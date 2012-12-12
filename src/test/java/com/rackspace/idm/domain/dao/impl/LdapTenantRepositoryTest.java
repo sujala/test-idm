@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.apache.commons.lang.StringUtils;
-import org.hamcrest.Matchers;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -19,9 +18,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
-import javax.naming.directory.SearchControls;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -204,21 +201,6 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToParent_parentUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.addTenantRoleToParent("   ", null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToParent_tenantRoleIsNull_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.addTenantRoleToParent("uniqueId", null);
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void addTenantRoleToParent_callsLDAPPersister_throwsIllegalStateException() throws Exception {
-        spy.addTenantRoleToParent("uniqueId", new TenantRole());
-    }
-
-    @Test (expected = IllegalArgumentException.class)
     public void deleteTenantRole_roleIsNull_throwsIllegalArgument() throws Exception {
         ldapTenantRepository.deleteTenantRole(null);
     }
@@ -235,54 +217,6 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doNothing().when(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
         spy.deleteTenantRole(role);
         verify(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
-    }
-
-    @Test
-    public void getTenantRoleForParentById_parentUniqueIdIsBlank_returnsNull() throws Exception {
-        TenantRole result = ldapTenantRepository.getTenantRoleForParentById("   ", "id");
-        assertThat("tenant role", result, equalTo(null));
-    }
-
-    @Test
-    public void getTenantRoleForParentById_idIsBlank_returnsNull() throws Exception {
-        TenantRole result = ldapTenantRepository.getTenantRoleForParentById("uniqueId", "");
-        assertThat("tenant role", result, equalTo(null));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getTenantRoleForParentById_callsGetSingleTenantRole_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getSingleTenantRole(anyString(), any(Filter.class));
-        spy.getTenantRoleForParentById("uniqueId", "id");
-    }
-
-    @Test
-    public void getTenantRoleForParentById_foundTenantRole_returnsRole() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        doReturn(tenantRole).when(spy).getSingleTenantRole(anyString(), any(Filter.class));
-        TenantRole result = spy.getTenantRoleForParentById("uniqueId", "id");
-        assertThat("tenant role", result, equalTo(tenantRole));
-    }
-
-    @Test
-    public void getTenantRolesByParent_parentUniqueIdIsBlank_returnsEmptyList() throws Exception {
-        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParent("  ");
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getTenantRolesByParent_callsGetMultipleTenantRoles_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        spy.getTenantRolesByParent("uniqueId");
-    }
-
-    @Test
-    public void getTenantRolesByParent_foundTenantRoles_returnsRoleList() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(tenantRole);
-        doReturn(roles).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        List<TenantRole> result = spy.getTenantRolesByParent("uniqueId");
-        assertThat("tenant role", result.get(0), equalTo(tenantRole));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -305,85 +239,15 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant role", result.get(0), equalTo(tenatnRole));
     }
 
-    @Test
-    public void getTenantRolesForUser_callsGetTenantRolesForClient() throws Exception {
+    private User getUser() {
         User user = new User();
-        user.setUniqueId("uniqueId");
-        doReturn(null).when(spy).getTenantRolesForClient("uniqueId", null);
-        spy.getTenantRolesForUser(user, null);
-        verify(spy).getTenantRolesForClient("uniqueId", null);
+        user.setUniqueId("id");
+        return user;
     }
 
-    @Test
-    public void getTenantRolesForApplication_callsGetTenantRolesForClient() throws Exception {
+    private Application getApplication() {
         Application application = new Application();
-        application.setUniqueId("uniqueId");
-        doReturn(null).when(spy).getTenantRolesForClient("uniqueId", null);
-        spy.getTenantRolesForApplication(application, null);
-        verify(spy).getTenantRolesForClient("uniqueId", null);
-    }
-
-    @Test
-    public void getTenantRolesByParentAndClientId_parentUniqueIdIsBlank_returnsEmptyList() throws Exception {
-        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParentAndClientId(" ", "clientId");
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void getTenantRolesByParentAndClientId_clientIdIsBlank_returnsEmptyList() throws Exception {
-        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParentAndClientId("uniqueId", null);
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getTenantRolesByParentAndClientId_callsGetMultipleTenantRoles_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getMultipleTenantRoles(eq("uniqueId"), any(Filter.class));
-        spy.getTenantRolesByParentAndClientId("uniqueId", "clientId");
-    }
-
-    @Test
-    public void getTenantRolesByParentAndClientId_foundRoles_returnsRoleList() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(tenantRole);
-        doReturn(roles).when(spy).getMultipleTenantRoles(eq("uniqueId"), any(Filter.class));
-        List<TenantRole> result = spy.getTenantRolesByParentAndClientId("uniqueId", "clientId");
-        assertThat("tenant role", result.get(0), equalTo(tenantRole));
-    }
-
-    @Test
-    public void getTenantRolesForClient_filterParamNotNull_addsAttributes() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
-        FilterParam filterParam = new FilterParam(FilterParam.FilterParamName.APPLICATION_ID, "applicationId");
-        FilterParam filterParam1 = new FilterParam(FilterParam.FilterParamName.TENANT_ID, "tenantId");
-        FilterParam filterParam2 = new FilterParam(FilterParam.FilterParamName.APPLICATION_NAME, "applicationName");
-        FilterParam[] filterParams = new FilterParam[3];
-        filterParams[0] = filterParam;
-        filterParams[1] = filterParam1;
-        filterParams[2] = filterParam2;
-        doReturn(new ArrayList<TenantRole>()).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        spy.getTenantRolesForClient("uniqueClientId", filterParams);
-        verify(spy).getMultipleTenantRoles(anyString(), argumentCaptor.capture());
-        Filter[] result = argumentCaptor.getValue().getComponents();
-        assertThat("application id", result[1].getAssertionValue(), equalTo("applicationId"));
-        assertThat("tenant id", result[2].getAssertionValue(), equalTo("tenantId"));
-        assertThat("filter size", result.length, equalTo(3));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getTenantRolesForClient_callsGetMultipleTenantRoles_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        spy.getTenantRolesForClient("uniqueId", new FilterParam[0]);
-    }
-
-    @Test
-    public void getTenantRolesForClient_gotRoles_returnRoleList() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(tenantRole);
-        doReturn(roles).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        List<TenantRole> result = spy.getTenantRolesForClient("uniqueId", null);
-        assertThat("tenant role", result.get(0), equalTo(tenantRole));
+        return application;
     }
 
     @Test
@@ -530,28 +394,6 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void doesScopeAccessHaveTenantRole_tenantRoleExists_returnsTrue() throws Exception {
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("roleId");
-        DelegatedClientScopeAccess scopeAccess = mock(DelegatedClientScopeAccess.class);
-        when(scopeAccess.getUniqueId()).thenReturn("uniqueId");
-        doReturn(new TenantRole()).when(spy).getTenantRoleForParentById("uniqueId", "roleId");
-        boolean result = spy.doesScopeAccessHaveTenantRole(scopeAccess, clientRole);
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void doesScopeAccessHaveTenantRole_tenantRoleDoesNotExist_returnsFalse() throws Exception {
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("roleId");
-        DelegatedClientScopeAccess scopeAccess = mock(DelegatedClientScopeAccess.class);
-        when(scopeAccess.getUniqueId()).thenReturn("uniqueId");
-        doReturn(null).when(spy).getTenantRoleForParentById("uniqueId", "roleId");
-        boolean result = spy.doesScopeAccessHaveTenantRole(scopeAccess, clientRole);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void getMultipleTenantRoles_callsPaginator_createSearchRequest() throws Exception {
         PaginatorContext<String> context = new PaginatorContext<String>();
         String[] referalURLs = {"123"};
@@ -642,9 +484,19 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("userId is blank", StringUtils.isBlank(userId));
     }
 
+    @Test
+    public void getUserDnFromScopeAccess_returnsUserDn() throws Exception {
+        DN dn = createDN(true);
+        DN compareToDn = new DN(new RDN("rsId", "123456789"), new RDN("ou", "users"), new RDN("o", "rackspace"), new RDN("dc", "rackspace"));
+
+        DN userDn = spy.getBaseDnForSearch(dn);
+
+        assertThat("userDn is correct", userDn.toString().equalsIgnoreCase(compareToDn.toString()));
+    }
+
     protected DN createDN(boolean withRsId) {
-        RDN rdn = new RDN("clientId", "abcd12345");
-        RDN rdn1 = new RDN("cn", "DIRECT TOKENS");
+        RDN rdn = new RDN("accessToken", "abcd12345");
+        RDN rdn1 = new RDN("cn", "TOKENS");
         RDN rdn2 = new RDN("rsId", "123456789");
         RDN rdn3 = new RDN("ou", "users");
         RDN rdn4 = new RDN("o", "rackspace");

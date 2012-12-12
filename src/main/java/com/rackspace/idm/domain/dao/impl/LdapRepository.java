@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import javax.naming.ldap.SortControl;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -168,6 +169,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CLOUD = "rsCloud";
     public static final String ATTR_QUESTION = "question";
     public static final String ATTR_CAPABILITY_ID = "capabilityId";
+    public static final String ATTR_RS_WEIGHT = "rsWeight";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
@@ -199,10 +201,8 @@ public abstract class LdapRepository {
     protected static final String PATTERN_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
-    protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
-    protected static final String CONTAINER_DELEGATE = "DELEGATE TOKENS";
-    protected static final String CONTAINER_IMPERSONATED = "IMPERSONATED TOKENS";
-    protected static final String CONTAINER_ROLES = "CLIENT ROLES";
+    protected static final String CONTAINER_ROLES = "ROLES";
+    protected static final String CONTAINER_TOKENS = "TOKENS";
 
     // Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
@@ -213,6 +213,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_CAPABILITY_SEARCH_ATTRIBUTES = {"*",ATTR_ACTION,ATTR_NAME};
     protected static final String[] ATTR_QUESTION_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_REGION_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_CLIENT_ROLE_SEARCH_ATTRIBUTES = {"*"};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     @Autowired
@@ -323,6 +324,17 @@ public abstract class LdapRepository {
         return entry;
     }
 
+    protected SearchResultEntry getEntryByDn(String entryDn) {
+        SearchResultEntry entry = null;
+        try {
+            entry = getAppInterface().getEntry(entryDn);
+        } catch (LDAPException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+        return entry;
+    }
+
     protected void updateEntry(String entryDn, List<Modification> mods,
         Audit audit) {
         try {
@@ -374,9 +386,7 @@ public abstract class LdapRepository {
                 .addEqualAttribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER)
                 .addEqualAttribute(ATTR_NAME, name).build();
 
-        SearchResultEntry entry = this.getSingleEntry(parentUniqueId,SearchScope.ONE, filter);
-
-        return entry;
+        return this.getSingleEntry(parentUniqueId, SearchScope.ONE, filter);
     }
     
     protected static final String NEXT_USER_ID = "nextUserId";
@@ -501,6 +511,12 @@ public abstract class LdapRepository {
 
         public LdapSearchBuilder addPresenceAttribute(String attribute) {
             Filter filter = Filter.createPresenceFilter(attribute);
+            filters.add(filter);
+            return this;
+        }
+
+        public LdapSearchBuilder addOrAttributes(List<Filter> components) {
+            Filter filter = Filter.createORFilter(components);
             filters.add(filter);
             return this;
         }

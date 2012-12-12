@@ -901,22 +901,22 @@ public class Cloud20VersionResourceTest {
 
     @Test
     public void listRoles_callsGetCloud20Service() throws Exception {
-        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null)).thenReturn(Response.ok());
-        spy.listRoles(httpHeaders, null, null, null, null);
+        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null, null)).thenReturn(Response.ok());
+        spy.listRoles(httpHeaders, null, null, null, null, null);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void listRoles_callsCloud20Service_callsListRoles() throws Exception {
-        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null)).thenReturn(Response.ok());
-        spy.listRoles(httpHeaders, null, null, null, null);
-        verify(delegateCloud20Service).listRoles(httpHeaders, null, null, null, null);
+        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null, null)).thenReturn(Response.ok());
+        spy.listRoles(httpHeaders, null, null, null, null, null);
+        verify(delegateCloud20Service).listRoles(httpHeaders, null, null, null, null, null);
     }
 
     @Test
     public void listRoles_responseOk_returns200() throws Exception {
-        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null)).thenReturn(Response.ok());
-        Response result = spy.listRoles(httpHeaders, null, null, null, null);
+        when(delegateCloud20Service.listRoles(httpHeaders, null, null, null, null, null)).thenReturn(Response.ok());
+        Response result = spy.listRoles(httpHeaders, null, null, null, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 

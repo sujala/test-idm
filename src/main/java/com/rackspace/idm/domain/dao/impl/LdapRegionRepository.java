@@ -66,8 +66,8 @@ public class LdapRegionRepository extends LdapGenericRepository<Region> implemen
     private Filter searchFilterGetDefaultRegion(String cloud) {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(LdapRegionRepository.ATTR_CLOUD, cloud)
-                .addEqualAttribute(LdapRegionRepository.ATTR_USE_FOR_DEFAULT_REGION, "true")
-                .addEqualAttribute(LdapRegionRepository.ATTR_ENABLED, "true")
+                .addEqualAttribute(LdapRegionRepository.ATTR_USE_FOR_DEFAULT_REGION, "TRUE")
+                .addEqualAttribute(LdapRegionRepository.ATTR_ENABLED, "TRUE")
                 .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_REGION).build();
     }
 

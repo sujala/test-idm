@@ -9,16 +9,10 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.Date;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS,requestAllAttributes=true)
-public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccessToken, HasRefreshToken  {
+public class DelegatedClientScopeAccess extends ScopeAccess implements HasRefreshToken  {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date accessTokenExp;
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String refreshTokenString;
@@ -42,9 +36,9 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
     private String userRCN;
     
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
-    public String getClientId() {
-        return super.getClientId();
+    @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    public String getAccessTokenString() {
+        return super.getAccessTokenString();
     }
 
     @Override
@@ -92,35 +86,10 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
     public void setUserRCN(String userRCN) {
         this.userRCN = userRCN;
     }
-    
-    @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
-    }
 
     @Override
     public void setRefreshTokenExpired() {
         this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
-    @Override
-    public void setAccessTokenExpired() {
-        this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
     public String getAuthCode() {
@@ -137,13 +106,6 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
 
     public void setAuthCodeExp(Date authCodeExp) {
         this.authCodeExp = authCodeExp;
-    }
-    
-	@Override
-    public boolean isAccessTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.accessTokenString)
-        || this.accessTokenExp == null
-        || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
     @Override

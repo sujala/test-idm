@@ -7,12 +7,15 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
+import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.UUID;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -22,7 +25,7 @@ public class ProvisionedApplicationResource extends ParentResource {
     private final ScopeAccessService scopeAccessService;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
-    
+
     @Autowired
     public ProvisionedApplicationResource(
         ScopeAccessService scopeAccessService, ApplicationService clientService,
@@ -58,6 +61,8 @@ public class ProvisionedApplicationResource extends ParentResource {
         ClientScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(provisionedApplication.getClientId());
         sa.setClientRCN(provisionedApplication.getRCN());
+        sa.setAccessTokenExp(new DateTime().toDate());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         this.scopeAccessService.addDirectScopeAccess(application.getUniqueId(), sa);
 

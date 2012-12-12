@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.RolesConverter;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -16,6 +15,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -59,7 +59,7 @@ public class UserTenantsResourceTest {
     @Test
     public void getAllTenantRolesForUser_callsTenantService_getTenantRolesForUser() throws Exception {
         userTenantsResource.getAllTenantRolesForUser("authHeader", "userId", "applicationId", "tenantId");
-        verify(tenantService).getTenantRolesForUser(any(User.class), any(FilterParam[].class));
+        verify(tenantService).getTenantRolesForUser(any(User.class), anyString(), anyString());
     }
 
     @Test

@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.RolesConverter;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +14,7 @@ import javax.ws.rs.core.Response;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -64,7 +64,7 @@ public class UserGlobalRolesResourceTest {
     @Test
     public void getRoles_callsTenantService_getGlobalRolesForUser() throws Exception {
         userGlobalRolesResource.getRoles("authHeader", "userId", "applicationId");
-        verify(tenantService).getGlobalRolesForUser(any(User.class), any(FilterParam[].class));
+        verify(tenantService).getGlobalRolesForUser(any(User.class), anyString());
     }
 
     @Test

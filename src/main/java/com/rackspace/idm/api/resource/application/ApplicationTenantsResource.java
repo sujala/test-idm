@@ -55,13 +55,9 @@ public class ApplicationTenantsResource extends ParentResource {
 
 		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 		
-		FilterBuilder filterBuilder = createFilterBuilder();
-		filterBuilder.addFilter(FilterParamName.APPLICATION_ID, provisionedApplicationId);
-		filterBuilder.addFilter(FilterParamName.TENANT_ID, tenantId);
-
 		Application application = applicationService.loadApplication(applicationId);
 
-		List<TenantRole> tenantRoles = tenantService.getTenantRolesForApplication(application, filterBuilder.getFilters());
+		List<TenantRole> tenantRoles = tenantService.getTenantRolesForApplication(application, applicationId, tenantId);
 
 		return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
 

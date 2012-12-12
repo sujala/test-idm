@@ -128,7 +128,6 @@ public class TokensResource extends ParentResource {
                                         @HeaderParam("X-Auth-Token") String authHeader,
                                         @PathParam("tokenString") String tokenString) {
 
-
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 

@@ -3,22 +3,28 @@ package com.rackspace.idm.api.resource.roles;
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
+import com.rackspace.idm.validation.RolePrecedenceValidator;
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import java.net.URI;
 import java.util.ArrayList;
@@ -44,6 +50,17 @@ public class RolesResource extends ParentResource {
         this.authorizationService = authorizationService;
         this.rolesConverter = rolesConverter;
     }
+
+    @Autowired
+    private RolePrecedenceValidator precedenceValidator;
+    @Autowired
+    private Paginator<ClientRole> paginator;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     /**
      * Get a role
@@ -73,22 +90,19 @@ public class RolesResource extends ParentResource {
     @GET
     public Response getAllRoles(
             @HeaderParam("X-Auth-Token") String authHeader,
+            @Context UriInfo uriInfo,
             @QueryParam("name") String name,
             @QueryParam("applicationId") String applicationId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        List<FilterParam> filters = new ArrayList<FilterParam>();
-        if (!StringUtils.isBlank(applicationId)) {
-            filters.add(new FilterParam(FilterParamName.APPLICATION_ID, applicationId));
-        }
 
-        if (!StringUtils.isBlank(name)) {
-            filters.add(new FilterParam(FilterParamName.ROLE_NAME, name));
-        }
+        PaginatorContext<ClientRole> context = applicationService.getClientRolesPaged(applicationId, name, 0, config.getInt("ldap.paging.limit.default"));
 
-        List<ClientRole> roles = applicationService.getAllClientRoles(filters);
+        String linkHeader = paginator.createLinkHeader(uriInfo, context);
 
-        return Response.ok(rolesConverter.toRoleJaxbFromClientRole(roles)).build();
+        return Response.status(200)
+                .header("Link", linkHeader)
+                .entity(rolesConverter.toRoleJaxbFromClientRole(context.getValueList())).build();
     }
 
     /**
@@ -101,6 +115,7 @@ public class RolesResource extends ParentResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRole(role);
         ClientRole clientRole = rolesConverter.toClientRole(role);
+        clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
         applicationService.addClientRole(clientRole);
         String locationUri = clientRole.getId();
         return Response.created(URI.create(locationUri)).build();
@@ -119,16 +134,25 @@ public class RolesResource extends ParentResource {
             @PathParam("roleId") String roleId,
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
+
         validateRole(role);
         Application application = applicationService.getById(role.getApplicationId());
         if(application==null){
             throw new BadRequestException("Application with id: " + role.getApplicationId() + " not found.");
         }
+
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
             throw new NotFoundException("Role with id: " + roleId + " not found.");
         }
+
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        }
+
         clientRole.copyChanges(updatedRole);
         applicationService.updateClientRole(clientRole);
         return Response.noContent().build();
@@ -148,10 +172,18 @@ public class RolesResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 		authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
+
 		ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
             throw new NotFoundException("role with id: " + roleId + " not found");
         }
+
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        }
+
 		applicationService.deleteClientRole(clientRole);
 		return Response.noContent().build();
 	}
@@ -166,5 +198,25 @@ public class RolesResource extends ParentResource {
         if(StringUtils.isBlank(role.getApplicationId())){
             throw new BadRequestException("Application id is not valid");
         }
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setPaginator(Paginator<ClientRole> paginator) {
+        this.paginator = paginator;
+    }
+
+    public void setPrecedenceValidator(RolePrecedenceValidator validator) {
+        this.precedenceValidator = validator;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setScopeAccessService(ScopeAccessService service) {
+        this.scopeAccessService = service;
     }
 }

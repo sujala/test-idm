@@ -10,17 +10,10 @@ import java.util.Date;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS
     ,requestAllAttributes=true)
-public class PasswordResetScopeAccess extends ScopeAccess implements
-HasAccessToken {
+public class PasswordResetScopeAccess extends ScopeAccess {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date accessTokenExp;
 
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String username;
@@ -32,9 +25,9 @@ HasAccessToken {
     private String userRCN;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
-    public String getClientId() {
-        return super.getClientId();
+    @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    public String getAccessTokenString() {
+        return super.getAccessTokenString();
     }
 
     @Override
@@ -66,45 +59,12 @@ HasAccessToken {
         this.userRCN = userRCN;
     }
 
-
-    @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExpired() {
-        this.accessTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
     public DateTime getUserPasswordExpirationDate() {
         return userPasswordExpirationDate;
     }
 
     public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
         this.userPasswordExpirationDate = userPasswordExpirationDate;
-    }
-
-    @Override
-    public boolean isAccessTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.accessTokenString)
-        || this.accessTokenExp == null
-        || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
     @Override

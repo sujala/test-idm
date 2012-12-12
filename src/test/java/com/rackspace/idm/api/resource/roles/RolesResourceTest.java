@@ -2,18 +2,26 @@ package com.rackspace.idm.api.resource.roles;
 
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.api.converter.RolesConverter;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.util.List;
 
@@ -34,6 +42,11 @@ public class RolesResourceTest {
     ApplicationService applicationService;
     RolesConverter rolesConverter;
     RolesResource spy;
+    Configuration config;
+    Paginator<ClientRole> clientRolePaginator;
+    UriInfo uriInfo;
+    ScopeAccessService scopeAccessService;
+
 
     @Before
     public void setUp() throws Exception {
@@ -44,102 +57,43 @@ public class RolesResourceTest {
         spy = spy(rolesResource);
         when(applicationService.getClientRoleById(anyString())).thenReturn(new ClientRole());
         when(rolesConverter.toClientRole(any(Role.class))).thenReturn(new ClientRole());
+        config = mock(Configuration.class);
+        clientRolePaginator = mock(Paginator.class);
+        scopeAccessService = mock(ScopeAccessService.class);
+        rolesResource.setConfig(config);
+        rolesResource.setPaginator(clientRolePaginator);
+        rolesResource.setScopeAccessService(scopeAccessService);
+        uriInfo = mock(UriInfo.class);
+
+        when(applicationService.getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+
     }
 
     @Test
     public void getAllRoles_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        rolesResource.getAllRoles(null, null, null);
+        rolesResource.getAllRoles(null, uriInfo, null, null);
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
     }
 
     @Test
-    public void getAllRoles_callsApplicationService_getAllClientRoles() throws Exception {
+    public void getAllRoles_callsApplicationService_getClientRolesPaged() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, null, null);
-        verify(applicationService).getAllClientRoles(anyList());
-    }
-
-    @Test
-    public void getAllRoles_withApplicationId_addsApplicationIdFilter() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, null, "applicationId");
-        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
-        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.APPLICATION_ID));
-    }
-
-    @Test
-    public void getAllRoles_withName_addsNameFilter() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, "name", null);
-        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
-        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.ROLE_NAME));
+        rolesResource.getAllRoles(null, null, null, null);
+        verify(applicationService).getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt());
     }
 
     @Test
     public void getAllRoles_returns200Status() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        Response response = rolesResource.getAllRoles(null, null, null);
+        Response response = rolesResource.getAllRoles(null, null, null, null);
         assertThat("response status", response.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void addRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(authorizationService).verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test
-    public void addRole_callsApplicationService_addClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(applicationService).addClientRole(clientRole);
-    }
-
-    @Test
-    public void addRole_callsRolesConverter_toClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(rolesConverter).toClientRole(any(Role.class));
-    }
-
-    @Test
-    public void addRole_returnsCreatedStatus() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        Response response = spy.addRole(null, null);
-        assertThat("response status", response.getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void updateRole_callsApplicationService_getById() throws Exception {
-        Role role = validRole();
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getById("appId")).thenReturn(new Application());
-        rolesResource.updateRole(null,"foo", role);
-        verify(applicationService).getById("appId");
     }
 
     @Test(expected = BadRequestException.class)
     public void updateRole_withNullApplication_throwsBadRequestException() throws Exception {
         Role role = validRole();
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         when(applicationService.getById("appId")).thenReturn(null);
         rolesResource.updateRole(null,"foo", role);
         verify(applicationService).getById("appId");
@@ -148,6 +102,7 @@ public class RolesResourceTest {
     @Test(expected = NotFoundException.class)
     public void updateRole_invalidRoleId_throwsNotFoundException() throws Exception {
         when(applicationService.getClientRoleById("id")).thenReturn(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         when(applicationService.getById("appId")).thenReturn(new Application());
         rolesResource.updateRole(null, "id", validRole());
     }
@@ -164,40 +119,12 @@ public class RolesResourceTest {
         verify(applicationService).getClientRoleById("id");
     }
 
-    @Test
-    public void deleteRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        rolesResource.deleteRole(null, null);
-        verify(authorizationService).verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test
-    public void deleteRole_callsApplicationService_getClientRoleById() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.deleteRole(null, "roleId");
-        verify(applicationService).getClientRoleById("roleId");
-    }
-
     @Test(expected = NotFoundException.class)
     public void deleteRole_withNullClientId_throwsNotFoundException() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         when(applicationService.getClientRoleById("roleId")).thenReturn(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         rolesResource.deleteRole(null, "roleId");
-    }
-
-    @Test
-    public void deleteRole_callsApplicationService_deleteClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
-        rolesResource.deleteRole(null, "roleId");
-        verify(applicationService).deleteClientRole(any(ClientRole.class));
-    }
-
-    @Test
-    public void deleteRole_returnsNoContentStatus() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
-        Response response = rolesResource.deleteRole(null, "roleId");
-        assertThat("response status", response.getStatus(), equalTo(204));
     }
 
     @Test(expected = BadRequestException.class)

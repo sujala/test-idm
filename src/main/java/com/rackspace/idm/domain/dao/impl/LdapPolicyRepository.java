@@ -139,11 +139,11 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         }
 
         if (newPolicy.isEnabled() != null && !newPolicy.isEnabled().equals(oldPolicy.isEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(newPolicy.isEnabled())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(newPolicy.isEnabled()).toUpperCase()));
         }
 
         if (newPolicy.isGlobal() != null && !newPolicy.isGlobal().equals(oldPolicy.isGlobal())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(newPolicy.isGlobal())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(newPolicy.isGlobal()).toUpperCase()));
         }
 
         if (newPolicy.getBlob() != null && !newPolicy.getBlob().equals(oldPolicy.getBlob())) {

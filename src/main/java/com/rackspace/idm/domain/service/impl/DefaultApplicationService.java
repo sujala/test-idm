@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -31,6 +34,10 @@ public class DefaultApplicationService implements ApplicationService {
     private UserDao userDao;
     @Autowired
     private TenantDao tenantDao;
+    @Autowired
+    private ApplicationRoleDao applicationRoleDao;
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -67,12 +74,6 @@ public class DefaultApplicationService implements ApplicationService {
         for (DefinedPermission definedPerm : definedPermissions) {
             this.deleteDefinedPermission(definedPerm);
         }
-
-        List<ClientGroup> groups = clientDao.getClientGroupsByClientId(clientId);
-
-        for (ClientGroup group : groups) {
-            clientDao.deleteClientGroup(group);
-        }
         
         List<ClientRole> roles = clientDao.getClientRolesByClientId(clientId);
         
@@ -101,8 +102,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new IllegalStateException("Client doesn't exist");
         }
 
-        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
-
+        ScopeAccess sa = this.scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
@@ -278,193 +278,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public void addClientGroup(ClientGroup clientGroup) {
-        logger.debug("Adding Client group: {}", clientGroup);
-        Application client = clientDao.getClientByClientId(clientGroup.getClientId());
-
-        if (client == null) {
-            logger.warn("Couldn't add group {} because clientId doesn't exist", clientGroup.getClientId());
-            throw new NotFoundException("Client doesn't exist");
-        }
-
-        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
-
-        if (customer == null) {
-            logger.warn("Could not add group {} because customer {} not found", clientGroup.getName(), clientGroup.getCustomerId());
-            throw new NotFoundException();
-        }
-
-        clientDao.addClientGroup(clientGroup, client.getUniqueId());
-        logger.debug("Added Client group: {}", clientGroup);
-    }
-
-    @Override
-    public void addUserToClientGroup(String username, String customerId,
-        String clientId, String groupName) {
-        logger.debug("Adding User: {} to Client group: {}", username, groupName);
-        ClientGroup group = this.getClientGroup(customerId, clientId, groupName);
-
-        if (group == null) {
-            String errMsg = String.format("ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.", groupName, clientId, customerId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        this.addUserToClientGroup(username, group);
-        logger.debug("Added User: {} to Client group: {}", username, groupName);
-    }
-
-    @Override
-    public void deleteClientGroup(String customerId, String clientId,
-        String groupName) {
-        logger.debug("Deleting Client Group: {} , Client: {}", groupName,
-            clientId);
-        if (StringUtils.isBlank(clientId) || StringUtils.isBlank(groupName)) {
-            throw new IllegalArgumentException();
-        }
-
-        ClientGroup groupToDelete = clientDao.getClientGroup(customerId,
-            clientId, groupName);
-
-        if (groupToDelete == null) {
-            throw new NotFoundException(
-                String.format("Client Group with Name %s, ClientId %s, and CustomerId %s not found",
-                        customerId, clientId, groupName));
-        }
-
-        clientDao.deleteClientGroup(groupToDelete);
-        logger.debug("Deleted Client Group: {} from Client: {}", groupName, clientId);
-
-        logger.debug("Deleting Users from Client Group: {} , Client: {}", groupName, clientId);
-        userDao.removeUsersFromClientGroup(groupToDelete);
-        logger.debug("Deleted Users from Client Group: {} , Client: {}", groupName, clientId);
-    }
-
-    @Override
-    public ClientGroup getClientGroup(String customerId, String clientId, String groupName) {
-        return clientDao.getClientGroup(customerId, clientId, groupName);
-    }
-
-    @Override
-    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
-        logger.debug("Finding Client Groups by ClientID: {}", clientId);
-        List<ClientGroup> groups = clientDao.getClientGroupsByClientId(clientId);
-        logger.debug("Found {} Client Groups by ClientID: {}", groups.size(), clientId);
-        return groups;
-    }
-
-    @Override
-    public void removeUserFromClientGroup(String username, ClientGroup clientGroup) {
-        logger.debug("Removing User: {} from Client Group: {}", username, clientGroup);
-        if (StringUtils.isBlank(username)) {
-            throw new IllegalArgumentException("username cannot be blank");
-        }
-
-        User user = userDao.getUserByUsername(username);
-        if (user == null) {
-            String msg = "User not found: " + username;
-            logger.warn(msg);
-            throw new NotFoundException(msg);
-        }
-
-        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
-
-        if (customer == null) {
-            String msg = "Customer not found: " + clientGroup.getCustomerId();
-            logger.warn(msg);
-            throw new NotFoundException(msg);
-        }
-
-        try {
-            clientDao.removeUserFromGroup(user.getUniqueId(), clientGroup);
-            logger.debug("Removed User: {} from Client Group: {}", username, clientGroup);
-        } catch (NotFoundException nfe) {
-            logger.warn("User {} isn't in group {}", user, clientGroup);
-        }
-    }
-
-    @Override
-    public List<ClientGroup> getClientGroupsForUserByClientIdAndType(
-        String username, String clientId, String type) {
-
-        logger.debug("Getting Groups for User: {} by ClientId: {}", username, clientId);
-
-        String[] groupIds = userDao.getGroupIdsForUser(username);
-
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-
-        if (groupIds == null) {
-            return groups;
-        }
-
-        boolean filterByClient = !StringUtils.isBlank(clientId);
-        boolean filterByType = !StringUtils.isBlank(type);
-
-        for (String groupId : groupIds) {
-            boolean addGroup = true;
-            ClientGroup group = clientDao.getClientGroupByUniqueId(groupId);
-            if (group != null) {
-                if (filterByClient && !group.getClientId().equalsIgnoreCase(clientId)) {
-                    addGroup = false;
-                }
-                if (filterByType && !group.getType().equalsIgnoreCase(type)) {
-                    addGroup = false;
-                }
-                if (addGroup) {
-                    groups.add(group);
-                }
-            }
-        }
-
-        logger.debug("Got {} Group(s) for User: {} - {}", new Object[]{groups.size(), username, clientId});
-        return groups;
-    }
-
-    @Override
-    public List<ClientGroup> getClientGroupsForUser(String username) {
-        logger.debug("Getting Groups for User: {}", username);
-        String[] groupIds = userDao.getGroupIdsForUser(username);
-
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-
-        if (groupIds == null) {
-            return groups;
-        }
-
-        for (String groupId : groupIds) {
-            ClientGroup group = clientDao.getClientGroupByUniqueId(groupId);
-            if (group != null) {
-                groups.add(group);
-            }
-        }
-
-        logger.debug("Got {} Group(s) for User: {} - {}", groups.size(), username);
-        return groups;
-    }
-
-    @Override
-    public boolean isUserMemberOfClientGroup(String username, ClientGroup group) {
-        logger.debug("Is user {} member of {}", username, group);
-
-        ClientGroup foundGroup = this.clientDao.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        if (foundGroup == null) {
-            String errMsg = String.format("ClientGroup %s not found", group);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        boolean isMember = this.clientDao.isUserInClientGroup(username, foundGroup.getUniqueId());
-
-        logger.debug(String.format("Is user %s member of %s - %s", username, group, isMember));
-
-        return isMember;
-    }
-
-    @Override
-    public void updateClientGroup(ClientGroup group) {
-        clientDao.updateClientGroup(group);
-    }
-
-    @Override
     public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) {
         logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
         DefinedPermission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
@@ -480,34 +293,6 @@ public class DefaultApplicationService implements ApplicationService {
 
         logger.debug("Found Permission: {} for ClientId: {}", permission, clientId);
         return permission;
-    }
-
-    void addUserToClientGroup(String username, ClientGroup clientGroup) {
-        logger.debug("Add User: {} to ClientGroup: {}", username, clientGroup);
-        if (StringUtils.isBlank(username)) {
-            logger.warn("Username is blank");
-            throw new IllegalArgumentException("username cannot be blank");
-        }
-
-        User user = userDao.getUserByUsername(username);
-        if (user == null) {
-            logger.warn("User: {} not found", username);
-            throw new NotFoundException(String.format(
-                "User with username %s not found", username));
-        }
-
-        if (user.isDisabled()) {
-            logger.warn("User: {} is disabled", username);
-            throw new UserDisabledException(String.format(
-                "User %s is disabled and cannot be added to group", username));
-        }
-
-        try {
-            clientDao.addUserToClientGroup(user.getUniqueId(), clientGroup);
-            logger.debug("Added User: {} to ClientGroup: {}", username, clientGroup);
-        } catch (DuplicateException drx) {
-            logger.warn("User {} already in group {}", user, clientGroup);
-        }
     }
 
     @Override
@@ -545,26 +330,26 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public void addClientRole(ClientRole role) {
-        addClientRole(role, clientDao.getNextRoleId());
+        addClientRole(role, applicationRoleDao.getNextRoleId());
     }
 
     @Override
     public void addClientRole(ClientRole role, String roleId) {
         logger.info("Adding Client Role: {}", role);
-        Application client = clientDao.getClientByClientId(role.getClientId());
-        if (client == null) {
+        Application application = clientDao.getClientByClientId(role.getClientId());
+        if (application == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        ClientRole exists = clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole exists = applicationRoleDao.getClientRoleByApplicationAndName(application, role);
         if (exists != null) {
             String errMsg = String.format("Role with name %s already exists", role.getName());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
         role.setId(roleId);
-        clientDao.addClientRole(client.getUniqueId(), role);
+        applicationRoleDao.addClientRole(application, role);
         logger.info("Added Client Role: {}", role);
     }
 
@@ -577,47 +362,74 @@ public class DefaultApplicationService implements ApplicationService {
             this.tenantDao.deleteTenantRole(tenantRole);
         }
         
-        this.clientDao.deleteClientRole(role);
+        this.applicationRoleDao.deleteClientRole(role);
         logger.info("Deleted Client Role: {}", role);
     }
 
     @Override
     public void updateClientRole(ClientRole role) {
         logger.info("Update Client Role: {}", role);
-        this.clientDao.updateClientRole(role);
+        this.applicationRoleDao.updateClientRole(role);
         logger.info("Udpated Client Role: {}", role);
     }
 
     @Override
     public List<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
-        List<ClientRole> roles = this.clientDao.getClientRolesByClientId(clientId);
-        logger.debug("Got {} Client Roles", roles.size());
-        return roles;
-    }
-    
-    @Override
-    public List<ClientRole> getAllClientRoles(List<FilterParam> filters) {
-        logger.debug("Getting Client Roles");
-        List<ClientRole> roles = this.clientDao.getAllClientRoles(filters);
+        Application application = clientDao.getClientByClientId(clientId);
+        if (application == null) {
+            throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
+        }
+        List<ClientRole> roles = this.applicationRoleDao.getClientRolesForApplication(application);
         logger.debug("Got {} Client Roles", roles.size());
         return roles;
     }
 
     @Override
-    public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
-        String roleName) {
+    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, roleName, offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getClientRolesPaged(int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+    
+    @Override
+    public List<ClientRole> getAllClientRoles() {
+        logger.debug("Getting Client Roles");
+        List<ClientRole> roles = this.applicationRoleDao.getAllClientRoles();
+        logger.debug("Got {} Client Roles", roles.size());
+        return roles;
+    }
+
+    @Override
+    public ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName) {
         logger.debug("Getting Client Role {} for client {}", roleName, clientId);
-        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        ClientRole role = this.applicationRoleDao.getClientRoleByApplicationAndName(clientId, roleName);
         logger.debug("Got Client Role {} for client {}", roleName, clientId);
         return role;
     }
 
     @Override
-    public ClientRole getClientRoleById(String id) {
-        logger.debug("Getting Client Role {}", id);
-        ClientRole role = this.clientDao.getClientRoleById(id);
-        logger.debug("Got Client Role {}", id);
+    public ClientRole getClientRoleById(String roleId) {
+        logger.debug("Getting Client Role {}", roleId);
+        ClientRole role = this.applicationRoleDao.getClientRole(roleId);
+        logger.debug("Got Client Role {}", roleId);
         return role;
     }
 
@@ -634,6 +446,24 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("SoftDeleting Application: {}", application);
         clientDao.softDeleteApplication(application);
         logger.debug("SoftDeleted Application: {}", application);
+    }
+
+    @Override
+    public ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames) {
+        logger.debug("getting identity:* role for user: {}", user);
+        Application application = clientDao.getClientByClientId(applicationId);
+        List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, roleNames);
+
+        TenantRole match = tenantRoleDao.getTenantRoleForUser(user, identityRoles);
+
+        if (match != null) {
+            for (ClientRole role : identityRoles) {
+                if (role.getId().equals(match.getRoleRsId())) {
+                    return role;
+                }
+            }
+        }
+        return null;
     }
 
 	@Override
@@ -661,4 +491,14 @@ public class DefaultApplicationService implements ApplicationService {
 	public void setTenantDao(TenantDao tenantDao) {
 		this.tenantDao = tenantDao;
 	}
+
+    @Override
+    public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
+        this.tenantRoleDao = tenantRoleDao;
+    }
+
+    @Override
+    public void setApplicationRoleDao(ApplicationRoleDao roleDao) {
+        this.applicationRoleDao = roleDao;
+    }
 }

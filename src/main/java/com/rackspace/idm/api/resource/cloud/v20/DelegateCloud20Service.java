@@ -1,6 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -11,10 +17,7 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -32,6 +35,8 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -170,7 +175,9 @@ public class DelegateCloud20Service implements Cloud20Service {
                 Date expires = gregorianCalendar.getTime();
                 LOG.info("expires = " + expires);
                 scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
-                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+                UserScopeAccess usa = (UserScopeAccess)scopeAccessService.getAccessTokenByAuthHeader(token.getId());
+                AuthenticateResponse auth = defaultCloud20Service.buildAuthResponse(usa, null, user, authenticationRequest);
+                return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             } else if (user == null) { //If "user" is null return cloud response
                 return serviceResponse;
             } else { //If we get this far, return Default Service Response
@@ -283,7 +290,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         validateResponse.setToken(validateResponse.getToken());
 
         com.rackspace.idm.domain.entity.User impersonator = userService.getUserByScopeAccess(impersonatedScopeAccess);
-        List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
+        List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator);
         UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
 
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
@@ -1130,7 +1137,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit)  {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -1140,7 +1147,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listRoles(httpHeaders, authToken, serviceId, marker, limit);
+        return defaultCloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, marker, limit);
     }
 
     @Override

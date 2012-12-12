@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -11,6 +12,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.util.LDAPSDKRuntimeException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -24,10 +26,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         try{
-            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( parentUniqueId, CONTAINER_DELEGATE);
-                entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+                addContainer( parentUniqueId, CONTAINER_TOKENS);
+                entry = getContainer( parentUniqueId, CONTAINER_TOKENS);
             }
 
             audit.succeed();
@@ -47,10 +49,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
         String dn = new LdapDnBuilder(parentUniqueId).build();
         try{
-            SearchResultEntry entry = getContainer( dn, CONTAINER_IMPERSONATED);
+            SearchResultEntry entry = getContainer( dn, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( dn, CONTAINER_IMPERSONATED);
-                entry = getContainer( dn, CONTAINER_IMPERSONATED);
+                addContainer( dn, CONTAINER_TOKENS);
+                entry = getContainer( dn, CONTAINER_TOKENS);
             }
             audit.succeed();
             getLogger().debug("Added Impersonated ScopeAccess: {}", scopeAccess);
@@ -67,10 +69,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         try {
-            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DIRECT);
+            SearchResultEntry entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( parentUniqueId, CONTAINER_DIRECT);
-                entry = getContainer( parentUniqueId, CONTAINER_DIRECT);
+                addContainer(parentUniqueId, LdapRepository.CONTAINER_TOKENS);
+                entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             }
 
             audit.succeed();
@@ -182,7 +184,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
 
         try {
             final Filter filter = new LdapSearchBuilder()
@@ -206,49 +208,67 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public ScopeAccess getImpersonatedScopeAccessForParentByClientId(String parentUniqueId, String username) {
+    public List<ScopeAccess> getAllImpersonatedScopeAccessForParentByUser(String parentUniqueId, String username) {
         getLogger().debug("Find ScopeAccess for Parent: {} by impersonating username: {}", parentUniqueId, username);
-
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_IMPERSONATED).build();
-
-        try {
-            final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS)
                 .addEqualAttribute(ATTR_IMPERSONATING_USERNAME, username).build();
 
+        return getMultipleImpersonatedScopeAccess(parentUniqueId, filter);
+    }
+
+    @Override
+    public List<ScopeAccess> getAllImpersonatedScopeAccessForParent(String parentUniqueId) {
+        getLogger().debug("Finding impersonatedScopeAccess for Parent {}", parentUniqueId);
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS).build();
+
+        return getMultipleImpersonatedScopeAccess(parentUniqueId, filter);
+    }
+
+    private List<ScopeAccess> getMultipleImpersonatedScopeAccess(String searchDN, Filter filter) {
+        String dn = new LdapDnBuilder(searchDN).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
+        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
+
+        try {
             final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);
-            getLogger().debug(
-                "Found {} ScopeAccess(s) for Parent: {} by impersonating username: {}",
-                new Object[]{searchEntries.size(), parentUniqueId, username});
-            for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return decodeScopeAccess(searchResultEntry);
+            getLogger().debug("Found {} impersonatedScopeAccess for parent {}", new Object[]{searchEntries.size(), searchDN});
+            for (final SearchResultEntry entry : searchEntries) {
+                scopeAccessList.add(decodeScopeAccess(entry));
             }
-        } catch (final LDAPException e) {
+        } catch (LDAPPersistException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
                 throw new IllegalStateException(e.getMessage(), e);
             }
         }
-        return null;
+        return scopeAccessList;
     }
 
     @Override
-    public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
+    public List<ScopeAccess> getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
+        List<ScopeAccess> objectList = new ArrayList<ScopeAccess>();
+        String dn = new LdapDnBuilder(parentUniqueId).build();
 
         try {
-            final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
-                .addEqualAttribute(ATTR_CLIENT_ID, clientId).build();
+            final Filter filter = Filter.createANDFilter(
+                    Filter.createORFilter(
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKERSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_PASSWORDRESETSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_USERSCOPEACCESS)
+                    ),
+                    Filter.createEqualityFilter(ATTR_CLIENT_ID, clientId)
+            );
 
             final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);
             getLogger().debug(
                 "Found {} ScopeAccess(s) for Parent: {} by ClientId: {}",
                 new Object[]{searchEntries.size(), parentUniqueId, clientId});
             for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return decodeScopeAccess(searchResultEntry);
+                objectList.add(decodeScopeAccess(searchResultEntry));
             }
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
@@ -256,7 +276,44 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 throw new IllegalStateException(e.getMessage(), e);
             }
         }
-        return null;
+        return objectList;
+    }
+
+    @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessByParentForUser(String parentUniqueId, String username) {
+        List<ScopeAccess> scopeAccessList = getAllImpersonatedScopeAccessForParentByUser(parentUniqueId, username);
+        ScopeAccess scopeAccess;
+        try {
+            scopeAccess =  getMostRecentScopeAccess(scopeAccessList);
+        } catch (NotFoundException ex) {
+            scopeAccess = null;
+        }
+        return scopeAccess;
+    }
+
+    @Override
+    public ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
+        List<ScopeAccess> scopeAccessList = getDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+        return getMostRecentScopeAccess(scopeAccessList);
+    }
+
+    private ScopeAccess getMostRecentScopeAccess(List<ScopeAccess> scopeAccessList) throws NotFoundException {
+        int mostRecentIndex = 0;
+
+        if (scopeAccessList.size() == 0) {
+            String errMsg = "Scope access not found.";
+            getLogger().warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        for (int i = 0; i < scopeAccessList.size(); i++) {
+            Date max = scopeAccessList.get(mostRecentIndex).getAccessTokenExp();
+            Date current = scopeAccessList.get(i).getAccessTokenExp();
+            if (max.before(current)) {
+                mostRecentIndex = i;
+            }
+        }
+        return scopeAccessList.get(mostRecentIndex);
     }
 
     @Override
@@ -543,7 +600,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         String parentUniqueId) {
         getLogger().debug("Finding ScopeAccesses for: {}", parentUniqueId);
         final List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
         try {
             final Filter filter = new LdapSearchBuilder().addEqualAttribute(
                 ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS).build();
@@ -640,6 +697,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         }
         return false;
     }
+
+    @Override
+    public void deleteScopeAccessByDn(String scopeAccessDn) {
+        getLogger().debug("Deleting ScopeAccess: {}", scopeAccessDn);
+
+        final Audit audit = Audit.log(scopeAccessDn).delete();
+        deleteEntryAndSubtree(scopeAccessDn, audit);
+        audit.succeed();
+    }
+
 
     public ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding ScopeAccess: {}", scopeAccess);

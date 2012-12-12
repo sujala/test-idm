@@ -2,14 +2,10 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +35,12 @@ public class UsersResource extends ParentResource {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     @Autowired(required = true)
     public UsersResource(

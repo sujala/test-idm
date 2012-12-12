@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -46,6 +47,8 @@ public class DefaultApplicationServiceTest {
     private TenantDao tenantDao;
 
     private DefaultApplicationService spy;
+    @Mock
+    ApplicationRoleDao applicationRoleDao;
 
     @Before
     public void setUp() throws Exception {
@@ -91,7 +94,7 @@ public class DefaultApplicationServiceTest {
         client.setRCN("rcn");
         when(customerDao.getCustomerByCustomerId(anyString())).thenReturn(new Customer());
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ClientScopeAccess());
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ClientScopeAccess());
         when(scopeAccessDao.addDirectScopeAccess(anyString(), any(ScopeAccess.class))).thenReturn(new ScopeAccess());
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), eq(definedPermission))).thenReturn(new DefinedPermission());
         defaultApplicationService.addDefinedPermission(definedPermission);
@@ -214,45 +217,6 @@ public class DefaultApplicationServiceTest {
         defaultApplicationService.getAvailableScopes();
     }
 
-    @Test(expected = NotFoundException.class)
-    public void addClientGroup_throwsNotFoundException_whenClientDoesNotExist() throws Exception {
-        when(clientDao.getClientByClientId("id")).thenReturn(null);
-        defaultApplicationService.addClientGroup(new ClientGroup("id", null, null, null));
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void addClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
-        when(clientDao.getClientByClientId("id")).thenReturn(new Application());
-        when(customerDao.getCustomerByCustomerId("id")).thenReturn(null);
-        defaultApplicationService.addClientGroup(new ClientGroup("id", "id", null, null));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsNull() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", null, "name");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsBlank() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "", "name");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameNull() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "id", null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameIsBlank() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "id", "");
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void deleteClientGroup_throwsNotFoundException_whenGroupIsNotFound() throws Exception {
-        when(clientDao.getClientGroup("customerId", "clientId", "groupName")).thenReturn(null);
-        defaultApplicationService.deleteClientGroup("customerId", "clientId", "groupName");
-    }
-
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_permissionIsNull_throwsNotFoundException() throws Exception {
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
@@ -321,36 +285,56 @@ public class DefaultApplicationServiceTest {
     @Test
     public void updateClientRole_callsClientDao_updateClientRole() throws Exception {
         defaultApplicationService.updateClientRole(null);
-        verify(clientDao).updateClientRole(null);
+        verify(applicationRoleDao).updateClientRole(null);
     }
 
     @Test
-    public void getClientRolesByClientId_callsClientDao_getClientRolesByClientId() throws Exception {
+    public void getClientRolesByClientId_callsClientRoleDao_getClientRoles() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
-        when(clientDao.getClientRolesByClientId("clientId")).thenReturn(roles);
+        Application application = new Application();
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
         defaultApplicationService.getClientRolesByClientId("clientId");
-        verify(clientDao).getClientRolesByClientId("clientId");
+        verify(applicationRoleDao).getClientRolesForApplication(application);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void getClientRolesByClientId_throwsNotFoundException() throws Exception {
+        when(clientDao.getClientByClientId("blah")).thenReturn(null);
+        defaultApplicationService.getClientRolesByClientId("blah");
+    }
+
+    @Test
+    public void getClientRolesPaged_callsApplicationRoleDao_getPagedUser() throws Exception {
+        when(applicationRoleDao.getClientRolesPaged(anyString(),anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        when(applicationRoleDao.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        when(applicationRoleDao.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        defaultApplicationService.getClientRolesPaged("applicationId", "roleName", 0, 10);
+        defaultApplicationService.getClientRolesPaged("applicationId", 0, 10);
+        defaultApplicationService.getClientRolesPaged(0, 10);
+        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt());
+        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyInt(), anyInt());
+        verify(applicationRoleDao).getClientRolesPaged(anyInt(), anyInt());
     }
 
     @Test
     public void getAllClientRoles_callsClientDao_getAllClientRoles() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
         when(clientDao.getAllClientRoles(null)).thenReturn(roles);
-        defaultApplicationService.getAllClientRoles(null);
+        defaultApplicationService.getAllClientRoles();
     }
 
     @Test
     public void getClientRoleByClientIdAndRoleName_callsClientDao_getClientRoleByClientIdAndRoleName() throws Exception {
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId", "roleName")).thenReturn(new ClientRole());
         defaultApplicationService.getClientRoleByClientIdAndRoleName("clientId", "roleName");
-        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
+        verify(applicationRoleDao).getClientRoleByApplicationAndName("clientId", "roleName");
     }
 
     @Test
     public void getClientRoleById_callsClientDao_getClientRoleById() throws Exception {
         when(clientDao.getClientRoleById("id")).thenReturn(new ClientRole());
         defaultApplicationService.getClientRoleById("id");
-        verify(clientDao).getClientRoleById("id");
+        verify(applicationRoleDao).getClientRole("id");
     }
 
     @Test
@@ -358,14 +342,6 @@ public class DefaultApplicationServiceTest {
         when(clientDao.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         defaultApplicationService.getOpenStackServices();
         verify(clientDao).getOpenStackServices();
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void removeUserFromClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
-        ClientGroup clientGroup = new ClientGroup("clientId", "customerId", "name", "type");
-        when(userDao.getUserByUsername("username")).thenReturn(new User());
-        when(customerDao.getCustomerByCustomerId("customerId")).thenReturn(null);
-        defaultApplicationService.removeUserFromClientGroup("username", clientGroup);
     }
 
     @Test
@@ -386,22 +362,24 @@ public class DefaultApplicationServiceTest {
     @Test(expected = DuplicateException.class)
     public void addClientRole_throwsDuplicateException_whenRoleIsNotFound() throws Exception {
         ClientRole role = new ClientRole();
+        Application application = new Application();
         role.setClientId("clientId");
         role.setName("role");
-        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
-        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(new ClientRole());
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
+        when(applicationRoleDao.getClientRoleByApplicationAndName(application, role)).thenReturn(new ClientRole());
         defaultApplicationService.addClientRole(role);
     }
 
     @Test
     public void addClientRole_callsClientDao_addClientRole() throws Exception {
         ClientRole role = new ClientRole();
+        Application application = new Application();
         role.setClientId("clientId");
         role.setName("role");
-        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
-        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(null);
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
+        when(applicationRoleDao.getClientRoleByApplicationAndName(application, role)).thenReturn(null);
         defaultApplicationService.addClientRole(role);
-        verify(clientDao).addClientRole(anyString(), eq(role));
+        verify(applicationRoleDao).addClientRole(any(Application.class), eq(role));
     }
 
     @Test (expected = NotFoundException.class)
@@ -436,7 +414,7 @@ public class DefaultApplicationServiceTest {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
         defaultApplicationService.deleteClientRole(role);
-        verify(clientDao).deleteClientRole(role);
+        verify(applicationRoleDao).deleteClientRole(role);
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -474,35 +452,6 @@ public class DefaultApplicationServiceTest {
         when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
         Applications clientServices = defaultApplicationService.getClientServices(client);
         assertThat("total records", clientServices.getTotalRecords(), equalTo(1));
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addUserToClientGroup_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        defaultApplicationService.addUserToClientGroup("", null);
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void addUserToClientGroup_userIsNull_throwsNotFoundException() throws Exception {
-        when(userDao.getUserByUsername("username")).thenReturn(null);
-        defaultApplicationService.addUserToClientGroup("username", null);
-    }
-
-    @Test (expected = UserDisabledException.class)
-    public void addUserToClientGroup_userIsDisabled_throwsUserDisabled() throws Exception {
-        when(userDao.getUserByUsername("username")).thenReturn(new User());
-        defaultApplicationService.addUserToClientGroup("username", null);
-    }
-
-    @Test
-    public void addUserToClientGroup_userExistsInGroup_throwsDuplicateException() throws Exception {
-        User user = new User();
-        ClientGroup clientGroup = new ClientGroup();
-        user.setEnabled(true);
-        user.setUniqueId("uniqueId");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
-        doThrow(new DuplicateException()).when(clientDao).addUserToClientGroup("uniqueId", clientGroup);
-        defaultApplicationService.addUserToClientGroup("username", clientGroup);
-        verify(clientDao).addUserToClientGroup("uniqueId", clientGroup);
     }
 
     @Test (expected = NotFoundException.class)
@@ -547,26 +496,5 @@ public class DefaultApplicationServiceTest {
         List<DefinedPermission> result = defaultApplicationService.getDefinedPermissionsByClient(client);
         assertThat("permission", result.get(0), equalTo(permission));
         assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
-    public void getClientGroupsForUserByClientIdAndType_groupNotNullAndFilterByClientAndClientIdNotMatch_returnsEmptyList() throws Exception {
-        String[] groupIds = {"groupId"};
-        ClientGroup group = new ClientGroup();
-        group.setClientId("notMatch");
-        group.setType("type");
-        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
-        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(group);
-        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUserByClientIdAndType("username", "clientId", "type");
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void getClientGroupsForUser_clientGroupIsNull_returnsEmptyList() throws Exception {
-        String[] groupIds = {"groupId"};
-        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
-        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(null);
-        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUser("username");
-        assertThat("list", result.isEmpty(), equalTo(true));
     }
 }

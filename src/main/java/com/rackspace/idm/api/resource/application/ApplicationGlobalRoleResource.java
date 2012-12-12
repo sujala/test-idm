@@ -2,11 +2,13 @@ package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,11 +90,16 @@ public class ApplicationGlobalRoleResource {
             @PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        
+
         Application application = this.applicationService.loadApplication(applicationId);
 
-    	TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(application.getUniqueId(), roleId);
-		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
+
+        TenantRole tenantRole = this.tenantService.getTenantRoleForApplicationById(application, roleId);
+        if (tenantRole == null) {
+            throw new NotFoundException(String.format("Role with id %s was not found", roleId));
+        }
+
+		this.tenantService.deleteTenantRoleForApplication(application, tenantRole);
 
         return Response.noContent().build();
     }
@@ -156,7 +163,7 @@ public class ApplicationGlobalRoleResource {
 
 		TenantRole tenantRole = createTenantRole(tenantId, roleId);
 		
-		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
+		this.tenantService.deleteTenantRoleForApplication(application, tenantRole);
 
 		return Response.noContent().build();
 	}

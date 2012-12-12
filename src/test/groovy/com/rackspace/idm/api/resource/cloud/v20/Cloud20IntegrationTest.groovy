@@ -23,21 +23,43 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
+import org.springframework.beans.factory.annotation.Autowired
+import com.rackspace.idm.domain.service.ScopeAccessService
+import org.apache.commons.configuration.Configuration
+import org.springframework.test.context.ContextConfiguration
+import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
+import com.unboundid.ldap.sdk.SearchScope
+import com.unboundid.ldap.sdk.SearchResultEntry
+import com.unboundid.ldap.sdk.persist.LDAPPersister
+import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.unboundid.ldap.sdk.Modification
+import com.unboundid.ldap.sdk.ModificationType
+import org.joda.time.DateTime
+import static javax.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 
+@ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud20IntegrationTest extends Specification {
+    @Autowired LdapConnectionPools connPools
+    @Autowired Configuration config
+    @Autowired DefaultCloud20Service cloud20Service
+
     @Shared WebResource resource
     @Shared JAXBObjectFactories objFactories;
 
-    @Shared def path = "cloud/v2.0/"
+    @Shared def path20 = "cloud/v2.0/"
+    @Shared def path11 = "cloud/v1.1/"
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
     @Shared def userAdminTwoToken
     @Shared def defaultUserToken
-
     @Shared def serviceAdmin
+
     @Shared def identityAdmin
     @Shared def userAdmin
     @Shared def userAdminTwo
@@ -45,13 +67,16 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
     @Shared def defaultUserForAdminTwo
+    @Shared def testUser
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def tenant
 
     @Shared def emptyDomainId
     @Shared def testDomainId
+    @Shared def testDomainId2
     @Shared def defaultRegion
     @Shared def endpointTemplateId
     @Shared def policyId
@@ -65,13 +90,27 @@ class Cloud20IntegrationTest extends Specification {
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
     static def OS_KSCATALOG = "OS-KSCATALOG"
+    @Shared REFRESH_WINDOW_HOURS
+    @Shared CLOUD_CLIENT_ID
+    @Shared BASE_DN = "o=rackspace,dc=rackspace,dc=com"
+    @Shared SCOPE = SearchScope.SUB
+    
+    @Shared def USER_FOR_AUTH
+    @Shared def USER_FOR_AUTH_PWD
 
+    @Shared def defaultUserRoleId = "2"
+    @Shared def userAdminRoleId = "3"
+    @Shared def identityAdminRoleId = "1"
+    @Shared def serviceAdminRoleId = "4"
 
+    @Shared def testIdentityRoleId = "testIdentityRoleForDelete"
+    @Shared def testIdentityRole
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
         testDomainId = "domain1$sharedRandom"
-        emptyDomainId = "domain2$sharedRandom"
+        testDomainId2 = "domain2$sharedRandom"
+        emptyDomainId = "domain3$sharedRandom"
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
@@ -80,6 +119,11 @@ class Cloud20IntegrationTest extends Specification {
 
         identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
+        createUser(serviceAdminToken, userForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
+        testUser = getUserByName(serviceAdminToken, "admin$sharedRandom").getEntity(User)
+        USER_FOR_AUTH = testUser.username
+        USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
         addEndpointTemplate(serviceAdminToken, endpointTemplate(endpointTemplateId))
@@ -133,12 +177,25 @@ class Cloud20IntegrationTest extends Specification {
             sharedRoleTwo = roleResponse2.getEntity(Role).value
         }
 
-        //Add role to identity-admin and default-users
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+        if (tenant == null) {
+            def tenantForCreate = createTenant()
+            def tenantResponse = addTenant(serviceAdminToken, tenantForCreate)
+            tenant = tenantResponse.getEntity(Tenant).value
+        }
 
+        //Add role to identity-admin and default-users
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+
+        //testIdentityRole = getRole(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
+
+    }
+
+    def setup() {
+        expireTokens(USER_FOR_AUTH, 12)
+        setConfigValues()
     }
 
     def cleanupSpec() {
@@ -156,8 +213,80 @@ class Cloud20IntegrationTest extends Specification {
         deleteUser(serviceAdminToken, defaultUserThree.getId())
         deleteUser(serviceAdminToken, defaultUserForAdminTwo.getId())
 
+        deleteUser(serviceAdminToken, testUser.getId())
+
+        //TODO: DELETE DOMAINS
+
         deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
         deletePolicy(serviceAdminToken, policyId)
+    }
+
+    def "authenticating where total access tokens remains unchanged"() {
+        when:
+        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+
+        then:
+        scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
+        allUsersScopeAccessAfter.entryCount <= 2
+    }
+
+    def "authenticating where token is within refresh window adds new token"() {
+        when:
+        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        setTokenInRefreshWindow(USER_FOR_AUTH, scopeAccessOne.token.id)
+
+        def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+
+        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+
+        then:
+        allUsersScopeAccessBefore.getEntryCount() + 1 == allUsersScopeAccessAfter.getEntryCount()
+        !scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
+
+    }
+
+    def "authenticating where token is valid returns existing token"() {
+        when:
+        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        then:
+        scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
+    }
+
+    def "authenticate with two valid tokens"() {
+        when:
+        def firstScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
+        def secondScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        def thirdScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        then:
+        secondScopeAccess.token.id.equals(thirdScopeAccess.token.id)
+    }
+
+    def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
+        when:
+        def firstScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
+        def secondScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        expireToken(USER_FOR_AUTH, firstScopeAccess.token.id, 12)
+        setTokenInRefreshWindow(USER_FOR_AUTH, secondScopeAccess.token.id)
+        def thirdScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=authQE))", "*")
+
+        then:
+        !thirdScopeAccess.token.id.equals(secondScopeAccess.token.id)
+        for (entry in allUsersScopeAccessAfter.searchEntries) {
+            assert(!entry.DN.contains("$firstScopeAccess.token.id"))
+        }
     }
 
     def 'User CRUD'() {
@@ -212,7 +341,7 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 createUser(serviceAdminToken, userForCreate("!@#What", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("1one", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                //createUser(serviceAdminToken, userForCreate("1one", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("one name", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
@@ -223,8 +352,9 @@ class Cloud20IntegrationTest extends Specification {
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Longpassword")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
                 createUser(identityAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
-                updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                updateUser(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1"))
+                //updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
+                updateUser(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1")),
+                updateUser(identityAdminToken, defaultUser.getId(), userForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
         ]
     }
 
@@ -334,17 +464,17 @@ class Cloud20IntegrationTest extends Specification {
         deleteGroupResponse.status == 204
     }
 
-    def "Group Assignment CRUD" () {
+    def "Group Assignment CRUD for serviceAdmin modifying identityAdmin" () {
         when:
-        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
 
-        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, defaultUser.getId())
+        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, identityAdmin.getId())
         def groups = listGroupsForUserResponse.getEntity(Groups).value
 
         def getUsersFromGroupResponse = getUsersFromGroup(serviceAdminToken, group.getId())
         def users = getUsersFromGroupResponse.getEntity(UserList).value
 
-        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
 
         then:
         addUserToGroupResponse.status == 204
@@ -355,6 +485,54 @@ class Cloud20IntegrationTest extends Specification {
         users.getUser().size() == 1
 
         removeUserFromGroupRespone.status == 204
+    }
+
+    def "Group Assignment CRUD for identityAdmin modifying userAdmin" () {
+        when:
+        def addUserToGroupResponse = addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        def listGroupsForUserResponse = listGroupsForUser(identityAdminToken, userAdmin.getId())
+        def groups = listGroupsForUserResponse.getEntity(Groups).value
+
+        def getUsersFromGroupResponse = getUsersFromGroup(identityAdminToken, group.getId())
+        def users = getUsersFromGroupResponse.getEntity(UserList).value
+
+        def removeUserFromGroupRespone = removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        then:
+        addUserToGroupResponse.status == 204
+
+        listGroupsForUserResponse.status == 200
+        groups.getGroup().size() >= 1
+        getUsersFromGroupResponse.status == 200
+        users.getUser().size() >= 1
+
+        removeUserFromGroupRespone.status == 204
+    }
+
+    def "create user adds user to the group"() {
+        given:
+        def tempUserAdmin = "tempUserAdmin$sharedRandom"
+
+        when:
+        addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        def getUsersFromGroupResponse1 = getUsersFromGroup(identityAdminToken, group.getId())
+        UserList users1 = getUsersFromGroupResponse1.getEntity(UserList).value
+
+        createUser(userAdminToken, userForCreate(tempUserAdmin, "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
+        def tempUser = getUserByName(userAdminToken, tempUserAdmin).getEntity(User)
+
+        def getUsersFromGroupResponse2 = getUsersFromGroup(identityAdminToken, group.getId())
+        UserList users2 = getUsersFromGroupResponse2.getEntity(UserList).value
+
+        removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        deleteUser(userAdminToken, tempUser.getId())
+
+        then:
+        users1.user.size() + 1 == users2.user.size()
+        users2.user.findAll({it.username == tempUserAdmin}).size() == 1
     }
 
     def "invalid operations on create/update group returns 'bad request'"() {
@@ -370,6 +548,8 @@ class Cloud20IntegrationTest extends Specification {
                 updateGroup(serviceAdminToken, group.getId(), group("", "this is a group")),
                 updateGroup(serviceAdminToken, group.getId(), group("group", null)),
                 addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+                addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
+                removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
     }
 
@@ -692,20 +872,105 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "addRole to default User not in domain of calling user-admin fails"() {
-        when:
-        def response = addRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
-
-        then:
+    def "create and delete applicationRole with insufficient priveleges"() {
+        expect:
         response.status == 403
+
+        where:
+        response << [
+                addApplicationRoleToUser(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
+                deleteApplicationRoleFromUser(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
+        ]
     }
 
-    def "addRole to default User in same domain of calling user-admin succeeds"() {
-        when:
-        def response = addRoleToUser(userAdminTwoToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
+    def "adding identity:* to user with identity:* role And deleting own identity:* role return forbidden"() {
+        expect:
+        response.status == 403
 
-        then:
+        where:
+        response << [
+                addApplicationRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", serviceAdmin.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, "3", userAdmin.getId()),
+                deleteApplicationRoleFromUser(identityAdminToken, "1", identityAdmin.getId()),
+                deleteApplicationRoleFromUser(serviceAdminToken, "4", serviceAdmin.getId())
+        ]
+    }
+
+    def "add Application role to user succeeds"() {
+        expect:
         response.status == 200
+
+        where:
+        response << [
+                addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        ]
+    }
+
+    def "delete Application role from user succeeds"() {
+        expect:
+        response.status == 204
+
+        where:
+        response << [
+                deleteApplicationRoleFromUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                deleteApplicationRoleFromUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        ]
+    }
+
+    def "adding to and deleting roles from user on tenant return 403"() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                deleteRoleFromUserOnTenant(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                deleteRoleFromUserOnTenant(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId()),
+                addRoleToUserOnTenant(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                addRoleToUserOnTenant(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId())
+        ]
+    }
+
+    def "adding identity:* roles to user on tenant returns 400"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), defaultUserRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), userAdminRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), identityAdminRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), serviceAdminRoleId)
+        ]
+    }
+
+    def "adding roles to user on tenant succeeds"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                addRoleToUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+        ]
+    }
+
+    def "deleting roles from user on tenant succeeds"() {
+        expect:
+        response.status == 204
+
+        where:
+        response << [
+                deleteRoleFromUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
+                deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+        ]
     }
 
     def "add policy to endpoint without endpoint without policy returns 404" () {
@@ -860,7 +1125,7 @@ class Cloud20IntegrationTest extends Specification {
 
     //Resource Calls
     def createUser(String token, user) {
-        resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def getUser(String token, URI location) {
@@ -868,39 +1133,39 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def listUsers(String token) {
-        resource.path(path).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listUsers(String token, offset, limit) {
-        resource.path(path).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserById(String token, String userId) {
-        resource.path(path).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUserByName(String token, String name) {
-        resource.path(path).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user) {
-        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def addCredential(String token, String userId, credential) {
-        resource.path(path).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
     def deleteUser(String token, String userId) {
-        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def hardDeleteUser(String token, String userId) {
-        resource.path(path).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def createGroup(String token, group) {
-        resource.path(path).path(RAX_GRPADM).path('groups').header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).post(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).post(ClientResponse)
     }
 
     def getGroup(String token, URI uri) {
@@ -908,86 +1173,102 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getGroups(String token) {
-        resource.path(path).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateGroup(String token, String groupId, group) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
 
     def deleteGroup(String  token, String groupId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addUserToGroup(String token, String groupId, String userId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
     def removeUserFromGroup(String token, String groupId, String userId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def listGroupsForUser(String token, String userId) {
-        resource.path(path).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUsersFromGroup(String token, String groupId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def authenticate(username, password) {
-        resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+        resource.path(path20 + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
     def createRegion(String token, region) {
-        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
     }
 
     def getRegion(String token, String regionId) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getRegions(String token) {
-        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def updateRegion(String token, String regionId, region) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
     }
 
     def deleteRegion(String token, String regionId) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId, int offset, int limit) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createRole(String token, Role role) {
-        resource.path(path).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
     }
 
     def deleteRole(String token, String roleId) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addRoleToUser(String token, String roleId, String userId) {
-        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    def addApplicationRoleToUser(String token, String roleId, String userId) {
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def deleteApplicationRoleFromUser(String token, String roleId, String userId) {
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
+                .path("roles").path("OS-KSADM").path(roleId)
+                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
+                .path("roles").path("OS-KSADM").path(roleId)
+                .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def removeRoleFromUser(String token, String roleId, String userId) {
-        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
 
     def createQuestion(String token, question) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
     }
 
     def getQuestion(String token, questionId) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def getQuestionFromLocation(String token, location) {
@@ -995,27 +1276,27 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getQuestions(String token) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def updateQuestion(String token, String questionId, question) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
     }
 
     def deleteQuestion(String token, String questionId) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addEndpointTemplate(String token, endpointTemplate) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
     }
 
     def deleteEndpointTemplate(String token, endpointTemplateId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addPolicy(String token, policy) {
-        resource.path(path).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
     }
 
     def getPolicy(String token, location) {
@@ -1023,31 +1304,51 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def deletePolicy(String token, policyId) {
-        resource.path(path).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addPolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
     def deletePolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def getPoliciesFromEndpointTemplate(String token, endpointTemplateId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
+    }
+
+    def addTenant(String token, Tenant tenant) {
+        resource.path(path20).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
     def getSecretQA(String token, String userId){
-        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createSecretQA(String token, String userId, secretqa){
-        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+    }
+
+    def getRole(String token, String roleId) {
+        resource.path(path20).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def impersonate(String token, User user) {
+        def request = new ImpersonationRequest().with {
+            it.user = user
+            it.expireInSeconds = 10800
+        }
+        resource.path(path20).path("RAX-AUTH/impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+    }
+
+    def revokeUserToken(String token, String tokenToRevoke) {
+        resource.path(path20).path("tokens").path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     //Helper Methods
@@ -1179,6 +1480,88 @@ class Cloud20IntegrationTest extends Specification {
             it.blob = "blob"
             it.type = "type"
             return it
+        }
+    }
+
+    def createTenant() {
+        new Tenant().with {
+            it.name = "tenant$sharedRandom"
+            it.displayName = "displayName"
+            it.enabled = true
+            return it
+        }
+    }
+
+    def setConfigValues() {
+        REFRESH_WINDOW_HOURS = config.getInt("token.refreshWindowHours")
+        CLOUD_CLIENT_ID = config.getString("cloudAuth.clientId")
+    }
+
+    def deleteUsersTokens(String uid) {
+        def result = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$uid))")
+        for (SearchResultEntry entry in result.getSearchEntries()) {
+            connPools.getAppConnPool().delete(entry.getDN())
+        }
+
+    }
+
+    def expireToken(String uid, String accessToken, int hoursOffset) {
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID)(accessToken=$accessToken))","*")
+        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
+            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
+            if (!entity.isAccessTokenExpired(new DateTime())) {
+                entity.accessTokenExp = new DateTime().minusHours(hoursOffset).toDate()
+                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
+                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
+            }
+        }
+    }
+
+    def expireTokens(String uid, int hoursOffset) {
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH))","*")
+        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
+            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
+            if (!entity.isAccessTokenExpired(new DateTime())) {
+                entity.accessTokenExp = new DateTime().minusHours(hoursOffset).toDate()
+                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
+                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
+            }
+        }
+    }
+
+    def setTokenValid(String uid) {
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID))","*")
+        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
+            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
+            if (!entity.isAccessTokenExpired(new DateTime())) {
+                entity.accessTokenExp = new DateTime().plusHours(24).toDate()
+                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
+                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
+            }
+        }
+    }
+
+    def setTokenInRefreshWindow(String uid, String accessToken) {
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(accessToken=$accessToken))","*")
+        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
+            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
+            if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {
+                entity.accessTokenExp = new DateTime().plusHours(REFRESH_WINDOW_HOURS).minusHours(2).toDate()
+                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
+                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
+            }
+        }
+    }
+
+    def setTokensInRefreshWindow(String uid) {
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID))","*")
+        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
+            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
+            if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {
+                entity.accessTokenExp = new DateTime().plusHours(REFRESH_WINDOW_HOURS).minusHours(2).toDate()
+                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
+                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
+            }
         }
     }
 

@@ -1460,7 +1460,7 @@ public class CloudMigrationServiceTest {
         Role role = new Role();
         role.setName("Role");
         roleList.getRole().add(role);
-        when(applicationService.getAllClientRoles(null)).thenReturn(clientRoles);
+        when(applicationService.getAllClientRoles()).thenReturn(clientRoles);
         cloudMigrationService.addUserGlobalRoles(new User(), roleList);
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
@@ -1475,7 +1475,7 @@ public class CloudMigrationServiceTest {
         Role role = new Role();
         role.setName("Role2");
         roleList.getRole().add(role);
-        when(applicationService.getAllClientRoles(null)).thenReturn(clientRoles);
+        when(applicationService.getAllClientRoles()).thenReturn(clientRoles);
         cloudMigrationService.addUserGlobalRoles(new User(), roleList);
         verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
@@ -1486,14 +1486,14 @@ public class CloudMigrationServiceTest {
         Role role = new Role();
         role.setName("Role2");
         roleList.getRole().add(role);
-        when(applicationService.getAllClientRoles(null)).thenReturn(new ArrayList<ClientRole>());
+        when(applicationService.getAllClientRoles()).thenReturn(new ArrayList<ClientRole>());
         cloudMigrationService.addUserGlobalRoles(new User(), roleList);
         verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
     public void addUserGlobalRoles_withNoRoleList_addsNoRoles() throws Exception {
-        when(applicationService.getAllClientRoles(null)).thenReturn(new ArrayList<ClientRole>());
+        when(applicationService.getAllClientRoles()).thenReturn(new ArrayList<ClientRole>());
         cloudMigrationService.addUserGlobalRoles(new User(), new RoleList());
         verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }

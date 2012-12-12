@@ -59,7 +59,6 @@ public class DefaultQuestionService implements QuestionService {
 
     @Override
     public List<Question> getQuestions() {
-
         return questionDao.getQuestions();
     }
 

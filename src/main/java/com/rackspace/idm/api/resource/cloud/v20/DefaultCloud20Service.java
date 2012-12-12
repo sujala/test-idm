@@ -29,6 +29,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.RolePrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -69,7 +70,7 @@ import java.util.*;
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
-    public static final String NOT_AUTHORIZED = "Not authorized.";
+    public static final String NOT_AUTHORIZED = "Not Authorized";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
@@ -143,6 +144,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Validator validator;
 
     @Autowired
+    private Validator20 validator20;
+
+    @Autowired
     private DefaultRegionService defaultRegionService;
 
     @Autowired
@@ -192,6 +196,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Paginator<User> userPaginator;
+
+    @Autowired
+    private Paginator<ClientRole> applicationRolePaginator;
+
+    @Autowired
+    private RolePrecedenceValidator precedenceValidator;
 
     @Autowired
     private Paginator<Domain> domainPaginator;
@@ -282,6 +292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientRole.setClientId(service.getClientId());
             clientRole.setDescription(role.getDescription());
             clientRole.setName(role.getName());
+            clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
 
             clientService.addClientRole(clientRole);
 
@@ -312,13 +323,24 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+                if (!caller.getDomainId().equals(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
 
             ClientRole role = checkAndGetClientRole(roleId);
-            String roleName = role.getName();
-            if (roleName.equals(getCloudAuthIdentityAdminRole()) || roleName.equals(getCloudAuthUserAdminRole())
-                    || roleName.equals(config.getString("cloudAuth.adminRole"))) {
+
+            List<String> identityRoleNames = getIdentityRoleNames();
+            if (identityRoleNames.contains(role.getName())) {
                 throw new BadRequestException("Cannot add identity roles to tenant.");
             }
+
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+
             TenantRole tenantrole = new TenantRole();
             tenantrole.setName(role.getName());
             tenantrole.setClientId(role.getClientId());
@@ -462,7 +484,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isEmpty(domainId) && callerIsUserAdmin) {
                 throw new BadRequestException("A Domain ID must be specified.");
             } else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
-
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             } else if (callerIsIdentityAdmin) {
                 if (StringUtils.isEmpty(domainId)) {
@@ -472,7 +493,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (callerIsIdentityAdmin || callerIsUserAdmin) {
-                defaultRegionService.validateDefaultRegion(userDO.getRegion());
+                if (userDO.getRegion() != null) {
+                    defaultRegionService.validateDefaultRegion(userDO.getRegion());
+                }
             }
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
@@ -480,7 +503,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             //after user is created and caller is a user admin, add tenant roles to default user
             if (callerIsUserAdmin) {
                 tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
+
+                User caller = userService.getUserByAuthToken(authToken);
+                if (caller != null) {
+                    List<Group> groups = cloudGroupService.getGroupsForUser(caller.getId());
+
+                    for (Group group :groups) {
+                        cloudGroupService.addGroupToUser(group.getGroupId(), userDO.getId());
+                    }
+                }
             }
+
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = userDO.getId();
             URI build = requestUriBuilder.path(id).build();
@@ -509,7 +542,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
-        //If caller is an Service admin, give user service-admin role
+        //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
@@ -654,23 +687,24 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
-
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            User user = userService.checkAndGetUserById(userId);
+
             ClientRole cRole = checkAndGetClientRole(roleId);
+
+            User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, cRole);
+
             checkForMultipleIdentityRoles(user, cRole);
 
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-            }
-            if (!authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)
-                    && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             TenantRole role = new TenantRole();
@@ -747,7 +781,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
             ScopeAccess impsa = null;
-            org.openstack.docs.identity.api.v2.Token convertedToken = null;
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -785,9 +818,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new NotAuthenticatedException(errMsg);
                 }
                 usa = (UserScopeAccess) sa;
-                scopeAccessService.updateExpiredUserScopeAccess(usa);
 
                 user = getUserByIdForAuthentication(usa.getUserRsId());
+
+                scopeAccessService.updateExpiredUserScopeAccess(user.getUniqueId(), sa.getClientId());
 
                 if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
                     String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
@@ -833,57 +867,61 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-            // Remove Admin URLs if non admin token
-            if (!this.authorizationService.authorizeCloudServiceAdmin(usa)) {
-                stripEndpoints(endpoints);
-            }
-            //filter endpoints by tenant
-            String tenantId = authenticationRequest.getTenantId();
-            String tenantName = authenticationRequest.getTenantName();
-            List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if (impsa != null) {
-                convertedToken = tokenConverterCloudV20.toToken(impsa);
-            } else {
-                convertedToken = tokenConverterCloudV20.toToken(usa);
-            }
-
-
-            AuthenticateResponse auth;
-
-            //tenant was specified
-            if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
-                List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
-                if (!StringUtils.isBlank(tenantId)) {
-                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
-                    for (OpenstackEndpoint endpoint : endpoints) {
-                        if (tenantId.equals(endpoint.getTenantId())) {
-                            tenantEndpoints.add(endpoint);
-                        }
-                    }
-                }
-                if (!StringUtils.isBlank(tenantName)) {
-                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
-                    for (OpenstackEndpoint endpoint : endpoints) {
-                        if (tenantName.equals(endpoint.getTenantName())) {
-                            tenantEndpoints.add(endpoint);
-                        }
-                    }
-                }
-                auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, tenantEndpoints);
-                auth.setToken(convertedToken);
-            } else {
-                auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-            }
-
-            // removing serviceId from response for now
-            auth = removeServiceIdFromAuthResponse(auth);
-
+            AuthenticateResponse auth = buildAuthResponse(usa, impsa, user, authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
+        AuthenticateResponse auth;
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
+        // Remove Admin URLs if non admin token
+        if (!this.authorizationService.authorizeCloudServiceAdmin(userScopeAccess)) {
+            stripEndpoints(endpoints);
+        }
+        //filter endpoints by tenant
+        String tenantId = authenticationRequest.getTenantId();
+        String tenantName = authenticationRequest.getTenantName();
+        List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(userScopeAccess);
+
+        org.openstack.docs.identity.api.v2.Token convertedToken = null;
+        if (impersonatedScopeAccess != null) {
+            convertedToken = tokenConverterCloudV20.toToken(impersonatedScopeAccess);
+        } else {
+            convertedToken = tokenConverterCloudV20.toToken(userScopeAccess);
+        }
+
+        //tenant was specified
+        if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
+            List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
+            if (!StringUtils.isBlank(tenantId)) {
+                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
+                for (OpenstackEndpoint endpoint : endpoints) {
+                    if (tenantId.equals(endpoint.getTenantId())) {
+                        tenantEndpoints.add(endpoint);
+                    }
+                }
+            }
+            if (!StringUtils.isBlank(tenantName)) {
+                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
+                for (OpenstackEndpoint endpoint : endpoints) {
+                    if (tenantName.equals(endpoint.getTenantName())) {
+                        tenantEndpoints.add(endpoint);
+                    }
+                }
+            }
+            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, tenantEndpoints);
+            auth.setToken(convertedToken);
+        } else {
+            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
+        }
+
+        // removing serviceId from response for now
+        auth = removeServiceIdFromAuthResponse(auth);
+        return auth;
     }
 
     User getUserByUsernameForAuthentication(String username) {
@@ -972,7 +1010,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
+
             ClientRole role = checkAndGetClientRole(roleId);
+            if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                throw new BadRequestException("role cannot be deleted");
+            }
+
             this.clientService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
@@ -988,14 +1031,28 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
+
             User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+                if (!caller.getDomainId().equals(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
             ClientRole role = checkAndGetClientRole(roleId);
+
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+
             TenantRole tenantrole = new TenantRole();
             tenantrole.setClientId(role.getClientId());
             tenantrole.setRoleRsId(role.getId());
             tenantrole.setUserId(user.getId());
             tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
-            this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
+
+            this.tenantService.deleteTenantRoleForUser(user, tenantrole);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1105,6 +1162,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
             User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                if (!caller.getDomainId().equals(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
             TenantRole role = null;
             for (TenantRole globalRole : globalRoles) {
@@ -1112,16 +1177,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                     role = globalRole;
                 }
             }
+
             if (role == null) {
                 String errMsg = String.format("Role %s not found for user %s", roleId, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
 
-            if (!authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)
-                    && config.getString("cloudAuth.adminRole").equals(role.getName())) {
+            if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
+
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
         } catch (Exception ex) {
@@ -1601,20 +1670,29 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            List<ClientRole> roles;
+            int offset = validateOffset(marker);
+            int resultSize = validateLimit(limit);
+
+            PaginatorContext<ClientRole> context;
 
             if (StringUtils.isBlank(serviceId)) {
-                roles = this.clientService.getAllClientRoles(null);
+                context = this.clientService.getClientRolesPaged(offset, resultSize);
             } else {
-                roles = this.clientService.getClientRolesByClientId(serviceId);
+                context = this.clientService.getClientRolesPaged(serviceId, offset, resultSize);
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)).getValue());
+            String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
+
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createRoles(roleConverterCloudV20.toRoleListFromClientRoles(context.getValueList())).getValue());
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1729,7 +1807,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, serviceId);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
@@ -1791,7 +1869,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
                 }
 
-                UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+                UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
 
                 if (impAccess.isAccessTokenExpired(new DateTime())) {
                     if (!user.isEnabled()) {
@@ -2492,7 +2570,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public boolean isValidImpersonatee(User user) {
-        List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
+        List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user);
         for (TenantRole role : tenantRolesForUser) {
             String name = role.getName();
             if (name.equals("identity:default") || name.equals("identity:user-admin")) {
@@ -2598,11 +2676,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
 
-            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
-            if (callerIsIdentityAdmin || callerIsUserAdmin) {
+            if (isDefaultUser) {
+                throw new BadRequestException("Cannot add sub-user to group");
+            } else if (isUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
@@ -2629,17 +2709,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Invalid user id");
             }
 
+            User user = userService.checkAndGetUserById(userId);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+
+            if (isDefaultUser) {
+                throw new BadRequestException("Cannot remove sub-user from group");
+            }
 
             if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
 
-            User user = userService.checkAndGetUserById(userId);
-
-            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
-            if (callerIsIdentityAdmin || callerIsUserAdmin) {
+            if (isUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
@@ -3016,11 +3099,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
-                    roles = tenantService.getTenantRolesForUser(user, null);
+                    roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
+                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
                     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
                     JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
@@ -3198,7 +3281,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         for (TenantRole userRole : user.getRoles()) {
             if (StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
-                throw new BadRequestException("You are not allowed to add more than one Identity role.");
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }
     }
@@ -3209,7 +3292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException(errMsg);
         }
         ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+        if (authScopeAccess == null || (authScopeAccess.isAccessTokenExpired(new DateTime()))) {
             throw new NotAuthorizedException(errMsg);
         }
         return authScopeAccess;
@@ -3344,6 +3427,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         return auth;
     }
 
+    private List<String> getIdentityRoleNames() {
+        List<String> names = new ArrayList<String>();
+        names.add(config.getString("cloudAuth.userRole"));
+        names.add(config.getString("cloudAuth.userAdminRole"));
+        names.add(config.getString("cloudAuth.adminRole"));
+        names.add(config.getString("cloudAuth.serviceAdminRole"));
+        return names;
+    }
+
     boolean isCloudAuthRoutingEnabled() {
         return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
@@ -3456,6 +3548,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.domainService = domainService;
     }
 
+    public void setApplicationRolePaginator(Paginator<ClientRole> rolePaginator) {
+        this.applicationRolePaginator = rolePaginator;
+    }
+
+    public void setUserPaginator(Paginator<User> userPaginator) {
+        this.userPaginator = userPaginator;
+    }
+    
     public void setQuestionService(QuestionService questionService) {
         this.questionService = questionService;
     }

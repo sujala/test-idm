@@ -1,11 +1,12 @@
 import org.junit.Assert;
 import org.junit.Test;
 
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
+
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,7 +66,11 @@ public class idmPropertiesTest {
     }
 
     private void setIdmPropertyLocations(File idmPropertyLocation) throws IOException{
-        if (idmPropertyLocation.isDirectory() && !idmPropertyLocation.getName().contains("LOCAL-DEV") && !idmPropertyLocation.getName().contains("JENKINS")) {
+        if (idmPropertyLocation.isDirectory() &&
+                !idmPropertyLocation.getName().contains("LOCAL-DEV") &&
+                !idmPropertyLocation.getName().contains("JENKINS") &&
+                !idmPropertyLocation.getName().contains("OPENLDAP")) {
+
             for (File file : idmPropertyLocation.listFiles()) {
                 setIdmPropertyLocations(file);
             }

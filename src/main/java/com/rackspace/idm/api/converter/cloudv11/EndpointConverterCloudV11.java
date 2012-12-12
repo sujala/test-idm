@@ -12,6 +12,7 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Component
@@ -102,8 +103,22 @@ public class EndpointConverterCloudV11 {
         for (OpenstackEndpoint e : endpoints) {
             refs.getBaseURLRef().addAll(toBaseUrlRef(e));
         }
-        return refs;
+
+        return removeDuplicates(refs);
 	}
+
+    protected BaseURLRefList removeDuplicates(BaseURLRefList refs) {
+        HashMap<Integer, BaseURLRef> refHashMap = new HashMap<Integer, BaseURLRef>();
+
+        for (BaseURLRef baseURLRef : refs.getBaseURLRef()) {
+            if (!refHashMap.containsKey(baseURLRef.getId())) {
+                refHashMap.put(baseURLRef.getId(), baseURLRef);
+            }
+        }
+        refs.getBaseURLRef().clear();
+        refs.getBaseURLRef().addAll(new ArrayList<BaseURLRef>(refHashMap.values()));
+        return refs;
+    }
 
     List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
     	List<BaseURLRef> result = new ArrayList<BaseURLRef>();

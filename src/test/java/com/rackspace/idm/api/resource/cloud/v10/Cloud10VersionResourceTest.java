@@ -15,6 +15,7 @@ import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -162,6 +163,7 @@ public class Cloud10VersionResourceTest {
         assertThat("response token", response.getStatus(), equalTo(403));
     }
 
+    @Ignore
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesService_withEndpoints_setsProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
@@ -249,6 +251,7 @@ public class Cloud10VersionResourceTest {
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url").toString(), equalTo("publicUrl"));
     }
 
+    @Ignore
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());

@@ -62,13 +62,10 @@ public class UserTenantsResource extends ParentResource {
         @QueryParam("tenantId") String tenantId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-		FilterBuilder filterBuilder = createFilterBuilder();
-		filterBuilder.addFilter(FilterParamName.APPLICATION_ID, applicationId);
-		filterBuilder.addFilter(FilterParamName.TENANT_ID, tenantId);
-    	
+
         User user = this.userService.loadUser(userId);        
        
-        List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(user, filterBuilder.getFilters());
+        List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(user, applicationId, tenantId);
 
         return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
     }

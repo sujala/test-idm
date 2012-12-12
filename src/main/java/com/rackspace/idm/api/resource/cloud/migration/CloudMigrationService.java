@@ -397,7 +397,7 @@ public class CloudMigrationService {
 
             return result;
         }
-        throw new NotAuthenticatedException("Not Authorized.");
+        throw new NotAuthenticatedException("Not Authorized");
     }
 
 	String getDefaultRegion(User user) {
@@ -810,7 +810,7 @@ public class CloudMigrationService {
 
     void addUserGlobalRoles(com.rackspace.idm.domain.entity.User user, RoleList roleList) {
 
-        List<ClientRole> clientRoles = applicationService.getAllClientRoles(null);
+        List<ClientRole> clientRoles = applicationService.getAllClientRoles();
         for (Role role : roleList.getRole()) {
             for (ClientRole cRole : clientRoles) {
                 if (StringUtils.equals(cRole.getName(), role.getName())) {

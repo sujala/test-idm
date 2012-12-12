@@ -138,7 +138,7 @@ public class Cloud10VersionResource {
                     List<Endpoint> endpoints = service.getEndpoint();
                     addValuetoHeather(HEADER_STORAGE_URL, endpoints.get(0).getPublicURL(), builder);
                     builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
-                    addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoints.get(0).getInternalURL(), builder);
+                   // addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoints.get(0).getInternalURL(), builder);
                 }
 
                 if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName())) {

@@ -65,4 +65,6 @@ public interface UserDao {
     PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit);
 
     Users getAllUsersNoLimit(FilterParam[] filters);
+
+    User getUserByDn(String userDn);
 }

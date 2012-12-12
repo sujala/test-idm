@@ -31,9 +31,9 @@ public class DefaultPaginator<T> implements Paginator<T> {
         context.setOffset(offset);
         context.setLimit(limit);
 
-    	ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));
+    	ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(true, new SortKey(sortAttribute));
 
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(offset + 1, 0, context.getLimit() - 1, contentCount, null);
+        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(offset + 1, 0, context.getLimit() - 1, contentCount, null, true);
         searchRequest.setControls(sortRequest, vlvRequest);
 
         return context;
@@ -48,6 +48,8 @@ public class DefaultPaginator<T> implements Paginator<T> {
             context.setTotalRecords(vlvResponseControl.getContentCount());
         } catch (LDAPException e) {
             context.setTotalRecords(0);
+        } catch (NullPointerException npe) {
+            context.setTotalRecords(context.getSearchResultEntryList().size());
         }
     }
 

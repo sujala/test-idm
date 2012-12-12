@@ -63,82 +63,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public void addClientGroup(ClientGroup clientGroup, String clientUniqueId) {
-        getLogger().info("Adding ClientGroup {}", clientGroup);
-
-
-        if (clientGroup == null) {
-            String errMsg = "Null instance of clientGroup was passed";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        Audit audit = Audit.log(clientGroup).add();
-
-        ClientGroup group = this.getClientGroup(clientGroup.getCustomerId(),
-                clientGroup.getClientId(), clientGroup.getName());
-
-        if (group != null) {
-            String errMsg = "Client Group already exists";
-            audit.fail(errMsg);
-            throw new DuplicateClientGroupException(errMsg);
-        }
-
-        Attribute[] atts = getAddAttributesForClientGroup(clientGroup);
-
-        String groupDN = new LdapDnBuilder(clientUniqueId).addAttribute(ATTR_NAME, clientGroup.getName()).build();
-
-        clientGroup.setUniqueId(groupDN);
-
-        addEntry(groupDN, atts, audit);
-
-        audit.succeed();
-
-        getLogger().debug("Added clientGroup {}", clientGroup);
-    }
-
-    @Override
-    public void addUserToClientGroup(String userUniqueId, ClientGroup group) {
-
-        getLogger().info("Adding user {} to {}", userUniqueId, group);
-
-        if (StringUtils.isBlank(userUniqueId)) {
-            String errMsg = "User uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            String errMsg = "Null group passed in or group uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF, group.getUniqueId()));
-
-        Audit audit = Audit.log(group).modify(mods);
-
-        try {
-            getAppInterface().modify(userUniqueId, mods);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error adding user to group {} - {}", group, ldapEx);
-
-            if (ldapEx.getResultCode().equals(ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
-                audit.fail("User already in group");
-                throw new DuplicateException("User already in group", ldapEx);
-            }
-
-            audit.fail(ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-        }
-
-        audit.succeed();
-
-        getLogger().info("Added user {} to group {}", userUniqueId, group);
-    }
-
-    @Override
     public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
         BindResult result;
         Application client = getClientByClientId(clientId);
@@ -179,17 +103,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             audit.succeed();
             getLogger().info("Deleted client {}", client.getClientId());
         }
-    }
-
-    @Override
-    public void deleteClientGroup(ClientGroup group) {
-        getLogger().info("Deleting clientGroup {}", group.getName());
-        Audit audit = Audit.log(group).delete();
-
-        this.deleteEntryAndSubtree(group.getUniqueId(), audit);
-
-        audit.succeed();
-        getLogger().info("Deleted clientGroup {}", group);
     }
 
     @Override
@@ -320,81 +233,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public ClientGroup getClientGroup(String customerId, String clientId,
-                                      String groupName) {
-
-        ClientGroup group = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_NAME, groupName)
-                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
-                .build();
-
-        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
-                SearchScope.SUB, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-
-        if (entry != null) {
-            group = getClientGroup(entry);
-        }
-
-        getLogger().debug("Found client group {}", group);
-
-        return group;
-    }
-
-    @Override
-    public ClientGroup getClientGroupByUniqueId(String uniqueId) {
-        ClientGroup group = null;
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-                ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
-
-        SearchResultEntry entry = this.getSingleEntry(uniqueId,
-                SearchScope.BASE, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-
-        if (entry != null) {
-            group = getClientGroup(entry);
-        }
-
-        getLogger().debug("Found Client Group - {}", group);
-
-        return group;
-    }
-
-    @Override
-    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
-
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-
-        Application client = this.getClientByClientId(clientId);
-
-        if (client == null) {
-            throw new NotFoundException();
-        }
-
-        String searchDN = client.getUniqueId();
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-                ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
-
-        List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
-                SearchScope.ONE, ATTR_NAME, searchFilter,
-                ATTR_GROUP_SEARCH_ATTRIBUTES);
-
-        if (entries.size() > 0) {
-            for (SearchResultEntry entry : entries) {
-                groups.add(getClientGroup(entry));
-            }
-        }
-
-        getLogger().debug("Found {} client groups.", groups.size());
-
-        return groups;
-    }
-
-    @Override
     public Applications getClientsByCustomerId(String customerId, int offset,
                                                int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
@@ -443,60 +281,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return applications;
     }
 
-
-    @Override
-    public boolean isUserInClientGroup(String username, String groupDN) {
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_UID, username)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
-
-        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
-                SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
-
-        return entry != null;
-    }
-
-    @Override
-    public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
-        getLogger().info("Removing user {} from {}", userUniqueId, group);
-
-        if (StringUtils.isBlank(userUniqueId)) {
-            getLogger().error("Null user passed in or user uniqueId was blank");
-            throw new IllegalArgumentException(
-                    "Null user passed in or user uniqueId was blank");
-        }
-
-        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error(
-                    "Null group passed in or group uniqueId was blank");
-            throw new IllegalArgumentException(
-                    "Null group passed in or group uniqueId was blank");
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
-                group.getUniqueId()));
-
-        Audit audit = Audit.log(group).modify(mods);
-        try {
-            getAppInterface().modify(userUniqueId, mods);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getMessage());
-            getLogger().error("Error deleting user from group {} - {}", group,
-                    ldapEx);
-            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
-                audit.fail("User isn't in group");
-                throw new NotFoundException("User isn't in group", ldapEx);
-            }
-            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-        }
-
-        audit.succeed();
-        getLogger().info("Removed user {} from group {}", userUniqueId, group);
-    }
-
     @Override
     public void updateClient(Application client) {
         getLogger().debug("Updating client {}", client);
@@ -539,37 +323,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public void updateClientGroup(ClientGroup group) {
-        getLogger().debug("Updating client group {}", group);
-
-        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error("ClientGroup instance is null or its uniqueId is blank.");
-            throw new IllegalArgumentException("Bad parameter: The Client instance is null or its uniqueId is blank.");
-        }
-
-        ClientGroup oldGroup = this.getClientGroupByUniqueId(group.getUniqueId());
-
-        if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
-            return;
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-
-        if (group.getType() != null && StringUtils.isBlank(group.getType())) {
-            mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
-        } else {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_GROUP_TYPE, group.getType()));
-        }
-
-        Audit audit = Audit.log(group).modify(mods);
-
-        updateEntry(oldGroup.getUniqueId(), mods, audit);
-
-        audit.succeed();
-        getLogger().debug("Updated clientGroup {}", group.getName());
-    }
-
-    @Override
     public List<Application> getAvailableScopes() {
         getLogger().debug("Search the scope accesses defined in the system.");
 
@@ -597,30 +350,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Found the scope accesses defined in the system.");
 
         return clients;
-    }
-
-    Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(group.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, group.getCustomerId()));
-        }
-        if (!StringUtils.isBlank(group.getClientId())) {
-            atts.add(new Attribute(ATTR_CLIENT_ID, group.getClientId()));
-        }
-        if (!StringUtils.isBlank(group.getName())) {
-            atts.add(new Attribute(ATTR_NAME, group.getName()));
-        }
-        if (!StringUtils.isBlank(group.getType())) {
-            atts.add(new Attribute(ATTR_GROUP_TYPE, group.getType()));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        getLogger().debug("Found {} add attributes for client group {}.",
-                attributes.length, group);
-        return attributes;
     }
 
     Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
@@ -651,7 +380,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         if (client.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.isEnabled())));
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.isEnabled()).toUpperCase()));
         }
 
         if (!StringUtils.isBlank(client.getTitle())) {
@@ -671,7 +400,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         if (client.getUseForDefaultRegion() != null) {
-            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion())));
+            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion()).toUpperCase()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -713,18 +442,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         getLogger().debug("Materialized Client object {}.", client);
         return client;
-    }
-
-    ClientGroup getClientGroup(SearchResultEntry resultEntry) {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId(resultEntry.getDN());
-        clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
-        clientGroup.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        clientGroup.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
-        getLogger().debug("Materialized client group {}.", clientGroup);
-
-        return clientGroup;
     }
 
     Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
@@ -852,13 +569,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private void checkForEnabledStatusModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled()).toUpperCase()));
         }
     }
 
     void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion()).toUpperCase()));
         }
     }
 
@@ -893,10 +610,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Audit audit = Audit.log(role).add();
         try {
 
-            SearchResultEntry entry = getContainer(clientUniqueId, CONTAINER_ROLES);
+            SearchResultEntry entry = getContainer(clientUniqueId, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer(clientUniqueId, CONTAINER_ROLES);
-                entry = getContainer(clientUniqueId, CONTAINER_ROLES);
+                addContainer(clientUniqueId, CONTAINER_TOKENS);
+                entry = getContainer(clientUniqueId, CONTAINER_TOKENS);
             }
 
             final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);
@@ -1155,7 +872,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             application.setUniqueId(newDn);
             // Disable the Application
             getAppInterface().modify(application.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -1220,7 +937,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             application.setUniqueId(newDn);
             // Enabled the User
             getAppInterface().modify(application.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e.getMessage(), e);

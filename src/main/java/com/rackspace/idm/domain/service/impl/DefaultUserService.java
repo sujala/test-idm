@@ -3,9 +3,10 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -21,7 +22,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -72,6 +72,12 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private Validator validator;
+
+    @Autowired
+    private LdapTenantRoleRepository tenantRoleDao;
+
+    @Autowired
+    private LdapApplicationRoleRepository applicationRoleDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -230,18 +236,10 @@ public class DefaultUserService implements UserService {
     public void deleteUser(String username) {
         logger.info("Deleting User: {}", username);
 
-        List<ClientGroup> groupsOfWhichUserIsMember = this.clientService
-                .getClientGroupsForUser(username);
-
-        for (ClientGroup g : groupsOfWhichUserIsMember) {
-            this.clientService.removeUserFromClientGroup(username, g);
-        }
-
         this.userDao.deleteUser(username);
 
         logger.info("Deleted User: {}", username);
     }
-
 
     @Override
     public String generateApiKey() {
@@ -310,6 +308,7 @@ public class DefaultUserService implements UserService {
         if(scopeAccessByAccessToken == null) {
             return null;
         }
+
         String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
         return getUser(uid);
     }
@@ -438,6 +437,18 @@ public class DefaultUserService implements UserService {
 //
 //        return passwordExpirationDate;
 //    }
+
+    @Override
+    public int getUserWeight(User user, String applicationId) {
+        List<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user, applicationId);
+        for (TenantRole tenantRole : tenantRoles) {
+            ClientRole clientRole = applicationRoleDao.getClientRole(tenantRole.getRoleRsId());
+            if (StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
+                return clientRole.getRsWeight();
+            }
+        }
+        return config.getInt("cloudAuth.defaultUser.rsWeight");
+    }
 
 
     @Override
@@ -794,9 +805,11 @@ public class DefaultUserService implements UserService {
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
-        for (String bId : tenant.getBaseUrlIds()) {
-            if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
-                throw new BadRequestException("BaseUrl already exists.");
+        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().length != 0) {
+            for (String bId : tenant.getBaseUrlIds()) {
+                if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
+                    throw new BadRequestException("BaseUrl already exists.");
+                }
             }
         }
 
@@ -940,5 +953,21 @@ public class DefaultUserService implements UserService {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
+    }
+
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
+
+    public void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao) {
+        this.tenantRoleDao = tenantRoleDao;
+    }
+
+    public void setApplicationRoleDao(LdapApplicationRoleRepository applicationRoleDao) {
+        this.applicationRoleDao = applicationRoleDao;
     }
 }

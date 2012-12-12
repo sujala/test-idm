@@ -77,7 +77,7 @@ public class CredentialValidator {
         final String username = credential.getUsername();
 
         if(StringUtils.isBlank(password)){
-            throw new BadRequestException("Expecting password");
+            throw new BadRequestException("Expecting Password");
         }
 
         if(StringUtils.isBlank(username)){

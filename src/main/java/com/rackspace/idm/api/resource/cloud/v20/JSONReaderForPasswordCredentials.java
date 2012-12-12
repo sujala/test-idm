@@ -88,7 +88,7 @@ public class JSONReaderForPasswordCredentials implements
             throw new BadRequestException("Expecting username");
         }
         if (StringUtils.isBlank(creds.getPassword())) {
-            throw new BadRequestException("Expecting password");
+            throw new BadRequestException("Expecting Password");
         }
         
         return creds;

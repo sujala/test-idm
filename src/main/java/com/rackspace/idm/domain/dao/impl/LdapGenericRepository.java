@@ -36,13 +36,23 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public List<T> getObjects(Filter searchFilter) {
+        return getObjects(searchFilter, getBaseDn(), SearchScope.SUB);
+    }
+
+    @Override
+    public List<T> getObjects(Filter searchFilter, String dn) {
+        return getObjects(searchFilter, dn, SearchScope.SUB);
+    }
+
+    @Override
+    public List<T> getObjects(Filter searchFilter, String dn, SearchScope scope) {
         getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
         SearchResult searchResult;
 
         try {
-            searchResult = getAppInterface().search(getBaseDn(), SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(dn, scope, searchFilter);
             getLogger().info("Got" + entityType.toString());
         } catch (LDAPSearchException ldapEx) {
             String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
@@ -70,7 +80,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         try {
             searchResult = getAppInterface().search(searchRequest);
         } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
+            String loggerMsg = String.format("Error searching for %s - %s", entityType.toString(), searchFilter);
             getLogger().error(loggerMsg);
             throw new IllegalStateException(ldapEx);
         }
@@ -105,6 +115,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void addObject(T object) {
+        addObject(getBaseDn(), object);
+    }
+
+    @Override
+    public void addObject(String dn, T object) {
         if (object == null) {
             getLogger().error(ERROR_GETTING_OBJECT);
             throw new IllegalArgumentException(ERROR_GETTING_OBJECT);
@@ -113,7 +128,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).add();
         try {
             final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
-            persister.add(object, getAppInterface(), getBaseDn());
+            persister.add(object, getAppInterface(), dn);
             audit.succeed();
             getLogger().info("Added: {}", object);
         } catch (final LDAPException e) {
@@ -129,13 +144,51 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public String addLdapContainer(String partialDnString, String containerName) {
+        SearchResultEntry entry = getLdapContainer(partialDnString, containerName);
+        if (entry == null) {
+            Audit audit = Audit.log(String.format("Adding container: %s", containerName));
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER));
+            attributes.add(new Attribute(ATTR_NAME, containerName));
+            Attribute[] attributeArray = attributes.toArray(new Attribute[0]);
+            String dn = new LdapDnBuilder(partialDnString).addAttribute(ATTR_NAME, containerName).build();
+            try {
+                getAppInterface().add(dn, attributeArray);
+                audit.succeed();
+                return dn;
+            } catch (LDAPException e) {
+                throw new IllegalStateException(e.getMessage(), e);
+            }
+        }
+        return entry.getDN();
+    }
+
+    private SearchResultEntry getLdapContainer(String dn, String containerName) {
+        Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER)
+                .addEqualAttribute(ATTR_NAME, containerName).build();
+        return getSingleEntry(dn, SearchScope.ONE, filter);
+    }
+
+    @Override
     public T getObject(Filter searchFilter) {
+        return getObject(searchFilter, getBaseDn());
+    }
+
+    @Override
+    public T getObject(Filter searchFilter, String dn) {
+        return getObject(searchFilter, dn, SearchScope.ONE);
+    }
+
+    @Override
+    public T getObject(Filter searchFilter, String dn, SearchScope scope) {
         String loggerMsg = String.format("Doing search for %s", entityType.toString());
         getLogger().debug(loggerMsg);
 
         T object;
         try {
-            object = getSingleObject(searchFilter);
+            object = getSingleObject(dn, scope, searchFilter);
         } catch (LDAPPersistException e) {
             getLogger().error(ERROR_GETTING_OBJECT, e);
             throw new IllegalStateException(e);
@@ -194,8 +247,21 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Deleted: {}", object);
     }
 
-    private T getSingleObject(Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(getBaseDn(), SearchScope.ONE, searchFilter);
+    @Override
+    public void deleteObject(T object) {
+        String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
+        getLogger().debug(loggerMsg);
+
+        getLogger().debug("Deleting: {}", object);
+        final String dn = object.getUniqueId();
+        final Audit audit = Audit.log((Auditable)object).delete();
+        deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
+        getLogger().debug("Deleted: {}", object);
+    }
+
+    private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
+        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter);
         if (entry == null) {
             return null;
         }

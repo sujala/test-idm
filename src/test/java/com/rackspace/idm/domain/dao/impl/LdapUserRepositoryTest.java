@@ -1103,11 +1103,11 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("username", result[15].getValue(), equalTo("jsmith"));
         assertThat("password", result[16].getValue(), equalTo("secret"));
         assertThat("region", result[20].getValue(), equalTo("central"));
-        assertThat("enabled", result[21].getValue(), equalTo("true"));
+        assertThat("enabled", result[21].getValue(), equalTo("TRUE"));
         assertThat("nast id", result[22].getValue(), equalTo("012"));
         assertThat("mosso id", result[23].getValue(), equalTo("123"));
         assertThat("domain id", result[24].getValue(), equalTo("345"));
-        assertThat("migration", result[25].getValue(), equalTo("true"));
+        assertThat("migration", result[25].getValue(), equalTo("TRUE"));
     }
 
     @Test
@@ -1211,7 +1211,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void getMultipleUsers_offsetGreaterThanZero_doesNotCallGetLdapPagingOffsetDefault() throws Exception {
         doReturn(1).when(spy).getLdapPagingLimitDefault();
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         spy.getMultipleUsers(null, null, 1, 0);
         verify(spy,never()).getLdapPagingOffsetDefault();
     }
@@ -1219,7 +1219,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void getMultipleUsers_limitGreaterThan0_doesNotCallGetLdapPagingLimitDefault() throws Exception {
         doReturn(1).when(spy).getLdapPagingOffsetDefault();
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         spy.getMultipleUsers(null, null, -1, 1);
         verify(spy,never()).getLdapPagingLimitDefault();
     }
@@ -1228,7 +1228,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void getMultipleUsers_offsetMoreThanContentCount_setsUsersToEmptyList() throws Exception {
         doReturn(1).when(spy).getLdapPagingOffsetDefault();
         doReturn(1).when(spy).getLdapPagingLimitDefault();
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         Users result = spy.getMultipleUsers(null, null, -1, 0);
         assertThat("user list", result.getUsers().isEmpty(), equalTo(true));
     }
@@ -1240,7 +1240,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         Users result = spy.getMultipleUsers(null, null, -1, 0);
         assertThat("user list", result.getUsers().isEmpty(), equalTo(true));
     }
@@ -1253,7 +1253,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
         spy.getMultipleUsers(null, null, -1, 0);
     }
@@ -1266,7 +1266,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
         spy.getMultipleUsers(null, null, -1, 0);
 
@@ -1280,7 +1280,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_ID, null, null);
         doReturn(new User()).when(spy).getUser(searchResultEntry);
         Users result = spy.getMultipleUsers(null, null, -1, 0);
         assertThat("user list", result.getUsers().size(), equalTo(1));

@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.SearchScope;
 
 import java.util.List;
 
@@ -14,14 +15,22 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface GenericDao<T> {
-    List<T> getObjects(Filter searchFilter);
-    PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void addObject(T object);
+    void addObject(String dn, T object);
     T getObject(Filter searchFilter);
+    T getObject(Filter searchFilter, String dn);
+    T getObject(Filter searchFilter, String dn, SearchScope scope);
+    List<T> getObjects(Filter searchFilter);
+    List<T> getObjects(Filter searchFilter, String dn);
+    List<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
+    PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     String getBaseDn();
     String getLdapEntityClass();
     String getNextId();
+    String addLdapContainer(String dnString, String containerName);
+
+    void deleteObject(T object);
     String getSortAttribute();
 }

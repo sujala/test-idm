@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class EndpointConverterCloudV11Test {
+public class EndpointConverterCloudV11TestOld {
     @Autowired
     private EndpointConverterCloudV11 endpointConverterCloudV11;
     @Autowired

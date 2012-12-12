@@ -22,8 +22,6 @@ public interface ScopeAccessService {
 
     ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
     
-    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
-
     boolean authenticateAccessToken(String accessTokenStr);
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
@@ -66,7 +64,7 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
-    ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
+    ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
 
     void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
 
@@ -111,7 +109,7 @@ public interface ScopeAccessService {
 
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
-    UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess);
+    UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
     
@@ -129,4 +127,6 @@ public interface ScopeAccessService {
 
 
     void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
+
+    void deleteScopeAccessByDn(String scopeAccessDn);
 }

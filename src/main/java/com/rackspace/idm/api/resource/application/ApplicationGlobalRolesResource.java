@@ -64,13 +64,14 @@ public class ApplicationGlobalRolesResource {
         logger.debug("Getting roles for Application: {}", applicationId);
 
         Application application = clientService.loadApplication(applicationId);
-        
-    	FilterParam[] filters = null;
+
+        List<TenantRole> tenantRoles;
     	if (!StringUtils.isBlank(provisionedApplicationId)) {
-    		filters = new FilterParam[] { new FilterParam(FilterParamName.APPLICATION_ID, applicationId)};
-    	}
+            tenantRoles = this.tenantService.getGlobalRolesForApplication(application, provisionedApplicationId);
+    	} else {
+            tenantRoles = this.tenantService.getGlobalRolesForApplication(application);
+        }
        
-        List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForApplication(application, filters);
 
         return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
     }

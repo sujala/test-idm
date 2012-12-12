@@ -90,74 +90,6 @@ public class LdapApplicationRepositoryTest{
         verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void addClientGroup_clientGroupIsNull_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.addClientGroup(null, null);
-    }
-
-    @Test (expected = DuplicateClientGroupException.class)
-    public void addClientGroup_groupExists_throwsDuplicateClientGroupException() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setCustomerId("customerId");
-        clientGroup.setClientId("clientId");
-        clientGroup.setName("name");
-        doReturn(clientGroup).when(spy).getClientGroup("customerId", "clientId", "name");
-        spy.addClientGroup(clientGroup, "uniqueId");
-    }
-
-    @Test
-    public void addClientGroup_callsAddEntry() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setCustomerId("customerId");
-        clientGroup.setClientId("clientId");
-        clientGroup.setName("name");
-        doReturn(null).when(spy).getClientGroup("customerId", "clientId", "name");
-        doReturn(new Attribute[0]).when(spy).getAddAttributesForClientGroup(clientGroup);
-        doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
-        spy.addClientGroup(clientGroup, "uniqueId");
-        verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addUserToClientGroup_uniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.addUserToClientGroup("", null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addUserToClientGroup_clientGropuIsNUll_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.addUserToClientGroup("uniqueId", null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addUserToClientGroup_clientGropuUniqueIdIsNUll_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.addUserToClientGroup("uniqueId", new ClientGroup());
-    }
-
-    @Test (expected = DuplicateException.class)
-    public void addUserToClientGroup_callsLDAPInterfaceModify_throwsDuplicateException() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        doThrow(new LDAPException(ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.addUserToClientGroup("uniqueId",clientGroup);
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void addUserToClientGroup_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.addUserToClientGroup("uniqueId",clientGroup);
-    }
-
-    @Test
-    public void addUserToClientGroup_callsLDAPInterface_modify() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.addUserToClientGroup("uniqueId",clientGroup);
-        verify(ldapInterface).modify(anyString(), any(List.class));
-    }
-
     @Test
     public void authenticate_clientIsNull_returnsNewClientAuthenticationResultWithNullClient() throws Exception {
         doReturn(null).when(spy).getClientByClientId("clientId");
@@ -178,16 +110,6 @@ public class LdapApplicationRepositoryTest{
     @Test
     public void deleteClient_clientIsNull_doesNothing() throws Exception {
         ldapApplicationRepository.deleteClient(null);
-    }
-
-    @Test
-    public void deleteClientGroup_callsDeleteEntryAndSubtree() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setName("name");
-        clientGroup.setUniqueId("uniqueId");
-        doNothing().when(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
-        spy.deleteClientGroup(clientGroup);
-        verify(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
     }
 
     @Test
@@ -276,91 +198,6 @@ public class LdapApplicationRepositoryTest{
         assertThat("client", result, equalTo(client));
     }
 
-    @Test
-    public void getClientGroup_didNotFindGroup_returnsNull() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_NAME, "groupName")
-                .addEqualAttribute(LdapRepository.ATTR_CLIENT_ID, "clientId")
-                .addEqualAttribute(LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, "customerId")
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP)
-                .build();
-        doReturn(null).when(spy).getSingleEntry(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        ClientGroup result = spy.getClientGroup("customerId", "clientId", "groupName");
-        assertThat("client group", result, equalTo(null));
-    }
-
-    @Test
-    public void getClientGroup_didFindGroup_returnsGroup() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_NAME, "groupName")
-                .addEqualAttribute(LdapRepository.ATTR_CLIENT_ID, "clientId")
-                .addEqualAttribute(LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, "customerId")
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP)
-                .build();
-        ClientGroup group = new ClientGroup();
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getSingleEntry(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        doReturn(group).when(spy).getClientGroup(searchResultEntry);
-        ClientGroup result = spy.getClientGroup("customerId", "clientId", "groupName");
-        assertThat("client group", result, equalTo(group));
-    }
-
-    @Test
-    public void getClientGroupByUniqueId_didNotFindGroup_returnsNull() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(
-                LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP).build();
-        doReturn(null).when(spy).getSingleEntry("uniqueId", SearchScope.BASE, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        ClientGroup result = spy.getClientGroupByUniqueId("uniqueId");
-        assertThat("client group", result, equalTo(null));
-    }
-
-    @Test
-    public void getClientGroupByUniqueId_didFindGroup_returnsGroup() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(
-                LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP).build();
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
-        ClientGroup group = new ClientGroup();
-        doReturn(searchResultEntry).when(spy).getSingleEntry("uniqueId", SearchScope.BASE, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        doReturn(group).when(spy).getClientGroup(searchResultEntry);
-        ClientGroup result = spy.getClientGroupByUniqueId("uniqueId");
-        assertThat("client group", result, equalTo(group));
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void getClientGroupsByClientId_clientIsNull_throwsNotFound() throws Exception {
-        doReturn(null).when(spy).getClientByClientId("clientId");
-        spy.getClientGroupsByClientId("clientId");
-    }
-
-    @Test
-    public void getClientGroupsByClientId_doesNotFindGroups_returnsEmptyList() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(
-                LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP).build();
-        Application client = new Application();
-        client.setUniqueId("uniqueId");
-        doReturn(client).when(spy).getClientByClientId("clientId");
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, LdapRepository.ATTR_NAME, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        List<ClientGroup> result = spy.getClientGroupsByClientId("clientId");
-        assertThat("group list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void getClientGroupsByClientId_doesFindGroups_returnsGroupList() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(
-                LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CLIENTGROUP).build();
-        ClientGroup group = new ClientGroup();
-        Application client = new Application();
-        client.setUniqueId("uniqueId");
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
-        ArrayList<SearchResultEntry> resultList = new ArrayList<SearchResultEntry>();
-        resultList.add(searchResultEntry);
-        doReturn(client).when(spy).getClientByClientId("clientId");
-        doReturn(resultList).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, LdapRepository.ATTR_NAME, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
-        doReturn(group).when(spy).getClientGroup(searchResultEntry);
-        List<ClientGroup> result = spy.getClientGroupsByClientId("clientId");
-        assertThat("group list", result.get(0), equalTo(group));
-    }
-
     @Test (expected = IllegalArgumentException.class)
     public void getClientsByCustomerId_customerIdIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.getClientsByCustomerId("  ", 1, 1);
@@ -405,68 +242,6 @@ public class LdapApplicationRepositoryTest{
         doReturn(clients).when(spy).getMultipleClients(any(Filter.class), eq(1), eq(1));
         Applications result = spy.getAllClients(null, 1, 1);
         assertThat("clients", result, equalTo(clients));
-    }
-
-    @Test
-    public void isUserInClientGroup_foundEntry_returnsTrue() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_UID, "username")
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-                .addEqualAttribute(LdapRepository.ATTR_MEMBER_OF, "groupDN").build();
-        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getSingleEntry(LdapRepository.USERS_BASE_DN, SearchScope.ONE, searchFilter, LdapRepository.ATTR_NO_ATTRIBUTES);
-        boolean result = spy.isUserInClientGroup("username", "groupDN");
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void isUserInClientGroup_notFoundEntry_returnsFalse() throws Exception {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_UID, "username")
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-                .addEqualAttribute(LdapRepository.ATTR_MEMBER_OF, "groupDN").build();
-        doReturn(null).when(spy).getSingleEntry(LdapRepository.USERS_BASE_DN, SearchScope.ONE, searchFilter, LdapRepository.ATTR_NO_ATTRIBUTES);
-        boolean result = spy.isUserInClientGroup("username", "groupDN");
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void removeUserFromGroup_userUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.removeUserFromGroup("  ", null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void removeUserFromGroup_groupIsNull_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.removeUserFromGroup("uniqueId", null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void removeUserFromGroup_groupUniqueIdIsNull_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.removeUserFromGroup("uniqueId", new ClientGroup());
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void removeUserFromGroup_callsLDAPInterfaceModify_throwsNotFoundException() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        doThrow(new LDAPException(ResultCode.NO_SUCH_ATTRIBUTE)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.removeUserFromGroup("uniqueId",clientGroup);
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void removeUserFromGroup_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.removeUserFromGroup("uniqueId",clientGroup);
-    }
-
-    @Test
-    public void removeUserFromGroup_callsLDAPInterface_modify() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.removeUserFromGroup("uniqueId",clientGroup);
-        verify(ldapInterface).modify(anyString(), any(List.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -542,60 +317,6 @@ public class LdapApplicationRepositoryTest{
         spy.updateClient(client);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void updateClientGroup_groupIsNull_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.updateClientGroup(null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void updateClientGroup_groupUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.updateClientGroup(new ClientGroup());
-    }
-
-    @Test
-    public void updateClientGroup_callsGetClientGroupByUniqueId() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        clientGroup.setType("same");
-        doReturn(clientGroup).when(spy).getClientGroupByUniqueId("uniqueId");
-        spy.updateClientGroup(clientGroup);
-        verify(spy).getClientGroupByUniqueId("uniqueId");
-    }
-
-    @Test
-    public void updateClientGroup_getTypeNotNullAndBlank_addsDeleteMod() throws Exception {
-        ArgumentCaptor<ArrayList> argumentCaptor = ArgumentCaptor.forClass(ArrayList.class);
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        clientGroup.setType("");
-        ClientGroup oldClientGroup = new ClientGroup();
-        oldClientGroup.setUniqueId("notUniqueAtAll");
-        oldClientGroup.setType("oldType");
-        doReturn(oldClientGroup).when(spy).getClientGroupByUniqueId("uniqueId");
-        doNothing().when(spy).updateEntry(eq("notUniqueAtAll"), any(ArrayList.class), any(Audit.class));
-        spy.updateClientGroup(clientGroup);
-        verify(spy).updateEntry(eq("notUniqueAtAll"), argumentCaptor.capture(), any(Audit.class));
-        ArrayList<Modification> value = argumentCaptor.getValue();
-        assertThat("modification type", value.get(0).getModificationType().toString(), equalTo("DELETE"));
-    }
-
-    @Test
-    public void updateClientGroup_getTypeNotNullAndNotBlank_addsReplaceMod() throws Exception {
-        ArgumentCaptor<ArrayList> argumentCaptor = ArgumentCaptor.forClass(ArrayList.class);
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setUniqueId("uniqueId");
-        clientGroup.setType("newType");
-        ClientGroup oldClientGroup = new ClientGroup();
-        oldClientGroup.setUniqueId("notUniqueAtAll");
-        oldClientGroup.setType("oldType");
-        doReturn(oldClientGroup).when(spy).getClientGroupByUniqueId("uniqueId");
-        doNothing().when(spy).updateEntry(eq("notUniqueAtAll"), any(ArrayList.class), any(Audit.class));
-        spy.updateClientGroup(clientGroup);
-        verify(spy).updateEntry(eq("notUniqueAtAll"), argumentCaptor.capture(), any(Audit.class));
-        ArrayList<Modification> value = argumentCaptor.getValue();
-        assertThat("modification type", value.get(0).getModificationType().toString(), equalTo("REPLACE"));
-    }
-
     @Test (expected = IllegalStateException.class)
     public void getAvailableScopes_callsLDAPInterfaceSearch_throwsLDAPSearchException() throws Exception {
         doThrow(new LDAPSearchException(ResultCode.LOCAL_ERROR, "error")).when(ldapInterface).search(anyString(), any(SearchScope.class), any(Filter.class));
@@ -624,27 +345,6 @@ public class LdapApplicationRepositoryTest{
         assertThat("client", result.isEmpty(), equalTo(true));
     }
 
-
-    @Test
-    public void getAddAttributesForClientGroup_addsAllAttributes_returnsArray() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setCustomerId("customerId");
-        clientGroup.setClientId("clientId");
-        clientGroup.setName("name");
-        clientGroup.setType("type");
-        Attribute[] result = ldapApplicationRepository.getAddAttributesForClientGroup(clientGroup);
-        assertThat("customer id", result[1].getValue(), equalTo("customerId"));
-        assertThat("client id", result[2].getValue(), equalTo("clientId"));
-        assertThat("name", result[3].getValue(), equalTo("name"));
-        assertThat("type", result[4].getValue(), equalTo("type"));
-    }
-
-    @Test
-    public void getAddAttributesForClientGroup_noAttributesAdded_returnsArray() throws Exception {
-        Attribute[] result = ldapApplicationRepository.getAddAttributesForClientGroup(new ClientGroup());
-        assertThat("attribute", result.length, equalTo(1));
-    }
-
     @Test
     public void getAddAttributesForClient_addsAllAttributes_returnsArray() throws Exception {
         Application client = new Application();
@@ -666,12 +366,12 @@ public class LdapApplicationRepositoryTest{
         assertThat("rcn", result[4].getValue(), equalTo("rcn"));
         assertThat("client secret", result[5].getValue(), equalTo("secret"));
         assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray()), equalTo("secret"));
-        assertThat("enabled", result[7].getValue(), equalTo("true"));
+        assertThat("enabled", result[7].getValue(), equalTo("TRUE"));
         assertThat("title", result[8].getValue(), equalTo("title"));
         assertThat("description", result[9].getValue(), equalTo("description"));
         assertThat("scope", result[10].getValue(), equalTo("scope"));
         assertThat("url", result[11].getValue(), equalTo("url"));
-        assertThat("userForDefaultRegion", result[12].getValue(), equalTo("true"));
+        assertThat("userForDefaultRegion", result[12].getValue(), equalTo("TRUE"));
     }
 
     @Test
@@ -711,23 +411,6 @@ public class LdapApplicationRepositoryTest{
         assertThat("scope",result.getScope(), equalTo("scope"));
         assertThat("url", result.getCallBackUrl(), equalTo("url"));
         assertThat("useForDefaultRegion", result.getUseForDefaultRegion(), equalTo(true));
-    }
-
-    @Test
-    public void getClientGroup_setupClientGropuAttributes_returnsClientGroup() throws Exception {
-        ClientGroup clientGroup = new ClientGroup();
-        clientGroup.setCustomerId("customerId");
-        clientGroup.setClientId("clientId");
-        clientGroup.setName("name");
-        clientGroup.setType("type");
-        Attribute[] clientGroupAttributes = ldapApplicationRepository.getAddAttributesForClientGroup(clientGroup);
-        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", clientGroupAttributes);
-        ClientGroup result = ldapApplicationRepository.getClientGroup(searchResultEntry);
-        assertThat("unique id", result.getUniqueId(), equalTo("uniqueId"));
-        assertThat("customer id", result.getCustomerId(), equalTo("customerId"));
-        assertThat("client id", result.getClientId(), equalTo("clientId"));
-        assertThat("name", result.getName(), equalTo("name"));
-        assertThat("type", result.getType(), equalTo("type"));
     }
 
     @Test
@@ -992,16 +675,16 @@ public class LdapApplicationRepositoryTest{
     @Test (expected = IllegalStateException.class)
     public void addClientRole_entryIsNull_throwsLDAPException() throws Exception {
         ClientRole clientRole = new ClientRole();
-        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
-        doReturn(null).doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
+        doReturn(null).doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
         spy.addClientRole("uniqueId", clientRole);
     }
 
     @Test (expected = IllegalStateException.class)
     public void addClientRole_entryNotNull_throwsLDAPException() throws Exception {
         ClientRole clientRole = new ClientRole();
-        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
-        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
+        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
         spy.addClientRole("uniqueId", clientRole);
     }
 

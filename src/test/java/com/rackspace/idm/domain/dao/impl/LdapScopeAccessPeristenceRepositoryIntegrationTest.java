@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.exception.NotFoundException;
+import org.joda.time.DateTime;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,9 @@ import org.junit.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -82,26 +86,30 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testAddDuplicateScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getRCN());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
 
     @Test
     public void testAddScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -121,7 +129,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         repo.addDirectScopeAccess(client.getUniqueId(), userScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof UserScopeAccess);
@@ -134,9 +142,11 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         clientScopeAccess.setClientId(client.getClientId());
         clientScopeAccess.setClientRCN(client.getName());
         clientScopeAccess.setAccessTokenString(accessToken);
+        clientScopeAccess.setAccessTokenExp(new Date());
+        clientScopeAccess.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         repo.addDirectScopeAccess(client.getUniqueId(), clientScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof ClientScopeAccess);
@@ -155,7 +165,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         sa.setUserRsId(userId);
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof PasswordResetScopeAccess);
@@ -278,23 +288,40 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         Assert.assertTrue(doesAccessTokenHavePermission);
     }
 
-    @Test
+    @Test(expected = NotFoundException.class)
     public void testDeleteScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
 
         repo.deleteScopeAccess(sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+    }
 
-        Assert.assertNull(sa);
+    @Test (expected = NotFoundException.class)
+    public void testDeleteScopeAccessByDn() {
+        ScopeAccess sa = new ClientScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        assert(sa != null);
+
+        repo.deleteScopeAccessByDn(sa.getUniqueId());
+        repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+
     }
 
     @Test
@@ -386,13 +413,15 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testGetScopeAccessForParentByClientId() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -580,9 +609,11 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testScopeAccess_Success() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         ScopeAccess scopeAccess = repo.addScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
@@ -631,6 +662,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
+        repo.deleteScopeAccess(sa);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -644,6 +676,103 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
     }
 
+    @Test
+    public void getAllImpersonatedScopeAccessByParentForUser_returnsOnlyScopeAccessForUser_asList() {
+        ImpersonatedScopeAccess saOne = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saTwo = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saThree = new ImpersonatedScopeAccess();
+
+        saOne.setClientId(client.getClientId());
+        saTwo.setClientId(client.getClientId());
+        saThree.setClientId(client.getClientId());
+
+        saOne.setImpersonatingToken("123456789one");
+        saTwo.setImpersonatingToken("123456789two");
+        saThree.setImpersonatingToken("123456789three");
+
+        saOne.setImpersonatingUsername("impersonatedUserOne");
+        saTwo.setImpersonatingUsername("impersonatedUserOne");
+        saThree.setImpersonatingUsername("impersonatedUserThree");
+
+        saOne.setAccessTokenString("123456789one");
+        saTwo.setAccessTokenString("123456789two");
+        saThree.setAccessTokenString("123456789three");
+
+        saOne.setAccessTokenExp(new Date());
+        saTwo.setAccessTokenExp(new Date());
+        saThree.setAccessTokenExp(new Date());
+
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saOne);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saTwo);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saThree);
+
+        List<ScopeAccess> scopeAccessList = repo.getAllImpersonatedScopeAccessForParentByUser(client.getUniqueId(), "impersonatedUserOne");
+
+        assert(scopeAccessList.size() == 2);
+
+        repo.deleteScopeAccess(saOne);
+        repo.deleteScopeAccess(saTwo);
+        repo.deleteScopeAccess(saThree);
+    }
+
+    @Test
+    public void getAllImpersonatedScopeAccessForParent_returnsAllImpersonatedScopeAccess_asList() {
+        ImpersonatedScopeAccess saOne = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saTwo = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saThree = new ImpersonatedScopeAccess();
+
+        saOne.setClientId(client.getClientId());
+        saTwo.setClientId(client.getClientId());
+        saThree.setClientId(client.getClientId());
+
+        saOne.setImpersonatingToken("123456789one");
+        saTwo.setImpersonatingToken("123456789two");
+        saThree.setImpersonatingToken("123456789three");
+
+        saOne.setImpersonatingUsername("impersonatedUserOne");
+        saTwo.setImpersonatingUsername("impersonatedUserOne");
+        saThree.setImpersonatingUsername("impersonatedUserThree");
+
+        saOne.setAccessTokenString("123456789one");
+        saTwo.setAccessTokenString("123456789two");
+        saThree.setAccessTokenString("123456789three");
+
+        saOne.setAccessTokenExp(new Date());
+        saTwo.setAccessTokenExp(new Date());
+        saThree.setAccessTokenExp(new Date());
+
+        List<ScopeAccess> preAddList = repo.getAllImpersonatedScopeAccessForParent(client.getUniqueId());
+
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saOne);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saTwo);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saThree);
+
+        List<ScopeAccess> postAddList = repo.getAllImpersonatedScopeAccessForParent(client.getUniqueId());
+
+        assert(preAddList.size() + 3 == postAddList.size());
+
+        repo.deleteScopeAccess(saOne);
+        repo.deleteScopeAccess(saTwo);
+        repo.deleteScopeAccess(saThree);
+    }
+
+    @Test
+    public void testUpdateScopeAccess_setTokenExpired() {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setUsername("user");
+        scopeAccess.setUserRsId("userRsId");
+        scopeAccess.setAccessTokenExp(new DateTime().plusHours(6).toDate());
+        scopeAccess.setAccessTokenString("1234abcd");
+        scopeAccess.setClientId(client.getClientId());
+        ScopeAccess addedScopeAccess = repo.addDirectScopeAccess(client.getUniqueId(), scopeAccess);
+
+        addedScopeAccess.setAccessTokenExpired();
+
+        repo.updateScopeAccess(addedScopeAccess);
+
+        ScopeAccess updatedScopeAccess = repo.getScopeAccessByAccessToken("1234abcd");
+        assert(updatedScopeAccess.isAccessTokenExpired(new DateTime()));
+    }
     private Customer addNewTestCustomer(String customerId) {
         final Customer newCustomer = createTestCustomerInstance(customerId);
         newCustomer.setId(id);

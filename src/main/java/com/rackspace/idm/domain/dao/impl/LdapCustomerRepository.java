@@ -192,7 +192,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         if (customer.isEnabled() != null) {
             atts.add(new Attribute(ATTR_ENABLED, String.valueOf(customer
-                .isEnabled())));
+                .isEnabled()).toUpperCase()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -222,7 +222,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         if (cNew.isEnabled() != null && cNew.isEnabled() != cOld.isEnabled()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
-                String.valueOf(cNew.isEnabled())));
+                String.valueOf(cNew.isEnabled()).toUpperCase()));
         }
 
         if (cNew.getPasswordRotationEnabled() != null
@@ -230,7 +230,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                 .getPasswordRotationEnabled()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_PASSWORD_ROTATION_ENABLED, String.valueOf(cNew
-                    .getPasswordRotationEnabled())));
+                    .getPasswordRotationEnabled()).toUpperCase()));
         }
 
         if (cNew.getPasswordRotationDuration() != cOld
@@ -260,7 +260,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.setUniqueId(newDn);
             // Disabled the customer
             getAppInterface().modify(customer.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -337,7 +337,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.setUniqueId(newDn);
             // Enabled the User
             getAppInterface().modify(customer.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
             throw new IllegalStateException(e.getMessage(), e);
