@@ -136,6 +136,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
             if (!mostRecent.isAccessTokenExpired(new DateTime())) {
                 scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
+                scopeAccessDao.deleteScopeAccess(mostRecent);
             }
         }
 

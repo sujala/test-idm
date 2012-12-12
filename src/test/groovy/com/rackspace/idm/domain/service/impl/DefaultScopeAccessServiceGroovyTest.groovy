@@ -409,7 +409,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         ImpersonatedScopeAccess returned = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
 
         then:
-        5 * scopeAccessDao.deleteScopeAccess(_)
+        6 * scopeAccessDao.deleteScopeAccess(_)
         3 * scopeAccessDao.addImpersonatedScopeAccess(_, _)
 
         returned.accessTokenString.equals("token")
