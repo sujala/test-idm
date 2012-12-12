@@ -607,6 +607,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(tokenService.doesTokenHaveAccessToApplication(null, null)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        when(cloudClient.get(url + "tokens/1", mockHeaders)).thenReturn(Response.status(200));
         delegateCloud20Service.validateToken(mockHeaders, null, "1", null);
         verify(cloudClient).get(url + "tokens/1", mockHeaders);
     }

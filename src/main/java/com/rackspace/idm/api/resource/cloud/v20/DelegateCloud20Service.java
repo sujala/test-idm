@@ -242,12 +242,21 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         validator20.validateToken(tokenId);
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
-        if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
+        ScopeAccess callerScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (isCloudAuthRoutingEnabled() && (scopeAccess == null || callerScopeAccess == null)) {
             String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
             request = appendQueryParams(request, params);
-            return cloudClient.get(request, httpHeaders);
+            Response.ResponseBuilder response = cloudClient.get(request, httpHeaders);
+            Response dummyResponse = response.clone().build();
+            int status = dummyResponse.getStatus();
+            if (callerScopeAccess != null && status == HttpServletResponse.SC_UNAUTHORIZED) {
+                throw new NotFoundException("Token not found.");
+            } else if(callerScopeAccess == null && status == HttpServletResponse.SC_NOT_FOUND){
+                throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            }
+            return response;
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
