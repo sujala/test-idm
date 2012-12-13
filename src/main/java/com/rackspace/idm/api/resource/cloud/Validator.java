@@ -80,6 +80,18 @@ public class Validator {
         }
     }
 
+    public void validate20User(org.openstack.docs.identity.api.v2.User user){
+        if (StringUtils.isBlank(user.getUsername())) {
+            String errorMsg = "Expecting username";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+        checkPattern(USERNAME, user.getUsername());
+        if(!isBlank(user.getEmail())){
+            isEmailValid(user.getEmail());
+        }
+    }
+
     public boolean validatePasswordForCreateOrUpdate(String password){
         return checkPattern(PASSWORD, password);
     }
@@ -87,8 +99,14 @@ public class Validator {
     private boolean checkPattern(String pattern, String value) {
         logger.warn("Checking regex pattern");
         com.rackspace.idm.domain.entity.Pattern tempPattern = ldapPatternRepository.getPattern(pattern);
-        Pattern usernamePatter = Pattern.compile(tempPattern.getRegex());
-        if(!usernamePatter.matcher(value).matches()){
+        Pattern pat = null;
+        try{
+            pat = Pattern.compile(tempPattern.getRegex());
+        }catch (Exception ex){
+            String errMsg = String.format("'%s' is not a valid regular expression.",tempPattern.getRegex());
+            throw new IllegalStateException(errMsg);
+        }
+        if(!pat.matcher(value).matches()){
             throw new BadRequestException(tempPattern.getErrMsg());
         }
 

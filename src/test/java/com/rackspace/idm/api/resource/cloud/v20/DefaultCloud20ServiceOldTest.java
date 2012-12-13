@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -120,6 +121,7 @@ public class DefaultCloud20ServiceOldTest {
     private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
     private Validator20 validator20;
+    private Validator validator;
     private Domain domain;
     private DefaultPaginator<User> userPaginator;
     private DefaultPaginator<ClientRole> clientRolePaginator;
@@ -156,6 +158,7 @@ public class DefaultCloud20ServiceOldTest {
         exceptionHandler = mock(ExceptionHandler.class);
         defaultRegionService = mock(DefaultRegionService.class);
         validator20 = mock(Validator20.class);
+        validator = mock(Validator.class);
         userPaginator = mock(DefaultPaginator.class);
         clientRolePaginator = mock(DefaultPaginator.class);
         uriInfo = mock(UriInfo.class);
@@ -182,6 +185,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
         defaultCloud20Service.setValidator20(validator20);
+        defaultCloud20Service.setValidator(validator);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
@@ -447,7 +451,6 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>anyObject())).thenReturn(new Users());
-
         spy.addUser(httpHeaders, uriInfo, authToken, userOS);
         verify(tenantService).addTenantRolesToUser(scopeAccess, user);
     }
@@ -1564,7 +1567,7 @@ public class DefaultCloud20ServiceOldTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(validator20).validateUserForCreate(userOS);
+        doThrow(badRequestException).when(validator).validate20User(userOS);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         userOS.setUsername(null);
         assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
@@ -1654,7 +1657,7 @@ public class DefaultCloud20ServiceOldTest {
         userOS.setPassword("password");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUser(null, null, authToken, userOS);
-        verify(validator20).validatePasswordForCreateOrUpdate("password");
+        verify(validator).validatePasswordForCreateOrUpdate("password");
     }
 
     @Test
@@ -4292,7 +4295,7 @@ public class DefaultCloud20ServiceOldTest {
         userOS.setPassword("123");
         userOS.setId(userId);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(validator20).validatePasswordForCreateOrUpdate("123");
+        verify(validator).validatePasswordForCreateOrUpdate("123");
     }
 
     @Test
@@ -4305,7 +4308,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(validator20).validateUsernameForUpdateOrCreate("username");
+        verify(validator).isUsernameValid("username");
     }
 
 

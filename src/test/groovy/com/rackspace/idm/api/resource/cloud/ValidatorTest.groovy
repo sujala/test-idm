@@ -172,6 +172,19 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "Validate username: bad pattern"(){
+        given:
+        setupMock()
+        Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@asdfsadf24232%^&*","Username has invalid characters.","pattern for invalid characters");
+        ldapPatternRepository.getPattern(_) >> patterns
+
+        when:
+        validator.isUsernameValid("someUsername123")
+
+        then:
+        thrown(IllegalStateException)
+    }
+
 
     def setupMock(){
         ldapPatternRepository = Mock();

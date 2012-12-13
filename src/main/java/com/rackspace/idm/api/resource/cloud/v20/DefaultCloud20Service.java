@@ -436,7 +436,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            validator.isUsernameValid(user.getUsername());
+            validator.validate20User(user);
 
             String password = user.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
@@ -567,7 +567,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
             if (user.getPassword() != null) {
-                validator20.validatePasswordForCreateOrUpdate(user.getPassword());
+                validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
             User retrievedUser = userService.checkAndGetUserById(userId);
             if (!userId.equals(user.getId()) && user.getId() != null) {
@@ -589,7 +589,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (!StringUtils.isBlank(user.getUsername())) {
-                validator20.validateUsernameForUpdateOrCreate(user.getUsername());
+                validator.isUsernameValid(user.getUsername());
             }
 
             if (!user.isEnabled()) {
@@ -3558,6 +3558,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     
     public void setQuestionService(QuestionService questionService) {
         this.questionService = questionService;
+    }
+
+    public void setValidator(Validator validator) {
+        this.validator = validator;
     }
 }
 

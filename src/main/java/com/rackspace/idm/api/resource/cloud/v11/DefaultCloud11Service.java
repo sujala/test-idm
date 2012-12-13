@@ -68,8 +68,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private EndpointService endpointService;
     @Autowired
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-    @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
     private UserConverterCloudV11 userConverterCloudV11;
@@ -77,7 +75,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private UserService userService;
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
-
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     private Map<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
 

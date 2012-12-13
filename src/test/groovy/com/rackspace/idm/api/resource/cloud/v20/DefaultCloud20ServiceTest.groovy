@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.Validator
+import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -64,6 +66,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Autowired Paginator<User> userPaginator
     @Autowired ApplicationService clientService
     @Autowired TenantService tenantService
+    @Autowired Validator validator
 
 
     @Shared DefaultScopeAccessService scopeAccessService
@@ -77,7 +80,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared LdapTenantRepository tenantDao
     @Shared LdapApplicationRoleRepository clientRoleDao
     @Shared LdapTenantRoleRepository tenantRoleDao
-
+    @Shared LdapPatternRepository ldapPatternRepository
 
     @Shared HttpHeaders headers
     @Shared def authToken = "token"
@@ -256,12 +259,158 @@ class DefaultCloud20ServiceTest extends Specification {
                 it.email = "email@email.com"
                 return it
             }
+        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
 
         when:
         def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 201
+    }
+
+    def "add User with password"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+            it.username = "1user$sharedRandom"
+            it.email = "email@email.com"
+            it.password = "Password1"
+            return it
+        }
+        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 201
+    }
+
+    def "add User with bad password"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+            it.username = "1user$sharedRandom"
+            it.email = "email@email.com"
+            it.password = "password1"
+            return it
+        }
+        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 400
+    }
+
+    def "add User with bad password 2"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+            it.username = "1user$sharedRandom"
+            it.email = "email@email.com"
+            it.password = "Pass1"
+            return it
+        }
+        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 400
+    }
+
+    def "Add user with emtpy username"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+            it.username = ""
+            it.email = "email@email.com"
+            return it
+        }
+        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 400
+    }
+
+    def "Add user with null username"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+            it.username = null
+            it.email = "email@email.com"
+            return it
+        }
+        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 400
+    }
+
+    def "Update user: username null" (){
+        given:
+        createMocks()
+        allowAccess()
+        def user = new UserForCreate().with {
+            it.username = null
+            it.email = "email@email.com"
+            return it
+        }
+        def retrievedUser = new User().with {
+            it.username = "somename"
+            it.email = "some@email.com"
+            it.id = "1"
+            return it
+        }
+        userService.checkAndGetUserById(_) >> retrievedUser
+        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern1
+
+        when:
+        def response = cloud20Service.updateUser(headers,authToken,"1",user)
+
+        then:
+        response.build().status == 200
+
+
     }
 
     def "get question returns 200 and question"() {
@@ -1589,6 +1738,10 @@ class DefaultCloud20ServiceTest extends Specification {
         userService.userDao = userDao
         userService.scopeAccesss = scopeAccessDao
         userService.applicationRoleDao = clientRoleDao
+
+        ldapPatternRepository = Mock()
+        validator.ldapPatternRepository = ldapPatternRepository
+
     }
 
     def setupUsersAndRoles() {
@@ -1813,6 +1966,16 @@ class DefaultCloud20ServiceTest extends Specification {
             it.id = id
             it.question = question
             it.answer = answer
+            return it
+        }
+    }
+
+    def pattern(String name, String regex, String errMsg, String description){
+        new Pattern().with {
+            it.name = name
+            it.regex = regex
+            it.errMsg = errMsg
+            it.description = description
             return it
         }
     }
