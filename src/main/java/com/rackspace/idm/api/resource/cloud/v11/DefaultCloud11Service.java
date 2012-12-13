@@ -58,14 +58,23 @@ public class DefaultCloud11Service implements Cloud11Service {
     public static final String USER_S_NOT_FOUND = "User %s not found";
     public static final String EXPECTING_USERNAME = "Expecting username";
     public static final String USER_NOT_FOUND = "User not found: ";
-    private final AuthConverterCloudV11 authConverterCloudV11;
-    private final Configuration config;
-    private final EndpointConverterCloudV11 endpointConverterCloudV11;
-    private final EndpointService endpointService;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final ScopeAccessService scopeAccessService;
-    private final UserConverterCloudV11 userConverterCloudV11;
-    private final UserService userService;
+
+    @Autowired
+    private AuthConverterCloudV11 authConverterCloudV11;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private EndpointConverterCloudV11 endpointConverterCloudV11;
+    @Autowired
+    private EndpointService endpointService;
+    @Autowired
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ScopeAccessService scopeAccessService;
+    @Autowired
+    private UserConverterCloudV11 userConverterCloudV11;
+    @Autowired
+    private UserService userService;
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
 
@@ -112,29 +121,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private Validator validator;
-
-    @Autowired
-    public DefaultCloud11Service(Configuration config,
-                                 ScopeAccessService scopeAccessService, EndpointService endpointService,
-                                 UserService userService, AuthConverterCloudV11 authConverterCloudV11,
-                                 UserConverterCloudV11 userConverterCloudV11,
-                                 EndpointConverterCloudV11 endpointConverterCloudV11,
-                                 CloudExceptionResponse cloudExceptionResponse,
-                                 ApplicationService clientService,
-                                 TenantService tenantService,
-                                 DomainService domainService) {
-        this.config = config;
-        this.scopeAccessService = scopeAccessService;
-        this.endpointService = endpointService;
-        this.userService = userService;
-        this.authConverterCloudV11 = authConverterCloudV11;
-        this.userConverterCloudV11 = userConverterCloudV11;
-        this.endpointConverterCloudV11 = endpointConverterCloudV11;
-        this.cloudExceptionResponse = cloudExceptionResponse;
-        this.clientService = clientService;
-        this.tenantService = tenantService;
-        this.domainService = domainService;
-    }
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
@@ -1388,5 +1374,53 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setValidator(Validator validator) {
         this.validator = validator;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setAuthConverterCloudv11(AuthConverterCloudV11 authConverterCloudv11) {
+        this.authConverterCloudV11 = authConverterCloudv11;
+    }
+
+    public void setUserConverterCloudV11(UserConverterCloudV11 userConverterCloudV11) {
+        this.userConverterCloudV11 = userConverterCloudV11;
+    }
+
+    public UserConverterCloudV11 getUserConverterCloudV11() {
+        return userConverterCloudV11;
+    }
+
+    public void setEndpointConverterCloudV11(EndpointConverterCloudV11 endpointConverterCloudV11) {
+        this.endpointConverterCloudV11 = endpointConverterCloudV11;
+    }
+
+    public void setCloudExceptionResponse(CloudExceptionResponse cloudExceptionResponse) {
+        this.cloudExceptionResponse = cloudExceptionResponse;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.clientService = applicationService;
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
     }
 }

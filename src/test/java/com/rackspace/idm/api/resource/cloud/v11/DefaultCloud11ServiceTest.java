@@ -151,7 +151,7 @@ public class DefaultCloud11ServiceTest {
         testService.setOpenStackType("foo");
         when(clientService.getByName(any(String.class))).thenReturn(testService);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
-        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, cloudExceptionResponse, clientService, tenantService, domainService);
+        defaultCloud11Service = new DefaultCloud11Service();
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setValidator(validator);
@@ -163,6 +163,18 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setCredentialValidator(credentialValidator);
         defaultCloud11Service.setCloudContractDescriptionBuilder(cloudContratDescriptionBuilder);
         defaultCloud11Service.setAuthHeaderHelper(authHeaderHelper);
+        defaultCloud11Service.setConfig(config);
+        defaultCloud11Service.setScopeAccessService(scopeAccessService);
+        defaultCloud11Service.setEndpointService(endpointService);
+        defaultCloud11Service.setUserService(userService);
+        defaultCloud11Service.setAuthConverterCloudv11(authConverterCloudv11);
+        defaultCloud11Service.setUserConverterCloudV11(userConverterCloudV11);
+        defaultCloud11Service.setEndpointConverterCloudV11(endpointConverterCloudV11);
+        defaultCloud11Service.setCloudExceptionResponse(cloudExceptionResponse);
+        defaultCloud11Service.setApplicationService(clientService);
+        defaultCloud11Service.setTenantService(tenantService);
+        defaultCloud11Service.setDomainService(domainService);
+
         spy = spy(defaultCloud11Service);
     }
 

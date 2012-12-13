@@ -93,8 +93,9 @@ public class DefaultUserService implements UserService {
     @Override
     public void addUser(User user) {
         logger.info("Adding User: {}", user);
-
-        validator.isEmailValid(user.getEmail());
+        if(!validator.isBlank(user.getEmail())){
+            validator.isEmailValid(user.getEmail());
+        }
         validateUsername(user);
         setPasswordIfNecessary(user);
 
@@ -612,7 +613,9 @@ public class DefaultUserService implements UserService {
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        validator.isEmailValid(user.getEmail());
+        if(!validator.isBlank(user.getEmail())){
+            validator.isEmailValid(user.getEmail());
+        }
 
         //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
 //        if (!user.isEnabled()) {
