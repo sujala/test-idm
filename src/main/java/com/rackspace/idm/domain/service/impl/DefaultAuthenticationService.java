@@ -549,7 +549,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setAccessTokenString(scopeAccess.getAccessTokenString());
         }
 
-        this.validateRackerHasRackerRole(racker, scopeAccess, client);
+        this.validateRackerHasRackerRole(racker, scopeAccessToAdd, client);
 
         DateTime current = new DateTime();
         DateTime accessExpiration = scopeAccessToAdd.getAccessTokenExp() == null ? new DateTime().minusDays(1)

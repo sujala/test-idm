@@ -2681,7 +2681,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
 
             if (isDefaultUser) {
-                throw new BadRequestException("Cannot add sub-user to group");
+                throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
             } else if (isUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
 
@@ -2715,7 +2715,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
 
             if (isDefaultUser) {
-                throw new BadRequestException("Cannot remove sub-user from group");
+                throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
             if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {

@@ -674,6 +674,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.91) = {
     description = "error message for regex pattern"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.92) = {
+    name = useMultiFactorAuthentication
+    ldap-names = useMultiFactorAuthentication
+    syntax = boolean
+    description = "is multi-factor authentication enabled?"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -714,7 +721,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		rsDomainId,
 		rsGroupId,
 		inMigration,
-		migrationDate
+		migrationDate,
+        useMultiFactorAuthentication,
+        telephoneNumber
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -1051,7 +1060,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
         enabled
     may-contain
         description,
-        tenantRsId
+        tenantRsId,
+        useMultiFactorAuthentication
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.28) = {
