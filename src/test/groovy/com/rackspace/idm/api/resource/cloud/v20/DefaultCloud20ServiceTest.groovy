@@ -400,9 +400,10 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
             it.id = "1"
             return it
         }
-        userService.checkAndGetUserById(_) >> retrievedUser
+        userDao.getUserById(_) >> retrievedUser
         Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
         ldapPatternRepository.getPattern(_) >> pattern1
+        scopeAccessService.getScopeAccessListByUserId(_) >> new ArrayList<ScopeAccess>();
 
         when:
         def response = cloud20Service.updateUser(headers,authToken,"1",user)
