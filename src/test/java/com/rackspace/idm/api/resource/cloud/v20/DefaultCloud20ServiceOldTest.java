@@ -1817,24 +1817,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteRole_callsClientService_deleteClientRoleMethod() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.deleteRole(null, authToken, role.getId());
-        verify(clientService).deleteClientRole(any(ClientRole.class));
-    }
-
-    @Test
-    public void deleteRole_throwsForbiddenException_returnsResponseBuilder() throws Exception {
-        ForbiddenException forbiddenException = new ForbiddenException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
-        when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
-        assertThat("code", spy.deleteRole(null, authToken, "roleId"), equalTo(responseBuilder));
-    }
-
-    @Test
     public void deleteRole_withNullRole_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -2223,7 +2205,7 @@ public class DefaultCloud20ServiceOldTest {
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRolesToUserOnTenant(null, null, null, userId, null), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(ForbiddenException.class));
     }
 
     @Test
@@ -2239,7 +2221,7 @@ public class DefaultCloud20ServiceOldTest {
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("resonse builder", spy.addRolesToUserOnTenant(null, null, null, userId, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
     }
 
     @Test
@@ -2255,7 +2237,7 @@ public class DefaultCloud20ServiceOldTest {
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRolesToUserOnTenant(null, null, null, userId, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
     }
 
     @Test
@@ -2783,14 +2765,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteEndpointTemplate(null, authToken, null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
-    }
-
-    @Test
-    public void deleteRole_callsVerifyServiceAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy). getScopeAccessForValidToken(authToken);
-        spy.deleteRole(null, authToken, roleId);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test

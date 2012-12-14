@@ -329,9 +329,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            List<String> identityRoleNames = getIdentityRoleNames();
-            if (identityRoleNames.contains(role.getName())) {
-                throw new BadRequestException("Cannot add identity roles to tenant.");
+           if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                throw new ForbiddenException("Cannot add specified role to tenants on users.");
             }
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
@@ -1002,15 +1001,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
             if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new BadRequestException("role cannot be deleted");
+                throw new ForbiddenException("role cannot be deleted");
             }
+
+            User caller = userService.getUserByAuthToken(authToken);
+
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
             this.clientService.deleteClientRole(role);
             return Response.noContent();
@@ -1852,6 +1855,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             String impersonatingToken = "";
             String impersonatingUsername = impersonationRequest.getUser().getUsername();
 
+            if (StringUtils.isBlank(impersonatingUsername)) {
+                throw new BadRequestException("Username for user to be impersonated must be provided");
+            }
+
             User user = userService.getUser(impersonatingUsername);
             if (user == null && isCloudAuthRoutingEnabled()) {
                 logger.info("Impersonation call - calling cloud auth to get user");
@@ -1859,7 +1866,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
             } else {
                 if(user == null){
-                    throw new BadRequestException("Invalid User");
+                    throw new NotFoundException(String.format("User %s not found", impersonatingUsername));
                 }
                 if (!isValidImpersonatee(user)) {
                     throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");

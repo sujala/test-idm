@@ -32,7 +32,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
 
-/**
+/*
  * Created by IntelliJ IDEA.
  * User: Hector
  * Date: 9/14/11
