@@ -451,6 +451,11 @@ public class DefaultUserService implements UserService {
         return config.getInt("cloudAuth.defaultUser.rsWeight");
     }
 
+    @Override
+    public void setValidator(Validator validator) {
+        this.validator = validator;
+    }
+
 
     @Override
     public Applications getUserApplications(User user) {
@@ -628,7 +633,9 @@ public class DefaultUserService implements UserService {
 
     public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        validator.isEmailValid(user.getEmail());
+        if(!validator.isBlank(user.getEmail())){
+            validator.isEmailValid(user.getEmail());
+        }
         userDao.updateUserById(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {

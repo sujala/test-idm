@@ -20,15 +20,15 @@ import java.util.List;
 public class LdapPatternRepository extends LdapGenericRepository<Pattern> implements PatternDao {
 
     public String getBaseDn(){
-        return QUESTION_BASE_DN;
+        return PATTERN_BASE_DN;
     }
 
     public String getLdapEntityClass(){
-        return OBJECTCLASS_QUESTION;
+        return OBJECTCLASS_PATTERN;
     }
 
     public String getNextId() {
-        return getNextId(NEXT_QUESTION_ID);
+        return getNextId(NEXT_PATTERN_ID);
     }
 
     @Override

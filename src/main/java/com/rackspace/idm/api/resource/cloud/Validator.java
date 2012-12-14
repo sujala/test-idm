@@ -104,6 +104,7 @@ public class Validator {
             pat = Pattern.compile(tempPattern.getRegex());
         }catch (Exception ex){
             String errMsg = String.format("'%s' is not a valid regular expression.",tempPattern.getRegex());
+            logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
         if(!pat.matcher(value).matches()){

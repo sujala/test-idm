@@ -175,8 +175,8 @@ public abstract class LdapRepository {
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
     public static final String ATTR_USER_RS_ID = "userRsId";
 
-    public static final String ATTR_REGEX = "regEx";
-    public static final String ATTR_ERRMSG = "error";
+    public static final String ATTR_REGEX = "pattern";
+    public static final String ATTR_ERRMSG = "errMsg";
 
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
@@ -198,7 +198,7 @@ public abstract class LdapRepository {
     protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
-    protected static final String PATTERN_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";
@@ -399,6 +399,8 @@ public abstract class LdapRepository {
     protected static final String NEXT_CAPABILITY_ID = "nextCapabilityId";
     protected static final String NEXT_QUESTION_ID = "nextQuestionId";
     protected static final String NEXT_POLICY_ID = "nextPolicyId";
+    protected static final String NEXT_PATTERN_ID = "nextPatternId";
+
 
 
     protected String getNextId(String type) {

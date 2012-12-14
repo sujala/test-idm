@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.domain.dao.TenantDao;
 import org.junit.runner.RunWith;
 
@@ -64,10 +65,14 @@ public class DefaultUserServiceTest {
     @Mock
     private TenantDao tenantDao;
 
+    private Validator validator;
+
     private DefaultUserService spy;
 
     @Before
     public void setUp() throws Exception {
+        validator = new Validator();
+        defaultUserService.setValidator(validator);
         spy = spy(defaultUserService);
     }
 
@@ -335,7 +340,7 @@ public class DefaultUserServiceTest {
             spy.checkAndGetUserById("id");
             assertTrue("should throw exception",false);
         } catch (NotFoundException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("User not found"));
+            assertThat("exception message",ex.getMessage(),equalTo("User id not found"));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -13,6 +14,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class UserServiceTests {
     ScopeAccessDao mockScopeAccessObjectDao;
     PasswordComplexityService mockPasswordComplexityService;
     CloudRegionService cloudRegionService;
+    Validator validator = new Validator();
 
     String customerId = "123456";
     String username = "testuser";
@@ -74,6 +77,8 @@ public class UserServiceTests {
         mockDomainService = EasyMock.createMock(DomainService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         cloudRegionService = EasyMock.createMock(DefaultCloudRegionService.class);
+        validator = EasyMock.createMock(Validator.class);
+
         
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
@@ -86,6 +91,7 @@ public class UserServiceTests {
         userService.setConfig(appConfig);
         userService.setPasswordComplexityService(mockPasswordComplexityService);
         userService.setCloudRegionService(cloudRegionService);
+        userService.setValidator(validator);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
@@ -150,6 +156,7 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername())).andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
+        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
         mockUserDao.addUser(user);
 
 
@@ -161,6 +168,7 @@ public class UserServiceTests {
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockPasswordComplexityService);
         EasyMock.replay(mockScopeAccessObjectDao);
+        EasyMock.replay(validator);
 
         Region region = new Region();
         region.setName("DFW");
@@ -177,7 +185,9 @@ public class UserServiceTests {
 
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
         .andReturn(false);
+        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
         EasyMock.replay(mockUserDao);
+        EasyMock.replay(validator);
 
         userService.addUser(user);
     }
@@ -260,6 +270,9 @@ public class UserServiceTests {
         final User user = getFakeUser();
         mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
+
+        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
+        EasyMock.replay(validator);
 
         userService.updateUser(user, false);
     }
