@@ -940,7 +940,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "adding identity:* roles to user on tenant returns 400"() {
         expect:
-        response.status == 400
+        response.status == 403
 
         where:
         response << [
@@ -970,6 +970,20 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 deleteRoleFromUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
                 deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+        ]
+    }
+
+    def "delete role returns 403"() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                deleteRole(userAdminToken, sharedRoleTwo.id),
+                deleteRole(identityAdminToken, identityAdminRoleId),
+                deleteRole(identityAdminToken, userAdminRoleId),
+                deleteRole(serviceAdminToken, identityAdminRoleId),
+                deleteRole(serviceAdminToken, userAdminRoleId)
         ]
     }
 
