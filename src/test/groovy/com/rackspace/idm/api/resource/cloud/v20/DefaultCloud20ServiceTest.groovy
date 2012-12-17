@@ -96,7 +96,7 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
     @Shared def tenantRoleList
     @Shared def serviceAdminRole
     @Shared def genericRole
-    @Shared def userAdmin1
+    @Shared def userAdmin
     @Shared def defaultUser
     @Shared def userNotInDomain
     @Shared def adminUser
