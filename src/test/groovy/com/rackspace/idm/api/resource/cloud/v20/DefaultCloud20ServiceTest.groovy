@@ -131,10 +131,11 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         allowAccess()
 
         userDao.isUsernameUnique(_) >> true
-
         cloudRegionService.getDefaultRegion("US") >> region()
-
         def user = user("user$sharedRandom", "user@email.com", true, "user$sharedRandom")
+
+        Pattern pattern = pattern("username","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
 
         when:
         userService.addUser(user)
@@ -146,7 +147,9 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
     def "create user without default region throws bad request"() {
         given:
         createMocks()
-    allowAccess()
+        allowAccess()
+        Pattern pattern = pattern("username","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
 
         userDao.isUsernameUnique(_) >> true
 
@@ -283,8 +286,9 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
             return it
         }
         Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
+        Pattern pattern2 = pattern("password","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
+        Pattern pattern3 = pattern("email","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern3 >> pattern2 >> pattern3
 
         when:
         def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)

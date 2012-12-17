@@ -980,4 +980,8 @@ public class DefaultUserService implements UserService {
     public void setApplicationRoleDao(LdapApplicationRoleRepository applicationRoleDao) {
         this.applicationRoleDao = applicationRoleDao;
     }
+
+    public void setTenantDao(TenantDao tenantDao){
+        this.tenantDao = tenantDao;
+    }
 }

@@ -52,6 +52,8 @@ class ValidatorTest extends Specification {
     def "Validate email"(){
         given:
         setupMock()
+        Pattern patterns = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         boolean result = validator.isEmailValid("joe.racker@rackspace.com")
@@ -63,6 +65,8 @@ class ValidatorTest extends Specification {
     def "Invalid email"(){
         given:
         setupMock()
+        Pattern patterns = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         validator.isEmailValid("joe racker@rackspace.com")

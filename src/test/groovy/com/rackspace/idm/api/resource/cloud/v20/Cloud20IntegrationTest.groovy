@@ -345,7 +345,7 @@ class Cloud20IntegrationTest extends Specification {
                 createUser(serviceAdminToken, userForCreate("one name", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("a$sharedRandom", "display", "junk!#", true, "ORD", null, "Password1")),
+                createUser(serviceAdminToken, userForCreate("a$sharedRandom", "display", "junk!@#", true, "ORD", null, "Password1")),
                 //createUser(serviceAdminToken, userForCreate("b$sharedRandom", "display", null, true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("c$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Pop1")),
                 createUser(serviceAdminToken, userForCreate("d$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "longpassword1")),

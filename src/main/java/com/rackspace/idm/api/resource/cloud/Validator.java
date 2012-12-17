@@ -33,10 +33,10 @@ public class Validator {
     static final String ALPHANUMERIC="alphanumeric";
     static final String PASSWORD="password";
     static final String TOKEN = "token";
+    static final String EMAIL = "email";
 
     static final String USER_ID_EMPTY_MSG = "User cannot be empty.";
     static final String USER_NULL_MSG = "User can not be null.";
-    static final String EMAIL_NOT_VALID= "Expecting valid email address";
 
     public boolean isEmpty(String str){
         return StringUtils.isEmpty(str);
@@ -63,11 +63,7 @@ public class Validator {
     }
 
     public boolean isEmailValid(String email) {
-        if (StringUtils.isBlank(email) || !emailValidator.isValid(email, null)) {
-            logger.warn(EMAIL_NOT_VALID);
-            throw new BadRequestException(EMAIL_NOT_VALID);
-        }
-        return true;
+        return checkPattern(EMAIL, email);
     }
 
     public void validate11User(User user) {
@@ -112,6 +108,11 @@ public class Validator {
         }
 
         return true;
+    }
+
+    public void setLdapPatternRepository(LdapPatternRepository ldapPatternRepository){
+        this.ldapPatternRepository = ldapPatternRepository;
+
     }
 
 

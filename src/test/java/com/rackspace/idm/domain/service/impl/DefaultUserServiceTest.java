@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -64,6 +65,8 @@ public class DefaultUserServiceTest {
     private CloudRegionService cloudRegionService;
     @Mock
     private TenantDao tenantDao;
+    @Mock
+    private LdapPatternRepository patternDao;
 
     private Validator validator;
 
@@ -72,6 +75,7 @@ public class DefaultUserServiceTest {
     @Before
     public void setUp() throws Exception {
         validator = new Validator();
+        validator.setLdapPatternRepository(patternDao);
         defaultUserService.setValidator(validator);
         spy = spy(defaultUserService);
     }
@@ -825,6 +829,10 @@ public class DefaultUserServiceTest {
 
     @Test (expected = BadRequestException.class)
     public void validateUserEmailAddress_notValidEmail_throwsBadRequest() throws Exception {
+        Pattern pat = new Pattern();
+        pat.setRegex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+");
+        pat.setErrMsg("Some Error");
+        when(patternDao.getPattern(anyString())).thenReturn(pat);
         User user = new User();
         user.setEmail("badEmail");
         defaultUserService.addUser(user);
@@ -896,6 +904,10 @@ public class DefaultUserServiceTest {
         user.setEnabled(true);
         user.setId("id");
         user.setDomainId("domainId");
+        Pattern pat = new Pattern();
+        pat.setRegex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+");
+        pat.setErrMsg("Some Error");
+        when(patternDao.getPattern(anyString())).thenReturn(pat);
         when(userDao.isUsernameUnique("username")).thenReturn(true);
         Region region = new Region();
         region.setName("DFW");
@@ -906,6 +918,10 @@ public class DefaultUserServiceTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void setPasswordIfNecessary_passwordObjNotNew_throwsIllegalArgument() throws Exception {
+        Pattern pat = new Pattern();
+        pat.setRegex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+");
+        pat.setErrMsg("Some Error");
+        when(patternDao.getPattern(anyString())).thenReturn(pat);
         Password password = new Password();
         Password oldPassword = password.toExisting();
         oldPassword.setValue("aZ23Afdkadzsd");
@@ -926,6 +942,10 @@ public class DefaultUserServiceTest {
         user.setUsername("username");
         user.setPasswordObj(password);
         PasswordComplexityResult passwordComplexityResult = mock(PasswordComplexityResult.class);
+        Pattern pat = new Pattern();
+        pat.setRegex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+");
+        pat.setErrMsg("Some Error");
+        when(patternDao.getPattern(anyString())).thenReturn(pat);
         when(config.getBoolean("password.rules.enforced", true)).thenReturn(true);
         when(userDao.isUsernameUnique("username")).thenReturn(true);
         when(passwordComplexityService.checkPassword("aZ23Afdkadzsd")).thenReturn(passwordComplexityResult);

@@ -8,6 +8,14 @@ objectClass: organizationalUnit
 objectClass: top
 ou: patterns
 
+dn: rsId=5,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 5
+cn: email
+pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
+errMsg: Expecting valid email address
+description: Checks for invalid characters on a token.
+
 dn: rsId=4,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPattern
 rsId: 4
