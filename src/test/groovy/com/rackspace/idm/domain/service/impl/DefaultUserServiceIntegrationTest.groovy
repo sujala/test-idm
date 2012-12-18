@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.domain.service.TenantService
 import spock.lang.Specification
 import spock.lang.Shared
 import com.rackspace.idm.domain.entity.User
@@ -42,6 +43,7 @@ class DefaultUserServiceIntegrationTest extends Specification {
 
     @Shared PaginatorContext<String> stringPaginator
     @Shared TenantDao tenantDao
+    @Shared TenantService tenantService
     @Shared UserDao userDao
     @Shared LdapApplicationRoleRepository applicationRoleDao
     @Shared LdapTenantRoleRepository tenantRoleDao
@@ -110,6 +112,7 @@ class DefaultUserServiceIntegrationTest extends Specification {
     def "getUsersWithRole calls second setUserContext"() {
         given:
         setupMocks()
+        tenantService.getGlobalRolesForUser(_) >>  new ArrayList<TenantRole>();
 
         when:
         def userContext = userService.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
@@ -127,6 +130,7 @@ class DefaultUserServiceIntegrationTest extends Specification {
     def "getUsersWithRole calls getAllUsersNoLimit"() {
         given:
         setupMocks()
+        tenantService.getGlobalRolesForUser(_) >>  new ArrayList<TenantRole>();
 
         when:
         userService.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
@@ -183,8 +187,10 @@ class DefaultUserServiceIntegrationTest extends Specification {
 
     def "filterUsersForRole no Users have role"() {
         given:
+        setupMocks()
         def list = new ArrayList<User>()
         def roleId = String.format("%s%s", sharedRandom, "5")
+        tenantService.getGlobalRolesForUser(_) >> new ArrayList<TenantRole>();
 
         when:
         userService.filterUsersForRole(users, list, roleId)
@@ -195,7 +201,9 @@ class DefaultUserServiceIntegrationTest extends Specification {
 
     def "filterUsersForRole all Users have role"() {
         given:
+        setupMocks()
         def list = new ArrayList<User>()
+        tenantService.getGlobalRolesForUser(_) >> new ArrayList<TenantRole>();
 
         when:
         userService.filterUsersForRole(users, list, sharedRandom)
@@ -206,6 +214,7 @@ class DefaultUserServiceIntegrationTest extends Specification {
 
     def "filterUsersForRole some Users have role"() {
         given:
+        setupMocks()
         def list = new ArrayList<User>()
         def compareTo = new ArrayList<User>()
         def userList = new ArrayList<User>()
@@ -215,6 +224,7 @@ class DefaultUserServiceIntegrationTest extends Specification {
         userList.add(createUser("135792468"))
         compareTo.add(user)
         def users = createUsers(userList)
+        tenantService.getGlobalRolesForUser(_) >> new ArrayList<TenantRole>() >> new ArrayList<TenantRole>() >> new ArrayList<TenantRole>()
 
         when:
         userService.filterUsersForRole(users, list, sharedRandom)
@@ -318,6 +328,9 @@ class DefaultUserServiceIntegrationTest extends Specification {
 
         applicationRoleDao = Mock()
         userService.applicationRoleDao = applicationRoleDao;
+
+        tenantService = Mock()
+        userService.tenantService = tenantService
     }
 
     def createTenantRole(roleId) {
