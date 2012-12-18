@@ -1,0 +1,4 @@
+dn: ou=capabilities,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: capabilities

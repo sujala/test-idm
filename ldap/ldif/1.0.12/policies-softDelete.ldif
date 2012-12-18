@@ -1,0 +1,4 @@
+dn: ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
