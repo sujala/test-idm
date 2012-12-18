@@ -1483,6 +1483,32 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-local-test-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/TEST</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/TEST</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-jenkins-resources</id>
                         <phase>validate</phase>
                         <goals>
