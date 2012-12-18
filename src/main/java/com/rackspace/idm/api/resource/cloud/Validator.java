@@ -83,7 +83,7 @@ public class Validator {
             throw new BadRequestException(errorMsg);
         }
         checkPattern(USERNAME, user.getUsername());
-        if(!isBlank(user.getEmail())){
+        if(!isEmpty(user.getEmail())){
             isEmailValid(user.getEmail());
         }
     }
