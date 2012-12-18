@@ -93,7 +93,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void addUser(User user) {
         logger.info("Adding User: {}", user);
-        if(!validator.isBlank(user.getEmail())){
+        if(!validator.isEmpty(user.getEmail())){
             validator.isEmailValid(user.getEmail());
         }
         validateUsername(user);

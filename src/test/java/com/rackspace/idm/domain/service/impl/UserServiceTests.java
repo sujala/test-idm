@@ -156,7 +156,7 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername())).andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
-        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
+        EasyMock.expect(validator.isEmpty(EasyMock.anyObject(String.class))).andReturn(true);
         mockUserDao.addUser(user);
 
 
@@ -185,7 +185,7 @@ public class UserServiceTests {
 
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
         .andReturn(false);
-        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
+        EasyMock.expect(validator.isEmpty(EasyMock.anyObject(String.class))).andReturn(true);
         EasyMock.replay(mockUserDao);
         EasyMock.replay(validator);
 
