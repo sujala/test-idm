@@ -622,19 +622,33 @@ public class DefaultUserService implements UserService {
             validator.isEmailValid(user.getEmail());
         }
 
-        //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
-//        if (!user.isEnabled()) {
-//        	 oauthService.revokeAllTokensForUser(user.getUniqueId());
-//        }
+        // Expire all User tokens if we are updating the password field
+        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
+        }
 
         userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
+    }
+
+    boolean checkForPasswordUpdate(User user) {
+        if(user != null) {
+            User currentUser = userDao.getUserById(user.getId());
+            if(currentUser != null && !StringUtils.isEmpty(currentUser.getPassword()) && !currentUser.getPassword().equals(user.getPassword())){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
+        }
+        // Expire all User tokens if we are updating the password field
+        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
         userDao.updateUserById(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());

@@ -267,10 +267,13 @@ public class UserServiceTests {
 
     @Test
     public void shouldUpdateUser() {
-        final User user = getFakeUser();
+        final User user = new User();
+        user.setUsername(username);
+        user.setCustomerId(customerId);
+        user.setMossoId(1);
+        user.setDomainId("1");
         mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
-
         EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
         EasyMock.replay(validator);
 
