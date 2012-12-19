@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.Validator
@@ -1742,7 +1743,41 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         response.status == 200
     }
 
-    //helper methods
+    def "Impersonate a disabled user" () {
+        given:
+        createMocks()
+        allowAccessForImpersonate()
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User()
+        user.username = "someUser"
+        User user1 = new User()
+        user1.username = "someUser"
+        user1.enabled = false
+        userDao.getUserByUsername(_) >> user1
+        tenantDao.getTenantRolesForUser(_) >> [tenantRole("identity:default")].asList()
+        def mockedClientRole = Mock(ClientRole)
+        mockedClientRole.getName() >> "identity:default"
+        clientDao.getClientRoleById(_) >> mockedClientRole
+        UserScopeAccess userScopeAccess = new UserScopeAccess()
+        userScopeAccess.setAccessTokenString("someToken")
+        scopeAccessService.updateExpiredUserScopeAccess(_,_) >> userScopeAccess
+        ScopeAccess scopeAccess = new UserScopeAccess()
+        scopeAccess.setAccessTokenExp(new Date().minus(1))
+        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_,_) >> scopeAccess
+
+        when:
+        def responseBuilder = cloud20Service.impersonate(headers, authToken, impersonation(user))
+
+        then:
+        responseBuilder.build().status == 200
+    }
+
+    ImpersonationRequest impersonation(org.openstack.docs.identity.api.v2.User user) {
+        new ImpersonationRequest().with {
+            it.user = user
+            return it
+        }
+    }
+//helper methods
     def createMocks() {
         headers = Mock()
         precedenceValidator = Mock()
@@ -1841,6 +1876,21 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
 
         clientScopeAccess.getLDAPEntry() >> entry
         scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess
+    }
+
+    def allowAccessForImpersonate() {
+        def attribute = new Attribute(LdapRepository.ATTR_UID, "username")
+        def entry = new ReadOnlyEntry("DN", attribute)
+
+        ClientScopeAccess clientScopeAccess = Mock()
+        Calendar calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        clientScopeAccess.accessTokenExp = calendar.getTime()
+        clientScopeAccess.accessTokenString = calendar.getTime().toString()
+
+        clientScopeAccess.getLDAPEntry() >> entry
+        UserScopeAccess userScopeAccess = new UserScopeAccess()
+        scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess >> userScopeAccess
     }
 
     def user(String username, String email, Boolean enabled, String displayName) {

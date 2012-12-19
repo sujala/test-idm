@@ -1879,14 +1879,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
 
                 if (impAccess.isAccessTokenExpired(new DateTime())) {
+                    UserScopeAccess scopeAccess;
                     if (!user.isEnabled()) {
                         logger.info("Impersonating a disabled user");
-                        scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
+                        scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
                     } else {
-                        scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
+                        scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
                     }
+                    impersonatingToken = scopeAccess.getAccessTokenString();
+                } else {
+                    impersonatingToken = impAccess.getAccessTokenString();
                 }
-                impersonatingToken = impAccess.getAccessTokenString();
             }
 
             if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
