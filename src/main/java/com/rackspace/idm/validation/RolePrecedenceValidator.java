@@ -64,6 +64,19 @@ public class RolePrecedenceValidator {
         }
     }
 
+    public void verifyCallerRolePrecendenceForAssignment(User user, ClientRole role) {
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        if (callerIdentityRole == null) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+        int callerWeight = callerIdentityRole.getRsWeight();
+        if (callerIdentityRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))) {
+            callerWeight = config.getInt("cloudAuth.special.rsWeight");
+        }
+        compareWeights(callerWeight, role.getRsWeight());
+
+    }
+
     private void compareWeights(int callerWeight, int roleWeight) {
         if (callerWeight > roleWeight) {
             throw new ForbiddenException(NOT_AUTHORIZED);

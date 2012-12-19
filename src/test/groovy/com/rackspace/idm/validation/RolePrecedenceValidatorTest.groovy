@@ -217,6 +217,59 @@ class RolePrecedenceValidatorTest extends Specification {
         notThrown(ForbiddenException)
     }
 
+    def "verify caller role precedence for assignment throws exception"() {
+        given:
+        createMocks()
+        setRoles()
+
+        def user1 = user("user")
+
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole
+        ]
+
+        when:
+        //validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:admin", 100, "1"))
+        //validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:service-admin", 0, "2"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:service-admin", 0, "2"))
+
+        then:
+        thrown(ForbiddenException)
+
+    }
+
+    def "verify caller role precedence for assignment does not throw exception"() {
+        given:
+        createMocks()
+        setRoles()
+
+        def user1 = user("user")
+
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole, userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole
+        ]
+
+        when:
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:default", 2000, "1"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 500, "2"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:admin", 1000, "3"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 500, "2"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:admin", 1000, "3"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:service-admin", 0, "4"))
+
+        then:
+        notThrown(ForbiddenException)
+    }
+
     def createMocks() {
         applicationDao = Mock()
         applicationRoleDao = Mock()
