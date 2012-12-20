@@ -3734,28 +3734,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.listRoles(null, null, authToken, null, null, "0");
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
-    public void listRoles_serviceIdIsBlankResponseOk_returns200() throws Exception {
-        when(clientService.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "", "0", "10");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listRoles_serviceIdNotBlankResponseOk_returns200() throws Exception {
-        when(clientService.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "serviceId",  "0", "10");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listRolesForTenant_verifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -5701,17 +5679,6 @@ public class DefaultCloud20ServiceOldTest {
         when(authConverterCloudV20.toAuthenticationResponse(eq(userTest), eq(userScopeAccess), eq(roles), any(List.class))).thenReturn(authenticateResponse);
         Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listRoles_throwsForbiddenException_returnsResponseBuilder() throws Exception {
-        ForbiddenException forbiddenException = new ForbiddenException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-        when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.listRoles(httpHeaders, null, authToken, null, null, null), equalTo(responseBuilder));
     }
 
     @Test

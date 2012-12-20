@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -12,11 +10,9 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.HashHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -394,17 +390,17 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, int offset, int limit) {
+    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable) {
         logger.debug("Getting all Client Roles page: {}");
-        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, offset, limit);
+        PaginatorContext<ClientRole> context = applicationRoleDao.getAvailableClientRolesPaged(applicationId, offset, limit, maxWeightAvailable);
         logger.debug("Got {} Client Roles", context.getTotalRecords());
         return context;
     }
 
     @Override
-    public PaginatorContext<ClientRole> getClientRolesPaged(int offset, int limit) {
+    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable) {
         logger.debug("Getting all Client Roles page: {}");
-        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(offset, limit);
+        PaginatorContext<ClientRole> context = applicationRoleDao.getAvailableClientRolesPaged(offset, limit, maxWeightAvailable);
         logger.debug("Got {} Client Roles", context.getTotalRecords());
         return context;
     }

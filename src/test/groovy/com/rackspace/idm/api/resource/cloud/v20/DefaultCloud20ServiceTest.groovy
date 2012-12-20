@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.validation.RolePrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
@@ -65,6 +66,7 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
     @Autowired CapabilityConverterCloudV20 capabilityConverter
     @Autowired UserConverterCloudV20 userConverterCloudV20
     @Autowired Paginator<User> userPaginator
+    @Autowired Paginator<ClientRole> clientRolePaginator
     @Autowired ApplicationService clientService
     @Autowired TenantService tenantService
     @Autowired Validator validator
@@ -1771,6 +1773,113 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         responseBuilder.build().status == 200
     }
 
+    def "listRoles verifies userAdmin level access"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        cloud20Service.listRoles(headers, uriInfo(), authToken, sharedRandom, null, null)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "listRoles gets available roles paged with appropriate maxWeight"() {
+        given:
+        createMocks()
+        allowAccess()
+        setupUsersAndRoles()
+        def mockContext = Mock(PaginatorContext)
+
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole,
+                userAdminTenantRole,
+                adminTenantRole,
+                serviceAdminTenantRole
+        ]
+
+        when:
+        def responseOne = cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+        def responseTwo = cloud20Service.listRoles(headers, uriInfo(), authToken, "applicationId", null, null)
+        cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+        cloud20Service.listRoles(headers, uriInfo(), authToken, "applicationId", null, null)
+
+        then:
+        1 * clientRoleDao.getAvailableClientRolesPaged(0, 25, configuration.getInt("cloudAuth.userAdmin.rsWeight")) >> mockContext
+        1 * clientRoleDao.getAvailableClientRolesPaged("applicationId", 0, 25, configuration.getInt("cloudAuth.userAdmin.rsWeight")) >> mockContext
+
+        then:
+        1 * clientRoleDao.getAvailableClientRolesPaged(0, 25, configuration.getInt("cloudAuth.admin.rsWeight")) >> mockContext
+        1 * clientRoleDao.getAvailableClientRolesPaged("applicationId", 0, 25, configuration.getInt("cloudAuth.serviceAdmin.rsWeight")) >> mockContext
+
+        then:
+        responseOne.build().status == 200
+        responseTwo.build().status == 200
+    }
+
+    def "listRoles returns exception response for not found"() {
+        given:
+        createMocks()
+        allowAccess()
+        setupUsersAndRoles()
+
+        clientDao.getClientByClientId(_) >> {throw new NotFoundException()}
+
+        when:
+        def response1 = cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+
+        then:
+        response1.build().status == 404
+    }
+
+    def "listRoles returns exception response for bad request"() {
+        given:
+        createMocks()
+        allowAccess()
+        setupUsersAndRoles()
+
+        clientDao.getClientByClientId(_) >> {throw new BadRequestException()}
+
+        when:
+        def response1 = cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+
+        then:
+        response1.build().status == 400
+    }
+
+    def "listRoles returns exception response for forbidden"() {
+        given:
+        createMocks()
+        allowAccess()
+        setupUsersAndRoles()
+
+        clientDao.getClientByClientId(_) >> {throw new ForbiddenException()}
+
+        when:
+        def response1 = cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+
+        then:
+        response1.build().status == 403
+    }
+
+    def "listRoles returns exception response for not authorized"() {
+        given:
+        createMocks()
+        allowAccess()
+        setupUsersAndRoles()
+
+        clientDao.getClientByClientId(_) >> {throw new NotAuthorizedException()}
+
+        when:
+        def response1 = cloud20Service.listRoles(headers, uriInfo(), authToken, null, null, null)
+
+        then:
+        response1.build().status == 401
+    }
+
     ImpersonationRequest impersonation(org.openstack.docs.identity.api.v2.User user) {
         new ImpersonationRequest().with {
             it.user = user
@@ -1792,8 +1901,10 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         clientDao = Mock()
         clientRoleDao = Mock()
         userDao = Mock()
+        clientRolePaginator = Mock()
 
         cloud20Service.userService = userService
+        cloud20Service.applicationRolePaginator = clientRolePaginator
 
 
         cloud20Service.scopeAccessService = scopeAccessService
