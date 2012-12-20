@@ -1,6 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper;
 
+import com.rackspace.docs.core.event.*;
+import com.rackspace.docs.event.identity.user.CloudIdentityType;
+import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -19,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.w3._2005.atom.UsageContent;
+import org.w3._2005.atom.UsageEntry;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -29,6 +37,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 
 /**
@@ -48,9 +57,14 @@ public class AtomHopperClient {
     @Autowired
     private Configuration config;
 
+    @Autowired
+    private DefaultGroupService defaultGroupService;
+
     private HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final String CLOUD_IDENTITY = "CloudIdentity";
 
 
     public AtomHopperClient() {
@@ -180,6 +194,41 @@ public class AtomHopperClient {
         atomFeed.setUser(feedUser);
         atomFeed.setContentType(content);
         return atomFeed;
+    }
+
+    public UsageEntry createEntryForDeleteUser(User user){
+        CloudIdentityType cloudIdentityType = new CloudIdentityType();
+        cloudIdentityType.setDisplayName(user.getUsername());
+        cloudIdentityType.setResourceType(ResourceTypes.USER);
+        List<Group> groupList = defaultGroupService.getGroupsForUser(user.getId());
+        if(groupList != null){
+            for(Group group : groupList){
+                cloudIdentityType.getGroups().add(group.getName());
+            }
+        }
+        if(user.getRoles() != null){
+            for(TenantRole tenantRole : user.getRoles()){
+                cloudIdentityType.getRoles().add(tenantRole.getName());
+            }
+        }
+        cloudIdentityType.setServiceCode(CLOUD_IDENTITY);
+        cloudIdentityType.setVersion("1");
+
+        V1Element v1Element = new V1Element();
+        v1Element.setType(EventType.DELETE);
+        v1Element.setResourceId(user.getId());
+        v1Element.setResourceName(user.getUsername());
+        v1Element.setRegion(Region.fromValue(user.getRegion()));
+        v1Element.setVersion("1");
+        v1Element.getAny().add(cloudIdentityType);
+
+        UsageContent usageContent = new UsageContent();
+        usageContent.setEvent(v1Element);
+        usageContent.setType(MediaType.APPLICATION_XML);
+
+        UsageEntry usageEntry = new UsageEntry();
+        usageEntry.setContent(usageContent);
+        return usageEntry;
     }
 
     public void setConfig(Configuration config) {
