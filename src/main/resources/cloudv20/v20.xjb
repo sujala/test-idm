@@ -334,5 +334,21 @@
             </annox:annotate>
         </jaxb:bindings>
     </jaxb:bindings>
+
+    <jaxb:bindings schemaLocation="entry.xsd" node="/xs:schema">
+        <jaxb:bindings node="xs:complexType[@name='UsageEntry']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="entry" namespace="http://www.w3.org/2005/Atom"/>
+            </annox:annotate>
+        </jaxb:bindings>
+    </jaxb:bindings>
+
+    <jaxb:bindings schemaLocation="identity.xsd" node="/xs:schema">
+        <jaxb:bindings node="xs:complexType[@name='CloudIdentityType']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="user"/>
+            </annox:annotate>
+        </jaxb:bindings>
+    </jaxb:bindings>
 </jaxb:bindings>
 

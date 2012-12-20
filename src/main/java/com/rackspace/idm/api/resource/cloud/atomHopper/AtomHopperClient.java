@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.w3._2005.atom.Title;
 import org.w3._2005.atom.UsageContent;
 import org.w3._2005.atom.UsageEntry;
 
@@ -64,7 +65,7 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String CLOUD_IDENTITY = "CloudIdentity";
+
 
 
     public AtomHopperClient() {
@@ -82,9 +83,9 @@ public class AtomHopperClient {
                     new Scheme("https", PORT443, sslsf));
 
             PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
-// Increase max total connection to 200
+            // Increase max total connection to 200
             cm.setMaxTotal(MAX_TOTAL_CONNECTION);
-// Increase default max connection per route to 20
+            // Increase default max connection per route to 20
             cm.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
 
             httpClient = new DefaultHttpClient(cm);
@@ -140,12 +141,16 @@ public class AtomHopperClient {
 
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            AtomFeed atomFeed = createAtomFeed(user,AtomHopperConstants.CONTENT_TYPE, null);
-            Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
+            Writer writer;
+            UsageEntry entry;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
+                entry = createEntryForUser(user, EventType.DELETE, false);
+                writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DELETED_URL));
             } else if (userStatus.equals(AtomHopperConstants.DISABLED)) {
+                entry = createEntryForUser(user, EventType.UPDATE, false);
+                writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DISABLED_URL));
             } else {
                 response = null;
@@ -177,6 +182,16 @@ public class AtomHopperClient {
         return writer;
     }
 
+    public Writer marshalEntry(UsageEntry entry) throws JAXBException {
+        Writer writer = new StringWriter();
+        JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class);
+        Marshaller marshaller = jc.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+        marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new AHNamespaceMapper());
+        marshaller.marshal(entry, writer);
+        return writer;
+    }
+
     public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
         InputStream isStream = new ByteArrayInputStream(s.getBytes("UTF-8"));
         return new InputStreamEntity(isStream, -1);
@@ -196,7 +211,7 @@ public class AtomHopperClient {
         return atomFeed;
     }
 
-    public UsageEntry createEntryForDeleteUser(User user){
+    public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated){
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
@@ -211,15 +226,18 @@ public class AtomHopperClient {
                 cloudIdentityType.getRoles().add(tenantRole.getName());
             }
         }
-        cloudIdentityType.setServiceCode(CLOUD_IDENTITY);
-        cloudIdentityType.setVersion("1");
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+        cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
+        if(migrated){
+            cloudIdentityType.setMigrated(migrated);
+        }
 
         V1Element v1Element = new V1Element();
-        v1Element.setType(EventType.DELETE);
+        v1Element.setType(eventType);
         v1Element.setResourceId(user.getId());
         v1Element.setResourceName(user.getUsername());
         v1Element.setRegion(Region.fromValue(user.getRegion()));
-        v1Element.setVersion("1");
+        v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
 
         UsageContent usageContent = new UsageContent();
@@ -228,11 +246,18 @@ public class AtomHopperClient {
 
         UsageEntry usageEntry = new UsageEntry();
         usageEntry.setContent(usageContent);
+        Title title = new Title();
+        title.setValue(AtomHopperConstants.IDENTITY_EVENT);
+        usageEntry.setTitle(title);
         return usageEntry;
     }
 
     public void setConfig(Configuration config) {
         this.config = config;
+    }
+
+    public void setDefaultGroupService(DefaultGroupService defaultGroupService) {
+        this.defaultGroupService = defaultGroupService;
     }
 
     public void setHttpClient(HttpClient httpClient) {
