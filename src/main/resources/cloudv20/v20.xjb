@@ -346,7 +346,7 @@
     <jaxb:bindings schemaLocation="identity.xsd" node="/xs:schema">
         <jaxb:bindings node="xs:complexType[@name='CloudIdentityType']">
             <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="user"/>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="product"/>
             </annox:annotate>
         </jaxb:bindings>
     </jaxb:bindings>

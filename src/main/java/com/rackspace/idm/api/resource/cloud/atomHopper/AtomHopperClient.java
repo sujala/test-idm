@@ -236,13 +236,18 @@ public class AtomHopperClient {
         v1Element.setType(eventType);
         v1Element.setResourceId(user.getId());
         v1Element.setResourceName(user.getUsername());
-        v1Element.setRegion(Region.fromValue(user.getRegion()));
+        for(Region region : Region.values()){
+            if(region.value().equals(user.getRegion())){
+                v1Element.setRegion(Region.fromValue(user.getRegion()));
+            }
+        }
+        v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
 
         UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
-        usageContent.setType(MediaType.APPLICATION_XML);
+        usageContent.setType(MediaType.APPLICATION_ATOM_XML);
 
         UsageEntry usageEntry = new UsageEntry();
         usageEntry.setContent(usageContent);
