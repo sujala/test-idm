@@ -99,12 +99,14 @@ public class DefaultUserService implements UserService {
         validateUsername(user);
         setPasswordIfNecessary(user);
 
-        Region region = cloudRegionService.getDefaultRegion(config.getString("cloud.region"));
-        if (region == null) {
-            throw new BadRequestException("default cloud region was not found");
-        }
+        if (user.getRegion() == null) {
+            Region region = cloudRegionService.getDefaultRegion(config.getString("cloud.region"));
+            if (region == null) {
+                throw new BadRequestException("default cloud region was not found");
+            }
 
-        user.setRegion(region.getName());
+            user.setRegion(region.getName());
+        }
 
         if (user.isEnabled() == null) {
             user.setEnabled(user.isEnabled());
