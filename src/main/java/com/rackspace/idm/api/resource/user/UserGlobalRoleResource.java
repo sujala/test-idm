@@ -78,7 +78,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, role);
         }
 
         if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
@@ -134,7 +134,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, tenantRole);
 
             if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
                 throw new BadRequestException("A user cannot delete their own identity role");
@@ -183,7 +183,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, tenantRole);
         }
 
         List<String> identityRoleNames = getIdentityRoleNames();

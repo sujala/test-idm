@@ -882,7 +882,6 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 addApplicationRoleToUser(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
                 addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
                 deleteApplicationRoleFromUser(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
                 deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
                 deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),

@@ -338,7 +338,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, role);
 
             TenantRole tenantrole = new TenantRole();
             tenantrole.setName(role.getName());
@@ -696,7 +696,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = userService.getUserByAuthToken(authToken);
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, cRole);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, cRole);
 
             checkForMultipleIdentityRoles(user, cRole);
 
@@ -1047,7 +1047,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole role = checkAndGetClientRole(roleId);
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, role);
 
             TenantRole tenantrole = new TenantRole();
             tenantrole.setClientId(role.getClientId());
