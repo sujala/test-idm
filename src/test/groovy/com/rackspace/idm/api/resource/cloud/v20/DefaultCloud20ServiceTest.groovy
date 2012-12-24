@@ -142,13 +142,15 @@ class DefaultCloud20ServiceTest extends Specification {
         mockQuestionConverter()
         allowAccess()
 
+
         when:
-        def response = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion()).build()
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-        1 * questionService.addQuestion(_)
-        response.build().status == 201
+        1 * questionService.addQuestion(_) >> "questionId"
+        response.getStatus() == 201
+        response.getMetadata().get("location")[0] != null
     }
 
     def "question create handles exceptions"() {
@@ -168,10 +170,45 @@ class DefaultCloud20ServiceTest extends Specification {
         def response3 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
 
         then:
-
         response1.build().status == 401
         response2.build().status == 403
         response3.build().status == 400
+    }
+
+    def "question delete verifies Identity admin level access and deletes question"() {
+        given:
+        mockQuestionConverter()
+        allowAccess()
+
+        when:
+        def response = cloud20Service.deleteQuestion(authToken, questionId).build()
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * questionService.deleteQuestion(questionId)
+
+        response.getStatus() == 204
+    }
+
+    def "question delete handles exceptions"() {
+        given:
+        mockQuestionConverter()
+
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
+
+        when:
+        def response1 = cloud20Service.deleteQuestion(authToken, questionId).build()
+        def response2 = cloud20Service.deleteQuestion(authToken, questionId).build()
+        def response3 = cloud20Service.deleteQuestion(authToken, questionId).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 404
+
     }
 
     def "question update verifies Identity admin level access"() {
@@ -212,18 +249,109 @@ class DefaultCloud20ServiceTest extends Specification {
         response4.build().status == 404
     }
 
+    def "question(s) get verifies user level access"() {
+        given:
+        mockQuestionConverter()
+        allowAccess()
+
+        when:
+        cloud20Service.getQuestion(authToken, questionId)
+        cloud20Service.getQuestions(authToken)
+
+        then:
+        2 * authorizationService.verifyUserLevelAccess(_)
+    }
+
+    def "question(s) get gets question and returns it (them)"() {
+        given:
+        mockQuestionConverter()
+        allowAccess()
+
+        def questionList = [
+                entityFactory.createQuestion("1", "question1"),
+                entityFactory.createQuestion("2", "question2")
+        ].asList()
+
+        when:
+        def response1 = cloud20Service.getQuestion(authToken, questionId).build()
+        def response2 = cloud20Service.getQuestions(authToken).build()
+
+        then:
+        1 * questionService.getQuestion(_) >> entityFactory.createQuestion()
+        1 * questionService.getQuestions() >> questionList
+
+        1 * questionConverter.toQuestion(_) >> { arg1 ->
+            def arg = arg1.get(0)
+            assert(arg.id.equalsIgnoreCase("id"))
+            assert(arg.question.equalsIgnoreCase("question"))
+            return jaxbMock
+        }
+
+        1 * questionConverter.toQuestions(_) >> { arg1 ->
+            def list = arg1.get(0)
+            assert(list.size == 2)
+            assert(list.get(0).id.equals("1"))
+            assert(list.get(0)).question.equals("question1")
+            assert(list.get(1).id.equals("2"))
+            assert(list.get(1).question.equals("question2"))
+            return jaxbMock
+        }
+
+        response1.status == 200
+        response2.status == 200
+
+    }
+
+    def "question(s) get handles exceptions"() {
+        given:
+        mockQuestionConverter()
+
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(authToken) >>> [ null, mock, Mock(ScopeAccess) ]
+        authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
+        questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
+
+        def secondMock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, secondMock ]
+        authorizationService.verifyUserLevelAccess(secondMock) >> { throw new ForbiddenException() }
+
+        when:
+        def questionResponse1 = cloud20Service.getQuestion(authToken, questionId).build()
+        def questionResponse2 = cloud20Service.getQuestion(authToken, questionId).build()
+        def questionResponse3 = cloud20Service.getQuestion(authToken, "1$questionId").build()
+
+        def questionsResponse1 = cloud20Service.getQuestions("1$authToken").build()
+        def questionsResponse2 = cloud20Service.getQuestions("1$authToken").build()
+
+        then:
+        questionResponse1.status == 401
+        questionResponse2.status == 403
+        questionResponse3.status == 404
+
+        questionsResponse1.status == 401
+        questionsResponse2.status == 403
+    }
+
     //Helper Methods
     def uriInfo() {
         return uriInfo("http://absolute.path/to/resource")
     }
 
     def uriInfo(String absolutePath) {
-        UriInfo uriInfo = Mock()
-        UriBuilder uriBuilder = Mock()
-        uriInfo.getRequestUriBuilder() >> uriBuilder
-        uriInfo.getAbsolutePath() >> new URI(absolutePath)
-        uriBuilder.path(_) >> uriBuilder
-        uriBuilder.build() >> new URI()
+        def absPath
+        try {
+            absPath = new URI(absolutePath)
+        } catch (Exception ex) {
+            absPath = new URI("http://absolute.path/to/resource")
+        }
+
+        def builderMock = Mock(UriBuilder)
+        def uriInfo = Mock(UriInfo)
+
+        builderMock.path(_ as String) >> builderMock
+        builderMock.build() >> absPath
+        uriInfo.getRequestUriBuilder() >> builderMock
+
         return uriInfo
     }
 
@@ -452,19 +580,6 @@ class DefaultCloud20ServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "question delete verifies Identity admin level access"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        questionDao.getObject(_) >> question()
-
-        when:
-        cloud20Service.deleteQuestion(authToken, questionId)
-
-        then:
-        1 *  authorizationService.verifyIdentityAdminLevelAccess(_);
-    }
 
     def "get question verifies default and user admin"() {
         given:
@@ -483,32 +598,6 @@ class DefaultCloud20ServiceTest extends Specification {
 
         then:
         2 *  authorizationService.verifyUserLevelAccess(_);
-    }
-
-    def "add question calls ldap"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        cloud20Service.addQuestion(uriInfo(), authToken, jaxbQuestion())
-
-        then:
-        1 * questionDao.addQuestion(_)
-    }
-
-    def "add question returns 200 on success and location header"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responseBuilder = cloud20Service.addQuestion(uriInfo(), authToken, jaxbQuestion())
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 201
-        response.getMetadata().get("location").get(0) != null
     }
 
     // this is for release (1.0.12 or seomthing) migration related 12/03/2012
