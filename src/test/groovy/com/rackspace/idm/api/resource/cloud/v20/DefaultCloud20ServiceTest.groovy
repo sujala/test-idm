@@ -11,17 +11,17 @@ import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.validation.*
 import org.apache.commons.configuration.Configuration
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.service.ApplicationService
+import testHelpers.V1Factory
+import testHelpers.V2Factory
 
 import javax.ws.rs.core.HttpHeaders
 import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.HelperMethods
+import testHelpers.EntityFactory
 
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
@@ -75,6 +75,8 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared ExceptionHandler exceptionHandler
 
     @Shared HttpHeaders headers
+    @Shared JAXBElement jaxbMock
+
     @Shared def authToken = "token"
     @Shared def offset = "0"
     @Shared def limit = "25"
@@ -108,7 +110,9 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared def userAdminRoleId = "2"
     @Shared def defaultRoleId = "3"
 
-    @Shared def helperMethods
+    @Shared def entityFactory
+    @Shared def v1Factory
+    @Shared def v2Factory
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -121,22 +125,25 @@ class DefaultCloud20ServiceTest extends Specification {
 
         cloud20Service.exceptionHandler = exceptionHandler
 
-        helperMethods = new HelperMethods()
+        entityFactory = new EntityFactory()
+        v1Factory = new V1Factory()
+        v2Factory = new V2Factory()
     }
 
     def setup() {
-        mockConverters()
         mockServices()
 
         headers = Mock()
+        jaxbMock = Mock()
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
         given:
+        mockQuestionConverter()
         allowAccess()
 
         when:
-        def response = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+        def response = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -146,6 +153,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question create handles exceptions"() {
         given:
+        mockQuestionConverter()
+
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
 
@@ -154,9 +163,9 @@ class DefaultCloud20ServiceTest extends Specification {
         questionService.addQuestion(_) >> { throw new BadRequestException() }
 
         when:
-        def response1 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
-        def response2 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
-        def response3 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+        def response1 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response2 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response3 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
 
         then:
 
@@ -167,10 +176,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question update verifies Identity admin level access"() {
         given:
+        mockQuestionConverter()
         allowAccess()
 
         when:
-        def response = cloud20Service.updateQuestion(authToken, questionId, helperMethods.createJAXBQuestion())
+        def response = cloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion())
 
         then:
         1 *  authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -179,6 +189,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question update handles exceptions"() {
         given:
+        mockQuestionConverter()
+
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
 
@@ -188,10 +200,10 @@ class DefaultCloud20ServiceTest extends Specification {
         questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
 
         when:
-        def response1 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
-        def response2 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
-        def response3 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
-        def response4 = cloud20Service.updateQuestion(authToken, "1$sharedRandom", helperMethods.createJAXBQuestion())
+        def response1 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response2 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response3 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response4 = cloud20Service.updateQuestion(authToken, "1$sharedRandom", entityFactory.createJAXBQuestion())
 
         then:
         response1.build().status == 401
@@ -219,42 +231,126 @@ class DefaultCloud20ServiceTest extends Specification {
         scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess)
     }
 
-    def mockConverters() {
-        def jaxbMock = Mock(JAXBElement)
+    def mockAuthConverter() {
         authConverter = Mock()
-        endpointConverter = Mock()
-        roleConverter = Mock()
-        serviceConverter = Mock()
-        tenantConverter = Mock()
-        tokenConverter = Mock()
-        userConverter = Mock()
-        domainConverter = Mock()
-        domainsConverter = Mock()
-        policyConverter = Mock()
-        policiesConverter = Mock()
+        authConverter.toAuthenticationResponse(_, _, _, _) >> v2Factory.createAuthenticateResponse()
+        authConverter.toImpersonationResponse(_) >> v1Factory.createImpersonationResponse()
+        cloud20Service.authConverterCloudV20 = authConverter
+    }
 
+    def mockEndpointConverter() {
+        endpointConverter = Mock()
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createCloudBaseUrl()
+        endpointConverter.toEndpoint(_) >> v2Factory.createEndpoint()
+        endpointConverter.toEndpointList(_) >> v2Factory.createEndpointList()
+        endpointConverter.toEndpointListFromBaseUrls(_) >> v2Factory.createEndpointList()
+        endpointConverter.toEndpointTemplate(_) >> v1Factory.createEndpointTemplate()
+        endpointConverter.toEndpointTemplateList(_) >> v1Factory.createEndpointTemplateList()
+        endpointConverter.toServiceCatalog(_) >> v2Factory.createServiceCatalog()
+        cloud20Service.endpointConverterCloudV20 = endpointConverter
+    }
+
+    def mockRoleConverter() {
+        roleConverter = Mock()
+        roleConverter.toRole(_) >> v2Factory.createRole()
+        roleConverter.toRoleFromClientRole(_) >> v2Factory.createRole()
+        roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
+        roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
+        cloud20Service.roleConverterCloudV20 = roleConverter
+    }
+
+    def mockServiceConverter() {
+        serviceConverter = Mock()
+        serviceConverter.toService(_) >> v1Factory.createService()
+        serviceConverter.toServiceList(_) >> v1Factory.createServiceList()
+        cloud20Service.serviceConverterCloudV20 = serviceConverter
+    }
+
+    def mockTenantConverter() {
+        tenantConverter = Mock()
+        tenantConverter.toTenant(_) >> v2Factory.createTenant()
+        tenantConverter.toTenantDO(_) >> entityFactory.createTenant()
+        tenantConverter.toTenantList(_) >> v2Factory.createTenantList()
+        cloud20Service.tenantConverterCloudV20 = tenantConverter
+    }
+
+    def mockTokenConverter() {
+        tokenConverter = Mock()
+        tokenConverter.toToken(_) >> v2Factory.createToken()
+        tokenConverter.toToken(_, _) >> v2Factory.createToken()
+        cloud20Service.tokenConverterCloudV20 = tokenConverter
+    }
+
+    def mockUserConverter() {
+        userConverter = Mock()
+        userConverter.toUser(_) >> v2Factory.createUser()
+        userConverter.toUserDO(_) >> entityFactory.createUser()
+        userConverter.toUserForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
+        userConverter.toUserList(_) >> v2Factory.createUserList()
+        cloud20Service.userConverterCloudV20 = userConverter
+    }
+
+    def mockDomainConverter() {
+        domainConverter = Mock()
+        domainConverter.toDomain(_) >> v1Factory.createDomain()
+        domainConverter.toDomainDO(_) >> entityFactory.createDomain()
+        cloud20Service.domainConverterCloudV20 = domainConverter
+    }
+
+    def mockDomainsConverter() {
+        domainsConverter = Mock()
+        domainsConverter.toDomains(_) >> v1Factory.createDomains()
+        domainsConverter.toDomainsDO(_) >> entityFactory.createDomains()
+        cloud20Service.domainsConverterCloudV20 = domainsConverter
+    }
+
+    def mockPolicyConverter() {
+        policyConverter = Mock()
+        policyConverter.toPolicy(_) >> v1Factory.createPolicy()
+        policyConverter.toPolicyDO(_) >> entityFactory.createPolicy()
+        policyConverter.toPolicyForPolicies(_) >> v1Factory.createPolicy()
+        cloud20Service.policyConverterCloudV20 = policyConverter
+    }
+
+    def mockPoliciesConverter() {
+        policiesConverter = Mock()
+        policiesConverter.toPolicies(_) >> v1Factory.createPolicies()
+        policiesConverter.toPoliciesDO(_) >> entityFactory.createPolicies()
+        cloud20Service.policiesConverterCloudV20 = policiesConverter
+    }
+
+    def mockCapabilityConverter() {
         capabilityConverter = Mock()
-        capabilityConverter.fromCapability(_) >> helperMethods.createEntityCapability()
-        capabilityConverter.fromCapabilities(_) >> helperMethods.createEntityCapabilities()
+        capabilityConverter.fromCapability(_) >> entityFactory.createCapability()
+        capabilityConverter.fromCapabilities(_) >> entityFactory.createCapabilities()
         capabilityConverter.toCapability(_) >> jaxbMock
         capabilityConverter.toCapabilities(_) >> jaxbMock
         capabilityConverter.toServiceApis(_) >> jaxbMock
         cloud20Service.capabilityConverterCloudV20 = capabilityConverter
+    }
 
+
+    def mockRegionConverter() {
         regionConverter = Mock()
-        //regionConverter.fromRegion(_) >> helperMethods.createEntityRegion()
+        regionConverter.fromRegion(_) >> entityFactory.createRegion()
         regionConverter.toRegion(_) >> jaxbMock
         regionConverter.toRegions(_) >> jaxbMock
         cloud20Service.regionConverterCloudV20 = regionConverter
+    }
 
+    def mockQuestionConverter() {
         questionConverter = Mock()
-        questionConverter.fromQuestion(_) >> helperMethods.createEntityQuestion()
+        questionConverter.fromQuestion(_) >> entityFactory.createQuestion()
         questionConverter.toQuestion(_) >> jaxbMock
         questionConverter.toQuestions(_) >> jaxbMock
         cloud20Service.questionConverter = questionConverter
+    }
 
+    def mockSecretQAConverter() {
         secretQAConverter = Mock()
-        //secretQAConverter.fromSecretQA(_) >> helperMethods.createSecretQA()
+        secretQAConverter.fromSecretQA(_) >> entityFactory.createSecretQA()
         secretQAConverter.toSecretQA(_) >> jaxbMock
         secretQAConverter.toSecretQAs(_) >> jaxbMock
         cloud20Service.secretQAConverterCloudV20 = secretQAConverter

@@ -1,0 +1,145 @@
+package testHelpers
+
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
+import org.openstack.docs.identity.api.v2.*
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: jacob
+ * Date: 12/24/12
+ * Time: 10:14 AM
+ * To change this template use File | Settings | File Templates.
+ */
+class V2Factory {
+
+    private static ID = "id"
+    private static USERNAME = "username"
+    private static DISPLAY = "displayName"
+    private static EMAIL = "email@example.com"
+    private static NAME = "name"
+    private static DESCRIPTION = "description"
+
+    def creatEndpoint() {
+        return createEndpoint(ID, null, NAME, null)
+    }
+
+    def createEndpoint(String id, String tenantId, String name, String region) {
+        new Endpoint().with {
+            it.id = id ? id : ID
+            it.tenantId = tenantId ? tenantId : "tenantId"
+            it.name = name ? name : NAME
+            it.region = region ? region : "region"
+            return it
+        }
+    }
+
+    def createEndpointList() {
+        return createEndpointList(null)
+    }
+
+    def createEndpointList(List<Endpoint> endpoints) {
+        def list = endpoints ? endpoints : [].asList()
+        new EndpointList().with {
+            it.getEndpoint().addAll(list)
+            return it
+        }
+    }
+
+    def createAuthenticateResponse() {
+        return createAuthenticateResponse("token", null, null)
+    }
+
+    def createAuthenticateResponse(String token, ServiceCatalog serviceCatalog, UserForAuthenticateResponse user) {
+        new AuthenticateResponse().with {
+            it.token = token ? token : "token"
+            it.serviceCatalog = serviceCatalog ? serviceCatalog : new ServiceCatalog()
+            it.user = user ? user : new UserForAuthenticateResponse()
+            return it
+        }
+    }
+
+    def createServiceCatalog() {
+        return createServiceCatalog(null)
+    }
+
+    def createServiceCatalog(List<ServiceForCatalog> services) {
+        def list = services ? services : [].asList()
+        new ServiceCatalog().with {
+            it.getService().addAll(list)
+        }
+    }
+    def createTenant() {
+        return createTenant(ID, NAME, DISPLAY, DESCRIPTION, true)
+    }
+
+    def createTenant(String id, String name, String displayName, String description, boolean enabled) {
+        new Tenant().with {
+            it.id = id ? id : ID
+            it.description = description ? description : DESCRIPTION
+            it.displayName = displayName ? displayName : DISPLAY
+            it.name = name ? name : NAME
+            it.enabled = enabled
+            return it
+        }
+    }
+
+    def createTenants() {
+        return createTenants(null)
+    }
+
+    def createTenants(List<Tenant> tenantList) {
+        def list = tenantList ? tenantList : [].asList
+        new Tenants().with {
+            it.getTenant().addAll(list)
+            return it
+        }
+    }
+    def createToken() {
+        return createToken(ID)
+    }
+    def createToken(String id) {
+        new Token().with {
+            it.id = id ? id : ID
+            it.expires = new XMLGregorianCalendarImpl()
+            it.tenant = new TenantForAuthenticateResponse()
+            return it
+        }
+    }
+    def createUser(String id, String username, String displayName, String email, boolean enabled) {
+        new User().with {
+            it.id = id ? id : ID
+            it.username = username ? username : USERNAME
+            it.displayName = displayName ? displayName : DISPLAY
+            it.email = email ? email : EMAIL
+            it.enabled
+            return it
+        }
+    }
+
+    def createUserForAuthenticateResponse() {
+        return createUserForAuthenticateResponse(ID, NAME, null)
+    }
+
+    def createUserForAuthenticateResponse(String id, String name, RoleList roleList) {
+        def RoleList list = roleList ? roleList : new RoleList()
+        new UserForAuthenticateResponse().with {
+            it.id = id ? id : ID
+            it.name = name ? name : NAME
+            it.roles = list
+            return it
+        }
+    }
+
+    def createUserList() {
+        return createUserList(null)
+    }
+
+    def createUserList(List<User> userList) {
+        def list = userList ? userList : [].asList()
+        new UserList().with {
+            it.getUser().addAll(list)
+            return it
+        }
+    }
+
+}
