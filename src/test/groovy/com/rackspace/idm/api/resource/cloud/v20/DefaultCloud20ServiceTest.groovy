@@ -147,6 +147,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         limit == 25
     }
 
+    def "validateLimit limit is too large sets to default max"() {
+        when:
+        config.getInt(_) >> 99
+        def value = 100
+        def limit = defaultCloud20Service.validateLimit(value.toString())
+
+        then:
+        limit == 99
+    }
+
+    def "validateLimit limit is valid sets limit"() {
+        when:
+        config.getInt(_) >> 100
+        def value = 99
+        def limit = defaultCloud20Service.validateLimit(value.toString())
+
+        then:
+        limit == value
+    }
+
     def "question create verifies Identity admin level access and adds Question"() {
         given:
         mockQuestionConverter(defaultCloud20Service)
@@ -987,26 +1007,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * userDao.getAllUsersNoLimit(_)
-    }
-
-
-
-    def "validateLimit limit is too large sets to default max"() {
-        when:
-        def value = configuration.getInt("ldap.paging.limit.max") + 1
-        def limit = defaultCloud20Service.validateLimit(value.toString())
-
-        then:
-        limit == configuration.getInt("ldap.paging.limit.max")
-    }
-
-    def "validateLimit limit is valid sets limit"() {
-        when:
-        def value = configuration.getInt("ldap.paging.limit.max") - 1
-        def limit = defaultCloud20Service.validateLimit(value.toString())
-
-        then:
-        limit == value
     }
 
     def "addUserRole verifies userAdmin Access"() {
