@@ -1,84 +1,28 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import com.rackspace.idm.api.resource.cloud.Validator
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.validation.*
-import org.apache.commons.configuration.Configuration
-import spock.lang.Shared
-import spock.lang.Specification
 import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.api.resource.pagination.Paginator
-import com.rackspace.idm.domain.service.ApplicationService
+import spock.lang.Shared
+import testHelpers.RootServiceTest
 import testHelpers.V1Factory
 import testHelpers.V2Factory
 
-import javax.ws.rs.core.HttpHeaders
-import com.rackspace.idm.domain.service.TenantService
 import testHelpers.EntityFactory
 
-import javax.ws.rs.core.UriBuilder
-import javax.ws.rs.core.UriInfo
 import javax.xml.bind.JAXBElement
 
 /*
  This class uses the application context but mocks the ldap interactions
  */
-class DefaultCloud20ServiceTest extends Specification {
+class DefaultCloud20ServiceTest extends RootServiceTest {
 
-    @Shared DefaultCloud20Service cloud20Service
-    @Shared AuthenticationService authenticationService
-    @Shared AuthorizationService authorizationService
-    @Shared CapabilityService capabilityService
-    @Shared ApplicationService clientService
-    @Shared Configuration config
-    @Shared EndpointService endpointService
-    @Shared JAXBObjectFactories objFactories
-    @Shared ScopeAccessService scopeAccessService
-    @Shared TenantService tenantService
-    @Shared GroupService cloudGroupService
-    @Shared UserService userService
-    @Shared AtomHopperClient atomHopperClient
-    @Shared Validator validator
-    @Shared Validator20 validator20
-    @Shared DefaultRegionService defaultRegionService
-    @Shared DomainService domainService
-    @Shared PolicyService policyService
-    @Shared QuestionService questionService
-    @Shared SecretQAService qaService
-    @Shared Paginator paginator
-    @Shared PrecedenceValidator precedenceValidator
-    @Shared DelegateCloud20Service delegateCloud20Service
-    @Shared CloudGroupBuilder cloudGroupBuilder
-    @Shared CloudKsGroupBuilder cloudKsGroupBuilder
-
-    @Shared AuthConverterCloudV20 authConverter
-    @Shared EndpointConverterCloudV20 endpointConverter
-    @Shared RoleConverterCloudV20 roleConverter
-    @Shared ServiceConverterCloudV20 serviceConverter
-    @Shared TenantConverterCloudV20 tenantConverter
-    @Shared TokenConverterCloudV20 tokenConverter
-    @Shared UserConverterCloudV20 userConverter
-    @Shared DomainConverterCloudV20 domainConverter
-    @Shared DomainsConverterCloudV20 domainsConverter
-    @Shared PolicyConverterCloudV20 policyConverter
-    @Shared PoliciesConverterCloudV20 policiesConverter
-    @Shared CapabilityConverterCloudV20 capabilityConverter
-    @Shared RegionConverterCloudV20 regionConverter
-    @Shared QuestionConverterCloudV20 questionConverter
-    @Shared SecretQAConverterCloudV20 secretQAConverter
     @Shared ExceptionHandler exceptionHandler
+    @Shared JAXBObjectFactories objFactories
 
-    @Shared HttpHeaders headers
-    @Shared def jaxbMock
-
-    @Shared def authToken = "token"
     @Shared def offset = "0"
     @Shared def limit = "25"
     @Shared def sharedRandomness = UUID.randomUUID()
@@ -111,20 +55,18 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared def userAdminRoleId = "2"
     @Shared def defaultRoleId = "3"
 
-    @Shared def entityFactory
-    @Shared def v1Factory
-    @Shared def v2Factory
-
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
-        cloud20Service = new DefaultCloud20Service()
+        //service being tested
+        defaultCloud20Service = new DefaultCloud20Service()
+
         exceptionHandler = new ExceptionHandler()
         objFactories = new JAXBObjectFactories()
 
         exceptionHandler.objFactories = objFactories
 
-        cloud20Service.exceptionHandler = exceptionHandler
+        defaultCloud20Service.exceptionHandler = exceptionHandler
 
         entityFactory = new EntityFactory()
         v1Factory = new V1Factory()
@@ -133,6 +75,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def setup() {
         mockServices()
+        mockMisc()
 
         headers = Mock()
         jaxbMock = Mock(JAXBElement)
@@ -140,7 +83,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateOffset null offset sets offset to 0"() {
         when:
-        def offset = cloud20Service.validateOffset(null)
+        def offset = defaultCloud20Service.validateOffset(null)
 
         then:
         offset == 0
@@ -148,7 +91,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateOffset negative offset throws bad request"() {
         when:
-        cloud20Service.validateOffset("-5")
+        defaultCloud20Service.validateOffset("-5")
 
         then:
         thrown(BadRequestException)
@@ -156,7 +99,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateOffset blank offset throws bad request"() {
         when:
-        cloud20Service.validateOffset("")
+        defaultCloud20Service.validateOffset("")
 
         then:
         thrown(BadRequestException)
@@ -164,7 +107,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateOffset valid offset sets offset"() {
         when:
-        def offset = cloud20Service.validateOffset("10")
+        def offset = defaultCloud20Service.validateOffset("10")
 
         then:
         offset == 10
@@ -173,7 +116,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit null limit sets limit to default"() {
         when:
         config.getInt(_) >> 25
-        def limit = cloud20Service.validateLimit(null)
+        def limit = defaultCloud20Service.validateLimit(null)
 
         then:
         limit == 25
@@ -181,7 +124,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateLimit negative limit throws bad request"() {
         when:
-        cloud20Service.validateLimit("-5")
+        defaultCloud20Service.validateLimit("-5")
 
         then:
         thrown(BadRequestException)
@@ -189,7 +132,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateLimit blank limit throws bad request"() {
         when:
-        cloud20Service.validateLimit("")
+        defaultCloud20Service.validateLimit("")
 
         then:
         thrown(BadRequestException)
@@ -198,7 +141,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit limit is 0 sets to default"() {
         when:
         config.getInt(_) >> 25
-        def limit = cloud20Service.validateLimit("0")
+        def limit = defaultCloud20Service.validateLimit("0")
 
         then:
         limit == 25
@@ -206,12 +149,12 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question create verifies Identity admin level access and adds Question"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
 
         when:
-        def response = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion()).build()
+        def response = defaultCloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion()).build()
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -222,7 +165,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question create handles exceptions"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -232,9 +175,9 @@ class DefaultCloud20ServiceTest extends Specification {
         questionService.addQuestion(_) >> { throw new BadRequestException() }
 
         when:
-        def response1 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
-        def response2 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
-        def response3 = cloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response1 = defaultCloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response2 = defaultCloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+        def response3 = defaultCloud20Service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
 
         then:
         response1.build().status == 401
@@ -244,11 +187,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question delete verifies Identity admin level access and deletes question"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        def response = cloud20Service.deleteQuestion(authToken, questionId).build()
+        def response = defaultCloud20Service.deleteQuestion(authToken, questionId).build()
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -259,7 +202,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question delete handles exceptions"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -267,9 +210,9 @@ class DefaultCloud20ServiceTest extends Specification {
         questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
 
         when:
-        def response1 = cloud20Service.deleteQuestion(authToken, questionId).build()
-        def response2 = cloud20Service.deleteQuestion(authToken, questionId).build()
-        def response3 = cloud20Service.deleteQuestion(authToken, questionId).build()
+        def response1 = defaultCloud20Service.deleteQuestion(authToken, questionId).build()
+        def response2 = defaultCloud20Service.deleteQuestion(authToken, questionId).build()
+        def response3 = defaultCloud20Service.deleteQuestion(authToken, questionId).build()
 
         then:
         response1.status == 401
@@ -280,11 +223,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question update verifies Identity admin level access"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        def response = cloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion())
+        def response = defaultCloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion())
 
         then:
         1 *  authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -293,11 +236,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question update updates question"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        def response = cloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion()).build()
+        def response = defaultCloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion()).build()
 
         then:
         1 * questionService.updateQuestion(questionId, _)
@@ -306,7 +249,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question update handles exceptions"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -317,10 +260,10 @@ class DefaultCloud20ServiceTest extends Specification {
         questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
 
         when:
-        def response1 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response2 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response3 = cloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response4 = cloud20Service.updateQuestion(authToken, "1$sharedRandom", entityFactory.createJAXBQuestion())
+        def response1 = defaultCloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response2 = defaultCloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response3 = defaultCloud20Service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+        def response4 = defaultCloud20Service.updateQuestion(authToken, "1$sharedRandom", entityFactory.createJAXBQuestion())
 
         then:
         response1.build().status == 401
@@ -331,12 +274,12 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question(s) get verifies user level access"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        cloud20Service.getQuestion(authToken, questionId)
-        cloud20Service.getQuestions(authToken)
+        defaultCloud20Service.getQuestion(authToken, questionId)
+        defaultCloud20Service.getQuestions(authToken)
 
         then:
         2 * authorizationService.verifyUserLevelAccess(_)
@@ -344,7 +287,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question(s) get gets question and returns it (them)"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
         allowAccess()
 
         def questionList = [
@@ -353,8 +296,8 @@ class DefaultCloud20ServiceTest extends Specification {
         ].asList()
 
         when:
-        def response1 = cloud20Service.getQuestion(authToken, questionId).build()
-        def response2 = cloud20Service.getQuestions(authToken).build()
+        def response1 = defaultCloud20Service.getQuestion(authToken, questionId).build()
+        def response2 = defaultCloud20Service.getQuestions(authToken).build()
 
         then:
         1 * questionService.getQuestion(_) >> entityFactory.createQuestion()
@@ -384,7 +327,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "question(s) get handles exceptions"() {
         given:
-        mockQuestionConverter()
+        mockQuestionConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(authToken) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -396,12 +339,12 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.verifyUserLevelAccess(secondMock) >> { throw new ForbiddenException() }
 
         when:
-        def questionResponse1 = cloud20Service.getQuestion(authToken, questionId).build()
-        def questionResponse2 = cloud20Service.getQuestion(authToken, questionId).build()
-        def questionResponse3 = cloud20Service.getQuestion(authToken, "1$questionId").build()
+        def questionResponse1 = defaultCloud20Service.getQuestion(authToken, questionId).build()
+        def questionResponse2 = defaultCloud20Service.getQuestion(authToken, questionId).build()
+        def questionResponse3 = defaultCloud20Service.getQuestion(authToken, "1$questionId").build()
 
-        def questionsResponse1 = cloud20Service.getQuestions("1$authToken").build()
-        def questionsResponse2 = cloud20Service.getQuestions("1$authToken").build()
+        def questionsResponse1 = defaultCloud20Service.getQuestions("1$authToken").build()
+        def questionsResponse2 = defaultCloud20Service.getQuestions("1$authToken").build()
 
         then:
         questionResponse1.status == 401
@@ -414,11 +357,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "updateCapabilities verifies identity admin level access"() {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(), "type", "version")
+        defaultCloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(), "type", "version")
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -426,11 +369,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "updateCapabilities updates capability" (){
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        def response = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest","1").build()
+        def response = defaultCloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest","1").build()
 
         then:
         response.status == 204
@@ -438,7 +381,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "updateCapabilities handles exceptions" (){
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -446,9 +389,9 @@ class DefaultCloud20ServiceTest extends Specification {
         capabilityService.updateCapabilities(_, _, _) >> { throw new BadRequestException() }
 
         when:
-        def response1 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
-        def response2 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
-        def response3 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+        def response1 = defaultCloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+        def response2 = defaultCloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+        def response3 = defaultCloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
 
         then:
         response1.status == 401
@@ -458,11 +401,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "capabilites get verifies identity admin level access"() {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        cloud20Service.getCapabilities(authToken, "type", "version")
+        defaultCloud20Service.getCapabilities(authToken, "type", "version")
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -470,13 +413,13 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "Capabilities get gets and returns capabilities" () {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         jaxbMock.getValue() >> v1Factory.createCapabilities([ v1Factory.createCapability("1", "capability") ].asList())
 
         when:
-        def response = cloud20Service.getCapabilities(authToken,"computeTest","1").build()
+        def response = defaultCloud20Service.getCapabilities(authToken,"computeTest","1").build()
 
         then:
         1 * capabilityService.getCapabilities(_, _)
@@ -488,7 +431,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "capabilities get handles exceptions" () {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -496,9 +439,9 @@ class DefaultCloud20ServiceTest extends Specification {
         capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
 
         when:
-        def response1 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
-        def response2 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
-        def response3 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
+        def response1 = defaultCloud20Service.getCapabilities("badToken","computeTest","1").build()
+        def response2 = defaultCloud20Service.getCapabilities("badToken","computeTest","1").build()
+        def response3 = defaultCloud20Service.getCapabilities("badToken","computeTest","1").build()
 
         then:
         response1.status == 401
@@ -508,11 +451,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "deleteCapabilities verifies identity admin level access"() {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        cloud20Service.removeCapabilities(authToken, "type", "version")
+        defaultCloud20Service.removeCapabilities(authToken, "type", "version")
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -520,11 +463,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "deleteCapabilities deletes capability" () {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
         allowAccess()
 
         when:
-        def response = cloud20Service.removeCapabilities(authToken , "computeTest", "1").build()
+        def response = defaultCloud20Service.removeCapabilities(authToken , "computeTest", "1").build()
 
         then:
         response.status == 204
@@ -533,7 +476,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "deleteCapabilities handles exceptions"() {
         given:
-        mockCapabilityConverter()
+        mockCapabilityConverter(defaultCloud20Service)
 
         def mock = Mock(ScopeAccess)
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
@@ -541,9 +484,9 @@ class DefaultCloud20ServiceTest extends Specification {
         capabilityService.removeCapabilities(_, _) >> { throw new BadRequestException() }
 
         when:
-        def response1 = cloud20Service.removeCapabilities(authToken, null, null).build()
-        def response2 = cloud20Service.removeCapabilities(authToken, null, null).build()
-        def response3 = cloud20Service.removeCapabilities(authToken, null, null).build()
+        def response1 = defaultCloud20Service.removeCapabilities(authToken, null, null).build()
+        def response2 = defaultCloud20Service.removeCapabilities(authToken, null, null).build()
+        def response3 = defaultCloud20Service.removeCapabilities(authToken, null, null).build()
 
         then:
         response1.status == 401
@@ -551,209 +494,33 @@ class DefaultCloud20ServiceTest extends Specification {
         response3.status == 400
     }
 
-    //Helper Methods
-    def uriInfo() {
-        return uriInfo("http://absolute.path/to/resource")
-    }
-
-    def uriInfo(String absolutePath) {
-        def absPath
-        try {
-            absPath = new URI(absolutePath)
-        } catch (Exception ex) {
-            absPath = new URI("http://absolute.path/to/resource")
-        }
-
-        def builderMock = Mock(UriBuilder)
-        def uriInfo = Mock(UriInfo)
-
-        builderMock.path(_ as String) >> builderMock
-        builderMock.build() >> absPath
-        uriInfo.getRequestUriBuilder() >> builderMock
-
-        return uriInfo
-    }
-
-    def allowAccess() {
-        scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess)
-    }
-
-    def mockAuthConverter() {
-        authConverter = Mock()
-        authConverter.toAuthenticationResponse(_, _, _, _) >> v2Factory.createAuthenticateResponse()
-        authConverter.toImpersonationResponse(_) >> v1Factory.createImpersonationResponse()
-        cloud20Service.authConverterCloudV20 = authConverter
-    }
-
-    def mockEndpointConverter() {
-        endpointConverter = Mock()
-        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createCloudBaseUrl()
-        endpointConverter.toEndpoint(_) >> v2Factory.createEndpoint()
-        endpointConverter.toEndpointList(_) >> v2Factory.createEndpointList()
-        endpointConverter.toEndpointListFromBaseUrls(_) >> v2Factory.createEndpointList()
-        endpointConverter.toEndpointTemplate(_) >> v1Factory.createEndpointTemplate()
-        endpointConverter.toEndpointTemplateList(_) >> v1Factory.createEndpointTemplateList()
-        endpointConverter.toServiceCatalog(_) >> v2Factory.createServiceCatalog()
-        cloud20Service.endpointConverterCloudV20 = endpointConverter
-    }
-
-    def mockRoleConverter() {
-        roleConverter = Mock()
-        roleConverter.toRole(_) >> v2Factory.createRole()
-        roleConverter.toRoleFromClientRole(_) >> v2Factory.createRole()
-        roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
-        roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
-        cloud20Service.roleConverterCloudV20 = roleConverter
-    }
-
-    def mockServiceConverter() {
-        serviceConverter = Mock()
-        serviceConverter.toService(_) >> v1Factory.createService()
-        serviceConverter.toServiceList(_) >> v1Factory.createServiceList()
-        cloud20Service.serviceConverterCloudV20 = serviceConverter
-    }
-
-    def mockTenantConverter() {
-        tenantConverter = Mock()
-        tenantConverter.toTenant(_) >> v2Factory.createTenant()
-        tenantConverter.toTenantDO(_) >> entityFactory.createTenant()
-        tenantConverter.toTenantList(_) >> v2Factory.createTenantList()
-        cloud20Service.tenantConverterCloudV20 = tenantConverter
-    }
-
-    def mockTokenConverter() {
-        tokenConverter = Mock()
-        tokenConverter.toToken(_) >> v2Factory.createToken()
-        tokenConverter.toToken(_, _) >> v2Factory.createToken()
-        cloud20Service.tokenConverterCloudV20 = tokenConverter
-    }
-
-    def mockUserConverter() {
-        userConverter = Mock()
-        userConverter.toUser(_) >> v2Factory.createUser()
-        userConverter.toUserDO(_) >> entityFactory.createUser()
-        userConverter.toUserForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
-        userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
-        userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
-        userConverter.toUserList(_) >> v2Factory.createUserList()
-        cloud20Service.userConverterCloudV20 = userConverter
-    }
-
-    def mockDomainConverter() {
-        domainConverter = Mock()
-        domainConverter.toDomain(_) >> v1Factory.createDomain()
-        domainConverter.toDomainDO(_) >> entityFactory.createDomain()
-        cloud20Service.domainConverterCloudV20 = domainConverter
-    }
-
-    def mockDomainsConverter() {
-        domainsConverter = Mock()
-        domainsConverter.toDomains(_) >> v1Factory.createDomains()
-        domainsConverter.toDomainsDO(_) >> entityFactory.createDomains()
-        cloud20Service.domainsConverterCloudV20 = domainsConverter
-    }
-
-    def mockPolicyConverter() {
-        policyConverter = Mock()
-        policyConverter.toPolicy(_) >> v1Factory.createPolicy()
-        policyConverter.toPolicyDO(_) >> entityFactory.createPolicy()
-        policyConverter.toPolicyForPolicies(_) >> v1Factory.createPolicy()
-        cloud20Service.policyConverterCloudV20 = policyConverter
-    }
-
-    def mockPoliciesConverter() {
-        policiesConverter = Mock()
-        policiesConverter.toPolicies(_) >> v1Factory.createPolicies()
-        policiesConverter.toPoliciesDO(_) >> entityFactory.createPolicies()
-        cloud20Service.policiesConverterCloudV20 = policiesConverter
-    }
-
-    def mockCapabilityConverter() {
-        capabilityConverter = Mock()
-        capabilityConverter.fromCapability(_) >> entityFactory.createCapability()
-        capabilityConverter.fromCapabilities(_) >> entityFactory.createCapabilities()
-        capabilityConverter.toCapability(_) >> jaxbMock
-        capabilityConverter.toCapabilities(_) >> jaxbMock
-        capabilityConverter.toServiceApis(_) >> jaxbMock
-        cloud20Service.capabilityConverterCloudV20 = capabilityConverter
-    }
-
-
-    def mockRegionConverter() {
-        regionConverter = Mock()
-        regionConverter.fromRegion(_) >> entityFactory.createRegion()
-        regionConverter.toRegion(_) >> jaxbMock
-        regionConverter.toRegions(_) >> jaxbMock
-        cloud20Service.regionConverterCloudV20 = regionConverter
-    }
-
-    def mockQuestionConverter() {
-        questionConverter = Mock()
-        questionConverter.fromQuestion(_) >> entityFactory.createQuestion()
-        questionConverter.toQuestion(_) >> jaxbMock
-        questionConverter.toQuestions(_) >> jaxbMock
-        cloud20Service.questionConverter = questionConverter
-    }
-
-    def mockSecretQAConverter() {
-        secretQAConverter = Mock()
-        secretQAConverter.fromSecretQA(_) >> entityFactory.createSecretQA()
-        secretQAConverter.toSecretQA(_) >> jaxbMock
-        secretQAConverter.toSecretQAs(_) >> jaxbMock
-        cloud20Service.secretQAConverterCloudV20 = secretQAConverter
-    }
-
     def mockServices() {
-        authenticationService = Mock()
-        authorizationService = Mock()
-        clientService = Mock()
-        capabilityService = Mock()
-        config = Mock()
-        endpointService = Mock()
-        objFactories = Mock()
-        scopeAccessService = Mock()
-        tenantService = Mock()
-        cloudGroupService = Mock()
-        userService = Mock()
-        atomHopperClient = Mock()
-        validator = Mock()
-        validator20 = Mock()
-        defaultRegionService = Mock()
-        domainService = Mock()
-        policyService = Mock()
-        questionService = Mock()
-        qaService = Mock()
-        paginator = Mock()
-        precedenceValidator = Mock()
-        delegateCloud20Service = Mock()
-        cloudGroupBuilder = Mock()
-        cloudKsGroupBuilder = Mock()
+        mockAuthenticationService(defaultCloud20Service)
+        mockAuthorizationService(defaultCloud20Service)
+        mockApplicationService(defaultCloud20Service)
+        mockScopeAccessService(defaultCloud20Service)
+        mockTenantService(defaultCloud20Service)
+        mockGroupService(defaultCloud20Service)
+        mockUserService(defaultCloud20Service)
+        mockDelegateCloud20Service(defaultCloud20Service)
+        mockDefaultRegionService(defaultCloud20Service)
+        mockDomainService(defaultCloud20Service)
+        mockPolicyService(defaultCloud20Service)
+        mockCapabilityService(defaultCloud20Service)
+        mockCloudRegionService(defaultCloud20Service)
+        mockQuestionService(defaultCloud20Service)
+        mockSecretQAService(defaultCloud20Service)
+    }
 
-        cloud20Service.authenticationService = authenticationService
-        cloud20Service.authorizationService = authorizationService
-        cloud20Service.capabilityService = capabilityService
-        cloud20Service.clientService = clientService
-        cloud20Service.config = config
-        cloud20Service.endpointService = endpointService
-        cloud20Service.scopeAccessService = scopeAccessService
-        cloud20Service.tenantService = tenantService
-        cloud20Service.cloudGroupService = cloudGroupService
-        cloud20Service.userService = userService
-        cloud20Service.atomHopperClient = atomHopperClient
-        cloud20Service.validator = validator
-        cloud20Service.validator20 = validator20
-        cloud20Service.defaultRegionService = defaultRegionService
-        cloud20Service.domainService = domainService
-        cloud20Service.policyService = policyService
-        cloud20Service.questionService = questionService
-        cloud20Service.secretQAService = qaService
-        cloud20Service.userPaginator = paginator
-        cloud20Service.domainPaginator = paginator
-        cloud20Service.applicationRolePaginator = paginator
-        cloud20Service.precedenceValidator = precedenceValidator
-        cloud20Service.delegateCloud20Service = delegateCloud20Service
-        cloud20Service.cloudGroupBuilder = cloudGroupBuilder
-        cloud20Service.cloudKsGroupBuilder = cloudKsGroupBuilder
+    def mockMisc() {
+        mockAtomHopperClient(defaultCloud20Service)
+        mockConfiguration(defaultCloud20Service)
+        mockCloudGroupBuilder(defaultCloud20Service)
+        mockCloudKsGroupBuilder(defaultCloud20Service)
+        mockValidator(defaultCloud20Service)
+        mockValidator20(defaultCloud20Service)
+        mockPolicyValidator(defaultCloud20Service)
+        mockPrecedenceValidator(defaultCloud20Service)
     }
 
     /*
@@ -820,7 +587,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 201
@@ -845,7 +612,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >> pattern1 >> pattern3 >> pattern2 >> pattern3
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 201
@@ -870,7 +637,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >>> [ pattern1 >> pattern2 ]
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 400
@@ -895,7 +662,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 400
@@ -918,7 +685,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 400
@@ -941,7 +708,7 @@ class DefaultCloud20ServiceTest extends Specification {
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
 
         then:
         response.build().status == 400
@@ -969,7 +736,7 @@ class DefaultCloud20ServiceTest extends Specification {
         scopeAccessService.getScopeAccessListByUserId(_) >> new ArrayList<ScopeAccess>();
 
         when:
-        def response = cloud20Service.updateUser(headers,authToken,"1",user)
+        def response = defaultCloud20Service.updateUser(headers,authToken,"1",user)
 
         then:
         response.build().status == 200
@@ -981,7 +748,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
 
         when:
-        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(_)
@@ -997,7 +764,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudUser(_) >> true
 
         when:
-        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
         response.status == 200
@@ -1011,7 +778,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
-        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
         1 * authorizationService.verifyUserAdminLevelAccess(_)
@@ -1026,7 +793,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
-        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
         1 * userDao.getAllUsersPaged(null, Integer.parseInt(offset), Integer.parseInt(limit))
@@ -1048,7 +815,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudServiceAdmin(_) >> false
 
         when:
-        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
         1 * userDao.getAllUsersPaged(_, _, _)
@@ -1064,7 +831,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudServiceAdmin(_) >> false
 
         when:
-        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
         response.status == 400
@@ -1084,7 +851,7 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getAllUsersPaged(_, _, _) >> userContext
 
         when:
-        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
         response.status == 200
@@ -1103,7 +870,7 @@ class DefaultCloud20ServiceTest extends Specification {
         tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         1 * authorizationService.verifyUserAdminLevelAccess(_)
@@ -1117,7 +884,7 @@ class DefaultCloud20ServiceTest extends Specification {
         clientDao.getClientRoleById(_) >> null
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         thrown(NotFoundException)
@@ -1128,12 +895,12 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
         DefaultUserService service = Mock()
-        cloud20Service.userService = service
+        defaultCloud20Service.userService = service
 
-        cloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
+        defaultCloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         1 * clientRoleDao.getClientRole(_) >> clientRole()
@@ -1145,15 +912,15 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
 
         DefaultUserService service = Mock()
-        cloud20Service.userService = service
+        defaultCloud20Service.userService = service
 
         tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
         clientRoleDao.getClientRole(_) >> clientRole()
-        cloud20Service.userService.getUserByScopeAccess(_) >> user("username", null)
+        defaultCloud20Service.userService.getUserByScopeAccess(_) >> user("username", null)
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         thrown(BadRequestException)
@@ -1164,15 +931,15 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
         DefaultUserService service = Mock()
-        cloud20Service.userService = service
+        defaultCloud20Service.userService = service
 
         clientRoleDao.getClientRole(_) >> clientRole()
-        cloud20Service.userService.getUserByScopeAccess(_) >> user("username", "domainId")
-        cloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
+        defaultCloud20Service.userService.getUserByScopeAccess(_) >> user("username", "domainId")
+        defaultCloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
-        def response = cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        def response = defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         response.build().status == 200
@@ -1187,7 +954,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         1 * tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>()
@@ -1216,7 +983,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
-        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         1 * userDao.getAllUsersNoLimit(_)
@@ -1227,7 +994,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit limit is too large sets to default max"() {
         when:
         def value = configuration.getInt("ldap.paging.limit.max") + 1
-        def limit = cloud20Service.validateLimit(value.toString())
+        def limit = defaultCloud20Service.validateLimit(value.toString())
 
         then:
         limit == configuration.getInt("ldap.paging.limit.max")
@@ -1236,7 +1003,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit limit is valid sets limit"() {
         when:
         def value = configuration.getInt("ldap.paging.limit.max") - 1
-        def limit = cloud20Service.validateLimit(value.toString())
+        def limit = defaultCloud20Service.validateLimit(value.toString())
 
         then:
         limit == value
@@ -1248,7 +1015,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
 
         when:
-        cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
+        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
 
         then:
         1 * authorizationService.verifyUserAdminLevelAccess(_)
@@ -1261,7 +1028,7 @@ class DefaultCloud20ServiceTest extends Specification {
         clientRoleDao.getClientRole(_) >> clientRole()
 
         when:
-        cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
+        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
 
         then:
         1 * userDao.getUserById(_) >> user("username", "domainId")
@@ -1275,7 +1042,7 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> user("username", "domainId")
 
         when:
-        cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
+        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
 
         then:
         1 * clientRoleDao.getClientRole(_) >> clientRole()
@@ -1297,7 +1064,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
         clientRoleDao.getClientRole(_) >> clientRole()
         when:
-        def status = cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status
+        def status = defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status
 
         then:
         status == 403
@@ -1321,7 +1088,7 @@ class DefaultCloud20ServiceTest extends Specification {
         clientDao.getClientRoleById(_) >> defaultUserRole
 
         when:
-        def response = cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build()
+        def response = defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build()
 
         then:
         response.status == 403
@@ -1377,15 +1144,15 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1401,7 +1168,7 @@ class DefaultCloud20ServiceTest extends Specification {
         def user = user("username", "domainId")
 
         when:
-        cloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom)
+        defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom)
 
         then:
         1 * userDao.getUserById(_) >> user
@@ -1427,9 +1194,9 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1482,11 +1249,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def  statuses = []
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
 
         then:
         for (status in statuses) {
@@ -1539,15 +1306,15 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
 
         then:
         for (status in statuses) {
@@ -1561,7 +1328,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
 
         when:
-        cloud20Service.addRole(headers, uriInfo(), authToken, role())
+        defaultCloud20Service.addRole(headers, uriInfo(), authToken, role())
 
         then:
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
@@ -1574,8 +1341,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def responses = []
-        responses.add(cloud20Service.addRole(headers, uriInfo(), authToken, role()).build())
-        responses.add(cloud20Service.addRole(headers, uriInfo(), authToken, null).build())
+        responses.add(defaultCloud20Service.addRole(headers, uriInfo(), authToken, role()).build())
+        responses.add(defaultCloud20Service.addRole(headers, uriInfo(), authToken, null).build())
 
         then:
         for (response in responses) {
@@ -1594,7 +1361,7 @@ class DefaultCloud20ServiceTest extends Specification {
         role.name = "genericRole"
 
         when:
-        def response = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def response = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
 
         then:
         response.status == 409
@@ -1611,7 +1378,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
 
         when:
-        def response = cloud20Service.addRole(headers, uriInfo(), authToken, identityRole).build()
+        def response = defaultCloud20Service.addRole(headers, uriInfo(), authToken, identityRole).build()
 
         then:
         response.status == 403
@@ -1628,8 +1395,8 @@ class DefaultCloud20ServiceTest extends Specification {
         clientRoleDao.getNextRoleId() >> "10"
 
         when:
-        def responseOne = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
-        def responseTwo = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def responseOne = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def responseTwo = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
 
         then:
         clientRoleDao.addClientRole(_, _) >> { arg1, arg2 ->
@@ -1646,7 +1413,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
 
         when:
-        def reponse = cloud20Service.deleteRole(headers, authToken, null)
+        def reponse = defaultCloud20Service.deleteRole(headers, authToken, null)
 
         then:
         reponse.build().status == 400
@@ -1662,7 +1429,7 @@ class DefaultCloud20ServiceTest extends Specification {
         clientRoleDao.getClientRole(_) >> cRole
 
         when:
-        def response = cloud20Service.deleteRole(headers, authToken, "roleId")
+        def response = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
 
         then:
         response.build().status == 403
@@ -1683,7 +1450,7 @@ class DefaultCloud20ServiceTest extends Specification {
         tenantRoleDao.getTenantRoleForUser(_) >> adminTenantRole
 
         when:
-        def response = cloud20Service.deleteRole(headers, authToken, "roleId")
+        def response = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
 
         then:
         response.build().status == 403
@@ -1705,8 +1472,8 @@ class DefaultCloud20ServiceTest extends Specification {
         tenantRoleDao.getTenantRoleForUser(_, _) >>> [ adminTenantRole, serviceAdminTenantRole ]
 
         when:
-        def responseOne = cloud20Service.deleteRole(headers, authToken, "roleId")
-        def responseTwo = cloud20Service.deleteRole(headers, authToken, "roleId")
+        def responseOne = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
+        def responseTwo = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
 
         then:
         responseOne.build().status == 204
@@ -1733,10 +1500,10 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1773,12 +1540,12 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1824,10 +1591,10 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1876,10 +1643,10 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1929,11 +1696,11 @@ class DefaultCloud20ServiceTest extends Specification {
 
         when:
         def statuses = []
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
 
         then:
         for (status in statuses) {
@@ -1957,7 +1724,7 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserByUsername(_) >> user
 
         when:
-        def responseBuilder = cloud20Service.getSecretQAs(authToken,"1")
+        def responseBuilder = defaultCloud20Service.getSecretQAs(authToken,"1")
 
         then:
         Response response = responseBuilder.build()
@@ -1983,7 +1750,7 @@ class DefaultCloud20ServiceTest extends Specification {
         questionDao.getQuestion(_) >>  question
 
         when:
-        def responseBuilder = cloud20Service.createSecretQA(authToken,"1", secretQA("1", "question", "answer"))
+        def responseBuilder = defaultCloud20Service.createSecretQA(authToken,"1", secretQA("1", "question", "answer"))
 
         then:
         Response response = responseBuilder.build()
@@ -2012,7 +1779,7 @@ class DefaultCloud20ServiceTest extends Specification {
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_,_) >> scopeAccess
 
         when:
-        def responseBuilder = cloud20Service.impersonate(headers, authToken, impersonation(user))
+        def responseBuilder = defaultCloud20Service.impersonate(headers, authToken, impersonation(user))
 
         then:
         responseBuilder.build().status == 200
@@ -2040,13 +1807,13 @@ class DefaultCloud20ServiceTest extends Specification {
         clientRoleDao = Mock()
         userDao = Mock()
 
-        cloud20Service.userService = userService
+        defaultCloud20Service.userService = userService
 
 
-        cloud20Service.scopeAccessService = scopeAccessService
+        defaultCloud20Service.scopeAccessService = scopeAccessService
         userService.scopeAccessService = scopeAccessService
 
-        cloud20Service.authorizationService = authorizationService
+        defaultCloud20Service.authorizationService = authorizationService
 
         userService.cloudRegionService = cloudRegionService
 
@@ -2056,16 +1823,16 @@ class DefaultCloud20ServiceTest extends Specification {
         userService.tenantRoleDao = tenantRoleDao
         userService.applicationRoleDao = clientRoleDao
         tenantService.tenantRoleDao = tenantRoleDao
-        clientService.tenantRoleDao = tenantRoleDao
+        applicationService.tenantRoleDao = tenantRoleDao
 
         questionService.questionDao = questionDao
 
         capabilityService.ldapCapabilityRepository = capabilityDao
 
-        clientService.applicationDao = clientDao
+        applicationService.applicationDao = clientDao
         tenantService.clientDao = clientDao
 
-        clientService.applicationRoleDao = clientRoleDao
+        applicationService.applicationRoleDao = clientRoleDao
 
         userService.userDao = userDao
         userService.scopeAccesss = scopeAccessDao

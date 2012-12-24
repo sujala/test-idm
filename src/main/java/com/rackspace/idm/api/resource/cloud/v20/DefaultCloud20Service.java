@@ -84,7 +84,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private AuthorizationService authorizationService;
 
     @Autowired
-    private ApplicationService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private Configuration config;
@@ -120,7 +120,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserConverterCloudV20 userConverterCloudV20;
 
     @Autowired
-    private GroupService cloudGroupService;
+    private GroupService groupService;
 
     @Autowired
     private UserService userService;
@@ -286,7 +286,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorizationService.verifyServiceAdminLevelAccess(tokenScopeAccess);
             }
 
-            Application service = clientService.checkAndGetApplication(role.getServiceId());
+            Application service = applicationService.checkAndGetApplication(role.getServiceId());
 
             ClientRole clientRole = new ClientRole();
             clientRole.setClientId(service.getClientId());
@@ -294,7 +294,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientRole.setName(role.getName());
             clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
 
-            clientService.addClientRole(clientRole);
+            applicationService.addClientRole(clientRole);
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = clientRole.getId();
@@ -382,7 +382,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             client.setName(service.getName());
             client.setRCN(getRackspaceCustomerId());
 
-            this.clientService.add(client);
+            this.applicationService.add(client);
             service.setId(client.getClientId());
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -505,10 +505,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 User caller = userService.getUserByAuthToken(authToken);
                 if (caller != null) {
-                    List<Group> groups = cloudGroupService.getGroupsForUser(caller.getId());
+                    List<Group> groups = groupService.getGroupsForUser(caller.getId());
 
                     for (Group group :groups) {
-                        cloudGroupService.addGroupToUser(group.getGroupId(), userDO.getId());
+                        groupService.addGroupToUser(group.getGroupId(), userDO.getId());
                     }
                 }
             }
@@ -543,17 +543,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
         //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }
         //if caller is an admin, give user user-admin role
         if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }
         //if caller is a user admin, give user default role
         if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }
 
@@ -1019,7 +1019,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
-            this.clientService.deleteClientRole(role);
+            this.applicationService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1066,8 +1066,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Application client = clientService.checkAndGetApplication(serviceId);
-            this.clientService.delete(client.getClientId());
+            Application client = applicationService.checkAndGetApplication(serviceId);
+            this.applicationService.delete(client.getClientId());
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1309,7 +1309,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Application client = clientService.checkAndGetApplication(serviceId);
+            Application client = applicationService.checkAndGetApplication(serviceId);
             return Response.ok(objFactories.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1640,7 +1640,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(serviceId)) {
                 baseUrls = this.endpointService.getBaseUrls();
             } else {
-                Application client = clientService.checkAndGetApplication(serviceId);
+                Application client = applicationService.checkAndGetApplication(serviceId);
                 baseUrls = this.endpointService.getBaseUrlsByServiceType(client.getOpenStackType());
             }
 
@@ -1684,9 +1684,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             PaginatorContext<ClientRole> context;
 
             if (StringUtils.isBlank(serviceId)) {
-                context = this.clientService.getClientRolesPaged(offset, resultSize);
+                context = this.applicationService.getClientRolesPaged(offset, resultSize);
             } else {
-                context = this.clientService.getClientRolesPaged(serviceId, offset, resultSize);
+                context = this.applicationService.getClientRolesPaged(serviceId, offset, resultSize);
             }
 
             String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
@@ -1748,7 +1748,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            List<Application> clients = this.clientService.getOpenStackServices();
+            List<Application> clients = this.applicationService.getOpenStackServices();
 
             return Response.ok(
                     objFactories.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());
@@ -1823,7 +1823,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<Group> groups = cloudGroupService.getGroups(marker, limit);
+            List<Group> groups = groupService.getGroups(marker, limit);
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
 
@@ -1842,7 +1842,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Group group = cloudGroupService.getGroupByName(groupName);
+            Group group = groupService.getGroupByName(groupName);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
@@ -1924,7 +1924,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listDefaultRegionServices(String authToken) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-        List<Application> openStackServices = clientService.getOpenStackServices();
+        List<Application> openStackServices = applicationService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if (openStackServices != null) {
             for (Application application : openStackServices) {
@@ -1942,7 +1942,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         List<String> serviceNames = defaultRegionServices.getServiceName();
-        List<Application> openStackServices = clientService.getOpenStackServices();
+        List<Application> openStackServices = applicationService.getOpenStackServices();
 
         for (String serviceName : serviceNames) {
             boolean found = false;
@@ -1958,12 +1958,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         for (Application application : openStackServices) {
             application.setUseForDefaultRegion(false);
-            clientService.updateClient(application);
+            applicationService.updateClient(application);
         }
         for (String serviceName : serviceNames) {
-            Application application = clientService.getByName(serviceName);
+            Application application = applicationService.getByName(serviceName);
             application.setUseForDefaultRegion(true);
-            clientService.updateClient(application);
+            applicationService.updateClient(application);
         }
 
         return Response.noContent();
@@ -2334,7 +2334,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-        ClientRole role = this.clientService.getClientRoleById(roleId);
+        ClientRole role = this.applicationService.getClientRoleById(roleId);
 
         if (role == null) {
             throw new NotFoundException(String.format("Role with id: %s not found", roleId));
@@ -2594,9 +2594,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<Group> groups = cloudGroupService.getGroupsForUser(userId);
+            List<Group> groups = groupService.getGroupsForUser(userId);
             if (groups.size() == 0) {
-                Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
+                Group defGroup = groupService.getGroupById(config.getInt("defaultGroupId"));
                 groups.add(defGroup);
             }
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
@@ -2616,7 +2616,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
-            Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
+            Group group = groupService.getGroupById(Integer.parseInt(groupId));
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
@@ -2631,7 +2631,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateKsGroup(group);
             Group groupDO = cloudGroupBuilder.build(group);
-            cloudGroupService.addGroup(groupDO);
+            groupService.addGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
                     .entity(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs).getValue());
@@ -2654,7 +2654,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
-            cloudGroupService.updateGroup(groupDO);
+            groupService.updateGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
 
             return Response.ok().entity(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs).getValue());
@@ -2670,7 +2670,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
-            cloudGroupService.deleteGroup(groupId);
+            groupService.deleteGroup(groupId);
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
@@ -2683,7 +2683,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
-            Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
@@ -2696,11 +2696,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
-                    cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+                    groupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
                 }
             }
 
-            cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
+            groupService.addGroupToUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
@@ -2713,7 +2713,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
-            Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
@@ -2728,7 +2728,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
-            if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
+            if (!groupService.isUserInGroup(userId, group.getGroupId())) {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
 
@@ -2736,10 +2736,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
-                    cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                    groupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
                 }
             }
-            cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
+            groupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
@@ -2754,8 +2754,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             String iMarker = validateMarker(marker);
             int iLimit = validateLimit(limit);
-            cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
-            Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
+            groupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            Users users = groupService.getAllEnabledUsers(filters, iMarker, iLimit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
         } catch (Exception e) {
@@ -2887,7 +2887,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public void setUserGroupService(GroupService cloudGroupService) {
-        this.cloudGroupService = cloudGroupService;
+        this.groupService = cloudGroupService;
     }
 
     public void setUserService(UserService userService) {
@@ -3238,7 +3238,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     ClientRole checkAndGetClientRole(String id) {
-        ClientRole cRole = this.clientService.getClientRoleById(id);
+        ClientRole cRole = this.applicationService.getClientRoleById(id);
         if (cRole == null) {
             String errMsg = String.format("Role %s not found", id);
             logger.warn(errMsg);
@@ -3482,8 +3482,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.endpointConverterCloudV20 = endpointConverterCloudV20;
     }
 
-    public void setClientService(ApplicationService clientService) {
-        this.clientService = clientService;
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
     }
 
     public void setConfig(Configuration config) {
@@ -3538,8 +3538,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.delegateCloud20Service = delegateCloud20Service;
     }
 
-    public void setCloudGroupService(GroupService cloudGroupService) {
-        this.cloudGroupService = cloudGroupService;
+    public void setGroupService(GroupService groupService) {
+        this.groupService = groupService;
     }
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {

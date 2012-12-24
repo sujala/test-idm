@@ -175,7 +175,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setTenantService(tenantService);
         defaultCloud20Service.setTokenConverterCloudV20(tokenConverterCloudV20);
         defaultCloud20Service.setEndpointService(endpointService);
-        defaultCloud20Service.setClientService(clientService);
+        defaultCloud20Service.setApplicationService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         defaultCloud20Service.setAtomHopperClient(atomHopperClient);
@@ -5857,7 +5857,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void listUserGroups_groupsSizeNotZero_responseOk_returns200() throws Exception {
         GroupService cloudGroupService = mock(GroupService.class);
-        spy.setCloudGroupService(cloudGroupService);
+        spy.setGroupService(cloudGroupService);
         Group group = new Group();
         List<Group> groups = new ArrayList<Group>();
         groups.add(group);
