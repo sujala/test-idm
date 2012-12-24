@@ -3,7 +3,7 @@ package com.rackspace.idm.api.resource.user
 import spock.lang.Specification
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.validation.RolePrecedenceValidator
+import com.rackspace.idm.validation.PrecedenceValidator
 import spock.lang.Shared
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
@@ -41,7 +41,7 @@ import com.rackspace.idm.exception.NotFoundException
 class UserGlobalRoleResourceGroovyTest extends Specification {
 
     @Autowired Configuration config
-    @Autowired RolePrecedenceValidator precedenceValidator
+    @Autowired PrecedenceValidator precedenceValidator
     @Autowired UserGlobalRoleResource globalRoleResource
     @Autowired DefaultApplicationService applicationService
     @Autowired DefaultUserService userService

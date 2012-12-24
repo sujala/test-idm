@@ -5,7 +5,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.validation.RolePrecedenceValidator;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class UserGlobalRoleResource {
     @Autowired
 	private TenantService tenantService;
     @Autowired
-    private RolePrecedenceValidator precedenceValidator;
+    private PrecedenceValidator precedenceValidator;
     @Autowired
     private Configuration config;
 
@@ -269,7 +269,7 @@ public class UserGlobalRoleResource {
         return config.getString("cloudAuth.clientId");
     }
 
-    public void setPrecedenceValidator(RolePrecedenceValidator validator) {
+    public void setPrecedenceValidator(PrecedenceValidator validator) {
         this.precedenceValidator = validator;
     }
 

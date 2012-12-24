@@ -6,7 +6,6 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -14,7 +13,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
-import com.rackspace.idm.validation.RolePrecedenceValidator;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,8 +26,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User Application Roles Resource.
@@ -52,7 +49,7 @@ public class RolesResource extends ParentResource {
     }
 
     @Autowired
-    private RolePrecedenceValidator precedenceValidator;
+    private PrecedenceValidator precedenceValidator;
     @Autowired
     private Paginator<ClientRole> paginator;
     @Autowired
@@ -208,7 +205,7 @@ public class RolesResource extends ParentResource {
         this.paginator = paginator;
     }
 
-    public void setPrecedenceValidator(RolePrecedenceValidator validator) {
+    public void setPrecedenceValidator(PrecedenceValidator validator) {
         this.precedenceValidator = validator;
     }
 

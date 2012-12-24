@@ -29,7 +29,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.validation.RolePrecedenceValidator;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -201,7 +201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Paginator<ClientRole> applicationRolePaginator;
 
     @Autowired
-    private RolePrecedenceValidator precedenceValidator;
+    private PrecedenceValidator precedenceValidator;
 
     @Autowired
     private Paginator<Domain> domainPaginator;

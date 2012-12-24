@@ -22,7 +22,7 @@ import java.util.List;
  */
 
 @Component
-public class RolePrecedenceValidator {
+public class PrecedenceValidator {
 
     @Autowired
     private UserService userService;

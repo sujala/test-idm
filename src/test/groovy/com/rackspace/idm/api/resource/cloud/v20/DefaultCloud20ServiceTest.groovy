@@ -1,87 +1,78 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
-import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.Validator
-import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
-import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
+import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.validation.RolePrecedenceValidator
+import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.exception.ForbiddenException
+import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.validation.*
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-
-import javax.ws.rs.core.Response
-import javax.ws.rs.core.UriBuilder
-import javax.ws.rs.core.UriInfo
-
 import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.service.impl.*
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
-import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
-import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
-
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
-import com.rackspace.idm.api.resource.pagination.PaginatorContext
-
-import com.rackspace.idm.domain.dao.impl.LdapRepository
-import com.unboundid.ldap.sdk.Attribute
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.service.ApplicationService
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
-import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository
 
 import javax.ws.rs.core.HttpHeaders
 import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
-import org.openstack.docs.identity.api.v2.Role
-import com.rackspace.idm.exception.ForbiddenException
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.joda.time.DateTime
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA;
+import com.rackspace.idm.HelperMethods
+
+import javax.ws.rs.core.UriBuilder
+import javax.ws.rs.core.UriInfo
+import javax.xml.bind.JAXBElement
 
 /*
  This class uses the application context but mocks the ldap interactions
  */
-@ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultCloud20ServiceIntegrationTest extends Specification {
+class DefaultCloud20ServiceTest extends Specification {
 
-    @Autowired DefaultUserService userService
-    @Autowired Configuration configuration
-    @Autowired DefaultCloud20Service cloud20Service
-    @Autowired DefaultQuestionService questionService
-    @Autowired QuestionConverterCloudV20 questionConverter
-    @Autowired DefaultCapabilityService capabilityService
-    @Autowired CapabilityConverterCloudV20 capabilityConverter
-    @Autowired UserConverterCloudV20 userConverterCloudV20
-    @Autowired Paginator<User> userPaginator
-    @Autowired ApplicationService clientService
-    @Autowired TenantService tenantService
-    @Autowired Validator validator
+    @Shared DefaultCloud20Service cloud20Service
+    @Shared AuthenticationService authenticationService
+    @Shared AuthorizationService authorizationService
+    @Shared ApplicationService clientService
+    @Shared Configuration config
+    @Shared EndpointService endpointService
+    @Shared JAXBObjectFactories objFactories
+    @Shared ScopeAccessService scopeAccessService
+    @Shared TenantService tenantService
+    @Shared GroupService cloudGroupService
+    @Shared UserService userService
+    @Shared AtomHopperClient atomHopperClient
+    @Shared Validator validator
+    @Shared Validator20 validator20
+    @Shared DefaultRegionService defaultRegionService
+    @Shared DomainService domainService
+    @Shared PolicyService policyService
+    @Shared QuestionService questionService
+    @Shared SecretQAService qaService
+    @Shared Paginator paginator
+    @Shared PrecedenceValidator precedenceValidator
+    @Shared DelegateCloud20Service delegateCloud20Service
+    @Shared CloudGroupBuilder cloudGroupBuilder
+    @Shared CloudKsGroupBuilder cloudKsGroupBuilder
 
-    @Shared RolePrecedenceValidator precedenceValidator
-    @Shared DefaultScopeAccessService scopeAccessService
-    @Shared DefaultAuthorizationService authorizationService
-    @Shared DefaultCloudRegionService cloudRegionService
-    @Shared LdapUserRepository userDao
-    @Shared LdapScopeAccessPeristenceRepository scopeAccessDao
-    @Shared LdapQuestionRepository questionDao
-    @Shared LdapCapabilityRepository capabilityDao
-    @Shared LdapApplicationRepository clientDao
-    @Shared LdapTenantRepository tenantDao
-    @Shared LdapApplicationRoleRepository clientRoleDao
-    @Shared LdapTenantRoleRepository tenantRoleDao
-    @Shared LdapPatternRepository ldapPatternRepository
+    @Shared AuthConverterCloudV20 authConverter
+    @Shared EndpointConverterCloudV20 endpointConverter
+    @Shared RoleConverterCloudV20 roleConverter
+    @Shared ServiceConverterCloudV20 serviceConverter
+    @Shared TenantConverterCloudV20 tenantConverter
+    @Shared TokenConverterCloudV20 tokenConverter
+    @Shared UserConverterCloudV20 userConverter
+    @Shared DomainConverterCloudV20 domainConverter
+    @Shared DomainsConverterCloudV20 domainsConverter
+    @Shared PolicyConverterCloudV20 policyConverter
+    @Shared PoliciesConverterCloudV20 policiesConverter
+    @Shared CapabilityConverterCloudV20 capabilityConverter
+    @Shared RegionConverterCloudV20 regionConverter
+    @Shared QuestionConverterCloudV20 questionConverter
+    @Shared SecretQAConverterCloudV20 secretQAConverter
+    @Shared ExceptionHandler exceptionHandler
 
     @Shared HttpHeaders headers
     @Shared def authToken = "token"
@@ -90,7 +81,6 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def questionId = "id"
-    @Shared JAXBObjectFactories objFactories;
     @Shared def roleId = "roleId"
 
     @Shared def adminRole
@@ -118,14 +108,214 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
     @Shared def userAdminRoleId = "2"
     @Shared def defaultRoleId = "3"
 
+    @Shared def helperMethods
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
+
+        cloud20Service = new DefaultCloud20Service()
+        exceptionHandler = new ExceptionHandler()
         objFactories = new JAXBObjectFactories()
+
+        exceptionHandler.objFactories = objFactories
+
+        cloud20Service.exceptionHandler = exceptionHandler
+
+        helperMethods = new HelperMethods()
     }
 
+    def setup() {
+        mockConverters()
+        mockServices()
+
+        headers = Mock()
+    }
+
+    def "question create verifies Identity admin level access and adds Question"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * questionService.addQuestion(_)
+        response.build().status == 201
+    }
+
+    def "question create handles exceptions"() {
+        given:
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
+        questionService.addQuestion(_) >> { throw new BadRequestException() }
+
+        when:
+        def response1 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+        def response2 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+        def response3 = cloud20Service.addQuestion(uriInfo(), authToken, helperMethods.createJAXBQuestion())
+
+        then:
+
+        response1.build().status == 401
+        response2.build().status == 403
+        response3.build().status == 400
+    }
+
+    def "question update verifies Identity admin level access"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = cloud20Service.updateQuestion(authToken, questionId, helperMethods.createJAXBQuestion())
+
+        then:
+        1 *  authorizationService.verifyIdentityAdminLevelAccess(_)
+        response.build().status == 204
+    }
+
+    def "question update handles exceptions"() {
+        given:
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
+        questionService.updateQuestion(sharedRandom, _) >> { throw new BadRequestException() }
+        questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
+
+        when:
+        def response1 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
+        def response2 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
+        def response3 = cloud20Service.updateQuestion(authToken, sharedRandom, helperMethods.createJAXBQuestion())
+        def response4 = cloud20Service.updateQuestion(authToken, "1$sharedRandom", helperMethods.createJAXBQuestion())
+
+        then:
+        response1.build().status == 401
+        response2.build().status == 403
+        response3.build().status == 400
+        response4.build().status == 404
+    }
+
+    //Helper Methods
+    def uriInfo() {
+        return uriInfo("http://absolute.path/to/resource")
+    }
+
+    def uriInfo(String absolutePath) {
+        UriInfo uriInfo = Mock()
+        UriBuilder uriBuilder = Mock()
+        uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriInfo.getAbsolutePath() >> new URI(absolutePath)
+        uriBuilder.path(_) >> uriBuilder
+        uriBuilder.build() >> new URI()
+        return uriInfo
+    }
+
+    def allowAccess() {
+        scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess)
+    }
+
+    def mockConverters() {
+        def jaxbMock = Mock(JAXBElement)
+        authConverter = Mock()
+        endpointConverter = Mock()
+        roleConverter = Mock()
+        serviceConverter = Mock()
+        tenantConverter = Mock()
+        tokenConverter = Mock()
+        userConverter = Mock()
+        domainConverter = Mock()
+        domainsConverter = Mock()
+        policyConverter = Mock()
+        policiesConverter = Mock()
+
+        capabilityConverter = Mock()
+        capabilityConverter.fromCapability(_) >> helperMethods.createEntityCapability()
+        capabilityConverter.fromCapabilities(_) >> helperMethods.createEntityCapabilities()
+        capabilityConverter.toCapability(_) >> jaxbMock
+        capabilityConverter.toCapabilities(_) >> jaxbMock
+        capabilityConverter.toServiceApis(_) >> jaxbMock
+        cloud20Service.capabilityConverterCloudV20 = capabilityConverter
+
+        regionConverter = Mock()
+        //regionConverter.fromRegion(_) >> helperMethods.createEntityRegion()
+        regionConverter.toRegion(_) >> jaxbMock
+        regionConverter.toRegions(_) >> jaxbMock
+        cloud20Service.regionConverterCloudV20 = regionConverter
+
+        questionConverter = Mock()
+        questionConverter.fromQuestion(_) >> helperMethods.createEntityQuestion()
+        questionConverter.toQuestion(_) >> jaxbMock
+        questionConverter.toQuestions(_) >> jaxbMock
+        cloud20Service.questionConverter = questionConverter
+
+        secretQAConverter = Mock()
+        //secretQAConverter.fromSecretQA(_) >> helperMethods.createSecretQA()
+        secretQAConverter.toSecretQA(_) >> jaxbMock
+        secretQAConverter.toSecretQAs(_) >> jaxbMock
+        cloud20Service.secretQAConverterCloudV20 = secretQAConverter
+    }
+
+    def mockServices() {
+        authenticationService = Mock()
+        authorizationService = Mock()
+        clientService = Mock()
+        config = Mock()
+        endpointService = Mock()
+        objFactories = Mock()
+        scopeAccessService = Mock()
+        tenantService = Mock()
+        cloudGroupService = Mock()
+        userService = Mock()
+        atomHopperClient = Mock()
+        validator = Mock()
+        validator20 = Mock()
+        defaultRegionService = Mock()
+        domainService = Mock()
+        policyService = Mock()
+        questionService = Mock()
+        qaService = Mock()
+        paginator = Mock()
+        precedenceValidator = Mock()
+        delegateCloud20Service = Mock()
+        cloudGroupBuilder = Mock()
+        cloudKsGroupBuilder = Mock()
+
+        cloud20Service.authenticationService = authenticationService
+        cloud20Service.authorizationService = authorizationService
+        cloud20Service.clientService = clientService
+        cloud20Service.config = config
+        cloud20Service.endpointService = endpointService
+        cloud20Service.scopeAccessService = scopeAccessService
+        cloud20Service.tenantService = tenantService
+        cloud20Service.cloudGroupService = cloudGroupService
+        cloud20Service.userService = userService
+        cloud20Service.atomHopperClient = atomHopperClient
+        cloud20Service.validator = validator
+        cloud20Service.validator20 = validator20
+        cloud20Service.defaultRegionService = defaultRegionService
+        cloud20Service.domainService = domainService
+        cloud20Service.policyService = policyService
+        cloud20Service.questionService = questionService
+        cloud20Service.secretQAService = qaService
+        cloud20Service.userPaginator = paginator
+        cloud20Service.domainPaginator = paginator
+        cloud20Service.applicationRolePaginator = paginator
+        cloud20Service.precedenceValidator = precedenceValidator
+        cloud20Service.delegateCloud20Service = delegateCloud20Service
+        cloud20Service.cloudGroupBuilder = cloudGroupBuilder
+        cloud20Service.cloudKsGroupBuilder = cloudKsGroupBuilder
+    }
+
+    /*
     def cleanupSpec() {
     }
 
+    // Belongs in UserService groovy tests
     def "create a user sets the default region"() {
         given:
         createMocks()
@@ -145,6 +335,7 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         user.region == "DFW"
     }
 
+    //Belongs in UserService groovy tests
     def "create user without default region throws bad request"() {
         given:
         createMocks()
@@ -163,32 +354,6 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
 
         then:
         thrown(BadRequestException)
-    }
-
-    def "question create verifies Identity admin level access"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        cloud20Service.addQuestion(uriInfo(), authToken, jaxbQuestion())
-
-        then:
-        1 *  authorizationService.verifyIdentityAdminLevelAccess(_);
-    }
-
-    def "question update verifies Identity admin level access"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        questionDao.getObject(_) >> question()
-
-        when:
-        cloud20Service.updateQuestion(authToken, questionId, jaxbQuestion())
-
-        then:
-        1 *  authorizationService.verifyIdentityAdminLevelAccess(_);
     }
 
     def "question delete verifies Identity admin level access"() {
@@ -2079,4 +2244,5 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
             return it
         }
     }
+    */
 }

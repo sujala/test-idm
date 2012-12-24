@@ -27,9 +27,9 @@ import com.rackspace.idm.domain.entity.Application
  */
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class RolePrecedenceValidatorTest extends Specification {
+class PrecedenceValidatorTest extends Specification {
 
-    @Autowired private RolePrecedenceValidator validator
+    @Autowired private PrecedenceValidator validator
     @Autowired private DefaultUserService userService
     @Autowired private DefaultApplicationService applicationService
     @Autowired private Configuration configuration

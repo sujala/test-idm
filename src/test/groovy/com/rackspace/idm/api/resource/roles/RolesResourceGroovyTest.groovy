@@ -2,22 +2,17 @@ package com.rackspace.idm.api.resource.roles
 
 import spock.lang.Specification
 import spock.lang.Shared
-import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.api.converter.RolesConverter
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.validation.RolePrecedenceValidator
+import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository
-import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
-import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
 import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository
@@ -45,7 +40,7 @@ import com.rackspace.idm.exception.ForbiddenException
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RolesResourceGroovyTest extends Specification {
 
-    @Autowired RolePrecedenceValidator valdiator
+    @Autowired PrecedenceValidator valdiator
     @Autowired Paginator<ClientRole> paginator
     @Autowired Configuration config
     @Autowired DefaultUserService userService
