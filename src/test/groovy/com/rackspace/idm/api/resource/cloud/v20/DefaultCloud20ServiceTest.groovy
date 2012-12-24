@@ -35,6 +35,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared DefaultCloud20Service cloud20Service
     @Shared AuthenticationService authenticationService
     @Shared AuthorizationService authorizationService
+    @Shared CapabilityService capabilityService
     @Shared ApplicationService clientService
     @Shared Configuration config
     @Shared EndpointService endpointService
@@ -75,7 +76,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared ExceptionHandler exceptionHandler
 
     @Shared HttpHeaders headers
-    @Shared JAXBElement jaxbMock
+    @Shared def jaxbMock
 
     @Shared def authToken = "token"
     @Shared def offset = "0"
@@ -134,7 +135,73 @@ class DefaultCloud20ServiceTest extends Specification {
         mockServices()
 
         headers = Mock()
-        jaxbMock = Mock()
+        jaxbMock = Mock(JAXBElement)
+    }
+
+    def "validateOffset null offset sets offset to 0"() {
+        when:
+        def offset = cloud20Service.validateOffset(null)
+
+        then:
+        offset == 0
+    }
+
+    def "validateOffset negative offset throws bad request"() {
+        when:
+        cloud20Service.validateOffset("-5")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateOffset blank offset throws bad request"() {
+        when:
+        cloud20Service.validateOffset("")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateOffset valid offset sets offset"() {
+        when:
+        def offset = cloud20Service.validateOffset("10")
+
+        then:
+        offset == 10
+    }
+
+    def "validateLimit null limit sets limit to default"() {
+        when:
+        config.getInt(_) >> 25
+        def limit = cloud20Service.validateLimit(null)
+
+        then:
+        limit == 25
+    }
+
+    def "validateLimit negative limit throws bad request"() {
+        when:
+        cloud20Service.validateLimit("-5")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateLimit blank limit throws bad request"() {
+        when:
+        cloud20Service.validateLimit("")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateLimit limit is 0 sets to default"() {
+        when:
+        config.getInt(_) >> 25
+        def limit = cloud20Service.validateLimit("0")
+
+        then:
+        limit == 25
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
@@ -222,6 +289,19 @@ class DefaultCloud20ServiceTest extends Specification {
         then:
         1 *  authorizationService.verifyIdentityAdminLevelAccess(_)
         response.build().status == 204
+    }
+
+    def "question update updates question"() {
+        given:
+        mockQuestionConverter()
+        allowAccess()
+
+        when:
+        def response = cloud20Service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion()).build()
+
+        then:
+        1 * questionService.updateQuestion(questionId, _)
+        response.status == 204
     }
 
     def "question update handles exceptions"() {
@@ -330,6 +410,145 @@ class DefaultCloud20ServiceTest extends Specification {
 
         questionsResponse1.status == 401
         questionsResponse2.status == 403
+    }
+
+    def "updateCapabilities verifies identity admin level access"() {
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        when:
+        cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(), "type", "version")
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "updateCapabilities updates capability" (){
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        when:
+        def response = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest","1").build()
+
+        then:
+        response.status == 204
+    }
+
+    def "updateCapabilities handles exceptions" (){
+        given:
+        mockCapabilityConverter()
+
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        capabilityService.updateCapabilities(_, _, _) >> { throw new BadRequestException() }
+
+        when:
+        def response1 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+        def response2 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+        def response3 = cloud20Service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+    }
+
+    def "capabilites get verifies identity admin level access"() {
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        when:
+        cloud20Service.getCapabilities(authToken, "type", "version")
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "Capabilities get gets and returns capabilities" () {
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        jaxbMock.getValue() >> v1Factory.createCapabilities([ v1Factory.createCapability("1", "capability") ].asList())
+
+        when:
+        def response = cloud20Service.getCapabilities(authToken,"computeTest","1").build()
+
+        then:
+        1 * capabilityService.getCapabilities(_, _)
+        def com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities entity = response.getEntity()
+        entity.getCapability().get(0).id.equals("1")
+        entity.getCapability().get(0).name.equals("capability")
+        response.status == 200
+    }
+
+    def "capabilities get handles exceptions" () {
+        given:
+        mockCapabilityConverter()
+
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
+
+        when:
+        def response1 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
+        def response2 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
+        def response3 = cloud20Service.getCapabilities("badToken","computeTest","1").build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+    }
+
+    def "deleteCapabilities verifies identity admin level access"() {
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        when:
+        cloud20Service.removeCapabilities(authToken, "type", "version")
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "deleteCapabilities deletes capability" () {
+        given:
+        mockCapabilityConverter()
+        allowAccess()
+
+        when:
+        def response = cloud20Service.removeCapabilities(authToken , "computeTest", "1").build()
+
+        then:
+        response.status == 204
+        1 * capabilityService.removeCapabilities("computeTest", "1")
+    }
+
+    def "deleteCapabilities handles exceptions"() {
+        given:
+        mockCapabilityConverter()
+
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        capabilityService.removeCapabilities(_, _) >> { throw new BadRequestException() }
+
+        when:
+        def response1 = cloud20Service.removeCapabilities(authToken, null, null).build()
+        def response2 = cloud20Service.removeCapabilities(authToken, null, null).build()
+        def response3 = cloud20Service.removeCapabilities(authToken, null, null).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
     }
 
     //Helper Methods
@@ -488,6 +707,7 @@ class DefaultCloud20ServiceTest extends Specification {
         authenticationService = Mock()
         authorizationService = Mock()
         clientService = Mock()
+        capabilityService = Mock()
         config = Mock()
         endpointService = Mock()
         objFactories = Mock()
@@ -511,6 +731,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
         cloud20Service.authenticationService = authenticationService
         cloud20Service.authorizationService = authorizationService
+        cloud20Service.capabilityService = capabilityService
         cloud20Service.clientService = clientService
         cloud20Service.config = config
         cloud20Service.endpointService = endpointService
@@ -581,26 +802,8 @@ class DefaultCloud20ServiceTest extends Specification {
     }
 
 
-    def "get question verifies default and user admin"() {
-        given:
-        createMocks()
-        allowAccess()
-        def questions = new ArrayList<Question>()
-        def question = question()
-        questions.add(question)
-
-        questionDao.getObject(_) >> question
-        questionDao.getObjects(_) >> questions
-
-        when:
-        cloud20Service.getQuestion(authToken, questionId)
-        cloud20Service.getQuestions(authToken)
-
-        then:
-        2 *  authorizationService.verifyUserLevelAccess(_);
-    }
-
     // this is for release (1.0.12 or seomthing) migration related 12/03/2012
+    //Belongs in UserSErvice groovy Tests
     def "add User allows a user to be created with a username beginning with a number"() {
         given:
         createMocks()
@@ -622,7 +825,7 @@ class DefaultCloud20ServiceTest extends Specification {
         then:
         response.build().status == 201
     }
-
+    //Belongs in UserSErvice groovy Tests
     def "add User with password"() {
         given:
         createMocks()
@@ -648,6 +851,7 @@ class DefaultCloud20ServiceTest extends Specification {
         response.build().status == 201
     }
 
+    //Belongs in UserSErvice groovy Tests
     def "add User with bad password"() {
         given:
         createMocks()
@@ -663,7 +867,7 @@ class DefaultCloud20ServiceTest extends Specification {
         }
         Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
         Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
+        ldapPatternRepository.getPattern(_) >>> [ pattern1 >> pattern2 ]
 
         when:
         def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
@@ -672,6 +876,7 @@ class DefaultCloud20ServiceTest extends Specification {
         response.build().status == 400
     }
 
+    //Belongs in UserSErvice groovy Tests
     def "add User with bad password 2"() {
         given:
         createMocks()
@@ -696,6 +901,7 @@ class DefaultCloud20ServiceTest extends Specification {
         response.build().status == 400
     }
 
+    //Belongs in UserSErvice groovy Tests
     def "Add user with emtpy username"() {
         given:
         createMocks()
@@ -718,6 +924,7 @@ class DefaultCloud20ServiceTest extends Specification {
         response.build().status == 400
     }
 
+    //Belongs in UserSErvice groovy Tests
     def "Add user with null username"() {
         given:
         createMocks()
@@ -740,6 +947,7 @@ class DefaultCloud20ServiceTest extends Specification {
         response.build().status == 400
     }
 
+    //Belongs in UserSErvice groovy Tests
     def "Update user: username null" (){
         given:
         createMocks()
@@ -765,255 +973,6 @@ class DefaultCloud20ServiceTest extends Specification {
 
         then:
         response.build().status == 200
-
-
-    }
-
-    def "get question returns 200 and question"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        questionDao.getQuestion(_) >> question()
-
-        when:
-        def responseBuilder = cloud20Service.getQuestion(authToken, questionId)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 200
-        response.entity != null
-    }
-
-    def "get questions returns 200 and questions"() {
-        given:
-        createMocks()
-        allowAccess()
-        def questions = new ArrayList<Question>()
-
-        questionDao.getQuestions() >> questions
-
-        when:
-        def responseBuilder = cloud20Service.getQuestions(authToken)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 200
-        response.entity != null
-
-    }
-
-    def "update question calls ldap update"() {
-        given:
-        createMocks()
-        allowAccess()
-        questionDao.getQuestion(_) >> question()
-
-        when:
-        cloud20Service.updateQuestion(authToken, questionId, jaxbQuestion())
-
-        then:
-        1 * questionDao.updateQuestion(_)
-    }
-
-    def "update question returns 204"() {
-        given:
-        createMocks()
-        allowAccess()
-        questionDao.getQuestion(_) >> question()
-
-        when:
-        def responseBuilder = cloud20Service.updateQuestion(authToken, questionId, jaxbQuestion())
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 204
-    }
-
-    def "delete question calls ldap"() {
-        given:
-        createMocks()
-        allowAccess()
-        questionDao.getQuestion(_) >> question()
-
-        when:
-        cloud20Service.deleteQuestion(authToken, questionId)
-
-        then:
-        1 * questionDao.deleteQuestion(_)
-    }
-
-    def "delete question returns 204"() {
-        given:
-        createMocks()
-        allowAccess()
-        questionDao.getQuestion(_) >> question()
-
-        when:
-        def responseBuilder = cloud20Service.deleteQuestion(authToken, questionId)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 204
-    }
-
-    def "updateCapabilities return 204" (){
-        given:
-        createMocks()
-        allowAccess()
-        Capabilities capabilities = new Capabilities();
-        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null))
-        List<com.rackspace.idm.domain.entity.Capability> capabilitiesDO = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
-        capabilityDao.getNextCapabilityId() >> "123321"
-        capabilityDao.getObjects(_) >> capabilitiesDO
-
-        when:
-        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 204
-    }
-
-    def "updateCapabilities return 400" (){
-        given:
-        createMocks()
-        allowAccess()
-        Capabilities capabilities = new Capabilities();
-        capabilities.capability.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null))
-        capabilityDao.getNextCapabilityId() >> "123321"
-        List<com.rackspace.idm.domain.entity.Capability> capabilities2 = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
-        capabilityDao.getObjects(_) >> capabilities2
-        when:
-        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
-        def responseBuilder2 = cloud20Service.updateCapabilities(authToken,capabilities,null,"1")
-        def responseBuilder3 = cloud20Service.updateCapabilities(authToken,null,"computeTest","1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 400
-        Response response2 = responseBuilder2.build()
-        response2.status == 400
-        Response response3 = responseBuilder3.build()
-        response3.status == 400
-    }
-
-    def "updateCapabilities return 401" (){
-        given:
-        createMocks()
-        Capabilities capabilities = new Capabilities();
-
-        when:
-        def responseBuilder = cloud20Service.updateCapabilities("badToken",capabilities,"computeTest","1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 401
-    }
-
-    def "getCapabilities returns 200" () {
-        given:
-        createMocks()
-        allowAccess()
-        List<com.rackspace.idm.domain.entity.Capability> capabilities = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
-        capabilityDao.getObjects(_) >> capabilities
-        when:
-        def responseBuilder = cloud20Service.getCapabilities(authToken,"computeTest","1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 200
-    }
-
-    def "getCapabilities returns 401" () {
-        given:
-        createMocks()
-
-        when:
-        def responseBuilder = cloud20Service.getCapabilities("badToken","computeTest","1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 401
-    }
-
-    def "getCapabilities returns 400" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responseBuilder = cloud20Service.getCapabilities(authToken, null , null)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 400
-    }
-
-    def "getCapabilities null version returns 400" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responseBuilder = cloud20Service.getCapabilities(authToken, "computeTest" , null)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 400
-    }
-
-    def "deleteCapabilities returns 204" () {
-        given:
-        createMocks()
-        allowAccess()
-        List<com.rackspace.idm.domain.entity.Capability> capabilities = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
-        capabilityDao.getObjects(_) >> capabilities
-
-        when:
-        def responseBuilder = cloud20Service.removeCapabilities(authToken , "computeTest", "1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 204
-    }
-
-    def "deleteCapabilities returns 400" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responseBuilder = cloud20Service.removeCapabilities(authToken, null , null)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 400
-    }
-
-    def "deleteCapabilities with null version returns 400" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responseBuilder = cloud20Service.removeCapabilities(authToken, "computeTest" , null)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 400
-    }
-
-    def "deleteCapabilities returns 401" () {
-        given:
-        createMocks()
-
-        when:
-        def responseBuilder = cloud20Service.removeCapabilities("badToken", "computeTest" , null)
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 401
     }
 
     def "listUsers verifies token"() {
@@ -1263,69 +1222,7 @@ class DefaultCloud20ServiceTest extends Specification {
         1 * userDao.getAllUsersNoLimit(_)
     }
 
-    def "validateOffset null offset sets offset to 0"() {
-        when:
-        def offset = cloud20Service.validateOffset(null)
 
-        then:
-        offset == 0
-    }
-
-    def "validateOffset negative offset throws bad request"() {
-        when:
-        cloud20Service.validateOffset("-5")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateOffset blank offset throws bad request"() {
-        when:
-        cloud20Service.validateOffset("")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateOffset valid offset sets offset"() {
-        when:
-        def offset = cloud20Service.validateOffset("10")
-
-        then:
-        offset == 10
-    }
-
-    def "validateLimit null limit sets limit to default"() {
-        when:
-        def limit = cloud20Service.validateLimit(null)
-
-        then:
-        limit == configuration.getInt("ldap.paging.limit.default")
-    }
-
-    def "validateLimit negative limit throws bad request"() {
-        when:
-        cloud20Service.validateLimit("-5")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateLimit blank limit throws bad request"() {
-        when:
-        cloud20Service.validateLimit("")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateLimit limit is 0 sets to default"() {
-        when:
-        def limit = cloud20Service.validateLimit("0")
-
-        then:
-        limit == configuration.getInt("ldap.paging.limit.default")
-    }
 
     def "validateLimit limit is too large sets to default max"() {
         when:

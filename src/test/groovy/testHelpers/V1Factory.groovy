@@ -27,6 +27,29 @@ class V1Factory {
     private static EMAIL = "email@example.com"
     private static PASSWORD = "Password1"
 
+    def createCapability() {
+        return createCapability(ID, NAME)
+    }
+
+    def createCapability(String id, String name) {
+        new Capability().with {
+            it.id = id ? id : ID
+            it.name = name ? name : NAME
+            return it
+        }
+    }
+    def createCapabilities() {
+        return createCapabilities(null)
+    }
+
+    def createCapabilities(List<Capability> capabilityList) {
+        def list = capabilityList ? capabilityList : [].asList()
+        new Capabilities().with {
+            it.getCapability().addAll(list)
+            return it
+        }
+    }
+
     def createDomain() {
         return createDomain("id", "name", "description", true)
     }
