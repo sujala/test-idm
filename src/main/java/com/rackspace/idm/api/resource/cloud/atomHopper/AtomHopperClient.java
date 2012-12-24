@@ -6,7 +6,9 @@ import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultGroupService;
+import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -61,6 +63,9 @@ public class AtomHopperClient {
     @Autowired
     private DefaultGroupService defaultGroupService;
 
+    @Autowired
+    private DefaultTenantService defaultTenantService;
+
     private HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -102,41 +107,18 @@ public class AtomHopperClient {
      * similar problems occurred.
      */
 
-    public void asyncPost(final User user, final String authToken, final String userStatus, final String migrationStatus) {
+    public void asyncPost(final User user, final String authToken, final String userStatus) {
         Runnable task = new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
-                        postMigrateUser(user, authToken, userStatus, migrationStatus);
-                    } else {
-                        postUser(user, authToken, userStatus);
-                    }
+                    postUser(user, authToken, userStatus);
                 } catch (Exception e) {
                     logger.warn("AtomHopperClient Exception: " + e);
                 }
             }
         };
         new Thread(task, "Atom Hopper").start();
-    }
-
-    public void postMigrateUser(User user, String authToken, String userStatus, String migrationStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
-        try {
-            AtomFeed atomFeed = createAtomFeed(user, AtomHopperConstants.CONTENT_TYPE, migrationStatus);
-            Writer writer = marshalFeed(atomFeed);
-            HttpResponse response;
-            if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
-            } else {
-                response = null;
-            }
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
-                logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
-            }
-
-        } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
-        }
     }
 
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
@@ -152,6 +134,10 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
                 writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DISABLED_URL));
+            } else if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
+                entry = createEntryForUser(user, EventType.CREATE, true);
+                writer = marshalEntry(entry);
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
             } else {
                 response = null;
             }
@@ -221,8 +207,9 @@ public class AtomHopperClient {
                 cloudIdentityType.getGroups().add(group.getName());
             }
         }
-        if(user.getRoles() != null){
-            for(TenantRole tenantRole : user.getRoles()){
+        List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
+        if(tenantRoles != null){
+            for(TenantRole tenantRole : tenantRoles){
                 cloudIdentityType.getRoles().add(tenantRole.getName());
             }
         }
@@ -268,5 +255,4 @@ public class AtomHopperClient {
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
     }
-
 }

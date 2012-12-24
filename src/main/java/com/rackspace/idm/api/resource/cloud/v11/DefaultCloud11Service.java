@@ -611,7 +611,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             //AtomHopper
             UserScopeAccess usa = getAuthtokenFromRequest(request);
-            atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DELETED, null);
+            atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DELETED);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -907,7 +907,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.updateUser(gaUser, false);
             if (gaUser.isDisabled()) {
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
+                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED);
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -991,7 +991,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (gaUser.isDisabled()) {
                 scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
+                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);

@@ -519,7 +519,7 @@ public class CloudMigrationServiceTest {
         toBeReturned.getUsers().add(new UserType());
         doReturn(toBeReturned).when(spy).migrateUserByUsername("user", false, null);
         spy.migrateUserByUsername("user", false);
-        verify(atomHopperClient).asyncPost(any(User.class), anyString(), anyString(), anyString());
+        verify(atomHopperClient).asyncPost(any(User.class), anyString(), anyString());
     }
 
     @Test
