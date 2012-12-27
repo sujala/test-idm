@@ -144,6 +144,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = (UserScopeAccess) sa;
             usa.setAccessTokenExpired();
             this.scopeAccessService.updateScopeAccess(usa);
+            User user = userService.getUserByScopeAccess(sa);
+            atomHopperClient.asyncTokenPost(user, tokenId);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -610,8 +612,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.softDeleteUser(gaUser);
 
             //AtomHopper
-            UserScopeAccess usa = getAuthtokenFromRequest(request);
-            atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DELETED);
+            atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DELETED);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -907,7 +908,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.updateUser(gaUser, false);
             if (gaUser.isDisabled()) {
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED);
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -990,8 +991,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if (gaUser.isDisabled()) {
                 scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
-                UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED);
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);

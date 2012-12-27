@@ -601,7 +601,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED);
+                atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             }
             Boolean updateRegion = true;
             if (userDO.getRegion() != null && retrievedUser != null) {
@@ -1103,7 +1103,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.asyncPost(user, authToken, AtomHopperConstants.DELETED);
+            atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -3131,6 +3131,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
+        User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+        atomHopperClient.asyncTokenPost(user, authToken);
         return Response.status(204);
     }
 
@@ -3158,6 +3160,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         scopeAccessService.expireAccessToken(tokenId);
+        User user = userService.getUserByScopeAccess(scopeAccess);
+        atomHopperClient.asyncTokenPost(user, tokenId);
         return Response.status(204);
     }
 

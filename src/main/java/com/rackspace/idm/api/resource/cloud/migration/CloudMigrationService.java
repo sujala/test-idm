@@ -228,7 +228,7 @@ public class CloudMigrationService {
             }
             String adminToken = getAdminToken();
             for (com.rackspace.idm.domain.entity.User migUser : migratedUsers) {
-                atomHopperClient.asyncPost(migUser, adminToken, AtomHopperConstants.MIGRATED);
+                atomHopperClient.asyncPost(migUser, AtomHopperConstants.MIGRATED);
             }
 
             return response;

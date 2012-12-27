@@ -302,7 +302,7 @@ class Cloud20IntegrationTest extends Specification {
         def getUserByIdResponse = getUserById(serviceAdminToken, userEntity.getId())
         def getUserByNameResponse = getUserByName(serviceAdminToken, userEntity.getUsername())
         //Update User
-        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", true, null, null)
+        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUser(serviceAdminToken, userEntity.getId())

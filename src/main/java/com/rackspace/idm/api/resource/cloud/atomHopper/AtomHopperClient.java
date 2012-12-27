@@ -3,16 +3,17 @@ package com.rackspace.idm.api.resource.cloud.atomHopper;
 import com.rackspace.docs.core.event.*;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.scheme.PlainSocketFactory;
@@ -23,6 +24,9 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.message.BasicHeader;
+import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +37,9 @@ import org.w3._2005.atom.UsageEntry;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
@@ -66,12 +72,14 @@ public class AtomHopperClient {
     @Autowired
     private DefaultTenantService defaultTenantService;
 
+    @Autowired
+    private DefaultCloud20Service defaultCloud20Service;
+
     private HttpClient httpClient;
 
+    private ObjectFactory objectFactory = new ObjectFactory();
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-
-
 
     public AtomHopperClient() {
         try {
@@ -80,7 +88,7 @@ public class AtomHopperClient {
                 public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
                     return true;
                 }
-            });
+            }, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
             SchemeRegistry schemeRegistry = new SchemeRegistry();
             schemeRegistry.register(
                     new Scheme("http", PORT80, PlainSocketFactory.getSocketFactory()));
@@ -107,12 +115,26 @@ public class AtomHopperClient {
      * similar problems occurred.
      */
 
-    public void asyncPost(final User user, final String authToken, final String userStatus) {
+    public void asyncPost(final User user, final String userStatus) {
         Runnable task = new Runnable() {
             @Override
             public void run() {
                 try {
-                    postUser(user, authToken, userStatus);
+                    postUser(user, getAuthToken(), userStatus);
+                } catch (Exception e) {
+                    logger.warn("AtomHopperClient Exception: " + e);
+                }
+            }
+        };
+        new Thread(task, "Atom Hopper").start();
+    }
+
+    public void asyncTokenPost(final User user, final String revokedToken) {
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    postToken(user, getAuthToken() , revokedToken);
                 } catch (Exception e) {
                     logger.warn("AtomHopperClient Exception: " + e);
                 }
@@ -123,7 +145,7 @@ public class AtomHopperClient {
 
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            HttpResponse response;
+            HttpResponse response = null;
             Writer writer;
             UsageEntry entry;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -138,14 +160,25 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.CREATE, true);
                 writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
-            } else {
-                response = null;
             }
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
 
         } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception: " + e);
+        }
+    }
+
+    public void postToken(User user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+        try{
+            UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
+            Writer writer = marshalEntry(entry);
+            HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_REVOKED_URL));
+            if(response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                logger.warn("Failed to create feed for revoked token: " + revokedToken);
+            }
+        } catch (Exception e){
             logger.warn("AtomHopperClient Exception: " + e);
         }
     }
@@ -159,6 +192,19 @@ public class AtomHopperClient {
         return httpClient.execute(httpPost);
     }
 
+    public String getAuthToken() throws IOException, JAXBException {
+        AuthenticationRequest request = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername credentialsBase = new PasswordCredentialsRequiredUsername();
+        credentialsBase.setUsername(config.getString("ga.username"));
+        credentialsBase.setPassword(config.getString("ga.password"));
+        JAXBElement<PasswordCredentialsRequiredUsername> jaxbCredentialsBase = objectFactory.createPasswordCredentials(credentialsBase);
+        request.setCredential(jaxbCredentialsBase);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.authenticate(null, request);
+        AuthenticateResponse authenticateResponse = (AuthenticateResponse)responseBuilder.build().getEntity();
+
+        return authenticateResponse.getToken().getId();
+    }
+
     public Writer marshalFeed(AtomFeed atomFeed) throws JAXBException {
         Writer writer = new StringWriter();
         JAXBContext jc = JAXBContext.newInstance(AtomFeed.class);
@@ -170,7 +216,7 @@ public class AtomHopperClient {
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
         Writer writer = new StringWriter();
-        JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class);
+        JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class);
         Marshaller marshaller = jc.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
         marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new AHNamespaceMapper());
@@ -228,6 +274,7 @@ public class AtomHopperClient {
                 v1Element.setRegion(Region.fromValue(user.getRegion()));
             }
         }
+
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
@@ -244,12 +291,60 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
+    public UsageEntry createEntryForRevokeToken(User user, String token){
+        com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
+        cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
+        cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+
+        List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
+        for(TenantRole tenantRole : tenantRoles){
+            if(tenantRole.getTenantIds() != null){
+                for(String tenantId : tenantRole.getTenantIds()){
+                    cloudIdentityType.getTenants().add(tenantId);
+                }
+            }
+        }
+
+        V1Element v1Element = new V1Element();
+        v1Element.setType(EventType.DELETE);
+        v1Element.setResourceId(token);
+        for(Region region : Region.values()){
+            if(region.value().equals(user.getRegion())){
+                v1Element.setRegion(Region.fromValue(user.getRegion()));
+            }
+        }
+
+        v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
+        v1Element.setVersion(AtomHopperConstants.VERSION);
+        v1Element.getAny().add(cloudIdentityType);
+
+        UsageContent usageContent = new UsageContent();
+        usageContent.setEvent(v1Element);
+        usageContent.setType(MediaType.APPLICATION_ATOM_XML);
+
+        UsageEntry usageEntry = new UsageEntry();
+        usageEntry.setContent(usageContent);
+        Title title = new Title();
+        title.setValue(AtomHopperConstants.IDENTITY_TOKEN_EVENT);
+        usageEntry.setTitle(title);
+        return usageEntry;
+    }
+
     public void setConfig(Configuration config) {
         this.config = config;
     }
 
     public void setDefaultGroupService(DefaultGroupService defaultGroupService) {
         this.defaultGroupService = defaultGroupService;
+    }
+
+    public void setDefaultTenantService(DefaultTenantService defaultTenantService){
+        this.defaultTenantService = defaultTenantService;
+    }
+
+    public void setObjectFactory(ObjectFactory objectFactory){
+        this.objectFactory = objectFactory;
     }
 
     public void setHttpClient(HttpClient httpClient) {

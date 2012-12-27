@@ -4,7 +4,6 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomFeed;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedUser;
-import junit.framework.TestCase;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
@@ -20,7 +19,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import com.rackspace.idm.domain.entity.User;
 
-import javax.ws.rs.core.Response;
 import java.io.*;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -166,7 +164,7 @@ public class AtomHopperClientTest {
     @Test
     public void asyncPost_callsPostUserThrowsException_getsCaught() throws Exception {
         doThrow(new IOException()).when(spy).postUser(user, "token", "notMigrated");
-        spy.asyncPost(user, "token", "notMigrated");
+        spy.asyncPost(user, "notMigrated");
         assertTrue(true);
     }
 
@@ -175,21 +173,8 @@ public class AtomHopperClientTest {
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
-        spy.asyncPost(user, "token", "notMigrated");
+        spy.asyncPost(user, "notMigrated");
         verify(spy, timeout(100)).postUser(user, "token", "notMigrated");
-    }
-
-    @Test
-    public void postUser_statusIs201_doesNotLogUsernameAndId() throws Exception {
-        User mockUser = mock(User.class);
-        when(httpResponse.getStatusLine()).thenReturn(statusLine);
-        when(statusLine.getStatusCode()).thenReturn(201);
-        when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
-        doReturn(null).when(spy).createAtomFeed(mockUser, AtomHopperConstants.CONTENT_TYPE, null);
-        doReturn(null).when(spy).marshalFeed(null);
-        spy.postUser(mockUser, "token", "deleted");
-        verify(mockUser,never()).getUsername();
-        verify(mockUser,never()).getId();
     }
 
     @Test
