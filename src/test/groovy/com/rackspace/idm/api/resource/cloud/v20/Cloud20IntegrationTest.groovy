@@ -105,7 +105,7 @@ class Cloud20IntegrationTest extends Specification {
 
     @Shared def testIdentityRoleId = "testIdentityRoleForDelete"
     @Shared def testIdentityRole
-    @Shared def cloudAuthClientId = config.getString("cloudAuth.clientId")
+    @Shared def cloudAuthClientId
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -197,6 +197,7 @@ class Cloud20IntegrationTest extends Specification {
     def setup() {
         expireTokens(USER_FOR_AUTH, 12)
         setConfigValues()
+        cloudAuthClientId = config.getString("cloudAuth.clientId")
     }
 
     def cleanupSpec() {
