@@ -94,9 +94,11 @@ class V2Factory {
             return it
         }
     }
+
     def createToken() {
         return createToken(ID)
     }
+
     def createToken(String id) {
         new Token().with {
             it.id = id ? id : ID
@@ -105,6 +107,11 @@ class V2Factory {
             return it
         }
     }
+
+    def createUser() {
+        return createUser(ID, USERNAME, DISPLAY, EMAIL, true)
+    }
+
     def createUser(String id, String username, String displayName, String email, boolean enabled) {
         new User().with {
             it.id = id ? id : ID

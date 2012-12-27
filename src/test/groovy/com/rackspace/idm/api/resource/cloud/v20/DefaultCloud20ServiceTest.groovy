@@ -1,11 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
+import com.unboundid.ldap.sdk.Attribute
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 import testHelpers.V1Factory
@@ -22,6 +27,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     @Shared ExceptionHandler exceptionHandler
     @Shared JAXBObjectFactories objFactories
+
+    @Shared ScopeAccess scopeAccessMock
 
     @Shared def offset = "0"
     @Shared def limit = "25"
@@ -67,6 +74,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         exceptionHandler.objFactories = objFactories
 
         defaultCloud20Service.exceptionHandler = exceptionHandler
+        defaultCloud20Service.objFactories = objFactories
 
         entityFactory = new EntityFactory()
         v1Factory = new V1Factory()
@@ -514,6 +522,323 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response3.status == 400
     }
 
+    def "addUser verifies user admin access level and validates user"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * validator.validate20User(_)
+        1 * validator.validatePasswordForCreateOrUpdate(_)
+    }
+
+    def "addUser determines if caller is user-admin, admin, or service admin"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate("username", null, "displayName", null, true))
+
+        then:
+        2 * authorizationService.authorizeCloudUserAdmin(_)
+        2 * authorizationService.authorizeCloudIdentityAdmin(_)
+        2 * authorizationService.authorizeCloudServiceAdmin(_)
+    }
+
+    def "addUser creates domain"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        authorizationService.authorizeCloudUserAdmin(_) >>> [ false, false ]
+        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true, false ]
+        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false, false ]
+
+        when:
+        defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
+
+        then:
+        1 * defaultRegionService.validateDefaultRegion(_)
+        1 * domainService.createNewDomain(_)
+    }
+
+    def "addUser sets roles"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        authorizationService.authorizeCloudUserAdmin(_) >>> [ false, false ]
+        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true, true ]
+        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false, false ]
+
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+
+        when:
+        defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
+
+        then:
+        1 * tenantService.addTenantRoleToUser(_, _)
+
+    }
+
+    def "addUser handles exceptions"() {
+        given:
+        def mockConverter = Mock(UserConverterCloudV20)
+        def mock = Mock(ScopeAccess)
+
+        defaultCloud20Service.userConverterCloudV20 = mockConverter
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
+        config.getInt("numberOfSubUsers") >>> [ 0 ] >> 50
+
+        userService.getAllUsers(_) >>> [
+                entityFactory.createUsers([entityFactory.createUser()].asList())
+        ] >> entityFactory.createUsers()
+
+        userService.getUserByAuthToken(_) >>> [
+                entityFactory.createUser("username1", "displayName", "id", null, null, null, null, true),
+                entityFactory.createUser("username2", "displayName", "id", "one", null, null, null, true),
+                entityFactory.createUser("username3", "displayName", "id", "two", null, null, null, true),
+                entityFactory.createUser("username4", "displayName", "id", null, null, null, null, true),
+        ]
+
+        mockConverter.toUserDO(_) >>> [
+                entityFactory.createUser("userDO1", null, null, null, null, null, null, true),
+                entityFactory.createUser("userDO2", null, null, null, null, null, null, true),
+                entityFactory.createUser("userDO3", null, null, "domain", null, null, null, true),
+                entityFactory.createUser("userDO4", null, null, null, null, null, null, true),
+                entityFactory.createUser("userDO5", null, null, "domain", null, null, null, true)
+        ]
+
+        authorizationService.authorizeCloudUserAdmin(_) >>> [
+                true,
+                true,
+                false,
+                false
+        ]
+
+        authorizationService.authorizeCloudIdentityAdmin(_) >>> [
+                false,
+                false,
+                false,
+                true
+        ]
+
+        authorizationService.authorizeCloudServiceAdmin(_) >>> [
+                false,
+                false,
+                true,
+                false
+        ]
+
+        userService.addUser(_) >> { throw new DuplicateException() }
+
+        when:
+        def response1 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response2 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response3 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response4 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response5 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response6 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+        def response7 = defaultCloud20Service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+        response4.status == 400
+        response5.status == 400
+        response6.status == 400
+        response7.status == 409
+    }
+
+    def "listUsers gets caller"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.listUsers(headers, uriInfo(), authToken, null, null)
+
+        then:
+        1 * userService.getUser(_) >> entityFactory.createUser()
+    }
+
+    def "listUsers (defaultUser caller) succeeds"() {
+        given:
+        mockUserService(defaultCloud20Service)
+        allowAccess()
+
+        authorizationService.authorizeCloudUser(_) >> true
+
+        when:
+        def response = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, null, null).build()
+
+        then:
+        response.status == 200
+    }
+
+    def "listUsers (caller is admin or service admin) gets paged users and returns list"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        authorizationService.authorizeCloudUser(_) >> false
+        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ false, true ]
+        authorizationService.authorizeCloudServiceAdmin(_) >>> [ true, false ]
+
+        def userContextMock = Mock(PaginatorContext)
+        userContextMock.getValueList() >> [].asList()
+
+        userPaginator.createLinkHeader(_, _) >> "link header"
+
+        when:
+        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
+        def response2 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
+
+        then:
+        2 * userService.getAllUsersPaged(_, _, _) >> userContextMock
+
+        response1.status == 200
+        response2.status == 200
+        response1.getMetadata().get("Link") != null
+        response2.getMetadata().get("Link") != null
+    }
+
+    def "listUsers (caller is userAdmin) gets paged users with domain filter and returns list"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        authorizationService.authorizeCloudUser(_) >> false
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        def userContextMock = Mock(PaginatorContext)
+        userContextMock.getValueList() >> [].asList()
+
+        userService.getUser(_) >> entityFactory.createUser()
+
+        userPaginator.createLinkHeader(_, _) >> "link header"
+
+        when:
+        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
+
+        then:
+        userService.getAllUsersPaged(_, _, _) >> { arg1, arg2, arg3 ->
+            assert(arg1[0] instanceof FilterParam)
+            return userContextMock
+        }
+
+        response1.status == 200
+        response1.getMetadata().get("Link") != null
+    }
+
+    def "listUsers handles exceptions"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+
+        def mock = Mock(ScopeAccess)
+        mock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessMock = Mock()
+        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
+        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
+        userService.getUser(_) >>> [
+                entityFactory.createUser(),
+                entityFactory.createUser("username", null, null, null, null, null, null, true)
+        ]
+
+        when:
+        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response2 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response3 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, null, null).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+    }
+
+    def "listUsersWithRole verifies admin level access"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        def contextMock = Mock(PaginatorContext)
+        contextMock.getValueList() >> [].asList()
+
+        userService.getUsersWithRole(_, _, _, _) >> contextMock
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, "0", "25")
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "listUsersWithRole (user admin caller) filters by domainId"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        allowAccess()
+
+        def domainFilter = createFilter(FilterParam.FilterParamName.DOMAIN_ID, "callerDomain")
+
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "callerDomain", null, null, null, true)
+
+        def contextMock = Mock(PaginatorContext)
+        contextMock.getValueList() >> [].asList()
+
+        when:
+        defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, "0", "25")
+
+        then:
+        userService.getUsersWithRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
+            assert(arg1.size() == 2)
+            assert(arg1[0].value.equals("callerDomain"))
+            return contextMock
+        }
+    }
+
+    def allowAccess() {
+        scopeAccessMock = Mock()
+        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccessMock
+    }
+
+    def createLdapEntry() {
+        return createLdapEntry(null)
+    }
+
+    def createLdapEntry(String dn) {
+        dn = dn ? dn : "accessToken=token,cn=TOKENS,rsId=id,ou=users"
+
+        def mock = Mock(ReadOnlyEntry)
+        mock.getDN() >> dn
+        mock.getAttributeValue(_) >> { arg ->
+            return arg[0]
+        }
+        return mock
+    }
+
+    def createFilter(FilterParam.FilterParamName name, String value) {
+        return new FilterParam(name, value)
+    }
+
     def mockServices() {
         mockAuthenticationService(defaultCloud20Service)
         mockAuthorizationService(defaultCloud20Service)
@@ -541,6 +866,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockValidator20(defaultCloud20Service)
         mockPolicyValidator(defaultCloud20Service)
         mockPrecedenceValidator(defaultCloud20Service)
+        mockUserPaginator(defaultCloud20Service)
     }
 
     /*
@@ -760,125 +1086,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.build().status == 200
-    }
-
-    def "listUsers verifies token"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
-
-        then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(_)
-
-    }
-
-    def "listUsers returns caller"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        userDao.getUserByUsername(_) >> user(sharedRandom, null)
-        authorizationService.authorizeCloudUser(_) >> true
-
-        when:
-        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
-
-        then:
-        response.status == 200
-        response.entity.user[0].username.equals(sharedRandom)
-    }
-
-    def "listUsers verifies userAdmin Access level"() {
-        given:
-        createMocks()
-        allowAccess()
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-
-        when:
-        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
-
-        then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
-    }
-
-    def "listUsers calls getAllUsersPaged with no filters"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
-
-        when:
-        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
-
-        then:
-        1 * userDao.getAllUsersPaged(null, Integer.parseInt(offset), Integer.parseInt(limit))
-    }
-
-    def "listUsers calls getAllUsersPaged with domainId filter"() {
-        given:
-        createMocks()
-        allowAccess()
-        def user = user(sharedRandom, null)
-        user.domainId = "123456789"
-
-        def userList = [ ] as User[]
-        userList = userList.toList()
-        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
-        userDao.getUserByUsername(_) >> user
-        userDao.getAllUsersPaged(_, _, _) >> userContext(Integer.parseInt(offset), Integer.parseInt(limit), userList)
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
-
-        when:
-        defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
-
-        then:
-        1 * userDao.getAllUsersPaged(_, _, _)
-    }
-
-    def "listUsers throws bad request"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        userDao.getUserByUsername(_) >> user(sharedRandom, null)
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
-
-        when:
-        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "listUsers returns userList"() {
-        given:
-        createMocks()
-        allowAccess()
-        def userList = [ user("user1", null), user("user2", null), user("user3", null) ] as User[]
-        userList = userList.toList()
-        def userContext = userContext(Integer.parseInt(offset), Integer.parseInt(limit), userList)
-
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
-        userDao.getUserByUsername(_) >> user(sharedRandom, null)
-        userDao.getAllUsersPaged(_, _, _) >> userContext
-
-        when:
-        def response = defaultCloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
-
-        then:
-        response.status == 200
-        response.entity.user[0].username == "user1"
-        response.entity.user[1].username == "user2"
-        response.entity.user[2].username == "user3"
-
     }
 
     def "listUsersWithRole verifies access level"() {

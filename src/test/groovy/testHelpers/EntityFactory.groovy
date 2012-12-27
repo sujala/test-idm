@@ -277,19 +277,32 @@ class EntityFactory {
     }
 
     def createUser() {
-        return createUser(USERNAME, "displayName", ID, "domainId", EMAIL, PASSWORD, true)
+        return createUser(USERNAME, "displayName", ID, "domainId", EMAIL, PASSWORD, "region", true)
     }
 
-    def createUser(String username, String displayName, String id, String domainId, String email, String password, boolean enabled) {
+    def createUser(String username, String displayName, String id, String domainId, String email, String password, String region, boolean enabled) {
         new User().with {
             it.username = username ? username : USERNAME
             it.displayName = displayName ? displayName : DISPLAY
             it.id = id ? id : ID
-            it.domainId = domainId ? domainId : "domainId"
+            it.domainId = domainId
             it.email = email ? email : EMAIL
-            it.password = password ? password : PASSWORD
+            it.password = password
             it.enabled = enabled
+            it.region = region ? region : "region"
             it.uniqueId = "rsId=$it.id,ou=users,o=rackspace"
+            return it
+        }
+    }
+
+    def createUsers() {
+        return createUsers(null)
+    }
+
+    def createUsers(List<User> userList) {
+        def list = userList ? userList : [].asList()
+        new Users().with {
+            it.setUsers(list)
             return it
         }
     }

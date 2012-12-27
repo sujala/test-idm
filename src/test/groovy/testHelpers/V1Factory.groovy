@@ -199,7 +199,7 @@ class V1Factory {
     def createUserForCreate(String username, String password, String displayName, String email, boolean enabled) {
         new UserForCreate().with {
             it.username = username ? username : USERNAME
-            it.password = password ? password : PASSWORD
+            it.password = password
             it.displayName = displayName ? displayName : DISPLAY
             it.email = email ? email : EMAIL
             it.enabled = enabled

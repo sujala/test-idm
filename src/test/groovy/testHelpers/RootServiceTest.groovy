@@ -614,8 +614,4 @@ class RootServiceTest extends Specification {
 
         return uriInfo
     }
-
-    def allowAccess() {
-        scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess)
-    }
 }

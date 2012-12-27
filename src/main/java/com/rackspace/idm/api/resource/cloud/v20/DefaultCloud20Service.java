@@ -543,18 +543,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
         //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
         }
         //if caller is an admin, give user user-admin role
         if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
         }
         //if caller is a user admin, give user default role
         if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
         }
 
     }
@@ -2779,7 +2779,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // KSADM Extension User methods
-
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit) {
         try {
@@ -2812,7 +2811,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
+            String linkHeader = userPaginator.createLinkHeader(uriInfo, userContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)
