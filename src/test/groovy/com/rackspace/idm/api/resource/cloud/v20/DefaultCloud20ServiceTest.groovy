@@ -1607,7 +1607,7 @@ class DefaultCloud20ServiceIntegrationTest extends Specification {
         clientRoleDao.getClientRole(sharedRandom) >>> [
                 clientRole("role", 500),
                 clientRole("role", 250),
-                clientRole("role", 750),
+                clientRole("role", 100),
                 clientRole("role", 500),
                 clientRole("role", 250),
                 clientRole("role", 50)

@@ -64,6 +64,11 @@ public class RolePrecedenceValidator {
         }
     }
 
+    public void verifyCallerRolePrecendenceForAssignment(User user, TenantRole role) {
+        ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
+        verifyCallerRolePrecendenceForAssignment(user, cRole);
+    }
+
     public void verifyCallerRolePrecendenceForAssignment(User user, ClientRole role) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
         if (callerIdentityRole == null) {
