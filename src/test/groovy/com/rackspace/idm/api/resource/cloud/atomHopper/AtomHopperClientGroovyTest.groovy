@@ -1,19 +1,24 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import org.apache.commons.configuration.Configuration
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ObjectFactory
+import org.openstack.docs.identity.api.v2.Token
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
 import org.apache.http.client.HttpClient;
 
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,6 +34,7 @@ class AtomHopperClientGroovyTest extends Specification {
     @Shared Configuration config
     @Shared HttpClient httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
+    @Shared DefaultCloud20Service defaultCloud20Service
 
     def setupSpec(){
         client = new AtomHopperClient();
@@ -136,6 +142,13 @@ class AtomHopperClientGroovyTest extends Specification {
         given:
         setupMock()
         config.getString(_) >> "https://d-api1.cidm.iad2.corp.rackspace.com/" >> "auth" >> "auth123"
+        AuthenticateResponse response1 = objectFactory.createAuthenticateResponse()
+        Token token1 = new Token()
+        token1.id = "1"
+        response1.token = token1
+
+        Response.ResponseBuilder response = Response.ok(response1)
+        defaultCloud20Service.authenticate(_,_) >> response
 
         when:
         String token = client.getAuthToken()
@@ -171,5 +184,8 @@ class AtomHopperClientGroovyTest extends Specification {
         client.config = config
         httpClient = Mock()
         client.httpClient = httpClient
+        defaultCloud20Service = Mock()
+        client.defaultCloud20Service = defaultCloud20Service
+        client.objectFactory = objectFactory;
     }
 }

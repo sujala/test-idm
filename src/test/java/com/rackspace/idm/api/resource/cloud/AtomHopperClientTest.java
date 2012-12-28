@@ -169,15 +169,6 @@ public class AtomHopperClientTest {
     }
 
     @Test
-    public void asyncPost_callsPostUser() throws Exception {
-        AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
-        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
-        spy.asyncPost(user, "notMigrated");
-        verify(spy, timeout(100)).postUser(user, "token", "notMigrated");
-    }
-
-    @Test
     public void createAtomFeed_returnsAtomFeed() throws Exception {
         AtomFeed atomFeed = atomHopperClient.createAtomFeed(user, AtomHopperConstants.CONTENT_TYPE, "migrated");
         FeedUser result = atomFeed.getUser();

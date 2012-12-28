@@ -350,4 +350,8 @@ public class AtomHopperClient {
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
     }
+
+    public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
+        this.defaultCloud20Service = defaultCloud20Service;
+    }
 }
