@@ -679,37 +679,58 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return addQuestion(uriInfo, authToken, question);
     }
 
     @Override
     public ResponseBuilder getQuestion(String authToken, String questionId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return getQuestion(authToken, questionId);
     }
 
     @Override
     public ResponseBuilder getQuestions(String authToken) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return getQuestions(authToken);
     }
 
     @Override
     public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return updateQuestion(authToken, questionId, question);
     }
 
     @Override
     public ResponseBuilder deleteQuestion(String authToken, String questionId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return deleteQuestion(authToken, questionId);
     }
 
     @Override
     public ResponseBuilder getSecretQAs(String authToken, String userId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return getSecretQAs(authToken, userId);
     }
 
     @Override
     public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return createSecretQA(authToken, userId, secretQA);
     }
 
     @Override
