@@ -1154,7 +1154,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     Response.ResponseBuilder adminAuthenticateResponse(UriInfo uriInfo, JAXBElement<? extends Credentials> cred)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
-            return handleRedirect(uriInfo, "v1.1/auth");
+            return handleRedirect("v1.1/auth");
         }
 
         User user = null;
@@ -1225,7 +1225,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (cred.getValue() instanceof PasswordCredentials
                 || cred.getValue() instanceof MossoCredentials
                 || cred.getValue() instanceof NastCredentials) {
-            return handleRedirect(uriInfo, "v1.1/auth-admin");
+            return handleRedirect("v1.1/auth-admin");
         }
 
         try {
@@ -1282,10 +1282,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.clientId");
     }
 
-    private ResponseBuilder handleRedirect(UriInfo uriInfo, String path) {
+    private ResponseBuilder handleRedirect(String path) {
         try {
             Response.ResponseBuilder builder = Response.status(302); //.header("Location", uri);
-            builder.header("Location", uriInfo.getBaseUri() + config.getString("virtualPath") + path);
+            builder.header("Location", config.getString("ga.endpoint") + path);
             return builder;
         } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
