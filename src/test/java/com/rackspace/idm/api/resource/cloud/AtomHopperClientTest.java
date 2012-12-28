@@ -1,18 +1,13 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomFeed;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.cloud.atomHopper.FeedUser;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.message.BasicStatusLine;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,7 +32,6 @@ public class AtomHopperClientTest {
 
     private AtomHopperClient atomHopperClient;
     private AtomHopperClient spy;
-    private AtomFeed atomFeed;
     private User user;
     private HttpResponse httpResponse;
     private Configuration config;
@@ -48,20 +42,11 @@ public class AtomHopperClientTest {
     public void setUp() throws Exception {
         atomHopperClient = new AtomHopperClient();
 
-        atomFeed = new AtomFeed();
-        FeedUser feedUser = new FeedUser();
-
         user = new User();
         user.setId("1");
         user.setDisplayName("test");
         user.setEmail("test@rackspace.com");
         user.setUsername("test");
-
-        feedUser.setDisplayName("testDisplayName");
-        feedUser.setId("2");
-        feedUser.setUsername("test2");
-
-        atomFeed.setUser(feedUser);
 
         //Mocks
         httpResponse = mock(HttpResponse.class);
@@ -107,34 +92,9 @@ public class AtomHopperClientTest {
     }
 
     @Test
-    public void postUser_withNon201Response_logsUsernameAndId() throws Exception {
-        User mockUser = mock(User.class);
-        when(httpResponse.getStatusLine()).thenReturn(statusLine);
-        when(statusLine.getStatusCode()).thenReturn(401);
-        when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
-        doReturn(null).when(spy).createAtomFeed(mockUser, AtomHopperConstants.CONTENT_TYPE, null);
-        doReturn(null).when(spy).marshalFeed(null);
-        spy.postUser(mockUser, "token", "deleted");
-        verify(mockUser).getUsername();
-        verify(mockUser).getId();
-    }
-
-    @Test
-    public void marshalFeed() throws Exception {
-        Writer writer = atomHopperClient.marshalFeed(atomFeed);
-        assertThat("Marshal User", writer.toString(), equalTo("<entry xmlns=\"http://www.w3.org/2005/Atom\"><user displayName=\"testDisplayName\" id=\"2\" username=\"test2\"/></entry>"));
-    }
-
-    @Test
     public void createRequestEntity() throws Exception {
         InputStreamEntity reqEntity = atomHopperClient.createRequestEntity("<user name=\"Jorge\" />");
         assertThat("Input Stream is created", reqEntity != null, equalTo(true));
-    }
-
-    @Test
-    public void createAtomFeed() throws Exception {
-        AtomFeed testAtomFeed = atomHopperClient.createAtomFeed(user, AtomHopperConstants.CONTENT_TYPE, null);
-        assertThat("Test Atom Create", testAtomFeed.getUser().getId(), equalTo("1"));
     }
 
     @Test
@@ -168,12 +128,4 @@ public class AtomHopperClientTest {
         assertTrue(true);
     }
 
-    @Test
-    public void createAtomFeed_returnsAtomFeed() throws Exception {
-        AtomFeed atomFeed = atomHopperClient.createAtomFeed(user, AtomHopperConstants.CONTENT_TYPE, "migrated");
-        FeedUser result = atomFeed.getUser();
-        assertThat("username", result.getUsername(), equalTo(user.getUsername()));
-        assertThat("id", result.getId(), equalTo(user.getId()));
-        assertThat("display name", result.getDisplayName(), equalTo(user.getDisplayName()));
-    }
 }

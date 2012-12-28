@@ -208,15 +208,6 @@ public class AtomHopperClient {
         return authenticateResponse.getToken().getId();
     }
 
-    public Writer marshalFeed(AtomFeed atomFeed) throws JAXBException {
-        Writer writer = new StringWriter();
-        JAXBContext jc = JAXBContext.newInstance(AtomFeed.class);
-        Marshaller marshaller = jc.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-        marshaller.marshal(atomFeed, writer);
-        return writer;
-    }
-
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
         Writer writer = new StringWriter();
         JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class);
@@ -230,20 +221,6 @@ public class AtomHopperClient {
     public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
         InputStream isStream = new ByteArrayInputStream(s.getBytes("UTF-8"));
         return new InputStreamEntity(isStream, -1);
-    }
-
-    public AtomFeed createAtomFeed(User user, String type, String status) {
-        AtomFeed atomFeed = new AtomFeed();
-        FeedUser feedUser = new FeedUser();
-        Content content = new Content();
-        content.setType(type);
-        feedUser.setDisplayName(user.getDisplayName());
-        feedUser.setId(user.getId());
-        feedUser.setUsername(user.getUsername());
-        feedUser.setMigrationStatus(status);
-        atomFeed.setUser(feedUser);
-        atomFeed.setContentType(content);
-        return atomFeed;
     }
 
     public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
