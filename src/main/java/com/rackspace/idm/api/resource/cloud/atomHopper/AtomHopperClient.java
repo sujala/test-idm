@@ -42,11 +42,14 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -243,7 +246,7 @@ public class AtomHopperClient {
         return atomFeed;
     }
 
-    public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated){
+    public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
@@ -278,6 +281,13 @@ public class AtomHopperClient {
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
+        GregorianCalendar c = new GregorianCalendar();
+        c.setTime(new Date());
+        c.setTimeZone(TimeZone.getTimeZone("UTC"));
+        XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+        v1Element.setEventTime(now);
+        String id = UUID.randomUUID().toString();
+        v1Element.setId(id);
 
         UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
@@ -288,10 +298,11 @@ public class AtomHopperClient {
         Title title = new Title();
         title.setValue(AtomHopperConstants.IDENTITY_EVENT);
         usageEntry.setTitle(title);
+        logger.warn("Created Identity user entry with id: " + id);
         return usageEntry;
     }
 
-    public UsageEntry createEntryForRevokeToken(User user, String token){
+    public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException {
         com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
@@ -318,6 +329,13 @@ public class AtomHopperClient {
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
+        GregorianCalendar c = new GregorianCalendar();
+        c.setTime(new Date());
+        c.setTimeZone(TimeZone.getTimeZone("UTC"));
+        XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+        v1Element.setEventTime(now);
+        String id = UUID.randomUUID().toString();
+        v1Element.setId(id);
 
         UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
