@@ -682,7 +682,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return addQuestion(uriInfo, authToken, question);
+        return defaultCloud20Service.addQuestion(uriInfo, authToken, question);
     }
 
     @Override
@@ -690,7 +690,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return getQuestion(authToken, questionId);
+        return defaultCloud20Service.getQuestion(authToken, questionId);
     }
 
     @Override
@@ -698,7 +698,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return getQuestions(authToken);
+        return defaultCloud20Service.getQuestions(authToken);
     }
 
     @Override
@@ -706,7 +706,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return updateQuestion(authToken, questionId, question);
+        return defaultCloud20Service.updateQuestion(authToken, questionId, question);
     }
 
     @Override
@@ -714,7 +714,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return deleteQuestion(authToken, questionId);
+        return defaultCloud20Service.deleteQuestion(authToken, questionId);
     }
 
     @Override
@@ -722,7 +722,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return getSecretQAs(authToken, userId);
+        return defaultCloud20Service.getSecretQAs(authToken, userId);
     }
 
     @Override
@@ -730,7 +730,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (!isGASourceOfTruth()) {
             return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
         }
-        return createSecretQA(authToken, userId, secretQA);
+        return defaultCloud20Service.createSecretQA(authToken, userId, secretQA);
     }
 
     @Override
