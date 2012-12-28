@@ -12,7 +12,6 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.UserDisabledException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.*;
  * Time: 1:52 PM
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultApplicationServiceTest {
+public class DefaultApplicationServiceTestOld {
 
     @InjectMocks
     private DefaultApplicationService defaultApplicationService = new DefaultApplicationService();
@@ -301,19 +300,6 @@ public class DefaultApplicationServiceTest {
     public void getClientRolesByClientId_throwsNotFoundException() throws Exception {
         when(clientDao.getClientByClientId("blah")).thenReturn(null);
         defaultApplicationService.getClientRolesByClientId("blah");
-    }
-
-    @Test
-    public void getClientRolesPaged_callsApplicationRoleDao_getPagedUser() throws Exception {
-        when(applicationRoleDao.getClientRolesPaged(anyString(),anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        when(applicationRoleDao.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        when(applicationRoleDao.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        defaultApplicationService.getClientRolesPaged("applicationId", "roleName", 0, 10);
-        defaultApplicationService.getClientRolesPaged("applicationId", 0, 10);
-        defaultApplicationService.getClientRolesPaged(0, 10);
-        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt());
-        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyInt(), anyInt());
-        verify(applicationRoleDao).getClientRolesPaged(anyInt(), anyInt());
     }
 
     @Test

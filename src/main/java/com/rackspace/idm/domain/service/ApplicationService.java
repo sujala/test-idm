@@ -70,9 +70,9 @@ public interface ApplicationService {
     
     List<ClientRole> getAllClientRoles();
 
-    PaginatorContext<ClientRole> getClientRolesPaged(int offset, int limit);
+    PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);
 
-    PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, int offset, int limit);
+    PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
 
     PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit);
     

@@ -1674,19 +1674,20 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             int offset = validateOffset(marker);
             int resultSize = validateLimit(limit);
 
             PaginatorContext<ClientRole> context;
+            User caller = userService.getUserByAuthToken(authToken);
+            ClientRole userIdentityRole = clientService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
 
             if (StringUtils.isBlank(serviceId)) {
-                context = this.clientService.getClientRolesPaged(offset, resultSize);
+                context = this.clientService.getAvailableClientRolesPaged(offset, resultSize, userIdentityRole.getRsWeight());
             } else {
-                context = this.clientService.getClientRolesPaged(serviceId, offset, resultSize);
+                context = this.clientService.getAvailableClientRolesPaged(serviceId, offset, resultSize, userIdentityRole.getRsWeight());
             }
 
             String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
