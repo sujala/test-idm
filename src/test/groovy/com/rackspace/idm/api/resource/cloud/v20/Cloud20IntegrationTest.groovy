@@ -1415,7 +1415,7 @@ class Cloud20IntegrationTest extends Specification {
         if (limit != null) {
             queryParams.add("limit", limit)
         }
-        resource.path("OS-KSADM/roles").queryParams(queryParams).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods
