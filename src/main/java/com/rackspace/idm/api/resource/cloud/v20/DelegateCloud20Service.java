@@ -614,17 +614,26 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomains(uriInfo, authToken, marker, limit);
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomainsForUser(authToken, userId);
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomainsEndpointsForUser(authToken, userId, domainId);
     }
 
     @Override
