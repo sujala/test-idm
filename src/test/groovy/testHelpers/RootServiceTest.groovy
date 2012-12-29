@@ -28,9 +28,11 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
 import com.rackspace.idm.api.resource.cloud.v20.DelegateCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
+import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApiDocService
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthenticationService
@@ -70,6 +72,7 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -609,9 +612,60 @@ class RootServiceTest extends Specification {
         def uriInfo = Mock(UriInfo)
 
         builderMock.path(_ as String) >> builderMock
+        builderMock.path(null) >> builderMock
         builderMock.build() >> absPath
         uriInfo.getRequestUriBuilder() >> builderMock
 
         return uriInfo
+    }
+
+    def createClientScopeAccess() {
+        return createClientScopeAccess("clientId", "tokenString", false, false)
+    }
+
+    def createClientScopeAccess(String clientId, String tokenString, boolean isExpired, boolean refresh) {
+        def scopeAccess = Mock(ClientScopeAccess)
+        clientId = clientId ? clientId : "clientId"
+        tokenString = tokenString ? tokenString : "tokenString"
+        def dn = "accessToken$tokenString,cn=TOKENS,clientId=$clientId"
+        def entry = createEntry(dn)
+
+        scopeAccess.getAccessTokenString() >> tokenString
+        scopeAccess.getClientId() >> clientId
+        scopeAccess.getUniqueId() >> dn
+        scopeAccess.getLDAPEntry() >> entry
+    }
+
+    def createUserScopeAccess() {
+        return createUserScopeAccess("tokenString", "userRsId", "clientId", false, false)
+    }
+
+    def createUserScopeAccess(String tokenString, String userRsId, String clientId, boolean isExpired, boolean refresh) {
+        def scopeAccess = Mock(UserScopeAccess)
+        tokenString = tokenString ? tokenString : "tokenString"
+        userRsId = userRsId ? userRsId : "userRsId"
+        clientId = clientId ? clientId : "clientId"
+        def dn = "acessToken=$tokenString,cn=TOKENS,rsId=$userRsId,ou=users"
+        def entry = createEntry(dn)
+
+        scopeAccess.getAccessTokenString() >> tokenString
+        scopeAccess.getUserRsId() >> userRsId
+        scopeAccess.getClientId() >> clientId
+        scopeAccess.getLDAPEntry() >> entry
+        scopeAccess.getUniqueId() >> dn
+        scopeAccess.isAccessTokenExpired(_) >> isExpired
+        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
+
+        return scopeAccess
+    }
+
+    def createEntry(String dn) {
+        dn = dn ? dn : "accessToken=GENERIC,cn=TOKENS,dn=STRING"
+        def mock = Mock(ReadOnlyEntry)
+        mock.getDN() >> dn
+        mock.getAttributeValue(_) >> { arg ->
+            return arg[0]
+        }
+        return mock
     }
 }

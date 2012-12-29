@@ -9,6 +9,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
+import org.openstack.docs.identity.api.v2.Token
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +27,8 @@ class V1Factory {
     private static DISPLAY = "displayName"
     private static EMAIL = "email@example.com"
     private static PASSWORD = "Password1"
+
+    private static V2Factory v2Factory = new V2Factory()
 
     def createCapability() {
         return createCapability(ID, NAME)
@@ -102,13 +105,20 @@ class V1Factory {
         }
     }
 
-    def createImpersonationResponse() {
-        return createImpersonationResponse("token")
+    ImpersonationRequest createImpersonationRequest(org.openstack.docs.identity.api.v2.User user) {
+        new ImpersonationRequest().with {
+            it.user = user
+            return it
+        }
     }
 
-    def createImpersonationResponse(String token) {
+    def createImpersonationResponse() {
+        return createImpersonationResponse(v2Factory.createToken())
+    }
+
+    def createImpersonationResponse(Token token) {
         new ImpersonationResponse().with {
-            it.token = token ? token : "token"
+            it.token = token ? token : v2Factory.createToken()
             return it
         }
     }
@@ -141,32 +151,31 @@ class V1Factory {
     }
 
     def createRole() {
-        return createRole(ID, NAME, DESCRIPTION, null)
+        return createRole(NAME, "serviceId", "tenantid")
     }
 
-    def createRole(String id, String name, String description, String tenantId) {
+    def createRole(String name, String serviceId, String tenantId) {
         new Role().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
-            it.description = description ? description : DESCRIPTION
-            it.serviceId = "serviceId"
-            it.tenantId = tenantId ? tenantId : "tenantId"
+            it.name = name
+            it.description = DESCRIPTION
+            it.serviceId = serviceId
+            it.tenantId = tenantId
             return it
         }
     }
 
-    def createRoleList() {
-        return createRoleList(null)
+    def createSecretQA() {
+        return createSecretQA("1", "answer", "question")
     }
 
-    def createRoleList(List<Role> roleList) {
-        def list = createRoleList() ? roleList : [].asList()
-        new RoleList().with {
-            it.getRole().addAll(list)
+    def createSecretQA(String id, String answer, String question) {
+        new SecretQA().with {
+            it.id = id ? id : "1"
+            it.answer  = answer
+            it.question = question
             return it
         }
     }
-
     def createService() {
         return createService(ID, NAME, DESCRIPTION)
     }

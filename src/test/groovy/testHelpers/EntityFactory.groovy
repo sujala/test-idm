@@ -169,6 +169,16 @@ class EntityFactory {
         }
     }
 
+    def pattern(String name, String regex, String errMsg, String description){
+        new Pattern().with {
+            it.name = name
+            it.regex = regex
+            it.errMsg = errMsg
+            it.description = description
+            return it
+        }
+    }
+
     def createPolicies() {
         return createPolicies(null)
     }
@@ -246,6 +256,18 @@ class EntityFactory {
         }
     }
 
+    def createSecretQAs() {
+        return createSecretQAs(null)
+    }
+
+    def createSecretQAs(List<SecretQA> qaList) {
+        def list = qaList ? qaList : [].asList()
+        new SecretQAs().with {
+            it.getSecretqa().addAll(list)
+            return it
+        }
+    }
+
     def createTenant() {
         return createTenant(ID, NAME, DISPLAY, DESCRIPTION, true)
     }
@@ -265,9 +287,9 @@ class EntityFactory {
         createTenantRole("roleRsId", ID, NAME, CLIENT, null)
     }
 
-    def createTenantRole(String roleRsId, String id, String name, String clientId, String[] tenantIds) {
+    def createTenantRole(String roleRsId, String userRsId, String name, String clientId, String[] tenantIds) {
         new TenantRole().with {
-            it.userId = id ? id : ID
+            it.userId = userRsId ? userRsId : ID
             it.clientId = clientId ? clientId : CLIENT
             it.name = name ? name : NAME
             it.roleRsId = roleRsId ? roleRsId : "roleRsId"

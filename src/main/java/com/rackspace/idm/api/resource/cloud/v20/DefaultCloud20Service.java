@@ -262,7 +262,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
-
         try {
             ScopeAccess tokenScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
@@ -314,7 +313,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
-
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
@@ -2320,7 +2318,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             capabilityService.removeCapabilities(type, version);
             return Response.noContent();  //To change body of implemented methods use File | Settings | File Templates.
         }catch (Exception ex){
-                 return exceptionHandler.exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -2332,36 +2330,40 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {
-        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-        ClientRole role = this.applicationService.getClientRoleById(roleId);
+        try {
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            ClientRole role = this.applicationService.getClientRoleById(roleId);
 
-        if (role == null) {
-            throw new NotFoundException(String.format("Role with id: %s not found", roleId));
-        }
-
-        FilterParam[] filters;
-        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
-        if (callerIsUserAdmin) {
-            User caller = this.userService.getUserByScopeAccess(scopeAccess);
-            if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
-                throw new BadRequestException("User-admin has no domain");
+            if (role == null) {
+                throw new NotFoundException(String.format("Role with id: %s not found", roleId));
             }
-            filters = setFilters(role.getId(), caller.getDomainId());
-        } else {
-            filters = setFilters(role.getId(), null);
+
+            FilterParam[] filters;
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+
+            if (callerIsUserAdmin) {
+                User caller = this.userService.getUserByScopeAccess(scopeAccess);
+                if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
+                    throw new BadRequestException("User-admin has no domain");
+                }
+                filters = setFilters(role.getId(), caller.getDomainId());
+            } else {
+                filters = setFilters(role.getId(), null);
+            }
+
+            int iMarker = validateOffset(marker);
+            int iLimit = validateLimit(limit);
+
+            PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, iMarker, iLimit);
+
+            String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
+
+            return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
+                    .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
         }
-
-        int iMarker = validateOffset(marker);
-        int iLimit = validateLimit(limit);
-
-        PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, iMarker, iLimit);
-
-        String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
-
-        return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
     }
 
     protected FilterParam[] setFilters(String roleId, String domainId) {

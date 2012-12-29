@@ -7,12 +7,15 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.ForbiddenException
+import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
-import com.unboundid.ldap.sdk.Attribute
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import testHelpers.RootServiceTest
+
 import testHelpers.V1Factory
 import testHelpers.V2Factory
 
@@ -36,31 +39,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def sharedRandom
     @Shared def questionId = "id"
     @Shared def roleId = "roleId"
-
-    @Shared def adminRole
-    @Shared def userAdminRole
-    @Shared def defaultUserRole
-    @Shared def specialRole
-    @Shared def tenantRoleList
-    @Shared def serviceAdminRole
-    @Shared def genericRole
-    @Shared def userAdmin
-    @Shared def defaultUser
-    @Shared def userNotInDomain
-    @Shared def adminUser
-    @Shared def serviceAdmin
-
-    @Shared def defaultTenantRole
-    @Shared def userAdminTenantRole
-    @Shared def adminTenantRole
-    @Shared def serviceAdminTenantRole
-
-    @Shared def List<ClientRole> identityRoles
-
-    @Shared def serviceAdminRoleId = "0"
-    @Shared def adminRoleId = "1"
-    @Shared def userAdminRoleId = "2"
-    @Shared def defaultRoleId = "3"
+    @Shared def userId = "userId"
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -84,6 +63,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def setup() {
         mockServices()
         mockMisc()
+
+        config.getBoolean("useCloudAuth") >> false
 
         headers = Mock()
         jaxbMock = Mock(JAXBElement)
@@ -693,17 +674,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowAccess()
 
         authorizationService.authorizeCloudUser(_) >> false
-        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ false, true ]
-        authorizationService.authorizeCloudServiceAdmin(_) >>> [ true, false ]
+        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true ]
+        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false ] >> true
 
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
+        userService.getUser(_) >> entityFactory.createUser()
+
         userPaginator.createLinkHeader(_, _) >> "link header"
 
         when:
-        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
-        def response2 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
+        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response2 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
         2 * userService.getAllUsersPaged(_, _, _) >> userContextMock
@@ -731,7 +714,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userPaginator.createLinkHeader(_, _) >> "link header"
 
         when:
-        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, "0", "25").build()
+        def response1 = defaultCloud20Service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
         userService.getAllUsersPaged(_, _, _) >> { arg1, arg2, arg3 ->
@@ -783,60 +766,837 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
-        defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, "0", "25")
+        defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit)
 
         then:
         1 * authorizationService.verifyUserAdminLevelAccess(_)
     }
 
-    def "listUsersWithRole (user admin caller) filters by domainId"() {
+    def "listUsersWithRole (user admin caller) filters by domain and gets users"() {
         given:
         mockUserConverter(defaultCloud20Service)
+        mockUserPaginator(defaultCloud20Service)
         allowAccess()
-
-        def domainFilter = createFilter(FilterParam.FilterParamName.DOMAIN_ID, "callerDomain")
+        def domain = "callerDomain"
 
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "callerDomain", null, null, null, true)
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, domain, null, null, null, true)
+        userPaginator.createLinkHeader(_, _) >> "link header"
 
         def contextMock = Mock(PaginatorContext)
         contextMock.getValueList() >> [].asList()
 
         when:
-        defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, "0", "25")
+        def response = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
 
         then:
         userService.getUsersWithRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
             assert(arg1.size() == 2)
-            assert(arg1[0].value.equals("callerDomain"))
+            assert(arg1[0].value.equals(domain))
             return contextMock
         }
+
+        response.getMetadata().get("Link") != null
+        response.status == 200
     }
 
-    def allowAccess() {
-        scopeAccessMock = Mock()
-        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
-        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccessMock
-    }
+    def "listUsersWithRole (admin or service admin) filters only by role and gets users"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        mockUserPaginator(defaultCloud20Service)
+        allowAccess()
 
-    def createLdapEntry() {
-        return createLdapEntry(null)
-    }
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole(roleId, null, null, null)
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        userPaginator.createLinkHeader(_, _) >> "link header"
 
-    def createLdapEntry(String dn) {
-        dn = dn ? dn : "accessToken=token,cn=TOKENS,rsId=id,ou=users"
+        def contextMock = Mock(PaginatorContext)
+        contextMock.getValueList() >> [].asList()
 
-        def mock = Mock(ReadOnlyEntry)
-        mock.getDN() >> dn
-        mock.getAttributeValue(_) >> { arg ->
-            return arg[0]
+        when:
+        def response = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+
+        then:
+        userService.getUsersWithRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
+            assert(arg1.size() == 1)
+            assert(arg1[0].value.equals(roleId))
+            return contextMock
         }
-        return mock
+
+        response.getMetadata().get("Link") != null
+        response.status == 200
     }
 
-    def createFilter(FilterParam.FilterParamName name, String value) {
-        return new FilterParam(name, value)
+    def "listUsersWithRole handles exceptions"() {
+        given:
+        mockUserConverter(defaultCloud20Service)
+        mockUserPaginator(defaultCloud20Service)
+
+        def scopeAccessMock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
+
+        applicationService.getClientRoleById(_) >>> [ null ] >> entityFactory.createClientRole()
+
+        authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
+
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, null, null, null, null, true)
+
+
+        when:
+        def response1 = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+        def response2 = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+        def response3 = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+        def response4 = defaultCloud20Service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 404
+        response4.status == 400
+    }
+
+    def "addUserRole verifies user-admin access and role to add"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole(roleId, null, null, null)
+    }
+
+    def "addUserRole verifies caller precedence over user to modify and role to add"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        defaultCloud20Service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, roleToAdd)
+    }
+
+    def "addUserRole checks for existing identity:* role"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        defaultCloud20Service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * tenantService.getGlobalRolesForUser(_)
+
+    }
+
+    def "addUserRole verifies user is within caller domain when caller is user-admin"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = Mock(User)
+        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        defaultCloud20Service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * caller.getDomainId() >> user.getDomainId()
+    }
+
+    def "addUserRole adds role"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        def response = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        1 * tenantService.addTenantRoleToUser(user, _)
+        response.status == 200
+    }
+
+    def "addUserRole handles exceptions"() {
+        given:
+        def mockedScopeAccess = Mock(ScopeAccess)
+        def user1 = entityFactory.createUser()
+        def user2 = entityFactory.createUser()
+        def user3 = entityFactory.createUser("user3", null, null, "domain3", null, null, null, true)
+        def caller1 = entityFactory.createUser()
+        def caller2 = entityFactory.createUser()
+        def caller3 = entityFactory.createUser("caller3", null, null, "domain1", null, null, null, true)
+        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        userService.checkAndGetUserById(("1$userId")) >> { throw new NotFoundException()}
+
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller1, user1) >> { throw new ForbiddenException() }
+        precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller2, user2) >> { throw new ForbiddenException() }
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(userId) >>> [ user1, user2, user3 ]
+        userService.getUserByAuthToken(authToken) >>> [ caller1, caller2, caller3 ]
+
+        when:
+        def response1 = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+        def response2 = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+        def response3 = defaultCloud20Service.addUserRole(headers, authToken, "1$userId", roleId).build()
+        def response4 = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+        def response5 = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+        def response6 = defaultCloud20Service.addUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 404
+        response4.status == 403
+        response5.status == 403
+        response6.status == 403
+    }
+
+    def "deleteUserRole verifies userAdmin level access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "deleteUserRole verifies user to modify is within callers domain when caller is user-admin"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = Mock(User)
+
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * caller.getDomainId() >> user.getDomainId()
+    }
+
+    def "deleteUserRole gets users globalRoles"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        when:
+        defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * tenantService.getGlobalRolesForUser(user) >> [ entityFactory.createTenantRole(roleId, null, "name", null, null) ].asList()
+
+    }
+
+    def "deleteUserRole prevents a user from deleting their own identity:* role"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> user
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, null, "identity:serviceAdmin", null, null) ].asList()
+
+        when:
+        def response = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        response.status == 403
+    }
+
+    def "deleteUserRole verifies callers precedence over user and role to be deleted"() {
+        given:
+        allowAccess()
+
+        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+
+        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, "userRsId", "name", null, null) ].asList()
+
+        when:
+        defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
+    }
+
+    def "deleteUserRole deletes role"() {
+        given:
+        allowAccess()
+
+        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+
+        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, userId, null, null, null) ].asList()
+
+        when:
+        def response = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        1 * tenantService.deleteGlobalRole(_)
+        response.status == 204
+    }
+
+    def "deleteUserRole handles exceptions"() {
+        given:
+        def mockedScopeAccess = Mock(ScopeAccess)
+        def user1 = entityFactory.createUser()
+        def user2 = entityFactory.createUser("user2", null, null, "domain2", null, null, null, true)
+        def user3 = entityFactory.createUser()
+        def caller1 = entityFactory.createUser()
+        def caller2 = entityFactory.createUser("caller2", null, null, "domain", null, null, null, true)
+        def caller3 = user3
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
+        userService.checkAndGetUserById("1$userId") >> { throw new NotFoundException() }
+
+        userService.checkAndGetUserById(_) >>> [ user2, user1, user3 ]
+        userService.getUserByAuthToken(_) >>> [ caller2, caller1, caller3 ]
+
+        authorizationService.authorizeCloudUserAdmin(_) >> [ true ] >> false
+
+        tenantService.getGlobalRolesForUser(_) >>> [
+                [].asList(),
+                [ entityFactory.createTenantRole(roleId, userId, "identity:role", null, null) ].asList()
+        ]
+
+        when:
+        def response1 = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response2 = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response3 = defaultCloud20Service.deleteUserRole(headers, authToken, "1$userId", roleId).build()
+        def response4 = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response5 = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response6 = defaultCloud20Service.deleteUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 404
+        response4.status == 403
+        response5.status == 404
+        response6.status == 403
+    }
+
+
+    def "addRole verifies admin access"() {
+        given:
+        mockRoleConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRole(headers, uriInfo(), authToken, v2Factory.createRole())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "addRole sets serviceId"() {
+        given:
+        mockRoleConverter(defaultCloud20Service)
+        allowAccess()
+
+        def roleMock = Mock(Role)
+        roleMock.getServiceId() == ''
+        roleMock.getName() >> "name"
+
+        when:
+        defaultCloud20Service.addRole(headers, uriInfo(), authToken, roleMock)
+
+        then:
+        1 * roleMock.setServiceId(_)
+    }
+
+    def "addRole verifies service admin access when adding identity:* roles"() {
+        given:
+        mockRoleConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
+
+        then:
+        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+    }
+
+    def "addRole gets service"() {
+        given:
+        mockRoleConverter(defaultCloud20Service)
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
+
+        then:
+        1 * applicationService.checkAndGetApplication(_)
+    }
+
+    def "addRole adds role and returns location"() {
+        given:
+        mockRoleConverter(defaultCloud20Service)
+        allowAccess()
+
+        applicationService.checkAndGetApplication(_) >> entityFactory.createApplication()
+
+        when:
+        def response = defaultCloud20Service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", null, null)).build()
+
+        then:
+        1 * applicationService.addClientRole(_)
+        response.status == 201
+        response.getMetadata().get("location") != null
+    }
+
+    def "addRole handles exceptions"() {
+        given:
+        def scopeAccessMock = Mock(ScopeAccess)
+        def role = v2Factory.createRole("role", "service", null)
+        def namelessRole = v2Factory.createRole(null, null, null)
+        def identityRole = v2Factory.createRole("identity:role", null, null)
+        def roleWithService = v2Factory.createRole("role", "serviceId", null)
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
+        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
+        authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        applicationService.checkAndGetApplication("serviceId") >> { throw new NotFoundException() }
+        applicationService.checkAndGetApplication("service") >> entityFactory.createApplication()
+        applicationService.addClientRole(_) >> { throw new DuplicateException() }
+
+        when:
+        def response1 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def response2 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def response3 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, null).build()
+        def response4 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, namelessRole).build()
+        def response5 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, identityRole).build()
+        def response6 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, roleWithService).build()
+        def response7 = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+        response4.status == 400
+        response5.status == 403
+        response6.status == 404
+        response7.status == 409
+    }
+
+    def "deleteRole verifies admin level access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.deleteRole(headers, authToken, roleId)
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "deleteRole verifies callers precedence over role to be deleted"() {
+        given:
+        allowAccess()
+
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        defaultCloud20Service.deleteRole(headers, authToken, roleId)
+
+        then:
+        1 * userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
+    }
+
+    def "deleteRole deletes role"() {
+        given:
+        allowAccess()
+
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        def response = defaultCloud20Service.deleteRole(headers, authToken, roleId).build()
+
+        then:
+        1 * applicationService.deleteClientRole(_)
+        response.status == 204
+    }
+
+    def "deleteRole handles exceptions"() {
+        given:
+        def scopeAccessMock = Mock(ScopeAccess)
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
+        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
+
+        applicationService.getClientRoleById("unique") >> entityFactory.createClientRole("unique", "identity:role", null, null)
+
+        when:
+        def response1 = defaultCloud20Service.deleteRole(headers, authToken, roleId).build()
+        def response2 = defaultCloud20Service.deleteRole(headers, authToken, roleId).build()
+        def response3 = defaultCloud20Service.deleteRole(headers, authToken, null).build()
+        def response4 = defaultCloud20Service.deleteRole(headers, authToken, "unique").build()
+
+        then:
+        response1.status == 401
+        response2.status == 403
+        response3.status == 400
+        response4.status == 403
+    }
+
+    def "addRolesToUserOnTenant verifies user-admin level access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "addRolesToUserOnTenant verifies tenant access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
+
+        then:
+        1 * authorizationService.verifyTokenHasTenantAccess(_, _)
+    }
+
+    def "addRolesToUserOnTenant verifies tenant"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
+
+        then:
+        1 * tenantService.checkAndGetTenant(_)
+    }
+
+    def "addRolesToUserOnTenant verifies user"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
+
+        then:
+        1 * userService.checkAndGetUserById(_)
+        1 * userService.getUserByAuthToken(_)
+    }
+
+    def "addRolesToUserOnTenant verifies that user to modify is within callers domain when caller is user-admin"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        def caller = Mock(User)
+
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        def response = defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * caller.getDomainId() >> entityFactory.createUser("username", null, null, "unique", null, null, null, true)
+        response.status == 403
+    }
+
+    def "addRolesToUserOnTenant verifies role"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole(null, "identity:role", null, null)
+        response.status == 403
+    }
+
+    def "addRolesToUserOnTenant verifies callers precedence"() {
+        given:
+        allowAccess()
+
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenatn1", "user1", "role1").build()
+
+        then:
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(_, _)
+    }
+
+    def "addRolesToUserOnTenant adds role to user on tenant"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        def response = defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * tenantService.addTenantRoleToUser(user, _)
+        response.status == 200
+    }
+
+    def "deleteRoleFromUserOnTenant verifies user admin level access"() {
+        given:
+        allowAccess()
+
+        when:
+        def response1 = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response2 = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, "1$authToken", "tenant1", "user1", "role1").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> { throw new NotAuthorizedException() }
+        response1.status == 401
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        response2.status == 403
+    }
+
+    def "deleteRoleFromUserOnTenant verifies tenant access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1")
+
+        then:
+        1 * authorizationService.verifyTokenHasTenantAccess(_, _)
+    }
+
+    def "deleteRoleFromUserOnTenant verifies user"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * userService.checkAndGetUserById("user1") >> { throw new NotFoundException() }
+        response.status == 404
+    }
+
+    def "deleteRoleFromUserOnTenant verifies tenant"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * tenantService.checkAndGetTenant(_) >> { throw new NotFoundException() }
+        response.status == 404
+    }
+
+    def "deleteRoleFromUserOnTenant verifies user belongs to callers domain when caller is user admin"() {
+        given:
+        allowAccess()
+
+        def caller = Mock(User)
+        def user = entityFactory.createUser()
+
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * caller.getDomainId() >> "1$user.domainId"
+        response.status == 403
+    }
+
+    def "deleteRoleFromUserOnTenant verifies role"() {
+        given:
+        allowAccess()
+
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> { throw new NotFoundException() }
+        response.status == 404
+    }
+
+    def "deleteRoleFromUserOnTenant verifies caller precedence"() {
+        given:
+        allowAccess()
+
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, _)
+    }
+
+    def "deleteRoleFromUserOnTenant deletes role from user"() {
+        given:
+        allowAccess()
+
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        def response = defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        1 * tenantService.deleteTenantRoleForUser(user, _)
+        response.status == 204
+    }
+
+    def "getSecretQA returns 200" () {
+        given:
+        mockSecretQAConverter(defaultCloud20Service)
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        user.id = "id"
+
+        userService.getUser(_) >> user
+        userService.checkAndGetUserById(_) >> user
+
+        when:
+        def response = defaultCloud20Service.getSecretQAs(authToken,"id").build()
+
+        then:
+        1 * secretQAService.getSecretQAs(_) >> entityFactory.createSecretQAs()
+        response.status == 200
+    }
+
+    def "createSecretQA returns 200" () {
+        given:
+        mockSecretQAConverter(defaultCloud20Service)
+        allowAccess()
+
+        def user = entityFactory.createUser()
+        user.id = "id"
+
+        userService.getUser(_) >> user
+        userService.checkAndGetUserById(_) >> user
+
+        when:
+        def response = defaultCloud20Service.createSecretQA(authToken,"1", v1Factory.createSecretQA()).build()
+
+        then:
+        1 * secretQAService.addSecretQA("1", _)
+        response.status == 200
+    }
+
+
+    def "Impersonate a disabled user" () {
+        given:
+        mockAuthConverter(defaultCloud20Service)
+        allowAccess()
+
+        def v20user = v2Factory.createUser()
+        v20user.username = "impersonatingUsername"
+        def impRequest = v1Factory.createImpersonationRequest(v20user)
+        def entityUser = entityFactory.createUser("impersonatedUser", null, null, null, null, null, null, false)
+        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", true, false)
+
+        tenantService.getGlobalRolesForUser(entityUser) >> [
+                entityFactory.createTenantRole("identity:default", null, null, null, null)
+        ].asList()
+
+        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> userScopeAccess
+
+        when:
+        def responseBuilder = defaultCloud20Service.impersonate(headers, authToken, impRequest)
+
+        then:
+        1 * scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess, true)
+        responseBuilder.build().status == 200
     }
 
     def mockServices() {
@@ -869,1436 +1629,28 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserPaginator(defaultCloud20Service)
     }
 
-    /*
-    def cleanupSpec() {
-    }
-
-    // Belongs in UserService groovy tests
-    def "create a user sets the default region"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion("US") >> region()
-        def user = user("user$sharedRandom", "user@email.com", true, "user$sharedRandom")
-
-        Pattern pattern = pattern("username","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        userService.addUser(user)
-
-        then:
-        user.region == "DFW"
-    }
-
-    //Belongs in UserService groovy tests
-    def "create user without default region throws bad request"() {
-        given:
-        createMocks()
-        allowAccess()
-        Pattern pattern = pattern("username","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        userDao.isUsernameUnique(_) >> true
-
-        cloudRegionService.getDefaultRegion("US") >> null
-
-        def user = user("user$sharedRandom", "user@email.com", true, "user$sharedRandom")
-
-        when:
-        userService.addUser(user)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-
-    // this is for release (1.0.12 or seomthing) migration related 12/03/2012
-    //Belongs in UserSErvice groovy Tests
-    def "add User allows a user to be created with a username beginning with a number"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-                it.username = "1user$sharedRandom"
-                it.email = "email@email.com"
-                return it
-            }
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 201
-    }
-    //Belongs in UserSErvice groovy Tests
-    def "add User with password"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-            it.username = "1user$sharedRandom"
-            it.email = "email@email.com"
-            it.password = "Password1"
-            return it
-        }
-        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        Pattern pattern2 = pattern("password","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
-        Pattern pattern3 = pattern("email","^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern3 >> pattern2 >> pattern3
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 201
-    }
-
-    //Belongs in UserSErvice groovy Tests
-    def "add User with bad password"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-            it.username = "1user$sharedRandom"
-            it.email = "email@email.com"
-            it.password = "password1"
-            return it
-        }
-        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
-        ldapPatternRepository.getPattern(_) >>> [ pattern1 >> pattern2 ]
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 400
-    }
-
-    //Belongs in UserSErvice groovy Tests
-    def "add User with bad password 2"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-            it.username = "1user$sharedRandom"
-            it.email = "email@email.com"
-            it.password = "Pass1"
-            return it
-        }
-        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        Pattern pattern2 = pattern("username","^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\\d=+`|\\(){}\\[\\]:;\"'<>,.?/£~!@#%^&*_-]{8,}\$","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern1 >> pattern2
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 400
-    }
-
-    //Belongs in UserSErvice groovy Tests
-    def "Add user with emtpy username"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-            it.username = ""
-            it.email = "email@email.com"
-            return it
-        }
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 400
-    }
-
-    //Belongs in UserSErvice groovy Tests
-    def "Add user with null username"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.isUsernameUnique(_) >> true
-        cloudRegionService.getDefaultRegion(_) >> region()
-
-        def user = new UserForCreate().with {
-            it.username = null
-            it.email = "email@email.com"
-            return it
-        }
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        def response = defaultCloud20Service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == 400
-    }
-
-    //Belongs in UserSErvice groovy Tests
-    def "Update user: username null" (){
-        given:
-        createMocks()
-        allowAccess()
-        def user = new UserForCreate().with {
-            it.username = null
-            it.email = "email@email.com"
-            return it
-        }
-        def retrievedUser = new User().with {
-            it.username = "somename"
-            it.email = "some@email.com"
-            it.id = "1"
-            return it
-        }
-        userDao.getUserById(_) >> retrievedUser
-        Pattern pattern1 = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern1
-        scopeAccessService.getScopeAccessListByUserId(_) >> new ArrayList<ScopeAccess>();
-
-        when:
-        def response = defaultCloud20Service.updateUser(headers,authToken,"1",user)
-
-        then:
-        response.build().status == 200
-    }
-
-    def "listUsersWithRole verifies access level"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        clientRoleDao.getClientRole(_) >> clientRole()
-        tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
-    }
-
-    def "listUsersWithRole throws notFoundException"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        clientDao.getClientRoleById(_) >> null
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        thrown(NotFoundException)
-    }
-
-    def "listUsersWithRole gets role"() {
-        given:
-        createMocks()
-        allowAccess()
-        DefaultUserService service = Mock()
-        defaultCloud20Service.userService = service
-
-        defaultCloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        1 * clientRoleDao.getClientRole(_) >> clientRole()
-    }
-
-    def "listUsersWithRole caller user-admin with no domain throws badRequest"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        DefaultUserService service = Mock()
-        defaultCloud20Service.userService = service
-
-        tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
-        clientRoleDao.getClientRole(_) >> clientRole()
-        defaultCloud20Service.userService.getUserByScopeAccess(_) >> user("username", null)
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "listUsersWithRole caller is userAdmin"() {
-        given:
-        createMocks()
-        allowAccess()
-        DefaultUserService service = Mock()
-        defaultCloud20Service.userService = service
-
-        clientRoleDao.getClientRole(_) >> clientRole()
-        defaultCloud20Service.userService.getUserByScopeAccess(_) >> user("username", "domainId")
-        defaultCloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        when:
-        def response = defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        response.build().status == 200
-    }
-
-    def "listUsersWithRole service-admin calls getMultipleTenantRoles"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        clientRoleDao.getClientRole(_) >> clientRole()
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        1 * tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>()
-    }
-
-    def "listUsersWithRole user-admin calls getAllUsersNoLimit"() {
-        given:
-        createMocks()
-        def access = new UserScopeAccess()
-        Calendar calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
-        access.accessTokenExp = calendar.getTime()
-        access.accessTokenString = calendar.getTime().toString()
-        access.username = "username"
-
-        def userList = new ArrayList<User>()
-        userList.add(user("username", null))
-        def users = new Users()
-        users.setUsers(userList)
-
-
-        scopeAccessService.getScopeAccessByAccessToken(_) >> access
-        clientRoleDao.getClientRole(_) >> clientRole()
-        userDao.getUserByUsername(_) >> user("username", "domainId")
-        userDao.getAllUsersNoLimit(_) >> users
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        when:
-        defaultCloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
-
-        then:
-        1 * userDao.getAllUsersNoLimit(_)
-    }
-
-    def "addUserRole verifies userAdmin Access"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
-
-        then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
-    }
-
-    def "addUserRole gets user to add role to"() {
-        given:
-        createMocks()
-        allowAccess()
-        clientRoleDao.getClientRole(_) >> clientRole()
-
-        when:
-        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
-
-        then:
-        1 * userDao.getUserById(_) >> user("username", "domainId")
-
-    }
-
-    def "addUserRole verifies role"() {
-        given:
-        createMocks()
-        allowAccess()
-        userDao.getUserById(_) >> user("username", "domainId")
-
-        when:
-        defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom)
-
-        then:
-        1 * clientRoleDao.getClientRole(_) >> clientRole()
-    }
-
-    def "addUserRole returns forbidden"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        // called
-        userDao.getUserById(_) >> userNotInDomain
-
-        // caller
-        userDao.getUserByUsername(_) >> userAdmin
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        clientRoleDao.getClientRole(_) >> clientRole()
-        when:
-        def status = defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status
-
-        then:
-        status == 403
-    }
-
-    def "addUserRole throws forbidden (multiple identity:* roles)"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        def user1 = user("username", "domainId")
-
-        userDao.getUserById(_) >> user1
-        userDao.getUserByUsername(_) >> user1
-
-        clientRoleDao.getClientRole(_) >> defaultUserRole
-
-        // check multiple identityRoles
-        tenantDao.getTenantRolesForUser(_) >> [ defaultTenantRole ].asList()
-        clientDao.getClientRoleById(_) >> defaultUserRole
-
-        when:
-        def response = defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build()
-
-        then:
-        response.status == 403
-    }
-
-    def "addUserRole successfully adds role to user"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        //added role
-        clientRoleDao.getClientRole(sharedRandom) >>> [
-                clientRole("userAdminAccessible", 1000),
-                clientRole("userAdminaccessible", 1500)
-        ] >> genericRole
-
-        // getUserIdentityRole for caller
-        clientDao.getClientByClientId(_) >> new Application()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
-                userAdminTenantRole, userAdminTenantRole,
-                adminTenantRole, adminTenantRole, adminTenantRole,
-                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
-        ]
-
-        // check multiple identityRoles
-        tenantDao.getTenantRolesForUser(_) >> [ defaultTenantRole ].asList()
-        clientDao.getClientRoleById(_) >> genericRole
-
-        authorizationService.authorizeCloudUserAdmin(_) >>> [
-                true, true,
-                false, false, false,
-                false, false, false, false,
-        ]
-
-        //caller
-        userDao.getUserByUsername(_) >>> [
-                userAdmin, userAdmin,
-                adminUser, adminUser, adminUser,
-                serviceAdmin, serviceAdmin, serviceAdmin, serviceAdmin,
-        ]
-
-        //addedTo
-        userDao.getUserById(_) >>> [
-                defaultUser, defaultUser,
-                defaultUser, userAdmin, adminUser,
-                defaultUser, userAdmin, adminUser, serviceAdmin,
-        ]
-
-        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 200)
-        }
-    }
-
-    def "deleteUserRole validates user to delete from and user deleting"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        def user = user("username", "domainId")
-
-        when:
-        defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom)
-
-        then:
-        1 * userDao.getUserById(_) >> user
-        1 * userDao.getUserByUsername(_) >> user
-    }
-
-    def "deleteUserRole prevents user from removing their own identity:* role"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        def user = user("username", "domainId", "userId")
-        def tenantRoles = [ tenantRole("tenantRole", sharedRandom) ].asList()
-        def clientRole = clientRole("identity:role", 1000)
-
-        userDao.getUserById(_) >> user
-        userDao.getUserByUsername(_) >> user
-        tenantDao.getTenantRolesForUser(_) >> tenantRoles
-        clientDao.getClientRoleById(_) >> clientRole
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-
-        //setup getUser
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 403)
-        }
-    }
-
-    def "deleteUserRole returns forbidden"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        def caller = user("caller", "domainId1", "1$sharedRandom")
-        userDao.getUserById(_) >>> [ userNotInDomain ] >> defaultUser
-        userDao.getUserByUsername(_) >> caller
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-
-        // pass getUsersGlobalRoles
-        tenantDao.getTenantRolesForUser(defaultUser) >> [ tenantRole("genericTenantRole", "2$sharedRandom") ].asList()
-        clientDao.getClientRoleById("2$sharedRandom") >>> [
-                clientRole("roleToBeRemoved", 1000),
-                clientRole("roleToBeRemoved", 1000),
-                clientRole("roleToBeRemoved", 1000),
-        ]
-
-        clientRoleDao.getClientRole(_) >>> [
-                clientRole("roleToBeRemoved1", 500),
-                clientRole("roleToBeRemoved2", 100),
-                clientRole("roleToBeRemoved3", 50)
-        ]
-
-        // setup precedence cases
-        // callers identity role
-        clientDao.getClientByClientId(_) >> new Application()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        //fail: UA delete from A and SA
-        //fail: A delete from SA
-        tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >>> [
-                userAdminTenantRole, userAdminTenantRole, adminTenantRole,
-                userAdminTenantRole, userAdminTenantRole, adminTenantRole
-        ]
-
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                adminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
-        ] >> defaultTenantRole
-
-
-        when:
-        def  statuses = []
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 403)
-        }
-    }
-
-    def "deleteUserRole is successful"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        def caller = user("caller", "domainId1", "1$sharedRandom")
-        userDao.getUserById(_) >> defaultUser
-        userDao.getUserByUsername(_) >> caller
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-
-        // pass getUsersGlobalRoles
-        tenantDao.getTenantRolesForUser(defaultUser) >> [ tenantRole("genericTenantRole", "2$sharedRandom") ].asList()
-        clientDao.getClientRoleById("2$sharedRandom") >> clientRole("getRole", 1000)
-
-        // setup precedence cases
-        // callers identity role
-        clientDao.getClientByClientId(_) >> new Application()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        // caller weight
-        tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >>> [
-                userAdminTenantRole, userAdminTenantRole,
-                adminTenantRole, adminTenantRole, adminTenantRole,
-                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
-        ]
-
-        // called weight
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                defaultTenantRole, userAdminTenantRole,
-                defaultTenantRole, userAdminTenantRole, adminTenantRole,
-                defaultTenantRole, userAdminTenantRole, adminTenantRole, serviceAdminTenantRole
-        ]
-
-        // calledRole
-        clientRoleDao.getClientRole(_) >>> [
-                defaultUserRole, userAdminRole,
-                defaultUserRole, userAdminRole, adminRole,
-                defaultUserRole, userAdminRole, adminRole, serviceAdminRole
-        ]
-
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-        statuses.add(defaultCloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 204)
-        }
-    }
-
-    def "addRole verifies identity:admin level access"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        defaultCloud20Service.addRole(headers, uriInfo(), authToken, role())
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "addRole returns badRequest"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def responses = []
-        responses.add(defaultCloud20Service.addRole(headers, uriInfo(), authToken, role()).build())
-        responses.add(defaultCloud20Service.addRole(headers, uriInfo(), authToken, null).build())
-
-        then:
-        for (response in responses) {
-            assert(response.status == 400)
-        }
-    }
-
-    def "addRole returns conflict"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        clientRoleDao.getClientRoleByApplicationAndName(_, _) >> clientRole()
-        clientDao.getClientByClientId(_) >> application()
-        def role = role()
-        role.name = "genericRole"
-
-        when:
-        def response = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
-
-        then:
-        response.status == 409
-    }
-
-    def "addRole returns forbidden (insufficient priveleges)"() {
-        given:
-        createMocks()
-        allowAccess()
-        def identityRole = role()
-        identityRole.name = "identity:hahah"
-
-        authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
-
-
-        when:
-        def response = defaultCloud20Service.addRole(headers, uriInfo(), authToken, identityRole).build()
-
-        then:
-        response.status == 403
-    }
-
-    def "addRole sets default weight for created role"() {
-        given:
-        createMocks()
-        allowAccess()
-        def role = role()
-        role.name = "genericRole"
-
-        clientDao.getClientByClientId(_) >> application()
-        clientRoleDao.getNextRoleId() >> "10"
-
-        when:
-        def responseOne = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
-        def responseTwo = defaultCloud20Service.addRole(headers, uriInfo(), authToken, role).build()
-
-        then:
-        clientRoleDao.addClientRole(_, _) >> { arg1, arg2 ->
-            arg2.id == "10"
-            arg2.clientId == "1234"
-            arg2.name == "genericRole"
-            arg2.rsWeight == configuration.getInt("cloudAuth.special.rsWeight")
-        }
-    }
-
-    def "deleteRole throws bad request; null roleId"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        when:
-        def reponse = defaultCloud20Service.deleteRole(headers, authToken, null)
-
-        then:
-        reponse.build().status == 400
-    }
-
-    def "deleteRole throws bad request; identity role"() {
-        given:
-        createMocks()
-        allowAccess()
-
-        def cRole = identityRole("identity:role", 500, "roleId")
-
-        clientRoleDao.getClientRole(_) >> cRole
-
-        when:
-        def response = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
-
-        then:
-        response.build().status == 403
-    }
-
-    def "deleteRole throws forbidden; insufficent precedence"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        clientRoleDao.getClientRole("roleId") >> clientRole("name", 50)
-        userDao.getUserByUsername(_) >> adminUser
-
-        clientDao.getClientByClientId(_) >> application()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        tenantRoleDao.getTenantRoleForUser(_) >> adminTenantRole
-
-        when:
-        def response = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
-
-        then:
-        response.build().status == 403
-    }
-
-    def "deleteRole deletes role"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        clientRoleDao.getClientRole("roleId") >> clientRole("name", 1000)
-        userDao.getUserByUsername(_) >>> [ adminUser, serviceAdmin ]
-
-        clientDao.getClientByClientId(_) >> application()
-
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        tenantRoleDao.getTenantRoleForUser(_, _) >>> [ adminTenantRole, serviceAdminTenantRole ]
-
-        when:
-        def responseOne = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
-        def responseTwo = defaultCloud20Service.deleteRole(headers, authToken, "roleId")
-
-        then:
-        responseOne.build().status == 204
-        responseTwo.build().status == 204
-    }
-
-    def "adding role to user on tenant returns bad request"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        def caller = user("caller", "domainId1", "1$sharedRandom")
-
-        userDao.getUserById(_) >> defaultUser
-        userDao.getUserByUsername(_) >> caller
-        tenantDao.getTenant(sharedRandom) >> new Tenant()
-        clientRoleDao.getClientRole(_) >>> [
-                defaultUserRole,
-                userAdminRole,
-                adminRole,
-                serviceAdminRole
-        ]
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 403)
-        }
-    }
-
-    def "adding role to user on tenant returns forbidden (insufficient access)"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-        userDao.getUserById(_) >> userNotInDomain >> defaultUser
-        userDao.getUserByUsername(_) >> userAdmin
-        tenantDao.getTenant(sharedRandom) >> new Tenant()
-
-        clientRoleDao.getClientRole(_) >> clientRole("rolerole", 50)
-
-        clientDao.getClientByClientId(_) >> new Application()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        //setup addee weight
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                userAdminTenantRole, adminTenantRole, serviceAdminTenantRole
-        ] >> defaultTenantRole
-
-        //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
-                defaultTenantRole, userAdminTenantRole, adminTenantRole,
-                defaultTenantRole, userAdminTenantRole, adminTenantRole
-        ]
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 403)
-        }
-    }
-
-    def "adding role to user on tenant succeeds"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-        userDao.getUserById(_) >> defaultUser
-        userDao.getUserByUsername(_) >> userAdmin
-        tenantDao.getTenant(_) >> new Tenant()
-        clientDao.getClientByClientId(_) >> application()
-        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        clientRoleDao.getClientRole(sharedRandom) >>> [
-                clientRole("availableToUserAdmin", 1000),
-                clientRole("availableToAdmin", 500),
-                clientRole("availableToAdmin", 100),
-                clientRole("availableToServiceAdmin", 50)
-        ]
-
-        //setup addee weight
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                defaultTenantRole,
-                defaultTenantRole,
-                userAdminTenantRole,
-                adminTenantRole
-        ]
-        //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
-                userAdminTenantRole,
-                adminTenantRole,
-                adminTenantRole,
-                serviceAdminTenantRole
-        ]
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.addRolesToUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 200)
-        }
-    }
-
-    def "deleting role from user on tenant returns forbidden (insufficient access)"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        tenantDao.getTenant(_) >> new Tenant()
-        userDao.getUserById(_) >> userNotInDomain >> defaultUser
-        userDao.getUserByUsername(_) >> userAdmin
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-        clientDao.getClientByClientId(_) >> application()
-        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        clientRoleDao.getClientRole(sharedRandom) >>> [
-                clientRole("role", 500),
-                clientRole("role", 250),
-                clientRole("role", 100),
-                clientRole("role", 500),
-                clientRole("role", 250),
-                clientRole("role", 50)
-        ]
-
-        //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
-                userAdminTenantRole,
-                adminTenantRole,
-                userAdminTenantRole,
-                userAdminTenantRole,
-                userAdminTenantRole,
-                adminTenantRole
-        ]
-
-        // setup called weight
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                adminTenantRole,
-                serviceAdminTenantRole
-        ] >> defaultTenantRole
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 403)
-        }
-    }
-
-    def "deleting role from user on tenant succeeds"() {
-        given:
-        createMocks()
-        allowAccess()
-        setupUsersAndRoles()
-
-        tenantDao.getTenant(_) >> new Tenant()
-        userDao.getUserById(_) >> defaultUser
-        userDao.getUserByUsername(_) >> userAdmin
-        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
-        clientDao.getClientByClientId(_) >> application()
-        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
-        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
-
-        clientRoleDao.getClientRole(sharedRandom) >>> [
-                clientRole("role", 1000),
-                clientRole("role", 500),
-                clientRole("role", 250),
-                clientRole("role", 50),
-                clientRole("role", 50)
-        ]
-
-        //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
-                userAdminTenantRole,
-                adminTenantRole,
-                adminTenantRole,
-                serviceAdminTenantRole,
-                serviceAdminTenantRole
-        ]
-
-        //setup called weight
-        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
-                defaultTenantRole,
-                defaultTenantRole,
-                userAdminTenantRole,
-                adminTenantRole,
-                serviceAdminTenantRole
-        ]
-
-        when:
-        def statuses = []
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-        statuses.add(defaultCloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
-
-        then:
-        for (status in statuses) {
-            assert(status == 204)
-        }
-    }
-
-    def "getSecretQA returns 200" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        User user = new User()
-        user.id = "1"
-        user.username = "name"
-        user.secretQuestion = "question"
-        user.secretAnswer = "answer"
-
-        userDao.getUserById(_) >> user
-        userService.getUser(_) >> user
-        userDao.getUserByUsername(_) >> user
-
-        when:
-        def responseBuilder = defaultCloud20Service.getSecretQAs(authToken,"1")
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 200
-    }
-
-    def "createSecretQA returns 200" () {
-        given:
-        createMocks()
-        allowAccess()
-
-        User user = new User()
-        user.id = "1"
-        user.username = "name"
-        user.secretQuestion = "question"
-        user.secretAnswer = "answer"
-        Question question = new Question()
-        question.setQuestion("question")
-
-        userDao.getUserById(_) >> user
-        userService.getUser(_) >> user
-        userDao.getUserByUsername(_) >> user
-        questionDao.getQuestion(_) >>  question
-
-        when:
-        def responseBuilder = defaultCloud20Service.createSecretQA(authToken,"1", secretQA("1", "question", "answer"))
-
-        then:
-        Response response = responseBuilder.build()
-        response.status == 200
-    }
-
-    def "Impersonate a disabled user" () {
-        given:
-        createMocks()
-        allowAccessForImpersonate()
-        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User()
-        user.username = "someUser"
-        User user1 = new User()
-        user1.username = "someUser"
-        user1.enabled = false
-        userDao.getUserByUsername(_) >> user1
-        tenantDao.getTenantRolesForUser(_) >> [tenantRole("identity:default")].asList()
-        def mockedClientRole = Mock(ClientRole)
-        mockedClientRole.getName() >> "identity:default"
-        clientDao.getClientRoleById(_) >> mockedClientRole
-        UserScopeAccess userScopeAccess = new UserScopeAccess()
-        userScopeAccess.setAccessTokenString("someToken")
-        scopeAccessService.updateExpiredUserScopeAccess(_,_) >> userScopeAccess
-        ScopeAccess scopeAccess = new UserScopeAccess()
-        scopeAccess.setAccessTokenExp(new Date().minus(1))
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_,_) >> scopeAccess
-
-        when:
-        def responseBuilder = defaultCloud20Service.impersonate(headers, authToken, impersonation(user))
-
-        then:
-        responseBuilder.build().status == 200
-    }
-
-    ImpersonationRequest impersonation(org.openstack.docs.identity.api.v2.User user) {
-        new ImpersonationRequest().with {
-            it.user = user
-            return it
-        }
-    }
-//helper methods
-    def createMocks() {
-        headers = Mock()
-        precedenceValidator = Mock()
-        scopeAccessDao = Mock()
-        scopeAccessService = Mock()
-        authorizationService = Mock()
-        cloudRegionService = Mock()
-        tenantDao = Mock()
-        tenantRoleDao = Mock()
-        questionDao = Mock()
-        capabilityDao = Mock()
-        clientDao = Mock()
-        clientRoleDao = Mock()
-        userDao = Mock()
-
-        defaultCloud20Service.userService = userService
-
-
-        defaultCloud20Service.scopeAccessService = scopeAccessService
-        userService.scopeAccessService = scopeAccessService
-
-        defaultCloud20Service.authorizationService = authorizationService
-
-        userService.cloudRegionService = cloudRegionService
-
-        userService.tenantDao = tenantDao
-        tenantService.tenantDao = tenantDao
-
-        userService.tenantRoleDao = tenantRoleDao
-        userService.applicationRoleDao = clientRoleDao
-        tenantService.tenantRoleDao = tenantRoleDao
-        applicationService.tenantRoleDao = tenantRoleDao
-
-        questionService.questionDao = questionDao
-
-        capabilityService.ldapCapabilityRepository = capabilityDao
-
-        applicationService.applicationDao = clientDao
-        tenantService.clientDao = clientDao
-
-        applicationService.applicationRoleDao = clientRoleDao
-
-        userService.userDao = userDao
-        userService.scopeAccesss = scopeAccessDao
-        userService.applicationRoleDao = clientRoleDao
-
-        ldapPatternRepository = Mock()
-        validator.ldapPatternRepository = ldapPatternRepository
-
-    }
-
-    def setupUsersAndRoles() {
-        defaultUserRole = identityRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"), defaultRoleId)
-        userAdminRole = identityRole("identity:user-admin", configuration.getInt("cloudAuth.userAdmin.rsWeight"), userAdminRoleId)
-        specialRole = identityRole("specialRole", configuration.getInt("cloudAuth.special.rsWeight"), "")
-        adminRole = identityRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"), adminRoleId)
-        serviceAdminRole = identityRole("identity:service-admin", configuration.getInt("cloudAuth.serviceAdmin.rsWeight"), serviceAdminRoleId)
-        genericRole = clientRole("genericRole", 500)
-
-        userAdmin = user("user-admin", "domainId1", sharedRandom)
-        defaultUser = user("default-user", "domainId1", sharedRandom)
-        userNotInDomain = user("default-user", "domainId2", sharedRandom)
-        adminUser = user("admin", "", sharedRandom)
-        serviceAdmin = user("service-admin", "", sharedRandom)
-
-        defaultTenantRole = tenantRole("identity:default", defaultRoleId)
-        userAdminTenantRole = tenantRole("identity:user-admin", userAdminRoleId)
-        adminTenantRole = tenantRole("identity:admin", adminRoleId)
-        serviceAdminTenantRole = tenantRole("identity:service-admin", serviceAdminRoleId)
-
-        identityRoles = new ArrayList<ClientRole>()
-        identityRoles.add(defaultUserRole);
-        identityRoles.add(userAdminRole);
-        identityRoles.add(adminRole);
-        identityRoles.add(serviceAdminRole);
-    }
-
-    def mockScopeAccess() {
-        ScopeAccess scopeAccess = Mock()
-
-        def attribute = new Attribute(LdapRepository.ATTR_UID, "username")
-        def entry = new ReadOnlyEntry("DN", attribute)
-
-        scopeAccess.getLDAPEntry() >> entry
-    }
-
     def allowAccess() {
-        def attribute = new Attribute(LdapRepository.ATTR_UID, "username")
-        def entry = new ReadOnlyEntry("DN", attribute)
-
-        ClientScopeAccess clientScopeAccess = Mock()
-        Calendar calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
-        clientScopeAccess.accessTokenExp = calendar.getTime()
-        clientScopeAccess.accessTokenString = calendar.getTime().toString()
-
-        clientScopeAccess.getLDAPEntry() >> entry
-        scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess
+        scopeAccessMock = Mock()
+        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccessMock
     }
 
-    def allowAccessForImpersonate() {
-        def attribute = new Attribute(LdapRepository.ATTR_UID, "username")
-        def entry = new ReadOnlyEntry("DN", attribute)
-
-        ClientScopeAccess clientScopeAccess = Mock()
-        Calendar calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
-        clientScopeAccess.accessTokenExp = calendar.getTime()
-        clientScopeAccess.accessTokenString = calendar.getTime().toString()
-
-        clientScopeAccess.getLDAPEntry() >> entry
-        UserScopeAccess userScopeAccess = new UserScopeAccess()
-        scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess >> userScopeAccess
+    def createLdapEntry() {
+        return createLdapEntry(null)
     }
 
-    def user(String username, String email, Boolean enabled, String displayName) {
-        new User().with {
-            it.uniqueId = "some dn"
-            it.username = username
-            it.email = email
-            it.enabled = enabled
-            it.displayName = displayName
-            return it
+    def createLdapEntry(String dn) {
+        dn = dn ? dn : "accessToken=token,cn=TOKENS,rsId=id,ou=users"
+
+        def mock = Mock(ReadOnlyEntry)
+        mock.getDN() >> dn
+        mock.getAttributeValue(_) >> { arg ->
+            return arg[0]
         }
+        return mock
     }
 
-    def user(name, domainId) {
-        new User().with {
-            it.uniqueId = "some dn"
-            it.username = name
-            it.domainId = domainId
-            it.enabled = true
-            return it
-        }
+    def createFilter(FilterParam.FilterParamName name, String value) {
+        return new FilterParam(name, value)
     }
-
-    def user(name, domainId, userId) {
-        new User().with {
-            it.id = userId
-            it.domainId = domainId
-            it.username = name
-            it.enabled = true
-            it.uniqueId = "some dn"
-            return it
-        }
-    }
-
-    def region() {
-        new Region().with {
-            it.cloud = "US"
-            it.name = "DFW"
-            it.isEnabled = true
-            it.isDefault = true
-            return it
-        }
-    }
-
-    def scopeAccess() {
-        new ClientScopeAccess().with {
-            Calendar calendar = Calendar.getInstance()
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-            it.accessTokenExp = calendar.getTime()
-            it.accessTokenString = calendar.getTime().toString()
-            return it
-        }
-    }
-
-    def jaxbQuestion() {
-        return jaxbQuestion("id", "question")
-    }
-
-    def jaxbQuestion(String id, String question) {
-        objFactories.getRackspaceIdentityExtRaxgaV1Factory().createQuestion().with {
-            it.id = id
-            it.question = question
-            return it
-        }
-    }
-
-    def question() {
-        question("id", "question")
-    }
-
-    def question(String id, String question) {
-        new Question().with {
-            it.id = id
-            it.question = question
-            return it
-        }
-    }
-
-    def getCapability(String action, String id, String name, String description, String url, List<String> resources) {
-        new Capability().with {
-            it.action = action
-            it.id = id
-            it.name = name
-            it.description = description
-            it.url = url
-            for(String list : resources){
-                it.resources.add(list)
-            }
-            return it
-        }
-    }
-
-    def uriInfo() {
-        UriInfo uriInfo = Mock()
-        UriBuilder uriBuilder = Mock()
-        uriInfo.getRequestUriBuilder() >> uriBuilder
-        uriInfo.getAbsolutePath() >> new URI("http://path.to/resource")
-        uriBuilder.path(_) >> uriBuilder
-        uriBuilder.build() >> new URI()
-        return uriInfo
-    }
-
-    def userContext(offset, limit, list) {
-        new PaginatorContext<User>().with {
-            it.limit = limit
-            it.offset = offset
-            it.totalRecords = list.size
-            it.valueList = list
-            return it
-        }
-    }
-
-    def role() {
-        new Role().with {
-            return it
-        }
-    }
-
-    def clientRole() {
-        new ClientRole().with {
-            it.clientId = "1234"
-            it.id = "1234"
-            it.name = "testRole"
-            return it
-        }
-    }
-
-    def clientRole(String name, int rsWeight) {
-        new ClientRole().with {
-            it.clientId = "1234"
-            it.id = "1234"
-            it.name = name
-            it.rsWeight = rsWeight
-            return it
-        }
-    }
-
-    def identityRole(String name, int rsWeight, String id) {
-        new ClientRole().with {
-            it.id = id
-            it.name = name
-            it.rsWeight = rsWeight
-            return it
-        }
-    }
-
-    def tenantRole(String name) {
-        new TenantRole().with {
-            it.name = name
-            it.roleRsId = "roleRsId"
-            return it
-        }
-    }
-
-    def tenantRole(String name, String roleRsId) {
-        new TenantRole().with {
-            it.name = name
-            it.roleRsId = roleRsId
-            return it
-        }
-    }
-
-    def application() {
-        new Application().with() {
-            it.clientId = "1234"
-            it.enabled = true
-            return it
-        }
-    }
-
-    def secretQA(String id, String question, String answer) {
-        new SecretQA().with {
-            it.id = id
-            it.question = question
-            it.answer = answer
-            return it
-        }
-    }
-
-    def pattern(String name, String regex, String errMsg, String description){
-        new Pattern().with {
-            it.name = name
-            it.regex = regex
-            it.errMsg = errMsg
-            it.description = description
-            return it
-        }
-    }
-    */
 }

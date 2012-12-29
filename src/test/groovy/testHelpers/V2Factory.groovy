@@ -46,14 +46,39 @@ class V2Factory {
     }
 
     def createAuthenticateResponse() {
-        return createAuthenticateResponse("token", null, null)
+        return createAuthenticateResponse(createToken(), null, null)
     }
 
-    def createAuthenticateResponse(String token, ServiceCatalog serviceCatalog, UserForAuthenticateResponse user) {
+    def createAuthenticateResponse(Token token, ServiceCatalog serviceCatalog, UserForAuthenticateResponse user) {
         new AuthenticateResponse().with {
-            it.token = token ? token : "token"
+            it.token = token ? token : createToken()
             it.serviceCatalog = serviceCatalog ? serviceCatalog : new ServiceCatalog()
             it.user = user ? user : new UserForAuthenticateResponse()
+            return it
+        }
+    }
+
+    def createRole() {
+        return createRole(NAME, "serviceId", "tenantId")
+    }
+
+    def createRole(String name, String serviceId, String tenantId) {
+        new Role().with {
+            it.name = name
+            it.serviceId = serviceId
+            it.tenantId = tenantId
+            return it
+        }
+    }
+
+    def createRoleList() {
+        return createRoleList(null)
+    }
+
+    def createRoleList(List<Role> roleList) {
+        def list = roleList ? roleList : [].asList()
+        new RoleList().with {
+            it.getRole().addAll(list)
             return it
         }
     }
