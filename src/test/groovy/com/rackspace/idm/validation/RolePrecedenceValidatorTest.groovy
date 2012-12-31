@@ -260,9 +260,9 @@ class RolePrecedenceValidatorTest extends Specification {
 
         when:
         validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:default", 2000, "1"))
-        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 500, "2"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 1000, "3"))
         validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:admin", 1000, "3"))
-        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 500, "2"))
+        validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:special", 1000, "3"))
         validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:admin", 1000, "3"))
         validator.verifyCallerRolePrecendenceForAssignment(user1, clientRole("identity:service-admin", 0, "4"))
 
