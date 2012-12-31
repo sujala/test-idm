@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
+import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ObjectFactory
@@ -35,12 +36,12 @@ class AtomHopperClientGroovyTest extends Specification {
     @Shared HttpClient httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
     @Shared DefaultCloud20Service defaultCloud20Service
+    @Shared CryptHelper cryptHelper
 
     def setupSpec(){
         client = new AtomHopperClient();
         objectFactory = new ObjectFactory();
     }
-
 
     def "create atom entry for delete user" () {
         given:
@@ -157,6 +158,44 @@ class AtomHopperClientGroovyTest extends Specification {
         token != null;
     }
 
+    def "client can encrypt token"() {
+        given:
+        def token = "this-is-my-token"
+
+        setupMock()
+        cryptHelper = new CryptHelper()
+        cryptHelper.configuration = config
+        client.cryptHelper = cryptHelper
+
+        when:
+        def encryptedToken = client.encrypt(token)
+        def decryptedToken = client.decrypt(encryptedToken)
+
+        then:
+        token == decryptedToken
+    }
+
+    def "client calls encrypt token" () {
+        given:
+        def token = "this-is-my-token"
+
+        setupMock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8082/namespace/feed"
+
+        when:
+        client.createEntryForRevokeToken(user, "token")
+
+        then:
+        1 * cryptHelper.encrypt(_,_)
+    }
+
     def createTenantRole(String name, String roleRsId, String description) {
         new TenantRole().with {
             it.name = name
@@ -187,5 +226,10 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultCloud20Service = Mock()
         client.defaultCloud20Service = defaultCloud20Service
         client.objectFactory = objectFactory;
+        cryptHelper = Mock()
+        client.cryptHelper = cryptHelper
+
+        config.getString("atom.hopper.crypto.password") >> "password"
+        config.getString("atom.hopper.crypto.salt") >> "c8 99"
     }
 }

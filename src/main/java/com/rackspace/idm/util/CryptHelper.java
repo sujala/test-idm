@@ -40,10 +40,14 @@ public class CryptHelper {
     public static final int IV_SIZE = 128;
 
     private CipherParameters getKeyParams() {
+        return getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
+    }
+
+    public CipherParameters getKeyParams(String passwordString, String saltString) {
         CipherParameters keyParams = null;
 		try {
-            char[] password = config.getString("crypto.password").toCharArray();
-            byte[] salt = fromHexString(config.getString("crypto.salt"));
+            char[] password = passwordString.toCharArray();
+            byte[] salt = fromHexString(saltString);
 			Security.addProvider(new BouncyCastleProvider());
 			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
 			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
@@ -63,13 +67,17 @@ public class CryptHelper {
 	}
 
 	public byte[] encrypt(String plainText) throws GeneralSecurityException, InvalidCipherTextException {
+        return encrypt(plainText, getKeyParams());
+    }
+
+    public byte[] encrypt(String plainText, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
 		if(plainText == null) {
 			throw new InvalidParameterException("Null argument is not valid");
 		}
 		
 		BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()), new PKCS7Padding());
 
-		cipher.init(true, getKeyParams());
+		cipher.init(true, cipherParameters);
 		byte[] bytes;
 		try {
 			bytes = plainText.getBytes("UTF8");
@@ -86,12 +94,16 @@ public class CryptHelper {
 	}
 
 	public String decrypt(final byte[] bytes) throws GeneralSecurityException, InvalidCipherTextException {
+        return decrypt(bytes, getKeyParams());
+    }
+
+    public String decrypt(final byte[] bytes, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
 		if(bytes == null || bytes.length < 1) {
 			return null;
 		}
 		
 		final BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()), new PKCS7Padding());
-		cipher.init(false, getKeyParams());
+		cipher.init(false, cipherParameters);
 
 		final byte[] processed = new byte[cipher.getOutputSize(bytes.length)];
 		int outputLength = cipher.processBytes(bytes, 0, bytes.length, processed, 0);

@@ -10,10 +10,13 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;
+import org.apache.http.auth.AuthOption;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.scheme.PlainSocketFactory;
@@ -25,6 +28,9 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.message.BasicHeader;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.util.encoders.Base64Encoder;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.slf4j.Logger;
@@ -47,6 +53,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -77,6 +84,9 @@ public class AtomHopperClient {
 
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
+
+    @Autowired
+    CryptHelper cryptHelper;
 
     private HttpClient httpClient;
 
@@ -279,7 +289,7 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
-    public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException {
+    public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
         com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
@@ -296,7 +306,7 @@ public class AtomHopperClient {
 
         V1Element v1Element = new V1Element();
         v1Element.setType(EventType.DELETE);
-        v1Element.setResourceId(token);
+        v1Element.setResourceId(encrypt(token));
         for(Region region : Region.values()){
             if(region.value().equals(user.getRegion())){
                 v1Element.setRegion(Region.fromValue(user.getRegion()));
@@ -324,6 +334,23 @@ public class AtomHopperClient {
         title.setValue(AtomHopperConstants.IDENTITY_TOKEN_EVENT);
         usageEntry.setTitle(title);
         return usageEntry;
+    }
+
+    private String encrypt(String text) throws GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+        byte[] bytes = cryptHelper.encrypt(text, getCipherParameters());
+        return new Base64().encodeToString(bytes);
+    }
+
+    private String decrypt(String text) throws GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+        String encryptedBytes = cryptHelper.decrypt(new Base64().decode(text), getCipherParameters());
+        return new String(encryptedBytes);
+    }
+
+    private CipherParameters getCipherParameters() {
+        return cryptHelper.getKeyParams(
+                    config.getString("atom.hopper.crypto.password"),
+                    config.getString("atom.hopper.crypto.salt")
+            );
     }
 
     public void setConfig(Configuration config) {
