@@ -1,0 +1,49 @@
+dn: ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: configuration
+
+dn: ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: patterns
+
+dn: rsId=5,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 5
+cn: email
+pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
+errMsg: Expecting valid email address
+description: Checks for invalid characters on a token.
+
+dn: rsId=4,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 4
+cn: token
+pattern: ^[A-Za-z0-9-]+$
+errMsg: Invalid token
+description: Checks for invalid characters on a token.
+
+dn: rsId=3,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 3
+cn: password
+pattern: ^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d=+`|\(){}\[\]:;"'<>,.?/£~!@#%^&*_-]{8,}$
+errMsg: Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character.
+description: Checks for invalid characters on a password.
+
+dn: rsId=2,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 2
+cn: phone
+pattern: [0-9]*
+errMsg: Phone number has invalid characters.
+description: Checks for invalid characters on a phone number.
+
+dn: rsId=1,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPattern
+rsId: 1
+cn: username
+pattern: ^[A-Za-z0-9][a-zA-Z0-9-_.@]*
+errMsg: Username must begin with an alphanumeric character, have no spaces, and only contain the following valid special characters: - _ . @
+description: AlphaNumeric w/ some special characters (- | _ | @ | .)

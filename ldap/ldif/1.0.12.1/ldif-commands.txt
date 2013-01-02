@@ -1,0 +1,6 @@
+Staging:
+
+Prod:
+
+1) Update Schema with RackSchema.dxc
+2) execute all ldiff (no specific order)
