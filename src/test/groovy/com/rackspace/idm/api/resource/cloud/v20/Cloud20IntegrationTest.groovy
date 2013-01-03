@@ -24,23 +24,18 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.service.ScopeAccessService
 import org.apache.commons.configuration.Configuration
 import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.persist.LDAPPersister
-import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.ModificationType
 import org.joda.time.DateTime
-import static javax.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud20IntegrationTest extends Specification {
@@ -114,82 +109,82 @@ class Cloud20IntegrationTest extends Specification {
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
-        serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
-        serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
+        serviceAdminToken = authenticateXML("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
+        serviceAdmin = getUserByNameXML(serviceAdminToken, "authQE").getEntity(User)
 
-        identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
-        identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+        identityAdmin = getUserByNameXML(serviceAdminToken, "auth").getEntity(User)
+        identityAdminToken = authenticateXML("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
 
-        createUser(serviceAdminToken, userForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
-        testUser = getUserByName(serviceAdminToken, "admin$sharedRandom").getEntity(User)
+        createUserXML(serviceAdminToken, userForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
+        testUser = getUserByNameXML(serviceAdminToken, "admin$sharedRandom").getEntity(User)
         USER_FOR_AUTH = testUser.username
         USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
-        addEndpointTemplate(serviceAdminToken, endpointTemplate(endpointTemplateId))
-        def addPolicyResponse = addPolicy(serviceAdminToken, policy("name"))
-        def getPolicyResponse = getPolicy(serviceAdminToken, addPolicyResponse.location)
+        addEndpointTemplateXML(serviceAdminToken, endpointTemplate(endpointTemplateId))
+        def addPolicyResponse = addPolicyXML(serviceAdminToken, policy("name"))
+        def getPolicyResponse = getPolicyXML(serviceAdminToken, addPolicyResponse.location)
         policyId = getPolicyResponse.getEntity(Policy).id as String
 
 
         defaultRegion = region("ORD", true, true)
-        createRegion(serviceAdminToken, defaultRegion)
-        updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
+        createRegionXML(serviceAdminToken, defaultRegion)
+        updateRegionXML(serviceAdminToken, defaultRegion.name, defaultRegion)
 
         //User Admin
-        def createResponse = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
-        userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
-        createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
-        userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
+        def createResponse = createUserXML(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
+        userAdmin = getUserByNameXML(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
+        createUserXML(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
+        userAdminTwo = getUserByNameXML(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
 
-        userAdminToken = authenticate("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
-        userAdminTwoToken = authenticate("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminToken = authenticateXML("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminTwoToken = authenticateXML("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         // Default Users
-        createUser(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
-        defaultUser = getUserByName(userAdminToken, "defaultUser1$sharedRandom").getEntity(User)
-        createUser(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
-        defaultUserTwo = getUserByName(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
-        createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
-        defaultUserThree = getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
-        createUser(userAdminTwoToken, userForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
-        defaultUserForAdminTwo = getUserByName(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
+        createUserXML(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUser = getUserByNameXML(userAdminToken, "defaultUser1$sharedRandom").getEntity(User)
+        createUserXML(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserTwo = getUserByNameXML(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
+        createUserXML(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserThree = getUserByNameXML(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
+        createUserXML(userAdminTwoToken, userForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserForAdminTwo = getUserByNameXML(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
 
-        defaultUserToken = authenticate("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        defaultUserToken = authenticateXML("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         //create group
-        def createGroupResponse = createGroup(serviceAdminToken, group("group$sharedRandom", "this is a group"))
+        def createGroupResponse = createGroupXML(serviceAdminToken, group("group$sharedRandom", "this is a group"))
         groupLocation = createGroupResponse.location
-        def getGroupResponse = getGroup(serviceAdminToken, groupLocation)
+        def getGroupResponse = getGroupXML(serviceAdminToken, groupLocation)
         group = getGroupResponse.getEntity(Group).value
 
-        def createRegionResponse = createRegion(serviceAdminToken, region("region$sharedRandom", true, false))
-        def getRegionResponse = getRegion(serviceAdminToken, "region$sharedRandom")
+        def createRegionResponse = createRegionXML(serviceAdminToken, region("region$sharedRandom", true, false))
+        def getRegionResponse = getRegionXML(serviceAdminToken, "region$sharedRandom")
         sharedRegion = getRegionResponse.getEntity(Region)
 
         //create role
         if (sharedRole == null) {
-            def roleResponse = createRole(serviceAdminToken, role())
+            def roleResponse = createRoleXML(serviceAdminToken, role())
             sharedRole = roleResponse.getEntity(Role).value
         }
         if (sharedRoleTwo == null) {
-            def roleResponse2 = createRole(serviceAdminToken, role())
+            def roleResponse2 = createRoleXML(serviceAdminToken, role())
             sharedRoleTwo = roleResponse2.getEntity(Role).value
         }
 
         if (tenant == null) {
             def tenantForCreate = createTenant()
-            def tenantResponse = addTenant(serviceAdminToken, tenantForCreate)
+            def tenantResponse = addTenantXML(serviceAdminToken, tenantForCreate)
             tenant = tenantResponse.getEntity(Tenant).value
         }
 
         //Add role to identity-admin and default-users
-        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
-        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
-        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
-        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+        addApplicationRoleToUserXML(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addApplicationRoleToUserXML(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
+        addApplicationRoleToUserXML(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
+        addApplicationRoleToUserXML(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
 
-        //testIdentityRole = getRole(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
+        //testIdentityRole = getRoleXML(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
 
     }
 
@@ -199,32 +194,32 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def cleanupSpec() {
-        deleteGroup(serviceAdminToken, group.getId())
-        deleteRegion(serviceAdminToken, sharedRegion.getName())
+        deleteGroupXML(serviceAdminToken, group.getId())
+        deleteRegionXML(serviceAdminToken, sharedRegion.getName())
 
-        deleteRole(serviceAdminToken, sharedRole.getId())
-        deleteRole(serviceAdminToken, sharedRoleTwo.getId())
+        deleteRoleXML(serviceAdminToken, sharedRole.getId())
+        deleteRoleXML(serviceAdminToken, sharedRoleTwo.getId())
 
-        deleteUser(serviceAdminToken, userAdmin.getId())
-        deleteUser(serviceAdminToken, userAdminTwo.getId())
+        deleteUserXML(serviceAdminToken, userAdmin.getId())
+        deleteUserXML(serviceAdminToken, userAdminTwo.getId())
 
-        deleteUser(serviceAdminToken, defaultUser.getId())
-        deleteUser(serviceAdminToken, defaultUserTwo.getId())
-        deleteUser(serviceAdminToken, defaultUserThree.getId())
-        deleteUser(serviceAdminToken, defaultUserForAdminTwo.getId())
+        deleteUserXML(serviceAdminToken, defaultUser.getId())
+        deleteUserXML(serviceAdminToken, defaultUserTwo.getId())
+        deleteUserXML(serviceAdminToken, defaultUserThree.getId())
+        deleteUserXML(serviceAdminToken, defaultUserForAdminTwo.getId())
 
-        deleteUser(serviceAdminToken, testUser.getId())
+        deleteUserXML(serviceAdminToken, testUser.getId())
 
         //TODO: DELETE DOMAINS
 
-        deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
-        deletePolicy(serviceAdminToken, policyId)
+        deleteEndpointTemplateXML(serviceAdminToken, endpointTemplateId)
+        deletePolicyXML(serviceAdminToken, policyId)
     }
 
     def "authenticating where total access tokens remains unchanged"() {
         when:
-        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
-        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
@@ -235,12 +230,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating where token is within refresh window adds new token"() {
         when:
-        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, scopeAccessOne.token.id)
 
         def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
-        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
@@ -252,8 +247,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating where token is valid returns existing token"() {
         when:
-        def scopeAccessOne = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
-        def scopeAccessTwo = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         then:
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
@@ -261,11 +256,11 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticate with two valid tokens"() {
         when:
-        def firstScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def firstScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
-        def secondScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def secondScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
-        def thirdScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def thirdScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         then:
         secondScopeAccess.token.id.equals(thirdScopeAccess.token.id)
@@ -273,12 +268,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
         when:
-        def firstScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def firstScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
-        def secondScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def secondScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         expireToken(USER_FOR_AUTH, firstScopeAccess.token.id, 12)
         setTokenInRefreshWindow(USER_FOR_AUTH, secondScopeAccess.token.id)
-        def thirdScopeAccess = authenticate(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def thirdScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=authQE))", "*")
 
@@ -294,20 +289,20 @@ class Cloud20IntegrationTest extends Specification {
         //Create user
         def random = ("$randomness").replace('-', "")
         def user = userForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
-        def response = createUser(serviceAdminToken, user)
+        def response = createUserXML(serviceAdminToken, user)
         //Get user
-        def getUserResponse = getUser(serviceAdminToken, response.location)
+        def getUserResponse = getUserXML(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
         //Get user by id
-        def getUserByIdResponse = getUserById(serviceAdminToken, userEntity.getId())
-        def getUserByNameResponse = getUserByName(serviceAdminToken, userEntity.getUsername())
+        def getUserByIdResponse = getUserByIdXML(serviceAdminToken, userEntity.getId())
+        def getUserByNameResponse = getUserByNameXML(serviceAdminToken, userEntity.getUsername())
         //Update User
         def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", true, null, null)
-        def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
+        def updateUserResponse = updateUserXML(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
-        def deleteResponses = deleteUser(serviceAdminToken, userEntity.getId())
+        def deleteResponses = deleteUserXML(serviceAdminToken, userEntity.getId())
         //Hard delete user
-        def hardDeleteResponses = hardDeleteUser(serviceAdminToken, userEntity.getId())
+        def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
 
         then:
         response.status == 201
@@ -326,11 +321,11 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                getUserById(serviceAdminToken, "badId"),
-                getUserByName(serviceAdminToken, "badName"),
-                updateUser(serviceAdminToken, "badId", new User()),
-                deleteUser(serviceAdminToken, "badId"),
-                addCredential(serviceAdminToken, "badId", getCredentials("someUser", "SomePassword1"))
+                getUserByIdXML(serviceAdminToken, "badId"),
+                getUserByNameXML(serviceAdminToken, "badName"),
+                updateUserXML(serviceAdminToken, "badId", new User()),
+                deleteUserXML(serviceAdminToken, "badId"),
+                addCredentialXML(serviceAdminToken, "badId", getCredentials("someUser", "SomePassword1"))
         ]
     }
 
@@ -340,23 +335,23 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createUser(serviceAdminToken, userForCreate("!@#What", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("What!@#", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                //createUser(serviceAdminToken, userForCreate("1one", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("one name", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("a$sharedRandom", "display", "junk!@#", true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("z$sharedRandom", "display", "   ", true, "ORD", null, "Password1")),
-                //createUser(serviceAdminToken, userForCreate("b$sharedRandom", "display", null, true, "ORD", null, "Password1")),
-                createUser(serviceAdminToken, userForCreate("c$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Pop1")),
-                createUser(serviceAdminToken, userForCreate("d$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "longpassword1")),
-                createUser(serviceAdminToken, userForCreate("e$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword")),
-                createUser(serviceAdminToken, userForCreate("f$sharedRandom", "displ:ay", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
-                createUser(identityAdminToken, userForCreate("g$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
-                //updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                updateUser(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1")),
-                updateUser(identityAdminToken, defaultUser.getId(), userForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
+                createUserXML(serviceAdminToken, userForCreate("!@#What", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("What!@#", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                //createUserXML(serviceAdminToken, userForCreate("1one", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("one name", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("a$sharedRandom", "display", "junk!@#", true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("z$sharedRandom", "display", "   ", true, "ORD", null, "Password1")),
+                //createUserXML(serviceAdminToken, userForCreate("b$sharedRandom", "display", null, true, "ORD", null, "Password1")),
+                createUserXML(serviceAdminToken, userForCreate("c$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Pop1")),
+                createUserXML(serviceAdminToken, userForCreate("d$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "longpassword1")),
+                createUserXML(serviceAdminToken, userForCreate("e$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword")),
+                createUserXML(serviceAdminToken, userForCreate("f$sharedRandom", "displ:ay", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
+                createUserXML(identityAdminToken, userForCreate("g$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
+                //updateUserXML(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
+                updateUserXML(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1")),
+                updateUserXML(identityAdminToken, defaultUser.getId(), userForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
         ]
     }
 
@@ -366,18 +361,18 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
-                getUserById("invalidToken", "badId"),
-                getUserById(null, "badId"),
-                getUserByName("invalidToken", "badId"),
-                getUserByName(null, "badId"),
-                updateUser("invalidToken", "badId", new User()),
-                updateUser(null, "badId", new User()),
-                deleteUser("invalidToken", "badId"),
-                deleteUser(null, "badId"),
-                listUsers("invalidToken"),
-                listUsers(null)
+                createUserXML("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                createUserXML(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
+                getUserByIdXML("invalidToken", "badId"),
+                getUserByIdXML(null, "badId"),
+                getUserByNameXML("invalidToken", "badId"),
+                getUserByNameXML(null, "badId"),
+                updateUserXML("invalidToken", "badId", new User()),
+                updateUserXML(null, "badId", new User()),
+                deleteUserXML("invalidToken", "badId"),
+                deleteUserXML(null, "badId"),
+                listUsersXML("invalidToken"),
+                listUsersXML(null)
         ]
 
     }
@@ -388,30 +383,30 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createUser(defaultUserToken, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                updateUser(defaultUserToken, userAdmin.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                getUserById(defaultUserToken, userAdmin.getId()),
-                getUserById(defaultUserToken, identityAdmin.getId()),
-                getUserById(defaultUserToken, serviceAdmin.getId()),
-                getUserById(userAdminToken, identityAdmin.getId()),
-                getUserById(userAdminToken, serviceAdmin.getId()),
-                getUserByName(defaultUserToken, userAdmin.getUsername()),
-                getUserByName(defaultUserToken, identityAdmin.getUsername()),
-                getUserByName(defaultUserToken, serviceAdmin.getUsername()),
-                getUserByName(userAdminToken, identityAdmin.getUsername()),
-                getUserByName(userAdminToken, serviceAdmin.getUsername()),
-                createGroup(defaultUserToken, group()),
-                updateGroup(defaultUserToken, group.getId(), group()),
-                deleteGroup(defaultUserToken, group.getId()),
-                getGroup(defaultUserToken, groupLocation),
-                getGroups(defaultUserToken),
-                createRegion(defaultUserToken, region()),
-                updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
-                deleteRegion(defaultUserToken, sharedRegion.getName()),
-                getRegion(defaultUserToken, sharedRegion.getName()),
-                createQuestion(defaultUserToken, question()),
-                updateQuestion(defaultUserToken, "id", question()),
-                deleteQuestion(defaultUserToken, "id"),
+                createUserXML(defaultUserToken, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                updateUserXML(defaultUserToken, userAdmin.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
+                getUserByIdXML(defaultUserToken, userAdmin.getId()),
+                getUserByIdXML(defaultUserToken, identityAdmin.getId()),
+                getUserByIdXML(defaultUserToken, serviceAdmin.getId()),
+                getUserByIdXML(userAdminToken, identityAdmin.getId()),
+                getUserByIdXML(userAdminToken, serviceAdmin.getId()),
+                getUserByNameXML(defaultUserToken, userAdmin.getUsername()),
+                getUserByNameXML(defaultUserToken, identityAdmin.getUsername()),
+                getUserByNameXML(defaultUserToken, serviceAdmin.getUsername()),
+                getUserByNameXML(userAdminToken, identityAdmin.getUsername()),
+                getUserByNameXML(userAdminToken, serviceAdmin.getUsername()),
+                createGroupXML(defaultUserToken, group()),
+                updateGroupXML(defaultUserToken, group.getId(), group()),
+                deleteGroupXML(defaultUserToken, group.getId()),
+                getGroupXML(defaultUserToken, groupLocation),
+                getGroupsXML(defaultUserToken),
+                createRegionXML(defaultUserToken, region()),
+                updateRegionXML(defaultUserToken, sharedRegion.getName(), sharedRegion),
+                deleteRegionXML(defaultUserToken, sharedRegion.getName()),
+                getRegionXML(defaultUserToken, sharedRegion.getName()),
+                createQuestionXML(defaultUserToken, question()),
+                updateQuestionXML(defaultUserToken, "id", question()),
+                deleteQuestionXML(defaultUserToken, "id"),
         ]
     }
 
@@ -421,20 +416,20 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsers(serviceAdminToken),
-                listUsers(identityAdminToken),
-                listUsers(userAdminToken),
-                listUsers(defaultUserToken),
-                getUserById(defaultUserToken, defaultUser.getId()),
-                getUserById(userAdminToken, defaultUser.getId()),
-                getUserById(userAdminToken, userAdmin.getId()),
-                getUserById(identityAdminToken, userAdmin.getId()),
-                getUserById(serviceAdminToken, userAdmin.getId()),
-                getUserByName(defaultUserToken, defaultUser.getUsername()),
-                getUserByName(userAdminToken, defaultUser.getUsername()),
-                getUserByName(userAdminToken, userAdmin.getUsername()),
-                getUserByName(identityAdminToken, userAdmin.getUsername()),
-                getUserByName(serviceAdminToken, userAdmin.getUsername())
+                listUsersXML(serviceAdminToken),
+                listUsersXML(identityAdminToken),
+                listUsersXML(userAdminToken),
+                listUsersXML(defaultUserToken),
+                getUserByIdXML(defaultUserToken, defaultUser.getId()),
+                getUserByIdXML(userAdminToken, defaultUser.getId()),
+                getUserByIdXML(userAdminToken, userAdmin.getId()),
+                getUserByIdXML(identityAdminToken, userAdmin.getId()),
+                getUserByIdXML(serviceAdminToken, userAdmin.getId()),
+                getUserByNameXML(defaultUserToken, defaultUser.getUsername()),
+                getUserByNameXML(userAdminToken, defaultUser.getUsername()),
+                getUserByNameXML(userAdminToken, userAdmin.getUsername()),
+                getUserByNameXML(identityAdminToken, userAdmin.getUsername()),
+                getUserByNameXML(serviceAdminToken, userAdmin.getUsername())
         ]
 
     }
@@ -442,18 +437,18 @@ class Cloud20IntegrationTest extends Specification {
     def "Group CRUD" () {
         when:
         def random = ("$randomness").replace('-', "")
-        def createGroupResponse = createGroup(serviceAdminToken, group("group$random", "this is a group"))
+        def createGroupResponse = createGroupXML(serviceAdminToken, group("group$random", "this is a group"))
 
-        def getGroupResponse = getGroup(serviceAdminToken, createGroupResponse.location)
+        def getGroupResponse = getGroupXML(serviceAdminToken, createGroupResponse.location)
         def groupEntity = getGroupResponse.getEntity(Group)
         def groupId = groupEntity.value.id
 
-        def getGroupsResponse = getGroups(serviceAdminToken)
+        def getGroupsResponse = getGroupsXML(serviceAdminToken)
         def groupsEntity = getGroupsResponse.getEntity(Groups)
 
-        def updateGroupResponse = updateGroup(serviceAdminToken, groupId, group("group$random", "updated group"))
+        def updateGroupResponse = updateGroupXML(serviceAdminToken, groupId, group("group$random", "updated group"))
 
-        def deleteGroupResponse = deleteGroup(serviceAdminToken, groupId)
+        def deleteGroupResponse = deleteGroupXML(serviceAdminToken, groupId)
 
 
         then:
@@ -468,15 +463,15 @@ class Cloud20IntegrationTest extends Specification {
 
     def "Group Assignment CRUD for serviceAdmin modifying identityAdmin" () {
         when:
-        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
+        def addUserToGroupResponse = addUserToGroupXML(serviceAdminToken, group.getId(), identityAdmin.getId())
 
-        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, identityAdmin.getId())
+        def listGroupsForUserResponse = listGroupsForUserXML(serviceAdminToken, identityAdmin.getId())
         def groups = listGroupsForUserResponse.getEntity(Groups).value
 
-        def getUsersFromGroupResponse = getUsersFromGroup(serviceAdminToken, group.getId())
+        def getUsersFromGroupResponse = getUsersFromGroupXML(serviceAdminToken, group.getId())
         def users = getUsersFromGroupResponse.getEntity(UserList).value
 
-        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
+        def removeUserFromGroupRespone = removeUserFromGroupXML(serviceAdminToken, group.getId(), identityAdmin.getId())
 
         then:
         addUserToGroupResponse.status == 204
@@ -491,15 +486,15 @@ class Cloud20IntegrationTest extends Specification {
 
     def "Group Assignment CRUD for identityAdmin modifying userAdmin" () {
         when:
-        def addUserToGroupResponse = addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+        def addUserToGroupResponse = addUserToGroupXML(identityAdminToken, group.getId(), userAdmin.getId())
 
-        def listGroupsForUserResponse = listGroupsForUser(identityAdminToken, userAdmin.getId())
+        def listGroupsForUserResponse = listGroupsForUserXML(identityAdminToken, userAdmin.getId())
         def groups = listGroupsForUserResponse.getEntity(Groups).value
 
-        def getUsersFromGroupResponse = getUsersFromGroup(identityAdminToken, group.getId())
+        def getUsersFromGroupResponse = getUsersFromGroupXML(identityAdminToken, group.getId())
         def users = getUsersFromGroupResponse.getEntity(UserList).value
 
-        def removeUserFromGroupRespone = removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+        def removeUserFromGroupRespone = removeUserFromGroupXML(identityAdminToken, group.getId(), userAdmin.getId())
 
         then:
         addUserToGroupResponse.status == 204
@@ -517,20 +512,20 @@ class Cloud20IntegrationTest extends Specification {
         def tempUserAdmin = "tempUserAdmin$sharedRandom"
 
         when:
-        addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+        addUserToGroupXML(identityAdminToken, group.getId(), userAdmin.getId())
 
-        def getUsersFromGroupResponse1 = getUsersFromGroup(identityAdminToken, group.getId())
+        def getUsersFromGroupResponse1 = getUsersFromGroupXML(identityAdminToken, group.getId())
         UserList users1 = getUsersFromGroupResponse1.getEntity(UserList).value
 
-        createUser(userAdminToken, userForCreate(tempUserAdmin, "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
-        def tempUser = getUserByName(userAdminToken, tempUserAdmin).getEntity(User)
+        createUserXML(userAdminToken, userForCreate(tempUserAdmin, "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
+        def tempUser = getUserByNameXML(userAdminToken, tempUserAdmin).getEntity(User)
 
-        def getUsersFromGroupResponse2 = getUsersFromGroup(identityAdminToken, group.getId())
+        def getUsersFromGroupResponse2 = getUsersFromGroupXML(identityAdminToken, group.getId())
         UserList users2 = getUsersFromGroupResponse2.getEntity(UserList).value
 
-        removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+        removeUserFromGroupXML(identityAdminToken, group.getId(), userAdmin.getId())
 
-        deleteUser(userAdminToken, tempUser.getId())
+        deleteUserXML(userAdminToken, tempUser.getId())
 
         then:
         users1.user.size() + 1 == users2.user.size()
@@ -543,15 +538,15 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createGroup(serviceAdminToken, group(null, "this is a group")),
-                createGroup(serviceAdminToken, group("", "this is a group")),
-                createGroup(serviceAdminToken, group("group", null)),
-                updateGroup(serviceAdminToken, group.getId(), group(null, "this is a group")),
-                updateGroup(serviceAdminToken, group.getId(), group("", "this is a group")),
-                updateGroup(serviceAdminToken, group.getId(), group("group", null)),
-                addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
-                addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
-                removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
+                createGroupXML(serviceAdminToken, group(null, "this is a group")),
+                createGroupXML(serviceAdminToken, group("", "this is a group")),
+                createGroupXML(serviceAdminToken, group("group", null)),
+                updateGroupXML(serviceAdminToken, group.getId(), group(null, "this is a group")),
+                updateGroupXML(serviceAdminToken, group.getId(), group("", "this is a group")),
+                updateGroupXML(serviceAdminToken, group.getId(), group("group", null)),
+                addUserToGroupXML(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+                addUserToGroupXML(serviceAdminToken, group.getId(), defaultUser.getId()),
+                removeUserFromGroupXML(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
     }
 
@@ -561,7 +556,7 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
+                addUserToGroupXML(serviceAdminToken, group.getId(), "doesnotexist"),
         ]
     }
 
@@ -570,7 +565,7 @@ class Cloud20IntegrationTest extends Specification {
         Region region1 = region("somename", false, false)
 
         when:
-        def updateRegionResponse = updateRegion(serviceAdminToken, sharedRegion.getName(), region1)
+        def updateRegionResponse = updateRegionXML(serviceAdminToken, sharedRegion.getName(), region1)
 
         then:
         updateRegionResponse.status == 400
@@ -584,19 +579,19 @@ class Cloud20IntegrationTest extends Specification {
         Region region2 = region(regionName, true, false)
 
         when:
-        def createRegionResponse = createRegion(serviceAdminToken, region1)
-        def getRegionResponse = getRegion(serviceAdminToken, regionName)
+        def createRegionResponse = createRegionXML(serviceAdminToken, region1)
+        def getRegionResponse = getRegionXML(serviceAdminToken, regionName)
         Region createdRegion = getRegionResponse.getEntity(Region)
 
-        def updateRegionResponse = updateRegion(serviceAdminToken, regionName, region2)
-        def getUpdatedRegionResponse = getRegion(serviceAdminToken, regionName)
+        def updateRegionResponse = updateRegionXML(serviceAdminToken, regionName, region2)
+        def getUpdatedRegionResponse = getRegionXML(serviceAdminToken, regionName)
         Region updatedRegion = getUpdatedRegionResponse.getEntity(Region)
 
-        def getRegionsResponse = getRegions(serviceAdminToken)
+        def getRegionsResponse = getRegionsXML(serviceAdminToken)
         Regions regions = getRegionsResponse.getEntity(Regions)
 
-        def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
-        def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
+        def deleteRegionResponse = deleteRegionXML(serviceAdminToken, regionName)
+        def getDeletedRegionResponse = getRegionXML(serviceAdminToken, regionName)
 
 
         then:
@@ -622,9 +617,9 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                updateRegion(serviceAdminToken, "notfound", region()),
-                deleteRegion(serviceAdminToken, "notfound"),
-                getRegion(serviceAdminToken, "notfound"),
+                updateRegionXML(serviceAdminToken, "notfound", region()),
+                deleteRegionXML(serviceAdminToken, "notfound"),
+                getRegionXML(serviceAdminToken, "notfound"),
         ]
     }
 
@@ -634,13 +629,13 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createRegion(serviceAdminToken, region(null, true, false)),
+                createRegionXML(serviceAdminToken, region(null, true, false)),
         ]
     }
 
     def "create region that already exists returns conflict"() {
         when:
-        def createRegionResponse = createRegion(serviceAdminToken, sharedRegion)
+        def createRegionResponse = createRegionXML(serviceAdminToken, sharedRegion)
 
         then:
         createRegionResponse.status == 409
@@ -648,7 +643,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole called by default-user returns forbidden"() {
         when:
-        def response = listUsersWithRole(defaultUserToken, "1")
+        def response = listUsersWithRoleXML(defaultUserToken, "1")
 
         then:
         response.status == 403
@@ -656,7 +651,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole called by admin invalid roleId returns not found"() {
         when:
-        def response = listUsersWithRole(serviceAdminToken, "-5")
+        def response = listUsersWithRoleXML(serviceAdminToken, "-5")
 
         then:
         response.status == 404
@@ -668,15 +663,15 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsersWithRole(identityAdminToken, sharedRole.getId()),
-                listUsersWithRole(serviceAdminToken, sharedRole.getId()),
-                listUsersWithRole(userAdminToken, sharedRole.getId())
+                listUsersWithRoleXML(identityAdminToken, sharedRole.getId()),
+                listUsersWithRoleXML(serviceAdminToken, sharedRole.getId()),
+                listUsersWithRoleXML(userAdminToken, sharedRole.getId())
         ]
     }
 
     def "listUsersWithRole empty list returns"() {
         when:
-        def response = listUsersWithRole(userAdminTwoToken, sharedRole.getId())
+        def response = listUsersWithRoleXML(userAdminTwoToken, sharedRole.getId())
 
         then:
         response.status == 200
@@ -686,9 +681,9 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole non empty list"() {
         when:
-        def userAdminResponse = listUsersWithRole(userAdminToken, sharedRole.getId())
-        def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRole.getId())
-        def identityAdminResponse = listUsersWithRole(identityAdminToken, sharedRole.getId())
+        def userAdminResponse = listUsersWithRoleXML(userAdminToken, sharedRole.getId())
+        def serviceAdminResponse = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId())
+        def identityAdminResponse = listUsersWithRoleXML(identityAdminToken, sharedRole.getId())
 
         then:
         userAdminResponse.status == 200
@@ -704,13 +699,13 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole pages results"() {
         when:
-        def userAdminResponse1 = listUsersWithRole(userAdminToken, sharedRole.getId(), 0, 1)
-        def userAdminResponse2 = listUsersWithRole(userAdminToken, sharedRole.getId(), 1, 1)
-        def userAdminResponse3 = listUsersWithRole(userAdminToken, sharedRole.getId(), 2, 1)
-        def serviceAdminResponse1 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 1, 2)
-        def serviceAdminResponse2 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 0, 2)
-        def serviceAdminResponse3 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 2, 2)
-        def serviceAdminResponse4 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 3, 4)
+        def userAdminResponse1 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 0, 1)
+        def userAdminResponse2 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 1, 1)
+        def userAdminResponse3 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 2, 1)
+        def serviceAdminResponse1 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 1, 2)
+        def serviceAdminResponse2 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 0, 2)
+        def serviceAdminResponse3 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 2, 2)
+        def serviceAdminResponse4 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 3, 4)
 
         then:
         userAdminResponse1.getEntity(UserList).value.user.size == 1
@@ -730,8 +725,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole offset greater than result set length returns 400"() {
         when:
-        def responseOne = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 100, 10)
-        def responseTwo = listUsersWithRole(userAdminToken, sharedRole.getId(), 100, 10)
+        def responseOne = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 100, 10)
+        def responseTwo = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 100, 10)
 
         then:
         responseOne.status == 400
@@ -740,12 +735,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole role assigned to no one"() {
         when:
-        def responseOne = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId())
-        def responseTwo = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId(), 0, 10)
-        def responseThree = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId())
-        def responseFour = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId(), 0, 10)
-        def responseFive = listUsersWithRole(userAdminToken, sharedRoleTwo.getId())
-        def responseSix = listUsersWithRole(userAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseOne = listUsersWithRoleXML(serviceAdminToken, sharedRoleTwo.getId())
+        def responseTwo = listUsersWithRoleXML(serviceAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseThree = listUsersWithRoleXML(identityAdminToken, sharedRoleTwo.getId())
+        def responseFour = listUsersWithRoleXML(identityAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseFive = listUsersWithRoleXML(userAdminToken, sharedRoleTwo.getId())
+        def responseSix = listUsersWithRoleXML(userAdminToken, sharedRoleTwo.getId(), 0, 10)
 
         then:
         responseOne.getEntity(UserList).value.user.size == 0
@@ -762,19 +757,19 @@ class Cloud20IntegrationTest extends Specification {
         def question2 = question(null, "question changed")
 
         when:
-        def createResponse = createQuestion(serviceAdminToken, question1)
-        def getCreateResponse = getQuestionFromLocation(serviceAdminToken, createResponse.location)
+        def createResponse = createQuestionXML(serviceAdminToken, question1)
+        def getCreateResponse = getQuestionFromLocationXML(serviceAdminToken, createResponse.location)
         def createEntity = getCreateResponse.getEntity(Question)
         question2.id = createEntity.id
 
-        def updateResponse = updateQuestion(serviceAdminToken, createEntity.id, question2)
-        def getUpdateResponse = getQuestion(serviceAdminToken, createEntity.id)
+        def updateResponse = updateQuestionXML(serviceAdminToken, createEntity.id, question2)
+        def getUpdateResponse = getQuestionXML(serviceAdminToken, createEntity.id)
         def updateEntity = getUpdateResponse.getEntity(Question)
 
-        def deleteResponse = deleteQuestion(serviceAdminToken, createEntity.id)
-        def getDeleteResponse = getQuestion(serviceAdminToken, createEntity.id)
+        def deleteResponse = deleteQuestionXML(serviceAdminToken, createEntity.id)
+        def getDeleteResponse = getQuestionXML(serviceAdminToken, createEntity.id)
 
-        def getQuestionResponse = getQuestions(serviceAdminToken)
+        def getQuestionResponse = getQuestionsXML(serviceAdminToken)
         def questions = getQuestionResponse.getEntity(Questions)
 
         then:
@@ -800,9 +795,9 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                updateQuestion(serviceAdminToken, "notfound", question("notfound", "question")),
-                deleteQuestion(serviceAdminToken, "notfound"),
-                getQuestion(serviceAdminToken, "notfound"),
+                updateQuestionXML(serviceAdminToken, "notfound", question("notfound", "question")),
+                deleteQuestionXML(serviceAdminToken, "notfound"),
+                getQuestionXML(serviceAdminToken, "notfound"),
         ]
     }
 
@@ -812,9 +807,9 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                updateQuestion(serviceAdminToken, "ids", question("dontmatch", "question")),
-                updateQuestion(serviceAdminToken, "id", question("id", null)),
-                createQuestion(serviceAdminToken, question("id", null)),
+                updateQuestionXML(serviceAdminToken, "ids", question("dontmatch", "question")),
+                updateQuestionXML(serviceAdminToken, "id", question("id", null)),
+                createQuestionXML(serviceAdminToken, question("id", null)),
         ]
     }
 
@@ -824,14 +819,14 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsers(""),
-                listUsers("1")
+                listUsersXML(""),
+                listUsersXML("1")
         ]
     }
 
     def "listUsers returns default user"() {
         when:
-        def users = listUsers(defaultUserToken).getEntity(UserList).value.user
+        def users = listUsersXML(defaultUserToken).getEntity(UserList).value.user
 
         then:
         users[0].username.equals(defaultUser.username)
@@ -839,7 +834,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsers caller is user-admin returns users from domain"() {
         when:
-        def users = listUsers(userAdminToken).getEntity(UserList).value.user
+        def users = listUsersXML(userAdminToken).getEntity(UserList).value.user
 
         then:
         users.size() == 4
@@ -852,12 +847,12 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsers(identityAdminToken),
-                listUsers(identityAdminToken, 0, 10),
-                listUsers(identityAdminToken, 15, 10),
-                listUsers(serviceAdminToken),
-                listUsers(serviceAdminToken, 0, 10),
-                listUsers(serviceAdminToken, 15, 10),
+                listUsersXML(identityAdminToken),
+                listUsersXML(identityAdminToken, 0, 10),
+                listUsersXML(identityAdminToken, 15, 10),
+                listUsersXML(serviceAdminToken),
+                listUsersXML(serviceAdminToken, 0, 10),
+                listUsersXML(serviceAdminToken, 15, 10),
         ]
     }
 
@@ -867,10 +862,10 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsers(serviceAdminToken, 100000000, 25),
-                listUsers(identityAdminToken, 10000000, 50),
-                listUsers(serviceAdminToken, 0, "abc"),
-                listUsers(serviceAdminToken, "abc", 10)
+                listUsersXML(serviceAdminToken, 100000000, 25),
+                listUsersXML(identityAdminToken, 10000000, 50),
+                listUsersXML(serviceAdminToken, 0, "abc"),
+                listUsersXML(serviceAdminToken, "abc", 10)
         ]
     }
 
@@ -880,11 +875,11 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addApplicationRoleToUser(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                deleteApplicationRoleFromUser(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
-                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
+                addApplicationRoleToUserXML(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                addApplicationRoleToUserXML(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                deleteApplicationRoleFromUserXML(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
+                deleteApplicationRoleFromUserXML(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                deleteApplicationRoleFromUserXML(userAdminToken, sharedRole.getId(), defaultUser.getId()),
         ]
     }
 
@@ -894,13 +889,13 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addApplicationRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
-                addApplicationRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
-                addApplicationRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
-                addApplicationRoleToUser(serviceAdminToken, "1", serviceAdmin.getId()),
-                deleteApplicationRoleFromUser(userAdminToken, "3", userAdmin.getId()),
-                deleteApplicationRoleFromUser(identityAdminToken, "1", identityAdmin.getId()),
-                deleteApplicationRoleFromUser(serviceAdminToken, "4", serviceAdmin.getId())
+                addApplicationRoleToUserXML(serviceAdminToken, "1", defaultUser.getId()),
+                addApplicationRoleToUserXML(serviceAdminToken, "1", userAdmin.getId()),
+                addApplicationRoleToUserXML(serviceAdminToken, "1", identityAdmin.getId()),
+                addApplicationRoleToUserXML(serviceAdminToken, "1", serviceAdmin.getId()),
+                deleteApplicationRoleFromUserXML(userAdminToken, "3", userAdmin.getId()),
+                deleteApplicationRoleFromUserXML(identityAdminToken, "1", identityAdmin.getId()),
+                deleteApplicationRoleFromUserXML(serviceAdminToken, "4", serviceAdmin.getId())
         ]
     }
 
@@ -910,8 +905,8 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
-                addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+                addApplicationRoleToUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                addApplicationRoleToUserXML(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
         ]
     }
 
@@ -921,8 +916,8 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                deleteApplicationRoleFromUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
-                deleteApplicationRoleFromUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+                deleteApplicationRoleFromUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                deleteApplicationRoleFromUserXML(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
         ]
     }
 
@@ -932,10 +927,10 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                deleteRoleFromUserOnTenant(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
-                deleteRoleFromUserOnTenant(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId()),
-                addRoleToUserOnTenant(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
-                addRoleToUserOnTenant(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId())
+                deleteRoleFromUserOnTenantXML(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                deleteRoleFromUserOnTenantXML(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId()),
+                addRoleToUserOnTenantXML(userAdminToken, tenant.id, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                addRoleToUserOnTenantXML(userAdminToken, tenant.id, defaultUser.getId(), sharedRole.getId())
         ]
     }
 
@@ -945,10 +940,10 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), defaultUserRoleId),
-                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), userAdminRoleId),
-                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), identityAdminRoleId),
-                addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), serviceAdminRoleId)
+                addRoleToUserOnTenantXML(serviceAdminToken, tenant.id, defaultUser.getId(), defaultUserRoleId),
+                addRoleToUserOnTenantXML(serviceAdminToken, tenant.id, defaultUser.getId(), userAdminRoleId),
+                addRoleToUserOnTenantXML(serviceAdminToken, tenant.id, defaultUser.getId(), identityAdminRoleId),
+                addRoleToUserOnTenantXML(serviceAdminToken, tenant.id, defaultUser.getId(), serviceAdminRoleId)
         ]
     }
 
@@ -958,8 +953,8 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                addRoleToUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
-                addRoleToUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+                addRoleToUserOnTenantXML(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
+                addRoleToUserOnTenantXML(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
         ]
     }
 
@@ -969,8 +964,8 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                deleteRoleFromUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
-                deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+                deleteRoleFromUserOnTenantXML(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
+                deleteRoleFromUserOnTenantXML(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
         ]
     }
 
@@ -980,17 +975,17 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                deleteRole(userAdminToken, sharedRoleTwo.id),
-                deleteRole(identityAdminToken, identityAdminRoleId),
-                deleteRole(identityAdminToken, userAdminRoleId),
-                deleteRole(serviceAdminToken, identityAdminRoleId),
-                deleteRole(serviceAdminToken, userAdminRoleId)
+                deleteRoleXML(userAdminToken, sharedRoleTwo.id),
+                deleteRoleXML(identityAdminToken, identityAdminRoleId),
+                deleteRoleXML(identityAdminToken, userAdminRoleId),
+                deleteRoleXML(serviceAdminToken, identityAdminRoleId),
+                deleteRoleXML(serviceAdminToken, userAdminRoleId)
         ]
     }
 
     def "add policy to endpoint without endpoint without policy returns 404" () {
         when:
-        def response = addPolicyToEndpointTemplate(identityAdminToken, "111111", "111111")
+        def response = addPolicyToEndpointTemplateXML(identityAdminToken, "111111", "111111")
 
         then:
         response.status == 404
@@ -998,7 +993,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "add policy to endpoint with endpoint without policy returns 404" () {
         when:
-        def response = addPolicyToEndpointTemplate(identityAdminToken, endpointTemplateId, "111111")
+        def response = addPolicyToEndpointTemplateXML(identityAdminToken, endpointTemplateId, "111111")
 
         then:
         response.status == 404
@@ -1006,12 +1001,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "add policy to endpoint with endpoint with policy returns 204"() {
         when:
-        def addResponse = addPolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
-        def getResponse = getPoliciesFromEndpointTemplate(serviceAdminToken, endpointTemplateId)
+        def addResponse = addPolicyToEndpointTemplateXML(serviceAdminToken, endpointTemplateId, policyId)
+        def getResponse = getPoliciesFromEndpointTemplateXML(serviceAdminToken, endpointTemplateId)
         def policies = getResponse.getEntity(Policies)
-        def updateResponse = updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
-        def deletePolicyResponse = deletePolicy(serviceAdminToken, policyId)
-        def deleteResponse = deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
+        def updateResponse = updatePoliciesForEndpointTemplateXML(serviceAdminToken, endpointTemplateId, policies)
+        def deletePolicyResponse = deletePolicyXML(serviceAdminToken, policyId)
+        def deleteResponse = deletePolicyToEndpointTemplateXML(serviceAdminToken, endpointTemplateId, policyId)
 
         then:
         addResponse.status == 204
@@ -1026,7 +1021,7 @@ class Cloud20IntegrationTest extends Specification {
         Policies policies = new Policies()
         Policy policy = policy("name")
         policies.policy.add(policy)
-        def response = updatePoliciesForEndpointTemplate(serviceAdminToken, "111111", policies)
+        def response = updatePoliciesForEndpointTemplateXML(serviceAdminToken, "111111", policies)
 
         then:
         response.status == 404
@@ -1037,7 +1032,7 @@ class Cloud20IntegrationTest extends Specification {
         Policies policies = new Policies()
         Policy policy = policy("name")
         policies.policy.add(policy)
-        def response = updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
+        def response = updatePoliciesForEndpointTemplateXML(serviceAdminToken, endpointTemplateId, policies)
 
         then:
         response.status == 404
@@ -1045,8 +1040,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "Create secretQA and get secretQA" () {
         when:
-        def response = createSecretQA(serviceAdminToken,defaultUser.getId(), secretQA("1","answer"))
-        def secretQAResponse = getSecretQA(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
+        def response = createSecretQAXML(serviceAdminToken,defaultUser.getId(), secretQA("1","answer"))
+        def secretQAResponse = getSecretQAXML(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
 
         then:
         response.status == 200
@@ -1059,19 +1054,19 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createSecretQA(defaultUserToken, serviceAdmin.getId(), secretQA("1", "answer")),
-                createSecretQA(defaultUserToken, identityAdmin.getId(), secretQA("1", "answer")),
-                createSecretQA(defaultUserToken, userAdmin.getId(), secretQA("1", "answer")),
-                createSecretQA(userAdminToken, serviceAdmin.getId(), secretQA("1", "answer")),
-                createSecretQA(userAdminToken, identityAdmin.getId(), secretQA("1", "answer")),
-                createSecretQA(userAdminToken, userAdminTwo.getId(), secretQA("1", "answer")),
-                createSecretQA(userAdminToken, defaultUserForAdminTwo.getId(), secretQA("1", "answer")),
-                getSecretQA(defaultUserToken, serviceAdmin.getId()),
-                getSecretQA(defaultUserToken, identityAdmin.getId()),
-                getSecretQA(userAdminToken, serviceAdmin.getId()),
-                getSecretQA(userAdminToken, identityAdmin.getId()),
-                getSecretQA(userAdminToken, userAdminTwo.getId()),
-                getSecretQA(userAdminToken, defaultUserForAdminTwo.getId())
+                createSecretQAXML(defaultUserToken, serviceAdmin.getId(), secretQA("1", "answer")),
+                createSecretQAXML(defaultUserToken, identityAdmin.getId(), secretQA("1", "answer")),
+                createSecretQAXML(defaultUserToken, userAdmin.getId(), secretQA("1", "answer")),
+                createSecretQAXML(userAdminToken, serviceAdmin.getId(), secretQA("1", "answer")),
+                createSecretQAXML(userAdminToken, identityAdmin.getId(), secretQA("1", "answer")),
+                createSecretQAXML(userAdminToken, userAdminTwo.getId(), secretQA("1", "answer")),
+                createSecretQAXML(userAdminToken, defaultUserForAdminTwo.getId(), secretQA("1", "answer")),
+                getSecretQAXML(defaultUserToken, serviceAdmin.getId()),
+                getSecretQAXML(defaultUserToken, identityAdmin.getId()),
+                getSecretQAXML(userAdminToken, serviceAdmin.getId()),
+                getSecretQAXML(userAdminToken, identityAdmin.getId()),
+                getSecretQAXML(userAdminToken, userAdminTwo.getId()),
+                getSecretQAXML(userAdminToken, defaultUserForAdminTwo.getId())
 
         ]
 
@@ -1083,14 +1078,14 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createSecretQA("", defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA("", defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA(null, defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA(null, defaultUser.getId(), secretQA("1", "answer")),
-                getSecretQA("", serviceAdmin.getId()),
-                getSecretQA("", identityAdmin.getId()),
-                getSecretQA(null, serviceAdmin.getId()),
-                getSecretQA(null, identityAdmin.getId()),
+                createSecretQAXML("", defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML("", defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML(null, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML(null, defaultUser.getId(), secretQA("1", "answer")),
+                getSecretQAXML("", serviceAdmin.getId()),
+                getSecretQAXML("", identityAdmin.getId()),
+                getSecretQAXML(null, serviceAdmin.getId()),
+                getSecretQAXML(null, identityAdmin.getId()),
         ]
 
     }
@@ -1101,8 +1096,8 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA(null, "answer")),
-                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("1", null))
+                createSecretQAXML(serviceAdminToken, defaultUser.getId(), secretQA(null, "answer")),
+                createSecretQAXML(serviceAdminToken, defaultUser.getId(), secretQA("1", null))
         ]
 
     }
@@ -1113,9 +1108,9 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createSecretQA(serviceAdminToken, "badId", secretQA("1", "answer")),
-                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("badId", "answer")),
-                getSecretQA(serviceAdminToken, "badId")
+                createSecretQAXML(serviceAdminToken, "badId", secretQA("1", "answer")),
+                createSecretQAXML(serviceAdminToken, defaultUser.getId(), secretQA("badId", "answer")),
+                getSecretQAXML(serviceAdminToken, "badId")
         ]
 
     }
@@ -1126,235 +1121,235 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA(identityAdminToken, defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA(userAdminToken, defaultUser.getId(), secretQA("1", "answer")),
-                createSecretQA(defaultUserToken, defaultUser.getId(), secretQA("1", "answer")),
-                getSecretQA(serviceAdminToken, defaultUser.getId()),
-                getSecretQA(identityAdminToken, defaultUser.getId()),
-                getSecretQA(userAdminToken, defaultUser.getId()),
-                getSecretQA(defaultUserToken, defaultUser.getId()),
+                createSecretQAXML(serviceAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML(identityAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML(userAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQAXML(defaultUserToken, defaultUser.getId(), secretQA("1", "answer")),
+                getSecretQAXML(serviceAdminToken, defaultUser.getId()),
+                getSecretQAXML(identityAdminToken, defaultUser.getId()),
+                getSecretQAXML(userAdminToken, defaultUser.getId()),
+                getSecretQAXML(defaultUserToken, defaultUser.getId()),
         ]
 
     }
 
     //Resource Calls
-    def createUser(String token, user) {
+    def createUserXML(String token, user) {
         resource.path(path20).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
-    def getUser(String token, URI location) {
+    def getUserXML(String token, URI location) {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listUsers(String token) {
+    def listUsersXML(String token) {
         resource.path(path20).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsers(String token, offset, limit) {
+    def listUsersXML(String token, offset, limit) {
         resource.path(path20).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getUserById(String token, String userId) {
+    def getUserByIdXML(String token, String userId) {
         resource.path(path20).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getUserByName(String token, String name) {
+    def getUserByNameXML(String token, String name) {
         resource.path(path20).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def updateUser(String token, String userId, user) {
+    def updateUserXML(String token, String userId, user) {
         resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
-    def addCredential(String token, String userId, credential) {
+    def addCredentialXML(String token, String userId, credential) {
         resource.path(path20).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
-    def deleteUser(String token, String userId) {
+    def deleteUserXML(String token, String userId) {
         resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def hardDeleteUser(String token, String userId) {
+    def hardDeleteUserXML(String token, String userId) {
         resource.path(path20).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def createGroup(String token, group) {
+    def createGroupXML(String token, group) {
         resource.path(path20).path(RAX_GRPADM).path('groups').header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).post(ClientResponse)
     }
 
-    def getGroup(String token, URI uri) {
+    def getGroupXML(String token, URI uri) {
         resource.uri(uri).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getGroups(String token) {
+    def getGroupsXML(String token) {
         resource.path(path20).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def updateGroup(String token, String groupId, group) {
+    def updateGroupXML(String token, String groupId, group) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
 
-    def deleteGroup(String  token, String groupId) {
+    def deleteGroupXML(String  token, String groupId) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addUserToGroup(String token, String groupId, String userId) {
+    def addUserToGroupXML(String token, String groupId, String userId) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
-    def removeUserFromGroup(String token, String groupId, String userId) {
+    def removeUserFromGroupXML(String token, String groupId, String userId) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def listGroupsForUser(String token, String userId) {
+    def listGroupsForUserXML(String token, String userId) {
         resource.path(path20).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getUsersFromGroup(String token, String groupId) {
+    def getUsersFromGroupXML(String token, String groupId) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticate(username, password) {
+    def authenticateXML(username, password) {
         resource.path(path20 + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
-    def createRegion(String token, region) {
+    def createRegionXML(String token, region) {
         resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
     }
 
-    def getRegion(String token, String regionId) {
+    def getRegionXML(String token, String regionId) {
         resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getRegions(String token) {
+    def getRegionsXML(String token) {
         resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def updateRegion(String token, String regionId, region) {
+    def updateRegionXML(String token, String regionId, region) {
         resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
     }
 
-    def deleteRegion(String token, String regionId) {
+    def deleteRegionXML(String token, String regionId) {
         resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def listUsersWithRole(String token, String roleId) {
+    def listUsersWithRoleXML(String token, String roleId) {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsersWithRole(String token, String roleId, int offset, int limit) {
+    def listUsersWithRoleXML(String token, String roleId, int offset, int limit) {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def createRole(String token, Role role) {
+    def createRoleXML(String token, Role role) {
         resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
     }
 
-    def deleteRole(String token, String roleId) {
+    def deleteRoleXML(String token, String roleId) {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addApplicationRoleToUser(String token, String roleId, String userId) {
+    def addApplicationRoleToUserXML(String token, String roleId, String userId) {
         resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
-    def deleteApplicationRoleFromUser(String token, String roleId, String userId) {
+    def deleteApplicationRoleFromUserXML(String token, String roleId, String userId) {
         resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {
+    def addRoleToUserOnTenantXML(String token, String tenantId, String userId, String roleId) {
         resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
-    def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
+    def deleteRoleFromUserOnTenantXML(String token, String tenantId, String userId, String roleId) {
         resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)
                 .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def removeRoleFromUser(String token, String roleId, String userId) {
+    def removeRoleFromUserXML(String token, String roleId, String userId) {
         resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
 
-    def createQuestion(String token, question) {
+    def createQuestionXML(String token, question) {
         resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
     }
 
-    def getQuestion(String token, questionId) {
+    def getQuestionXML(String token, questionId) {
         resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getQuestionFromLocation(String token, location) {
+    def getQuestionFromLocationXML(String token, location) {
         resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getQuestions(String token) {
+    def getQuestionsXML(String token) {
         resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
-    def updateQuestion(String token, String questionId, question) {
+    def updateQuestionXML(String token, String questionId, question) {
         resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
     }
 
-    def deleteQuestion(String token, String questionId) {
+    def deleteQuestionXML(String token, String questionId) {
         resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addEndpointTemplate(String token, endpointTemplate) {
+    def addEndpointTemplateXML(String token, endpointTemplate) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
     }
 
-    def deleteEndpointTemplate(String token, endpointTemplateId) {
+    def deleteEndpointTemplateXML(String token, endpointTemplateId) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addPolicy(String token, policy) {
+    def addPolicyXML(String token, policy) {
         resource.path(path20).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
     }
 
-    def getPolicy(String token, location) {
+    def getPolicyXML(String token, location) {
         resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def deletePolicy(String token, policyId) {
+    def deletePolicyXML(String token, policyId) {
         resource.path(path20).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addPolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
+    def addPolicyToEndpointTemplateXML(String token, endpointTemplateId, policyId) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
-    def deletePolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
+    def deletePolicyToEndpointTemplateXML(String token, endpointTemplateId, policyId) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def getPoliciesFromEndpointTemplate(String token, endpointTemplateId) {
+    def getPoliciesFromEndpointTemplateXML(String token, endpointTemplateId) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
+    def updatePoliciesForEndpointTemplateXML(String token, endpointTemplateId, policies) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
     }
 
-    def addTenant(String token, Tenant tenant) {
+    def addTenantXML(String token, Tenant tenant) {
         resource.path(path20).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
-    def getSecretQA(String token, String userId){
+    def getSecretQAXML(String token, String userId){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def createSecretQA(String token, String userId, secretqa){
+    def createSecretQAXML(String token, String userId, secretqa){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
     }
 
-    def getRole(String token, String roleId) {
+    def getRoleXML(String token, String roleId) {
         resource.path(path20).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def impersonate(String token, User user) {
+    def impersonateXML(String token, User user) {
         def request = new ImpersonationRequest().with {
             it.user = user
             it.expireInSeconds = 10800
@@ -1362,7 +1357,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path20).path("RAX-AUTH/impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
-    def revokeUserToken(String token, String tokenToRevoke) {
+    def revokeUserTokenXML(String token, String tokenToRevoke) {
         resource.path(path20).path("tokens").path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
