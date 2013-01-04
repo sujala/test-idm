@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.rackspace.idm.domain.service.UserService;
+import com.sun.jersey.core.util.Base64;
 import lombok.Data;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,16 +30,21 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     private static final String TOKENS = "tokens";
     private static final String USERS = "users";
 
-    public void log(String authToken, String host, String userAgent, String method, String path) {
-        long timeStamp = new Date().getTime();
+    public void log(Long startTime, String authToken, String basicAuth, String host, String userAgent, String method, String path, int status) {
+        long duration = new Date().getTime() - startTime;
         String endpoint = config.getString("ga.endpoint");
 
         Message message = new Message();
-        message.setTimestamp(String.valueOf(timeStamp));
+        message.setTimestamp(String.valueOf(startTime));
+        message.setDuration(String.valueOf(duration));
 
         Caller caller = new Caller();
         caller.setIp(getHost(host));
-        caller.setId(getUserIdFromAuthToken(authToken));
+        if (authToken != null) {
+            caller.setId(getUserIdFromAuthToken(authToken));
+        } else if (basicAuth != null) {
+            caller.setId(getUserIdFromBasicAuth(basicAuth));
+        }
         caller.setAgent(userAgent);
         message.setCaller(caller);
 
@@ -56,12 +62,44 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         Resource resource = new Resource();
         resource.setUri(getUri(endpoint, path));
         resource.setMethod(method);
+        resource.setResponseStatus(status);
         message.setResource(resource);
 
         Gson gson = new GsonBuilder().create();
         String messageString = gson.toJson(message);
 
         analyticsLogHandler.log(messageString);
+    }
+
+    private String getUserIdFromBasicAuth(String basicAuth) {
+        String username = getUsernameFromDecoded(getDecodedAuth(basicAuth));
+        if (username != null) {
+            com.rackspace.idm.domain.entity.User caller = userService.getUser(username);
+            if (caller != null) {
+                return caller.getId();
+            }
+        }
+        return null;
+    }
+
+    private String getUsernameFromDecoded(String authentication) {
+        if (authentication != null) {
+            List<String> usernameAndPassword = Arrays.asList(authentication.split(":"));
+            if (usernameAndPassword.size() == 2) {
+                return usernameAndPassword.get(0);
+            }
+        }
+        return null;
+    }
+
+    private String getDecodedAuth(String basicAuth) {
+        if (basicAuth != null) {
+            List<String> authHeader = Arrays.asList(basicAuth.split(" "));
+            if (authHeader.size() == 2) {
+                return Base64.base64Decode(authHeader.get(1));
+            }
+        }
+        return null;
     }
 
     private String getUserIdFromPath(String path) {
@@ -126,6 +164,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     @Data
     private class Message {
         private String timestamp;
+        private String duration;
         private Caller caller;
         private User user;
         private Resource resource;
@@ -147,7 +186,8 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
 
     @Data
     private class Resource {
-        String uri;
-        String method;
+        private String uri;
+        private String method;
+        private int responseStatus;
     }
 }

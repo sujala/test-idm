@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.apache.commons.configuration.Configuration
-import org.openstack.docs.identity.api.v2.User
+import org.apache.ws.commons.util.Base64
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -160,7 +162,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log("authToken", "host", "userAgent", "POST", "users/userId")
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
@@ -173,10 +175,69 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log("authToken", "host", "userAgent", "POST", "users/userId")
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
         1 * analyticsLogHandler.log(_)
+    }
+
+    def "log sets resource response status, method, and uri"() {
+        given:
+        userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
+        def status = 200
+        def method = "POST"
+
+        when:
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", method, "users/userId", status)
+
+        then:
+        analyticsLogHandler.log(_) >> { arg1 ->
+            Gson gson = new GsonBuilder().create()
+            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+            def resource = message.getAt("resource")
+            assert(resource != null)
+            assert(resource.getAt("uri") != null)
+            assert(resource.getAt("method") == method)
+            assert(resource.getAt("responseStatus") == status)
+        }
+    }
+
+    def "log sets duration and timestamp"() {
+        given:
+        userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
+
+        when:
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+
+        then:
+        analyticsLogHandler.log(_) >> { arg1 ->
+            Gson gson = new GsonBuilder().create()
+            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+            assert(message.getAt("duration") != null)
+            assert(message.getAt("timestamp") != null)
+        }
+    }
+
+    def "user is retrieved from basic auth header"() {
+        given:
+        def userId = "userId"
+        def username = "username"
+        def basicAuth = getBasicAuth(username, "Password1")
+        def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
+
+        when:
+        def result = analyticsLogger.getUserIdFromBasicAuth(basicAuth)
+
+        then:
+        1 * userService.getUser(username) >> mockedUser
+        1 * mockedUser.getId() >> userId
+        result == userId
+    }
+
+    private String getBasicAuth(String username, String password) {
+        String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
+        byte[] base = usernamePassword.getBytes();
+        return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
     }
 }

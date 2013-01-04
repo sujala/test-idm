@@ -8,7 +8,9 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 @Component
 public class LoggerFilter implements Filter {
@@ -33,10 +35,16 @@ public class LoggerFilter implements Filter {
         String host = ((HttpServletRequestWrapper) request).getHeader("Host");
         String userAgent = ((HttpServletRequestWrapper) request).getHeader("User-Agent");
         String authToken = ((HttpServletRequestWrapper) request).getHeader("X-Auth-Token");
+        String basicAuth = ((HttpServletRequestWrapper) request).getHeader("Authorization");
+        Long startTime = new Date().getTime();
 
-        analyticsLogger.log(authToken, host, userAgent, method, path);
+        StatusExposingServletResponse responseWrapper = new StatusExposingServletResponse((HttpServletResponse)response);
 
-        chain.doFilter(request, response);
+        chain.doFilter(request, responseWrapper);
+        int status = responseWrapper.getStatus();
+
+        // TODO: make async
+        analyticsLogger.log(startTime, authToken, basicAuth, host, userAgent, method, path, status);
     }
 
     @Override

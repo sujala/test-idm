@@ -24,23 +24,18 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.service.ScopeAccessService
 import org.apache.commons.configuration.Configuration
 import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.persist.LDAPPersister
-import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.ModificationType
 import org.joda.time.DateTime
-import static javax.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud20IntegrationTest extends Specification {
