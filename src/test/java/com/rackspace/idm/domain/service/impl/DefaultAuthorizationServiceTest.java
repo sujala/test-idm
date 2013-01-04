@@ -311,10 +311,9 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void hasDefaultUserRole_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        String uniqueUserId = "uniqueId";
         DefaultAuthorizationService.setCloudUserRole(null);
-        defaultAuthorizationService.hasDefaultUserRole(scopeAccess);
+        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
         verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
@@ -341,11 +340,10 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void hasDefaultUserROle_callsTenantDaoMethod() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        String uniqueUserId = "uniqueId";
         DefaultAuthorizationService.setCloudUserRole(new ClientRole());
-        defaultAuthorizationService.hasDefaultUserRole(scopeAccess);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
+        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
+        verify(tenantDao).doesUserHaveTenantRole(eq(uniqueUserId), any(ClientRole.class));
     }
 
     @Test
@@ -356,18 +354,19 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void hasUserAdminRole_cloudUserAdminRoleIsNull_setsRole() throws Exception {
+        String uniqueUserId = "uniqueId";
         ScopeAccess scopeAccess = new ScopeAccess();
-        defaultAuthorizationService.hasUserAdminRole(scopeAccess);
+        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
         verify(clientDao).getClientRoleByClientIdAndRoleName(null, null);
     }
 
     @Test
     public void hasUserAdminRole_callsTenantDao_doesScopeAccessHaveTenantRole() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
+        String uniqueUserId = "uniqueId";
         ClientRole cloud_user_admin_role = new ClientRole();
         DefaultAuthorizationService.setCloudUserAdminRole(cloud_user_admin_role);
-        defaultAuthorizationService.hasUserAdminRole(scopeAccess);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(scopeAccess, cloud_user_admin_role);
+        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
+        verify(tenantDao).doesUserHaveTenantRole(uniqueUserId, cloud_user_admin_role);
     }
 
     @Test

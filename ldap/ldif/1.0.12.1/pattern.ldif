@@ -28,7 +28,7 @@ dn: rsId=3,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPattern
 rsId: 3
 cn: password
-pattern: ^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d=+`|\(){}\[\]:;"'<>,.?/£~!@#%^&*_-]{8,}$
+pattern: ^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d=+`|\(){}\[\]:;"'<>,.?/\\\\£~!@#%^&$*_ -]{8,}$
 errMsg: Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character.
 description: Checks for invalid characters on a password.
 

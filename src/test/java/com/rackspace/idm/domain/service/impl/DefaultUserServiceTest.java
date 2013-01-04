@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -130,20 +131,18 @@ public class DefaultUserServiceTest {
         Users users = new Users();
         ArrayList<User> userArrayList = new ArrayList<User>();
         User defaultUser = new User();
+        defaultUser.setUniqueId("uniqueId1");
         defaultUser.setDomainId("domainId");
         userArrayList.add(defaultUser);
         User defaultUser2 = new User();
+        defaultUser2.setUniqueId("uniqueId2");
         defaultUser2.setDomainId("domainId");
         userArrayList.add(defaultUser2);
         users.setUsers(userArrayList);
         when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
-        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
         defaultUserService.hasSubUsers("id");
-        verify(authorizationService).hasDefaultUserRole(scopeAccess);
+        verify(authorizationService).hasDefaultUserRole(defaultUser.getUniqueId());
     }
 
     @Test
@@ -157,6 +156,7 @@ public class DefaultUserServiceTest {
         defaultUser.setDomainId("domainId");
         userArrayList.add(defaultUser);
         User defaultUser2 = new User();
+        defaultUser2.setUniqueId("uniqueId");
         defaultUser2.setDomainId("domainId");
         userArrayList.add(defaultUser2);
         users.setUsers(userArrayList);
@@ -165,7 +165,7 @@ public class DefaultUserServiceTest {
         ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
-        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(true));
     }
@@ -181,6 +181,7 @@ public class DefaultUserServiceTest {
         defaultUser.setDomainId("domainId");
         userArrayList.add(defaultUser);
         User defaultUser2 = new User();
+        defaultUser2.setUniqueId("uniqueId");
         defaultUser2.setDomainId("domainId");
         userArrayList.add(defaultUser2);
         users.setUsers(userArrayList);
@@ -189,7 +190,7 @@ public class DefaultUserServiceTest {
         ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
-        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(false);
+        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(false);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(false));
     }
@@ -573,13 +574,14 @@ public class DefaultUserServiceTest {
     @Test
     public void getUserByMossoId_authorizedUserAdmin_returnAdminUser() throws Exception {
         User user = new User();
+        user.setUniqueId("uniqueId");
         List<User> userList = new ArrayList<User>();
         userList.add(user);
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
         when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        when(authorizationService.authorizeCloudUserAdmin(null)).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
         User result = defaultUserService.getUserByMossoId(1);
         assertThat("user", result, equalTo(user));
     }

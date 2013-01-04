@@ -1097,8 +1097,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
-            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
-            if (authorizationService.hasUserAdminRole(scopeAccess) && userService.hasSubUsers(userId)) {
+            if (authorizationService.hasUserAdminRole(user.getUniqueId()) && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             userService.softDeleteUser(user);
@@ -2687,9 +2686,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
@@ -2721,9 +2719,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
