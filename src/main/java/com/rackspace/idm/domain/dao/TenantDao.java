@@ -26,6 +26,7 @@ public interface TenantDao {
     List<TenantRole> getAllTenantRolesForTenant(String tenantId);
     List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
     boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role);
+    boolean doesUserHaveTenantRole(String uniqueId, ClientRole role);
     List<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
 
     PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit);
