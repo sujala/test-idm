@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultAnalyticsLogHandler implements AnalyticsLogHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final String AUDIT_LOGGER_ID = "analytics";
+
+    Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
 
     @Override
     public void log(String message) {
