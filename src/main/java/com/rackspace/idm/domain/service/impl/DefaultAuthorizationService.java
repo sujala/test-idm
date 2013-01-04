@@ -230,35 +230,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-
-    //This method does not check if the scope access has an access token.
-    //This method checks if the scope access has the cloud default user role.
-    @Override
-    public boolean hasDefaultUserRoleXXX(ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
-            return false;
-        }
-        if (cloudUserRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-            cloudUserRole = role;
-        }
-        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudUserRole);
-    }
-
-    //This method does not check if the scope access has an access token.
-    //This method checks if the scope access has the cloud default user role.
-    @Override
-    public boolean hasUserAdminRoleXXX(ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
-            return false;
-        }
-        if (cloudUserAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            cloudUserAdminRole = role;
-        }
-        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudUserAdminRole);
-    }
-
     @Override
     public boolean hasDefaultUserRole(String uniqueId) {
         if (uniqueId == null) {
@@ -283,18 +254,30 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return tenantDao.doesUserHaveTenantRole(uniqueId, cloudUserAdminRole);
     }
 
+    @Override
+    public boolean hasIdentityAdminRole(String uniqueId) {
+        if (uniqueId == null) {
+            return false;
+        }
+        if (cloudIdentityAdminRole == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            cloudIdentityAdminRole = role;
+        }
+        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudIdentityAdminRole);
+    }
+
     //This method does not check if the scope access has an access token.
     //This method checks if the scope access has the cloud default user role.
     @Override
-    public boolean hasServiceAdminRole(ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
+    public boolean hasServiceAdminRole(String uniqueId) {
+        if (uniqueId == null) {
             return false;
         }
         if (cloudServiceAdminRole == null) {
             ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
             cloudServiceAdminRole = role;
         }
-        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudServiceAdminRole);
+        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudServiceAdminRole);
     }
 
     @Override

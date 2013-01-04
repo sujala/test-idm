@@ -3014,8 +3014,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller, credUser);
             } else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-                UserScopeAccess userScopeAccess = scopeAccessService.getUserScopeAccessForClientId(credUser.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.hasServiceAdminRole(userScopeAccess)) {
+                if (authorizationService.hasServiceAdminRole(credUser.getUniqueId())) {
                     throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
                 }
             }

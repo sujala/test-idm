@@ -4546,7 +4546,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         when(userService.getUserByAuthToken(anyString())).thenReturn(svcuser);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
-        when(authorizationService.hasServiceAdminRole(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasServiceAdminRole(anyString())).thenReturn(true);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.resetUserApiKeyCredentials(null, authToken, null, null);
         verify(exceptionHandler).exceptionResponse(any(ForbiddenException.class));
