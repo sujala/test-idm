@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RolePrecedenceValidator;
@@ -147,6 +148,9 @@ public class RolesResource extends ParentResource {
         if(clientRole==null){
             throw new NotFoundException("Role with id: " + roleId + " not found.");
         }
+        if (org.apache.commons.lang.StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
+            throw new ForbiddenException("role cannot be updated");
+        }
 
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
@@ -177,6 +181,9 @@ public class RolesResource extends ParentResource {
 		ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
             throw new NotFoundException("role with id: " + roleId + " not found");
+        }
+        if (org.apache.commons.lang.StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
+            throw new ForbiddenException("role cannot be deleted");
         }
 
         if (!(scopeAccess instanceof ClientScopeAccess)) {
