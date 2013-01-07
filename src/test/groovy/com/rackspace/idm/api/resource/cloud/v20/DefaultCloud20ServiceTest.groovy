@@ -23,9 +23,6 @@ import testHelpers.EntityFactory
 
 import javax.xml.bind.JAXBElement
 
-/*
- This class uses the application context but mocks the ldap interactions
- */
 class DefaultCloud20ServiceTest extends RootServiceTest {
 
     @Shared ExceptionHandler exceptionHandler
@@ -41,6 +38,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def roleId = "roleId"
     @Shared def userId = "userId"
 
+    @Shared def entityFactory = new EntityFactory()
+    @Shared def v1Factory = new V1Factory()
+    @Shared def v2Factory = new V2Factory()
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
@@ -54,10 +55,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         defaultCloud20Service.exceptionHandler = exceptionHandler
         defaultCloud20Service.objFactories = objFactories
-
-        entityFactory = new EntityFactory()
-        v1Factory = new V1Factory()
-        v2Factory = new V2Factory()
     }
 
     def setup() {
@@ -1577,7 +1574,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Impersonate a disabled user" () {
         given:
         mockAuthConverter(defaultCloud20Service)
-        allowAccess()
 
         def v20user = v2Factory.createUser()
         v20user.username = "impersonatingUsername"
@@ -1585,8 +1581,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def entityUser = entityFactory.createUser("impersonatedUser", null, null, null, null, null, null, false)
         def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", true, false)
 
+        scopeAccessMock = Mock()
+        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [
+                scopeAccessMock,
+                userScopeAccess
+        ]
+
+        userService.getUser(_) >> entityUser
         tenantService.getGlobalRolesForUser(entityUser) >> [
-                entityFactory.createTenantRole("identity:default", null, null, null, null)
+                entityFactory.createTenantRole(null, null, "identity:default", null, null)
         ].asList()
 
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> userScopeAccess
@@ -1595,7 +1599,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def responseBuilder = defaultCloud20Service.impersonate(headers, authToken, impRequest)
 
         then:
-        1 * scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess, true)
+        1 * scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess, true) >> userScopeAccess
         responseBuilder.build().status == 200
     }
 

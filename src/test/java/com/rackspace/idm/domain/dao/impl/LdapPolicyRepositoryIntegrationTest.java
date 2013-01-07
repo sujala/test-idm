@@ -143,6 +143,16 @@ public class LdapPolicyRepositoryIntegrationTest extends InMemoryLdapIntegration
         repo.deletePolicy(policy.getPolicyId());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void deletePolicy_emptyPolicyId(){
+        repo.deletePolicy("");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deletePolicy_nullPolicyId(){
+        repo.deletePolicy(null);
+    }
+
     private Policy getTestPolicy() {
         Policy policy = new Policy();
         policy.setDescription(description);

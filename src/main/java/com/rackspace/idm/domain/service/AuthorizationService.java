@@ -19,43 +19,26 @@ public interface AuthorizationService {
 	 * @param authorizedRoles  - the role ids that client must have to access the object. null allowed.
 	 */
 	void authorize(String token, Entity object, String... authorizedRoles);
-	
+
     boolean authorizeRacker(ScopeAccess scopeAccess);
-
     boolean authorizeRackspaceClient(ScopeAccess scopeAccess);
-
     boolean authorizeCustomerUser(ScopeAccess scopeAccess, String customerId);
-
     boolean authorizeUser(ScopeAccess scopeAccess, String customerId, String username);
-
-    /**
-     * Appropriate for authorizing internal calls.
-     */
+    boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess, ScopeAccess requestingScopeAccess);
     boolean authorizeCustomerIdm(ScopeAccess scopeAccess);
-
-    /**
-     * @param targetScopeAccess ScopeAccess against which the action being performed is being evaluated.
-     * @param requestingScopeAccess Representing the caller's credentials
-     * @return true/false
-     */
-    boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
-        ScopeAccess requestingScopeAccess);
+    boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
+    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
+    boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
+    boolean authorizeCloudUser(ScopeAccess scopeAccess);
+    boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
+    boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
-    boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
-
-    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
-
-    boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
-
-    boolean authorizeCloudUser(ScopeAccess scopeAccess);
-    boolean hasDefaultUserRole(ScopeAccess scopeAccess);
-    boolean hasUserAdminRole(ScopeAccess scopeAccess);
-    boolean hasServiceAdminRole(ScopeAccess scopeAccess);
-    boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
-
-    void authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
+    boolean hasDefaultUserRole(String uniqueId);
+    boolean hasUserAdminRole(String uniqueId);
+    boolean hasIdentityAdminRole(String uniqueId);
+    boolean hasServiceAdminRole(String uniqueId);
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);

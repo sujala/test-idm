@@ -599,7 +599,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
+                atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             }
             Boolean updateRegion = true;
             if (userDO.getRegion() != null && retrievedUser != null) {
@@ -1095,13 +1095,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
-            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
-            if (authorizationService.hasUserAdminRole(scopeAccess) && userService.hasSubUsers(userId)) {
+            if (authorizationService.hasUserAdminRole(user.getUniqueId()) && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.asyncPost(user, authToken, AtomHopperConstants.DELETED, null);
+            atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1672,19 +1671,20 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             int offset = validateOffset(marker);
             int resultSize = validateLimit(limit);
 
             PaginatorContext<ClientRole> context;
+            User caller = userService.getUserByAuthToken(authToken);
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
 
             if (StringUtils.isBlank(serviceId)) {
-                context = this.applicationService.getClientRolesPaged(offset, resultSize);
+                context = this.applicationService.getAvailableClientRolesPaged(offset, resultSize, userIdentityRole.getRsWeight());
             } else {
-                context = this.applicationService.getClientRolesPaged(serviceId, offset, resultSize);
+                context = this.applicationService.getAvailableClientRolesPaged(serviceId, offset, resultSize, userIdentityRole.getRsWeight());
             }
 
             String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
@@ -2688,9 +2688,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
@@ -2722,9 +2721,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
@@ -3017,8 +3015,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller, credUser);
             } else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-                UserScopeAccess userScopeAccess = scopeAccessService.getUserScopeAccessForClientId(credUser.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.hasServiceAdminRole(userScopeAccess)) {
+                if (authorizationService.hasServiceAdminRole(credUser.getUniqueId())) {
                     throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
                 }
             }
@@ -3132,6 +3129,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
+        User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+        atomHopperClient.asyncTokenPost(user, authToken);
         return Response.status(204);
     }
 
@@ -3159,6 +3158,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         scopeAccessService.expireAccessToken(tokenId);
+        User user = userService.getUserByScopeAccess(scopeAccess);
+        atomHopperClient.asyncTokenPost(user, tokenId);
         return Response.status(204);
     }
 

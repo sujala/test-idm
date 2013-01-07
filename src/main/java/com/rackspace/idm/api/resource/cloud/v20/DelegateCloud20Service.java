@@ -614,17 +614,26 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomains(uriInfo, authToken, marker, limit);
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomainsForUser(authToken, userId);
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getAccessibleDomainsEndpointsForUser(authToken, userId, domainId);
     }
 
     @Override
@@ -679,37 +688,58 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.addQuestion(uriInfo, authToken, question);
     }
 
     @Override
     public ResponseBuilder getQuestion(String authToken, String questionId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getQuestion(authToken, questionId);
     }
 
     @Override
     public ResponseBuilder getQuestions(String authToken) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getQuestions(authToken);
     }
 
     @Override
     public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.updateQuestion(authToken, questionId, question);
     }
 
     @Override
     public ResponseBuilder deleteQuestion(String authToken, String questionId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.deleteQuestion(authToken, questionId);
     }
 
     @Override
     public ResponseBuilder getSecretQAs(String authToken, String userId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getSecretQAs(authToken, userId);
     }
 
     @Override
     public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        if (!isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.createSecretQA(authToken, userId, secretQA);
     }
 
     @Override

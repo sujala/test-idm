@@ -492,7 +492,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    @Override
+    @Override // Todo: Remove this function and just use the below User call
     public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role) {
         getLogger().debug("Does Scope Access Have Tenant Role");
 
@@ -514,6 +514,27 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);
+        return hasRole;
+    }
+
+    @Override
+    public boolean doesUserHaveTenantRole(String uniqueId, ClientRole role) {
+        getLogger().debug("Does User Have Tenant Role");
+
+        DN searchDn;
+        try {
+            searchDn = new DN(uniqueId);
+        } catch (Exception ex) {
+            throw new IllegalStateException();
+        }
+
+        if (searchDn == null) {
+            throw new BadRequestException("User is invalid");
+        }
+        TenantRole exists = this.getTenantRoleForParentById(searchDn.toString(), role.getId());
+
+        boolean hasRole = exists != null;
+        getLogger().debug("Does User Have Tenant Role: {}", hasRole);
         return hasRole;
     }
 

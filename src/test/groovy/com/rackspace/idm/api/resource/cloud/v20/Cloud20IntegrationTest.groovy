@@ -100,6 +100,7 @@ class Cloud20IntegrationTest extends Specification {
 
     @Shared def testIdentityRoleId = "testIdentityRoleForDelete"
     @Shared def testIdentityRole
+    @Shared def cloudAuthClientId
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -191,6 +192,7 @@ class Cloud20IntegrationTest extends Specification {
     def setup() {
         expireTokens(USER_FOR_AUTH, 12)
         setConfigValues()
+        cloudAuthClientId = config.getString("cloudAuth.clientId")
     }
 
     def cleanupSpec() {
@@ -297,7 +299,7 @@ class Cloud20IntegrationTest extends Specification {
         def getUserByIdResponse = getUserByIdXML(serviceAdminToken, userEntity.getId())
         def getUserByNameResponse = getUserByNameXML(serviceAdminToken, userEntity.getUsername())
         //Update User
-        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", true, null, null)
+        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = updateUserXML(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUserXML(serviceAdminToken, userEntity.getId())
@@ -879,7 +881,7 @@ class Cloud20IntegrationTest extends Specification {
                 addApplicationRoleToUserXML(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
                 deleteApplicationRoleFromUserXML(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
                 deleteApplicationRoleFromUserXML(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                deleteApplicationRoleFromUserXML(userAdminToken, sharedRole.getId(), defaultUser.getId()),
+                //deleteApplicationRoleFromUserXML(userAdminToken, sharedRole.getId(), defaultUser.getId()),
         ]
     }
 
@@ -1130,7 +1132,43 @@ class Cloud20IntegrationTest extends Specification {
                 getSecretQAXML(userAdminToken, defaultUser.getId()),
                 getSecretQAXML(defaultUserToken, defaultUser.getId()),
         ]
+    }
 
+    def "listRoles returns success"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                listRoles(userAdminToken, cloudAuthClientId, null, null),
+                listRoles(identityAdminToken, cloudAuthClientId, null, null),
+                listRoles(serviceAdminToken, cloudAuthClientId, null, null),
+                listRoles(userAdminToken, null, null, null),
+                listRoles(identityAdminToken, null, null, null),
+                listRoles(serviceAdminToken, null, null, null)
+        ]
+    }
+
+    def "listRoles returns forbidden"() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                listRoles(defaultUserToken, null, null, null),
+                listRoles(defaultUserToken, cloudAuthClientId, null, null)
+        ]
+    }
+
+    def "listRoles returns not authorized"() {
+        expect:
+        response.status == 401
+
+        where:
+        response << [
+                listRoles("token", null, null, null),
+                listRoles("token", cloudAuthClientId, null, null)
+        ]
     }
 
     //Resource Calls
@@ -1359,6 +1397,20 @@ class Cloud20IntegrationTest extends Specification {
 
     def revokeUserTokenXML(String token, String tokenToRevoke) {
         resource.path(path20).path("tokens").path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def listRoles(String token, String serviceId, String offset, String limit) {
+        def queryParams = new MultivaluedMapImpl()
+        if (serviceId != null) {
+            queryParams.add("serviceId", serviceId)
+        }
+        if (offset != null) {
+            queryParams.add("marker", offset)
+        }
+        if (limit != null) {
+            queryParams.add("limit", limit)
+        }
+        resource.path(path20).path("OS-KSADM/roles").queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods

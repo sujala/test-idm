@@ -169,10 +169,6 @@ class RootServiceTest extends Specification {
 
     @Shared def jaxbMock
 
-    @Shared def entityFactory
-    @Shared def v1Factory
-    @Shared def v2Factory
-
     @Shared def authToken = "token"
 
     /*

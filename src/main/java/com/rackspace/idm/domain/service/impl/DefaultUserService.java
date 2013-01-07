@@ -334,8 +334,7 @@ public class DefaultUserService implements UserService {
             return users.getUsers().get(0);
         } else if (users.getUsers().size() > 1) {
             for (User user : users.getUsers()) {
-                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.authorizeCloudUserAdmin(sa)) {
+                if (authorizationService.hasUserAdminRole(user.getUniqueId())) {
                     return user;
                 }
             }
@@ -559,12 +558,8 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users.getUsers()) {
-            List<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccessListByUserId(userInList.getId());
-            for (ScopeAccess scopeAccess : scopeAccessList) {
-                boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
-                if (isDefaultUser) {
-                    return true;
-                }
+            if(authorizationService.hasDefaultUserRole(userInList.getUniqueId())) {
+                return true;
             }
         }
         return false;

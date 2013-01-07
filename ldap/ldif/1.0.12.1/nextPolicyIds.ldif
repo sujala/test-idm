@@ -1,0 +1,5 @@
+dn: cn=nextPolicyId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextPolicyId
+rsId: 1000

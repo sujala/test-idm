@@ -30,6 +30,7 @@ public class idmPropertiesTest {
         for (String fileName : propertyHashMap.keySet()) {
             ArrayList<String> propertyNameErrorList = propertyHashMap.get(fileName);
             propertyNameErrorList.remove("virtualPath");
+            propertyNameErrorList.remove("atom.hopper.dataCenter");
             if (!propertyNameErrorList.isEmpty()) {
                 error += fileName + ":\n";
                 error += "\t" + propertyNameErrorList.toString() + "\n\n";

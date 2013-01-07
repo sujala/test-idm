@@ -517,7 +517,8 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void deleteUser_userIsUserAdmin_callsUserService_hasSubUsers() throws Exception {
-        when(authorizationService.hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
     }
@@ -532,7 +533,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById("userId")).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
-        when(authorizationService.hasUserAdminRole(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
         when(userService.hasSubUsers("userId")).thenReturn(true);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
@@ -541,17 +542,11 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteUser_callsScopeAccessService_getScopeAccessByUserId() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
-        spy.deleteUser(httpHeaders, authToken, userId);
-        verify(scopeAccessService).getScopeAccessByUserId(userId);
-    }
-
-    @Test
     public void deleteUser_callsAuthService_hasUserAdminRole() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
-        verify(authorizationService).hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class));
+        verify(authorizationService).hasUserAdminRole(anyString());
     }
 
     @Test
@@ -1786,6 +1781,7 @@ public class DefaultCloud20ServiceOldTest {
         user1.setDomainId("domainId");
         caller.setId("id");
         caller.setDomainId("domainId");
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(userService.getUserById(userId)).thenReturn(user1);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         spy.deleteUser(null, authToken, userId);
@@ -3734,28 +3730,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.listRoles(null, null, authToken, null, null, "0");
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
-    public void listRoles_serviceIdIsBlankResponseOk_returns200() throws Exception {
-        when(clientService.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "", "0", "10");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listRoles_serviceIdNotBlankResponseOk_returns200() throws Exception {
-        when(clientService.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "serviceId",  "0", "10");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listRolesForTenant_verifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -4243,7 +4217,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudUser(scopeAccessForDefaultUser)).thenReturn(true);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
-        when(authorizationService.hasDefaultUserRole(value)).thenReturn(true);
+        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -4258,7 +4232,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
-        when(authorizationService.hasUserAdminRole(scopeAccessForUserAdmin)).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -4355,7 +4329,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
-        when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -4572,7 +4546,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         when(userService.getUserByAuthToken(anyString())).thenReturn(svcuser);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
-        when(authorizationService.hasServiceAdminRole(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasServiceAdminRole(anyString())).thenReturn(true);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.resetUserApiKeyCredentials(null, authToken, null, null);
         verify(exceptionHandler).exceptionResponse(any(ForbiddenException.class));
@@ -5701,17 +5675,6 @@ public class DefaultCloud20ServiceOldTest {
         when(authConverterCloudV20.toAuthenticationResponse(eq(userTest), eq(userScopeAccess), eq(roles), any(List.class))).thenReturn(authenticateResponse);
         Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listRoles_throwsForbiddenException_returnsResponseBuilder() throws Exception {
-        ForbiddenException forbiddenException = new ForbiddenException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-        when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.listRoles(httpHeaders, null, authToken, null, null, null), equalTo(responseBuilder));
     }
 
     @Test

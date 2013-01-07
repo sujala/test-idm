@@ -73,6 +73,8 @@ public class CryptHelperTests {
     public void encrypt_nullPlainText_throwsInvalidParameterException() throws Exception {
         try{
             CryptHelper cryptHelper = new CryptHelper();
+            when(configuration.getString("crypto.password")).thenReturn("password");
+            when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
             cryptHelper.encrypt(null);
             assertTrue("should throw exception",false);
         }catch (InvalidParameterException ex){
