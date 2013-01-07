@@ -105,7 +105,7 @@ class V1Factory {
         }
     }
 
-    ImpersonationRequest createImpersonationRequest(org.openstack.docs.identity.api.v2.User user) {
+    def createImpersonationRequest(org.openstack.docs.identity.api.v2.User user) {
         new ImpersonationRequest().with {
             it.user = user
             return it
@@ -160,6 +160,18 @@ class V1Factory {
             it.description = DESCRIPTION
             it.serviceId = serviceId
             it.tenantId = tenantId
+            return it
+        }
+    }
+
+    def createRsaCredentials() {
+        return createRsaCredentials("username", "tokenKey")
+    }
+
+    def createRsaCredentials(String username, String tokenKey) {
+        new RsaCredentials().with {
+            it.username = username
+            it.tokenKey = tokenKey
             return it
         }
     }

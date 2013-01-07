@@ -58,6 +58,16 @@ class EntityFactory {
         }
     }
 
+    def createUserAuthenticationResult() {
+        return createUserAuthenticationResult(createUser(), true)
+    }
+
+    def createUserAuthenticationResult(User user, boolean authenticated) {
+        new UserAuthenticationResult(user, authenticated).with {
+            return it
+        }
+    }
+
     def createCapabilities() {
         return createCapabilities(null)
     }
@@ -225,6 +235,13 @@ class EntityFactory {
         objFactories.getRackspaceIdentityExtRaxgaV1Factory().createQuestion().with {
             it.id = id
             it.question = question
+            return it
+        }
+    }
+
+    def createRacker() {
+        new Racker().with {
+            it.rackerId = rackerId
             return it
         }
     }

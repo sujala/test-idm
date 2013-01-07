@@ -30,6 +30,7 @@ import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.Racker
+import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -630,6 +631,26 @@ class RootServiceTest extends Specification {
         scopeAccess.getClientId() >> clientId
         scopeAccess.getUniqueId() >> dn
         scopeAccess.getLDAPEntry() >> entry
+    }
+
+    def createRackerScopeAcccss() {
+        return createRackerScopeAccess("tokenString", "rackerId", false, false)
+    }
+
+    def createRackerScopeAccess(String tokenString, String rackerId, boolean isExpired, boolean refresh) {
+        def scopeAccess = Mock(RackerScopeAccess)
+        tokenString = tokenString ? tokenString : "tokenString"
+        rackerId = rackerId ? rackerId : "rackerId"
+        def dn = "accessToken=$tokenString,cn=TOKENS,rsI$rackerId,ou=rackers"
+        def entry = createEntry(dn)
+
+        scopeAccess.getAccessTokenString() >> tokenString
+        scopeAccess.getRackerId() >> rackerId
+        scopeAccess.getUniqueId() >> dn
+        scopeAccess.getLDAPEntry() >> entry
+        scopeAccess.isAccessTokenExpired(_) >> isExpired
+        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
+        return scopeAccess
     }
 
     def createUserScopeAccess() {

@@ -3,6 +3,8 @@ package testHelpers
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.openstack.docs.identity.api.v2.*
 
+import javax.xml.bind.JAXBElement
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -18,6 +20,7 @@ class V2Factory {
     private static EMAIL = "email@example.com"
     private static NAME = "name"
     private static DESCRIPTION = "description"
+    private static V1Factory v1Factory = new V1Factory()
 
     def creatEndpoint() {
         return createEndpoint(ID, null, NAME, null)
@@ -54,6 +57,18 @@ class V2Factory {
             it.token = token ? token : createToken()
             it.serviceCatalog = serviceCatalog ? serviceCatalog : new ServiceCatalog()
             it.user = user ? user : new UserForAuthenticateResponse()
+            return it
+        }
+    }
+
+    def createPasswordCredentialsRequiredUsername() {
+        return createPasswordCredentialsRequiredUsername("username", "Password1")
+    }
+
+    def createPasswordCredentialsRequiredUsername(String username, String password) {
+        new PasswordCredentialsRequiredUsername().with {
+            it.username = username
+            it.password = password
             return it
         }
     }

@@ -11,7 +11,7 @@ import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
-import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -1603,6 +1603,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         responseBuilder.build().status == 200
     }
 
+    def "setDomainId throws bad request"() {
+        given:
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        scopeAccessMock = Mock()
+        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+
+        def mockedUser = Mock(User)
+        mockedUser.getDomainId() >> null
+
+        userService.getUser(_) >> mockedUser
+
+        when:
+        defaultCloud20Service.setDomainId(scopeAccessMock, Mock(User))
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "authenticateFederatedDomain handles authentication with password credentials"() {
+        given:
+        mockDomainConverter(defaultCloud20Service)
+        mockAuthConverter(defaultCloud20Service)
+        def authRequest = createAuthenticationRequest(false)
+        def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
+        def racker = entityFactory.createRacker()
+
+        scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+
+        when:
+        defaultCloud20Service.authenticateFederatedDomain(headers, authRequest, domain)
+
+        then:
+        1 * validator20.validatePasswordCredentials(_)
+        1 * domainConverter.toDomainDO(domain)
+        1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> entityFactory.createUserAuthenticationResult(racker, true)
+    }
+
+    def "authenticateFederatedDomain handles authentication with RSA credentials"() {
+        given:
+        mockDomainConverter(defaultCloud20Service)
+        mockAuthConverter(defaultCloud20Service)
+        def authRequest = createAuthenticationRequest(true)
+        def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
+        def racker = entityFactory.createRacker()
+
+        scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+
+        when:
+        defaultCloud20Service.authenticateFederatedDomain(headers, authRequest, domain)
+
+        then:
+        1 * validator20.validateUsername(_)
+        1 * domainConverter.toDomainDO(domain)
+        1 * authenticationService.authenticateDomainRSA(_, _, _) >> entityFactory.createUserAuthenticationResult(racker, true)
+    }
+
     def mockServices() {
         mockAuthenticationService(defaultCloud20Service)
         mockAuthorizationService(defaultCloud20Service)
@@ -1656,5 +1712,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def createFilter(FilterParam.FilterParamName name, String value) {
         return new FilterParam(name, value)
+    }
+
+    def createAuthenticationRequest(boolean useRsaCreds) {
+        def mockedElement = Mock(JAXBElement)
+        if (useRsaCreds) {
+            mockedElement.getValue() >> v1Factory.createRsaCredentials()
+        } else {
+            mockedElement.getValue() >> v2Factory.createPasswordCredentialsRequiredUsername()
+        }
+        new AuthenticationRequest().with {
+            it.credential = mockedElement
+            return it
+        }
     }
 }
