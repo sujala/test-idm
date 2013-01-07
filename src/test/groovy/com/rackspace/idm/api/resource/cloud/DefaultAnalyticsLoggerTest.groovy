@@ -235,6 +235,35 @@ class DefaultAnalyticsLoggerTest extends Specification {
         result == userId
     }
 
+    def "token is removed from path"() {
+        expect:
+        input.replace("tokenId", "XXXX") == analyticsLogger.getPathWithoutToken(input)
+
+        where:
+        input << [
+                "tokens/tokenId/endpoints",
+                "tokens/tokenId",
+                "tokens",
+        ]
+    }
+
+    def "remove path is called when logging"() {
+        given:
+        userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
+
+        when:
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "tokens/tokenID", 200)
+
+        then:
+        analyticsLogHandler.log(_) >> { arg1 ->
+            Gson gson = new GsonBuilder().create()
+            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+            def resource = message.getAt("resource")
+            assert(resource != null)
+            assert(resource.getAt("uri") == "http://localhost/tokens/XXXX")
+        }
+    }
+
     private String getBasicAuth(String username, String password) {
         String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
         byte[] base = usernamePassword.getBytes();

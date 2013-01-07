@@ -29,6 +29,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
 
     private static final String TOKENS = "tokens";
     private static final String USERS = "users";
+    private static final String OBFUSCATED_TOKEN = "XXXX";
 
     public void log(Long startTime, String authToken, String basicAuth, String host, String userAgent, String method, String path, int status) {
         long duration = new Date().getTime() - startTime;
@@ -60,7 +61,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         }
 
         Resource resource = new Resource();
-        resource.setUri(getUri(endpoint, path));
+        resource.setUri(getUri(endpoint, getPathWithoutToken(path)));
         resource.setMethod(method);
         resource.setResponseStatus(status);
         message.setResource(resource);
@@ -69,6 +70,14 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         String messageString = gson.toJson(message);
 
         analyticsLogHandler.log(messageString);
+    }
+
+    private String getPathWithoutToken(String path) {
+        String token = parseUserTokenFromPath(path);
+        if (token != null) {
+            return path.replace(token, OBFUSCATED_TOKEN);
+        }
+        return path;
     }
 
     private String getUserIdFromBasicAuth(String basicAuth) {
