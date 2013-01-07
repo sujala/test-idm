@@ -261,6 +261,7 @@ public class DefaultAuthorizationServiceTest {
         assertThat("boolean", defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess), equalTo(false));
     }
 
+    @Ignore
     @Test
     public void authorizeCloudUserAdmin_cloudAdminNull_callsClientDao() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
