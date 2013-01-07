@@ -22,6 +22,15 @@
 		<param-value>file:${idm.properties.location}/log4j.xml</param-value>
 	</context-param>
 
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:/app-config.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
 	<!--
 		<filter> <filter-name>jersey</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>
@@ -40,10 +49,15 @@
             <param-value></param-value>
         </init-param>
     </filter>
-    <filter-mapping>
-        <filter-name>UrlFilter</filter-name>
-        <url-pattern>/cloud/*</url-pattern>
-    </filter-mapping>
+
+    <filter>
+        <filter-name>LoggerFilter</filter-name>
+        <filter-class>com.rackspace.idm.api.resource.cloud.LoggerFilter</filter-class>
+        <init-param>
+            <param-name></param-name>
+            <param-value></param-value>
+        </init-param>
+    </filter>
 
     <filter>
         <filter-name>ResponseHeaderFilter10</filter-name>
@@ -93,6 +107,17 @@
             </param-value>
         </init-param>
     </filter>
+
+    <filter-mapping>
+        <filter-name>UrlFilter</filter-name>
+        <url-pattern>/cloud/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>LoggerFilter</filter-name>
+        <url-pattern>/cloud/*</url-pattern>
+    </filter-mapping>
+
     <filter-mapping>
         <filter-name>ResponseHeaderFilter10</filter-name>
         <url-pattern>/cloud/auth</url-pattern>
