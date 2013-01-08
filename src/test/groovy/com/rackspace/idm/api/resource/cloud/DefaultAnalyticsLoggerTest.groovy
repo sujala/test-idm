@@ -192,9 +192,8 @@ class DefaultAnalyticsLoggerTest extends Specification {
         analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", method, "users/userId", status)
 
         then:
-        analyticsLogHandler.log(_) >> { arg1 ->
-            Gson gson = new GsonBuilder().create()
-            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+        analyticsLogHandler.log(_) >> { String json ->
+            def message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             def resource = message.getAt("resource")
             assert(resource != null)
             assert(resource.getAt("uri") != null)
@@ -211,9 +210,8 @@ class DefaultAnalyticsLoggerTest extends Specification {
         analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
 
         then:
-        analyticsLogHandler.log(_) >> { arg1 ->
-            Gson gson = new GsonBuilder().create()
-            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+        analyticsLogHandler.log(_) >> { String json ->
+            def message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             assert(message.getAt("duration") != null)
             assert(message.getAt("timestamp") != null)
         }
@@ -255,12 +253,26 @@ class DefaultAnalyticsLoggerTest extends Specification {
         analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "tokens/tokenID", 200)
 
         then:
-        analyticsLogHandler.log(_) >> { arg1 ->
-            Gson gson = new GsonBuilder().create()
-            def message = gson.fromJson(arg1[0], DefaultAnalyticsLogger.Message.class)
+        analyticsLogHandler.log(_) >> { String json ->
+            def message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             def resource = message.getAt("resource")
             assert(resource != null)
             assert(resource.getAt("uri") == "http://localhost/tokens/XXXX")
+        }
+    }
+
+    def "should not log user if the user does not exist"() {
+        given:
+        userService.getUserById(_) >> null
+
+        when:
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+
+        then:
+        analyticsLogHandler.log(_) >> { String json ->
+            DefaultAnalyticsLogger.Message message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
+            assert message != null
+            assert message.user == null
         }
     }
 
@@ -268,5 +280,9 @@ class DefaultAnalyticsLoggerTest extends Specification {
         String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
         byte[] base = usernamePassword.getBytes();
         return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
+    }
+
+    def gsonBuilder() {
+        new GsonBuilder().create()
     }
 }

@@ -55,9 +55,11 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
             User user = new User();
             user.setId(userId);
             com.rackspace.idm.domain.entity.User userEntity = userService.getUserById(userId);
-            user.setUsername(userEntity.getUsername());
-            user.setDomain(userEntity.getDomainId());
-            message.setUser(user);
+            if (userEntity != null) {
+                user.setUsername(userEntity.getUsername());
+                user.setDomain(userEntity.getDomainId());
+                message.setUser(user);
+            }
         }
 
         Resource resource = new Resource();
