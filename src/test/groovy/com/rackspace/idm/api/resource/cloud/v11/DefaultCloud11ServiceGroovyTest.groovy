@@ -74,6 +74,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         userService.getUser(_) >> null
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User()
         user1.setId("1")
+        user1.setUsername("someN@me")
         user1.setMossoId(1)
         userConverterCloudV11.toUserDO(_) >> user1
         domainService.createNewDomain(_) >> "1"
@@ -109,6 +110,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         userService.getUser(_) >> null
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User()
         user1.setId("1")
+        user1.setUsername("someN@me")
         user1.setMossoId(1)
         userConverterCloudV11.toUserDO(_) >> user1
         domainService.createNewDomain(_) >> "1"

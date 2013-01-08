@@ -309,7 +309,9 @@ public class AtomHopperClient {
 
         V1Element v1Element = new V1Element();
         v1Element.setType(EventType.DELETE);
+        logger.warn("Encrypting token ...");
         v1Element.setResourceId(encrypt(token));
+        logger.warn("Token encrypted");
         for(Region region : Region.values()){
             if(region.value().equals(user.getRegion())){
                 v1Element.setRegion(Region.fromValue(user.getRegion()));
