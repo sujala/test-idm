@@ -399,8 +399,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(userDO.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
-            String id = userDO.getId();
-            URI uri = uriInfo.getRequestUriBuilder().path(id).build();
+            URI uri = uriInfo.getRequestUriBuilder().path(userDO.getUsername()).build();
             com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpointsForUser);
             return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User).getValue());
         } catch (Exception ex) {

@@ -132,17 +132,6 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         spy.getGroupByName("groupName");
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void getGroupByName_foundMoreThanOneGroup_throwsIllegalStateException() throws Exception {
-        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
-        searchResultEntryList.add(searchResultEntry);
-        ResultCode resultCode = ResultCode.SUCCESS;
-        SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 2, 1, new Control[0]);
-        when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
-        spy.getGroupByName("groupName");
-    }
-
     @Test
     public void getGroupByName_foundZeroGroup_returnsNull() throws Exception {
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);

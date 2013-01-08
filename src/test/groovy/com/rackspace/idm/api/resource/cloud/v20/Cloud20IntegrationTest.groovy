@@ -443,6 +443,7 @@ class Cloud20IntegrationTest extends Specification {
 
         def getGroupResponse = getGroupXML(serviceAdminToken, createGroupResponse.location)
         def groupEntity = getGroupResponse.getEntity(Group)
+        def getGroupByNameResponse = getGroupByNameXML(serviceAdminToken, groupEntity.value.name)
         def groupId = groupEntity.value.id
 
         def getGroupsResponse = getGroupsXML(serviceAdminToken)
@@ -457,6 +458,7 @@ class Cloud20IntegrationTest extends Specification {
         createGroupResponse.status == 201
         createGroupResponse.location != null
         getGroupResponse.status == 200
+        getGroupByNameResponse.status == 200
         getGroupsResponse.status == 200
         groupsEntity.value.getGroup().size() > 0
         updateGroupResponse.status == 200
@@ -1218,6 +1220,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def getGroupXML(String token, URI uri) {
         resource.uri(uri).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getGroupByNameXML(String token, String name) {
+        resource.path(path20).path(RAX_GRPADM).path('groups').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getGroupsXML(String token) {

@@ -100,13 +100,9 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             throw new IllegalStateException(ldapEx);
         }
 
-        if (searchResult.getEntryCount() == 1) {
+        if (searchResult.getEntryCount() >= 1) {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             group = getGroup(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format("More than one entry was found for group - %s", groupName);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
         }
 
         getLogger().debug("Get group by Name {}", groupName);
