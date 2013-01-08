@@ -206,6 +206,7 @@ public class AtomHopperClient {
     }
 
     public String getAuthToken() throws IOException, JAXBException {
+        logger.warn("Authenticating ...");
         AuthenticationRequest request = new AuthenticationRequest();
         PasswordCredentialsRequiredUsername credentialsBase = new PasswordCredentialsRequiredUsername();
         credentialsBase.setUsername(config.getString("ga.username"));
@@ -214,7 +215,7 @@ public class AtomHopperClient {
         request.setCredential(jaxbCredentialsBase);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.authenticate(null, request);
         AuthenticateResponse authenticateResponse = (AuthenticateResponse)responseBuilder.build().getEntity();
-
+        logger.warn("Authenticated user %s", config.getString("ga.username"));
         return authenticateResponse.getToken().getId();
     }
 
@@ -234,6 +235,7 @@ public class AtomHopperClient {
     }
 
     public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
+        logger.warn("Creating user entry ...");
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
@@ -290,6 +292,7 @@ public class AtomHopperClient {
     }
 
     public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+        logger.warn("Creating revoke token entry ...");
         com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
@@ -333,6 +336,7 @@ public class AtomHopperClient {
         Title title = new Title();
         title.setValue(AtomHopperConstants.IDENTITY_TOKEN_EVENT);
         usageEntry.setTitle(title);
+        logger.warn("Created Identity token entry with id: " + id);
         return usageEntry;
     }
 
