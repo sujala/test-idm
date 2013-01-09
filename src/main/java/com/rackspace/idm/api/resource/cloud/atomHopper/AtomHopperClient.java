@@ -280,7 +280,7 @@ public class AtomHopperClient {
 
         UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
-        usageContent.setType(MediaType.APPLICATION_ATOM_XML);
+        usageContent.setType(MediaType.APPLICATION_XML);
 
         UsageEntry usageEntry = new UsageEntry();
         usageEntry.setContent(usageContent);
@@ -331,7 +331,7 @@ public class AtomHopperClient {
 
         UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
-        usageContent.setType(MediaType.APPLICATION_ATOM_XML);
+        usageContent.setType(MediaType.APPLICATION_XML);
 
         UsageEntry usageEntry = new UsageEntry();
         usageEntry.setContent(usageContent);

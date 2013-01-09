@@ -60,7 +60,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
         then:
         entry.title.value == "Identity Event"
-        entry.content.type == MediaType.APPLICATION_ATOM_XML
+        entry.content.type == MediaType.APPLICATION_XML
         entry.content.event.resourceName == "testUser"
     }
 
