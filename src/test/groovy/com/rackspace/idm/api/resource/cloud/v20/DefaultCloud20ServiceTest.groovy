@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
@@ -37,10 +40,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def questionId = "id"
     @Shared def roleId = "roleId"
     @Shared def userId = "userId"
-
-    @Shared def entityFactory = new EntityFactory()
-    @Shared def v1Factory = new V1Factory()
-    @Shared def v2Factory = new V2Factory()
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -1659,6 +1658,426 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authenticationService.authenticateDomainRSA(_, _, _) >> entityFactory.createUserAuthenticationResult(racker, true)
     }
 
+    def "getUserCredential verifies access token"() {
+        when:
+        defaultCloud20Service.getUserCredential(headers, authToken, "userId", "credentialType")
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(_)
+    }
+
+    def "getUserCredential verifies user level access"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.getUserCredential(headers, authToken, "userId", "credentialType")
+
+        then:
+        1 * authorizationService.verifyUserLevelAccess(_)
+    }
+
+    def "getUserCredential verifies credential type"() {
+        given:
+        allowAccess()
+
+        when:
+        def result = defaultCloud20Service.getUserCredential(headers, authToken, "userId", "invalidCredentialType")
+
+        then:
+        result.build().status == 400
+    }
+
+    def "getUserCredential gets user"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+
+        then:
+        1 * userService.getUserById("userId")
+    }
+
+    def "getUserCredential gets caller and checks if caller is user-admin or default user"() {
+        given:
+        allowAccess()
+
+        userService.getUserById(_) >> entityFactory.createUser()
+
+        when:
+        defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+
+        then:
+        1 * authorizationService.authorizeCloudUser(_) >> false
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
+        1 * userService.getUser(_) >> entityFactory.createUser()
+    }
+
+    def "getUserCredential verifies user is in callers domain when caller is user-admin" () {
+        given:
+        allowAccess()
+
+        def user = Mock(User)
+        def caller = Mock(User)
+
+        userService.getUserById(_) >> user
+        userService.getUser(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+
+        then:
+        1 * authorizationService.verifyDomain(caller, user)
+    }
+
+    def "getUserCredential verifies caller is user when caller is default user"() {
+        given:
+        allowAccess()
+
+        def user = Mock(User)
+        def caller = Mock(User)
+        caller.getId() >> "unique"
+
+        userService.getUserById(_) >> user
+        userService.getUser(_) >> caller
+        authorizationService.authorizeCloudUser(_) >> true
+
+        when:
+        def result = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+
+        then:
+        result.build().status == 403
+    }
+
+    def "getUserCredential verifies user with id exists"() {
+        given:
+        allowAccess()
+
+        authorizationService.authorizeCloudUser(_) >> false
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        when:
+        def result = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+
+        then:
+        result.build().status == 404
+    }
+
+    def "getUserCredential gets user password credentials"() {
+        given:
+        allowAccess()
+
+        def user = Mock(User)
+        user.getPassword() >>> [ null, "Password1" ]
+        user.getUsername() >> "username"
+        def caller = Mock(User)
+
+        userService.getUserById(_) >> user
+        userService.getUser(_) >> caller
+
+        when:
+        def response1 = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+        def response2 = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+
+        then:
+        response1.build().status == 404
+        response2.build().status == 200
+    }
+
+    def "getUserCredential gets user apikey credentials"() {
+        given:
+        allowAccess()
+
+        def user = Mock(User)
+        user.getApiKey() >>> [ null, "apiKey" ]
+        user.getUsername() >> "username"
+        def caller = Mock(User)
+
+        userService.getUserById(_) >> user
+        userService.getUser(_) >> caller
+
+        when:
+        def response1 = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+        def response2 = defaultCloud20Service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+
+        then:
+        response1.build().status == 404
+        response2.build().status == 200
+    }
+
+    def "addDomain verifies access level"() {
+        given:
+        allowAccess()
+        mockDomainConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.addDomain(authToken, uriInfo(), v1Factory.createDomain())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "addDomain verifies domain has name"() {
+        given:
+        allowAccess()
+        def domain = v1Factory.createDomain("id", null, "description", true)
+
+        when:
+        def response = defaultCloud20Service.addDomain(authToken, uriInfo(), domain)
+
+        then:
+        response.build().status == 400
+    }
+
+    def "addDomain adds domain with duplicate exception and success"() {
+        given:
+        allowAccess()
+        domainConverter = Mock(DomainConverterCloudV20)
+        defaultCloud20Service.domainConverterCloudV20 = domainConverter
+
+        def domain1 = Mock(Domain)
+        def domain2 = Mock(Domain)
+
+        domainConverter.toDomainDO(_) >>> [
+                domain1,
+                domain2
+        ]
+
+        when:
+        def response1 = defaultCloud20Service.addDomain(authToken, uriInfo(), v1Factory.createDomain())
+        def response2 = defaultCloud20Service.addDomain(authToken, uriInfo(), v1Factory.createDomain())
+
+        then:
+        1 * domainService.addDomain(domain1) >> { throw new DuplicateException() }
+        1 * domainService.addDomain(domain2)
+
+        response1.build().status == 409
+        response2.build().status == 201
+    }
+
+    def "getEndpointsByDomainId verifies admin access"() {
+        given:
+        allowAccess()
+        mockEndpointConverter(defaultCloud20Service)
+
+        domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+
+        when:
+        defaultCloud20Service.getEndpointsByDomainId(authToken, "domainId")
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "getEndpointsByDomainId verifies domain"() {
+        given:
+        allowAccess()
+        mockEndpointConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.getEndpointsByDomainId(authToken, "domainId")
+
+        then:
+        1 * domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+    }
+
+    def "getEndpointsByDomainId gets endpoints for domainId"() {
+        given:
+        allowAccess()
+        mockEndpointConverter(defaultCloud20Service)
+
+        domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+
+        when:
+        def response = defaultCloud20Service.getEndpointsByDomainId(authToken, "domainId")
+
+        then:
+        1 * tenantService.getTenantsFromNameList(_)
+        1 * endpointService.getEndpointsFromTenantList(_)
+        1 * endpointConverter.toEndpointList(_)
+
+        response.build().status == 200
+    }
+
+    def "removeTenantFromDomain verifies access level"() {
+        given:
+        allowAccess()
+
+        when:
+        defaultCloud20Service.removeTenantFromDomain(authToken, "domainId", "tenantId")
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "removeTenantFromDomain removes tenant from domain"() {
+        given:
+        allowAccess()
+
+        when:
+        def response = defaultCloud20Service.removeTenantFromDomain(authToken, "domainId", "tenantId")
+
+        then:
+        1 * domainService.removeTenantFromDomain(_, _)
+
+        response.build().status == 204
+    }
+
+    def "getServiceApis verifies access level"() {
+        given:
+        allowAccess()
+        mockCapabilityConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.getServiceApis(authToken)
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "getServiceApis gets service api's"() {
+        given:
+        allowAccess()
+        mockCapabilityConverter(defaultCloud20Service)
+
+        when:
+        def response = defaultCloud20Service.getServiceApis(authToken)
+
+        then:
+        1 * capabilityService.getServiceApis()
+        response.build().status == 200
+    }
+
+    def "getPolicies verifies access level"() {
+        given:
+        allowAccess()
+        mockPoliciesConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.getPolicies(authToken)
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "getPolicies gets policies"() {
+        given:
+        allowAccess()
+        mockPoliciesConverter(defaultCloud20Service)
+
+        when:
+        def response = defaultCloud20Service.getPolicies(authToken)
+
+        then:
+        1 * policyService.getPolicies()
+
+        response.build().status == 200
+    }
+
+    def "add policy verifies access level"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "add policy validates policy name"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        def response = defaultCloud20Service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
+
+        then:
+        1 * policyValidator.validatePolicyName(_) >> { throw new BadRequestException() }
+        response.build().status == 400
+    }
+
+    def "add policy adds policy with duplicate exception and success"() {
+        given:
+        allowAccess()
+
+        def policy1 = Mock(Policy)
+        def policy2 = Mock(Policy)
+
+        policyConverter = Mock(PolicyConverterCloudV20)
+        policyConverter.toPolicyDO(_) >>> [
+                policy1,
+                policy2
+        ]
+
+        defaultCloud20Service.policyConverterCloudV20 = policyConverter
+
+        when:
+        def response1 = defaultCloud20Service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
+        def response2 = defaultCloud20Service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
+
+        then:
+        1 * policyService.addPolicy(policy1) >> { throw new DuplicateException() }
+        1 * policyService.addPolicy(policy2)
+
+        response1.build().status == 409
+        response2.build().status == 201
+    }
+
+    def "updatePolicy verifies access level"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.updatePolicy(authToken,"policyId", v1Factory.createPolicy())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "updatePolicy verifies policy"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        def response = defaultCloud20Service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
+
+        then:
+        1 * policyService.checkAndGetPolicy("policyId") >> { throw new NotFoundException() }
+        response.build().status == 404
+    }
+
+    def "updatePolicy verifies policy name"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        defaultCloud20Service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
+
+        then:
+        1 * policyValidator.validatePolicyName(_)
+    }
+
+    def "updatePolicy updates policy"() {
+        given:
+        allowAccess()
+        mockPolicyConverter(defaultCloud20Service)
+
+        when:
+        def response = defaultCloud20Service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
+
+        then:
+        1 * policyService.updatePolicy(_, _)
+        response.build().status == 204
+    }
+
     def mockServices() {
         mockAuthenticationService(defaultCloud20Service)
         mockAuthorizationService(defaultCloud20Service)
@@ -1675,6 +2094,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockCloudRegionService(defaultCloud20Service)
         mockQuestionService(defaultCloud20Service)
         mockSecretQAService(defaultCloud20Service)
+        mockEndpointService(defaultCloud20Service)
     }
 
     def mockMisc() {

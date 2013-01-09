@@ -171,6 +171,9 @@ class RootServiceTest extends Specification {
     @Shared def jaxbMock
 
     @Shared def authToken = "token"
+    @Shared def entityFactory = new EntityFactory()
+    @Shared def v1Factory = new V1Factory()
+    @Shared def v2Factory = new V2Factory()
 
     /*
         Mock Converters
@@ -214,7 +217,6 @@ class RootServiceTest extends Specification {
         tenantConverter = Mock()
         tenantConverter.toTenant(_) >> v2Factory.createTenant()
         tenantConverter.toTenantDO(_) >> entityFactory.createTenant()
-        tenantConverter.toTenantList(_) >> v2Factory.createTenantList()
         rootService.tenantConverterCloudV20 = tenantConverter
     }
 

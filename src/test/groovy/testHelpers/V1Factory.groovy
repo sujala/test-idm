@@ -59,9 +59,9 @@ class V1Factory {
 
     def createDomain(String id, String name, String description, boolean enabled) {
         new Domain().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
-            it.description = description ? description : DESCRIPTION
+            it.id = id
+            it.name = name
+            it.description = description
             it.enabled = enabled
             return it
         }
@@ -80,13 +80,13 @@ class V1Factory {
     }
 
     def createEndpointTemplate() {
-        return createEndpointTemplate(ID, NAME, true, true)
+        return createEndpointTemplate(1, NAME, true, true)
     }
 
-    def createEndpointTemplate(String id, String name, boolean enabled, boolean global) {
+    def createEndpointTemplate(int id, String name, boolean enabled, boolean global) {
         new EndpointTemplate().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
+            it.id = id
+            it.name = name
             it.enabled = enabled
             it.global = global
             return it
