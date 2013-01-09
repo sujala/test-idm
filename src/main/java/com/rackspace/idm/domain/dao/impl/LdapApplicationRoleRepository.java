@@ -34,7 +34,7 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     @Override
     public void addClientRole(Application application, ClientRole role) {
-        String dn = addLdapContainer(application.getUniqueId(), CONTAINER_ROLES);
+        String dn = addLdapContainer(application.getUniqueId(), CONTAINER_APPLICATION_ROLES);
         addObject(dn, role);
     }
 
