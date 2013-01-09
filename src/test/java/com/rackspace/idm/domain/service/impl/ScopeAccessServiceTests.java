@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
@@ -26,6 +27,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     EndpointDao endpointDao;
     AuthHeaderHelper authHeaderHelper;
     ScopeAccessService scopeAccessService;
+    AtomHopperClient atomHopperClient;
+    DefaultUserService userService;
 
     @Before
     public void setUp() throws Exception {
@@ -37,6 +40,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessDao = EasyMock.createMock(LdapScopeAccessPeristenceRepository.class);
         endpointDao = EasyMock.createMock(EndpointDao.class);
         tenantDao = EasyMock.createMock(TenantDao.class);
+        atomHopperClient = EasyMock.createMock(AtomHopperClient.class);
+        userService = EasyMock.createMock(DefaultUserService.class);
         scopeAccessService = new DefaultScopeAccessService();
         scopeAccessService.setUserDao(mockUserDao);
         scopeAccessService.setApplicationDao(mockClientDao);
@@ -45,6 +50,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessService.setEndpointDao(endpointDao);
         scopeAccessService.setAuthHeaderHelper(authHeaderHelper);
         scopeAccessService.setAppConfig(appConfig);
+        scopeAccessService.setAtomHopperClient(atomHopperClient);
+        scopeAccessService.setUserService(userService);
     }
 
     @Test

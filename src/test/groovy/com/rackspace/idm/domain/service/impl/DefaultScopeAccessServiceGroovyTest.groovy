@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import spock.lang.Specification
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
@@ -46,6 +47,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
     @Shared ApplicationDao applicationDao
     @Shared TenantRoleDao tenantRoleDao
     @Shared ScopeAccessDao scopeAccessDao
+    @Shared AtomHopperClient atomHopperClient
+    @Shared DefaultUserService userService
 
     @Shared def randomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -415,6 +418,83 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         returned.accessTokenString.equals("token")
     }
 
+    def "atomHopper client is called when expiring all tokens for user" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userDao.getUserByUsername(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = refreshDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+
+
+        when:
+        service.expireAllTokensForUser("someName")
+
+        then:
+        2 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
+    def "atomHopper client is called when expiring all tokens for user by id" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userDao.getUserById(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = refreshDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+
+
+        when:
+        service.expireAllTokensForUserById("1")
+
+        then:
+        2 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
+    def "atomHopper client is called when expiring a token" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userService.getUserByScopeAccess(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+
+        scopeAccessDao.getScopeAccessByAccessToken(_) >> scopeAccessOne
+
+
+        when:
+        service.expireAccessToken("someToken")
+
+        then:
+        1 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
     def createMocks() {
         userDao = Mock()
         tenantDao = Mock()
@@ -422,6 +502,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         applicationDao = Mock()
         tenantRoleDao = Mock()
         scopeAccessDao = Mock()
+        atomHopperClient = Mock()
+        userService = Mock()
 
         service.userDao = userDao
         service.tenantDao = tenantDao
@@ -429,6 +511,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         service.applicationDao = applicationDao
         service.tenantRoleDao = tenantRoleDao
         service.scopeAcessDao = scopeAccessDao
+        service.atomHopperClient = atomHopperClient
+        service.userService = userService
     }
 
     def createUserScopeAccess() {

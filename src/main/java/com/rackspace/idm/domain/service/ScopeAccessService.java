@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
 
@@ -124,6 +126,10 @@ public interface ScopeAccessService {
     void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
 
     void setAppConfig(Configuration appConfig);
+
+    void setAtomHopperClient(AtomHopperClient atomHopperClient);
+
+    void setUserService(DefaultUserService userService);
 
 
     void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
