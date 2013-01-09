@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -14,6 +15,7 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.RDN;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private Configuration config;
     @Autowired
     private TenantRoleDao tenantRoleDao;
+    @Autowired
+    private AtomHopperClient atomHopperClient;
+    @Autowired
+    private DefaultUserService userService;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
@@ -393,6 +399,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             ((HasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
+        User user = userService.getUserByScopeAccess(scopeAccess);
+        if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString())){
+            logger.warn("Sending token feed to atom hopper.");
+            atomHopperClient.asyncTokenPost(user, tokenString);
+        }
         logger.debug("Done expiring access token {}", tokenString);
     }
 
@@ -443,6 +454,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             if (sa instanceof HasAccessToken) {
                 ((HasAccessToken) sa).setAccessTokenExpired();
                 this.scopeAccessDao.updateScopeAccess(sa);
+                if(!StringUtils.isBlank(sa.getAccessTokenString())){
+                    logger.warn("Sending token feed to atom hopper.");
+                    atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
+                }
             }
         }
         logger.debug("Done expiring all tokens for user {}", username);
@@ -463,6 +478,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             if (sa instanceof HasAccessToken) {
                 ((HasAccessToken) sa).setAccessTokenExpired();
                 this.scopeAccessDao.updateScopeAccess(sa);
+                if(!StringUtils.isBlank(sa.getAccessTokenString())){
+                    logger.warn("Sending token feed to atom hopper.");
+                    atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
+                }
             }
         }
         logger.debug("Done expiring all tokens for user {}", userId);
@@ -1249,4 +1268,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
+    }
+
+    public void setUserService(DefaultUserService userService) {
+        this.userService = userService;
+    }
 }

@@ -3130,7 +3130,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
         User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
-        atomHopperClient.asyncTokenPost(user, authToken);
         return Response.status(204);
     }
 
@@ -3158,8 +3157,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         scopeAccessService.expireAccessToken(tokenId);
-        User user = userService.getUserByScopeAccess(scopeAccess);
-        atomHopperClient.asyncTokenPost(user, tokenId);
         return Response.status(204);
     }
 
