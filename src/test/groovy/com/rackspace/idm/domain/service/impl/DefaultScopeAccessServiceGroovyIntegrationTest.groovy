@@ -35,7 +35,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultScopeAccessServiceGroovyTest extends Specification {
+class DefaultScopeAccessServiceGroovyIntegrationTest extends Specification {
 
     @Autowired private Configuration config
     @Autowired private AuthHeaderHelper authHeaderHelper
