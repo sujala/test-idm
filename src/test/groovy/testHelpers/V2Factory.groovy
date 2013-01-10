@@ -22,16 +22,16 @@ class V2Factory {
     private static DESCRIPTION = "description"
     private static V1Factory v1Factory = new V1Factory()
 
-    def creatEndpoint() {
-        return createEndpoint(ID, null, NAME, null)
+    def createEndpoint() {
+        return createEndpoint(1, "tenantId", NAME, "region")
     }
 
-    def createEndpoint(String id, String tenantId, String name, String region) {
+    def createEndpoint(int id, String tenantId, String name, String region) {
         new Endpoint().with {
-            it.id = id ? id : ID
-            it.tenantId = tenantId ? tenantId : "tenantId"
-            it.name = name ? name : NAME
-            it.region = region ? region : "region"
+            it.id = id
+            it.tenantId = tenantId
+            it.name = name
+            it.region = region
             return it
         }
     }

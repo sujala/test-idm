@@ -203,6 +203,7 @@ public abstract class LdapRepository {
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";
     protected static final String CONTAINER_TOKENS = "TOKENS";
+    protected static final String CONTAINER_APPLICATION_ROLES = "CLIENT ROLES";
 
     // Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
