@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -23,6 +24,8 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.*;
 
 @Component
@@ -57,6 +60,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private AtomHopperClient atomHopperClient;
     @Autowired
     private DefaultUserService userService;
+    @Autowired
+    private DefaultCloud20Service defaultCloud20Service;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
@@ -388,19 +393,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAccessToken(String tokenString) {
+    public void expireAccessToken(String tokenString) throws IOException, JAXBException {
         logger.debug("Expiring access token {}", tokenString);
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
             return;
         }
 
+        Date expireDate = null;
         if (scopeAccess instanceof HasAccessToken) {
+            expireDate =  scopeAccess.getAccessTokenExp();
             ((HasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         User user = userService.getUserByScopeAccess(scopeAccess);
-        if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString())){
+        if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
             logger.warn("Sending token feed to atom hopper.");
             atomHopperClient.asyncTokenPost(user, tokenString);
         }
@@ -426,7 +433,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAllTokensForCustomer(String customerId) {
+    public void expireAllTokensForCustomer(String customerId) throws IOException, JAXBException {
         logger.debug("Expiring all tokens for client {}", customerId);
         List<Application> clients = getAllClientsForCustomerId(customerId);
         List<User> users = getAllUsersForCustomerId(customerId);
@@ -440,7 +447,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAllTokensForUser(String username) {
+    public void expireAllTokensForUser(String username) throws IOException, JAXBException {
         logger.debug("Expiring all tokens for user {}", username);
         final User user = this.userDao.getUserByUsername(username);
         if (user == null) {
@@ -452,9 +459,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         for (final ScopeAccess sa : saList) {
             if (sa instanceof HasAccessToken) {
+                Date expireDate =  sa.getAccessTokenExp();
                 ((HasAccessToken) sa).setAccessTokenExpired();
                 this.scopeAccessDao.updateScopeAccess(sa);
-                if(!StringUtils.isBlank(sa.getAccessTokenString())){
+                if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
                     logger.warn("Sending token feed to atom hopper.");
                     atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
                 }
@@ -462,9 +470,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.debug("Done expiring all tokens for user {}", username);
     }
-    
+
+    private boolean isExpired(Date date) {
+        if(date != null){
+            return date.before(new Date());
+        }else{
+            return true;
+        }
+    }
+
     @Override
-    public void expireAllTokensForUserById(String userId) {
+    public void expireAllTokensForUserById(String userId) throws IOException, JAXBException {
         logger.debug("Expiring all tokens for user {}", userId);
         final User user = this.userDao.getUserById(userId);
         if (user == null) {
@@ -476,9 +492,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         for (final ScopeAccess sa : saList) {
             if (sa instanceof HasAccessToken) {
+                Date expireDate =  sa.getAccessTokenExp();
                 ((HasAccessToken) sa).setAccessTokenExpired();
                 this.scopeAccessDao.updateScopeAccess(sa);
-                if(!StringUtils.isBlank(sa.getAccessTokenString())){
+                if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
                     logger.warn("Sending token feed to atom hopper.");
                     atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
                 }

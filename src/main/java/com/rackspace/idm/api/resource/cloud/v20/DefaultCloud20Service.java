@@ -56,6 +56,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
@@ -2080,7 +2081,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
+    public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Domain domain = domainService.checkAndGetDomain(domainId);
         if (!domain.isEnabled()) {
@@ -3125,7 +3126,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) {
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException {
         ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
@@ -3134,7 +3135,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) {
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException, JAXBException {
         ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
 
         if (authToken.equals(tokenId)) {

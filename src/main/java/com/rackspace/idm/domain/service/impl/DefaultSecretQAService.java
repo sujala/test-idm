@@ -11,6 +11,9 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -27,7 +30,7 @@ public class DefaultSecretQAService implements SecretQAService{
     DefaultQuestionService defaultQuestionService;
 
     @Override
-    public void addSecretQA(String userId, SecretQA secretQA) {
+    public void addSecretQA(String userId, SecretQA secretQA) throws IOException, JAXBException {
         User user = defaultUserService.checkAndGetUserById(userId);
         validateSecretQA(secretQA);
         Question question = defaultQuestionService.getQuestion(secretQA.getId());

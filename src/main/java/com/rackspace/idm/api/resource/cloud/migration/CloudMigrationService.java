@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -36,7 +37,9 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -246,7 +249,7 @@ public class CloudMigrationService {
         }
     }
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws IOException, JAXBException {
         client.setCloud20Host(getCloudAuth20Url());
         client.setCloud11Host(getCloudAuth11Url());
         if (userService.userExistsByUsername(username)) {
@@ -669,7 +672,7 @@ public class CloudMigrationService {
         return false;
     }
 
-    public void setMigratedUserEnabledStatus(String username, boolean enable) {
+    public void setMigratedUserEnabledStatus(String username, boolean enable) throws IOException, JAXBException {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if (user == null) {
             throw new NotFoundException(USER_NOT_FOUND);

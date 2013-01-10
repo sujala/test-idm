@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,14 +51,14 @@ public class MigrationResource {
 
     @PUT
     @Path("cloud/users/{username}/enable")
-    public Response enableMigratedUserByUsername(@PathParam("username") String username) {
+    public Response enableMigratedUserByUsername(@PathParam("username") String username) throws IOException, JAXBException {
         cloudMigrationService.setMigratedUserEnabledStatus(username, false);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @PUT
     @Path("cloud/users/{username}/disable")
-    public Response disableMigratedUserByUsername(@PathParam("username") String username) {
+    public Response disableMigratedUserByUsername(@PathParam("username") String username) throws IOException, JAXBException {
         cloudMigrationService.setMigratedUserEnabledStatus(username, true);
         return Response.status(Response.Status.ACCEPTED).build();
     }

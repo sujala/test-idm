@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 
 /**
  * A users secret question and answer
@@ -74,7 +76,7 @@ public class UserSecretResource extends ParentResource {
     public Response setUserSecret(
     	@HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId, 
-        EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) throws IOException, JAXBException {
         
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRequestBody(holder);

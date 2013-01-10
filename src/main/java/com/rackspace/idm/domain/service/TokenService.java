@@ -4,6 +4,9 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import org.apache.commons.configuration.Configuration;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+
 public interface TokenService {
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
@@ -15,9 +18,9 @@ public interface TokenService {
     
     void revokeAllTokensForClient(String clientId);
     
-    void revokeAllTokensForCustomer(String customerId);
+    void revokeAllTokensForCustomer(String customerId) throws IOException, JAXBException;
 
-    void revokeAllTokensForUser(String username);
+    void revokeAllTokensForUser(String username) throws IOException, JAXBException;
 
     void setClientService(ApplicationService clientService);
 

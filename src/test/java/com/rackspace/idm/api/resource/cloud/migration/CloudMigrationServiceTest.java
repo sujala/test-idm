@@ -479,7 +479,7 @@ public class CloudMigrationServiceTest {
     }
 
     @Test (expected = BadRequestException.class)
-    public void migrateUserByUsername_callsMigrateUserByUsername_throwsBadRequestException() {
+    public void migrateUserByUsername_callsMigrateUserByUsername_throwsBadRequestException() throws IOException, JAXBException {
         doThrow(new BadRequestException()).when(spy).migrateUserByUsername("username", false, null);
         spy.migrateUserByUsername("username", false);
     }

@@ -428,7 +428,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def scopeAccessOne = new UserScopeAccess()
         def scopeAccessTwo = new UserScopeAccess()
         scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.accessTokenExp = refreshDate
         scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
         scopeAccessTwo.accessTokenString = "1234"
         scopeAccessTwo.accessTokenExp = refreshDate
@@ -445,6 +445,33 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
     }
 
+    def "atomHopper client is not called when tokens for user are already expired" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userDao.getUserByUsername(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = expiredDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+
+
+        when:
+        service.expireAllTokensForUser("someName")
+
+        then:
+        0 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
     def "atomHopper client is called when expiring all tokens for user by id" () {
         given:
         createMocks()
@@ -455,7 +482,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def scopeAccessOne = new UserScopeAccess()
         def scopeAccessTwo = new UserScopeAccess()
         scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.accessTokenExp = refreshDate
         scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
         scopeAccessTwo.accessTokenString = "1234"
         scopeAccessTwo.accessTokenExp = refreshDate
@@ -472,7 +499,57 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
     }
 
+    def "atomHopper client is not called when tokens for user by id are already expired" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userDao.getUserById(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = expiredDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+
+
+        when:
+        service.expireAllTokensForUserById("1")
+
+        then:
+        0 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
     def "atomHopper client is called when expiring a token" () {
+        given:
+        createMocks()
+        User user = new User()
+        user.id = "1"
+        userService.getUserByScopeAccess(_) >> user
+
+        def scopeAccessOne = new UserScopeAccess()
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = refreshDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+
+        scopeAccessDao.getScopeAccessByAccessToken(_) >> scopeAccessOne
+
+
+        when:
+        service.expireAccessToken("someToken")
+
+        then:
+        1 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
+    def "atomHopper client is not called when expiring a token that is already expired" () {
         given:
         createMocks()
         User user = new User()
@@ -491,7 +568,15 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         service.expireAccessToken("someToken")
 
         then:
-        1 * atomHopperClient.asyncTokenPost(_,_)
+        0 * atomHopperClient.asyncTokenPost(_,_)
+
+    }
+
+    def "isExpired with null date"() {
+        when:
+        service.isExpired(null)
+        then:
+        true
 
     }
 

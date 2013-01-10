@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -36,15 +38,15 @@ public interface ScopeAccessService {
     
     boolean doesAccessTokenHaveService(ScopeAccess token, String clientId);
     
-    void expireAccessToken(String tokenString);
+    void expireAccessToken(String tokenString) throws IOException, JAXBException;
 
     void expireAllTokensForClient(String clientId);
 
-    void expireAllTokensForCustomer(String customerId);
+    void expireAllTokensForCustomer(String customerId) throws IOException, JAXBException;
 
-    void expireAllTokensForUser(String username);
+    void expireAllTokensForUser(String username) throws IOException, JAXBException;
     
-    void expireAllTokensForUserById(String userId);
+    void expireAllTokensForUserById(String userId) throws IOException, JAXBException;
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
@@ -130,7 +132,6 @@ public interface ScopeAccessService {
     void setAtomHopperClient(AtomHopperClient atomHopperClient);
 
     void setUserService(DefaultUserService userService);
-
 
     void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
 

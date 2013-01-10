@@ -14,8 +14,12 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.xml.bind.JAXBException;
+
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -266,7 +270,7 @@ public class UserServiceTests {
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void shouldUpdateUser() throws IOException, JAXBException {
         final User user = new User();
         user.setUsername(username);
         user.setCustomerId(customerId);

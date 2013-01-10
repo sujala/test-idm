@@ -14,6 +14,8 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,7 +133,7 @@ public class DefaultTokenService implements TokenService {
 
     
     @Override
-    public void revokeAllTokensForCustomer(final String customerId) {
+    public void revokeAllTokensForCustomer(final String customerId) throws IOException, JAXBException {
         logger
             .debug("Revoking all access tokens for customer: {}.", customerId);
         final List<User> usersList = getAllUsersForCustomerId(customerId);
@@ -150,7 +152,7 @@ public class DefaultTokenService implements TokenService {
 
     
     @Override
-    public void revokeAllTokensForUser(final String username) {
+    public void revokeAllTokensForUser(final String username) throws IOException, JAXBException {
         logger.debug("Deleting all access tokens for user {}.", username);
         this.scopeAccessService.expireAllTokensForUser(username);
         logger.debug("Deleted all access tokens for user {}.", username);

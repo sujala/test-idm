@@ -12,7 +12,9 @@ import org.openstack.docs.identity.api.v2.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBException;
 import javax.xml.ws.Response;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,9 +28,9 @@ public interface Cloud20Service {
 
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
-    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken);
+    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException;
 
-    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken);
+    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken) throws IOException, JAXBException;
 
     ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) ;
 
@@ -192,7 +194,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getUsersByDomainId(String authToken, String domainId, String enabled);
 
-    ResponseBuilder addUserToDomain(String authToken, String domainId, String userId);
+    ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException;
 
     ResponseBuilder getEndpointsByDomainId(String authToken, String domainId);
 

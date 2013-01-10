@@ -23,6 +23,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
 import java.io.StringReader;
 
 /**
@@ -79,7 +80,7 @@ public class Cloud20VersionResource {
 
     @DELETE
     @Path("tokens")
-    public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) {
+    public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) throws IOException, JAXBException {
         return defaultCloud20Service.revokeToken(httpHeaders, authToken).build();
     }
 
@@ -87,7 +88,7 @@ public class Cloud20VersionResource {
     @Path("tokens/{tokenId}")
     public Response revokeUserToken(@Context HttpHeaders httpHeaders,
                                     @HeaderParam(X_AUTH_TOKEN) String authToken,
-                                    @PathParam("tokenId") String tokenId) {
+                                    @PathParam("tokenId") String tokenId) throws IOException, JAXBException {
         return defaultCloud20Service.revokeToken(httpHeaders, authToken, tokenId).build();
     }
 
@@ -218,7 +219,7 @@ public class Cloud20VersionResource {
     public Response addUserToDomain(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("domainId") String domainId,
-            @PathParam("userId") String userId) {
+            @PathParam("userId") String userId) throws IOException, JAXBException {
         return defaultCloud20Service.addUserToDomain(authToken, domainId, userId).build();
     }
 

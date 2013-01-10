@@ -15,6 +15,8 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -397,13 +399,13 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     }
 
     @Test
-    public void shouldExpireAllTokensForUser() {
+    public void shouldExpireAllTokensForUser() throws IOException, JAXBException {
         User fakeUser = getFakeUser();
         setUpUserTokenExiprationTest(true, fakeUser);
         EasyMock.verify(mockUserDao, scopeAccessDao);
     }
 
-    private void setUpUserTokenExiprationTest(boolean doTest, User fakeUser) {
+    private void setUpUserTokenExiprationTest(boolean doTest, User fakeUser) throws IOException, JAXBException {
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(
             fakeUser);
         List<ScopeAccess> sas = new ArrayList<ScopeAccess>();
@@ -462,7 +464,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     }
 
     @Test
-    public void shouldExpireAllTokensForCustomer() {
+    public void shouldExpireAllTokensForCustomer() throws IOException, JAXBException {
         Configuration config = EasyMock.createMock(Configuration.class);
         EasyMock.expect(config.getInt("ldap.paging.limit.max")).andReturn(10);
         Application client0 = getFakeClient();
@@ -490,7 +492,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     }
 
     @Test
-    public void shouldExpireAccessToken() {
+    public void shouldExpireAccessToken() throws IOException, JAXBException {
         UserScopeAccess sa = getFakeUserScopeAccess();
         String tokenString = "tokenString";
         EasyMock

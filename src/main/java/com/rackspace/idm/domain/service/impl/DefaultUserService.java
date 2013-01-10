@@ -22,6 +22,9 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -580,7 +583,7 @@ public class DefaultUserService implements UserService {
 
 
     @Override
-    public void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) {
+    public void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) throws IOException, JAXBException {
         logger.debug("Updating Password for User: {}", userId);
 
         User user = loadUser(userId);
@@ -613,7 +616,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
+    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
@@ -638,7 +641,7 @@ public class DefaultUserService implements UserService {
         return false;
     }
 
-    public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
+    public void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
@@ -709,7 +712,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void softDeleteUser(User user) {
+    public void softDeleteUser(User user) throws IOException, JAXBException {
         logger.debug("SoftDeleting User: {}", user);
         scopeAccessService.expireAllTokensForUserById(user.getId());
         userDao.softDeleteUser(user);

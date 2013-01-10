@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 
 /**
  * A User.
@@ -104,7 +106,7 @@ public class UserResource extends ParentResource {
 	public Response updateUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
-			EntityHolder<com.rackspace.api.idm.v1.User> holder) {
+			EntityHolder<com.rackspace.api.idm.v1.User> holder) throws IOException, JAXBException {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
@@ -149,7 +151,7 @@ public class UserResource extends ParentResource {
 	@DELETE
 	public Response deleteUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
-			@PathParam("userId") String userId) {
+			@PathParam("userId") String userId) throws IOException, JAXBException {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);

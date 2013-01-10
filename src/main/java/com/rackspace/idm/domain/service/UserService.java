@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
@@ -76,17 +78,17 @@ public interface UserService {
 
     boolean hasSubUsers(String userId);
     
-    void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token);
+    void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) throws IOException, JAXBException;
 
-    void updateUser(User user, boolean hasSelfUpdatedPassword);
-    void updateUserById(User user, boolean hasSelfUpdatedPassword);
+    void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
+    void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
     Password resetUserPassword(User user);
 
 //    DateTime getUserPasswordExpirationDate(String userName);
 
 //    UserAuthenticationResult authenticateRacker(String username, String password);
 
-    void softDeleteUser(User user);
+    void softDeleteUser(User user) throws IOException, JAXBException;
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
     boolean isMigratedUser(User user);

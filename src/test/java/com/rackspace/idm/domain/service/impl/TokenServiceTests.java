@@ -25,6 +25,9 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+
 public class TokenServiceTests {
 
     UserService mockUserService;
@@ -87,7 +90,7 @@ public class TokenServiceTests {
     }
 
     @Test
-    public void shouldRevokeAllTokensForUser() {
+    public void shouldRevokeAllTokensForUser() throws IOException, JAXBException {
         mockScopeAccessService.expireAllTokensForUser(username);
         EasyMock.replay(mockScopeAccessService);
         tokenService.revokeAllTokensForUser(username);
