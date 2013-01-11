@@ -28,7 +28,15 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
 import com.rackspace.idm.api.resource.cloud.v20.DelegateCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
+import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.EndpointDao
+import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.TenantDao
+import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.ClientScopeAccess
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -71,6 +79,7 @@ import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.domain.service.impl.DefaultTokenService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
@@ -162,7 +171,16 @@ class RootServiceTest extends Specification {
     @Shared DefaultCloud20Service defaultCloud20Service
     @Shared DelegateCloud20Service delegateCloud20Service
 
+    // Dao's
+    @Shared ApplicationDao applicationDao
+    @Shared ScopeAccessDao scopeAccessDao
+    @Shared UserDao userDao
+    @Shared TenantDao tenantDao
+    @Shared EndpointDao endpointDao
+    @Shared TenantRoleDao tenantRoleDao
+
     @Shared HttpHeaders headers
+    @Shared AuthHeaderHelper authHeaderHelper
     @Shared Paginator userPaginator
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
@@ -521,6 +539,41 @@ class RootServiceTest extends Specification {
         rootService.delegateCloud20Service = delegateCloud20Service
     }
 
+
+    /*
+        Mock Dao
+    */
+
+    def mockScopeAccessDao(rootService) {
+        scopeAccessDao = Mock()
+        rootService.scopeAccessDao = scopeAccessDao
+    }
+
+    def mockUserDao(rootService) {
+        userDao = Mock()
+        rootService.userDao = userDao
+    }
+
+    def mockTenantDao(rootService) {
+        tenantDao = Mock()
+        rootService.tenantDao = tenantDao
+    }
+
+    def mockEndpointDao(rootService) {
+        endpointDao = Mock()
+        rootService.endpointDao = endpointDao
+    }
+
+    def mockApplicationDao(rootService) {
+        applicationDao = Mock()
+        rootService.applicationDao = applicationDao
+    }
+
+    def mockTenantRoleDao(rootService) {
+        tenantRoleDao = Mock()
+        rootService.tenantRoleDao = tenantRoleDao
+    }
+
     /*
         Mock Builders
     */
@@ -595,6 +648,11 @@ class RootServiceTest extends Specification {
         rootService.config = config
     }
 
+    def mockAuthHeaderHelper(rootService) {
+        authHeaderHelper = Mock()
+        rootService.authHeaderHelper = authHeaderHelper
+    }
+
     def uriInfo() {
         return uriInfo("http://absolute.path/to/resource")
     }
@@ -626,13 +684,59 @@ class RootServiceTest extends Specification {
         def scopeAccess = Mock(ClientScopeAccess)
         clientId = clientId ? clientId : "clientId"
         tokenString = tokenString ? tokenString : "tokenString"
-        def dn = "accessToken$tokenString,cn=TOKENS,clientId=$clientId"
+        def dn = "accessToken=$tokenString,cn=TOKENS,clientId=$clientId"
         def entry = createEntry(dn)
 
         scopeAccess.getAccessTokenString() >> tokenString
         scopeAccess.getClientId() >> clientId
         scopeAccess.getUniqueId() >> dn
         scopeAccess.getLDAPEntry() >> entry
+
+        return scopeAccess
+    }
+
+    def createImpersonatedScopeAccess(String username, String impUsername, String tokenString, String impToken, boolean isExpired, boolean refresh) {
+        def scopeAccess = Mock(ImpersonatedScopeAccess)
+        username = username ? username : "username"
+        impUsername = impUsername ? impUsername : "impersonatingUsername"
+        tokenString = tokenString ? tokenString : "tokenString"
+        impToken = impToken ? impToken : "impersonatedTokenString"
+        def dn = "accessToken=$tokenString,cn=TOKENS,userRsId=$username,ou=users"
+        def entry = createEntry(dn)
+
+        scopeAccess.getAccessTokenString() >> tokenString
+        scopeAccess.getUsername() >> username
+        scopeAccess.getImpersonatingUsername() >> impUsername
+        scopeAccess.getImpersonatingToken() >> impToken
+        scopeAccess.getUniqueId() >> dn
+        scopeAccess.getLDAPEntry() >> entry
+        scopeAccess.isAccessTokenExpired(_) >> isExpired
+        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
+
+        return scopeAccess
+    }
+    def createPasswordResetScopeAccess() {
+        return createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", false, false)
+    }
+
+    def createPasswordResetScopeAccess(String tokenString, String clientId, String userRsId, boolean isExpired, boolean refresh) {
+        def scopeAccess = Mock(PasswordResetScopeAccess)
+        clientId = clientId ? clientId : "clientId"
+        tokenString = tokenString ? tokenString : "tokenString"
+        userRsId = userRsId ? userRsId : "userRsId"
+
+        def dn = "accessToken=$tokenString,cn=TOKENS,userRsId=$userRsId"
+        def entry = createEntry(dn)
+
+        scopeAccess.getUniqueId() >> dn
+        scopeAccess.getUserRsId() >> userRsId
+        scopeAccess.getClientId() >> clientId
+        scopeAccess.getAccessTokenString() >> tokenString
+        scopeAccess.getLDAPEntry() >> entry
+        scopeAccess.isAccessTokenExpired(_) >> isExpired
+        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
+
+        return scopeAccess
     }
 
     def createRackerScopeAcccss() {
@@ -643,7 +747,7 @@ class RootServiceTest extends Specification {
         def scopeAccess = Mock(RackerScopeAccess)
         tokenString = tokenString ? tokenString : "tokenString"
         rackerId = rackerId ? rackerId : "rackerId"
-        def dn = "accessToken=$tokenString,cn=TOKENS,rsI$rackerId,ou=rackers"
+        def dn = "accessToken=$tokenString,cn=TOKENS,rsId=$rackerId,ou=rackers"
         def entry = createEntry(dn)
 
         scopeAccess.getAccessTokenString() >> tokenString

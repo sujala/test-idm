@@ -22,6 +22,32 @@ class V2Factory {
     private static DESCRIPTION = "description"
     private static V1Factory v1Factory = new V1Factory()
 
+    def createAuthenticationRequest() {
+        return createAuthenticationRequest("tenantId", "tenantName", null, null)
+    }
+
+    def createAuthenticationRequest(String tenantId, String tenantName, credential, any) {
+        new AuthenticationRequest().with {
+            it.tenantId = tenantId
+            it.tenantName = tenantName
+            it.credential = credential
+            it.any = any
+            return it
+        }
+    }
+    def createAuthenticateResponse() {
+        return createAuthenticateResponse(createToken(), null, null)
+    }
+
+    def createAuthenticateResponse(Token token, ServiceCatalog serviceCatalog, UserForAuthenticateResponse user) {
+        new AuthenticateResponse().with {
+            it.token = token ? token : createToken()
+            it.serviceCatalog = serviceCatalog ? serviceCatalog : new ServiceCatalog()
+            it.user = user ? user : new UserForAuthenticateResponse()
+            return it
+        }
+    }
+
     def createEndpoint() {
         return createEndpoint(1, "tenantId", NAME, "region")
     }
@@ -44,19 +70,6 @@ class V2Factory {
         def list = endpoints ? endpoints : [].asList()
         new EndpointList().with {
             it.getEndpoint().addAll(list)
-            return it
-        }
-    }
-
-    def createAuthenticateResponse() {
-        return createAuthenticateResponse(createToken(), null, null)
-    }
-
-    def createAuthenticateResponse(Token token, ServiceCatalog serviceCatalog, UserForAuthenticateResponse user) {
-        new AuthenticateResponse().with {
-            it.token = token ? token : createToken()
-            it.serviceCatalog = serviceCatalog ? serviceCatalog : new ServiceCatalog()
-            it.user = user ? user : new UserForAuthenticateResponse()
             return it
         }
     }
