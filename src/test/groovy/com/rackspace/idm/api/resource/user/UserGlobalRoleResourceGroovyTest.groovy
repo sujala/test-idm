@@ -479,6 +479,31 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         tenantRole.tenantIds == ["tenantId"]
     }
 
+    def "test isIdentityRole method return true" (){
+        given:
+        createMocks()
+        config.getString("cloudAuth.adminRole") >> "identity:admin"
+        config.getString("cloudAuth.serviceAdminRole") >> "identity:service-admin"
+        config.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
+        config.getString("cloudAuth.userRole") >> "identity:default"
+
+        when:
+        boolean result1 = globalRoleResource.isIdentityRole("identity:admin")
+        boolean result2 = globalRoleResource.isIdentityRole("identity:default")
+        boolean result3 = globalRoleResource.isIdentityRole("identity:user-admin")
+        boolean result4 = globalRoleResource.isIdentityRole("identity:service-admin")
+        boolean result5 = globalRoleResource.isIdentityRole("badrole")
+
+        then:
+        result1
+        result2
+        result3
+        result4
+        !result5
+
+
+    }
+
     def createMocks() {
         userDao = Mock()
         tenantDao = Mock()
