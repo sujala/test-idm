@@ -533,6 +533,23 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         response.getStatus() == 204
     }
 
+    def "delete tenant role for user no tenant role - returns NotFoundException"(){
+        given:
+        createMocks()
+        precedenceValidator = Mock()
+        globalRoleResource.setPrecedenceValidator(precedenceValidator)
+        ScopeAccess scopeAccess = new ScopeAccess()
+        scopeAccessService.getAccessTokenByAuthHeader(_) >> scopeAccess
+        User user = new User()
+        userDao.getUserById(_) >> user
+
+        when:
+        globalRoleResource.deleteTenantRoleFromUser(authToken, "1", "1", "1")
+
+        then:
+        thrown(NotFoundException)
+    }
+
     def createMocks() {
         userDao = Mock()
         tenantDao = Mock()
