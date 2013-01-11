@@ -253,8 +253,6 @@ public class DelegateCloud20Service implements Cloud20Service {
             int status = dummyResponse.getStatus();
             if (callerScopeAccess != null && status == HttpServletResponse.SC_UNAUTHORIZED) {
                 throw new NotFoundException("Token not found.");
-            } else if(callerScopeAccess == null && status == HttpServletResponse.SC_NOT_FOUND){
-                throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
             }
             return response;
         }
