@@ -29,6 +29,9 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.exception.NotFoundException
+import com.unboundid.ldap.sdk.Entry
+
+import javax.ws.rs.core.Response
 
 /**
  * Created with IntelliJ IDEA.
@@ -504,6 +507,32 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
 
     }
 
+    def "delete tenant role for user"(){
+        given:
+        createMocks()
+        precedenceValidator = Mock()
+        globalRoleResource.setPrecedenceValidator(precedenceValidator)
+        ScopeAccess scopeAccess = new ScopeAccess()
+        scopeAccessService.getAccessTokenByAuthHeader(_) >> scopeAccess
+        User user = new User()
+        userDao.getUserById(_) >> user
+        TenantRole role = new TenantRole()
+        tenantRoleDao.getTenantRoleForUser(_,_) >> role
+        userService.getUserByAuthToken(_) >> user
+        scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess).with() {
+            def attribute = new Attribute(LdapRepository.ATTR_UID, "username")
+            def entry = new ReadOnlyEntry("DN", attribute)
+            it.getLDAPEntry() >> entry
+            return it
+        }
+
+        when:
+        Response response = globalRoleResource.deleteTenantRoleFromUser(authToken, "1", "1", "1")
+
+        then:
+        response.getStatus() == 204
+    }
+
     def createMocks() {
         userDao = Mock()
         tenantDao = Mock()
@@ -536,6 +565,8 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         globalRoleResource.setAuthorizationService(authorizationService)
         globalRoleResource.setScopeAccessService(scopeAccessService)
         globalRoleResource.setTenantService(tenantService)
+
+
     }
 
     def setupRoles() {
