@@ -39,7 +39,7 @@
             <param name="activeFileName" value="/var/log/idm/analytics.log"/>
         </rollingPolicy>
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %m %n"/>
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
 		</layout>
 	</appender>
 

@@ -5,15 +5,22 @@ import com.google.gson.GsonBuilder;
 import com.rackspace.idm.domain.service.UserService;
 import com.sun.jersey.core.util.Base64;
 import lombok.Data;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component("analyticsLogger")
 public class DefaultAnalyticsLogger implements AnalyticsLogger {
@@ -31,17 +38,17 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     private static final String USERS = "users";
     private static final String OBFUSCATED_TOKEN = "XXXX";
 
-    public void log(Long startTime, String authToken, String basicAuth, String host, String userAgent, String method, String path, int status) {
+    public void log(Long startTime, String authToken, String basicAuth, String host, String remoteHost, String userAgent, String method, String path, int status, String requestBody, String contentType) {
         long duration = new Date().getTime() - startTime;
-        String endpoint = config.getString("ga.endpoint");
 
         Message message = new Message();
         message.setTimestamp(String.valueOf(startTime));
         message.setDuration(String.valueOf(duration));
 
         Caller caller = new Caller();
-        caller.setIp(getHost(host));
+        caller.setIp(remoteHost);
         if (authToken != null) {
+            caller.setToken(hashToken(authToken));
             caller.setId(getUserIdFromAuthToken(authToken));
         } else if (basicAuth != null) {
             caller.setId(getUserIdFromBasicAuth(basicAuth));
@@ -49,21 +56,30 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         caller.setAgent(userAgent);
         message.setCaller(caller);
 
-        String userId = getUserIdFromPath(path);
+        com.rackspace.idm.domain.entity.User userEntity = null;
 
+        String userId = getUserIdFromPath(path);
         if (userId != null) {
-            User user = new User();
-            user.setId(userId);
-            com.rackspace.idm.domain.entity.User userEntity = userService.getUserById(userId);
-            if (userEntity != null) {
-                user.setUsername(userEntity.getUsername());
-                user.setDomain(userEntity.getDomainId());
-                message.setUser(user);
+            userEntity = userService.getUserById(userId);
+        }
+
+        if (userEntity == null) {
+            String username = getUsernameFromRequestBody(requestBody, contentType);
+            if (username != null) {
+                userEntity = userService.getUser(username);
             }
         }
 
+        if (userEntity != null) {
+            User user = new User();
+            user.setId(userEntity.getId());
+            user.setUsername(userEntity.getUsername());
+            user.setDomain(userEntity.getDomainId());
+            message.setUser(user);
+        }
+
         Resource resource = new Resource();
-        resource.setUri(getUri(endpoint, getPathWithoutToken(path)));
+        resource.setUri(getUri(host, getPathWithoutToken(path)));
         resource.setMethod(method);
         resource.setResponseStatus(status);
         message.setResource(resource);
@@ -74,10 +90,20 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         analyticsLogHandler.log(messageString);
     }
 
+    private String hashToken(String authToken) {
+        try {
+            InputStream is = new ByteArrayInputStream( authToken.getBytes());
+            return DigestUtils.md5Hex(is);
+        } catch (UnsupportedEncodingException e) {
+        } catch (IOException e) {
+        }
+        return OBFUSCATED_TOKEN;
+    }
+
     private String getPathWithoutToken(String path) {
         String token = parseUserTokenFromPath(path);
         if (token != null) {
-            return path.replace(token, OBFUSCATED_TOKEN);
+            return path.replace(token, hashToken(token));
         }
         return path;
     }
@@ -146,16 +172,6 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         return null;
     }
 
-    private String getHost(String host) {
-        if (host != null) {
-            int index = host.indexOf(':');
-            if (index >= 0) {
-                host = host.substring(0, index);
-            }
-        }
-        return host;
-    }
-
     private String getUserIdFromAuthToken(String authToken) {
         com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(authToken);
         if (user != null) {
@@ -164,12 +180,31 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         return null;
     }
 
-    private String getUri(String endpoint, String path) {
+    private String getUri(String host, String path) {
         try {
-            return new URL(new URL(endpoint), path).toString();
+            return new URL(new URL("https://" + host), path).toString();
         } catch (MalformedURLException e) {
         }
         return "";
+    }
+
+    private String getUsernameFromRequestBody(String requestBody, String contentType) {
+        if (contentType != null && requestBody != null) {
+            if (contentType.equalsIgnoreCase("application/json")) {
+                Pattern pattern = Pattern.compile(".*\"(?i:username)\"\\s*:\\s*\"([^\"]+)\".*");
+                Matcher matcher = pattern.matcher(requestBody);
+                if (matcher.matches()) {
+                    return matcher.group(1);
+                }
+            } else if (contentType.equalsIgnoreCase("application/xml")) {
+                Pattern pattern = Pattern.compile(".*(?i:username)\\s*=\\s*\"([^\"]+)\".*");
+                Matcher matcher = pattern.matcher(requestBody);
+                if (matcher.matches()) {
+                    return matcher.group(1);
+                }
+            }
+        }
+        return null;
     }
 
     @Data
@@ -186,6 +221,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         private String id;
         private String ip;
         private String agent;
+        private String token;
     }
 
     @Data

@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 
 @Component
@@ -33,9 +35,13 @@ public class LoggerFilter implements Filter {
         String path = ((HttpServletRequestWrapper) request).getPathInfo();
         String method = ((HttpServletRequestWrapper) request).getMethod();
         String host = ((HttpServletRequestWrapper) request).getHeader("Host");
+        String remoteHost = ((HttpServletRequestWrapper) request).getRemoteHost();
         String userAgent = ((HttpServletRequestWrapper) request).getHeader("User-Agent");
         String authToken = ((HttpServletRequestWrapper) request).getHeader("X-Auth-Token");
         String basicAuth = ((HttpServletRequestWrapper) request).getHeader("Authorization");
+        InputStream stream = request.getInputStream();
+        String requestBody = IOUtils.toString(stream);
+        String contentType = ((HttpServletRequestWrapper) request).getHeader("Content-Type");
         Long startTime = new Date().getTime();
 
         StatusExposingServletResponse responseWrapper = new StatusExposingServletResponse((HttpServletResponse)response);
@@ -44,7 +50,7 @@ public class LoggerFilter implements Filter {
         int status = responseWrapper.getStatus();
 
         // TODO: make async
-        analyticsLogger.log(startTime, authToken, basicAuth, host, userAgent, method, path, status);
+        analyticsLogger.log(startTime, authToken, basicAuth, host, remoteHost, userAgent, method, path, status, requestBody, contentType);
     }
 
     @Override

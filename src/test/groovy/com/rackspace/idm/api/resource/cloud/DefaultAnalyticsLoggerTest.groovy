@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.apache.commons.configuration.Configuration
@@ -29,14 +28,13 @@ class DefaultAnalyticsLoggerTest extends Specification {
         analyticsLogHandler = Mock()
         analyticsLogger.analyticsLogHandler = analyticsLogHandler
 
-        config.getString("ga.endpoint") >> "http://localhost"
         config.getString("cloud.region") >> "US"
     }
 
     def "logger returns valid uri"() {
         when:
-        def result = analyticsLogger.getUri("http://localhost/", "/somepath")
-        result = result.replace("http://", "")
+        def result = analyticsLogger.getUri("https://localhost/", "/somepath")
+        result = result.replace("https://", "")
 
         then:
         ! result.contains("//")
@@ -63,17 +61,6 @@ class DefaultAnalyticsLoggerTest extends Specification {
         then:
         1 * userService.getUserByAuthToken(_) >> null
         result == null
-    }
-
-    def "port is removed from the host"() {
-        expect:
-        result == "hostname"
-
-        where:
-        result << [
-                analyticsLogger.getHost("hostname"),
-                analyticsLogger.getHost("hostname:8000")
-        ]
     }
 
     def "can parse userId from path"() {
@@ -162,7 +149,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
@@ -175,7 +162,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
@@ -189,7 +176,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def method = "POST"
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", method, "users/userId", status)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", method, "users/userId", status, null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -207,7 +194,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -221,7 +208,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         given:
         def userId = "userId"
         def username = "username"
-        def basicAuth = getBasicAuth(username, "Password1")
+        def basicAuth = createBasicAuth(username, "Password1")
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
@@ -235,7 +222,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
     def "token is removed from path"() {
         expect:
-        input.replace("tokenId", "XXXX") == analyticsLogger.getPathWithoutToken(input)
+        input.replace("tokenId", analyticsLogger.hashToken("tokenId")) == analyticsLogger.getPathWithoutToken(input)
 
         where:
         input << [
@@ -245,19 +232,19 @@ class DefaultAnalyticsLoggerTest extends Specification {
         ]
     }
 
-    def "remove path is called when logging"() {
+    def "remove path is called when logging and token is hashed"() {
         given:
         userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "tokens/tokenID", 200)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "localhost", "host", "userAgent", "POST", "tokens/tokenId", 200, "", "")
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
             def message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             def resource = message.getAt("resource")
             assert(resource != null)
-            assert(resource.getAt("uri") == "http://localhost/tokens/XXXX")
+            assert(resource.getAt("uri") == "https://localhost/tokens/" + analyticsLogger.hashToken("tokenId"))
         }
     }
 
@@ -266,7 +253,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         userService.getUserById(_) >> null
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "host", "userAgent", "POST", "users/userId", 200)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, "", "")
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -276,7 +263,32 @@ class DefaultAnalyticsLoggerTest extends Specification {
         }
     }
 
-    private String getBasicAuth(String username, String password) {
+    def "can get username from requestBody"() {
+        expect:
+        analyticsLogger.getUsernameFromRequestBody(requestBody, contentType) == 'myuser'
+
+        where:
+        requestBody | contentType
+        '{"user": {"username" : "myuser","email": "cmarin1-sub@example.com","enabled": true,"OS-KSADM:password":"Password1"}}' | 'application/json'
+        '{"auth": {"RAX-KSKEY:apiKeyCredentials": {"username":"myuser","apiKey": "key"}}}' | 'application/json'
+        '{"auth":{"passwordCredentials":{"UserName"  :  \t"myuser" , "password":"theUsersPassword"}}}' | 'application/json'
+        '<?xml version="1.0" encoding="UTF-8"?><user xmlns="http://docs.openstack.org/identity/api/v2.0" enabled="true" email="john.smith@example.org" username="myuser"/>' | 'application/xml'
+        '<?xml version="1.0" encoding="UTF-8"?><auth xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"xmlns="http://docs.openstack.org/identity/api/v2.0"><passwordCredentials username = "myuser" password="Password1"/></auth>' | 'application/xml'
+    }
+
+    def "hashToken method does token hash"() {
+        given:
+        def token = "token"
+
+        when:
+        def result1 = analyticsLogger.hashToken(token)
+        def result2 = analyticsLogger.hashToken(token)
+
+        then:
+        result1 == result2
+    }
+
+    private String createBasicAuth(String username, String password) {
         String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
         byte[] base = usernamePassword.getBytes();
         return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
