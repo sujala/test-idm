@@ -1439,9 +1439,11 @@
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>2.5.1</version>
                 <configuration>
-                    <excludes>
-                        <exclude>com/rackspace/docs/identity/policy/v1/*.class</exclude>
-                    </excludes>
+                    <instrumentation>
+                        <excludes>
+                            <exclude>com/rackspace/docs/identity/policy/v1/*.class</exclude>
+                        </excludes>
+                    </instrumentation>
                     <skip>${cobertura.skip.check}</skip>
                     <check>
                         <totalLineRate>90</totalLineRate>
