@@ -6,7 +6,7 @@
     <artifactId>idm</artifactId>
     <name>idm</name>
     <packaging>war</packaging>
-    <version>1.0.12.1</version>
+    <version>1.0.12.3</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1444,7 +1444,7 @@
                     </excludes>
                     <skip>${cobertura.skip.check}</skip>
                     <check>
-                        <totalLineRate>95</totalLineRate>
+                        <totalLineRate>90</totalLineRate>
                         <!--<totalBranchRate>95</totalBranchRate>-->
                     </check>
                     <formats>
