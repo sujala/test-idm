@@ -51,7 +51,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Autowired
     private AuthHeaderHelper authHeaderHelper;
     @Autowired
-    private ApplicationDao clientDao;
+    private ApplicationDao applicationDao;
     @Autowired
     private Configuration config;
     @Autowired
@@ -59,7 +59,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Autowired
     private AtomHopperClient atomHopperClient;
     @Autowired
-    private DefaultUserService userService;
+    private DefaultUserService defaultUserService;
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
 
@@ -406,7 +406,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             ((HasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
-        User user = userService.getUserByScopeAccess(scopeAccess);
+        User user = defaultUserService.getUserByScopeAccess(scopeAccess);
         if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
             logger.warn("Sending token feed to atom hopper.");
             atomHopperClient.asyncTokenPost(user, tokenString);
@@ -417,7 +417,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAllTokensForClient(String clientId) {
         logger.debug("Expiring all tokens for client {}", clientId);
-        final Application client = this.clientDao.getClientByClientId(clientId);
+        final Application client = this.applicationDao.getClientByClientId(clientId);
         if (client == null) {
             return;
         }
@@ -600,6 +600,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
                 this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
                 this.scopeAccessDao.deleteScopeAccessByDn(prsa.getUniqueId());
+                return scopeAccessToAdd;
             }
         }
         logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
@@ -831,7 +832,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         final List<ScopeAccess> scopeAccessList = this.getScopeAccessesForParentByClientId(user.getUniqueId(), clientId);
-        Application client = this.clientDao.getClientByClientId(clientId);
+        Application client = this.applicationDao.getClientByClientId(clientId);
 
         UserScopeAccess scopeAccess = null;
         int oldestIndex = 0;
@@ -898,7 +899,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.info("Granting permission {} to client {}", parentUniqueId,
                 permission.getPermissionId());
-        Application dClient = this.clientDao.getClientByClientId(permission
+        Application dClient = this.applicationDao.getClientByClientId(permission
                 .getClientId());
 
         if (dClient == null) {
@@ -958,7 +959,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Granting permission {} to user {}", user.getUsername(),
                 permission.getPermissionId());
 
-        Application dClient = this.clientDao.getClientByCustomerIdAndClientId(
+        Application dClient = this.applicationDao.getClientByCustomerIdAndClientId(
                 permission.getCustomerId(), permission.getClientId());
         if (dClient == null) {
             String errMsg = String.format("Client %s not found",
@@ -1163,7 +1164,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void setApplicationDao(ApplicationDao applicationDao) {
-        this.clientDao = applicationDao;
+        this.applicationDao = applicationDao;
     }
 
     @Override
@@ -1202,7 +1203,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Applications clientsObj = clientDao.getClientsByCustomerId(
+            final Applications clientsObj = applicationDao.getClientsByCustomerId(
                     customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
@@ -1289,7 +1290,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.atomHopperClient = atomHopperClient;
     }
 
-    public void setUserService(DefaultUserService userService) {
-        this.userService = userService;
+    public void setUserService(DefaultUserService defaultUserService) {
+        this.defaultUserService = defaultUserService;
     }
 }

@@ -2078,6 +2078,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == 204
     }
 
+    def "checkDomainFromAuthRequest returns domain"() {
+        given:
+        def domain = v1Factory.createDomain()
+        def list = [ domain ].asList()
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, null, list)
+
+        when:
+        def response = defaultCloud20Service.checkDomainFromAuthRequest(authRequest)
+
+        then:
+        response.description.equals(domain.getDescription())
+        response.id.equals(domain.getId())
+        response.name.equals(domain.getName())
+
+    }
+
+    def "getting identity role names retrieves identity role names from config"() {
+        when:
+        defaultCloud20Service.getIdentityRoleNames()
+
+        then:
+        1 * config.getString("cloudAuth.userRole")
+        1 * config.getString("cloudAuth.userAdminRole")
+        1 * config.getString("cloudAuth.adminRole")
+        1 * config.getString("cloudAuth.serviceAdminRole")
+    }
+
     def mockServices() {
         mockAuthenticationService(defaultCloud20Service)
         mockAuthorizationService(defaultCloud20Service)

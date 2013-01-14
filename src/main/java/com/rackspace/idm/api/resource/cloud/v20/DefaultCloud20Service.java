@@ -3420,7 +3420,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) ((JAXBElement)authenticationRequest.getAny().get(i)).getValue();
                         return domain;
                     }
-                }catch(Exception ex){
+                } catch (Exception ex){
 
                 }
             }
