@@ -6,7 +6,7 @@
     <artifactId>idm</artifactId>
     <name>idm</name>
     <packaging>war</packaging>
-    <version>1.0.12.1</version>
+    <version>1.0.12.3</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1439,12 +1439,14 @@
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>2.5.1</version>
                 <configuration>
-                    <excludes>
-                        <exclude>com/rackspace/docs/identity/policy/v1/*.class</exclude>
-                    </excludes>
+                    <instrumentation>
+                        <excludes>
+                            <exclude>com/rackspace/docs/identity/policy/v1/*.class</exclude>
+                        </excludes>
+                    </instrumentation>
                     <skip>${cobertura.skip.check}</skip>
                     <check>
-                        <totalLineRate>95</totalLineRate>
+                        <totalLineRate>90</totalLineRate>
                         <!--<totalBranchRate>95</totalBranchRate>-->
                     </check>
                     <formats>
