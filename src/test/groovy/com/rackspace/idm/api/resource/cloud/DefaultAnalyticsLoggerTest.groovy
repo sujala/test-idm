@@ -149,7 +149,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null, null, null)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
@@ -162,7 +162,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null, null, null)
 
         then:
         1 * userService.getUserById(_) >> mockedUser
@@ -176,7 +176,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def method = "POST"
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", method, "users/userId", status, null, null)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", method, "users/userId", status, null, null, null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -194,7 +194,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null)
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, null, null, null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -237,7 +237,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, "localhost", "host", "userAgent", "POST", "tokens/tokenId", 200, "", "")
+        analyticsLogger.log(new Date().getTime(), "authToken", null, "localhost", "host", "userAgent", "POST", "tokens/tokenId", 200, "", "", null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
@@ -253,13 +253,13 @@ class DefaultAnalyticsLoggerTest extends Specification {
         userService.getUserById(_) >> null
 
         when:
-        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, "", "")
+        analyticsLogger.log(new Date().getTime(), "authToken", null, null, "host", "userAgent", "POST", "users/userId", 200, "", "", null, null)
 
         then:
         analyticsLogHandler.log(_) >> { String json ->
             DefaultAnalyticsLogger.Message message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             assert message != null
-            assert message.user == null
+            assert message.user.username == null
         }
     }
 
@@ -286,6 +286,18 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
         then:
         result1 == result2
+    }
+
+    def "can get the token from responseBody"() {
+        expect:
+        def tokenParam = analyticsLogger.getTokenFromResponseBody(responseBody, contentType)
+        tokenParam.token == "tokenId"
+        tokenParam.tokenExp == 1334340900000
+
+        where:
+        responseBody | contentType
+        '{ "access": { "token": { "expires": "2012-04-13T13:15:00.000-05:00", "id": "tokenId" }, "user": { "RAX-AUTH:defaultRegion": "DFW", "id": "161418", "name": "demoauthor", "roles": [ { "description": "User Admin Role.", "id": "3", "name": "identity:user-    admin" } ] } } }' | 'application/json'
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?> <access xmlns:atom="http://www.w3.org/2005/Atom"> <token id="tokenId" expires="2012-04-13T13:15:00.000-05:00"/> <user xmlns:rax-auth="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" id=    "161418" name="demoauthor" rax-auth:defaultRegion="DFW"> <roles> <role id="3" name="identity:user-admin" description="User Admin Role."/> </roles> </user> </access>' | 'application/xml'
     }
 
     private String createBasicAuth(String username, String password) {

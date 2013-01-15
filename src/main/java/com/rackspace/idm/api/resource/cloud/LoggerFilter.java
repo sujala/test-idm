@@ -41,16 +41,33 @@ public class LoggerFilter implements Filter {
         String basicAuth = ((HttpServletRequestWrapper) request).getHeader("Authorization");
         InputStream stream = request.getInputStream();
         String requestBody = IOUtils.toString(stream);
-        String contentType = ((HttpServletRequestWrapper) request).getHeader("Content-Type");
+        String requestType = ((HttpServletRequestWrapper) request).getHeader("Content-Type");
         Long startTime = new Date().getTime();
 
         StatusExposingServletResponse responseWrapper = new StatusExposingServletResponse((HttpServletResponse)response);
 
         chain.doFilter(request, responseWrapper);
         int status = responseWrapper.getStatus();
+        String responseBody = responseWrapper.getBody();
+        String responseType = ((HttpServletRequestWrapper) request).getHeader("Accept");
 
         // TODO: make async
-        analyticsLogger.log(startTime, authToken, basicAuth, host, remoteHost, userAgent, method, path, status, requestBody, contentType);
+        analyticsLogger.log
+                (
+                        startTime,
+                        authToken,
+                        basicAuth,
+                        host,
+                        remoteHost,
+                        userAgent,
+                        method,
+                        path,
+                        status,
+                        requestBody,
+                        requestType,
+                        responseBody,
+                        responseType
+                );
     }
 
     @Override
