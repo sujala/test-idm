@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.service.UserService;
 import com.sun.jersey.core.util.Base64;
-import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 import lombok.Data;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
@@ -28,7 +27,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -124,22 +122,40 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         TokenParam tokenParam = new TokenParam();
         if (responseBody != null && responseType != null) {
             if (responseType.equalsIgnoreCase("application/json")) {
-                getTokenFromJsonBody(responseBody, tokenParam);
+                getTokenFromCloudJsonBody(responseBody, tokenParam);
+                if (tokenParam.getToken() == null) {
+                    getTokenFromCloudJsonBodyFoundation(responseBody, tokenParam);
+                }
             } else if (responseType.equalsIgnoreCase("application/xml")) {
-                getTokenFromXmlBody(responseBody, tokenParam);
+                getTokenFromCloudXmlBody(responseBody, tokenParam);
+                if (tokenParam.getToken() == null) {
+                    getTokenFromCloudXmlBodyFoundation(responseBody, tokenParam);
+                }
             }
         }
         return tokenParam;
     }
 
-    private void getTokenFromJsonBody(String responseBody, TokenParam tokenParam) {
-        JSONParser parser = new JSONParser();
+    private void getTokenFromCloudJsonBody(String responseBody, TokenParam tokenParam) {
+        String rootElement = JSONConstants.ACCESS;
+        String tokenElement = JSONConstants.TOKEN;
+        getTokenFromJson(responseBody, tokenParam, rootElement, tokenElement);
+    }
+
+    private void getTokenFromCloudJsonBodyFoundation(String responseBody, TokenParam tokenParam) {
+        String rootElement = "auth";
+        String tokenElement = "access_token";
+        getTokenFromJson(responseBody, tokenParam, rootElement, tokenElement);
+    }
+
+    private void getTokenFromJson(String responseBody, TokenParam tokenParam, String rootElement, String tokenElement) {
         try {
+            JSONParser parser = new JSONParser();
             JSONObject jsonObject = (JSONObject) parser.parse(responseBody);
-            if (jsonObject.containsKey(JSONConstants.ACCESS)) {
-                JSONObject access = (JSONObject) jsonObject.get(JSONConstants.ACCESS);
-                if (access.containsKey(JSONConstants.TOKEN)) {
-                    JSONObject token = (JSONObject) access.get(JSONConstants.TOKEN);
+            if (jsonObject.containsKey(rootElement)) {
+                JSONObject access = (JSONObject) jsonObject.get(rootElement);
+                if (access.containsKey(tokenElement)) {
+                    JSONObject token = (JSONObject) access.get(tokenElement);
                     if (token.containsKey(JSONConstants.ID)) {
                         tokenParam.setToken((String)token.get(JSONConstants.ID));
                     }
@@ -153,14 +169,25 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         }
     }
 
-    private void getTokenFromXmlBody(String responseBody, TokenParam tokenParam) {
+    private void getTokenFromCloudXmlBody(String responseBody, TokenParam tokenParam) {
+        String tokenElement = JSONConstants.TOKEN;
+        getTokenFromXml(responseBody, tokenParam, tokenElement);
+    }
+
+    private void getTokenFromCloudXmlBodyFoundation(String responseBody, TokenParam tokenParam) {
+        String tokenElement = "ns3:access_token";
+        getTokenFromXml(responseBody, tokenParam, tokenElement);
+    }
+
+    private void getTokenFromXml(String responseBody, TokenParam tokenParam, String tokenElement) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputSource is = new InputSource(new StringReader(responseBody));
             Document document = builder.parse(is);
 
-            NodeList nodeList = document.getElementsByTagName(JSONConstants.TOKEN);
+            NodeList nodeList = document.getElementsByTagName(tokenElement);
             if (nodeList.getLength() > 0) {
                 Node node = nodeList.item(0);
                 Node idNode = node.getAttributes().getNamedItem(JSONConstants.ID);
