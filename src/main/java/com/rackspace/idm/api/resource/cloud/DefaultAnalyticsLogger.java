@@ -45,6 +45,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     @Autowired
     AnalyticsLogHandler analyticsLogHandler;
 
+    private static final String TOKEN = "token";
     private static final String TOKENS = "tokens";
     private static final String USERS = "users";
     private static final String OBFUSCATED_TOKEN = "XXXX";
@@ -297,7 +298,12 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     }
 
     private String parseUserTokenFromPath(String path) {
-        return parseValueFromPath(TOKENS, path);
+        String token = parseValueFromPath(TOKENS, path);
+        if (token != null) {
+            return token;
+        } else {
+            return parseValueFromPath(TOKEN, path);
+        }
     }
 
     private String parseUserIdFromPath(String path) {

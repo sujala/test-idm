@@ -93,6 +93,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
         where:
         result << [
+                analyticsLogger.parseUserTokenFromPath("token/tokenId"),
                 analyticsLogger.parseUserTokenFromPath("tokens/tokenId"),
                 analyticsLogger.parseUserTokenFromPath("tokens/tokenId/endpoints"),
         ]
@@ -226,6 +227,8 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
         where:
         input << [
+                "token/tokenId/endpoints",
+                "token/tokenId",
                 "tokens/tokenId/endpoints",
                 "tokens/tokenId",
                 "tokens",
