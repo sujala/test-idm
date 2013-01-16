@@ -1276,12 +1276,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
             scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            return scopeAccess;
+            return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
-            scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccess);
-            return scopeAccess;
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
+            return scopeAccessToAdd;
         }
         return scopeAccess;
     }

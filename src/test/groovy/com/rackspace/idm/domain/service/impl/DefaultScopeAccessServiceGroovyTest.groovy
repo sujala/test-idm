@@ -515,6 +515,37 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     }
 
+    def "updateExpiredRackerScopeAccess adds new scopeAccess, deletes existing expired scopeAccess, and returns new scopeAccess"() {
+        given:
+        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", true, false)
+
+        when:
+        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
+
+        then:
+        newScopeAccess != oldScopeAccess
+        newScopeAccess instanceof RackerScopeAccess
+        ! newScopeAccess.isAccessTokenExpired(new DateTime())
+
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+    }
+
+    def "updateExpiredRackerScopeAccess adds new scopeAccess, keeps existing, and returns new when within refresh window"() {
+        given:
+        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", false, true)
+
+        when:
+        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
+
+        then:
+        newScopeAccess != oldScopeAccess
+        newScopeAccess instanceof RackerScopeAccess
+        ! newScopeAccess.isAccessTokenExpired(new DateTime())
+
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+    }
+
     def mockDaos() {
         mockScopeAccessDao(service)
         mockUserDao(service)
@@ -533,5 +564,8 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         mockConfiguration(service)
         mockAtomHopperClient(service)
         mockAuthHeaderHelper(service)
+
+        config.getInt("token.cloudAuthExpirationSeconds") >> 21600 // 6 hours
+        config.getInt("token.expirationSeconds") >> 43200 //12 hours
     }
 }
