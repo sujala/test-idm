@@ -292,7 +292,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         expect:
         def tokenParam = analyticsLogger.getTokenFromResponseBody(responseBody, contentType)
         tokenParam.token == "tokenId"
-        tokenParam.tokenExp == 1334340900000
+        tokenParam.tokenExp == "2012-04-13T13:15:00.000-05:00"
 
         where:
         responseBody | contentType

@@ -161,7 +161,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
                     }
                     if (token.containsKey(JSONConstants.EXPIRES)){
                         String dateString = (String)token.get(JSONConstants.EXPIRES);
-                        tokenParam.setTokenExp(new DateTime(dateString).toDate().getTime());
+                        tokenParam.setTokenExp(dateString);
                     }
                 }
             }
@@ -196,7 +196,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
                 }
                 Node expNode = node.getAttributes().getNamedItem(JSONConstants.EXPIRES);
                 if (expNode != null) {
-                    tokenParam.setTokenExp(new DateTime(expNode.getNodeValue()).toDate().getTime());
+                    tokenParam.setTokenExp(expNode.getNodeValue());
                 }
             }
 
@@ -348,7 +348,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         private String username;
         private String domain;
         private String token;
-        private long tokenExp;
+        private String tokenExp;
     }
 
     @Data
@@ -361,6 +361,6 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     @Data
     private class TokenParam {
         private String token;
-        private long tokenExp;
+        private String tokenExp;
     }
 }
