@@ -288,6 +288,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def result2 = analyticsLogger.hashToken(token)
 
         then:
+        result1 != token
         result1 == result2
     }
 
