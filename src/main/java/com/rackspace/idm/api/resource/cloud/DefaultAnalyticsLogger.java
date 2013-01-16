@@ -48,6 +48,8 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     private static final String TOKENS = "tokens";
     private static final String USERS = "users";
     private static final String OBFUSCATED_TOKEN = "XXXX";
+    private static final String CLOUD_AUTH = "CLOUD_AUTH";
+    private static final String IDENTITY = "IDENTITY";
 
     public void log(Long startTime, String authToken, String basicAuth, String host, String remoteHost, String userAgent, String method, String path, int status, String requestBody, String requestType, String responseBody, String responseType) {
         long duration = new Date().getTime() - startTime;
@@ -56,17 +58,46 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         message.setTimestamp(String.valueOf(startTime));
         message.setDuration(String.valueOf(duration));
 
-        Caller caller = new Caller();
-        caller.setIp(remoteHost);
-        if (authToken != null) {
-            caller.setToken(hashToken(authToken));
-            caller.setId(getUserIdFromAuthToken(authToken));
-        } else if (basicAuth != null) {
-            caller.setId(getUserIdFromBasicAuth(basicAuth));
-        }
-        caller.setAgent(userAgent);
-        message.setCaller(caller);
+        message.setCaller(getCaller(authToken, basicAuth, remoteHost, userAgent));
+        message.setResource(getResource(host, method, path, status));
 
+        com.rackspace.idm.domain.entity.User userEntity = getUser(path, requestBody, requestType);
+
+        User user = new User();
+
+        if (userEntity != null) {
+            user.setId(userEntity.getId());
+            user.setUsername(userEntity.getUsername());
+            user.setDomain(userEntity.getDomainId());
+            message.setUser(user);
+        }
+
+        if (isAuthenticateCall(path, method) || isValidateCall(path, method)) {
+            TokenParam tokenParam = getTokenFromResponseBody(responseBody, responseType);
+            user.setToken(hashToken(tokenParam.getToken()));
+            user.setTokenExp(tokenParam.getTokenExp());
+            user.setTokenSrc(getTokenSource(tokenParam.getToken()));
+            message.setUser(user);
+        }
+
+        Gson gson = new GsonBuilder().create();
+        String messageString = gson.toJson(message);
+
+        analyticsLogHandler.log(messageString);
+    }
+
+    private String getTokenSource(String token) {
+        if (token != null) {
+            if (token.contains("-")) {
+                return CLOUD_AUTH;
+            } else {
+                return IDENTITY;
+            }
+        }
+        return null;
+    }
+
+    private com.rackspace.idm.domain.entity.User getUser(String path, String requestBody, String requestType) {
         com.rackspace.idm.domain.entity.User userEntity = null;
 
         String userId = getUserIdFromPath(path);
@@ -80,33 +111,29 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
                 userEntity = userService.getUser(username);
             }
         }
+        return userEntity;
+    }
 
-        User user = new User();
-
-        if (userEntity != null) {
-            user.setId(userEntity.getId());
-            user.setUsername(userEntity.getUsername());
-            user.setDomain(userEntity.getDomainId());
-        }
-
+    private Resource getResource(String host, String method, String path, int status) {
         Resource resource = new Resource();
         resource.setUri(getUri(host, getPathWithoutToken(path)));
         resource.setMethod(method);
         resource.setResponseStatus(status);
-        message.setResource(resource);
+        return resource;
+    }
 
-        if (isAuthenticateCall(path, method) || isValidateCall(path, method)) {
-            TokenParam tokenParam = getTokenFromResponseBody(responseBody, responseType);
-            user.setToken(hashToken(tokenParam.getToken()));
-            user.setTokenExp(tokenParam.getTokenExp());
+    private Caller getCaller(String authToken, String basicAuth, String remoteHost, String userAgent) {
+        Caller caller = new Caller();
+        caller.setIp(remoteHost);
+        if (authToken != null) {
+            caller.setToken(hashToken(authToken));
+            caller.setId(getUserIdFromAuthToken(authToken));
+            caller.setTokenSrc(getTokenSource(authToken));
+        } else if (basicAuth != null) {
+            caller.setId(getUserIdFromBasicAuth(basicAuth));
         }
-
-        message.setUser(user);
-
-        Gson gson = new GsonBuilder().create();
-        String messageString = gson.toJson(message);
-
-        analyticsLogHandler.log(messageString);
+        caller.setAgent(userAgent);
+        return caller;
     }
 
     private boolean isAuthenticateCall(String path, String method) {
@@ -340,15 +367,17 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         private String ip;
         private String agent;
         private String token;
+        private String tokenSrc;
     }
 
     @Data
-    private class User {
+    public class User {
         private String id;
         private String username;
         private String domain;
         private String token;
         private String tokenExp;
+        private String tokenSrc;
     }
 
     @Data
