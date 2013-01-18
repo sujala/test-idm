@@ -39,7 +39,6 @@ import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApiDocService
@@ -78,12 +77,12 @@ import com.rackspace.idm.domain.service.impl.DefaultSecretQAService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.domain.service.impl.DefaultTokenService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
+import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -192,6 +191,14 @@ class RootServiceTest extends Specification {
     @Shared def entityFactory = new EntityFactory()
     @Shared def v1Factory = new V1Factory()
     @Shared def v2Factory = new V2Factory()
+
+    @Shared def defaultExpirationHours = 12
+    @Shared def defaultRefreshHours = 6
+    @Shared def defaultImpersonationHours = 1
+
+    @Shared def defaultExpirationSeconds = 3600 * defaultExpirationHours
+    @Shared def defaultRefreshSeconds = 3600 * defaultRefreshHours
+    @Shared def defaultImpersonationExpirationSeconds = 3600 * defaultImpersonationHours
 
     /*
         Mock Converters
@@ -677,118 +684,103 @@ class RootServiceTest extends Specification {
     }
 
     def createClientScopeAccess() {
-        return createClientScopeAccess("clientId", "tokenString", false, false)
+        return createClientScopeAccess("clientId", "tokenString", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }
 
-    def createClientScopeAccess(String clientId, String tokenString, boolean isExpired, boolean refresh) {
-        def scopeAccess = Mock(ClientScopeAccess)
+    def createClientScopeAccess(String clientId, String tokenString, Date expiration) {
         clientId = clientId ? clientId : "clientId"
         tokenString = tokenString ? tokenString : "tokenString"
         def dn = "accessToken=$tokenString,cn=TOKENS,clientId=$clientId"
-        def entry = createEntry(dn)
 
-        scopeAccess.getAccessTokenString() >> tokenString
-        scopeAccess.getClientId() >> clientId
-        scopeAccess.getUniqueId() >> dn
-        scopeAccess.getLDAPEntry() >> entry
-
-        return scopeAccess
+        new ClientScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.clientId = clientId
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
 
-    def createImpersonatedScopeAccess(String username, String impUsername, String tokenString, String impToken, boolean isExpired, boolean refresh) {
-        def scopeAccess = Mock(ImpersonatedScopeAccess)
+    def createImpersonatedScopeAccess() {
+        return createImpersonatedScopeAccess("username", "impUsername", "tokenString", "impToken", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
+    }
+
+    def createImpersonatedScopeAccess(String username, String impUsername, String tokenString, String impToken, Date expiration) {
         username = username ? username : "username"
         impUsername = impUsername ? impUsername : "impersonatingUsername"
         tokenString = tokenString ? tokenString : "tokenString"
         impToken = impToken ? impToken : "impersonatedTokenString"
         def dn = "accessToken=$tokenString,cn=TOKENS,userRsId=$username,ou=users"
-        def entry = createEntry(dn)
 
-        scopeAccess.getAccessTokenString() >> tokenString
-        scopeAccess.getUsername() >> username
-        scopeAccess.getImpersonatingUsername() >> impUsername
-        scopeAccess.getImpersonatingToken() >> impToken
-        scopeAccess.getUniqueId() >> dn
-        scopeAccess.getLDAPEntry() >> entry
-        scopeAccess.isAccessTokenExpired(_) >> isExpired
-        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
-
-        return scopeAccess
+        new ImpersonatedScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.username = username
+            it.impersonatingUsername = impUsername
+            it.impersonatingToken = impToken
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
     def createPasswordResetScopeAccess() {
-        return createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", false, false)
+        return createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }
 
-    def createPasswordResetScopeAccess(String tokenString, String clientId, String userRsId, boolean isExpired, boolean refresh) {
-        def scopeAccess = Mock(PasswordResetScopeAccess)
+    def createPasswordResetScopeAccess(String tokenString, String clientId, String userRsId, Date expiration) {
         clientId = clientId ? clientId : "clientId"
         tokenString = tokenString ? tokenString : "tokenString"
         userRsId = userRsId ? userRsId : "userRsId"
-
         def dn = "accessToken=$tokenString,cn=TOKENS,userRsId=$userRsId"
-        def entry = createEntry(dn)
 
-        scopeAccess.getUniqueId() >> dn
-        scopeAccess.getUserRsId() >> userRsId
-        scopeAccess.getClientId() >> clientId
-        scopeAccess.getAccessTokenString() >> tokenString
-        scopeAccess.getLDAPEntry() >> entry
-        scopeAccess.isAccessTokenExpired(_) >> isExpired
-        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
-
-        return scopeAccess
+        new PasswordResetScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.userRsId = userRsId
+            it.clientId = clientId
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
 
     def createRackerScopeAcccss() {
-        return createRackerScopeAccess("tokenString", "rackerId", false, false)
+        return createRackerScopeAccess("tokenString", "rackerId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }
 
-    def createRackerScopeAccess(String tokenString, String rackerId, boolean isExpired, boolean refresh) {
-        def scopeAccess = Mock(RackerScopeAccess)
+    def createRackerScopeAccess(String tokenString, String rackerId, Date expiration) {
         tokenString = tokenString ? tokenString : "tokenString"
         rackerId = rackerId ? rackerId : "rackerId"
         def dn = "accessToken=$tokenString,cn=TOKENS,rsId=$rackerId,ou=rackers"
-        def entry = createEntry(dn)
 
-        scopeAccess.getAccessTokenString() >> tokenString
-        scopeAccess.getRackerId() >> rackerId
-        scopeAccess.getUniqueId() >> dn
-        scopeAccess.getLDAPEntry() >> entry
-        scopeAccess.isAccessTokenExpired(_) >> isExpired
-        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
-        return scopeAccess
+        new RackerScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.rackerId = rackerId
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
 
     def createUserScopeAccess() {
-        return createUserScopeAccess("tokenString", "userRsId", "clientId", false, false)
+        return createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }
 
-    def createUserScopeAccess(String tokenString, String userRsId, String clientId, boolean isExpired, boolean refresh) {
-        def scopeAccess = Mock(UserScopeAccess)
+    def createUserScopeAccess(String tokenString, String userRsId, String clientId, Date expiration) {
         tokenString = tokenString ? tokenString : "tokenString"
         userRsId = userRsId ? userRsId : "userRsId"
         clientId = clientId ? clientId : "clientId"
         def dn = "acessToken=$tokenString,cn=TOKENS,rsId=$userRsId,ou=users"
-        def entry = createEntry(dn)
 
-        scopeAccess.getAccessTokenString() >> tokenString
-        scopeAccess.getUserRsId() >> userRsId
-        scopeAccess.getClientId() >> clientId
-        scopeAccess.getLDAPEntry() >> entry
-        scopeAccess.getUniqueId() >> dn
-        scopeAccess.isAccessTokenExpired(_) >> isExpired
-        scopeAccess.isAccessTokenWithinRefreshWindow(_) >> refresh
-
-        return scopeAccess
+        new UserScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.userRsId = userRsId
+            it.clientId = clientId
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
 
-    def createEntry(String dn) {
-        dn = dn ? dn : "accessToken=GENERIC,cn=TOKENS,dn=STRING"
-        def mock = Mock(ReadOnlyEntry)
-        mock.getDN() >> dn
-        mock.getAttributeValue(_) >> { arg ->
-            return arg[0]
-        }
-        return mock
+    def createEntryForScopeAccess(String dn) {
+        return new ReadOnlyEntry(dn)
     }
 }

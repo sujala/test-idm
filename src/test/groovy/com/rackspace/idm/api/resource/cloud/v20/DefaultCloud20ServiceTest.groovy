@@ -41,6 +41,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def roleId = "roleId"
     @Shared def userId = "userId"
 
+    @Shared def expiredDate
+    @Shared def futureDate
+    @Shared def refreshDate
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
@@ -1578,7 +1582,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         v20user.username = "impersonatingUsername"
         def impRequest = v1Factory.createImpersonationRequest(v20user)
         def entityUser = entityFactory.createUser("impersonatedUser", null, null, null, null, null, null, false)
-        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", true, false)
+        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new Date())
 
         scopeAccessMock = Mock()
         scopeAccessMock.getLDAPEntry() >> createLdapEntry()
