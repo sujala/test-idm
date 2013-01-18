@@ -119,6 +119,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
+    private static final String NOT_AUTHORIZED_MSG = "Not Authorized";
+
     private org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
     private org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory objectFactoryOSADMN = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
@@ -241,8 +243,17 @@ public class DelegateCloud20Service implements Cloud20Service {
             throw new BadRequestException("Token cannot be empty.");
         }
         validator20.validateToken(tokenId);
-        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         ScopeAccess callerScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
+        if (callerScopeAccess != null && callerScopeAccess.isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException(NOT_AUTHORIZED_MSG);
+        }
+
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        if(scopeAccess != null && scopeAccess.isAccessTokenExpired(new DateTime()) && callerScopeAccess != null && !callerScopeAccess.isAccessTokenExpired(new DateTime())){
+            throw new NotFoundException("Token not found.");
+        }
+
         if (isCloudAuthRoutingEnabled() && (scopeAccess == null || callerScopeAccess == null)) {
             String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -254,6 +265,15 @@ public class DelegateCloud20Service implements Cloud20Service {
             if (callerScopeAccess != null && status == HttpServletResponse.SC_UNAUTHORIZED) {
                 throw new NotFoundException("Token not found.");
             }
+            if (scopeAccess != null) {
+                if (status == HttpServletResponse.SC_OK && scopeAccess.isAccessTokenExpired(new DateTime())) {
+                    throw new NotFoundException("Token not found.");
+                }
+                if (status == HttpServletResponse.SC_NOT_FOUND && !scopeAccess.isAccessTokenExpired(new DateTime())) {
+                    //TODO: Validate calling token in CA; verify identity role; return 200
+                }
+            }
+
             return response;
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
