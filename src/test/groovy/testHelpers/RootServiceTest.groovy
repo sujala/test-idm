@@ -29,6 +29,8 @@ import com.rackspace.idm.api.resource.cloud.v20.DelegateCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.dao.CustomerDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantDao
@@ -177,6 +179,8 @@ class RootServiceTest extends Specification {
     @Shared TenantDao tenantDao
     @Shared EndpointDao endpointDao
     @Shared TenantRoleDao tenantRoleDao
+    @Shared CustomerDao customerDao
+    @Shared ApplicationRoleDao applicationRoleDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -579,6 +583,16 @@ class RootServiceTest extends Specification {
     def mockTenantRoleDao(rootService) {
         tenantRoleDao = Mock()
         rootService.tenantRoleDao = tenantRoleDao
+    }
+
+    def mockCustomerDao(rootService) {
+        customerDao = Mock()
+        rootService.customerDao = customerDao
+    }
+
+    def mockApplicationRoleDao(rootService) {
+        applicationRoleDao = Mock()
+        rootService.applicationRoleDao = applicationRoleDao
     }
 
     /*

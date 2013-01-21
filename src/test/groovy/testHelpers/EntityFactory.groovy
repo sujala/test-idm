@@ -179,6 +179,33 @@ class EntityFactory {
         }
     }
 
+    def createDefinedPermission() {
+        return createDefinedPermission("title", "type", "value", true)
+    }
+
+    def createDefinedPermission(String title, String type, String value, boolean enabled) {
+        new DefinedPermission().with {
+            it.title = title
+            it.permissionType = type
+            it.enabled = enabled
+            it.value = value
+            return it
+        }
+    }
+
+    def createPermission() {
+        return createPermission("clientId", "customerId", "permissionId")
+    }
+
+    def createPermission(String clientId, String customerId, String permissionId) {
+        new Permission().with {
+            it.clientId = clientId
+            it.permissionId = permissionId
+            it.customerId = customerId
+            return it
+        }
+    }
+
     def pattern(String name, String regex, String errMsg, String description){
         new Pattern().with {
             it.name = name
