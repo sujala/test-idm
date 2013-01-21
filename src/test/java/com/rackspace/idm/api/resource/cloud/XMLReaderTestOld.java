@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  * Time: 3:44 PM
  * To change this template use File | Settings | File Templates.
  */
-public class XMLReaderTest {
+public class XMLReaderTestOld {
 
     XMLReader xmlReader;
     XMLReader spy;
@@ -83,41 +83,6 @@ public class XMLReaderTest {
 
         spy.readFrom(null, User.class, null, null, null, entityStream);
         verify(jaxbContext).createUnmarshaller();
-    }
-
-    @Test
-    public void readFrom_unmarshalls() throws Exception {
-        JAXBContext jaxbContext = mock(JAXBContext.class);
-        Unmarshaller unmarshaller = mock(Unmarshaller.class);
-        String xml = "<user xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
-                "      enabled=\"true\" email=\"john.smith@example.org\"\n" +
-                "      username=\"jqsmith\" id=\"123456\"/>";
-        InputStream entityStream = new ASN1InputStream(xml.getBytes());
-
-        doReturn(unmarshaller).when(jaxbContext).createUnmarshaller();
-        doReturn(jaxbContext).when(spy).getContext();
-        doReturn(new JAXBElement<User>(QName.valueOf("foo"),User.class,new User())).when(unmarshaller).unmarshal(any(Source.class),eq(User.class));
-
-        spy.readFrom(null, User.class, null, null, null, entityStream);
-        verify(jaxbContext).createUnmarshaller();
-    }
-
-    @Test
-    public void readFrom_getsValueFromJAXBElement() throws Exception {
-        JAXBContext jaxbContext = mock(JAXBContext.class);
-        Unmarshaller unmarshaller = mock(Unmarshaller.class);
-        String xml = "<user xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
-                "      enabled=\"true\" email=\"john.smith@example.org\"\n" +
-                "      username=\"jqsmith\" id=\"123456\"/>";
-        InputStream entityStream = new ASN1InputStream(xml.getBytes());
-        JAXBElement<User> jaxbElement = mock(JAXBElement.class);
-
-        doReturn(unmarshaller).when(jaxbContext).createUnmarshaller();
-        doReturn(jaxbContext).when(spy).getContext();
-        doReturn(jaxbElement).when(unmarshaller).unmarshal(any(Source.class), eq(User.class));
-
-        spy.readFrom(null, User.class, null, null, null, entityStream);
-        verify(jaxbElement).getValue();
     }
 
     @Test

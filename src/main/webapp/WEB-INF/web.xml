@@ -47,15 +47,6 @@
     <!--Filter use to do a url Decode-->
 
     <filter>
-        <filter-name>securityFilter</filter-name>
-        <filter-class>com.rackspace.idm.api.filter.SecurityFilter</filter-class>
-        <init-param>
-            <param-name></param-name>
-            <param-value></param-value>
-        </init-param>
-    </filter>
-
-    <filter>
         <filter-name>UrlFilter</filter-name>
         <filter-class>com.rackspace.idm.api.resource.cloud.UrlFilter</filter-class>
         <init-param>
@@ -121,11 +112,6 @@
             </param-value>
         </init-param>
     </filter>
-
-    <filter-mapping>
-        <filter-name>securityFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
 
     <filter-mapping>
         <filter-name>UrlFilter</filter-name>

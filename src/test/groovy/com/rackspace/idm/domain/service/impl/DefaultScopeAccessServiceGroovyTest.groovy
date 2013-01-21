@@ -45,16 +45,27 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
     @Shared def dn = "accessToken=123456,cn=TOKENS,rsId=12345,ou=users,o=rackspace"
     @Shared def searchDn = "rsId=12345,ou=users,o=rackspace"
 
-    @Shared def refreshWindow = 6
+    @Shared def expiredDate
+    @Shared def refreshDate
+    @Shared def futureDate
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace("-", "")
+
+        expiredDate = new DateTime().minusHours(1).toDate()
+        refreshDate = new DateTime().plusHours(defaultRefreshHours - 1).toDate()
+        futureDate = new DateTime().plusHours(defaultRefreshHours + 1).toDate()
     }
 
     def setup() {
         mockDaos()
         mockMisc()
         mockServices()
+
+        config.getInt("token.cloudAuthExpirationSeconds") >>  defaultExpirationSeconds
+        config.getInt("token.expirationSeconds") >> defaultExpirationSeconds
+        config.getInt("token.impersonatedExpirationSeconds") >> defaultImpersonationExpirationSeconds
+        config.getInt("token.refreshWindowHours") >> defaultRefreshHours
     }
 
     def "if user is null getOrCreatePasswordResetScopeAccessForUser throws exception"() {
@@ -78,7 +89,7 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "when getOrCreatePasswordResetScopeAccessForUser and token is expired; old is deleted, and new is added and returned"() {
         given:
-        def prsa = createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", true, false)
+        def prsa = createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", expiredDate)
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> prsa
 
@@ -180,9 +191,9 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "update expired user scope access adds new scope access entity to the directory"() {
         given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", false, false)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", true, false)
-        def refresh_sa = createUserScopeAccess("refreshTokenString", "userRsId", "clientId", false, true)
+        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
+        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
+        def refresh_sa = createUserScopeAccess("refreshTokenString", "userRsId", "clientId", refreshDate)
 
         when:
         service.updateExpiredUserScopeAccess(sa, true)
@@ -196,8 +207,8 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "update (different parameters) deletes expired"() {
         given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", false, false)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", true, false)
+        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
+        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >>> [
                 [ expired_sa ].asList()
@@ -228,15 +239,10 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
         given:
-        def scopeAccessOne = createUserScopeAccess("expiredOne", "userRsId", "clientId", true, false)
-        def scopeAccessTwo = createUserScopeAccess("refreshOne", "userRsId", "clientId", false, true)
-        def scopeAccessThree = createUserScopeAccess("expiredPne", "userRsId", "clientId", true, false)
-        def scopeAccessFour = createUserScopeAccess("goodOne", "userRsId", "clientId", false, false)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(4).toDate()
-        scopeAccessThree.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        scopeAccessFour.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
+        def scopeAccessOne = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
+        def scopeAccessTwo = createUserScopeAccess("refreshOne", "userRsId", "clientId", refreshDate)
+        def scopeAccessThree = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
+        def scopeAccessFour = createUserScopeAccess("goodOne", "userRsId", "clientId", futureDate)
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
@@ -270,13 +276,9 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "getValidRackerScopeAccessForClientId adds new and deletes old as appropriate"() {
         given:
-        def rackerScopeAccessOne = createRackerScopeAccess("expired", "rackerId", true, false)
-        def rackerScopeAccessTwo = createRackerScopeAccess("refresh", "rackerId", false, true)
-        def rackerScopeAccessThree = createRackerScopeAccess("good", "rackerId", false, false)
-
-        rackerScopeAccessOne.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        rackerScopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(4).toDate()
-        rackerScopeAccessThree.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
+        def rackerScopeAccessOne = createRackerScopeAccess("expired", "rackerId", expiredDate)
+        def rackerScopeAccessTwo = createRackerScopeAccess("refresh", "rackerId", refreshDate)
+        def rackerScopeAccessThree = createRackerScopeAccess("good", "rackerId", futureDate)
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 
@@ -338,12 +340,12 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "addImpersonatedScopeAccess deletes expired scopeAccess and creates new scopeAccess"() {
         given:
-        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", true, false)
-        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user2", "impUser2", "tokenString2", "impToken2", true, false)
-        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user3", "impUser3", "tokenString3", "impToken3", true, false)
-        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser4", "tokenString4", "impToken4", true, false)
-        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser5", "tokenString5", "impToken5", false, true)
-        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", false, false)
+        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", expiredDate)
+        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user2", "impUser2", "tokenString2", "impToken2", expiredDate)
+        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user3", "impUser3", "tokenString3", "impToken3", expiredDate)
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser4", "tokenString4", "impToken4", expiredDate)
+        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser5", "tokenString5", "impToken5", refreshDate)
+        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", futureDate)
 
         def request = new ImpersonationRequest().with {
             it.user = v2Factory.createUser("userId", "userToBeImpersonated", "displayName", "email@email.com", true)
@@ -384,8 +386,8 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         userDao.getUserByUsername(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
+        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
 
         scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
@@ -406,14 +408,10 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         userDao.getUserByUsername(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        scopeAccessTwo.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
+        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
         scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
-
 
         when:
         service.expireAllTokensForUser("someName")
@@ -429,8 +427,8 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         userDao.getUserById(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
+        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
 
         scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
@@ -451,11 +449,8 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         userDao.getUserById(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        scopeAccessTwo.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
+        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
         scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
@@ -473,7 +468,7 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         defaultUserService.getUserByScopeAccess(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", futureDate)
 
         scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
 
@@ -493,9 +488,7 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         user.id = "1"
         defaultUserService.getUserByScopeAccess(_) >> user
 
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", false, true)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
         scopeAccessDao.getScopeAccessByAccessToken(_) >> scopeAccessOne
 
@@ -517,7 +510,7 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "updateExpiredRackerScopeAccess adds new scopeAccess, deletes existing expired scopeAccess, and returns new scopeAccess"() {
         given:
-        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", true, false)
+        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", expiredDate)
 
         when:
         def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
@@ -533,7 +526,7 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
 
     def "updateExpiredRackerScopeAccess adds new scopeAccess, keeps existing, and returns new when within refresh window"() {
         given:
-        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", false, true)
+        def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", refreshDate)
 
         when:
         def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
@@ -564,8 +557,5 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         mockConfiguration(service)
         mockAtomHopperClient(service)
         mockAuthHeaderHelper(service)
-
-        config.getInt("token.cloudAuthExpirationSeconds") >> 21600 // 6 hours
-        config.getInt("token.expirationSeconds") >> 43200 //12 hours
     }
 }
