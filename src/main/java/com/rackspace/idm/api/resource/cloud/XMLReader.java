@@ -16,6 +16,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,17 +104,22 @@ public class XMLReader implements MessageBodyReader<Object> {
     @Override
     public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException {
         try {
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(entityStream, writer);
-            String en = writer.toString();
-            Unmarshaller m = getContext().createUnmarshaller();
-            JAXBElement<?> unMarshal = m.unmarshal(new StreamSource(new StringReader(en)), (Class) genericType);
-
+            XMLInputFactory xif = XMLInputFactory.newFactory();
+            xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+            xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            try {
+                XMLStreamReader xsr = xif.createXMLStreamReader(entityStream);
+                StringWriter writer = new StringWriter();
+                IOUtils.copy(entityStream, writer);
+                String en = writer.toString();
+                Unmarshaller m = getContext().createUnmarshaller();
+                JAXBElement<?> unMarshal = m.unmarshal(xsr, (Class) genericType);
             return unMarshal.getValue();
+            } catch (XMLStreamException e) {
+                throw new BadRequestException(e.toString(), e);
+            }
         } catch (JAXBException e) {
             throw new BadRequestException(e.toString(), e);
         }
-
-
     }
 }
