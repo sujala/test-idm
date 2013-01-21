@@ -31,9 +31,14 @@
         <cobertura.skip.check>true</cobertura.skip.check>
         <jetty.port>8083</jetty.port>
         <jetty.host>http://localhost:${jetty.port}/idm/</jetty.host>
+
+        <!--Jacoco directories location-->
+        <coverage.reports.dir>${basedir}/target/coverage-reports</coverage.reports.dir>
+        <sonar.jacoco.reportPath>${coverage.reports.dir}/jacoco-it.exec</sonar.jacoco.reportPath>
+        <sonar.jacoco.jar>${basedir}/lib/jacocoagent.jar</sonar.jacoco.jar>
+
     </properties>
     <dependencies>
-
         <dependency>
             <groupId>net.sf.dozer</groupId>
             <artifactId>dozer</artifactId>
@@ -1008,7 +1013,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <goals>          
+                        <goals>
                             <goal>testCompile</goal>
                         </goals>
                     </execution>
@@ -1153,7 +1158,7 @@
                 <configuration>
                     <skip>${skip.default.surefire}</skip>
                     <skipTests>${skip.test}</skipTests>
-                    <argLine>-Xmx1024m -XX:MaxPermSize=512m</argLine>
+                    <argLine>-javaagent:${sonar.jacoco.jar}=destfile=${sonar.jacoco.reportPath} -Xmx1024m -XX:MaxPermSize=512m</argLine>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>
@@ -1429,34 +1434,6 @@
                         <!-- bind to the packaging phase -->
                         <goals>
                             <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.5.1</version>
-                <configuration>
-                    <instrumentation>
-                        <excludes>
-                            <exclude>com/rackspace/docs/identity/policy/v1/*.class</exclude>
-                        </excludes>
-                    </instrumentation>
-                    <skip>${cobertura.skip.check}</skip>
-                    <check>
-                        <totalLineRate>90</totalLineRate>
-                        <!--<totalBranchRate>95</totalBranchRate>-->
-                    </check>
-                    <formats>
-                        <format>xml</format>
-                    </formats>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
