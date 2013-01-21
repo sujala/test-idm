@@ -9,7 +9,6 @@ import lombok.Data;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -128,9 +127,12 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         caller.setIp(remoteHost);
         if (authToken != null) {
             caller.setToken(hashToken(authToken));
-            caller.setId(getUserIdFromAuthToken(authToken));
+            com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(authToken);
+            caller.setId(getUserIdFromUser(user));
+            caller.setUsername(getUsernameFromUser(user));
             caller.setTokenSrc(getTokenSource(authToken));
         } else if (basicAuth != null) {
+            caller.setUsername(getUsernameFromDecoded(getDecodedAuth(basicAuth)));
             caller.setId(getUserIdFromBasicAuth(basicAuth));
         }
         caller.setAgent(userAgent);
@@ -290,7 +292,8 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         String token = parseUserTokenFromPath(path);
 
         if (token != null) {
-            userId = getUserIdFromAuthToken(token);
+            com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(token);
+            userId = getUserIdFromUser(user);
         } else {
             userId = parseUserIdFromPath(path);
         }
@@ -323,10 +326,16 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         return null;
     }
 
-    private String getUserIdFromAuthToken(String authToken) {
-        com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(authToken);
+    private String getUserIdFromUser(com.rackspace.idm.domain.entity.User user) {
         if (user != null) {
             return user.getId();
+        }
+        return null;
+    }
+
+    private String getUsernameFromUser(com.rackspace.idm.domain.entity.User user) {
+        if (user != null) {
+            return user.getUsername();
         }
         return null;
     }
@@ -370,6 +379,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     @Data
     private class Caller {
         private String id;
+        private String username;
         private String ip;
         private String agent;
         private String token;

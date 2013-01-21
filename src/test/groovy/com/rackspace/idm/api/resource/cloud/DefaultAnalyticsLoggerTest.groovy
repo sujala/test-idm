@@ -40,27 +40,14 @@ class DefaultAnalyticsLoggerTest extends Specification {
         ! result.contains("//")
     }
 
-    def "userService is called when getting userId"() {
-        given:
-        def userId = "id"
-        def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
-
-        when:
-        def result = analyticsLogger.getUserIdFromAuthToken("auth-token")
-
-        then:
-        1 * userService.getUserByAuthToken(_) >> mockedUser
-        1 * mockedUser.getId() >> userId
-        result == userId
-    }
-
     def "userService is called and returns null when getting userId"() {
         when:
-        def result = analyticsLogger.getUserIdFromAuthToken("auth-token")
+        def caller = analyticsLogger.getCaller("auth-token", null, null, null)
 
         then:
         1 * userService.getUserByAuthToken(_) >> null
-        result == null
+        caller.id == null
+        caller.username == null
     }
 
     def "can parse userId from path"() {
@@ -316,6 +303,41 @@ class DefaultAnalyticsLoggerTest extends Specification {
         "0000-0000-0000-0000" | DefaultAnalyticsLogger.CLOUD_AUTH
         null                  | null
 
+    }
+
+    def "calling getCaller with x-auth-token sets the username"() {
+        given:
+        def authToken = "token"
+        def username = "username"
+        def id = "id"
+        def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
+
+        when:
+        def caller = analyticsLogger.getCaller(authToken, null, null, null)
+
+        then:
+        caller.username == username
+        caller.id == id
+        1 * userService.getUserByAuthToken(_) >> mockedUser
+        1 * mockedUser.getUsername() >> username
+        1 * mockedUser.getId() >> id
+    }
+
+    def "calling getcaller with basic auth sets the username"() {
+        given:
+        def username = "username"
+        def id = "id"
+        def basicAuth = createBasicAuth(username, "Password1")
+        def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
+
+        when:
+        def caller = analyticsLogger.getCaller(null, basicAuth, null, null)
+
+        then:
+        caller.username == username
+        caller.id == id
+        1 * userService.getUser(_) >> mockedUser
+        1 * mockedUser.getId() >> id
     }
 
     private String createBasicAuth(String username, String password) {
