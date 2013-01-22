@@ -37,7 +37,7 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(User user);
-    boolean hasTenantAccess(ScopeAccess scopeAccess, String tenantId);
+    boolean hasTenantAccess(User user, String tenantId);
     List<User> getUsersForTenant(String tenantId);
     List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
     List<TenantRole> getTenantRolesForTenant(String tenantId);

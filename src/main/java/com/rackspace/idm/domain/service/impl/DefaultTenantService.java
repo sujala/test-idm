@@ -198,14 +198,14 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public boolean hasTenantAccess(ScopeAccess scopeAccess, String tenantId) {
-        if(scopeAccess==null){
+    public boolean hasTenantAccess(User user, String tenantId) {
+        if(user ==null){
             return false;
         }
         if(StringUtils.isBlank(tenantId)){
             return false;
         }
-        List<Tenant> tenantList = getTenantsForScopeAccessByTenantRoles(scopeAccess);
+        List<Tenant> tenantList = getTenantsForUserByTenantRoles(user);
         for(Tenant tenant : tenantList){
             if(tenant.getTenantId()!=null && tenant.getTenantId().equals(tenantId)){
                 return true;

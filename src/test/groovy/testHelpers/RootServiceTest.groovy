@@ -21,6 +21,7 @@ import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithToken
 import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
@@ -188,6 +189,7 @@ class RootServiceTest extends Specification {
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
+    @Shared AuthWithToken authWithToken
 
     @Shared def jaxbMock
 
@@ -672,6 +674,11 @@ class RootServiceTest extends Specification {
     def mockAuthHeaderHelper(rootService) {
         authHeaderHelper = Mock()
         rootService.authHeaderHelper = authHeaderHelper
+    }
+
+    def mockAuthWithToken(rootService) {
+        authWithToken = Mock()
+        rootService.authWithToken = authWithToken
     }
 
     def uriInfo() {

@@ -35,6 +35,19 @@ class V2Factory {
             return it
         }
     }
+
+    def createAuthenticationRequest(String tokenId, String tenantId, String tenantName) {
+        def token = new TokenForAuthenticationRequest().with {
+            it.id = tokenId
+            return it
+        }
+
+        createAuthenticationRequest(tenantId, tenantName, null, null).with {
+            it.token = token
+            return it
+        }
+    }
+
     def createAuthenticateResponse() {
         return createAuthenticateResponse(createToken(), null, null)
     }

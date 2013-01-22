@@ -31,6 +31,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
+import lombok.Data;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -206,6 +207,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Paginator<Domain> domainPaginator;
+
+    @Autowired
+    private AuthWithToken authWithToken;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -776,9 +780,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         try {
-            User user = null;
-            UserScopeAccess usa = null;
-            ScopeAccess impsa = null;
+            AuthReturnValues returnValues = new AuthReturnValues();
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -791,86 +793,52 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return authenticateFederatedDomain(httpHeaders, authenticationRequest, domain);
             }
             if (authenticationRequest.getToken() != null) {
-                if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
-                    throw new BadRequestException("Invalid Token Id");
-                }
-                if (StringUtils.isBlank(authenticationRequest.getTenantId()) && StringUtils.isBlank(authenticationRequest.getTenantName())) {
-                    throw new BadRequestException("Invalid request. Specify tenantId or tenantName.");
-                }
-                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
-                // Check for impersonated token
-                if (sa instanceof ImpersonatedScopeAccess) {
-                    impsa = sa;
-                    // Check Expiration of impersonated token
-                    if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
-                        throw new NotAuthorizedException("Token not authenticated");
-                    }
-                    // Swap token out and Log
-                    String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
-                    logger.info("Impersonating token {} with token {} ", authenticationRequest.getToken(), newToken);
-                    sa = scopeAccessService.getScopeAccessByAccessToken(newToken);
-                }
-                if (!(sa instanceof UserScopeAccess) || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
-                    String errMsg = "Token not authenticated";
-                    logger.warn(errMsg);
-                    throw new NotAuthenticatedException(errMsg);
-                }
-                usa = (UserScopeAccess) sa;
-
-                user = getUserByIdForAuthentication(usa.getUserRsId());
-
-                scopeAccessService.updateExpiredUserScopeAccess(user.getUniqueId(), sa.getClientId());
-
-                if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
-                    String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
-                    logger.warn(errMsg);
-                    throw new NotAuthenticatedException(errMsg);
-                }
-                if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantId())) {
-                    String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantId() + "'";
-                    logger.warn(errMsg);
-                    throw new NotAuthenticatedException(errMsg);
-                }
+                returnValues = authWithToken.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
-                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
-                //TODO username validation breaks validate call
-                validator20.validatePasswordCredentials(creds);
-                String username = creds.getUsername();
-                String password = creds.getPassword();
-
-                user = getUserByUsernameForAuthentication(username);
-
-
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
-
+                authenticateWithPasswordCredentials(authenticationRequest, returnValues);
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-                ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
-                validator20.validateApiKeyCredentials(creds);
-                String username = creds.getUsername();
-                String key = creds.getApiKey();
-
-                user = getUserByUsernameForAuthentication(username);
-
-
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
-                //Check if authentication is within 12hrs of experation if so create a new one
+                authenticateWithApiKeyCredentials(authenticationRequest, returnValues);
             }
-            if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + user.getUsername() + "' (id: '" + user.getId() + "')";
+            if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantName())) {
+                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + returnValues.getUser().getUsername() + "' (id: '" + returnValues.getUser().getId() + "')";
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
-            if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantId())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + user.getUsername() + "' (id: '" + user.getId() + "')";
+            if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantId())) {
+                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + returnValues.getUser().getUsername() + "' (id: '" + returnValues.getUser().getId() + "')";
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
 
-            AuthenticateResponse auth = buildAuthResponse(usa, impsa, user, authenticationRequest);
+            AuthenticateResponse auth = buildAuthResponse(returnValues.getUsa(), returnValues.getImpsa(), returnValues.getUser(), authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    private void authenticateWithApiKeyCredentials(AuthenticationRequest authenticationRequest, AuthReturnValues returnValues) {
+        ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
+        validator20.validateApiKeyCredentials(creds);
+        String username = creds.getUsername();
+        String key = creds.getApiKey();
+
+        returnValues.setUser(getUserByUsernameForAuthentication(username));
+
+        returnValues.setUsa(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId()));
+        //Check if authentication is within 12hrs of experation if so create a new one
+    }
+
+    private void authenticateWithPasswordCredentials(AuthenticationRequest authenticationRequest, AuthReturnValues returnValues) {
+        PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+        //TODO username validation breaks validate call
+        validator20.validatePasswordCredentials(creds);
+        String username = creds.getUsername();
+        String password = creds.getPassword();
+
+        returnValues.setUser(getUserByUsernameForAuthentication(username));
+
+        returnValues.setUsa(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId()));
     }
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
