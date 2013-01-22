@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;
@@ -28,7 +26,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ApplicationDao clientDao;
+    private ApplicationDao applicationDao;
     @Autowired
     private Configuration config;
     @Autowired
@@ -74,7 +72,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     boolean doesClientHaveAuthorizedRoles(ScopeAccess scopeAccess, String... authorizedRoles) {
     	List<String> allAuthorizedRoles = createRoleList(authorizedRoles);
     	for (String authorizedRole : allAuthorizedRoles) {
-    		ClientRole clientRole = this.clientDao.getClientRoleById(authorizedRole);
+    		ClientRole clientRole = this.applicationDao.getClientRoleById(authorizedRole);
     		if (this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, clientRole)) {
     			return true;
     		}
@@ -126,7 +124,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (cloudAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
             cloudAdminRole = role;
         }
 
@@ -146,7 +144,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (rackerRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(config.getString("idm.clientId"), "Racker");
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(config.getString("idm.clientId"), "Racker");
             rackerRole = role;
         }
 
@@ -166,7 +164,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (cloudIdentityAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
             cloudIdentityAdminRole = role;
         }
 
@@ -201,7 +199,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (cloudUserAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
             cloudUserAdminRole = role;
         }
 
@@ -220,7 +218,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (cloudUserRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
             cloudUserRole = role;
         }
 
@@ -231,53 +229,77 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasDefaultUserRole(String uniqueId) {
-        if (uniqueId == null) {
+    public boolean hasDefaultUserRole(User user) {
+        if (user == null) {
             return false;
         }
         if (cloudUserRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-            cloudUserRole = role;
+            cloudUserRole = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
         }
-        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudUserRole);
+
+        List<TenantRole> tenantRoles = tenantDao.getTenantRolesForUser(user, getCloudAuthClientId());
+        for(TenantRole tenantRole : tenantRoles){
+            if (tenantRole.getRoleRsId().equals(cloudUserRole.getId())){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public boolean hasUserAdminRole(String uniqueId) {
-        if (uniqueId == null) {
+    public boolean hasUserAdminRole(User user) {
+        if (user == null) {
             return false;
         }
+
         if (cloudUserAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            cloudUserAdminRole = role;
+            cloudUserAdminRole = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
         }
-        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudUserAdminRole);
+
+        List<TenantRole> tenantRoles = tenantDao.getTenantRolesForUser(user, getCloudAuthClientId());
+        for(TenantRole tenantRole : tenantRoles){
+            if (tenantRole.getRoleRsId().equals(cloudUserAdminRole.getId())){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public boolean hasIdentityAdminRole(String uniqueId) {
-        if (uniqueId == null) {
+    public boolean hasIdentityAdminRole(User user) {
+        if (user == null) {
             return false;
         }
+
         if (cloudIdentityAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-            cloudIdentityAdminRole = role;
+            cloudIdentityAdminRole = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
         }
-        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudIdentityAdminRole);
+        List<TenantRole> tenantRoles = tenantDao.getTenantRolesForUser(user, getCloudAuthClientId());
+        for(TenantRole tenantRole : tenantRoles){
+            if (tenantRole.getRoleRsId().equals(cloudIdentityAdminRole.getId())){
+                return true;
+            }
+        }
+        return false;
     }
 
     //This method does not check if the scope access has an access token.
     //This method checks if the scope access has the cloud default user role.
     @Override
-    public boolean hasServiceAdminRole(String uniqueId) {
-        if (uniqueId == null) {
+    public boolean hasServiceAdminRole(User user) {
+        if (user == null) {
             return false;
         }
         if (cloudServiceAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
-            cloudServiceAdminRole = role;
+            cloudServiceAdminRole = applicationDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
         }
-        return tenantDao.doesUserHaveTenantRole(uniqueId, cloudServiceAdminRole);
+        List<TenantRole> tenantRoles = tenantDao.getTenantRolesForUser(user, getCloudAuthClientId());
+        for(TenantRole tenantRole : tenantRoles){
+            if (tenantRole.getRoleRsId().equals(cloudServiceAdminRole.getId())){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -293,7 +315,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (idmSuperAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getIdmClientId(), config.getString("idm.superAdminRole"));
+            ClientRole role = applicationDao.getClientRoleByClientIdAndRoleName(getIdmClientId(), config.getString("idm.superAdminRole"));
             idmSuperAdminRole = role;
         }
 
@@ -596,7 +618,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 	}
 
 	public void setApplicationDao(ApplicationDao applicationDao) {
-		this.clientDao = applicationDao;
+		this.applicationDao = applicationDao;
 	}
 
 	public void setTenantDao(TenantDao tenantDao) {

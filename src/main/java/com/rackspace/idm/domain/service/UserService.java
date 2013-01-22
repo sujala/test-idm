@@ -52,6 +52,10 @@ public interface UserService {
     
     User getUserByRPN(String rpn);
 
+    Users getUsersByTenantId(String tenantId);
+
+    User getUserByTenantId(String tenantId);
+
     User getUserByNastId(String nastId);
 
     User getUserByMossoId(int mossoId);

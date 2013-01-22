@@ -2,6 +2,9 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
+import com.unboundid.ldap.sdk.Filter;
+
+import java.util.List;
 
 public interface UserDao {
 
@@ -42,6 +45,8 @@ public interface UserDao {
     User getUserBySecureId(String secureId);
 
     User getUserByUsername(String username);
+
+    Users getUsers(List<Filter> filters);
 
     boolean isUsernameUnique(String username);
 

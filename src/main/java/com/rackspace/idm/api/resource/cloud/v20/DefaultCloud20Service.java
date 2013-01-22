@@ -1096,7 +1096,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
-            if (authorizationService.hasUserAdminRole(user.getUniqueId()) && userService.hasSubUsers(userId)) {
+            if (authorizationService.hasUserAdminRole(user) && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             userService.softDeleteUser(user);
@@ -2689,8 +2689,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
@@ -2722,8 +2722,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user.getUniqueId());
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user.getUniqueId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
@@ -3016,7 +3016,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller, credUser);
             } else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-                if (authorizationService.hasServiceAdminRole(credUser.getUniqueId())) {
+                if (authorizationService.hasServiceAdminRole(credUser)) {
                     throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
                 }
             }

@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
+import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -329,6 +330,35 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public Users getUsersByTenantId(String tenantId) {
+        logger.debug("Get list of users with tenant", tenantId);
+        List<TenantRole> tenantRoles = tenantDao.getAllTenantRolesForTenant(tenantId);
+        List<Filter> filterList = new ArrayList<Filter>();
+        for(TenantRole t : tenantRoles){
+            filterList.add(Filter.createEqualityFilter("rsId", t.getUserId()));
+        }
+        Users users = userDao.getUsers(filterList);
+        logger.debug("Got list of users with tenant", tenantId);
+        return users;
+    }
+
+    @Override
+    public User getUserByTenantId(String tenantId) {
+        logger.debug("Getting user by tenantId: {}", tenantId);
+        Users users = getUsersByTenantId(tenantId);
+        if (users.getUsers().size() == 1) {
+            return users.getUsers().get(0);
+        }else if(users.getUsers().size() > 1){
+            for (User user : users.getUsers()) {
+                if (authorizationService.hasUserAdminRole(user)) {
+                    return user;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     public User getUserByMossoId(int mossoId) { // Returns the first User-Admin it finds with matching mossoId
         logger.debug(GETTING_USER, mossoId);
         Users users = userDao.getUsersByMossoId(mossoId);
@@ -337,7 +367,7 @@ public class DefaultUserService implements UserService {
             return users.getUsers().get(0);
         } else if (users.getUsers().size() > 1) {
             for (User user : users.getUsers()) {
-                if (authorizationService.hasUserAdminRole(user.getUniqueId())) {
+                if (authorizationService.hasUserAdminRole(user)) {
                     return user;
                 }
             }
@@ -561,7 +591,7 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users.getUsers()) {
-            if(authorizationService.hasDefaultUserRole(userInList.getUniqueId())) {
+            if(authorizationService.hasDefaultUserRole(userInList)) {
                 return true;
             }
         }

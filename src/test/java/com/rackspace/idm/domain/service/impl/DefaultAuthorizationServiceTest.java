@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
@@ -314,7 +315,7 @@ public class DefaultAuthorizationServiceTest {
     public void hasDefaultUserRole_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
         String uniqueUserId = "uniqueId";
         DefaultAuthorizationService.setCloudUserRole(null);
-        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
+        defaultAuthorizationService.hasDefaultUserRole(new User());
         verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
@@ -343,8 +344,9 @@ public class DefaultAuthorizationServiceTest {
     public void hasDefaultUserROle_callsTenantDaoMethod() throws Exception {
         String uniqueUserId = "uniqueId";
         DefaultAuthorizationService.setCloudUserRole(new ClientRole());
-        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
-        verify(tenantDao).doesUserHaveTenantRole(eq(uniqueUserId), any(ClientRole.class));
+        User user = new User();
+        defaultAuthorizationService.hasDefaultUserRole(user);
+        verify(tenantDao).getTenantRolesForUser(eq(user), anyString());
     }
 
     @Test
@@ -357,7 +359,7 @@ public class DefaultAuthorizationServiceTest {
     public void hasUserAdminRole_cloudUserAdminRoleIsNull_setsRole() throws Exception {
         String uniqueUserId = "uniqueId";
         ScopeAccess scopeAccess = new ScopeAccess();
-        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
+        defaultAuthorizationService.hasUserAdminRole(new User());
         verify(clientDao).getClientRoleByClientIdAndRoleName(null, null);
     }
 
@@ -366,8 +368,10 @@ public class DefaultAuthorizationServiceTest {
         String uniqueUserId = "uniqueId";
         ClientRole cloud_user_admin_role = new ClientRole();
         DefaultAuthorizationService.setCloudUserAdminRole(cloud_user_admin_role);
-        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
-        verify(tenantDao).doesUserHaveTenantRole(uniqueUserId, cloud_user_admin_role);
+        User user = new User();
+        defaultAuthorizationService.hasUserAdminRole(user);
+        verify(tenantDao).getTenantRolesForUser(eq(user), anyString());
+        DefaultAuthorizationService.setCloudUserAdminRole(null);
     }
 
     @Test

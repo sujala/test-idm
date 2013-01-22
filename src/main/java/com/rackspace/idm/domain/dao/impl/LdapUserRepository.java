@@ -424,6 +424,26 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public Users getUsers(List<Filter> filters) {
+        getLogger().debug("Doing search for users");
+
+        if(filters == null){
+           return null;
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .addOrAttributes(filters)
+                .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+
+        getLogger().debug(FOUND_USERS, users);
+
+        return users;
+    }
+
+    @Override
     public PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit) {
         getLogger().debug("Getting paged users");
 
@@ -1018,7 +1038,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
         Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
-        boolean wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
+        boolean wasSelfUpdated = false;
+        if(resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED) != null){
+            wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
+        }
         DateTime lasteUpdated = new DateTime(lastUpdates);
         Password pwd = Password.existingInstance(ecryptedPwd, lasteUpdated, wasSelfUpdated);
         user.setPasswordObj(pwd);

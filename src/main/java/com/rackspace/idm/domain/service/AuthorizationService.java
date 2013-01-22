@@ -35,10 +35,10 @@ public interface AuthorizationService {
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
-    boolean hasDefaultUserRole(String uniqueId);
-    boolean hasUserAdminRole(String uniqueId);
-    boolean hasIdentityAdminRole(String uniqueId);
-    boolean hasServiceAdminRole(String uniqueId);
+    boolean hasDefaultUserRole(User user);
+    boolean hasUserAdminRole(User user);
+    boolean hasIdentityAdminRole(User user);
+    boolean hasServiceAdminRole(User user);
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
