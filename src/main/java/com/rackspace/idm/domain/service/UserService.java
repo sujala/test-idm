@@ -78,8 +78,6 @@ public interface UserService {
 
     boolean hasSubUsers(String userId);
     
-    void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) throws IOException, JAXBException;
-
     void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
     void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
     Password resetUserPassword(User user);

@@ -111,6 +111,8 @@ public interface ScopeAccessService {
     boolean doesUserHavePermissionForClient(User user, Permission permission,
         Application client);
 
+    List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user);
+
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
     UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId);

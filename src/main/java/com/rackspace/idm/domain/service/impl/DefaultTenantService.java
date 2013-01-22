@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.*;
@@ -34,7 +33,7 @@ public class DefaultTenantService implements TenantService {
     private TenantDao tenantDao;
 
     @Autowired
-    private ApplicationDao clientDao;
+    private ApplicationDao applicationDao;
 
     @Autowired
     private UserDao userDao;
@@ -141,6 +140,35 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<Tenant> getTenantsForUserByTenantRoles(User user) {
+        if (user == null) {
+            throw new IllegalStateException();
+        }
+
+        logger.info("Getting Tenants for Parent");
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        List<String> tenantIds = new ArrayList<String>();
+        List<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+        for (TenantRole role : tenantRoles) {
+            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+                for (String tenantId : role.getTenantIds()) {
+                    if (!tenantIds.contains(tenantId)) {
+                        tenantIds.add(tenantId);
+                    }
+                }
+            }
+        }
+        for (String tenantId : tenantIds) {
+            Tenant tenant = this.getTenant(tenantId);
+            if (tenant != null && tenant.isEnabled()) {
+                tenants.add(tenant);
+            }
+        }
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
+    }
+
+    @Override
     public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
         if (sa == null) {
             throw new IllegalStateException();
@@ -213,14 +241,14 @@ public class DefaultTenantService implements TenantService {
                 "User cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application client = this.clientDao.getClientByClientId(role.getClientId());
+        Application client = this.applicationDao.getClientByClientId(role.getClientId());
         if (client == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole cRole = this.applicationDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
@@ -259,14 +287,14 @@ public class DefaultTenantService implements TenantService {
                 "Client cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application owner = this.clientDao.getClientByClientId(role.getClientId());
+        Application owner = this.applicationDao.getClientByClientId(role.getClientId());
         if (owner == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole cRole = this.applicationDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
@@ -377,7 +405,7 @@ public class DefaultTenantService implements TenantService {
     private void getRoleDetails(List<TenantRole> roles) {
         for (TenantRole role : roles) {
             if (role != null) {
-                ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
+                ClientRole cRole = this.applicationDao.getClientRoleById(role.getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
             }
@@ -408,7 +436,7 @@ public class DefaultTenantService implements TenantService {
 
         List<TenantRole> returnedRoles = new ArrayList<TenantRole>();
         for (String roleId : roleIds) {
-            ClientRole cRole = this.clientDao.getClientRoleById(roleId);
+            ClientRole cRole = this.applicationDao.getClientRoleById(roleId);
             if (cRole != null) {
                 TenantRole newRole = new TenantRole();
                 newRole.setClientId(cRole.getClientId());
@@ -473,7 +501,7 @@ public class DefaultTenantService implements TenantService {
         for (TenantRole role : roles) {
             if (role != null
                 && (role.getTenantIds() == null || role.getTenantIds().length == 0)) {
-                ClientRole cRole = this.clientDao.getClientRoleById(role
+                ClientRole cRole = this.applicationDao.getClientRoleById(role
                     .getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
@@ -579,8 +607,8 @@ public class DefaultTenantService implements TenantService {
 	}
 
 	@Override
-	public void setClientDao(ApplicationDao applicationDao) {
-		this.clientDao = applicationDao;
+	public void setApplicationDao(ApplicationDao applicationDao) {
+		this.applicationDao = applicationDao;
 		
 	}
 
@@ -600,7 +628,7 @@ public class DefaultTenantService implements TenantService {
 	}
 
     @Override
-    public void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao) {
+    public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
         this.tenantRoleDao = tenantRoleDao;
     }
 }

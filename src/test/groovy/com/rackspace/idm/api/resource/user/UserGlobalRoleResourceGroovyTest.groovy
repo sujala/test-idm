@@ -29,7 +29,6 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.exception.NotFoundException
-import com.unboundid.ldap.sdk.Entry
 
 import javax.ws.rs.core.Response
 
@@ -566,7 +565,7 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
 
         tenantService.tenantDao = tenantDao
         tenantService.tenantRoleDao = tenantRoleDao
-        tenantService.clientDao = applicationDao
+        tenantService.applicationDao = applicationDao
 
         authorizationService.tenantDao = tenantDao
         authorizationService.applicationDao = applicationDao

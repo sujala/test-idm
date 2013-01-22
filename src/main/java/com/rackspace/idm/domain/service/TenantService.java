@@ -1,11 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import com.rackspace.idm.domain.entity.*;
 
@@ -40,6 +36,7 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
+    List<Tenant> getTenantsForUserByTenantRoles(User user);
     boolean hasTenantAccess(ScopeAccess scopeAccess, String tenantId);
     List<User> getUsersForTenant(String tenantId);
     List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
@@ -50,10 +47,10 @@ public interface TenantService {
 
     List<Tenant> getTenantsFromNameList(String[] tenants);
 	void setTenantDao(TenantDao tenantDao);
-	void setClientDao(ApplicationDao applicationDao);
+	void setApplicationDao(ApplicationDao applicationDao);
 	void setUserDao(UserDao userDao);
 	void setEndpointDao(EndpointDao endpointDao);
 	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
-    void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao);
+    void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 }

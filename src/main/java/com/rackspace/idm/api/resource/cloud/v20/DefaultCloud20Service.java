@@ -2228,9 +2228,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
 
             User user = userService.checkAndGetUserById(userId);
-            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
-
-            Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
+            Domains domains = cloudUserAccessibility.getAccessibleDomainsByUser(user);
 
             domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
             domains = cloudUserAccessibility.removeDuplicateDomains(domains);
@@ -2273,12 +2271,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
             domainService.checkAndGetDomain(domainId);
-            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
 
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccessByUserId);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
             List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
 
-            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints, tenants, scopeAccessByUserId);
+            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints, tenants, user);
 
             EndpointList list = cloudUserAccessibility.convertPopulateEndpointList(domainEndpoints);
 

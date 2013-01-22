@@ -18,19 +18,21 @@ import org.openstack.docs.identity.api.v2.ObjectFactory;
  */
 public class CloudUserAdminAccessibility extends CloudUserAccessibility {
 
+    public CloudUserAdminAccessibility() {
+        super();
+    }
+
     public CloudUserAdminAccessibility(TenantService tenantService, DomainService domainService,
                                        AuthorizationService authorizationService, UserService userService,
                                        Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
         super(tenantService, domainService, authorizationService, userService, config, objFactory, callerScopeAccess);
     }
 
-    public boolean hasAccess(ScopeAccess scopeAccess){
-        User caller = userService.getUserByScopeAccess(callerScopeAccess);
-        User user = userService.getUserByScopeAccess(scopeAccess);
+    public boolean hasAccess(User user){
         if(caller.getId().equals(user.getId())){
             return true;
         }
-        Boolean isDefaultUser = userContainsRole(scopeAccess, config.getString("cloudAuth.userRole"));
+        Boolean isDefaultUser = userContainsRole(tenantService.getTenantRolesForUser(user), config.getString("cloudAuth.userRole"));
         if(isDefaultUser && caller.getDomainId().equals(user.getDomainId())){
             return true;
         }

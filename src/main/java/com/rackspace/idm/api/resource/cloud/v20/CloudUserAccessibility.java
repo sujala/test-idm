@@ -27,8 +27,6 @@ public class CloudUserAccessibility {
 
     public static final String NOT_AUTHORIZED = "Not Authorized";
 
-    public ScopeAccess callerScopeAccess;
-
     protected TenantService tenantService;
 
     private DomainService domainService;
@@ -39,21 +37,26 @@ public class CloudUserAccessibility {
 
     private ObjectFactory objFactory;
 
+    protected User caller;
+
+    public CloudUserAccessibility() {
+    }
+
     public CloudUserAccessibility(TenantService tenantService, DomainService domainService,
                                   AuthorizationService authorizationService, UserService userService,
-                                  Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
+                                  Configuration config, ObjectFactory objFactory, ScopeAccess scopeAccess) {
         this.tenantService = tenantService;
         this.domainService = domainService;
         this.authorizationService = authorizationService;
         this.userService = userService;
         this.objFactory = objFactory;
         this.config = config;
-        this.callerScopeAccess = callerScopeAccess;
+        this.caller = userService.getUserByScopeAccess(scopeAccess);
     }
 
-    public Domains getAccessibleDomainsByScopeAccessForUser(ScopeAccess scopeAccessByAccessToken) {
+    public Domains getAccessibleDomainsForUser(User user) {
         Domains domains = new Domains();
-        List<Tenant> tenants = tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccessByAccessToken);
+        List<Tenant> tenants = tenantService.getTenantsForUserByTenantRoles(user);
         if (tenants == null || tenants.size() == 0) {
             return domains;
         }
@@ -64,10 +67,10 @@ public class CloudUserAccessibility {
         return domains;
     }
 
-    public Domains getAccessibleDomainsByScopeAccess(ScopeAccess scopeAccess) {
+    public Domains getAccessibleDomainsByUser(User user) {
         Domains domains;
-        if (hasAccess(scopeAccess)) {
-            domains = getAccessibleDomainsByScopeAccessForUser(scopeAccess);
+        if (hasAccess(user)) {
+            domains = getAccessibleDomainsForUser(user);
         } else {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
@@ -93,8 +96,8 @@ public class CloudUserAccessibility {
         return noDup;
     }
 
-    public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, ScopeAccess scopeAccess) {
-        if(hasAccess(scopeAccess)) {
+    public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, User user) {
+        if(hasAccess(user)) {
             List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
             if (endpoints.isEmpty() || tenants.isEmpty()) {
                 return openstackEndpoints;
@@ -116,8 +119,9 @@ public class CloudUserAccessibility {
 
     public EndpointList convertPopulateEndpointList(List<OpenstackEndpoint> endpoints) {
         EndpointList list = objFactory.createEndpointList();
-        Boolean isIdentityAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.adminRole"));
-        Boolean isServiceAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.serviceAdminRole"));
+        List<TenantRole> tenantRolesForUser = tenantService.getTenantRolesForUser(caller);
+        Boolean isIdentityAdmin = userContainsRole(tenantRolesForUser, config.getString("cloudAuth.adminRole"));
+        Boolean isServiceAdmin = userContainsRole(tenantRolesForUser, config.getString("cloudAuth.serviceAdminRole"));
 
         if (endpoints == null || endpoints.size() == 0) {
             return list;
@@ -152,12 +156,11 @@ public class CloudUserAccessibility {
         return list;
     }
 
-    public boolean hasAccess(ScopeAccess scopeAccess) {
+    public boolean hasAccess(User user) {
         return false;
     }
 
-    boolean userContainsRole(ScopeAccess requesterScopeAccess, String role) {
-        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+    boolean userContainsRole(List<TenantRole> tenantRoleList, String role) {
         boolean hasRole = false;
         for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();

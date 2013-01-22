@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
  * Time: 4:10 PM
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultTenantServiceTest {
+public class DefaultTenantServiceTestOld {
 
     @InjectMocks
     DefaultTenantService defaultTenantService = new DefaultTenantService();

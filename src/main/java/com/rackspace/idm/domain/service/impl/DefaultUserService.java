@@ -581,40 +581,6 @@ public class DefaultUserService implements UserService {
         return newPassword.toExisting();
     }
 
-
-    @Override
-    public void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) throws IOException, JAXBException {
-        logger.debug("Updating Password for User: {}", userId);
-
-        User user = loadUser(userId);
-        checkPasswordComplexity(userCred.getNewPassword());
-
-        if (userCred.isVerifyCurrentPassword()) {
-            if (userCred.getCurrentPassword() == null ||
-                    StringUtils.isBlank(userCred.getCurrentPassword().getValue())) {
-                String errMsg = "Value for Current Password cannot be blank";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
-            // authenticate using old password
-            UserAuthenticationResult uaResult = this.authenticate(user.getUsername(), userCred.getCurrentPassword().getValue());
-            if (!uaResult.isAuthenticated()) {
-                String errorMsg = String.format("Current password does not match for user: %s", userId);
-                logger.warn(errorMsg);
-                throw new NotAuthenticatedException(errorMsg);
-            }
-        }
-
-        user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getValue()));
-
-        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token).getUsername().equals(user.getUsername()))
-                || (token instanceof PasswordResetScopeAccess && ((PasswordResetScopeAccess) token).getUsername().equals(user.getUsername()));
-
-        this.updateUser(user, isSelfUpdate);
-        logger.debug("Updated password for user: {}", user);
-    }
-
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);

@@ -3054,7 +3054,7 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void getTenantService_returnsTenetService() throws Exception {
-        assertThat("tenantService",delegateCloud20Service.getTenantService(),equalTo(tenantService));
+        assertThat("service",delegateCloud20Service.getTenantService(),equalTo(tenantService));
     }
 
     @Test

@@ -20,15 +20,17 @@ import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 public class CloudDefaultUserAccessibility extends CloudUserAccessibility {
 
+    public CloudDefaultUserAccessibility() {
+        super();
+    }
+
     public CloudDefaultUserAccessibility(TenantService tenantService, DomainService domainService,
                                          AuthorizationService authorizationService, UserService userService,
                                          Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
         super(tenantService, domainService, authorizationService, userService, config, objFactory, callerScopeAccess);
     }
 
-    public boolean hasAccess(ScopeAccess userScopeAccess){
-        User caller = userService.getUserByScopeAccess(callerScopeAccess);
-        User user = userService.getUserByScopeAccess(userScopeAccess);
+    public boolean hasAccess(User user){
         if(caller.getId().equals(user.getId())){
             return true;
         }

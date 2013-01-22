@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
+import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -37,7 +38,7 @@ import testHelpers.RootServiceTest
  * Time: 6:14 PM
  * To change this template use File | Settings | File Templates.
  */
-class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
+class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     @Shared DefaultScopeAccessService service = new DefaultScopeAccessService()
     @Shared def randomness = UUID.randomUUID()
@@ -537,6 +538,24 @@ class DefaultScopeAccessServiceGroovyTest extends RootServiceTest {
         ! newScopeAccess.isAccessTokenExpired(new DateTime())
 
         1 * scopeAccessDao.addDirectScopeAccess(_, _)
+    }
+
+    def "can get endpoints from getOpenstackEndpointsForUser"() {
+        given:
+        def user = entityFactory.createUser()
+        def tenant = entityFactory.createTenant("tenantId", null, null, null, true)
+        def tenantRoles = [entityFactory.createTenantRole("roleRsId", null, null, null, "tenantId")].asList()
+        def endpoint = entityFactory.createOpenstackEndpoint([entityFactory.createCloudBaseUrl()].asList())
+
+        when:
+        def endpoints = service.getOpenstackEndpointsForUser(user)
+
+        then:
+        endpoints != null
+        endpoints.size() == 1
+        tenantRoleDao.getTenantRolesForUser(user) >> tenantRoles
+        tenantDao.getTenant(_) >> tenant
+        endpointDao.getOpenstackEndpointsForTenant(_) >> endpoint
     }
 
     def mockDaos() {

@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.exception.NotFoundException;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,7 +42,7 @@ public class TenantServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         tenantService = new DefaultTenantService();
         tenantService.setTenantDao(mockTenantDao);
-        tenantService.setClientDao(mockClientDao);
+        tenantService.setApplicationDao(mockClientDao);
         tenantService.setUserDao(mockUserDao);
         tenantService.setEndpointDao(mockEndpointDao);
         tenantService.setScopeAccessDao(mockScopeAccessDao);

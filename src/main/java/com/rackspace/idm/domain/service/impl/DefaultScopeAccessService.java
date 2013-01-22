@@ -64,6 +64,41 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private DefaultCloud20Service defaultCloud20Service;
 
     @Override
+    public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+
+        // First get the tenantRoles for the token
+        List<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+
+        if (roles == null || roles.size() == 0) {
+            return endpoints;
+        }
+
+        // Second get the tenants from each of those roles
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        for (TenantRole role : roles) {
+            if (role.getTenantIds() != null) {
+                for (String tenantId : role.getTenantIds()) {
+                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    if (tenant != null) {
+                        tenants.add(tenant);
+                    }
+                }
+            }
+        }
+
+        // Third get the endppoints for each tenant
+        for (Tenant tenant : tenants) {
+            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                endpoints.add(endpoint);
+            }
+        }
+
+        return endpoints;
+    }
+
+    @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
 
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();

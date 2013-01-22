@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.dao.TenantDao
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
 import spock.lang.Specification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -29,9 +28,7 @@ import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Credentials
-import org.apache.cxf.configuration.security.ClientAuthentication
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult
-import com.rackspace.idm.domain.entity.OAuthGrantType
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
 
@@ -352,7 +349,7 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
         scopeAccessService.scopeAcessDao = scopeAccessDao
 
         tenantService.tenantRoleDao = tenantRoleDao
-        tenantService.clientDao = applicationDao
+        tenantService.applicationDao = applicationDao
         tenantDao = Mock()
         tenantService.tenantDao = tenantDao
 

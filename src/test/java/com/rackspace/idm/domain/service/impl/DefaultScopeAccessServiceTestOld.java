@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
  * Time: 10:30 AM
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultScopeAccessServiceTest {
+public class DefaultScopeAccessServiceTestOld {
 
     @InjectMocks
     DefaultScopeAccessService defaultScopeAccessService = new DefaultScopeAccessService();

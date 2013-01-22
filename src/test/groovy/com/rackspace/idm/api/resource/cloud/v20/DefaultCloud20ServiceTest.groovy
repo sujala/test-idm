@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.bouncycastle.asn1.x509.X509Extension
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
@@ -2107,6 +2108,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * config.getString("cloudAuth.userAdminRole")
         1 * config.getString("cloudAuth.adminRole")
         1 * config.getString("cloudAuth.serviceAdminRole")
+    }
+
+    def "method getAccessibleDomainsEndpointsForUser gets endpoints by user"() {
+        given:
+        allowAccess()
+        def userId = "userId"
+        def domainId = "domainId"
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
+        def endpoints = [entityFactory.createOpenstackEndpoint()].asList()
+        def tenants = [entityFactory.createTenant()].asList()
+        def tenantRoles = [entityFactory.createTenantRole()].asList()
+
+        when:
+        def response = defaultCloud20Service.getAccessibleDomainsEndpointsForUser(authToken, userId, domainId)
+
+        then:
+        authorizationService.authorizeCloudUser(_) >> true
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * domainService.checkAndGetDomain(_) >> domain
+        0 * scopeAccessService.getScopeAccessByUserId(_)
+        1 * scopeAccessService.getOpenstackEndpointsForUser(_) >> endpoints
+        1 * tenantService.getTenantsByDomainId(_) >> tenants
+        1 * userService.getUserByScopeAccess(_) >> user
+        1 * tenantService.getTenantRolesForUser(_) >> tenantRoles
+        response.build().status == 200
     }
 
     def mockServices() {
