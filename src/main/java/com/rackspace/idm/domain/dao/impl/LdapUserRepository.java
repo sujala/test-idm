@@ -428,7 +428,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for users");
 
         if(filters == null){
-           return null;
+           return new Users();
         }
 
         Filter searchFilter = new LdapSearchBuilder()

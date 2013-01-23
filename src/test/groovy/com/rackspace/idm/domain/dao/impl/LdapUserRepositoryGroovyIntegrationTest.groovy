@@ -50,7 +50,7 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
         when:
         Users users = ldapUserRepository.getUsers(null)
         then:
-        users == null
+        users.getUsers() == null
     }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
