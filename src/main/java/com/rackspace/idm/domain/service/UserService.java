@@ -121,4 +121,8 @@ public interface UserService {
     int getUserWeight(User user, String applicationId);
 
     void setValidator(Validator validator);
+
+    User getUserByUsernameForAuthentication(String username);
+
+    User checkAndGetUserByName(String username);
 }

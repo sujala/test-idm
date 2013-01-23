@@ -40,7 +40,6 @@ import static org.junit.Assert.assertThat;
  */
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
-    private UserService userService;
     Cloud20TestHelper cloud20TestHelper = new Cloud20TestHelper();
 
     static boolean setupComplete = false;

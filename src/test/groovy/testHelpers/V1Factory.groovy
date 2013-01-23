@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.unboundid.ldif.LDIFEntrySource
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
@@ -28,7 +29,25 @@ class V1Factory {
     private static EMAIL = "email@example.com"
     private static PASSWORD = "Password1"
 
+    private static objFactory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory()
     private static V2Factory v2Factory = new V2Factory()
+
+    def createApiKeyCredentials() {
+        return createApiKeyCredentials("username", "apiKey")
+    }
+
+    def createApiKeyCredentials(String username, String apiKey) {
+        new ApiKeyCredentials().with {
+            it.username = username
+            it.apiKey = apiKey
+            return it
+        }
+    }
+
+    def createJAXBApiKeyCredentials(String username, String apiKey) {
+        def credentials = createApiKeyCredentials(username, apiKey)
+        return objFactory.createApiKeyCredentials(credentials)
+    }
 
     def createCapability() {
         return createCapability(ID, NAME)

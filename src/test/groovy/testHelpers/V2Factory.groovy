@@ -21,6 +21,7 @@ class V2Factory {
     private static NAME = "name"
     private static DESCRIPTION = "description"
     private static V1Factory v1Factory = new V1Factory()
+    private static objFactory = new org.openstack.docs.identity.api.v2.ObjectFactory()
 
     def createAuthenticationRequest() {
         return createAuthenticationRequest("tenantId", "tenantName", null, null)
@@ -97,6 +98,11 @@ class V2Factory {
             it.password = password
             return it
         }
+    }
+
+    def createJAXBPasswordCredentialsRequiredUsername(String username, String password) {
+        def credential = createPasswordCredentialsRequiredUsername(username, password)
+        return objFactory.createPasswordCredentials(credential)
     }
 
     def createRole() {

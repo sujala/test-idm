@@ -460,6 +460,31 @@ public class DefaultUserService implements UserService {
         this.validator = validator;
     }
 
+    @Override
+    public User getUserByUsernameForAuthentication(String username) {
+        User user = null;
+        try {
+            user = checkAndGetUserByName(username);
+        } catch (NotFoundException e) {
+            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
+            logger.warn(errorMessage);
+            throw new NotAuthenticatedException(errorMessage, e);
+        }
+        return user;
+    }
+
+    @Override
+    public User checkAndGetUserByName(String username) {
+        User user = userDao.getUserByUsername(username);
+
+        if (user == null) {
+            String errMsg = String.format("User '%s' not found.", username);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        return user;
+    }
 
     @Override
     public Applications getUserApplications(User user) {

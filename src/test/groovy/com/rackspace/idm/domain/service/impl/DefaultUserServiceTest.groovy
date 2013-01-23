@@ -10,9 +10,11 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.NotAuthenticatedException
+import com.rackspace.idm.exception.NotFoundException
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
-import spock.lang.Specification
+import testHelpers.RootServiceTest
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,25 +23,19 @@ import spock.lang.Specification
  * Time: 12:41 PM
  * To change this template use File | Settings | File Templates.
  */
-class DefaultUserServiceGroovyTest extends Specification{
-    @Shared DefaultUserService defaultUserService
-    @Shared EndpointService endpointService
-    @Shared TenantService tenantService
-    @Shared DefaultCloudRegionService cloudRegionService
-
-    @Shared Validator validator
-
-    @Shared Configuration config
-    @Shared UserDao userDao
-    @Shared ScopeAccessDao scopeAccessDao
+class DefaultUserServiceTest extends RootServiceTest {
+    @Shared DefaultUserService service
 
     def setupSpec(){
-        defaultUserService = new DefaultUserService()
+        service = new DefaultUserService()
+    }
+
+    def setup() {
+        setupMocks()
     }
 
     def "Add BaseUrl to user"() {
         given:
-        setupMocks()
         User user = new User()
         user.id = "1"
         user.nastId = "123"
@@ -59,7 +55,7 @@ class DefaultUserServiceGroovyTest extends Specification{
         tenantService.getTenant(_) >> tenant
 
         when:
-        defaultUserService.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser(1, user)
 
         then:
         1 * this.tenantService.updateTenant(_)
@@ -67,7 +63,6 @@ class DefaultUserServiceGroovyTest extends Specification{
 
     def "Add BaseUrl to user - dup baseUrl on tenant"() {
         given:
-        setupMocks()
         User user = new User()
         user.id = "1"
         user.nastId = "123"
@@ -87,7 +82,7 @@ class DefaultUserServiceGroovyTest extends Specification{
         tenantService.getTenant(_) >> tenant
 
         when:
-        defaultUserService.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser(1, user)
 
         then:
         thrown(BadRequestException)
@@ -95,7 +90,6 @@ class DefaultUserServiceGroovyTest extends Specification{
 
     def "Add BaseUrl to user - empty baseUrl on tenant"() {
         given:
-        setupMocks()
         User user = new User()
         user.nastId = "123"
 
@@ -112,7 +106,7 @@ class DefaultUserServiceGroovyTest extends Specification{
         tenantService.getTenant(_) >> tenant
 
         when:
-        defaultUserService.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser(1, user)
 
         then:
         1 * this.tenantService.updateTenant(_)
@@ -121,12 +115,11 @@ class DefaultUserServiceGroovyTest extends Specification{
 
     def "addUser keeps specified region for user"() {
         given:
-        setupMocks()
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("notthesame", "cloud", true)
         userDao.isUsernameUnique(_) >> true
 
         when:
-        defaultUserService.addUser(createUserEntity("region", true, "id", "email@email.com"))
+        service.addUser(createUserEntity("region", true, "id", "email@email.com"))
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -136,12 +129,11 @@ class DefaultUserServiceGroovyTest extends Specification{
 
     def "addUser adds region to user if not present"() {
         given:
-        setupMocks()
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
         userDao.isUsernameUnique(_) >> true
 
         when:
-        defaultUserService.addUser(createUserEntity(null, true, "id", "email@email.com"))
+        service.addUser(createUserEntity(null, true, "id", "email@email.com"))
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -149,22 +141,47 @@ class DefaultUserServiceGroovyTest extends Specification{
         }
     }
 
-    def setupMocks(){
-        endpointService = Mock()
-        tenantService = Mock()
-        cloudRegionService = Mock()
-        userDao = Mock()
-        config = Mock()
-        validator = Mock()
-        scopeAccessDao = Mock()
+    def "checkAndGetUserByName gets user"() {
+        when:
+        service.checkAndGetUserByName("username")
 
-        defaultUserService.endpointService = endpointService
-        defaultUserService.tenantService = tenantService
-        defaultUserService.userDao = userDao
-        defaultUserService.cloudRegionService = cloudRegionService
-        defaultUserService.config = config
-        defaultUserService.validator = validator
-        defaultUserService.scopeAccessDao = scopeAccessDao
+        then:
+        1 * userDao.getUserByUsername("username") >> entityFactory.createUser()
+    }
+
+    def "checkAndGetUserByName throws NotFoundException if the user does not exist"() {
+        when:
+        service.checkAndGetUserByName("username")
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "a user is returned by getUserByUsernameForAuthentication"() {
+        when:
+        def user = service.getUserByUsernameForAuthentication("username")
+
+        then:
+        1 * userDao.getUserByUsername("username") >> entityFactory.createUser()
+        user != null
+    }
+
+    def "NotAuthenticatedException is thrown if the user is not found"() {
+        when:
+        service.getUserByUsernameForAuthentication("username")
+
+        then:
+        thrown(NotAuthenticatedException)
+    }
+
+    def setupMocks() {
+        mockEndpointService(service)
+        mockTenantService(service)
+        mockCloudRegionService(service)
+        mockUserDao(service)
+        mockConfiguration(service)
+        mockValidator(service)
+        mockScopeAccessDao(service)
     }
 
     def createUserEntity(String region, boolean enabled, String id, String email) {

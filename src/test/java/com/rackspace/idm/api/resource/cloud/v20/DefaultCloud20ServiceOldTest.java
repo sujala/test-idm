@@ -813,18 +813,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void checkAndGetUserByName_userIsNull_throwsNotFoundException() throws Exception {
-        spy.checkAndGetUserByName(null);
-    }
-
-    @Test
-    public void checkAndGetUserByName_returnsCorrectUser() throws Exception {
-        when(userService.getUser("user")).thenReturn(user);
-        User checkUser = spy.checkAndGetUserByName("user");
-        assertThat("user name", checkUser.getUsername(), equalTo("id"));
-    }
-
-    @Test(expected = NotFoundException.class)
     public void checkAndGetSoftDeletedUser_userIsNull_throwsNotFoundException() throws Exception {
         spy.checkAndGetSoftDeletedUser(null);
     }
@@ -875,194 +863,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void authenticate_withPasswordCredentialsWithInvalidTenant_returnsResponseBuilder() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        passwordCredentialsRequiredUsername.setUsername("test_user");
-        passwordCredentialsRequiredUsername.setPassword("123");
-
-        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
-
-        authenticationRequest.setToken(null);
-        authenticationRequest.setCredential(credentialType);
-        authenticationRequest.setTenantId("tenantId");
-
-        Token token = new Token();
-        token.setId("token");
-
-        RoleList roleList = mock(RoleList.class);
-        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
-        userForAuthenticateResponse.setRoles(roleList);
-
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        authenticateResponse.setUser(userForAuthenticateResponse);
-
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
-        scopeAccess.setAccessTokenString("foo");
-
-        when(userService.getUser("test_user")).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(tenantService.hasTenantAccess(null, "tenantId")).thenReturn(false);
-        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response builder", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
-    }
-
-    @Test
-    public void authenticate_withApiKeyCredentialsWithInvalidTenant_callsValidateApiKeyCredentials() throws Exception {
-        ApiKeyCredentials keyCredentials = new ApiKeyCredentials();
-        keyCredentials.setUsername("test_user");
-        keyCredentials.setApiKey("123");
-        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, keyCredentials);
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setCredential(credentialType);
-        doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
-        spy.authenticate(null, authenticationRequest);
-        verify(validator20).validateApiKeyCredentials(keyCredentials);
-    }
-
-    @Test
-    public void authenticate_withApiKeyCredentialsWithInvalidTenant_returnsResponseBuilder() throws Exception {
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-
-        ApiKeyCredentials keyCredentials = new ApiKeyCredentials();
-        keyCredentials.setUsername("test_user");
-        keyCredentials.setApiKey("123");
-
-        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, keyCredentials);
-
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setToken(null);
-        authenticationRequest.setCredential(credentialType);
-        authenticationRequest.setTenantId("tenantId");
-
-        Token token = new Token();
-        token.setId("token");
-
-        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
-
-        RoleList roleList = mock(RoleList.class);
-        userForAuthenticateResponse.setRoles(roleList);
-
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        authenticateResponse.setUser(userForAuthenticateResponse);
-
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
-        scopeAccess.setAccessTokenString("foo");
-
-        when(userService.getUser("test_user")).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(tenantService.hasTenantAccess(null, "tenantId")).thenReturn(false);
-        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
-    }
-
-    @Test
-    public void authenticate_tokenNotNullAndIdNotBlankScopeAccessIsNull_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setTenantId("tenantId");
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotAuthenticatedException.class));
-    }
-
-    @Test
-    public void authenticate_tokenNotNullAndIsNotBlankTokenExpired_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        UserScopeAccess sa = new UserScopeAccess();
-        sa.setAccessTokenExp(new Date(1000, 1, 1));
-        tokenForAuthenticationRequest.setId("tokenId");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setTenantId("tenantId");
-        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(sa);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
-    }
-
-    @Test
-    public void authenticate_tokenNotNullAndIsNotBlankScopeAccessNotInstanceOfUserScopeAccess_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-        Response.ResponseBuilder responseBuilder= new ResponseBuilderImpl();
-
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setTenantId("tenantId");
-
-        RackerScopeAccess sa = new RackerScopeAccess();
-        sa.setAccessTokenExp(new Date(1000, 1, 1));
-
-        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(sa);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(), instanceOf(NotAuthenticatedException.class));
-    }
-
-    @Test
-    public void authenticate_tokenIsNullAndIsPasswordCredentials_callsScopeAccessService() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        passwordCredentialsRequiredUsername.setUsername("test_user");
-        passwordCredentialsRequiredUsername.setPassword("123");
-        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
-        authenticationRequest.setToken(null);
-        authenticationRequest.setCredential(credentialType);
-        doReturn(new User()).when(spy).checkAndGetUserByName("test_user");
-        spy.authenticate(null, authenticationRequest);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword("test_user", "123", null);
-    }
-
-    @Test
-    public void authenticate_tokenIsNullAndIsAPICredentials_callsScopeAccessService() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        apiKeyCredentials.setUsername("test_user");
-        apiKeyCredentials.setApiKey("123");
-        JAXBElement<? extends ApiKeyCredentials> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, apiKeyCredentials);
-        authenticationRequest.setToken(null);
-        authenticationRequest.setCredential(credentialType);
-        doReturn(new User()).when(spy).checkAndGetUserByName("test_user");
-        spy.authenticate(null, authenticationRequest);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
-    }
-
-    @Test
     public void authenticate_withTenantIdAndNullToken_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
@@ -1073,38 +873,6 @@ public class DefaultCloud20ServiceOldTest {
 
         assertThat("response builder", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
         assertThat("response message", argumentCaptor.getValue().getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
-    }
-
-    @Test
-    public void authenticate_withTenantIdAndBlankTokenId_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setTenantId("tenantId");
-        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
-        token.setId(" ");
-        authenticationRequest.setToken(token);
-
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response status", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void authenticate_withTenantIdAndNullTokenId_returnsBadRequestResponse() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setTenantId("tenantId");
-        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
-        token.setId(null);
-        authenticationRequest.setToken(token);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response status", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-
     }
 
     @Test
@@ -5164,12 +4932,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("Verify Tenant", testTenant.getName(), equalTo(test.getName()));
     }
 
-    @Test (expected = NotAuthenticatedException.class)
-    public void getUserByUsernameForAuthentication_throwsNotAuthenticatedException() throws Exception {
-        doThrow(new NotFoundException()).when(spy).checkAndGetUserByName("username");
-        spy.getUserByUsernameForAuthentication("username");
-    }
-
     @Test
     public void getUserByIdForAuthentication_succeeds_returnsUser() throws Exception {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
@@ -5180,67 +4942,6 @@ public class DefaultCloud20ServiceOldTest {
     public void getUserByIdForAuthentication_throwsNotAuthenticatedException() throws Exception {
         doThrow(new NotFoundException()).when(userService).checkAndGetUserById("id");
         spy.getUserByIdForAuthentication("id");
-    }
-
-    @Test
-    public void authenticate_scopeAccessInstanceOfImpersonatedAndTokenExpired_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthorizedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthorizedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        passwordCredentialsRequiredUsername.setPassword("password");
-        passwordCredentialsRequiredUsername.setUsername("username");
-
-        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
-
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setTenantName("tenantName");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setCredential(creds);
-
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-
-        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response code", spy.authenticate(httpHeaders, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthorizedException.class));
-    }
-
-    @Test
-    public void authenticate_scopeAccessWasImpersonatedScopeAccessThenCannotFindScopeAccessWithImpersonatingToken_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthenticatedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthenticatedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        passwordCredentialsRequiredUsername.setPassword("password");
-        passwordCredentialsRequiredUsername.setUsername("username");
-
-        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
-
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setTenantName("tenantName");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setCredential(creds);
-
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        impersonatedScopeAccess.setAccessTokenString("notExpired");
-        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
-
-        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
-        when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(null);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response code", spy.authenticate(httpHeaders, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
     }
 
     @Test

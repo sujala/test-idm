@@ -31,7 +31,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
-import lombok.Data;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -210,6 +209,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private AuthWithToken authWithToken;
+
+    @Autowired
+    private AuthWithPasswordCredentials authWithPasswordCredentials;
+
+    @Autowired
+    private AuthWithApiKeyCredentials authWithApiKeyCredentials;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -780,7 +785,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         try {
-            AuthReturnValues returnValues = new AuthReturnValues();
+            AuthResponseTuple authResponseTuple = new AuthResponseTuple();
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -792,53 +797,31 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(domain != null) {
                 return authenticateFederatedDomain(httpHeaders, authenticationRequest, domain);
             }
+
             if (authenticationRequest.getToken() != null) {
-                returnValues = authWithToken.authenticate(authenticationRequest);
+                authResponseTuple = authWithToken.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
-                authenticateWithPasswordCredentials(authenticationRequest, returnValues);
+                authResponseTuple = authWithPasswordCredentials.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-                authenticateWithApiKeyCredentials(authenticationRequest, returnValues);
+                authResponseTuple = authWithApiKeyCredentials.authenticate(authenticationRequest);
             }
-            if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantName())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + returnValues.getUser().getUsername() + "' (id: '" + returnValues.getUser().getId() + "')";
+
+            if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
+                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
-            if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantId())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + returnValues.getUser().getUsername() + "' (id: '" + returnValues.getUser().getId() + "')";
+            if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
+                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
 
-            AuthenticateResponse auth = buildAuthResponse(returnValues.getUsa(), returnValues.getImpsa(), returnValues.getUser(), authenticationRequest);
+            AuthenticateResponse auth = buildAuthResponse(authResponseTuple.getUserScopeAccess(), authResponseTuple.getImpersonatedScopeAccess(), authResponseTuple.getUser(), authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    private void authenticateWithApiKeyCredentials(AuthenticationRequest authenticationRequest, AuthReturnValues returnValues) {
-        ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
-        validator20.validateApiKeyCredentials(creds);
-        String username = creds.getUsername();
-        String key = creds.getApiKey();
-
-        returnValues.setUser(getUserByUsernameForAuthentication(username));
-
-        returnValues.setUsa(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId()));
-        //Check if authentication is within 12hrs of experation if so create a new one
-    }
-
-    private void authenticateWithPasswordCredentials(AuthenticationRequest authenticationRequest, AuthReturnValues returnValues) {
-        PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
-        //TODO username validation breaks validate call
-        validator20.validatePasswordCredentials(creds);
-        String username = creds.getUsername();
-        String password = creds.getPassword();
-
-        returnValues.setUser(getUserByUsernameForAuthentication(username));
-
-        returnValues.setUsa(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId()));
     }
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
@@ -888,18 +871,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         // removing serviceId from response for now
         auth = removeServiceIdFromAuthResponse(auth);
         return auth;
-    }
-
-    User getUserByUsernameForAuthentication(String username) {
-        User user = null;
-        try {
-            user = checkAndGetUserByName(username);
-        } catch (NotFoundException e) {
-            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
-            logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage, e);
-        }
-        return user;
     }
 
     User getUserByIdForAuthentication(String id) {
@@ -3222,18 +3193,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return sa;
-    }
-
-    User checkAndGetUserByName(String username) {
-        User user = this.userService.getUser(username);
-
-        if (user == null) {
-            String errMsg = String.format("User '%s' not found.", username);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        return user;
     }
 
     User checkAndGetSoftDeletedUser(String id) {

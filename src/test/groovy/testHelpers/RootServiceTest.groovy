@@ -21,6 +21,8 @@ import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithToken
 import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder
@@ -190,6 +192,8 @@ class RootServiceTest extends Specification {
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
     @Shared AuthWithToken authWithToken
+    @Shared AuthWithPasswordCredentials authWithPasswordCredentials
+    @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
 
     @Shared def jaxbMock
 
@@ -209,14 +213,14 @@ class RootServiceTest extends Specification {
     /*
         Mock Converters
     */
-    def mockAuthConverter(rootService) {
+    def mockAuthConverterCloudV20(service) {
         authConverter = Mock()
         authConverter.toAuthenticationResponse(_, _, _, _) >> v2Factory.createAuthenticateResponse()
         authConverter.toImpersonationResponse(_) >> v1Factory.createImpersonationResponse()
-        rootService.authConverterCloudV20 = authConverter
+        service.authConverterCloudV20 = authConverter
     }
 
-    def mockEndpointConverter(rootService) {
+    def mockEndpointConverter(service) {
         endpointConverter = Mock()
         endpointConverter.toCloudBaseUrl(_) >> entityFactory.createCloudBaseUrl()
         endpointConverter.toEndpoint(_) >> v2Factory.createEndpoint()
@@ -225,40 +229,40 @@ class RootServiceTest extends Specification {
         endpointConverter.toEndpointTemplate(_) >> v1Factory.createEndpointTemplate()
         endpointConverter.toEndpointTemplateList(_) >> v1Factory.createEndpointTemplateList()
         endpointConverter.toServiceCatalog(_) >> v2Factory.createServiceCatalog()
-        rootService.endpointConverterCloudV20 = endpointConverter
+        service.endpointConverterCloudV20 = endpointConverter
     }
 
-    def mockRoleConverter(rootService) {
+    def mockRoleConverter(service) {
         roleConverter = Mock()
         roleConverter.toRole(_) >> v2Factory.createRole()
         roleConverter.toRoleFromClientRole(_) >> v2Factory.createRole()
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
-        rootService.roleConverterCloudV20 = roleConverter
+        service.roleConverterCloudV20 = roleConverter
     }
 
-    def mockServiceConverter(rootService) {
+    def mockServiceConverter(service) {
         serviceConverter = Mock()
         serviceConverter.toService(_) >> v1Factory.createService()
         serviceConverter.toServiceList(_) >> v1Factory.createServiceList()
-        rootService.serviceConverterCloudV20 = serviceConverter
+        service.serviceConverterCloudV20 = serviceConverter
     }
 
-    def mockTenantConverter(rootService) {
+    def mockTenantConverter(service) {
         tenantConverter = Mock()
         tenantConverter.toTenant(_) >> v2Factory.createTenant()
         tenantConverter.toTenantDO(_) >> entityFactory.createTenant()
-        rootService.tenantConverterCloudV20 = tenantConverter
+        service.tenantConverterCloudV20 = tenantConverter
     }
 
-    def mockTokenConverter(rootService) {
+    def mockTokenConverter(service) {
         tokenConverter = Mock()
         tokenConverter.toToken(_) >> v2Factory.createToken()
         tokenConverter.toToken(_, _) >> v2Factory.createToken()
-        rootService.tokenConverterCloudV20 = tokenConverter
+        service.tokenConverterCloudV20 = tokenConverter
     }
 
-    def mockUserConverter(rootService) {
+    def mockUserConverter(service) {
         userConverter = Mock()
         userConverter.toUser(_) >> v2Factory.createUser()
         userConverter.toUserDO(_) >> entityFactory.createUser()
@@ -266,290 +270,290 @@ class RootServiceTest extends Specification {
         userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
         userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
         userConverter.toUserList(_) >> v2Factory.createUserList()
-        rootService.userConverterCloudV20 = userConverter
+        service.userConverterCloudV20 = userConverter
     }
 
-    def mockDomainConverter(rootService) {
+    def mockDomainConverter(service) {
         domainConverter = Mock()
         domainConverter.toDomain(_) >> v1Factory.createDomain()
         domainConverter.toDomainDO(_) >> entityFactory.createDomain()
-        rootService.domainConverterCloudV20 = domainConverter
+        service.domainConverterCloudV20 = domainConverter
     }
 
-    def mockDomainsConverter(rootService) {
+    def mockDomainsConverter(service) {
         domainsConverter = Mock()
         domainsConverter.toDomains(_) >> v1Factory.createDomains()
         domainsConverter.toDomainsDO(_) >> entityFactory.createDomains()
-        rootService.domainsConverterCloudV20 = domainsConverter
+        service.domainsConverterCloudV20 = domainsConverter
     }
 
-    def mockPolicyConverter(rootService) {
+    def mockPolicyConverter(service) {
         policyConverter = Mock()
         policyConverter.toPolicy(_) >> v1Factory.createPolicy()
         policyConverter.toPolicyDO(_) >> entityFactory.createPolicy()
         policyConverter.toPolicyForPolicies(_) >> v1Factory.createPolicy()
-        rootService.policyConverterCloudV20 = policyConverter
+        service.policyConverterCloudV20 = policyConverter
     }
 
-    def mockPoliciesConverter(rootService) {
+    def mockPoliciesConverter(service) {
         policiesConverter = Mock()
         policiesConverter.toPolicies(_) >> v1Factory.createPolicies()
         policiesConverter.toPoliciesDO(_) >> entityFactory.createPolicies()
-        rootService.policiesConverterCloudV20 = policiesConverter
+        service.policiesConverterCloudV20 = policiesConverter
     }
 
-    def mockCapabilityConverter(rootService) {
+    def mockCapabilityConverter(service) {
         capabilityConverter = Mock()
         capabilityConverter.fromCapability(_) >> entityFactory.createCapability()
         capabilityConverter.fromCapabilities(_) >> entityFactory.createCapabilities()
         capabilityConverter.toCapability(_) >> jaxbMock
         capabilityConverter.toCapabilities(_) >> jaxbMock
         capabilityConverter.toServiceApis(_) >> jaxbMock
-        rootService.capabilityConverterCloudV20 = capabilityConverter
+        service.capabilityConverterCloudV20 = capabilityConverter
     }
 
 
-    def mockRegionConverter(rootService) {
+    def mockRegionConverter(service) {
         regionConverter = Mock()
         regionConverter.fromRegion(_) >> entityFactory.createRegion()
         regionConverter.toRegion(_) >> jaxbMock
         regionConverter.toRegions(_) >> jaxbMock
-        rootService.regionConverterCloudV20 = regionConverter
+        service.regionConverterCloudV20 = regionConverter
     }
 
-    def mockQuestionConverter(rootService) {
+    def mockQuestionConverter(service) {
         questionConverter = Mock()
         questionConverter.fromQuestion(_) >> entityFactory.createQuestion()
         questionConverter.toQuestion(_) >> jaxbMock
         questionConverter.toQuestions(_) >> jaxbMock
-        rootService.questionConverter = questionConverter
+        service.questionConverter = questionConverter
     }
 
-    def mockSecretQAConverter(rootService) {
+    def mockSecretQAConverter(service) {
         secretQAConverter = Mock()
         secretQAConverter.fromSecretQA(_) >> entityFactory.createSecretQA()
         secretQAConverter.toSecretQA(_) >> jaxbMock
         secretQAConverter.toSecretQAs(_) >> jaxbMock
-        rootService.secretQAConverterCloudV20 = secretQAConverter
+        service.secretQAConverterCloudV20 = secretQAConverter
     }
 
     /*
         Mock Services
     */
 
-    def mockApplicationService(rootService) {
+    def mockApplicationService(service) {
         applicationService = Mock()
-        rootService.applicationService = applicationService
+        service.applicationService = applicationService
     }
 
-    def mockApiDocService(rootService) {
+    def mockApiDocService(service) {
         apiDocService = Mock()
-        rootService.apiDocService = apiDocService
+        service.apiDocService = apiDocService
     }
 
-    def mockDomainService(rootService) {
+    def mockDomainService(service) {
         domainService = Mock()
-        rootService.domainService = domainService
+        service.domainService = domainService
     }
 
-    def mockCustomerService(rootService) {
+    def mockCustomerService(service) {
         customerService = Mock()
-        rootService.customerService = customerService
+        service.customerService = customerService
     }
 
-    def mockCapabilityService(rootService) {
+    def mockCapabilityService(service) {
         capabilityService = Mock()
-        rootService.capabilityService = capabilityService
+        service.capabilityService = capabilityService
     }
 
-    def mockQuestionService(rootService) {
+    def mockQuestionService(service) {
         questionService = Mock()
-        rootService.questionService = questionService
+        service.questionService = questionService
     }
 
-    def mockScopeAccessService(rootService) {
+    def mockScopeAccessService(service) {
         scopeAccessService = Mock()
-        rootService.scopeAccessService = scopeAccessService
+        service.scopeAccessService = scopeAccessService
     }
 
-    def mockPasswordComplexityService(rootService) {
+    def mockPasswordComplexityService(service) {
         passwordComplexityService = Mock()
-        rootService.passwordComplexityService = passwordComplexityService
+        service.passwordComplexityService = passwordComplexityService
     }
 
-    def mockTenantService(rootService) {
+    def mockTenantService(service) {
         tenantService = Mock()
-        rootService.tenantService = tenantService
+        service.tenantService = tenantService
     }
 
-    def mockTokenService(rootService) {
+    def mockTokenService(service) {
         tokenService = Mock()
-        rootService.tokenService = tokenService
+        service.tokenService = tokenService
     }
 
-    def mockSecretQAService(rootService) {
+    def mockSecretQAService(service) {
         secretQAService = Mock()
-        rootService.secretQAService = secretQAService
+        service.secretQAService = secretQAService
     }
 
-    def mockEndpointService(rootService) {
+    def mockEndpointService(service) {
         endpointService = Mock()
-        rootService.endpointService = endpointService
+        service.endpointService = endpointService
     }
 
-    def mockAuthorizationService(rootService) {
+    def mockAuthorizationService(service) {
         authorizationService = Mock()
-        rootService.authorizationService = authorizationService
+        service.authorizationService = authorizationService
     }
 
-    def mockUserService(rootService) {
+    def mockUserService(service) {
         userService = Mock()
-        rootService.userService = userService
+        service.userService = userService
     }
 
-    def mockAuthenticationService(rootService) {
+    def mockAuthenticationService(service) {
         authenticationService = Mock()
-        rootService.authenticationService = authenticationService
+        service.authenticationService = authenticationService
     }
 
-    def mockGroupService(rootService) {
+    def mockGroupService(service) {
         groupService = Mock()
-        rootService.groupService = groupService
+        service.groupService = groupService
     }
 
-    def mockCloudRegionService(rootService) {
+    def mockCloudRegionService(service) {
         cloudRegionService = Mock()
-        rootService.cloudRegionService = cloudRegionService
+        service.cloudRegionService = cloudRegionService
     }
 
-    def mockDefaultCapabilityService(rootService) {
+    def mockDefaultCapabilityService(service) {
         defaultCapabilityService = Mock()
-        rootService.defaultCapabilityService = defaultCapabilityService
+        service.defaultCapabilityService = defaultCapabilityService
     }
 
-    def mockDefaultAuthorizationService(rootService) {
+    def mockDefaultAuthorizationService(service) {
         defaultAuthorizationService = Mock()
-        rootService.defaultAuthorizationService = defaultAuthorizationService
+        service.defaultAuthorizationService = defaultAuthorizationService
     }
 
-    def mockDefaultEndpointService(rootService) {
+    def mockDefaultEndpointService(service) {
         defaultEndpointService = Mock()
-        rootService.defaultEndpointService = defaultEndpointService
+        service.defaultEndpointService = defaultEndpointService
     }
 
-    def mockDefaultApiDocService(rootService) {
+    def mockDefaultApiDocService(service) {
         defaultApiDocService = Mock()
-        rootService.defaultApiDocService = defaultApiDocService
+        service.defaultApiDocService = defaultApiDocService
     }
 
-    def mockDefaultTenantService(rootService) {
+    def mockDefaultTenantService(service) {
         defaultTenantService = Mock()
-        rootService.defaultTenantService = defaultTenantService
+        service.defaultTenantService = defaultTenantService
     }
 
-    def mockDefaultGroupService(rootService) {
+    def mockDefaultGroupService(service) {
         defaultGroupService = Mock()
-        rootService.defaultGroupService = defaultGroupService
+        service.defaultGroupService = defaultGroupService
     }
 
-    def mockDefaultUserService(rootService) {
+    def mockDefaultUserService(service) {
         defaultUserService = Mock()
-        rootService.defaultUserService = defaultUserService
+        service.defaultUserService = defaultUserService
     }
 
-    def mockDefaultCustomerService(rootService) {
+    def mockDefaultCustomerService(service) {
         defaultCustomerService = Mock()
-        rootService.defaultCustomerService = defaultCustomerService
+        service.defaultCustomerService = defaultCustomerService
     }
 
-    def mockDefaultTokenService(rootService) {
+    def mockDefaultTokenService(service) {
         defaultTokenService = Mock()
-        rootService.defaultTokenService = defaultTokenService
+        service.defaultTokenService = defaultTokenService
     }
 
-    def mockDefaultSecretQAService(rootService) {
+    def mockDefaultSecretQAService(service) {
         defaultSecretQAService = Mock()
-        rootService.defaultSecretQAService = defaultSecretQAService
+        service.defaultSecretQAService = defaultSecretQAService
     }
 
-    def mockDefaultScopeAccessService(rootService) {
+    def mockDefaultScopeAccessService(service) {
         defaultScopeAccessService = Mock()
-        rootService.defaultScopeAccessService = defaultScopeAccessService
+        service.defaultScopeAccessService = defaultScopeAccessService
     }
 
-    def mockDefaultApplicationService(rootService) {
+    def mockDefaultApplicationService(service) {
         defaultApplicationService = Mock()
-        rootService.defaultApplicationService = defaultApplicationService
+        service.defaultApplicationService = defaultApplicationService
     }
 
-    def mockDefaultQuestionService(rootService) {
+    def mockDefaultQuestionService(service) {
         defaultQuestionService = Mock()
-        rootService.defaultQuestionService = defaultQuestionService
+        service.defaultQuestionService = defaultQuestionService
     }
 
-    def mockDefaultPasswordComplexityService(rootService) {
+    def mockDefaultPasswordComplexityService(service) {
         defaultPasswordComplexityService = Mock()
-        rootService.defaultPasswordComplexityService = defaultPasswordComplexityService
+        service.defaultPasswordComplexityService = defaultPasswordComplexityService
     }
 
-    def mockDefaultDomainService(rootService) {
+    def mockDefaultDomainService(service) {
         defaultDomainService = Mock()
-        rootService.defaultDomainService = defaultDomainService
+        service.defaultDomainService = defaultDomainService
     }
 
-    def mockDefaultCloudRegionService(rootService) {
+    def mockDefaultCloudRegionService(service) {
         defaultCloudRegionService = Mock()
-        rootService.defaultCloudRegionService = defaultCloudRegionService
+        service.defaultCloudRegionService = defaultCloudRegionService
     }
 
-    def mockDefaultAuthenticationService(rootService) {
+    def mockDefaultAuthenticationService(service) {
         defaultAuthenticationService = Mock()
-        rootService.defaultAuthenticationService = defaultAuthenticationService
+        service.defaultAuthenticationService = defaultAuthenticationService
     }
 
-    def mockDefaultPolicyService(rootService) {
+    def mockDefaultPolicyService(service) {
         defaultPolicyService = Mock()
-        rootService.defaultPolicyService = defaultPolicyService
+        service.defaultPolicyService = defaultPolicyService
     }
 
-    def mockPolicyService(rootService) {
+    def mockPolicyService(service) {
         policyService = Mock()
-        rootService.policyService = policyService
+        service.policyService = policyService
     }
 
-    def mockCloud11Service(rootService) {
+    def mockCloud11Service(service) {
         cloud11Service = Mock()
-        rootService.cloud11Service = cloud11Service
+        service.cloud11Service = cloud11Service
     }
 
-    def mockDelegateCloud11Service(rootService) {
+    def mockDelegateCloud11Service(service) {
         delegateCloud11Service = Mock()
-        rootService.delegateCloud11Service = delegateCloud11Service
+        service.delegateCloud11Service = delegateCloud11Service
     }
 
-    def mockDefaultCloud11Service(rootService) {
+    def mockDefaultCloud11Service(service) {
         defaultCloud11Service = Mock()
-        rootService.defaultCloud11Service = defaultCloud11Service
+        service.defaultCloud11Service = defaultCloud11Service
     }
 
-    def mockCloudMigrationService(rootService) {
+    def mockCloudMigrationService(service) {
         cloudMigrationService = Mock()
-        rootService.cloudMigrationService = cloudMigrationService
+        service.cloudMigrationService = cloudMigrationService
     }
 
-    def mockDefaultRegionService(rootService) {
+    def mockDefaultRegionService(service) {
         defaultRegionService = Mock()
-        rootService.defaultRegionService = defaultRegionService
+        service.defaultRegionService = defaultRegionService
     }
 
-    def mockDefaultCloud20Service(rootService) {
+    def mockDefaultCloud20Service(service) {
         defaultCloud20Service = Mock()
-        rootService.defaultCloud20Service = defaultCloud20Service
+        service.defaultCloud20Service = defaultCloud20Service
     }
 
-    def mockDelegateCloud20Service(rootService) {
+    def mockDelegateCloud20Service(service) {
         delegateCloud20Service = Mock()
-        rootService.delegateCloud20Service = delegateCloud20Service
+        service.delegateCloud20Service = delegateCloud20Service
     }
 
 
@@ -557,130 +561,140 @@ class RootServiceTest extends Specification {
         Mock Dao
     */
 
-    def mockScopeAccessDao(rootService) {
+    def mockScopeAccessDao(service) {
         scopeAccessDao = Mock()
-        rootService.scopeAccessDao = scopeAccessDao
+        service.scopeAccessDao = scopeAccessDao
     }
 
-    def mockUserDao(rootService) {
+    def mockUserDao(service) {
         userDao = Mock()
-        rootService.userDao = userDao
+        service.userDao = userDao
     }
 
-    def mockTenantDao(rootService) {
+    def mockTenantDao(service) {
         tenantDao = Mock()
-        rootService.tenantDao = tenantDao
+        service.tenantDao = tenantDao
     }
 
-    def mockEndpointDao(rootService) {
+    def mockEndpointDao(service) {
         endpointDao = Mock()
-        rootService.endpointDao = endpointDao
+        service.endpointDao = endpointDao
     }
 
-    def mockApplicationDao(rootService) {
+    def mockApplicationDao(service) {
         applicationDao = Mock()
-        rootService.applicationDao = applicationDao
+        service.applicationDao = applicationDao
     }
 
-    def mockTenantRoleDao(rootService) {
+    def mockTenantRoleDao(service) {
         tenantRoleDao = Mock()
-        rootService.tenantRoleDao = tenantRoleDao
+        service.tenantRoleDao = tenantRoleDao
     }
 
-    def mockCustomerDao(rootService) {
+    def mockCustomerDao(service) {
         customerDao = Mock()
-        rootService.customerDao = customerDao
+        service.customerDao = customerDao
     }
 
-    def mockApplicationRoleDao(rootService) {
+    def mockApplicationRoleDao(service) {
         applicationRoleDao = Mock()
-        rootService.applicationRoleDao = applicationRoleDao
+        service.applicationRoleDao = applicationRoleDao
     }
 
     /*
         Mock Builders
     */
-    def mockCloudGroupBuilder(rootService) {
+    def mockCloudGroupBuilder(service) {
         cloudGroupBuilder = Mock()
-        rootService.cloudGroupBuilder = cloudGroupBuilder
+        service.cloudGroupBuilder = cloudGroupBuilder
     }
 
-    def mockCloudKsGroupBuilder(rootService) {
+    def mockCloudKsGroupBuilder(service) {
         cloudKsGroupBuilder = Mock()
-        rootService.cloudKsGroupBuilder = cloudKsGroupBuilder
+        service.cloudKsGroupBuilder = cloudKsGroupBuilder
     }
 
     /*
         Mock Validators
     */
-    def mockValidator(rootService) {
+    def mockValidator(service) {
         validator = Mock()
-        rootService.validator = validator
+        service.validator = validator
     }
 
-    def mockValidator20(rootService) {
+    def mockValidator20(service) {
         validator20 = Mock()
-        rootService.validator20 = validator20
+        service.validator20 = validator20
     }
 
-    def mockPolicyValidator(rootService) {
+    def mockPolicyValidator(service) {
         policyValidator = Mock()
-        rootService.policyValidator = policyValidator
+        service.policyValidator = policyValidator
     }
 
-    def mockPrecedenceValidator(rootService) {
+    def mockPrecedenceValidator(service) {
         precedenceValidator = Mock()
-        rootService.precedenceValidator = precedenceValidator
+        service.precedenceValidator = precedenceValidator
     }
 
     /*
         Paginator Mocks
     */
 
-    def mockUserPaginator(rootService) {
+    def mockUserPaginator(service) {
         userPaginator = Mock()
-        rootService.userPaginator = userPaginator
+        service.userPaginator = userPaginator
     }
 
-    def mockDomainPaginator(rootService) {
+    def mockDomainPaginator(service) {
         domainPaginator = Mock()
-        rootService.domainPaginator = domainPaginator
+        service.domainPaginator = domainPaginator
     }
 
-    def mockApplicationRolePaginator(rootService) {
+    def mockApplicationRolePaginator(service) {
         applicationRolePaginator = Mock()
-        rootService.applicationRolePaginator = applicationRolePaginator
+        service.applicationRolePaginator = applicationRolePaginator
     }
 
-    def mockTenantRolePaginator(rootService) {
+    def mockTenantRolePaginator(service) {
         tenantRolePaginator = Mock()
-        rootService.tenantRolePaginator = tenantRolePaginator
+        service.tenantRolePaginator = tenantRolePaginator
     }
 
     /*
         misc. mocks
     */
 
-    def mockAtomHopperClient(rootService) {
+    def mockAtomHopperClient(service) {
         atomHopperClient = Mock()
-        rootService.atomHopperClient = atomHopperClient
+        service.atomHopperClient = atomHopperClient
     }
 
-    def mockConfiguration(rootService) {
+    def mockConfiguration(service) {
         config = Mock()
-        rootService.config = config
+        service.config = config
     }
 
-    def mockAuthHeaderHelper(rootService) {
+    def mockAuthHeaderHelper(service) {
         authHeaderHelper = Mock()
-        rootService.authHeaderHelper = authHeaderHelper
+        service.authHeaderHelper = authHeaderHelper
     }
 
-    def mockAuthWithToken(rootService) {
+    def mockAuthWithToken(service) {
         authWithToken = Mock()
-        rootService.authWithToken = authWithToken
+        service.authWithToken = authWithToken
     }
 
+    def mockAuthWithPasswordCredentials(service) {
+        authWithPasswordCredentials = Mock()
+        service.authWithPasswordCredentials = authWithPasswordCredentials
+    }
+
+    def mockAuthWithApiKeyCredentials(service) {
+        authWithApiKeyCredentials = Mock()
+        service.authWithApiKeyCredentials = authWithApiKeyCredentials 
+    }
+    
     def uriInfo() {
         return uriInfo("http://absolute.path/to/resource")
     }

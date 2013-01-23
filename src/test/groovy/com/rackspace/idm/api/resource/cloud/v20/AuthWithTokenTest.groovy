@@ -111,8 +111,8 @@ class AuthWithTokenTest extends RootServiceTest {
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken("impToken") >> scopeAccess
         result != null
-        result.impsa == impScopeAccess
-        result.usa == scopeAccess
+        result.impersonatedScopeAccess == impScopeAccess
+        result.userScopeAccess == scopeAccess
         result.user == user
     }
 
@@ -154,8 +154,8 @@ class AuthWithTokenTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken("tokenId") >> scopeAccess
         1 * userService.checkAndGetUserById(_) >> user
         result != null
-        result.impsa == null
-        result.usa == scopeAccess
+        result.impersonatedScopeAccess == null
+        result.userScopeAccess == scopeAccess
         result.user == user
     }
 

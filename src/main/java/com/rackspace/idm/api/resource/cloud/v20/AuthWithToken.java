@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.v20.AuthReturnValues;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -31,7 +30,7 @@ public class AuthWithToken {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    AuthReturnValues authenticate(AuthenticationRequest authenticationRequest) {
+    AuthResponseTuple authenticate(AuthenticationRequest authenticationRequest) {
         if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
             throw new BadRequestException("Invalid Token Id");
         }
@@ -39,12 +38,12 @@ public class AuthWithToken {
             throw new BadRequestException("Invalid request. Specify tenantId or tenantName.");
         }
 
-        AuthReturnValues returnValues = new AuthReturnValues();
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
         ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
 
         // Check for impersonated token
         if (sa instanceof ImpersonatedScopeAccess) {
-            returnValues.setImpsa(sa);
+            authResponseTuple.setImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
             // Check Expiration of impersonated token
             if (sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotAuthorizedException("Token not authenticated");
@@ -59,24 +58,24 @@ public class AuthWithToken {
             logger.warn(errMsg);
             throw new NotAuthenticatedException(errMsg);
         }
-        returnValues.setUsa((UserScopeAccess) sa);
+        authResponseTuple.setUserScopeAccess((UserScopeAccess) sa);
 
-        returnValues.setUser(getUserByIdForAuthentication(returnValues.getUsa().getUserRsId()));
+        authResponseTuple.setUser(getUserByIdForAuthentication(authResponseTuple.getUserScopeAccess().getUserRsId()));
 
-        scopeAccessService.updateExpiredUserScopeAccess(returnValues.getUser().getUniqueId(), sa.getClientId());
+        scopeAccessService.updateExpiredUserScopeAccess(authResponseTuple.getUser().getUniqueId(), sa.getClientId());
 
-        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantName())) {
+        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
             String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
             logger.warn(errMsg);
             throw new NotAuthenticatedException(errMsg);
         }
-        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(returnValues.getUser(), authenticationRequest.getTenantId())) {
+        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
             String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantId() + "'";
             logger.warn(errMsg);
             throw new NotAuthenticatedException(errMsg);
         }
 
-        return returnValues;
+        return authResponseTuple;
     }
 
     User getUserByIdForAuthentication(String id) {
