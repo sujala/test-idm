@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.unboundid.ldap.sdk.Filter;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
@@ -37,6 +38,7 @@ public class UserServiceTests {
     ScopeAccessDao mockScopeAccessObjectDao;
     PasswordComplexityService mockPasswordComplexityService;
     CloudRegionService cloudRegionService;
+    TenantDao tenantDao;
     Validator validator = new Validator();
 
     String customerId = "123456";
@@ -82,6 +84,7 @@ public class UserServiceTests {
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         cloudRegionService = EasyMock.createMock(DefaultCloudRegionService.class);
         validator = EasyMock.createMock(Validator.class);
+        tenantDao = EasyMock.createMock(TenantDao.class);
 
         
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
@@ -96,6 +99,7 @@ public class UserServiceTests {
         userService.setPasswordComplexityService(mockPasswordComplexityService);
         userService.setCloudRegionService(cloudRegionService);
         userService.setValidator(validator);
+        userService.setTenantDao(tenantDao);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
@@ -216,11 +220,20 @@ public class UserServiceTests {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("someName");
+        tenantRole.setUserId("1");
+        tenantRoles.add(tenantRole);
+        List<Filter> filterList = new ArrayList<Filter>();
+        filterList.add(Filter.createEqualityFilter("rsId", "1"));
 
-        EasyMock.expect(mockUserDao.getUsersByNastId(nastId)).andReturn(users);
+        EasyMock.expect(mockUserDao.getUsers(filterList)).andReturn(users);
         EasyMock.replay(mockUserDao);
+        EasyMock.expect(tenantDao.getAllTenantRolesForTenant("nastId")).andReturn(tenantRoles);
+        EasyMock.replay(tenantDao);
 
-        final User retrievedUser = userService.getUserByNastId(nastId);
+        final User retrievedUser = userService.getUserByTenantId(nastId);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
@@ -246,11 +259,20 @@ public class UserServiceTests {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("someName");
+        tenantRole.setUserId("1");
+        tenantRoles.add(tenantRole);
+        List<Filter> filterList = new ArrayList<Filter>();
+        filterList.add(Filter.createEqualityFilter("rsId", "1"));
 
-        EasyMock.expect(mockUserDao.getUsersByMossoId(mossoId)).andReturn(users);
+        EasyMock.expect(mockUserDao.getUsers(filterList)).andReturn(users);
         EasyMock.replay(mockUserDao);
+        EasyMock.expect(tenantDao.getAllTenantRolesForTenant("6676")).andReturn(tenantRoles);
+        EasyMock.replay(tenantDao);
 
-        final User retrievedUser = userService.getUserByMossoId(mossoId);
+        final User retrievedUser = userService.getUserByTenantId(String.valueOf(mossoId));
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);

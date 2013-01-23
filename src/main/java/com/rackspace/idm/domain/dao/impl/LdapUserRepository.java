@@ -301,43 +301,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public Users getUsersByMossoId(int mossoId) {
-        getLogger().debug("Doing search for mossoId " + mossoId);
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
-    }
-
-    @Override
-    public Users getUsersByNastId(String nastId) {
-        getLogger().debug("Doing search for nastId " + nastId);
-        if (StringUtils.isBlank(nastId)) {
-            getLogger().error("Null or Empty nastId parameter");
-            getLogger().info("Invalid nastId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAST_ID, nastId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
-    }
-
-    @Override
     public Users getUsersByDomainId(String domainId) {
         getLogger().debug("Doing search for domainId " + domainId);
         if (StringUtils.isBlank(domainId)) {
@@ -427,7 +390,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public Users getUsers(List<Filter> filters) {
         getLogger().debug("Doing search for users");
 
-        if(filters == null){
+        if(filters == null || filters.size() == 0){
            return new Users();
         }
 

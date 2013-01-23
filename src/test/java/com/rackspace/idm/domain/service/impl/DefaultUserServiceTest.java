@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
+import com.unboundid.ldap.sdk.Filter;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -298,40 +299,6 @@ public class DefaultUserServiceTest {
     }
 
     @Test
-    public void validateMossoId_callsUserDAO_getUserByMossoId() throws Exception {
-        defaultUserService.validateMossoId(1);
-        verify(userDao).getUsersByMossoId(1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateMossoId_withExistingUserWithMossoId_throwsBadRequestException() throws Exception {
-        Users users = new Users();
-        List<User> userList = new ArrayList<User>();
-        User testUser = new User("testUser");
-        userList.add(testUser);
-        users.setUsers(userList);
-        testUser.setMossoId(1);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        defaultUserService.validateMossoId(1);
-    }
-
-    @Test
-    public void validateMossoId_withExistingUserWithMossoId_throwsBadRequestException_returnsCorrectMessage() throws Exception {
-        Users users = new Users();
-        List<User> userList = new ArrayList<User>();
-        User testUser = new User("testUser");
-        userList.add(testUser);
-        users.setUsers(userList);
-        testUser.setMossoId(1);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        try{
-            defaultUserService.validateMossoId(1);
-        }catch (Exception e){
-            assertThat("exception message", e.getMessage(), Matchers.equalTo("User with Mosso Account ID: 1 already exists."));
-        }
-    }
-
-    @Test
     public void checkAndGetUserById_userExists_returnsUser() throws Exception {
         User user = new User();
         doReturn(user).when(spy).getUserById("id");
@@ -388,7 +355,7 @@ public class DefaultUserServiceTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
+        when(userDao.getUsers(anyList())).thenReturn(users);
         defaultUserService.authenticateWithMossoIdAndApiKey(1, "apiKey");
         verify(userDao).authenticateByAPIKey("username", "apiKey");
     }
@@ -401,36 +368,9 @@ public class DefaultUserServiceTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
+        when(userDao.getUsers(anyList())).thenReturn(users);
         when(userDao.authenticateByAPIKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(user, true));
         UserAuthenticationResult result = defaultUserService.authenticateWithMossoIdAndApiKey(1, "apiKey");
-        assertThat("username", result.getUser().getUsername(), equalTo("username"));
-    }
-
-    @Test
-    public void authenticateWithNastIdAndApiKey_callsUserDao_authenticateByAPIKey() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        List<User> userList = new ArrayList<User>();
-        userList.add(user);
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByNastId("nastId")).thenReturn(users);
-        defaultUserService.authenticateWithNastIdAndApiKey("nastId", "apiKey");
-        verify(userDao).authenticateByAPIKey("username", "apiKey");
-    }
-
-    @Test
-    public void authenticateWithNastIdAndApiKey_returns() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        List<User> userList = new ArrayList<User>();
-        userList.add(user);
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByNastId("nastId")).thenReturn(users);
-        when(userDao.authenticateByAPIKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(user, true));
-        UserAuthenticationResult result = defaultUserService.authenticateWithNastIdAndApiKey("nastId", "apiKey");
         assertThat("username", result.getUser().getUsername(), equalTo("username"));
     }
 
@@ -548,16 +488,6 @@ public class DefaultUserServiceTest {
     }
 
     @Test
-    public void getUserByMossoId_usersSizeIsZero_returnsNull() throws Exception {
-        List<User> userList = new ArrayList<User>();
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        User result = defaultUserService.getUserByMossoId(1);
-        assertThat("user", result, equalTo(null));
-    }
-
-    @Test
     public void getUserByMossoId_notAuthorizedUserAdmin_returnsNull() throws Exception {
         User user = new User();
         List<User> userList = new ArrayList<User>();
@@ -565,9 +495,9 @@ public class DefaultUserServiceTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
+        when(userDao.getUsers(anyList())).thenReturn(users);
         when(authorizationService.authorizeCloudUserAdmin(null)).thenReturn(false);
-        User result = defaultUserService.getUserByMossoId(1);
+        User result = defaultUserService.getUserByTenantId("1");
         assertThat("user", result, equalTo(null));
     }
 
@@ -580,34 +510,17 @@ public class DefaultUserServiceTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
+        when(userDao.getUsers(anyList())).thenReturn(users);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
-        User result = defaultUserService.getUserByMossoId(1);
+        User result = defaultUserService.getUserByTenantId("1");
         assertThat("user", result, equalTo(user));
     }
 
     @Test
     public void getUsersByMossoId_callsUserDao_getUsersByMossoId() throws Exception {
-        defaultUserService.getUsersByMossoId(1);
-        verify(userDao).getUsersByMossoId(1);
-    }
-
-    @Test
-    public void getUsersByMossoId_returnUsers() throws Exception {
-        Users users = new Users();
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        Users result = defaultUserService.getUsersByMossoId(1);
-        assertThat("users", result, equalTo(users));
-    }
-
-    @Test
-    public void getUserByNastId_usersSizeIsZero_returnsNull() throws Exception {
-        List<User> userList = new ArrayList<User>();
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByNastId("nastId")).thenReturn(users);
-        User result = defaultUserService.getUserByNastId("nastId");
-        assertThat("user", result, equalTo(null));
+        defaultUserService.getUsersByTenantId("1");
+        List<com.unboundid.ldap.sdk.Filter> filters = new ArrayList<Filter>();
+        verify(userDao).getUsers(filters);
     }
 
     @Test
@@ -618,24 +531,10 @@ public class DefaultUserServiceTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userDao.getUsersByNastId("nastId")).thenReturn(users);
+        when(userDao.getUsers(anyList())).thenReturn(users);
         when(authorizationService.authorizeCloudUserAdmin(null)).thenReturn(false);
-        User result = defaultUserService.getUserByNastId("nastId");
+        User result = defaultUserService.getUserByTenantId("nastId");
         assertThat("user", result, equalTo(null));
-    }
-
-    @Test
-    public void getUserByNastId_authorizedUserAdmin_returnAdminUser() throws Exception {
-        User user = new User();
-        List<User> userList = new ArrayList<User>();
-        userList.add(user);
-        userList.add(user);
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByNastId("nastId")).thenReturn(users);
-        when(authorizationService.authorizeCloudUserAdmin(null)).thenReturn(true);
-        User result = defaultUserService.getUserByNastId("nastId");
-        assertThat("user", result, equalTo(user));
     }
 
     @Test
@@ -838,15 +737,6 @@ public class DefaultUserServiceTest {
         User user = new User();
         user.setEmail("badEmail");
         defaultUserService.addUser(user);
-    }
-
-    @Test
-    public void validateMossoId_userSizeIsZero_doesNothing() throws Exception {
-        List<User> userList = new ArrayList<User>();
-        Users users = new Users();
-        users.setUsers(userList);
-        when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        defaultUserService.validateMossoId(1);
     }
 
     @Test

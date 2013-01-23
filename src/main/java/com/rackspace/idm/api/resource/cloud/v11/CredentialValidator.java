@@ -49,7 +49,7 @@ public class CredentialValidator {
             throw new BadRequestException("Expecting nastId");
         }
 
-        User user = userService.getUserByNastId(nastId);
+        User user = userService.getUserByTenantId(nastId);
 
         if(user == null) {
             throw new NotAuthenticatedException("NastId or api key is invalid.");
@@ -98,7 +98,7 @@ public class CredentialValidator {
     public void validateMossoCredentials(MossoCredentials credential, UserService userService){
         final int mossoId = credential.getMossoId();
         final String key = credential.getKey();
-        User user = userService.getUserByMossoId(mossoId);
+        User user = userService.getUserByTenantId(String.valueOf(mossoId));
 
         if(StringUtils.isBlank(key)){
             throw new BadRequestException("Expecting apiKey");

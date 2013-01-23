@@ -53,6 +53,13 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
         users.getUsers() == null
     }
 
+    def "GET - user w/ a list of filters - list is zero" () {
+        when:
+        Users users = ldapUserRepository.getUsers(new ArrayList<Filter>())
+        then:
+        users.getUsers() == null
+    }
+
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
             it.id = id

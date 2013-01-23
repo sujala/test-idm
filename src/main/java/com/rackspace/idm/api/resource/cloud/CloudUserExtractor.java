@@ -95,13 +95,13 @@ public class CloudUserExtractor {
             if (key == null) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso key"));
             }
-            user = userService.getUserByMossoId(mossoId);
+            user = userService.getUserByTenantId(String.valueOf(mossoId));
         } else if (credentials.getValue() instanceof NastCredentials) {
             String nastId = ((NastCredentials) credentials.getValue()).getNastId();
             if (StringUtils.isBlank(nastId)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id"));
             }
-            user = userService.getUserByNastId(nastId);
+            user = userService.getUserByTenantId(nastId);
         }
         return user;
     }

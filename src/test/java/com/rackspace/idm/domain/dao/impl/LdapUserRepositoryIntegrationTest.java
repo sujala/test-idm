@@ -163,27 +163,6 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
     }
 
     @Test
-    public void shouldFindOneUsersThatExistsByNastId() {
-        User newUser = addNewTestUser();
-        Users users = repo.getUsersByNastId("TESTNASTID");
-        Assert.assertNotNull(users);
-        Assert.assertEquals("deleteme", users.getUsers().get(0).getUsername());
-
-        repo.deleteUser(newUser.getUsername());
-    }
-
-    @Ignore
-    @Test
-    public void shouldFindOneUserThatExistsByMossoId() {
-        User newUser = addNewTestUser();
-        Users users = repo.getUsersByMossoId(88888);
-        Assert.assertNotNull(users);
-        Assert.assertEquals("deleteme", users.getUsers().get(0).getUsername());
-
-        repo.deleteUser(newUser.getUsername());
-    }
-
-    @Test
     public void shouldFindOneUserThatExistsByRPN() {
         User newUser = addNewTestUser();
         User user = repo.getUserByRPN(newUser.getPersonId());
@@ -191,18 +170,6 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         Assert.assertEquals("deleteme", user.getUsername());
 
         repo.deleteUser(newUser.getUsername());
-    }
-
-    @Test
-    public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
-        Users users = repo.getUsersByNastId("NOTAREALNASTID");
-        Assert.assertEquals(0, users.getUsers().size());
-    }
-
-    @Test
-    public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
-        Users users = repo.getUsersByMossoId(-1);
-        Assert.assertEquals(0, users.getUsers().size());
     }
 
     @Test

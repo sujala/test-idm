@@ -191,7 +191,7 @@ public class CloudUserExtractorTest {
         mossoCredentials.setKey("mossoKey");
         JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""), Credentials.class, MossoCredentials.class, mossoCredentials);
         cloudUserExtractor.getUserByCredentialType(jaxbElement);
-        verify(userService).getUserByMossoId(123456);
+        verify(userService).getUserByTenantId("123456");
     }
 
     @Test
@@ -213,7 +213,7 @@ public class CloudUserExtractorTest {
         nastCredentials.setKey("nastKey");
         JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""), Credentials.class, NastCredentials.class, nastCredentials);
         cloudUserExtractor.getUserByCredentialType(jaxbElement);
-        verify(userService).getUserByNastId("nastId");
+        verify(userService).getUserByTenantId("nastId");
     }
 
     @Test
