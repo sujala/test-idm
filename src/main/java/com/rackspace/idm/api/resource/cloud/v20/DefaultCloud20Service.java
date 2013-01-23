@@ -763,7 +763,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         usa.setAccessTokenExp(rsa.getAccessTokenExp());
         usa.setAccessTokenString(rsa.getAccessTokenString());
 
-        List<TenantRole> roleList = tenantService.getTenantRolesForScopeAccess(rsa);
+        List<TenantRole> roleList = tenantService.getTenantRolesForUser(user);
         //Add Racker eDir Roles
         List<String> rackerRoles = userService.getRackerRoles(user.getId());
         if (rackerRoles != null) {
@@ -834,7 +834,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         //filter endpoints by tenant
         String tenantId = authenticationRequest.getTenantId();
         String tenantName = authenticationRequest.getTenantName();
-        List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(userScopeAccess);
+        List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
 
         org.openstack.docs.identity.api.v2.Token convertedToken = null;
         if (impersonatedScopeAccess != null) {
@@ -892,10 +892,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             ScopeAccess sa = checkAndGetToken(tokenId);
+            User user = userService.getUserByAuthToken(tokenId);
 
             if (!StringUtils.isBlank(tenantId)) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
-                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
+                List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
                 if (!tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
                     throw new NotFoundException();
                 }

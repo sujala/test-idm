@@ -1620,15 +1620,27 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         thrown(BadRequestException)
     }
 
+    def "authenticateFederatedDomain throws BadRequest if domain is invalid"() {
+        given:
+        def authRequest = createAuthenticationRequest(false)
+        def domain = v1Factory.createDomain("id", "notRACKSPACE", null, true)
+
+        when:
+        service.authenticateFederatedDomain(headers, authRequest, domain)
+
+        then:
+        thrown(BadRequestException)
+    }
+
     def "authenticateFederatedDomain handles authentication with password credentials"() {
         given:
         mockDomainConverter(service)
         mockAuthConverterCloudV20(service)
+
         def authRequest = createAuthenticationRequest(false)
         def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
         def racker = entityFactory.createRacker()
-
-        scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+        def authResult = entityFactory.createUserAuthenticationResult(racker, true)
 
         when:
         service.authenticateFederatedDomain(headers, authRequest, domain)
@@ -1636,18 +1648,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * validator20.validatePasswordCredentials(_)
         1 * domainConverter.toDomainDO(domain)
-        1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> entityFactory.createUserAuthenticationResult(racker, true)
+        1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+        1 * tenantService.getTenantRolesForUser(racker)
     }
 
     def "authenticateFederatedDomain handles authentication with RSA credentials"() {
         given:
         mockDomainConverter(service)
         mockAuthConverterCloudV20(service)
+
         def authRequest = createAuthenticationRequest(true)
         def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
         def racker = entityFactory.createRacker()
-
-        scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+        def authResult = entityFactory.createUserAuthenticationResult(racker, true)
 
         when:
         service.authenticateFederatedDomain(headers, authRequest, domain)
@@ -1655,7 +1669,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * validator20.validateUsername(_)
         1 * domainConverter.toDomainDO(domain)
-        1 * authenticationService.authenticateDomainRSA(_, _, _) >> entityFactory.createUserAuthenticationResult(racker, true)
+        1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
+        1 * tenantService.getTenantRolesForUser(racker)
     }
 
     def "getUserCredential verifies access token"() {
@@ -2209,6 +2225,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         res3.status == 200
     }
 
+    def "buildAuthResponse gets User's tenantRoles from the User"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        mockTokenConverter(service)
+
+        def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
+
+        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+
+        when:
+        service.buildAuthResponse(userScopeAccess, null, user, authRequest)
+
+        then:
+        1 * tenantService.getTenantRolesForUser(user)
+    }
+
+    def "checkToken verifies accessLevel"() {
+        given:
+        def scopeAccessOne = createUserScopeAccess()
+        def scopeAccessTwo = createUserScopeAccess()
+
+        scopeAccessService.getScopeAccessByAccessToken(authToken) >> scopeAccessOne
+        scopeAccessService.getScopeAccessByAccessToken("differentToken") >> scopeAccessTwo
+        scopeAccessService.getScopeAccessByAccessToken("tokenId") >> null
+
+        when:
+        def notAuthedResponse = service.checkToken(headers, "", "", "tenantId").build()
+        def forbiddenResponse = service.checkToken(headers, authToken, "tokenId", "tenantId").build()
+        def notFoundResponse = service.checkToken(headers, "differentToken", "tokenId", "tenantId").build()
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(scopeAccessOne) >> { throw new ForbiddenException() }
+
+        notAuthedResponse.status == 401
+        forbiddenResponse.status == 403
+        notFoundResponse.status == 404
+    }
+
+    def "checkToken gets user and TenantRoles from that user"() {
+        given:
+        allowAccess()
+
+        def user = entityFactory.createUser()
+
+        when:
+        def response = service.checkToken(headers, authToken, "tokenId", "tenantId").build()
+
+        then:
+        1 * userService.getUserByAuthToken("tokenId") >> user
+        1 * tenantService.getTenantRolesForUser(user) >> [].asList()
+        1 * tenantService.isTenantIdContainedInTenantRoles(_, _)
+        response.status == 404
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
@@ -2244,9 +2316,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def allowAccess() {
-        scopeAccessMock = Mock()
-        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
-        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccessMock
+        allowAccess(createUserScopeAccess())
+    }
+
+    def allowAccess(scopeAccess) {
+        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
     }
 
     def createLdapEntry() {

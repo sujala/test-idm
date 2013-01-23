@@ -2170,13 +2170,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void checkToken_belongsToNotBlank_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
-        doReturn(null).when(spy).checkAndGetToken("tokenId");
-        spy.checkToken(null, authToken, "tokenId", "belongsTo");
-        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void checkToken_tenantIdNotBlank_callsIsTenantIdContainedInTenantRoles() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         List<TenantRole> roles = new ArrayList<TenantRole>();
