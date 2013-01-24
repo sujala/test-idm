@@ -50,6 +50,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     private static final String OBFUSCATED_TOKEN = "XXXX";
     private static final String CLOUD_AUTH = "CLOUD_AUTH";
     private static final String IDENTITY = "IDENTITY";
+    private static final String HASH_PREFIX = "hash#";
 
     public void log(Long startTime, String authToken, String basicAuth, String host, String remoteHost, String userAgent, String method, String path, int status, String requestBody, String requestType, String responseBody, String responseType) {
         long duration = new Date().getTime() - startTime;
@@ -240,7 +241,7 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         if (authToken != null) {
             try {
                 InputStream is = new ByteArrayInputStream( authToken.getBytes());
-                return DigestUtils.md5Hex(is);
+                return HASH_PREFIX + DigestUtils.md5Hex(is);
             } catch (UnsupportedEncodingException e) {
             } catch (IOException e) {
             }

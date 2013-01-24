@@ -276,6 +276,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
         then:
         result1 != token
+        result1.startsWith(analyticsLogger.HASH_PREFIX)
         result1 == result2
     }
 
