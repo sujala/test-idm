@@ -17,7 +17,7 @@ public interface TenantService {
     List<Tenant> getTenants();
     
     void addTenantRoleToUser(User user, TenantRole role);
-    void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser);
+    void addCallerTenantRolesToUser(User caller, User user);
     void addTenantRoleToClient(Application client, TenantRole role);
     void deleteTenantRoleForUser(User user, TenantRole role);
     void deleteTenantRoleForApplication(Application application, TenantRole role);

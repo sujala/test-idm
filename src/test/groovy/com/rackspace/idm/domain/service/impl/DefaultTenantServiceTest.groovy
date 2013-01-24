@@ -69,4 +69,41 @@ class DefaultTenantServiceTest extends RootServiceTest {
         result2 == true
         result3 == true
     }
+
+    def "addCallerTenantRolesToUser gets callers tenant roles by userObject"() {
+        given:
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+
+        when:
+        service.addCallerTenantRolesToUser(caller, user)
+
+        then:
+        1 * tenantDao.getTenantRolesForUser(caller) >> [].asList()
+    }
+
+    def "addCallerTenantRolesToUser verifies that role to be added is not an identity:* role"() {
+        given:
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+        def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
+
+        tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
+        applicationDao.getClientRoleById(_) >> entityFactory.createClientRole()
+        applicationDao.getClientByClientId(_) >> entityFactory.createApplication()
+        applicationDao.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
+
+        when:
+        service.addCallerTenantRolesToUser(caller, user)
+
+        then:
+        1 * config.getString("cloudAuth.adminRole") >> ""
+        1 * config.getString("cloudAuth.serviceAdminRole") >> ""
+        1 * config.getString("cloudAuth.userAdminRole") >> ""
+        1 * config.getString("cloudAuth.userRole") >> ""
+
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(user, _)
+    }
 }
+

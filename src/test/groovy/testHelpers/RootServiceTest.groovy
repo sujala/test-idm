@@ -694,6 +694,10 @@ class RootServiceTest extends Specification {
         authWithApiKeyCredentials = Mock()
         service.authWithApiKeyCredentials = authWithApiKeyCredentials 
     }
+
+    /*
+        Miscellaneous methods
+     */
     
     def uriInfo() {
         return uriInfo("http://absolute.path/to/resource")
@@ -817,5 +821,21 @@ class RootServiceTest extends Specification {
 
     def createEntryForScopeAccess(String dn) {
         return new ReadOnlyEntry(dn)
+    }
+
+    def allowUserAccess() {
+        allowAccess(createUserScopeAccess())
+    }
+
+    def allowRackerAccess() {
+        allowAccess(createRackerScopeAcccss())
+    }
+
+    def allowImpersonatedAccess() {
+        allowAccess(createImpersonatedScopeAccess())
+    }
+
+    def allowAccess(scopeAccess) {
+        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
     }
 }

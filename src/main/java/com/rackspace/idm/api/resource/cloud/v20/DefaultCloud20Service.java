@@ -439,22 +439,24 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) {
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate userForCreate) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            validator.validate20User(user);
+            validator.validate20User(userForCreate);
 
-            String password = user.getPassword();
+            String password = userForCreate.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
 
             if (password != null) {
-                validator.validatePasswordForCreateOrUpdate(user.getPassword());
+                validator.validatePasswordForCreateOrUpdate(userForCreate.getPassword());
             } else {
                 password = Password.generateRandom(false).getValue();
-                user.setPassword(password);
+                userForCreate.setPassword(password);
             }
-            User userDO = this.userConverterCloudV20.toUserDO(user);
+
+            User userDO = this.userConverterCloudV20.toUserDO(userForCreate);
+            User caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
@@ -464,7 +466,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (callerIsUserAdmin) {
                 //TODO pagination index and offset
                 Users users;
-                User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
                 if (domainId == null) {
                     throw new BadRequestException("User-Admin does not have a Domain");
@@ -480,7 +481,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userDO.setNastId(caller.getNastId());
 
                 // If creating sub-user, set DomainId of caller
-                setDomainId(scopeAccessByAccessToken, userDO);
+                assignUserToCallersDomain(caller, userDO);
             }
 
             String domainId = userDO.getDomainId();
@@ -509,9 +510,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             //after user is created and caller is a user admin, add tenant roles to default user
             if (callerIsUserAdmin) {
-                tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
+                tenantService.addCallerTenantRolesToUser(caller, userDO);
 
-                User caller = userService.getUserByAuthToken(authToken);
                 if (caller != null) {
                     List<Group> groups = groupService.getGroupsForUser(caller.getId());
 
@@ -549,22 +549,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
+        ClientRole role = null;
         //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
+            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
         }
         //if caller is an admin, give user user-admin role
         if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
+            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
         }
         //if caller is a user admin, give user default role
         if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-            ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-            this.addUserRole(httpHeaders, authToken, userDO.getId(), role.getId());
+            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
         }
 
+        assignRoleToUser(userDO, role);
     }
 
     @Override
@@ -634,14 +633,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         return userService.getUser(uid);
     }
 
-    void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
-        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-            User caller = getUser(scopeAccessByAccessToken);
-            if (caller.getDomainId() == null) {
-                throw new BadRequestException("User must belong to a domain to create a sub-user");
-            }
-            userDO.setDomainId(caller.getDomainId());
+    void assignUserToCallersDomain(User caller, User userDO) {
+        if (caller.getDomainId() == null) {
+            throw new BadRequestException("User must belong to a domain to create a sub-user");
         }
+        userDO.setDomainId(caller.getDomainId());
     }
 
     @Override
@@ -714,14 +710,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            TenantRole role = new TenantRole();
-            role.setClientId(cRole.getClientId());
-            role.setName(cRole.getName());
-            role.setRoleRsId(cRole.getId());
-            this.tenantService.addTenantRoleToUser(user, role);
+            assignRoleToUser(user, cRole);
             return Response.ok();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void assignRoleToUser(User user, ClientRole clientRole) {
+        if (clientRole != null) {
+            TenantRole role = new TenantRole();
+            role.setClientId(clientRole.getClientId());
+            role.setName(clientRole.getName());
+            role.setRoleRsId(clientRole.getId());
+            this.tenantService.addTenantRoleToUser(user, role);
         }
     }
 
@@ -1455,17 +1457,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) {
         try {
-            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(callersScopeAccess);
+            ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserLevelAccess(callerScopeAccess);
 
             User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByScopeAccess(callerScopeAccess);
 
-            if (isUserAdmin(callersScopeAccess, null) || isDefaultUser(callersScopeAccess, null)) {
-                authorizationService.verifySelf(userService.getUserByScopeAccess(callersScopeAccess), user);
+            if (isUserAdmin(caller) || isDefaultUser(caller)) {
+                authorizationService.verifySelf(caller, user);
             }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
 
-            if (authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
+            if (authorizationService.authorizeCloudServiceAdmin(callerScopeAccess)) {
                 if (!StringUtils.isBlank(user.getPassword())) {
                     PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
                     userCreds.setPassword(user.getPassword());
@@ -1487,13 +1490,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
-        List<TenantRole> tenantRoleList;
-        if (tenantRoles == null) {
-            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
-        } else {
-            tenantRoleList = tenantRoles;
-        }
+    boolean isUserAdmin(User user) {
+        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForUser(user);
         boolean hasRole = false;
         for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
@@ -1504,11 +1502,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         return hasRole;
     }
 
-    boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
-        List<TenantRole> tenantRoleList = tenantRoles;
-        if (tenantRoleList == null) {
-            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
-        }
+    boolean isDefaultUser(User user) {
+        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForUser(user);
         boolean hasRole = false;
         for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
@@ -3017,7 +3012,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
                 Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
-                List<TenantRole> roleList = tenantService.getTenantRolesForScopeAccess(rackerScopeAccess);
+                List<TenantRole> roleList = tenantService.getTenantRolesForUser(racker);
 
                 //Add Racker eDir Roles
                 List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
@@ -3037,7 +3032,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
                     user = userService.getUserByScopeAccess(usa);
-                    roles = getRolesForScopeAccess(sa);
+                    roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(sa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
@@ -3162,16 +3157,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {
-        List<TenantRole> roles = null;
-        if (scopeAccess instanceof UserScopeAccess) {
-            roles = this.tenantService.getTenantRolesForScopeAccess(scopeAccess);
-        } else if (scopeAccess instanceof ImpersonatedScopeAccess) {
-            roles = this.tenantService.getTenantRolesForScopeAccess(scopeAccess);
-        }
-        return roles;
     }
 
     ClientRole checkAndGetClientRole(String id) {

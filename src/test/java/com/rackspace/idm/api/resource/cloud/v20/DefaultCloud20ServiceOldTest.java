@@ -16,7 +16,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -441,33 +440,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUser_withUserAdminCaller_callsTenantService_addTenantRolesToUser() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).setDomainId(scopeAccess, user);
-        doNothing().when(spy).assignProperRole(httpHeaders, authToken, scopeAccess, user);
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>anyObject())).thenReturn(new Users());
-        spy.addUser(httpHeaders, uriInfo, authToken, userOS);
-        verify(tenantService).addTenantRolesToUser(scopeAccess, user);
-    }
-
-    @Test
-    public void addUser_withUserAdminCaller_noDomainId_throwBadRequestException() throws Exception {
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        user.setDomainId(null);
-        when(authorizationService.authorizeCloudUserAdmin((ScopeAccess) any())).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
-    }
-
-    @Test
     public void addUser_withServiceAdmin_domainId_throwsBadRequestException() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -656,20 +628,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void validateToken_whenRackerScopeAccess_callsTenantService_getTenantRolesForScopeAccess() throws Exception {
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setRackerId("rackerId");
-        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        rackerScopeAccess.setAccessTokenString("rackerToken");
-        when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
-        Token token = new Token();
-        token.setId("rackerToken");
-        when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
-        spy.validateToken(null, authToken, "rackerToken", null);
-        verify(tenantService).getTenantRolesForScopeAccess(rackerScopeAccess);
-    }
-
-    @Test
     public void validateToken_whenRackerScopeAccess_callsUserService_getRackerByRackerId() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRackerId("rackerId");
@@ -705,21 +663,6 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getRackerRoles(anyString())).thenReturn(rackerRoles);
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "rackerToken", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void validateToken_whenUserScopeAccess_callsValidateTenantIdInRoles() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        userScopeAccess.setAccessTokenString("userToken");
-
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-
-        doReturn(userScopeAccess).when(spy).checkAndGetToken("token");
-        doReturn(roles).when(spy).getRolesForScopeAccess(userScopeAccess);
-
-        spy.validateToken(httpHeaders, authToken, "token", "tenantId");
-        verify(validator20).validateTenantIdInRoles("tenantId", roles);
     }
 
     @Test
@@ -796,20 +739,6 @@ public class DefaultCloud20ServiceOldTest {
     public void revokeInvalidToken_returnsNotFound() throws Exception {
         when(scopeAccessService.getScopeAccessByAccessToken("invalid")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "invalid");
-    }
-
-    @Test
-    public void getRolesForScopeAccess_whenUserScopeAccess_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        spy.getRolesForScopeAccess(userScopeAccess);
-        verify(tenantService).getTenantRolesForScopeAccess(userScopeAccess);
-    }
-
-    @Test
-    public void getRolesForScopeAccess_whenImpersonatedScopeAccess_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        spy.getRolesForScopeAccess(impersonatedScopeAccess);
-        verify(tenantService).getTenantRolesForScopeAccess(impersonatedScopeAccess);
     }
 
     @Test(expected = NotFoundException.class)
@@ -1020,67 +949,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUser_callerIsUserAdmin_setsMossoAndNastId() throws Exception {
-        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        User caller = new User();
-        caller.setMossoId(123);
-        caller.setNastId("nastId");
-        caller.setDomainId("someId");
-        users = mock(Users.class);
-        List<User> usersList = new ArrayList();
-        User tempUser = new User();
-        tempUser.setId("1");
-        tempUser.setUsername("tempUser");
-        usersList.add(tempUser);
-        users.setUsers(usersList);
-        User newUser = new User();
-        newUser.setDomainId("domain");
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
-        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
-        when(config.getInt("numberOfSubUsers")).thenReturn(100);
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        UserForCreate userForCreate = new UserForCreate();
-        userForCreate.setUsername("userforcreate");
-        userForCreate.setEmail("user@rackspace.com");
-        spy.addUser(null, null, authToken, userForCreate);
-        verify(userService).addUser(argument.capture());
-        assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
-        assertThat("mosso id", argument.getValue().getMossoId(), equalTo(123));
-    }
-
-    @Test
-    public void addUser_callerIsNotUserAdmin_doesNotSetMossoAndNastId() throws Exception {
-        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        User caller = new User();
-        caller.setMossoId(123);
-        caller.setNastId("nastId");
-        User newUser = new User();
-        newUser.setDomainId("domain");
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        UserForCreate userForCreate = new UserForCreate();
-        userForCreate.setUsername("userforcreate");
-        userForCreate.setEmail("user@rackspace.com");
-        spy.addUser(null, null, authToken, userForCreate);
-        verify(userService).addUser(argument.capture());
-        assertThat("nast id", argument.getValue().getNastId(), not(equalTo("nastId")));
-        assertThat("mosso id", argument.getValue().getMossoId(), not(equalTo(123)));
-    }
-
-    @Test
     public void addUser_callsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -1113,19 +981,6 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(userService).addUser(user);
-    }
-
-    @Test
-    public void addUser_callsSetDomainId() throws Exception {
-        User caller = new User();
-        caller.setMossoId(123);
-        caller.setNastId("nastId");
-        caller.setDomainId("someId");
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        spy.addUser(null, null, authToken, userOS);
-        verify(spy).setDomainId(any(ScopeAccess.class), any(User.class));
     }
 
     @Test
@@ -1162,116 +1017,11 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUser_callerIsUserAdmin_callsDefaultRegionService() throws Exception {
-        User user = new User();
-        user.setDomainId("someId");
-        user.setRegion("region");
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-
-        spy.addUser(null, null, authToken, userOS);
-        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
-    }
-
-    @Test
     public void addUser_userPasswordNotNull_callsValidatePassword() throws Exception {
         userOS.setPassword("password");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUser(null, null, authToken, userOS);
         verify(validator).validatePasswordForCreateOrUpdate("password");
-    }
-
-    @Test
-    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returns400() throws Exception {
-        User caller = new User();
-        users = mock(Users.class);
-        List<User> userList = new ArrayList();
-        User tempUser = new User();
-        tempUser.setId("1");
-        tempUser.setUsername("tempUser");
-        userList.add(tempUser);
-        users.setUsers(userList);
-
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
-        when(config.getInt("numberOfSubUsers")).thenReturn(-1);
-        ExceptionHandler handler = new ExceptionHandler();
-        handler.setObjFactories(new JAXBObjectFactories());
-        spy.setExceptionHandler(handler);
-
-        Response.ResponseBuilder builder = spy.addUser(null, null, authToken, userOS);
-        assertThat("response builder", builder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsers_returns201() throws Exception {
-        userOS.setPassword("password");
-        UriBuilder uriBuilder = mock(UriBuilder.class);
-        URI uri = new URI("");
-        User caller = new User();
-        caller.setDomainId("someId");
-        users = mock(Users.class);
-        List<User> userList = new ArrayList();
-        User tempUser = new User();
-        tempUser.setId("1");
-        tempUser.setUsername("tempUser");
-        tempUser.setDomainId("someDomain");
-        userList.add(tempUser);
-        users.setUsers(userList);
-        User newUser = new User();
-        newUser.setDomainId("domain");
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
-        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
-        when(config.getInt("numberOfSubUsers")).thenReturn(2);
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
-        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        doReturn(uriBuilder).when(uriBuilder).path(anyString());
-        doReturn(uri).when(uriBuilder).build();
-        Response.ResponseBuilder responseBuilder = spy.addUser(httpHeaders, uriInfo, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void addUser_responseCreated_returns201() throws Exception {
-        UriBuilder uriBuilder = mock(UriBuilder.class);
-        URI uri = new URI("");
-        User user = new User();
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-
-        user.setDomainId("domain");
-
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-
-        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
-        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
-        doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
-        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        doReturn(uriBuilder).when(uriBuilder).path(anyString());
-        doReturn(uri).when(uriBuilder).build();
-        Response.ResponseBuilder responseBuilder = spy.addUser(httpHeaders, uriInfo, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -1298,7 +1048,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(caller);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(any(FilterParam[].class))).thenReturn(null);
-        doNothing().when(spy).setDomainId(userScopeAccess,caller);
+        doNothing().when(spy).assignUserToCallersDomain(caller, caller);
         doThrow(duplicateUsernameException).when(userService).addUser(caller);
         when(exceptionHandler.exceptionResponse(duplicateUsernameException)).thenReturn(responseBuilder);
 
@@ -2836,18 +2586,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getUserByName_responseOk_returns200() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.getUser("userName")).thenReturn(user);
-        doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
-        doReturn(false).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
-        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.getUserByName(httpHeaders, authToken, "userName");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -3036,31 +2774,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response builder", spy.listCredentials(null, authToken, userId, null, 0), equalTo(responseBuilder));
     }
 
-    @Test
-    public void listCredentials_userAdmin_callsVerifySelf() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        User requester = new User();
-        User requested = new User();
-        when(userService.checkAndGetUserById(userId)).thenReturn(requested);
-        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(true).when(spy).isUserAdmin(scopeAccess, null);
-        spy.listCredentials(null, authToken, userId, null, null);
-        verify(authorizationService).verifySelf(requester, requested);
-    }
-
-    @Test
-    public void listCredentials_defaultUser_callsVerifySelf() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        User requester = new User();
-        User requested = new User();
-        when(userService.checkAndGetUserById(userId)).thenReturn(requested);
-        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(true).when(spy).isDefaultUser(scopeAccess, null);
-        spy.listCredentials(null, authToken, userId, null, null);
-        verify(authorizationService).verifySelf(requester, requested);
-    }
 
     @Test
     public void listCredentials_userPasswordIsNotBlankResponseOk_returns200() throws Exception {
@@ -3094,66 +2807,6 @@ public class DefaultCloud20ServiceOldTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void isUserAdmin_tenantRolesIsNull_callsTenantService() throws Exception {
-        spy.isUserAdmin(null, null);
-        verify(tenantService).getTenantRolesForScopeAccess(null);
-    }
-
-    @Test
-    public void isUserAdmin_returnsFalse() throws Exception {
-        Boolean hasRole = spy.isUserAdmin(null, null);
-        assertThat("boolean value", hasRole, equalTo(false));
-    }
-
-    @Test
-    public void isUserAdmin_returnsTrue() throws Exception {
-        tenantRole.setName("identity:user-admin");
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        Boolean hasRole = spy.isUserAdmin(null, globalRoles);
-        assertThat("boolean value", hasRole, equalTo(true));
-    }
-
-    @Test
-    public void isUserAdmin_nameNotIdentityUserAdmin_returnsFalse() throws Exception {
-        tenantRole.setName("notAdmin");
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        Boolean hasRole = spy.isUserAdmin(null, globalRoles);
-        assertThat("boolean value", hasRole, equalTo(false));
-    }
-
-    @Test
-    public void isDefaultUser_tenantRolesIsNull_callsTenantService() throws Exception {
-        spy.isDefaultUser(null, null);
-        verify(tenantService).getTenantRolesForScopeAccess(null);
-    }
-
-    @Test
-    public void isDefaultUser_returnsFalse() throws Exception {
-        Boolean hasRole = spy.isUserAdmin(null, null);
-        assertThat("boolean value", hasRole, equalTo(false));
-    }
-
-    @Test
-    public void isDefaultUser_returnsTrue() throws Exception {
-        tenantRole.setName("identity:default");
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        Boolean hasRole = spy.isDefaultUser(null, globalRoles);
-        assertThat("boolean value", hasRole, equalTo(true));
-    }
-
-    @Test
-    public void isDefaultUser_nameNotIdentityDefault_returnsFalse() throws Exception {
-        tenantRole.setName("notDefault");
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        Boolean hasRole = spy.isDefaultUser(null, globalRoles);
-        assertThat("boolean value", hasRole, equalTo(false));
     }
 
     @Test
@@ -4124,28 +3777,6 @@ public class DefaultCloud20ServiceOldTest {
         verify(userService).updateUser(user, false);
     }
 
-    @Test
-    public void setDomainId_callsAuthorizationService_authorizeCloudUserAdmin() throws Exception {
-        ScopeAccess scopeAccessByAccessToken = new ScopeAccess();
-        User userDO = new User();
-        defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
-        verify(authorizationService).authorizeCloudUserAdmin(scopeAccessByAccessToken);
-    }
-
-    @Test
-    public void setDomainId_callerIsUserAdmin_callsUserService() throws Exception {
-        User userDO = new User();
-        userDO.setUsername("dude");
-        userDO.setDomainId("123456");
-        Attribute[] attributes = {new Attribute(LdapRepository.ATTR_UID, "dude")};
-        ScopeAccess scopeAccessByAccessToken = mock(ScopeAccess.class);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)).thenReturn(true);
-        when(userService.getUser("dude")).thenReturn(userDO);
-        when(scopeAccessByAccessToken.getLDAPEntry()).thenReturn(new SearchResultEntry("", attributes, new Control[]{}));
-        defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
-        verify(userService).getUser("dude");
-    }
-
     @Test(expected = ForbiddenException.class)
     public void checkXAUTHTOKEN_notAuthorized_throwsForbiddenException() throws Exception {
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
@@ -4526,12 +4157,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void setDomainId_callsAuthorizeCloudUserAdmin() throws Exception {
-        defaultCloud20Service.setDomainId(null, null);
-        verify(authorizationService).authorizeCloudUserAdmin(null);
-    }
-
-    @Test
     public void assignProperRole_callsAuthorizeCloudUserAdmin() throws Exception {
         defaultCloud20Service.assignProperRole(null, authToken, null, null);
         verify(authorizationService).authorizeCloudUserAdmin(null);
@@ -4547,30 +4172,6 @@ public class DefaultCloud20ServiceOldTest {
     public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
         defaultCloud20Service.assignProperRole(null, authToken, null, null);
         verify(authorizationService).authorizeCloudServiceAdmin(null);
-    }
-
-    @Test
-    public void assignProperRole_cloudUserAdmin_callsAddUserRole() throws Exception {
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
-        spy.assignProperRole(null, authToken, null, user);
-        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
-    }
-
-    @Test
-    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
-        spy.assignProperRole(null, authToken, null, user);
-        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
-    }
-
-    @Test
-    public void assignProperRole_cloudServiceAdmin_callsAddUserRole() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
-        spy.assignProperRole(null, authToken, null, user);
-        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
     }
 
     @Test
@@ -5124,13 +4725,6 @@ public class DefaultCloud20ServiceOldTest {
         when(tokenConverterCloudV20.toToken(clientScopeAccess)).thenReturn(token);
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "tokenId", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void getRolesForScopeAccess_scopeAccessNotInstanceOfUserOrImpersonatedScopeAccess_returnsNull() throws Exception {
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        List<TenantRole> result = spy.getRolesForScopeAccess(rackerScopeAccess);
-        assertThat("list", result, equalTo(null));
     }
 
     @Test

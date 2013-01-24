@@ -261,8 +261,8 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser) {
-        List<TenantRole> tenantRoles = this.getTenantRolesForScopeAccess(userAdminScopeAccess);
+    public void addCallerTenantRolesToUser(User caller, User user) {
+        List<TenantRole> tenantRoles = this.getTenantRolesForUser(caller);
         for (TenantRole tenantRole : tenantRoles) {
             if (!tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
                     && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
@@ -274,8 +274,8 @@ public class DefaultTenantService implements TenantService {
                 role.setName(tenantRole.getName());
                 role.setRoleRsId(tenantRole.getRoleRsId());
                 role.setTenantIds(tenantRole.getTenantIds());
-                tenantRole.setUserId(subUser.getId());
-                this.addTenantRoleToUser(subUser, role);
+                tenantRole.setUserId(user.getId());
+                this.addTenantRoleToUser(user, role);
             }
         }
     }
