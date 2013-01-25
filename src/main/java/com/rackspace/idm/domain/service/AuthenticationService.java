@@ -21,6 +21,7 @@ public interface AuthenticationService {
 
     UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain);
 
+    @Deprecated
     AuthData getAuthDataFromToken(String authToken);
 
     void setAuthDao(AuthDao authDao);

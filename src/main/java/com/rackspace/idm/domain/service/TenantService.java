@@ -26,6 +26,7 @@ public interface TenantService {
     
     TenantRole getTenantRoleForUserById(User user, String id);
     TenantRole getTenantRoleForApplicationById(Application application, String id);
+    @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     List<TenantRole> getGlobalRolesForUser(User user);
     List<TenantRole> getGlobalRolesForApplication(Application application);
@@ -35,6 +36,7 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForUser(User user);
     List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
+    @Deprecated
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(User user);
     boolean hasTenantAccess(User user, String tenantId);

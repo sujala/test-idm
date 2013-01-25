@@ -367,7 +367,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) {
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
+
             if (service == null) {
                 String errMsg = "service cannot be null";
                 logger.warn(errMsg);
@@ -1054,7 +1056,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
+
             User user = checkAndGetSoftDeletedUser(userId);
             userService.deleteUser(user);
             return Response.noContent();
@@ -1697,8 +1701,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess access = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(access);
+            User user = userService.getUserByScopeAccess(access);
 
-            List<Tenant> tenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(access);
+            List<Tenant> tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
 
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
@@ -3216,33 +3221,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException(errMsg);
         }
         return authScopeAccess;
-    }
-
-    void checkXAUTHTOKEN(String authToken, boolean identityOnly, String tenantId) {
-        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-
-        boolean authorized = false;
-
-        authorized = this.authorizationService.authorizeCloudServiceAdmin(authScopeAccess);
-
-        if (!identityOnly && !authorized) { // Check for User Admin Access
-            authorized = this.authorizationService.authorizeCloudUserAdmin(authScopeAccess);
-            if (authorized && tenantId != null) { // Check tenant access
-                authorized = false; // until matched in the loop below
-                List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
-                for (Tenant tenant : adminTenants) {
-                    if (tenant.getTenantId().equals(tenantId)) {
-                        authorized = true;
-                    }
-                }
-            }
-        }
-
-        if (!authorized) {
-            String errMsg = NOT_AUTHORIZED;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
     }
 
     void stripEndpoints(List<OpenstackEndpoint> endpoints) {

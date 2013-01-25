@@ -2583,6 +2583,41 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result == true
     }
 
+    def "addService checks if caller is service admin"() {
+        when:
+        def result = service.addService(headers, uriInfo(), authToken, null).build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        result.status == 403
+    }
+
+     def "deleteUserFromSoftDeleted checks if caller is service admin"() {
+        when:
+        def result = service.deleteUserFromSoftDeleted(headers, authToken, "userId")
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        result.status == 403
+    }
+
+    def "listTenants gets user from scopeAccess and tenants from user"() {
+        given:
+        allowUserAccess()
+        mockTenantConverter(service)
+        def user = entityFactory.createUser()
+
+        when:
+        def result = service.listTenants(headers, authToken, null, null).build()
+
+        then:
+        1 * userService.getUserByScopeAccess(_) >> user
+        1 * tenantService.getTenantsForUserByTenantRoles(user)  >> [].asList()
+        result.status == 200
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)

@@ -277,8 +277,6 @@ public class DefaultCloud20ServiceOldTest {
         when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
 
         spy = spy(defaultCloud20Service);
-        doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
-        doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
     }
 
     @Test(expected = BadRequestException.class)
@@ -1243,47 +1241,9 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.addService(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
     public void addService_callsClientService_add() throws Exception {
         spy.addService(null, null, authToken, service);
         verify(clientService).add(any(Application.class));
-    }
-
-    @Test
-    public void addService_withNullService_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).checkXAUTHTOKEN(authToken, true, null);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addService(null, null, authToken, null), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void addService_withNullServiceType_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).checkXAUTHTOKEN(authToken,true,null);
-        service.setType(null);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addService(null, null, authToken, service), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void addService_withNullName_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).checkXAUTHTOKEN(authToken,true,null);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        service.setName(null);
-        assertThat("response builder", spy.addService(null, null, authToken, service), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -3777,54 +3737,6 @@ public class DefaultCloud20ServiceOldTest {
         verify(userService).updateUser(user, false);
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void checkXAUTHTOKEN_notAuthorized_throwsForbiddenException() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, true, tenantId);
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdNotMatch_throwsForbidden() throws Exception {
-        List<Tenant> adminTenants = new ArrayList<Tenant>();
-        adminTenants.add(tenant);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "notMatch");
-    }
-
-    @Test
-    public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdMatch_succeeds() throws Exception {
-        List<Tenant> adminTenants = new ArrayList<Tenant>();
-        adminTenants.add(tenant);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void checkXAUTHTOKEN_notCloudServiceAdminAndNotCloudUserAdmin_throwsForbidden() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
-    }
-
-    @Test
-    public void checkXAUTHTOKEN_authorizationServiceReturnsTrue_doesNotThrowException() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "tenantId");
-        assertTrue("no exceptions", true);
-    }
-
-    @Test
-    public void checkXAUTHTOKEN_hasUserAdminAccessAndTenantIdIsNull_doesNotThrowException() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, null);
-        assertTrue("no exceptions", true);
-    }
-
     @Test
     public void stripEndpoints_succeeds() throws Exception {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
@@ -4481,12 +4393,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteUserFromSoftDeleted_callsCheckXAUTHTOKEN() throws Exception {
-        spy.deleteUserFromSoftDeleted(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
     public void deleteUserFromSoftDeleted_callsCheckAndGetSoftDeletedUser() throws Exception {
         spy.deleteUserFromSoftDeleted(null, authToken, "userId");
         verify(spy).checkAndGetSoftDeletedUser("userId");
@@ -4505,15 +4411,6 @@ public class DefaultCloud20ServiceOldTest {
         doNothing().when(userService).deleteUser(any(User.class));
         Response.ResponseBuilder responseBuilder = spy.deleteUserFromSoftDeleted(null, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteUserFromSoftDeleted_throwsExceptionResponseBadRequest_returnsResponseBuilder() throws Exception {
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        BadRequestException badRequestException = new BadRequestException();
-        doThrow(badRequestException).when(spy).checkXAUTHTOKEN(authToken, true, null);
-        when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.deleteUserFromSoftDeleted(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
