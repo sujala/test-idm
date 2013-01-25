@@ -6,6 +6,7 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +15,7 @@ import lombok.Data;
  * Time: 3:33 PM
  * To change this template use File | Settings | File Templates.
  */
+@EqualsAndHashCode(exclude = "description")
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_BASEURL)
 public class ServiceApi implements UniqueId {
@@ -28,20 +30,5 @@ public class ServiceApi implements UniqueId {
     @Override
     public String getUniqueId() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean equals(Object obj){
-        if(obj == this){
-            return true;
-        }
-        if(!(obj instanceof ServiceApi)){
-            return false;
-        }
-        ServiceApi other = (ServiceApi) obj;
-        if(this.getType().equalsIgnoreCase(other.getType()) && this.getVersion().equalsIgnoreCase(other.getVersion())){
-            return true;
-        }
-        return false;
     }
 }

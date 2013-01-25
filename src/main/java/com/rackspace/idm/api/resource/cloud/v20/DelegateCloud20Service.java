@@ -269,9 +269,6 @@ public class DelegateCloud20Service implements Cloud20Service {
                 if (status == HttpServletResponse.SC_OK && scopeAccess.isAccessTokenExpired(new DateTime())) {
                     throw new NotFoundException("Token not found.");
                 }
-                if (status == HttpServletResponse.SC_NOT_FOUND && !scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    //TODO: Validate calling token in CA; verify identity role; return 200
-                }
             }
 
             return response;

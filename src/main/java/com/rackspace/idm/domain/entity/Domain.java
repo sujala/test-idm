@@ -7,6 +7,7 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,6 +16,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
  * Time: 3:51 PM
  * To change this template use File | Settings | File Templates.
  */
+@EqualsAndHashCode
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
 public class Domain implements Auditable, UniqueId {
 
@@ -73,7 +75,11 @@ public class Domain implements Auditable, UniqueId {
     }
 
     public void setTenantIds(String[] tenantIds) {
-        this.tenantIds = tenantIds;
+        if(tenantIds != null){
+            this.tenantIds = tenantIds.clone();
+        }else{
+            this.tenantIds = null;
+        }
     }
 
     public ReadOnlyEntry getLDAPEntry() {
@@ -102,17 +108,4 @@ public class Domain implements Auditable, UniqueId {
     public void setLdapEntry(ReadOnlyEntry ldapEntry) {
         this.ldapEntry = ldapEntry;
     }
-
-    @Override
-    public boolean equals(Object obj){
-        if(obj == this){
-            return true;
-        }
-        if(!(obj instanceof Domain)){
-            return false;
-        }
-        Domain other = (Domain) obj;
-        return this.domainId.equals(other.getDomainId());
-    }
-
 }
