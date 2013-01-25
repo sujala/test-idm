@@ -76,7 +76,8 @@ public class Domain implements Auditable, UniqueId {
 
     public void setTenantIds(String[] tenantIds) {
         if(tenantIds != null){
-            this.tenantIds = tenantIds.clone();
+            this.tenantIds = new String[tenantIds.length];
+            System.arraycopy(tenantIds, 0, this.tenantIds, 0, tenantIds.length);
         }else{
             this.tenantIds = null;
         }
