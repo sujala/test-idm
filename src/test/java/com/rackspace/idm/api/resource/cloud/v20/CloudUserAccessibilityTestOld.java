@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
  * Time: 1:32 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CloudUserAccessibilityTest {
+public class CloudUserAccessibilityTestOld {
 
     private CloudUserAccessibility cloudUserAccessibility;
 

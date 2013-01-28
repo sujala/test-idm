@@ -11,6 +11,7 @@ import org.openstack.docs.identity.api.v2.VersionForService;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -51,6 +52,9 @@ public class CloudUserAccessibility {
         this.callerScopeAccess = callerScopeAccess;
     }
 
+    public CloudUserAccessibility(){
+    }
+
     public Domains getAccessibleDomainsByScopeAccessForUser(ScopeAccess scopeAccessByAccessToken) {
         Domains domains = new Domains();
         List<Tenant> tenants = tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccessByAccessToken);
@@ -84,13 +88,19 @@ public class CloudUserAccessibility {
     }
 
     public Domains removeDuplicateDomains(Domains domains) {
-        Domains noDup = new Domains();
+        if(domains == null){
+            return new Domains();
+        }
+
+        HashMap<String, Domain> map = new HashMap<String, Domain>();
         for (Domain domain : domains.getDomain()) {
-            if (!noDup.getDomain().contains(domain)) {
-                noDup.getDomain().add(domain);
+            if (!map.containsKey(domain.getDomainId())) {
+                map.put(domain.getDomainId(), domain);
             }
         }
-        return noDup;
+        Domains result = new Domains();
+        result.getDomain().addAll(map.values());
+        return result;
     }
 
     public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, ScopeAccess scopeAccess) {
