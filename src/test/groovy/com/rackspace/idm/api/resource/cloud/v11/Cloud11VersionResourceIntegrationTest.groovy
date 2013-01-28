@@ -104,22 +104,26 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         deleteUserResponse.status == 204
     }
 
-    def "Don't allow disabled identity/service admin to create user"(){
+    def "Don't allow disabled identity/service admin to get/create user"(){
         given:
         User userForUpdate = createUser(identityAdmin.username, null, null, null, false)
-        authUser = identityAdmin.username
-        authPassword = "Password1"
         String username = "userAdmin" + sharedRandom
         User user = createUser(username, "1234567890", randomMosso, null, true)
+        String username2 = "userAdmin2" + sharedRandom
+        User userForCreate = createUser(username2, "1234567890", randomMosso+1, null, true)
 
         when:
         def updateUser = updateUserXML(identityAdmin.username, userForUpdate)
         createUserXML(user)
+        authUser = identityAdmin.username
+        authPassword = "Password1"
         def getUser = getUserXML(user.id)
+        def createUser = createUserXML(userForCreate)
 
         then:
         updateUser.status == 200
         getUser.status == 403
+        createUser.status == 403
     }
 
     def createUser(String id, String key, Integer mossoId, String nastId, Boolean enabled) {
