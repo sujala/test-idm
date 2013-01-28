@@ -914,7 +914,7 @@ public class CloudMigrationService {
                 }
 
                 try {
-                    com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupById(Integer.parseInt(group.getId()));
+                    com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupByName(group.getName());
                     if (!StringUtils.equals(newGroup.getName(), oldGroup.getName()) || !StringUtils.equals(newGroup.getDescription(), oldGroup.getDescription())) {
                         cloudGroupService.updateGroup(newGroup);
                     }

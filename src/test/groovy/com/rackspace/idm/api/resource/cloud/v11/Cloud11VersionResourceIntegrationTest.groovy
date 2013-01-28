@@ -9,6 +9,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername
 import org.springframework.test.context.ContextConfiguration
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -124,6 +125,22 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         updateUser.status == 200
         getUser.status == 403
         createUser.status == 403
+    }
+
+    @Ignore
+    def "Identity admin should not be allowed to delete himself" () {
+        given:
+        User userForUpdate = createUser(identityAdmin.username, null, null, null, true)
+
+        when:
+        def updateUser = updateUserXML(identityAdmin.username, userForUpdate)
+        authUser = identityAdmin.username
+        authPassword = "Password1"
+        def deleteAdminUser = deleteUserXML(identityAdmin.username)
+
+        then:
+        updateUser.status == 200
+        deleteAdminUser.status == 403
     }
 
     def createUser(String id, String key, Integer mossoId, String nastId, Boolean enabled) {

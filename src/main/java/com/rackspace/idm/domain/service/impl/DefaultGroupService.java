@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -35,6 +36,8 @@ public class DefaultGroupService implements GroupService {
     private UserService defaultUserService;
     @Autowired
     private GroupDao groupDao;
+    @Autowired
+    private Configuration config;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -98,6 +101,9 @@ public class DefaultGroupService implements GroupService {
         if(group.getGroupId() == null){
             throw new IllegalArgumentException("GroupId cannot be null");
         }
+        if(String.valueOf(group.getGroupId()).equals(config.getString("defaultGroupId"))){
+            throw new BadRequestException("Default Group can not be updated.");
+        }
         Integer groupId = group.getGroupId();
         Group groupDo = groupDao.getGroupById(groupId);
 
@@ -127,6 +133,9 @@ public class DefaultGroupService implements GroupService {
     public void deleteGroup(String groupId) {
         if(groupId == null){
             throw new IllegalArgumentException(GROUP_CANNOT_BE_NULL);
+        }
+        if(groupId.equals(config.getString("defaultGroupId"))){
+            throw new BadRequestException("Default Group can not be deleted");
         }
         int grpId = Integer.parseInt(groupId);
         Group exists = groupDao.getGroupById(grpId);

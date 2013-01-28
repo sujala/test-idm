@@ -58,7 +58,7 @@ import static org.mockito.Mockito.any;
  * Time: 9:28 AM
  * To change this template use File | Settings | File Templates.
  */
-public class CloudMigrationServiceTest {
+public class CloudMigrationServiceTestOld {
     private CloudMigrationService cloudMigrationService;
     private CloudMigrationService spy;
     private Configuration config;
@@ -1510,7 +1510,7 @@ public class CloudMigrationServiceTest {
         Group group1 = new Group();
         group1.setName("groupName");
         group1.setDescription("groupDescription");
-        when(groupService.getGroupById(123456)).thenReturn(group1);
+        when(groupService.getGroupByName("groupNameNew")).thenReturn(group1);
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService).updateGroup(any(Group.class));
     }
@@ -1527,7 +1527,7 @@ public class CloudMigrationServiceTest {
         Group group1 = new Group();
         group1.setName("groupName");
         group1.setDescription("groupDescription");
-        when(groupService.getGroupById(123456)).thenReturn(group1);
+        when(groupService.getGroupByName("groupNameNew")).thenReturn(group1);
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService).updateGroup(any(Group.class));
     }
@@ -1544,7 +1544,7 @@ public class CloudMigrationServiceTest {
         Group group1 = new Group();
         group1.setName("groupName");
         group1.setDescription("groupDescription");
-        when(groupService.getGroupById(123456)).thenReturn(group1);
+        when(groupService.getGroupByName("groupName")).thenReturn(group1);
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService).updateGroup(any(Group.class));
     }
@@ -1561,7 +1561,7 @@ public class CloudMigrationServiceTest {
         Group group1 = new Group();
         group1.setName("groupName");
         group1.setDescription("groupDescription");
-        when(groupService.getGroupById(123456)).thenReturn(group1);
+        when(groupService.getGroupByName("groupName")).thenReturn(group1);
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService, never()).updateGroup(any(Group.class));
     }
@@ -1576,7 +1576,7 @@ public class CloudMigrationServiceTest {
         group.setDescription("groupDescription");
         groups.getGroup().add(group);
         when(client.getGroups("adminToken")).thenReturn(groups);
-        when(groupService.getGroupById(123456)).thenThrow(new NotFoundException());
+        when(groupService.getGroupByName("groupName")).thenThrow(new NotFoundException());
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService).insertGroup(any(Group.class));
     }
@@ -1589,7 +1589,7 @@ public class CloudMigrationServiceTest {
         group.setName("groupName");
         groups.getGroup().add(group);
         when(client.getGroups("adminToken")).thenReturn(groups);
-        when(groupService.getGroupById(123456)).thenThrow(new NotFoundException());
+        when(groupService.getGroupByName("groupName")).thenThrow(new NotFoundException());
         cloudMigrationService.addOrUpdateGroups("adminToken");
         ArgumentCaptor<Group> groupArgumentCaptor = ArgumentCaptor.forClass(Group.class);
         verify(groupService).insertGroup(groupArgumentCaptor.capture());

@@ -232,7 +232,7 @@ public class CloudMigrationServiceIntegrationTest {
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
         when(config.getString("migration.username")).thenReturn("migration_user");
         when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(groupService.getGroupById(anyInt())).thenReturn(group);
+        when(groupService.getGroupByName(anyString())).thenReturn(group);
         spy.migrateGroups();
         verify(spy).addOrUpdateGroups(anyString());
     }
