@@ -66,20 +66,8 @@ public class AuthorizationServiceTests {
         mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         service = new DefaultAuthorizationService();
-        service.setScopeAccessDao(mockScopeAccessDao);
-        service.setApplicationDao(mockClientDao);
-        service.setTenantDao(mockTenantDao);
         service.setConfig(appConfig);
         setUpObjects();
-    }
-
-    @Test
-    public void shouldReturnTrueForRacker() {
-        doReturn(true).when(mockTenantDao).doesScopeAccessHaveTenantRole(Matchers.<RackerScopeAccess>anyObject(), Matchers.<ClientRole>anyObject());
-        trustedToken.setAccessTokenExp(new Date(10000000000000L));
-        trustedToken.setAccessTokenString("bob");
-        boolean authorized = service.authorizeRacker(trustedToken);
-        Assert.assertTrue(authorized);
     }
 
     @Test

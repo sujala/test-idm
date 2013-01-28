@@ -320,7 +320,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .getUserScopeAccessForClientIdByUsernameAndApiCredentials(username,
                 apiKey, clientId);
         //TODO add a new test for updateExpiredUserScopeAccess
-        //EasyMock.verify(scopeAccessDao, mockUserDao);
+        //EasyMock.verify(scopeAccessService, mockUserDao);
     }
 
     @Test

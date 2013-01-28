@@ -128,7 +128,7 @@ public class DefaultCustomerService implements CustomerService {
 //        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
 //
 //        // locks/unlocks all applications under customer
-//        clientDao.setClientsLockedFlagByCustomerId(customerId, locked);
+//        applicationService.setClientsLockedFlagByCustomerId(customerId, locked);
 //       
 //        // revoke all tokens for customer
 //    	oauthService.revokeAllTokensForCustomer(customerId);

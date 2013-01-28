@@ -124,78 +124,6 @@ public class DefaultUserServiceTestOld {
     }
 
     @Test
-    public void hasSubUsers_HasSubUsers_callsAuthorizationService_hasDefaultUserRole() throws Exception {
-        User userAdmin = new User();
-        userAdmin.setDomainId("domainId");
-        when(userDao.getUserById("id")).thenReturn(userAdmin);
-        Users users = new Users();
-        ArrayList<User> userArrayList = new ArrayList<User>();
-        User defaultUser = new User();
-        defaultUser.setUniqueId("uniqueId1");
-        defaultUser.setDomainId("domainId");
-        userArrayList.add(defaultUser);
-        User defaultUser2 = new User();
-        defaultUser2.setUniqueId("uniqueId2");
-        defaultUser2.setDomainId("domainId");
-        userArrayList.add(defaultUser2);
-        users.setUsers(userArrayList);
-        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
-        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
-        defaultUserService.hasSubUsers("id");
-        verify(authorizationService).hasDefaultUserRole(defaultUser.getUniqueId());
-    }
-
-    @Test
-    public void hasSubUsers_HasSubUsers_returnsTrue() throws Exception {
-        User userAdmin = new User();
-        userAdmin.setDomainId("domainId");
-        when(userDao.getUserById("id")).thenReturn(userAdmin);
-        Users users = new Users();
-        ArrayList<User> userArrayList = new ArrayList<User>();
-        User defaultUser = new User();
-        defaultUser.setDomainId("domainId");
-        userArrayList.add(defaultUser);
-        User defaultUser2 = new User();
-        defaultUser2.setUniqueId("uniqueId");
-        defaultUser2.setDomainId("domainId");
-        userArrayList.add(defaultUser2);
-        users.setUsers(userArrayList);
-        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
-        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
-        boolean hasUsers = defaultUserService.hasSubUsers("id");
-        assertThat("User has subusers", hasUsers, equalTo(true));
-    }
-
-    @Test
-    public void hasSubUsers_HasSubUsersAndNotDefaultUser_returnsFalse() throws Exception {
-        User userAdmin = new User();
-        userAdmin.setDomainId("domainId");
-        when(userDao.getUserById("id")).thenReturn(userAdmin);
-        Users users = new Users();
-        ArrayList<User> userArrayList = new ArrayList<User>();
-        User defaultUser = new User();
-        defaultUser.setDomainId("domainId");
-        userArrayList.add(defaultUser);
-        User defaultUser2 = new User();
-        defaultUser2.setUniqueId("uniqueId");
-        defaultUser2.setDomainId("domainId");
-        userArrayList.add(defaultUser2);
-        users.setUsers(userArrayList);
-        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
-        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(false);
-        boolean hasUsers = defaultUserService.hasSubUsers("id");
-        assertThat("User has subusers", hasUsers, equalTo(false));
-    }
-
-    @Test
     public void hasSubUsers_HasNoSubUsers_returnsFalse() throws Exception {
         User userAdmin = new User();
         userAdmin.setDomainId("domainId");
@@ -581,7 +509,7 @@ public class DefaultUserServiceTestOld {
         Users users = new Users();
         users.setUsers(userList);
         when(userDao.getUsersByMossoId(1)).thenReturn(users);
-        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         User result = defaultUserService.getUserByMossoId(1);
         assertThat("user", result, equalTo(user));
     }

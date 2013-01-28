@@ -615,7 +615,7 @@ public class DefaultScopeAccessServiceTestOld {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         when(scopeAccessDao.doesParentHaveScopeAccess((String) eq(null),any(ScopeAccess.class))).thenReturn(true);
-        assertTrue("should return boolean from scopeAccessDao", defaultScopeAccessService.doesAccessTokenHaveService(token, null));
+        assertTrue("should return boolean from scopeAccessService", defaultScopeAccessService.doesAccessTokenHaveService(token, null));
     }
 
     @Test
@@ -899,32 +899,6 @@ public class DefaultScopeAccessServiceTestOld {
             assertThat("exception type", ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
             assertThat("exception message", ex.getMessage(), equalTo("Null scope access object instance."));
         }
-    }
-
-    @Test
-    public void getPermissionsForParent_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.getPermissionsForParent(null,null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex) {
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null scope access object instance."));
-        }
-    }
-
-    @Test
-    public void getPermissionsForParent_permissionIsNotNull_callsScopeAccessDaoMethod() throws Exception {
-        Permission permission = new Permission();
-        defaultScopeAccessService.getPermissionsForParent(null,permission);
-        verify(scopeAccessDao).getPermissionsByParentAndPermission(null,permission);
-    }
-
-    @Test
-    public void getPermissionsForParent_permissionIsNotNull_returnsList() throws Exception {
-        List<Permission> list = new ArrayList<Permission>();
-        Permission permission = new Permission();
-        when(scopeAccessDao.getPermissionsByParentAndPermission(null,permission)).thenReturn(list);
-        assertThat("list",defaultScopeAccessService.getPermissionsForParent(null,permission),equalTo(list));
     }
 
     @Test

@@ -337,7 +337,7 @@ public class DefaultUserService implements UserService {
             return users.getUsers().get(0);
         } else if (users.getUsers().size() > 1) {
             for (User user : users.getUsers()) {
-                if (authorizationService.hasUserAdminRole(user.getUniqueId())) {
+                if (authorizationService.hasUserAdminRole(user)) {
                     return user;
                 }
             }
@@ -586,7 +586,7 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users.getUsers()) {
-            if(authorizationService.hasDefaultUserRole(userInList.getUniqueId())) {
+            if(authorizationService.hasDefaultUserRole(userInList)) {
                 return true;
             }
         }

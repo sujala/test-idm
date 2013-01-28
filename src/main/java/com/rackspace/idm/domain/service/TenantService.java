@@ -24,7 +24,8 @@ public interface TenantService {
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);
     
-    TenantRole getTenantRoleForUserById(User user, String id);
+    TenantRole getTenantRoleForUserById(User user, String roleId);
+    boolean doesUserContainTenantRole(User user, String roleId);
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);

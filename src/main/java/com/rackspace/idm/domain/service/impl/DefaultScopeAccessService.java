@@ -662,26 +662,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
-                                                    Permission permission) {
-        if (permission == null) {
-            String errorMsg = String
-                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
-            logger.warn(errorMsg);
-            throw new IllegalArgumentException(errorMsg);
-        }
-
-        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
-                scopeAccessUniqueId);
-        List<Permission> perms = this.scopeAccessDao
-                .getPermissionsByParentAndPermission(scopeAccessUniqueId,
-                        permission);
-        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
-                scopeAccessUniqueId);
-        return perms;
-    }
-
-    @Override
     public List<Permission> getPermissionsForParent(String scopeAccessUniqueId) {
         logger.debug("Getting Permissions on ScopeAccess {}",
                 scopeAccessUniqueId);
@@ -1162,6 +1142,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return scopeAccessToAdd;
         }
         return scopeAccess;
+    }
+
+    @Override
+    public boolean isScopeAccessExpired(ScopeAccess scopeAccess) {
+        if (scopeAccess == null || scopeAccess.isAccessTokenExpired(new DateTime())) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private String getBaseDnAsString(String dnString) {

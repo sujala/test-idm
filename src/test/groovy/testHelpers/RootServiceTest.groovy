@@ -803,6 +803,11 @@ class RootServiceTest extends Specification {
         return createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }
 
+    def expireScopeAccess(scopeAccess) {
+        scopeAccess.accessTokenExp = new DateTime().minusHours(1).toDate()
+        return scopeAccess
+    }
+
     def createUserScopeAccess(String tokenString, String userRsId, String clientId, Date expiration) {
         tokenString = tokenString ? tokenString : "tokenString"
         userRsId = userRsId ? userRsId : "userRsId"

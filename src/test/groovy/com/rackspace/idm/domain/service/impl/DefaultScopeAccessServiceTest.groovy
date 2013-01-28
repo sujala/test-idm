@@ -558,6 +558,38 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         endpointDao.getOpenstackEndpointsForTenant(_) >> endpoint
     }
 
+    def "isScopeAccessExpired returns true when scopeAccess is null"() {
+        given:
+
+        when:
+        def result = service.isScopeAccessExpired(null)
+
+        then:
+        result == true
+    }
+
+    def "isScopeAccessExpired returns true when scopeAccess is expired"() {
+        given:
+        def scopeAccess = expireScopeAccess(createUserScopeAccess())
+
+        when:
+        def result = service.isScopeAccessExpired(scopeAccess)
+
+        then:
+        result == true
+    }
+
+    def "isScopeAccessExpired returns false when scopeAccess is not expired"() {
+        given:
+        def scopeAccess = createUserScopeAccess()
+
+        when:
+        def result = service.isScopeAccessExpired(scopeAccess)
+
+        then:
+        result == false
+    }
+
     def mockDaos() {
         mockScopeAccessDao(service)
         mockUserDao(service)

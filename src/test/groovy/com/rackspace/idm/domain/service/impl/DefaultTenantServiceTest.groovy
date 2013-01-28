@@ -105,5 +105,32 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         1 * tenantRoleDao.addTenantRoleToUser(user, _)
     }
+
+    def "doesUserContainTenantRole returns false if user does not contain the role"() {
+        given:
+        def user = entityFactory.createUser()
+        def roleId = "roleId"
+
+        when:
+        def result = service.doesUserContainTenantRole(user, roleId)
+
+        then:
+        result == false
+        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> null
+    }
+
+    def "doesUserContainTenantRole returns true if user does contain the role"() {
+        given:
+        def user = entityFactory.createUser()
+        def tenantRole = entityFactory.createTenantRole()
+        def roleId = "roleId"
+
+        when:
+        def result = service.doesUserContainTenantRole(user, roleId)
+
+        then:
+        result == true
+        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> tenantRole
+    }
 }
 

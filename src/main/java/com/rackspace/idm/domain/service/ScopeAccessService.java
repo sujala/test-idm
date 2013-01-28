@@ -15,9 +15,7 @@ import java.util.List;
 
 public interface ScopeAccessService {
 
-    List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
-        Permission permission);
-    
+    @Deprecated
     List<Permission> getPermissionsForParent(String scopeAccessUniqueId);
         
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
@@ -118,6 +116,8 @@ public interface ScopeAccessService {
     UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
+
+    boolean isScopeAccessExpired(ScopeAccess scopeAccess);
     
     void setUserDao(UserDao userDao);
 

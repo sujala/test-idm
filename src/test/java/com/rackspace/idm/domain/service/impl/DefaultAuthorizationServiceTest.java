@@ -1,13 +1,13 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,104 +35,25 @@ import static org.mockito.Mockito.*;
 public class DefaultAuthorizationServiceTest {
 
     DefaultAuthorizationService defaultAuthorizationService;
-    ScopeAccessDao scopeAccessDao = mock(ScopeAccessDao.class);
-    ApplicationDao clientDao = mock(ApplicationDao.class);
-    TenantDao tenantDao = mock(TenantDao.class);
+    ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
+    ApplicationService applicationService = mock(ApplicationService.class);
     Configuration config = mock(Configuration.class);
     TenantService tenantSerivce = mock(TenantService.class);
+    UserService userService = mock(UserService.class);
     DefaultAuthorizationService spy;
 
     @Before
     public void setUp() throws Exception {
         defaultAuthorizationService = new DefaultAuthorizationService();
-        defaultAuthorizationService.setScopeAccessDao(scopeAccessDao);
-        defaultAuthorizationService.setApplicationDao(clientDao);
-        defaultAuthorizationService.setTenantDao(tenantDao);
         defaultAuthorizationService.setConfig(config);
         defaultAuthorizationService.setTenantService(tenantSerivce);
+        defaultAuthorizationService.setScopeAccessService(scopeAccessService);
+        defaultAuthorizationService.setApplicationService(applicationService);
+        defaultAuthorizationService.setUserService(userService);
         spy = spy(defaultAuthorizationService);
 
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void authorize_nullToken_throwsIllegalArgumentException() throws Exception {
-        defaultAuthorizationService.authorize(null,null,null);
-    }
-
-    @Test
-    public void authorize_clientHasAuthorizedRoles_grantsAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByAccessToken("token")).thenReturn(scopeAccess);
-        when(spy.doesClientHaveAuthorizedRoles(scopeAccess, null)).thenReturn(true);
-        spy.authorize("token", null, null);
-    }
-
-    @Test
-    public void authorize_clientDoesNotHaveAuthorizedRolesAndIsEntityBeingAccessed_grantsAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByAccessToken("token")).thenReturn(scopeAccess);
-        when(spy.doesClientHaveAuthorizedRoles(scopeAccess, null)).thenReturn(false);
-        when(spy.isClientTheEntityBeingAccessed(scopeAccess, null)).thenReturn(true);
-        spy.authorize("token",null,null);
-    }
-
-    @Test (expected = ForbiddenException.class)
-    public void authorize_clientDoesNotHaveAuthorizedRolesAndIsNotEntityBeingAccessed_throwsForbiddenException() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByAccessToken("token")).thenReturn(scopeAccess);
-        when(spy.doesClientHaveAuthorizedRoles(scopeAccess, null)).thenReturn(false);
-        when(spy.isClientTheEntityBeingAccessed(scopeAccess, null)).thenReturn(false);
-        spy.authorize("token", null, null);
-    }
-
-    @Test
-    public void doesClientHaveAuthorizedRoles_scopeAccessHasTenantRole_returnsTrue() throws Exception {
-        List<String> allAuthorizedRoles = new ArrayList<String>();
-        allAuthorizedRoles.add("1");
-        ClientRole clientRole = new ClientRole();
-        when(spy.createRoleList(null)).thenReturn(allAuthorizedRoles);
-        when(clientDao.getClientRoleById("1")).thenReturn(clientRole);
-        when(tenantDao.doesScopeAccessHaveTenantRole(null, clientRole)).thenReturn(true);
-        assertThat("has authorized status", spy.doesClientHaveAuthorizedRoles(null, null), equalTo(true));
-    }
-
-    @Test
-    public void doesClientHaveAuthorizedRoles_scopeAccessDoesNotHaveTenantRole_returnsFalse() throws Exception {
-        List<String> allAuthorizedRoles = new ArrayList<String>();
-        allAuthorizedRoles.add("1");
-        ClientRole clientRole = new ClientRole();
-        when(spy.createRoleList(null)).thenReturn(allAuthorizedRoles);
-        when(clientDao.getClientRoleById("1")).thenReturn(clientRole);
-        when(tenantDao.doesScopeAccessHaveTenantRole(null, clientRole)).thenReturn(false);
-        assertThat("has authorized status", spy.doesClientHaveAuthorizedRoles(null, null), equalTo(false));
-    }
-
-    @Test
-    public void doesClientHaveAuthorizedRoles_roleListIsEmpty_returnsFalse() throws Exception {
-        List<String> allAuthorizedRoles = new ArrayList<String>();
-        when(spy.createRoleList(null)).thenReturn(allAuthorizedRoles);
-        assertThat("has authorized status", spy.doesClientHaveAuthorizedRoles(null, null), equalTo(false));
-    }
-
-    @Test
-    public void createRoleList_twoRoles_returnsCorrectList() throws Exception {
-       List<String> allAuthorizedRoles = defaultAuthorizationService.createRoleList("programmers","awesome");
-       assertThat("number of roles", allAuthorizedRoles.size(), equalTo(3));
-       assertThat("first role",allAuthorizedRoles.get(0),equalTo(ClientRole.SUPER_ADMIN_ROLE));
-       assertThat("second role",allAuthorizedRoles.get(1),equalTo("programmers"));
-       assertThat("third role",allAuthorizedRoles.get(2),equalTo("awesome"));
-    }
-
-    @Test
-    public void createRoleList_nullParameter_returnsListWithOnlySuperAdminRole() throws Exception {
-        List<String> allAuthorizedRoles = defaultAuthorizationService.createRoleList(null);
-        assertThat("number of roles",allAuthorizedRoles.size(),equalTo(1));
-        assertThat("first role",allAuthorizedRoles.get(0),equalTo(ClientRole.SUPER_ADMIN_ROLE));
-    }
-
-    @Test
-    public void isClientTheEntityBeingAccessed_returnsFalse() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.isClientTheEntityBeingAccessed(null, null),equalTo(false));
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
+        defaultAuthorizationService.retrieveAccessControlRoles();
     }
 
     @Test
@@ -148,25 +69,15 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void authorizeCloudServiceAdmin_cloudAdminNull_callsClientDao() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("roleName");
-        spy.authorizeCloudServiceAdmin(scopeAccess);
-        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
-    }
-
-    @Test
     public void authorizeCloudServiceAdmin_cloudAdminRoleNotNull_doesNotResetCloudAdminRole() throws Exception {
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setCloudAdminRole(clientRole);
+        DefaultAuthorizationService.setCloudServiceAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudServiceAdmin(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getCloudAdminRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setCloudAdminRole(null);
+        assertThat("client role", DefaultAuthorizationService.getCloudServiceAdminRole(), equalTo(clientRole));
+        DefaultAuthorizationService.setCloudServiceAdminRole(null);
     }
 
     @Test
@@ -188,7 +99,7 @@ public class DefaultAuthorizationServiceTest {
         DefaultAuthorizationService.setRackerRole(clientRole);
         ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeRacker(scopeAccess);
         assertThat("client role", DefaultAuthorizationService.getRackerRole(), equalTo(clientRole));
         DefaultAuthorizationService.setRackerRole(null);
@@ -207,22 +118,12 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void authorizeCloudIdentityAdmin_cloudAdminNull_callsClientDao() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(config.getString("cloudAuth.adminRole")).thenReturn("roleName");
-        spy.authorizeCloudIdentityAdmin(scopeAccess);
-        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
-    }
-
-    @Test
     public void authorizeCloudIdentityAdmin_cloudIdentityAdminRoleNotNull_doesResetCloudIdentityAdminRole() throws Exception {
         ClientRole clientRole = new ClientRole();
         DefaultAuthorizationService.setCloudIdentityAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudIdentityAdmin(scopeAccess);
         assertThat("client role", DefaultAuthorizationService.getCloudIdentityAdminRole(), equalTo(clientRole));
         DefaultAuthorizationService.setCloudIdentityAdminRole(null);
@@ -261,24 +162,13 @@ public class DefaultAuthorizationServiceTest {
         assertThat("boolean", defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess), equalTo(false));
     }
 
-    @Ignore
-    @Test
-    public void authorizeCloudUserAdmin_cloudAdminNull_callsClientDao() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(config.getString("cloudAuth.userAdminRole")).thenReturn("roleName");
-        spy.authorizeCloudUserAdmin(scopeAccess);
-        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
-    }
-
     @Test
     public void authorizeCloudUserAdmin_cloudUserAdminRoleNotNull_doesNotResetCloudUserAdminRole() throws Exception {
         ClientRole clientRole = new ClientRole();
         DefaultAuthorizationService.setCloudUserAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess);
         assertThat("client role", DefaultAuthorizationService.getCloudUserAdminRole(), equalTo(clientRole));
         DefaultAuthorizationService.setCloudUserAdminRole(null);
@@ -290,32 +180,10 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void hasDefaultUserRole_scopeAccessIsNull_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.hasDefaultUserRole(null), equalTo(false));
-    }
-
-    @Test
     public void authorizeCloudUser_tokenExpired_returnsFalse() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         assertThat("boolean", defaultAuthorizationService.authorizeCloudUser(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudUser_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        DefaultAuthorizationService.setCloudUserRole(null);
-        defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
-    }
-
-    @Test
-    public void hasDefaultUserRole_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
-        String uniqueUserId = "uniqueId";
-        DefaultAuthorizationService.setCloudUserRole(null);
-        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
-        verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
     @Test
@@ -324,60 +192,10 @@ public class DefaultAuthorizationServiceTest {
         DefaultAuthorizationService.setCloudUserRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         assertThat("client role", DefaultAuthorizationService.getCloudUserRole(), equalTo(clientRole));
         DefaultAuthorizationService.setCloudUserRole(null);
-    }
-
-    @Test
-    public void authorizeCloudUser_callsTenantDaoMethod() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        DefaultAuthorizationService.setCloudUserRole(null);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
-    }
-
-    @Test
-    public void hasDefaultUserROle_callsTenantDaoMethod() throws Exception {
-        String uniqueUserId = "uniqueId";
-        DefaultAuthorizationService.setCloudUserRole(new ClientRole());
-        defaultAuthorizationService.hasDefaultUserRole(uniqueUserId);
-        verify(tenantDao).doesUserHaveTenantRole(eq(uniqueUserId), any(ClientRole.class));
-    }
-
-    @Test
-    public void hasUserAdminRole_scopeAccessIsNull_returnsFalse() throws Exception {
-        boolean result = defaultAuthorizationService.hasUserAdminRole(null);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
-    public void hasUserAdminRole_cloudUserAdminRoleIsNull_setsRole() throws Exception {
-        String uniqueUserId = "uniqueId";
-        ScopeAccess scopeAccess = new ScopeAccess();
-        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
-        verify(clientDao).getClientRoleByClientIdAndRoleName(null, null);
-    }
-
-    @Test
-    public void hasUserAdminRole_callsTenantDao_doesScopeAccessHaveTenantRole() throws Exception {
-        String uniqueUserId = "uniqueId";
-        ClientRole cloud_user_admin_role = new ClientRole();
-        DefaultAuthorizationService.setCloudUserAdminRole(cloud_user_admin_role);
-        defaultAuthorizationService.hasUserAdminRole(uniqueUserId);
-        verify(tenantDao).doesUserHaveTenantRole(uniqueUserId, cloud_user_admin_role);
-    }
-
-    @Test
-    public void authorizeCloudUser_returnsBoolean() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(tenantDao.doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class))).thenReturn(true);
-        boolean authorized = defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        DefaultAuthorizationService.setCloudUserRole(null);
-        assertThat("boolean", authorized, equalTo(true));
     }
 
     @Test
@@ -401,49 +219,16 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void authorizeIdmSuperAdmin_idmSuperAdminRoleNull_setsIdmSuperAdminRole() throws Exception {
-        ClientRole clientRole = new ClientRole();
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
-        when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(clientRole);
-        spy.authorizeIdmSuperAdmin(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getIdmSuperAdminRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setIdmSuperAdminRole(null);
-    }
-
-    @Test
     public void authorizeIdmSuperAdmin_idmSuperAdminRoleExists_doesNotResetIdmSuperAdminRole() throws Exception {
         ClientRole clientRole = new ClientRole();
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         DefaultAuthorizationService.setIdmSuperAdminRole(clientRole);
         doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
         when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
+        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         spy.authorizeIdmSuperAdmin(scopeAccess);
         assertThat("client role",DefaultAuthorizationService.getIdmSuperAdminRole(),equalTo(clientRole));
         DefaultAuthorizationService.setIdmSuperAdminRole(null);
-    }
-
-    @Test
-    public void authorizeIdmSuperAdmin_callsTenantDaoMethod() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        spy.authorizeIdmSuperAdmin(scopeAccess);
-        DefaultAuthorizationService.setIdmSuperAdminRole(null);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
-    }
-
-    @Test
-    public void authorizeIdmSuperAdmin_returnsBoolean() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(tenantDao.doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class))).thenReturn(true);
-        boolean authorized = spy.authorizeIdmSuperAdmin(scopeAccess);
-        DefaultAuthorizationService.setIdmSuperAdminRole(null);
-        assertThat("boolean", authorized, equalTo(true));
     }
 
     @Test
@@ -1344,11 +1129,5 @@ public class DefaultAuthorizationServiceTest {
             String message = ex.getMessage();
             assertThat("message",message,equalTo("Token cat Forbidden from this call"));
         }
-    }
-
-    @Ignore
-    @Test
-    public void getIDM_ADMIN_GROUP_DN() throws Exception {
-        assertThat("string", defaultAuthorizationService.getIdmAdminGroupDn(), nullValue());
     }
 }

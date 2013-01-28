@@ -10,7 +10,6 @@ import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
@@ -20,7 +19,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
-import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -488,7 +486,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void deleteUser_userIsUserAdmin_callsUserService_hasSubUsers() throws Exception {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
     }
@@ -503,7 +501,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById("userId")).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
-        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         when(userService.hasSubUsers("userId")).thenReturn(true);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
@@ -516,7 +514,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
-        verify(authorizationService).hasUserAdminRole(anyString());
+        verify(authorizationService).hasUserAdminRole(user);
     }
 
     @Test
@@ -3354,7 +3352,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudUser(scopeAccessForDefaultUser)).thenReturn(true);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
-        when(authorizationService.hasDefaultUserRole(anyString())).thenReturn(true);
+        when(authorizationService.hasDefaultUserRole(user)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -3369,7 +3367,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
-        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -3466,7 +3464,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
-        when(authorizationService.hasUserAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
@@ -3683,7 +3681,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         when(userService.getUserByAuthToken(anyString())).thenReturn(svcuser);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
-        when(authorizationService.hasServiceAdminRole(anyString())).thenReturn(true);
+        when(authorizationService.hasServiceAdminRole(user)).thenReturn(true);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.resetUserApiKeyCredentials(null, authToken, null, null);
         verify(exceptionHandler).exceptionResponse(any(ForbiddenException.class));

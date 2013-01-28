@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.dao.TenantDao
 import spock.lang.Specification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -55,7 +54,6 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
     @Shared LdapCustomerRepository customerDao
     @Shared LdapScopeAccessPeristenceRepository scopeAccessDao
     @Shared LdapTenantRoleRepository tenantRoleDao
-    @Shared TenantDao tenantDao
 
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
@@ -221,7 +219,6 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
         ]
 
         tenantService.getTenantRolesForUser(_) >> new ArrayList<TenantRole>()
-        tenantDao.getTenantRolesForUser(_) >> new ArrayList<TenantRole>()
 
         mockedClientRole.getName() >> "Racker"
 
@@ -350,8 +347,6 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
 
         tenantService.tenantRoleDao = tenantRoleDao
         tenantService.applicationDao = applicationDao
-        tenantDao = Mock()
-        tenantService.tenantDao = tenantDao
 
         service.tenantService = tenantService
 
