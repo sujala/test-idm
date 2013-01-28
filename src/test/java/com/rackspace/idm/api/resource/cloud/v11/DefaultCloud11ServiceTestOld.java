@@ -59,7 +59,7 @@ import static org.mockito.Mockito.*;
  * Date: 10/18/11
  * Time: 6:19 PM
  */
-public class DefaultCloud11ServiceTest {
+public class DefaultCloud11ServiceTestOld {
 
     AuthorizationService authorizationService;
     DefaultCloud11Service defaultCloud11Service;

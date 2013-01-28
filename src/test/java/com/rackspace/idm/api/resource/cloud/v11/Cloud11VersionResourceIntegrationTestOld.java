@@ -20,7 +20,7 @@ import static org.junit.Assert.assertThat;
  * Date: 8/22/11
  * Time: 10:06 AM
  */
-public class Cloud11VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
+public class Cloud11VersionResourceIntegrationTestOld extends AbstractAroundClassJerseyTest {
 
     @Before
     public void setUp() throws Exception {

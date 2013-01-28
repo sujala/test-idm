@@ -346,6 +346,11 @@ public class DefaultUserService implements UserService {
     public User getUserByTenantId(String tenantId) {
         logger.debug("Getting user by tenantId: {}", tenantId);
         Users users = getUsersByTenantId(tenantId);
+
+        if(users.getUsers() == null || users.getUsers().size() < 1){
+            return null;
+        }
+
         if (users.getUsers().size() == 1) {
             return users.getUsers().get(0);
         }else if(users.getUsers().size() > 1){
