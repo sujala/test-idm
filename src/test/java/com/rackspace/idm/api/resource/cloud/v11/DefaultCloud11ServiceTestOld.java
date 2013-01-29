@@ -59,7 +59,7 @@ import static org.mockito.Mockito.*;
  * Date: 10/18/11
  * Time: 6:19 PM
  */
-public class DefaultCloud11ServiceTest {
+public class DefaultCloud11ServiceTestOld {
 
     AuthorizationService authorizationService;
     DefaultCloud11Service defaultCloud11Service;
@@ -231,7 +231,7 @@ public class DefaultCloud11ServiceTest {
         mossoCredentials.setKey("key");
         mossoCredentials.setMossoId(123);
         JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
-        when(userService.getUserByMossoId(123)).thenThrow(new NotAuthenticatedException());
+        when(userService.getUserByTenantId("123")).thenThrow(new NotAuthenticatedException());
 
         Response response = defaultCloud11Service.adminAuthenticateResponse(null, jaxbElement).build();
         assertThat("response status", response.getStatus(), equalTo(401));
@@ -243,18 +243,18 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void validateMossoId_calls_UserService_getUsersByMossoId() throws Exception {
         defaultCloud11Service.validateMossoId(123);
-        verify(userService).getUserByMossoId(123);
+        verify(userService).getUserByTenantId("123");
     }
 
     @Test
     public void validateMossoId_noUserExists_succeeds() throws Exception {
-        when(userService.getUserByMossoId(123)).thenReturn(null);
+        when(userService.getUserByTenantId("123")).thenReturn(null);
         defaultCloud11Service.validateMossoId(123);
     }
 
     @Test(expected = BadRequestException.class)
     public void validateMossoId_UserExists_succeeds() throws Exception {
-        when(userService.getUserByMossoId(123)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(userService.getUserByTenantId("123")).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.validateMossoId(123);
     }
 
@@ -378,7 +378,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement credentials = mock(JAXBElement.class);
         when(credentials.getValue()).thenReturn(new NastCredentials());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(userService).getUserByNastId(null);
+        verify(userService).getUserByTenantId(null);
     }
 
     @Test
@@ -386,7 +386,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement credentials = mock(JAXBElement.class);
         when(credentials.getValue()).thenReturn(new NastCredentials());
         userDO.setEnabled(true);
-        when(userService.getUserByNastId(null)).thenReturn(userDO);
+        when(userService.getUserByTenantId(null)).thenReturn(userDO);
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
@@ -399,7 +399,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(userService).getUserByMossoId(12345);
+        verify(userService).getUserByTenantId("12345");
     }
 
     @Test
@@ -409,7 +409,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
+        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(eq(userDO.getUsername()), eq("apiKey"), anyString());
@@ -422,7 +422,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
+        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
@@ -436,7 +436,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
+        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
@@ -450,7 +450,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
+        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
@@ -465,7 +465,7 @@ public class DefaultCloud11ServiceTest {
         users.setUsers(listUser);
         user.setId("userId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addNastTenant(user);
         Mockito.verify(nastFacade).addNastUser(user);
@@ -479,7 +479,7 @@ public class DefaultCloud11ServiceTest {
         users.setUsers(listUser);
         user.setId("userId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addMossoTenant(user);
         verify(tenantService).addTenant(any(Tenant.class));
@@ -505,7 +505,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setNastId("nastId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addNastTenant(user);
         verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
@@ -522,7 +522,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setNastId("nastId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         defaultCloud11Service.addMossoTenant(user1);
         verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
     }
@@ -538,7 +538,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setNastId("nastId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         defaultCloud11Service.addMossoTenant(user1);
         verify(tenantService).addTenant(any(Tenant.class));
     }
@@ -551,7 +551,7 @@ public class DefaultCloud11ServiceTest {
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
         users.setUsers(listUser);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(nastFacade.addNastUser(user1)).thenReturn("nastId");
         defaultCloud11Service.addNastTenant(user1);
         verify(tenantService).addTenant(any(Tenant.class));
@@ -565,7 +565,7 @@ public class DefaultCloud11ServiceTest {
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
         users.setUsers(listUser);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(nastFacade.addNastUser(user1)).thenReturn("nastId");
         doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
         defaultCloud11Service.addNastTenant(user1);
@@ -660,7 +660,7 @@ public class DefaultCloud11ServiceTest {
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
         listUser.add(userDO);
         users.setUsers(listUser);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(clientService.getByName("cloudServers")).thenReturn(application);
         defaultCloud11Service.addMossoTenant(user1);
@@ -686,7 +686,7 @@ public class DefaultCloud11ServiceTest {
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
         listUser.add(userDO);
         users.setUsers(listUser);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId("123")).thenReturn(users);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(clientService.getByName("cloudServers")).thenReturn(application);
         defaultCloud11Service.addMossoTenant(user1);
@@ -709,7 +709,7 @@ public class DefaultCloud11ServiceTest {
         user1.setMossoId(null);
         defaultCloud11Service.addMossoTenant(user1);
         verify(clientService, never()).getClientRoleByClientIdAndRoleName(anyString(), anyString());
-        verify(userService, never()).getUsersByMossoId(anyInt());
+        verify(userService, never()).getUserByTenantId(anyString());
     }
 
 
@@ -721,7 +721,7 @@ public class DefaultCloud11ServiceTest {
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
         listUser.add(userDO);
         users.setUsers(listUser);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId(String.valueOf(123))).thenReturn(users);
         defaultCloud11Service.addMossoTenant(user1);
         verify(tenantService).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
     }
@@ -735,7 +735,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setNastId("nastId");
         user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(userService.getUsersByTenantId(String.valueOf(123))).thenReturn(users);
         when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addMossoTenant(user);
         Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
@@ -849,7 +849,7 @@ public class DefaultCloud11ServiceTest {
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         spy.validateToken(request, null, "123", "MOSSO", null);
-        verify(userService).getUserByMossoId(123);
+        verify(userService).getUserByTenantId("123");
     }
 
     @Test
@@ -859,7 +859,7 @@ public class DefaultCloud11ServiceTest {
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         spy.validateToken(request, null, "belongsTo", "NAST", null);
-        verify(userService).getUserByNastId("belongsTo");
+        verify(userService).getUserByTenantId("belongsTo");
     }
 
     @Test
@@ -1697,13 +1697,13 @@ public class DefaultCloud11ServiceTest {
     public void getUserFromMossoId_isAdminCall_callsUserService_getUserByMossoId() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         spy.getUserFromMossoId(request, 12345, null);
-        verify(userService).getUserByMossoId(12345);
+        verify(userService).getUserByTenantId("12345");
     }
 
     @Test
     public void getUserFromMossoId_withNullUser_returnsNotFoundResponse() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userService.getUserByMossoId(12345)).thenReturn(null);
+        when(userService.getUserByTenantId("12345")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserFromMossoId(request, 12345, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
@@ -1711,7 +1711,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void getUserFromMossoId_withValidUser_returns301Status() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userService.getUserByMossoId(12345)).thenReturn(userDO);
+        when(userService.getUserByTenantId("12345")).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.getUserFromMossoId(request, 12345, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(301));
 
@@ -1742,13 +1742,13 @@ public class DefaultCloud11ServiceTest {
     public void getUserFromNastId_isAdminCall_callsUserService_getUserByMossoId() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         spy.getUserFromNastId(request, "nastId", null);
-        verify(userService).getUserByNastId("nastId");
+        verify(userService).getUserByTenantId("nastId");
     }
 
     @Test
     public void getUserFromNastId_withNullUser_returnsNotFoundResponse() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userService.getUserByNastId("nastId")).thenReturn(null);
+        when(userService.getUserByTenantId("nastId")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserFromNastId(request, "nastId", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
@@ -1756,7 +1756,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void getUserFromNastId_withValidUser_returns301Status() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userService.getUserByNastId("nastId")).thenReturn(userDO);
+        when(userService.getUserByTenantId("nastId")).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.getUserFromNastId(request, "nastId", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(301));
     }
@@ -2392,7 +2392,7 @@ public class DefaultCloud11ServiceTest {
         userDO.setMossoId(123456);
         when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        when(userService.getUsersByMossoId(123456)).thenReturn(users);
+        when(userService.getUsersByTenantId("123456")).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
         doNothing().when(spy).addMossoTenant(any(User.class));

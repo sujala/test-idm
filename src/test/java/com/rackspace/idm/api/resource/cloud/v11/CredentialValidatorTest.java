@@ -46,16 +46,16 @@ public class CredentialValidatorTest {
         credential.setNastId("nastId");
         User user = new User();
         user.setEnabled(true);
-        when(userService.getUserByNastId("nastId")).thenReturn(user);
+        when(userService.getUserByTenantId("nastId")).thenReturn(user);
         credentialValidator.validateCredential(credential, userService);
-        verify(userService).getUserByNastId("nastId");
+        verify(userService).getUserByTenantId("nastId");
     }
 
     @Test (expected = NotAuthenticatedException.class)
     public void validateNastCredentials_userIsNull_throwsNotAuthenticatedException() throws Exception {
         NastCredentials credential = new NastCredentials();
         credential.setNastId("nastId");
-        when(userService.getUserByNastId("nastId")).thenReturn(null);
+        when(userService.getUserByTenantId("nastId")).thenReturn(null);
         credentialValidator.validateCredential(credential, userService);
     }
 
@@ -66,7 +66,7 @@ public class CredentialValidatorTest {
         User user = new User();
         user.setNastId("nastId");
         user.setEnabled(false);
-        when(userService.getUserByNastId("nastId")).thenReturn(user);
+        when(userService.getUserByTenantId("nastId")).thenReturn(user);
         credentialValidator.validateCredential(credential, userService);
     }
 
@@ -77,7 +77,7 @@ public class CredentialValidatorTest {
         User user = new User();
         user.setNastId("nastId");
         user.setEnabled(true);
-        when(userService.getUserByNastId("nastId")).thenReturn(user);
+        when(userService.getUserByTenantId("nastId")).thenReturn(user);
         try {
             credentialValidator.validateCredential(credential, userService);
         } catch (Exception e) {
@@ -187,7 +187,7 @@ public class CredentialValidatorTest {
         MossoCredentials mossoCredentials = new MossoCredentials();
         mossoCredentials.setKey("apiKey");
         mossoCredentials.setMossoId(0);
-        when(userService.getUserByMossoId(0)).thenReturn(null);
+        when(userService.getUserByTenantId("0")).thenReturn(null);
         credentialValidator.validateCredential(mossoCredentials, userService);
     }
 
@@ -199,7 +199,7 @@ public class CredentialValidatorTest {
         User user = new User();
         user.setMossoId(0);
         user.setEnabled(false);
-        when(userService.getUserByMossoId(0)).thenReturn(user);
+        when(userService.getUserByTenantId("0")).thenReturn(user);
         credentialValidator.validateCredential(mossoCredentials, userService);
     }
 
@@ -211,7 +211,7 @@ public class CredentialValidatorTest {
         User user = new User();
         user.setMossoId(0);
         user.setEnabled(true);
-        when(userService.getUserByMossoId(0)).thenReturn(user);
+        when(userService.getUserByTenantId("0")).thenReturn(user);
         try {
             credentialValidator.validateCredential(mossoCredentials, userService);
         } catch (Exception e) {

@@ -239,6 +239,48 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         responseBuilder.build().status == 400
     }
 
+    def "GET - userByMossoId - returns 301" () {
+        given:
+        setupMock()
+        allowAccess()
+        userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
+
+
+        when:
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserFromMossoId(request,123,null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 301
+        response.metadata.get("Location")[0] == "/v1.1/users/someName"
+    }
+
+    def "GET - userByNastId - returns 301" () {
+        given:
+        setupMock()
+        allowAccess()
+        userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
+
+
+        when:
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserFromNastId(request,"nast",null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 301
+        response.metadata.get("Location")[0] == "/v1.1/users/someName"
+    }
+
+    def createUser(String id, String username, int mossoId, String nastId) {
+        new com.rackspace.idm.domain.entity.User().with {
+            it.id = id
+            it.username = username
+            it.mossoId = mossoId
+            it.nastId = nastId
+            return it
+        }
+    }
+
     def pattern(String name, String regex, String errMsg, String description){
         new Pattern().with {
             it.name = name

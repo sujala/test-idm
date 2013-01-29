@@ -1,10 +1,10 @@
-package com.rackspace.idm.domain.service
+package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-class AuthorizationServiceTempTest extends RootServiceTest {
+class DefaultAuthorizationServiceTest extends RootServiceTest {
     @Shared DefaultAuthorizationService service
 
     def setupSpec() {

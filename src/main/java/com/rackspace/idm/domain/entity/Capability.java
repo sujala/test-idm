@@ -8,6 +8,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * Time: 3:51 PM
  * To change this template use File | Settings | File Templates.
  */
+@EqualsAndHashCode(exclude = "description")
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_CAPABILITY)
 public class Capability implements Auditable, UniqueId {
@@ -71,20 +73,5 @@ public class Capability implements Auditable, UniqueId {
 
     public void setUniqueId(String id){
         this.ldapEntry.setDN(id);
-    }
-
-    @Override
-    public boolean equals(Object obj){
-        if(obj == this){
-            return true;
-        }
-        if(!(obj instanceof Capability)){
-            return false;
-        }
-        Capability other = (Capability) obj;
-        if(this.getId().equalsIgnoreCase(other.getId()) && this.getVersion().equalsIgnoreCase(other.getVersion()) && this.getType().equalsIgnoreCase(other.getType())){
-            return true;
-        }
-        return false;
     }
 }

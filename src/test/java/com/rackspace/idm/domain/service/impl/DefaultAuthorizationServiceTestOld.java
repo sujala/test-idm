@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * Time: 9:18 AM
  * To change this template use File | Settings | File Templates.
  */
-public class DefaultAuthorizationServiceTest {
+public class DefaultAuthorizationServiceTestOld {
 
     DefaultAuthorizationService defaultAuthorizationService;
     ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);

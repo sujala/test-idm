@@ -406,7 +406,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGAByMossoId(int mossoId){
-        com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByMossoId(mossoId);
+        com.rackspace.idm.domain.entity.Users usersById = defaultUserService.getUsersByTenantId(String.valueOf(mossoId));
         if(usersById.getUsers() == null) {
             return false;
         } if(usersById.getUsers().size() == 0) {
@@ -416,7 +416,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGAByNastId(String nastId){
-        com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByNastId(nastId);
+        com.rackspace.idm.domain.entity.Users usersById = defaultUserService.getUsersByTenantId(nastId);
         if(usersById.getUsers() == null) {
             return false;
         } if (usersById.getUsers().size() == 0) {

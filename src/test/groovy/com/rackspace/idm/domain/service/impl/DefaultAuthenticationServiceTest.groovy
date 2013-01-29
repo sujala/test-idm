@@ -39,7 +39,7 @@ import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultAuthenticationServiceGroovyTest extends Specification {
+class DefaultAuthenticationServiceTest extends Specification {
 
     @Autowired private DefaultAuthenticationService service
     @Autowired private TenantService tenantService

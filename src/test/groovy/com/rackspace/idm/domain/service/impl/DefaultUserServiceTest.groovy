@@ -2,11 +2,15 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.Validator
 import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.Users
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
@@ -119,7 +123,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         userDao.isUsernameUnique(_) >> true
 
         when:
-        service.addUser(createUserEntity("region", true, "id", "email@email.com"))
+        service.addUser(createUser("region", true, "id", "email@email.com", 1, "nast"))
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -133,7 +137,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         userDao.isUsernameUnique(_) >> true
 
         when:
-        service.addUser(createUserEntity(null, true, "id", "email@email.com"))
+        service.addUser(createUser(null, true, "id", "email@email.com", 1, "nast"))
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -174,22 +178,94 @@ class DefaultUserServiceTest extends RootServiceTest {
         thrown(NotAuthenticatedException)
     }
 
-    def setupMocks() {
-        mockEndpointService(service)
-        mockTenantService(service)
-        mockCloudRegionService(service)
-        mockUserDao(service)
-        mockConfiguration(service)
-        mockValidator(service)
-        mockScopeAccessDao(service)
+
+    def "GET - user by tenant id - size 1" (){
+        given:
+        setupMocks()
+        String[] tenantIds = ["1","2"]
+        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        Users users = new Users()
+        users.users = new ArrayList<User>();
+        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        userDao.getUsers(_) >> users
+
+        when:
+        User user = this.service.getUserByTenantId("1")
+
+        then:
+        user != null;
+        user.getMossoId() == 1
     }
 
-    def createUserEntity(String region, boolean enabled, String id, String email) {
+    def "GET - user by tenant id - size > 1 - isUserAdmin=true" (){
+        given:
+        setupMocks()
+        String[] tenantIds = ["1","2"]
+        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        Users users = new Users()
+        users.users = new ArrayList<User>();
+        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        userDao.getUsers(_) >> users
+        authorizationService.hasUserAdminRole(_) >>> [false] >> true
+
+        when:
+        User user = this.service.getUserByTenantId("1")
+
+        then:
+        user != null;
+        user.getMossoId() == 1
+        user.id == "2"
+    }
+
+    def "GET - user by tenant id - size > 1 - isUserAdmin=false" (){
+        given:
+        setupMocks()
+        String[] tenantIds = ["1","2"]
+        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        Users users = new Users()
+        users.users = new ArrayList<User>();
+        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        userDao.getUsers(_) >> users
+        authorizationService.hasUserAdminRole(_) >> false
+
+        when:
+        User user = this.service.getUserByTenantId("1")
+
+        then:
+        user == null;
+    }
+
+    def "GET - users by tenant id - size > 1" (){
+        given:
+        setupMocks()
+        String[] tenantIds = ["1","2"]
+        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        Users users = new Users()
+        users.users = new ArrayList<User>();
+        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        userDao.getUsers(_) >> users
+        authorizationService.hasUserAdminRole(_) >> true
+
+        when:
+        Users results = this.service.getUsersByTenantId("1")
+
+        then:
+        results.users != null;
+        results.users.size() == 2
+        results.users.get(0).mossoId == 1
+    }
+
+    def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {
         new User().with {
             it.region = region
             it.enabled = enabled
             it.id = id
             it.email = email
+            it.mossoId = mossoId
+            it.nastId = nastId
             return it
         }
     }
@@ -201,5 +277,27 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.isDefault = isDefault
             return it
         }
+    }
+
+    def createTenantRole(String name, String userId, String[] tenantIds) {
+        new TenantRole().with {
+            it.name = name
+            it.userId = userId
+            it.tenantIds = tenantIds
+            return it
+        }
+    }
+
+    def setupMocks() {
+        mockEndpointService(service)
+        mockTenantService(service)
+        mockCloudRegionService(service)
+        mockUserDao(service)
+        mockConfiguration(service)
+        mockValidator(service)
+        mockScopeAccessDao(service)
+        mockScopeAccessService(service)
+        mockTenantDao(service)
+        mockAuthorizationService(service)
     }
 }

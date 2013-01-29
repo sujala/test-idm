@@ -350,7 +350,9 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void getUsersByMossoId_callsGetMultipleUsers() throws Exception {
         doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getUsersByMossoId(1);
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(Filter.createEqualityFilter("rsId", "1"));
+        spy.getUsers(filters);
         verify(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
     }
 
@@ -358,20 +360,24 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void getUsersByMossoId_foundUsers_returnUsers() throws Exception {
         Users users = new Users();
         doReturn(users).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        Users result = spy.getUsersByMossoId(1);
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(Filter.createEqualityFilter("rsId", "1"));
+        Users result = spy.getUsers(filters);
         assertThat("users", result, equalTo(users));
     }
 
     @Test
     public void getUsersByNastId_nastIdIsBlank_returnsNull() throws Exception {
-        Users result = ldapUserRepository.getUsersByNastId("");
-        assertThat("users", result, equalTo(null));
+        Users result = ldapUserRepository.getUsers(null);
+        assertThat("users", result.getUsers(), equalTo(null));
     }
 
     @Test
     public void getUsersByNastId_callsGetMultipleUsers() throws Exception {
         doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getUsersByNastId("nastId");
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(Filter.createEqualityFilter("rsId", "nastId"));
+        spy.getUsers(filters);
         verify(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
     }
 
@@ -379,7 +385,9 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void getUsersByNastId_foundUsers_returnUsers() throws Exception {
         Users users = new Users();
         doReturn(users).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        Users result = spy.getUsersByNastId("nastId");
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(Filter.createEqualityFilter("rsId", "nastId"));
+        Users result = spy.getUsers(filters);
         assertThat("users", result, equalTo(users));
     }
 

@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
  * Time: 4:07 PM
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultAuthenticationServiceTest {
+public class DefaultAuthenticationServiceTestOld {
 
     @Mock
     ApplicationDao applicationDao;

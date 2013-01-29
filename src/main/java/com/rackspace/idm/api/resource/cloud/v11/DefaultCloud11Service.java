@@ -203,10 +203,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                         user = this.userService.getUser(belongsTo);
                         break;
                     case MOSSO:
-                        user = this.userService.getUserByMossoId(Integer.parseInt(belongsTo));
+                        user = this.userService.getUserByTenantId(belongsTo);
                         break;
                     case NAST:
-                        user = this.userService.getUserByNastId(belongsTo);
+                        user = this.userService.getUserByTenantId(belongsTo);
                         break;
                 }
 
@@ -517,7 +517,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     public void validateMossoId(Integer mossoId) {
-        User user = userService.getUserByMossoId(mossoId);
+        User user = userService.getUserByTenantId(String.valueOf(mossoId));
         if (user != null) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
@@ -780,7 +780,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = this.userService.getUserByMossoId(mossoId);
+            User user = this.userService.getUserByTenantId(String.valueOf(mossoId));
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
@@ -806,7 +806,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = this.userService.getUserByNastId(nastId);
+            User user = this.userService.getUserByTenantId(nastId);
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
@@ -1161,17 +1161,19 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         credentialValidator.validateCredential(cred.getValue(), userService);
         try {
-            if (cred.getValue() instanceof MossoCredentials) {
-                MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
-                int mossoId = mossoCreds.getMossoId();
-                String apiKey = mossoCreds.getKey();
-                user = this.userService.getUserByMossoId(mossoId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
-            } else if (cred.getValue() instanceof NastCredentials) {
-                NastCredentials nastCreds = (NastCredentials) cred.getValue();
-                String nastId = nastCreds.getNastId();
-                String apiKey = nastCreds.getKey();
-                user = this.userService.getUserByNastId(nastId);
+            if (cred.getValue() instanceof MossoCredentials || cred.getValue() instanceof  NastCredentials) {
+                String tenantId = null;
+                String apiKey;
+                if(cred.getValue() instanceof MossoCredentials){
+                    MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
+                    tenantId = String.valueOf(mossoCreds.getMossoId());
+                    apiKey = mossoCreds.getKey();
+                }else{
+                    NastCredentials nastCreds = (NastCredentials) cred.getValue();
+                    tenantId = nastCreds.getNastId();
+                    apiKey = nastCreds.getKey();
+                }
+                user = this.userService.getUserByTenantId(tenantId);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else {
                 PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();

@@ -15,7 +15,8 @@ import static org.hamcrest.Matchers.equalTo;
  * Time: 9:51 AM
  * To change this template use File | Settings | File Templates.
  */
-public class DomainTest {
+
+public class DomainTestOld {
     Domain domain;
 
     @Before

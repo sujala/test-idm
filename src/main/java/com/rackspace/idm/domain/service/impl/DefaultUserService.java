@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
+import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -176,7 +177,7 @@ public class DefaultUserService implements UserService {
     @Override
     public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
         logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        User user = getUserByMossoId(mossoId);
+        User user = getUserByTenantId(String.valueOf(mossoId));
         UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
         logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
@@ -187,7 +188,7 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
 
-        User user = getUserByNastId(nastId);
+        User user = getUserByTenantId(nastId);
 
         UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
 
@@ -329,41 +330,32 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByMossoId(int mossoId) { // Returns the first User-Admin it finds with matching mossoId
-        logger.debug(GETTING_USER, mossoId);
-        Users users = userDao.getUsersByMossoId(mossoId);
-
-        if (users.getUsers().size() == 1) {
-            return users.getUsers().get(0);
-        } else if (users.getUsers().size() > 1) {
-            for (User user : users.getUsers()) {
-                if (authorizationService.hasUserAdminRole(user)) {
-                    return user;
-                }
-            }
+    public Users getUsersByTenantId(String tenantId) {
+        logger.debug("Get list of users with tenant", tenantId);
+        List<TenantRole> tenantRoles = tenantDao.getAllTenantRolesForTenant(tenantId);
+        List<Filter> filterList = new ArrayList<Filter>();
+        for(TenantRole t : tenantRoles){
+            filterList.add(Filter.createEqualityFilter("rsId", t.getUserId()));
         }
-        return null;
-    }
-
-    @Override
-    public Users getUsersByMossoId(int mossoId) {
-        logger.debug(GETTING_USER, mossoId);
-        Users users = userDao.getUsersByMossoId(mossoId);
-        logger.debug(GOT_USER, users);
+        Users users = userDao.getUsers(filterList);
+        logger.debug("Got list of users with tenant", tenantId);
         return users;
     }
 
     @Override
-    public User getUserByNastId(String nastId) { // Returns the first User-Admin it finds with matching nastId
-        logger.debug(GETTING_USER, nastId);
-        Users users = userDao.getUsersByNastId(nastId);
+    public User getUserByTenantId(String tenantId) {
+        logger.debug("Getting user by tenantId: {}", tenantId);
+        Users users = getUsersByTenantId(tenantId);
+
+        if(users.getUsers() == null || users.getUsers().size() < 1){
+            return null;
+        }
 
         if (users.getUsers().size() == 1) {
             return users.getUsers().get(0);
-        } else if (users.getUsers().size() > 1) {
+        }else if(users.getUsers().size() > 1){
             for (User user : users.getUsers()) {
-                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.authorizeCloudUserAdmin(sa)) {
+                if (authorizationService.hasUserAdminRole(user)) {
                     return user;
                 }
             }
@@ -671,13 +663,6 @@ public class DefaultUserService implements UserService {
         if (!isUsernameUnique) {
             logger.warn("Couldn't add/update user {} because username already taken", user);
             throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
-        }
-    }
-
-    void validateMossoId(int mossoId) {
-        Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
-        if (usersByMossoId != null && usersByMossoId.getUsers().size() > 0) {
-            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
 

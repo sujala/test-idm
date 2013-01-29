@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
@@ -52,12 +53,10 @@ public interface UserService {
     
     User getUserByRPN(String rpn);
 
-    User getUserByNastId(String nastId);
+    Users getUsersByTenantId(String tenantId);
 
-    User getUserByMossoId(int mossoId);
+    User getUserByTenantId(String tenantId);
 
-    Users getUsersByMossoId(int mossoId);
-    
     User getUserBySecureId(String secureId);
 
     User getUser(String customerId, String username);
@@ -125,4 +124,6 @@ public interface UserService {
     User getUserByUsernameForAuthentication(String username);
 
     User checkAndGetUserByName(String username);
+
+    void setTenantDao(TenantDao tenantDao);
 }

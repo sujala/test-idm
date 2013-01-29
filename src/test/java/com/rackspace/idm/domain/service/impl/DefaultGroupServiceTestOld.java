@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultGroupServiceTest{
+public class DefaultGroupServiceTestOld {
     @InjectMocks
     DefaultGroupService defaultGroupService = new DefaultGroupService();
     User user1 = new User();
@@ -45,6 +46,8 @@ public class DefaultGroupServiceTest{
     GroupDao groupDao;
     @Mock
     DefaultUserService defaultUserService;
+    @Mock
+    Configuration config;
 
     DefaultGroupService spy;
 
@@ -178,6 +181,7 @@ public class DefaultGroupServiceTest{
     public void updateGroup_nullGroupName_callsGroupDaoMethod() throws Exception {
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
         group.setGroupId(123);
+        when(config.getString("defaultGroupId")).thenReturn("0");
         when(groupDao.getGroupById(123)).thenReturn(group);
         defaultGroupService.updateGroup(group);
     }
@@ -187,6 +191,7 @@ public class DefaultGroupServiceTest{
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
         group.setGroupId(123);
         group.setName("John Smith");
+        when(config.getString("defaultGroupId")).thenReturn("0");
         when(groupDao.getGroupById(123)).thenReturn(group);
         doNothing().when(groupDao).updateGroup(group);
 
@@ -203,6 +208,7 @@ public class DefaultGroupServiceTest{
         group1.setGroupId(123);
         group1.setName("John Smith");
         group2.setName("Adam Smith");
+        when(config.getString("defaultGroupId")).thenReturn("0");
         when(groupDao.getGroupById(123)).thenReturn(group2);
         doNothing().when(groupDao).updateGroup(group1);
         doNothing().when(spy).verifyDuplicateGroup(group1);
