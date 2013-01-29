@@ -322,6 +322,10 @@ class EntityFactory extends Specification {
         }
     }
 
+    def buildUser() {
+        return new UserBuilder()
+    }
+
     def createUser() {
         return createUser("username", "id", "domainId", "region")
     }
