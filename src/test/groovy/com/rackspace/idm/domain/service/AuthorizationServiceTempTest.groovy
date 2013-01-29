@@ -20,6 +20,24 @@ class AuthorizationServiceTempTest extends RootServiceTest {
         retrieveAccessControlRoles()
     }
 
+    def "authorizeRacker verifies the scopeAccess"() {
+        when:
+        def result = service.authorizeRacker(scopeAccess)
+
+        then:
+        result == expectedResult
+        scopeAccessService.isScopeAccessExpired(scopeAccess) >> expired
+        userService.getUserByScopeAccess(scopeAccess) >> entityFactory.createUser()
+        tenantService.doesUserContainTenantRole(_, _) >> hasTenantRole
+
+        where:
+        expectedResult  | expired   | hasTenantRole | scopeAccess
+        false           | true      | false         | null
+        false           | true      | false         | createRackerScopeAcccss()
+        false           | false     | false         | createRackerScopeAcccss()
+        true            | false     | true          | createRackerScopeAcccss()
+    }
+
     def "authorizeRacker verifies the scopeAccess is not expired"() {
         given:
         def expiredScopeAccess = expireScopeAccess(createRackerScopeAcccss())
