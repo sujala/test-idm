@@ -3690,9 +3690,11 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void updateUserPasswordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
         PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("someName");
+        passwordCredentialsRequiredUsername.setPassword("Password1");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserPasswordCredentials(null, authToken, null, null, passwordCredentialsRequiredUsername);
-        verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+        verify(validator).validatePasswordForCreateOrUpdate(passwordCredentialsRequiredUsername.getPassword());
     }
 
     @Test

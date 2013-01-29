@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -1173,9 +1174,50 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    def "updateCredentials with valid passwords should be able to authenticate" () {
+        given:
+        String username = "userUpdateCred" + sharedRandom
+        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
+        User user = userForCreate.getEntity(User)
+        String password = "Password1~!@#\$%^&*_#\$%^% <>?:\"^(%)'"
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {
+            it.username = username
+            it.password = password
+            return it
+        }
+
+        when:
+        def updateCreds = updateCredentialsXML(identityAdminToken, user.id, creds)
+        String updatePassword = updateCreds.getEntity(PasswordCredentialsRequiredUsername).value.password
+        def authenticate = authenticateXML(user.username,updatePassword)
+
+        then:
+        updateCreds.status == 200
+        authenticate.status == 200
+    }
+
+    def "updateCredentials with invalid password should return BadRequestException" () {
+        given:
+        String username = "userUpdateCred2" + sharedRandom
+        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
+        User user = userForCreate.getEntity(User)
+        String password = "Password1~!@א"
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {
+            it.username = username
+            it.password = password
+            return it
+        }
+
+        when:
+        def updateCreds = updateCredentialsXML(identityAdminToken, user.id, creds)
+
+        then:
+        updateCreds.status == 400
+    }
+
     //Resource Calls
     def createUserXML(String token, user) {
-        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(user).post(ClientResponse)
     }
 
     def getUserXML(String token, URI location) {
@@ -1417,6 +1459,10 @@ class Cloud20IntegrationTest extends Specification {
             queryParams.add("limit", limit)
         }
         resource.path(path20).path("OS-KSADM/roles").queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateCredentialsXML(String token, String userId, creds) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(creds).get(ClientResponse)
     }
 
     //Helper Methods

@@ -103,7 +103,7 @@ public class Validator {
             logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
-        if(!pat.matcher(value).matches()){
+        if(value == null || !pat.matcher(value).matches()){
             throw new BadRequestException(tempPattern.getErrMsg());
         }
 

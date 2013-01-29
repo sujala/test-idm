@@ -2676,6 +2676,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 200
     }
 
+
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)

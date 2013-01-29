@@ -2979,7 +2979,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validatePasswordCredentialsForCreateOrUpdate(creds);
+            validator.isUsernameValid(creds.getUsername());
+            validator.validatePasswordForCreateOrUpdate(creds.getPassword());
 
             User user = userService.checkAndGetUserById(userId);
             if (!creds.getUsername().equals(user.getUsername())) {

@@ -221,4 +221,8 @@ public class DefaultGroupService implements GroupService {
         }
         return false;
 	}
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 }
