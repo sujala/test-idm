@@ -2,10 +2,8 @@ package testHelpers
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-
-import javax.ws.rs.core.UriBuilder
-import javax.ws.rs.core.UriInfo
+import spock.lang.Shared
+import spock.lang.Specification
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,46 +12,43 @@ import javax.ws.rs.core.UriInfo
  * Time: 4:46 PM
  * To change this template use File | Settings | File Templates.
  */
-class EntityFactory {
+class EntityFactory extends Specification {
 
     private static ID = "id"
     private static CLIENT = "clientId"
     private static NAME = "name"
-    private static DESCRIPTION = "description"
-    private static DISPLAY = "displayName"
     private static PASSWORD = "Password1"
     private static USERNAME = "username"
-    private static EMAIL = "email@example.com"
 
-    JAXBObjectFactories objFactories = new JAXBObjectFactories()
+    private static objFactories = new JAXBObjectFactories()
 
     def createApplication() {
-        return createApplication(CLIENT, NAME, DESCRIPTION, true)
+        return createApplication(CLIENT, NAME)
     }
 
-    def createApplication(String clientId, String name, String description, boolean enabled) {
+    def createApplication(String clientId, String name) {
+        def id = clientId ? clientId : CLIENT
         new Application().with {
-            it.clientId = clientId ? clientId : CLIENT
-            it.name = name ? name : NAME
-            it.description = description ? description : DESCRIPTION
-            it.enabled = enabled
-            it.uniqueId = "clientId=$it.clientId,ou=applications,o=rackspace"
+            it.clientId = clientId
+            it.name = name
+            it.enabled = true
+            it.uniqueId = "clientId=$id,ou=applications,o=rackspace"
             return it
         }
     }
 
     def createAuthCredentials() {
-        return createAuthCredentials(CLIENT, "clientSecret", USERNAME, PASSWORD, null, null)
+        return createAuthCredentials(CLIENT, "clientSecret", USERNAME, PASSWORD, null)
     }
 
-    def createAuthCredentials(String clientId, String clientSecret, String username, String password, String grantType, OAuthGrantType oAuthGrantType) {
+    def createAuthCredentials(String clientId, String clientSecret, String username, String password, String grantType) {
         new AuthCredentials().with {
-            it.clientId = clientId ? clientId : CLIENT
-            it.clientSecret = clientSecret ? clientSecret : "clientSecret"
-            it.password = password ? password : PASSWORD
-            it.username = username ? username : USERNAME
-            it.grantType = grantType ? grantType : "PASSWORD"
-            it.OAuthGrantType = oAuthGrantType ? oAuthGrantType : OAuthGrantType.PASSWORD
+            it.clientId = clientId
+            it.clientSecret = clientSecret
+            it.password = password
+            it.username = username
+            it.grantType = "password"
+            it.OAuthGrantType = OAuthGrantType.PASSWORD
             return it
         }
     }
@@ -82,73 +77,67 @@ class EntityFactory {
 
     def createCapability() {
         def list = ["resource"].asList()
-        return createCapability(ID, NAME, "rsId", "action", DESCRIPTION, list)
+        return createCapability(ID, NAME)
     }
 
-    def createCapability(String id, String name, String rsId, String action, String description, List<String> resources) {
-        def emptyList = [].asList()
+    def createCapability(String id, String name) {
         new Capability().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
-            it.rsId = rsId ? rsId : "rsId"
-            it.action = action ? action : "action"
-            it.description = description ? description : DESCRIPTION
-            it.resources = resources ? resources : emptyList
+            it.id = id
+            it.name = name
+            it.resources = [].asList()
             return it
         }
     }
 
     def createClientRole() {
-        return createClientRole(ID, NAME, 500, CLIENT)
+        return createClientRole(NAME)
     }
 
-    def createClientRole(String id, String name, Integer weight, String clientId) {
+    def createClientRole(String name) {
         new ClientRole().with {
-            it.id = id ? id : ID
+            it.id = ID
             it.name = name ? name : NAME
-            it.rsWeight = weight ? weight : 500
-            it.clientId = clientId ? clientId : CLIENT
+            it.rsWeight = 500
             return it
         }
     }
 
 
     def createCloudBaseUrl() {
-        return createCloudBaseUrl(true, true, "CloudServersOpenStack", "region")
+        return createCloudBaseUrl("CloudServersOpenStack", "region")
     }
 
-    def createCloudBaseUrl(boolean v1Default, boolean enabled, String openstackType, String region) {
+    def createCloudBaseUrl(String openstackType, String region) {
         new CloudBaseUrl().with {
-            it.v1Default = v1Default
-            it.enabled = enabled
-            it.openstackType = openstackType ? openstackType : "CloudServersOpenStack"
-            it.region = region ? region : "region"
+            it.v1Default = true
+            it.enabled = true
+            it.openstackType = openstackType
+            it.region = region
             return it
         }
     }
 
     def createCloudEndpoint() {
-        return createCloudEndpoint(1, "nastId", null)
+        return createCloudEndpoint(1, "nastId")
     }
 
-    def createCloudEndpoint(Integer mossoId, String nastId, CloudBaseUrl baseUrl) {
+    def createCloudEndpoint(Integer mossoId, String nastId) {
         new CloudEndpoint().with {
             it.mossoId = mossoId ? mossoId : 1
             it.nastId = nastId ? nastId : "nastId"
-            it.baseUrl = baseUrl ? baseUrl : createCloudBaseUrl()
+            it.baseUrl = createCloudBaseUrl()
             return it
         }
     }
 
     def createDomain() {
-        return createDomain(true, "domainId", DESCRIPTION)
+        return createDomain("domainId")
     }
 
-    def createDomain(boolean enabled, String domainId, String description) {
+    def createDomain(String domainId) {
         new Domain().with {
-            it.enabled = enabled
-            it.domainId = domainId ? domainId : "domainId"
-            it.description = description ? description : DESCRIPTION
+            it.domainId = domainId
+            it.enabled = true
             return it
         }
     }
@@ -166,29 +155,28 @@ class EntityFactory {
     }
 
     def createOpenstackEndpoint() {
-        return createOpenstackEndpoint(null)
+        return createOpenstackEndpoint("tenantId", "tenantName")
     }
 
-    def createOpenstackEndpoint(List<CloudBaseUrl> baseUrls) {
-        def baseUrlList = baseUrls ? baseUrls : [].asList()
+    def createOpenstackEndpoint(String tenantId, String tenantName) {
         new OpenstackEndpoint().with {
-            it.tenantId = tenantId ? tenantId : "tenantId"
-            it.baseUrls = baseUrlList
-            it.tenantName = tenantName ? tenantName : "tenantName"
+            it.tenantId = tenantId
+            it.tenantName = tenantName
+            it.baseUrls = [].asList()
             return it
         }
     }
 
     def createDefinedPermission() {
-        return createDefinedPermission("title", "type", "value", true)
+        return createDefinedPermission("title", "type", "value")
     }
 
-    def createDefinedPermission(String title, String type, String value, boolean enabled) {
+    def createDefinedPermission(String title, String type, String value) {
         new DefinedPermission().with {
             it.title = title
             it.permissionType = type
-            it.enabled = enabled
             it.value = value
+            it.enabled = true
             return it
         }
     }
@@ -206,12 +194,10 @@ class EntityFactory {
         }
     }
 
-    def pattern(String name, String regex, String errMsg, String description){
+    def createPattern(String name, String regex) {
         new Pattern().with {
             it.name = name
             it.regex = regex
-            it.errMsg = errMsg
-            it.description = description
             return it
         }
     }
@@ -229,15 +215,14 @@ class EntityFactory {
     }
 
     def createPolicy() {
-        return createPolicy("blob", DESCRIPTION, true, true)
+        return createPolicy("blob")
     }
 
-    def createPolicy(String blob, String description, boolean enabled, boolean global) {
+    def createPolicy(String blob) {
         new Policy().with {
-            it.blob = blob ? blob : "blob"
-            it.description = description ? description : DESCRIPTION
-            it.enabled = enabled
-            it.global = global
+            it.blob = blob
+            it.enabled = true
+            it.global = true
             return it
         }
     }
@@ -248,8 +233,8 @@ class EntityFactory {
 
     def createQuestion(String id, String question) {
         new Question().with {
-            it.id = id ? id : ID
-            it.question = question ? question : "question"
+            it.id = id
+            it.question = question
             return it
         }
     }
@@ -274,15 +259,15 @@ class EntityFactory {
     }
 
     def createRegion() {
-        return createRegion(NAME, "cloud", true, true)
+        return createRegion(NAME, "cloud")
     }
 
-    def createRegion(String name, String cloud, boolean isDefault, boolean isEnabled) {
+    def createRegion(String name, String cloud) {
         new Region().with {
-            it.name = name ? name : NAME
-            it.cloud = cloud ? cloud : "cloud"
-            it.isDefault = isDefault
-            it.isEnabled = isEnabled
+            it.name = name
+            it.cloud = cloud
+            it.isDefault = true
+            it.isEnabled = true
             return it
         }
     }
@@ -293,9 +278,9 @@ class EntityFactory {
 
     def createSecretQA(String id, String question, String answer) {
         new SecretQA().with {
-            it.id = id ? id : ID
-            it.question = question ? question : "question"
-            it.answer = answer ? answer : "answer"
+            it.id = id
+            it.question = question
+            it.answer = answer
             return it
         }
     }
@@ -313,50 +298,43 @@ class EntityFactory {
     }
 
     def createTenant() {
-        return createTenant(ID, NAME, DISPLAY, DESCRIPTION, true)
+        return createTenant(ID, NAME)
     }
 
-    def createTenant(String id, String name, String displayName, String description, boolean enabled) {
+    def createTenant(String id, String name) {
         new Tenant().with {
-            it.tenantId = id ? id : ID
-            it.name = name ? name : NAME
-            it.displayName = displayName ? displayName : DISPLAY
-            it.description = description ? description : DESCRIPTION
-            it.enabled = enabled
+            it.tenantId = id
+            it.name = name
+            it.enabled = true
             return it
         }
     }
 
     def createTenantRole() {
-        createTenantRole("roleRsId", ID, NAME, CLIENT, null)
+        createTenantRole(NAME)
     }
 
-    def createTenantRole(String roleRsId, String userRsId, String name, String clientId, String[] tenantIds) {
+    def createTenantRole(String name) {
         new TenantRole().with {
-            it.userId = userRsId ? userRsId : ID
-            it.clientId = clientId ? clientId : CLIENT
-            it.name = name ? name : NAME
-            it.roleRsId = roleRsId ? roleRsId : "roleRsId"
-            it.tenantIds = tenantIds ? tenantIds : []
+            it.name = name
+            it.tenantIds = []
             return it
         }
     }
 
     def createUser() {
-        return createUser(USERNAME, "displayName", ID, "domainId", EMAIL, PASSWORD, "region", true)
+        return createUser("username", "id", "domainId", "region")
     }
 
-    def createUser(String username, String displayName, String id, String domainId, String email, String password, String region, boolean enabled) {
+    def createUser(String username, String userId, String domainId, String region) {
+        def id = userId ? userId : "id"
         new User().with {
-            it.username = username ? username : USERNAME
-            it.displayName = displayName ? displayName : DISPLAY
-            it.id = id ? id : ID
+            it.username = username
+            it.id = id
             it.domainId = domainId
-            it.email = email ? email : EMAIL
-            it.password = password
-            it.enabled = enabled
-            it.region = region ? region : "region"
-            it.uniqueId = "rsId=$it.id,ou=users,o=rackspace"
+            it.region = region
+            it.uniqueId = "rsId=$id,ou=users,o=rackspace"
+            it.enabled = true
             return it
         }
     }

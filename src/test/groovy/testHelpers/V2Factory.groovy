@@ -3,8 +3,6 @@ package testHelpers
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.openstack.docs.identity.api.v2.*
 
-import javax.xml.bind.JAXBElement
-
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -16,23 +14,18 @@ class V2Factory {
 
     private static ID = "id"
     private static USERNAME = "username"
-    private static DISPLAY = "displayName"
-    private static EMAIL = "email@example.com"
     private static NAME = "name"
-    private static DESCRIPTION = "description"
-    private static V1Factory v1Factory = new V1Factory()
     private static objFactory = new org.openstack.docs.identity.api.v2.ObjectFactory()
 
     def createAuthenticationRequest() {
-        return createAuthenticationRequest("tenantId", "tenantName", null, null)
+        return createAuthenticationRequest("tenantId", "tenantName", null)
     }
 
-    def createAuthenticationRequest(String tenantId, String tenantName, credential, any) {
+    def createAuthenticationRequest(String tenantId, String tenantName, Object credential) {
         new AuthenticationRequest().with {
             it.tenantId = tenantId
             it.tenantName = tenantName
             it.credential = credential
-            it.any = any
             return it
         }
     }
@@ -43,10 +36,13 @@ class V2Factory {
             return it
         }
 
-        createAuthenticationRequest(tenantId, tenantName, null, null).with {
+        return new AuthenticationRequest().with {
+            it.tenantId = tenantId
+            it.tenantName = tenantName
             it.token = token
             return it
         }
+
     }
 
     def createAuthenticateResponse() {
@@ -106,7 +102,7 @@ class V2Factory {
     }
 
     def createRole() {
-        return createRole(NAME, "serviceId", "tenantId")
+        return createRole(NAME, "applicationId", "tenantId")
     }
 
     def createRole(String name, String serviceId, String tenantId) {
@@ -141,16 +137,14 @@ class V2Factory {
         }
     }
     def createTenant() {
-        return createTenant(ID, NAME, DISPLAY, DESCRIPTION, true)
+        return createTenant(ID, NAME)
     }
 
-    def createTenant(String id, String name, String displayName, String description, boolean enabled) {
+    def createTenant(String id, String name) {
         new Tenant().with {
-            it.id = id ? id : ID
-            it.description = description ? description : DESCRIPTION
-            it.displayName = displayName ? displayName : DISPLAY
-            it.name = name ? name : NAME
-            it.enabled = enabled
+            it.id = id
+            it.name =
+            it.enabled = true
             return it
         }
     }
@@ -181,16 +175,14 @@ class V2Factory {
     }
 
     def createUser() {
-        return createUser(ID, USERNAME, DISPLAY, EMAIL, true)
+        return createUser(ID, USERNAME)
     }
 
-    def createUser(String id, String username, String displayName, String email, boolean enabled) {
+    def createUser(String id, String username) {
         new User().with {
-            it.id = id ? id : ID
-            it.username = username ? username : USERNAME
-            it.displayName = displayName ? displayName : DISPLAY
-            it.email = email ? email : EMAIL
-            it.enabled
+            it.id = id
+            it.username = username
+            it.enabled = true
             return it
         }
     }
@@ -202,8 +194,8 @@ class V2Factory {
     def createUserForAuthenticateResponse(String id, String name, RoleList roleList) {
         def RoleList list = roleList ? roleList : new RoleList()
         new UserForAuthenticateResponse().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
+            it.id = id
+            it.name = name
             it.roles = list
             return it
         }
@@ -220,5 +212,4 @@ class V2Factory {
             return it
         }
     }
-
 }

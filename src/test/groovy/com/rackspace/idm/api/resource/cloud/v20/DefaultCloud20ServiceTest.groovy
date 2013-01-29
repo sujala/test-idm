@@ -519,7 +519,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate("username", null, "displayName", null, true))
+        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate("username", null, null))
 
         then:
         2 * authorizationService.authorizeCloudUserAdmin(_)
@@ -587,6 +587,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "addUser caller is userAdmin with too many subUsers throws BadRequestException"() {
         given:
         allowUserAccess()
+        def converterMock = Mock(UserConverterCloudV20)
+        service.userConverterCloudV20 = converterMock
+
         mockUserConverter(service)
         def caller = entityFactory.createUser()
         def users = entityFactory.createUsers([ entityFactory.createUser() ].asList())
@@ -595,6 +598,21 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getAllUsers(_) >> users
         config.getInt("numberOfSubUsers") >> 0
+
+        userService.getUserByAuthToken(_) >>> [
+                entityFactory.createUser("username1", "id", null, "region"),
+                entityFactory.createUser("username2", "id", "one", "region"),
+                entityFactory.createUser("username3", "id", "two", "region"),
+                entityFactory.createUser("username4", "id", null, "region"),
+        ]
+
+        converterMock.toUserDO(_) >>> [
+                entityFactory.createUser("userDO1", null, null, "region"),
+                entityFactory.createUser("userDO2", null, null, "region"),
+                entityFactory.createUser("userDO3", null, "domain", "region"),
+                entityFactory.createUser("userDO4", null, null, "region"),
+                entityFactory.createUser("userDO5", null, "domain", "region")
+        ]
 
         when:
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
@@ -829,7 +847,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUser(_) >>> [
                 entityFactory.createUser(),
-                entityFactory.createUser("username", null, null, null, null, null, null, true)
+                entityFactory.createUser("username", null, null, "region")
         ]
 
         when:
@@ -870,7 +888,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, domain, null, null, null, true)
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, domain, "region")
         userPaginator.createLinkHeader(_, _) >> "link header"
 
         def contextMock = Mock(PaginatorContext)
@@ -896,7 +914,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserPaginator(service)
         allowUserAccess()
 
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole(roleId, null, null, null)
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole(null).with {
+            it.id = roleId
+            return it
+        }
         authorizationService.authorizeCloudUserAdmin(_) >> false
         userPaginator.createLinkHeader(_, _) >> "link header"
 
@@ -930,7 +951,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
 
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, null, null, null, null, true)
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "region")
 
 
         when:
@@ -955,7 +976,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserAdminLevelAccess(_)
-        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole(roleId, null, null, null)
+        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole(null)
     }
 
     def "addUserRole verifies caller precedence over user to modify and role to add"() {
@@ -964,7 +985,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
-        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+        def roleToAdd = entityFactory.createClientRole(null)
 
         applicationService.getClientRoleById(roleId) >> roleToAdd
         userService.checkAndGetUserById(_) >> user
@@ -984,7 +1005,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
-        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+        def roleToAdd = entityFactory.createClientRole(null)
 
         applicationService.getClientRoleById(roleId) >> roleToAdd
         userService.checkAndGetUserById(_) >> user
@@ -1004,7 +1025,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = Mock(User)
-        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+        def roleToAdd = entityFactory.createClientRole(null)
 
         applicationService.getClientRoleById(roleId) >> roleToAdd
         userService.checkAndGetUserById(_) >> user
@@ -1024,7 +1045,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
-        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+        def roleToAdd = entityFactory.createClientRole(null)
 
         applicationService.getClientRoleById(roleId) >> roleToAdd
         userService.checkAndGetUserById(_) >> user
@@ -1043,11 +1064,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def mockedScopeAccess = Mock(ScopeAccess)
         def user1 = entityFactory.createUser()
         def user2 = entityFactory.createUser()
-        def user3 = entityFactory.createUser("user3", null, null, "domain3", null, null, null, true)
+        def user3 = entityFactory.createUser("user3", null, "domain3", "region")
         def caller1 = entityFactory.createUser()
         def caller2 = entityFactory.createUser()
-        def caller3 = entityFactory.createUser("caller3", null, null, "domain1", null, null, null, true)
-        def roleToAdd = entityFactory.createClientRole(roleId, null, null, null)
+        def caller3 = entityFactory.createUser("caller3", null, "domain1", "region")
+        def roleToAdd = entityFactory.createClientRole(null)
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
         authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
@@ -1123,7 +1144,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.deleteUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * tenantService.getGlobalRolesForUser(user) >> [ entityFactory.createTenantRole(roleId, null, "name", null, null) ].asList()
+        1 * tenantService.getGlobalRolesForUser(user) >> [ entityFactory.createTenantRole("name") ].asList()
 
     }
 
@@ -1132,12 +1153,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         def user = entityFactory.createUser()
+        def tenantRole = entityFactory.createTenantRole("identity:serviceAdmin").with {
+            it.roleRsId = roleId
+            return it
+        }
 
         userService.checkAndGetUserById(_) >> user
         userService.getUserByAuthToken(_) >> user
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
-        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, null, "identity:serviceAdmin", null, null) ].asList()
+        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
         def response = service.deleteUserRole(headers, authToken, userId, roleId).build()
@@ -1149,11 +1174,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "deleteUserRole verifies callers precedence over user and role to be deleted"() {
         given:
         allowUserAccess()
+        def tenantRole = entityFactory.createTenantRole("name").with {
+            it.roleRsId = roleId
+            return it
+        }
 
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
 
-        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, "userRsId", "name", null, null) ].asList()
+        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
         service.deleteUserRole(headers, authToken, userId, roleId)
@@ -1167,10 +1196,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
 
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = roleId
+            return it
+        }
+
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
 
-        tenantService.getGlobalRolesForUser(_) >> [ entityFactory.createTenantRole(roleId, userId, null, null, null) ].asList()
+        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
         def response = service.deleteUserRole(headers, authToken, userId, roleId).build()
@@ -1184,11 +1218,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         def mockedScopeAccess = Mock(ScopeAccess)
         def user1 = entityFactory.createUser()
-        def user2 = entityFactory.createUser("user2", null, null, "domain2", null, null, null, true)
+        def user2 = entityFactory.createUser("user2", null, "domain2", "region")
         def user3 = entityFactory.createUser()
         def caller1 = entityFactory.createUser()
-        def caller2 = entityFactory.createUser("caller2", null, null, "domain", null, null, null, true)
+        def caller2 = entityFactory.createUser("caller2", null, "domain", "region")
         def caller3 = user3
+        def tenantRole = entityFactory.createTenantRole("identity:role").with {
+            it.roleRsId = roleId
+            return it
+        }
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
         authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
@@ -1201,7 +1239,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         tenantService.getGlobalRolesForUser(_) >>> [
                 [].asList(),
-                [ entityFactory.createTenantRole(roleId, userId, "identity:role", null, null) ].asList()
+                [ tenantRole ].asList()
         ]
 
         when:
@@ -1366,11 +1404,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "deleteRole handles exceptions"() {
         given:
         def scopeAccessMock = Mock(ScopeAccess)
+        def role = entityFactory.createClientRole("identity:role").with {
+            it.id = "unique"
+            return it
+        }
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
         authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
 
-        applicationService.getClientRoleById("unique") >> entityFactory.createClientRole("unique", "identity:role", null, null)
+        applicationService.getClientRoleById("unique") >> role
 
         when:
         def response1 = service.deleteRole(headers, authToken, roleId).build()
@@ -1446,7 +1488,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
 
         then:
-        1 * caller.getDomainId() >> entityFactory.createUser("username", null, null, "unique", null, null, null, true)
+        1 * caller.getDomainId() >> entityFactory.createUser("username", null, "unique", "region")
         response.status == 403
     }
 
@@ -1458,7 +1500,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
 
         then:
-        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole(null, "identity:role", null, null)
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:role")
         response.status == 403
     }
 
@@ -1670,7 +1712,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def v20user = v2Factory.createUser()
         v20user.username = "impersonatingUsername"
         def impRequest = v1Factory.createImpersonationRequest(v20user)
-        def entityUser = entityFactory.createUser("impersonatedUser", null, null, null, null, null, null, false)
+        def entityUser = entityFactory.createUser("impersonatedUser", null, null, "region").with {
+            it.enabled = false
+            return it
+        }
         def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new Date())
 
         scopeAccessMock = Mock()
@@ -1682,7 +1727,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUser(_) >> entityUser
         tenantService.getGlobalRolesForUser(entityUser) >> [
-                entityFactory.createTenantRole(null, null, "identity:default", null, null)
+                entityFactory.createTenantRole("identity:default")
         ].asList()
 
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> userScopeAccess
@@ -1713,7 +1758,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "authenticateFederatedDomain throws BadRequest if domain is invalid"() {
         given:
         def authRequest = createAuthenticationRequest(false)
-        def domain = v1Factory.createDomain("id", "notRACKSPACE", null, true)
+        def domain = v1Factory.createDomain("id", "notRACKSPACE")
 
         when:
         service.authenticateFederatedDomain(headers, authRequest, domain)
@@ -1728,7 +1773,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthConverterCloudV20(service)
 
         def authRequest = createAuthenticationRequest(false)
-        def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
+        def domain = v1Factory.createDomain("id", "RACKSPACE")
         def racker = entityFactory.createRacker()
         def authResult = entityFactory.createUserAuthenticationResult(racker, true)
 
@@ -1749,7 +1794,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthConverterCloudV20(service)
 
         def authRequest = createAuthenticationRequest(true)
-        def domain = v1Factory.createDomain("id", "RACKSPACE", null, true)
+        def domain = v1Factory.createDomain("id", "RACKSPACE")
         def racker = entityFactory.createRacker()
         def authResult = entityFactory.createUserAuthenticationResult(racker, true)
 
@@ -1928,7 +1973,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "addDomain verifies domain has name"() {
         given:
         allowUserAccess()
-        def domain = v1Factory.createDomain("id", null, "description", true)
+        def domain = v1Factory.createDomain("id", null)
 
         when:
         def response = service.addDomain(authToken, uriInfo(), domain)
@@ -2188,7 +2233,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         def domain = v1Factory.createDomain()
         def list = [ domain ].asList()
-        def authRequest = v2Factory.createAuthenticationRequest(null, null, null, list)
+        def authRequest = v2Factory.createAuthenticationRequest("tenantId", "tenantName", null).with {
+            it.any = list
+            return it
+        }
 
         when:
         def response = service.checkDomainFromAuthRequest(authRequest)
@@ -2288,8 +2336,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def passwordCred = v2Factory.createJAXBPasswordCredentialsRequiredUsername("username", "Password1")
         def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
 
-        def passwordAuthRequest = v2Factory.createAuthenticationRequest("", "", passwordCred, null)
-        def apiKeyAuthRequest = v2Factory.createAuthenticationRequest("", "", apiKeyCred, null)
+        def passwordAuthRequest = v2Factory.createAuthenticationRequest("", "", passwordCred)
+        def apiKeyAuthRequest = v2Factory.createAuthenticationRequest("", "", apiKeyCred)
         def tokenAuthRequest = v2Factory.createAuthenticationRequest("tokenString", "", "")
 
         def authResponseTuple = new AuthResponseTuple().with {
@@ -2451,7 +2499,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
-        def userAdminTenantList = [ entityFactory.createTenantRole("roleRsId", "userRsId", "identity:user-admin", null, null) ].asList()
+        def tenantRole = entityFactory.createTenantRole("identity:user-admin").with {
+            it.roleRsId = "roleRsId"
+            it.userId = "userId"
+            return it
+        }
+        def userAdminTenantList = [ tenantRole ].asList()
 
         tenantService.getTenantRolesForUser(_) >>  userAdminTenantList
 
@@ -2470,7 +2523,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
-        def defaultuserTenantList = [ entityFactory.createTenantRole("roleRsId", "userRsId", "identity:default", null, null) ].asList()
+        def tenantRole = entityFactory.createTenantRole("identity:default").with {
+            it.roleRsId = "roleRsId"
+            it.userId = "userId"
+            return it
+        }
+        def defaultuserTenantList = [ tenantRole ].asList()
 
         tenantService.getTenantRolesForUser(_) >>> [
                 [].asList(),
@@ -2547,7 +2605,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "isUserAdmin checks if user-admin role is in roleList"() {
         given:
         def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole("roleRsId", "userRsId", "identity:user-admin", null, null) ].asList()
+        def roleList = [ entityFactory.createTenantRole("identity:user-admin") ].asList()
 
         when:
         def result = service.isUserAdmin(user)
@@ -2573,7 +2631,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "isDefaultUser checks if user-admin role is in roleList"() {
         given:
         def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole("roleRsId", "userRsId", "identity:default", null, null) ].asList()
+        def roleList = [ entityFactory.createTenantRole("identity:default") ].asList()
 
         when:
         def result = service.isDefaultUser(user)

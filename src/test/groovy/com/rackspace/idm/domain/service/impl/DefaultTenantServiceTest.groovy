@@ -25,14 +25,14 @@ class DefaultTenantServiceTest extends RootServiceTest {
         given:
         def user = entityFactory.createUser()
         def tenant = entityFactory.createTenant()
-        def tenantRole = entityFactory.createTenantRole(null, null, null, null, "tenantId")
-        def tenantRoles = [tenantRole].asList()
+        def tenantRole = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId" ]; return it }
+        def tenantRoles = [ tenantRole ].asList()
 
         when:
         def tenants = service.getTenantsForUserByTenantRoles(user)
 
         then:
-        tenants == [tenant].asList()
+        tenants == [ tenant ].asList()
         1 * tenantRoleDao.getTenantRolesForUser(_) >> tenantRoles
         1 * tenantDao.getTenant(_) >> tenant
     }
@@ -51,9 +51,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def "hasTenantAccess returns true if it contains tenant; false otherwise"() {
         given:
-        def tenantRoles = [entityFactory.createTenantRole(null, null, null, null, "tenantId")].asList()
-        def tenantWithMatchingId = entityFactory.createTenant("tenantId", "noMatch", null, null, true)
-        def tenantWithMatchingName = entityFactory.createTenant("notTenantId", "match", null, null, true)
+        def tenantRole = entityFactory.createTenantRole("tenantName").with { it.tenantIds = [ "tenantId" ]; return it }
+        def tenantRoles = [ tenantRole ].asList()
+        def tenantWithMatchingId = entityFactory.createTenant("tenantId", "noMatch")
+        def tenantWithMatchingName = entityFactory.createTenant("notTenantId", "match")
         def user = entityFactory.createUser()
 
         when:
@@ -132,5 +133,34 @@ class DefaultTenantServiceTest extends RootServiceTest {
         result == true
         1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> tenantRole
     }
-}
 
+    def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {
+        when:
+        service.getTenantRolesForScopeAccess(null)
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def "delete Tenant role For Application with null user returns IllegalState" () {
+        given:
+        def application = entityFactory.createApplication()
+
+        when:
+        service.deleteTenantRoleForApplication(application, null)
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def "delete Tenant role For Application with null application returns IllegalState" () {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+
+        when:
+        service.deleteTenantRoleForApplication(null, tenantRole)
+
+        then:
+        thrown(IllegalStateException)
+    }
+}

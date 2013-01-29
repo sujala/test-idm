@@ -3,22 +3,15 @@ package com.rackspace.idm.domain.service.impl
 import spock.lang.Specification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import com.rackspace.idm.domain.dao.TenantDao
+import com.rackspace.idm.domain.dao.impl.*
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.util.RSAClient
-import spock.lang.Shared
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
-import com.rackspace.idm.domain.dao.impl.LdapAuthRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
-import com.rackspace.idm.domain.dao.impl.LdapCustomerRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.unboundid.ldap.sdk.ReadOnlyEntry
+import com.rackspace.idm.validation.InputValidator
 import com.unboundid.ldap.sdk.Attribute
-import org.joda.time.DateTime
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.Racker
@@ -30,6 +23,11 @@ import com.rackspace.idm.domain.entity.Credentials
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
+import org.joda.time.DateTime
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
+import spock.lang.Shared
+import spock.lang.Specification
 
 /**
  * Created with IntelliJ IDEA.
@@ -353,7 +351,7 @@ class DefaultAuthenticationServiceTest extends Specification {
     }
 
     def attribute() {
-        return new Attribute("attribute", "value")
-    }
+            return new Attribute("attribute", "value")
+        }
 
-}
+    }

@@ -28,7 +28,7 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
     def "authenticate validates credentials"() {
         given:
         def credential = v2Factory.createJAXBPasswordCredentialsRequiredUsername("username", "Password1")
-        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential, null)
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
 
         when:
         service.authenticate(authRequest)
@@ -43,7 +43,7 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
     def "authenticate sets User and UserScopeAccess in authReturnValues"() {
         given:
         def credential = v2Factory.createJAXBPasswordCredentialsRequiredUsername("username", "Password1")
-        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential, null)
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
         def user = entityFactory.createUser()
         def scopeAccess = createUserScopeAccess()
 

@@ -10,7 +10,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Token
 
 /**
@@ -76,15 +75,14 @@ class V1Factory {
     }
 
     def createDomain() {
-        return createDomain("id", "name", "description", true)
+        return createDomain("id", "name")
     }
 
-    def createDomain(String id, String name, String description, boolean enabled) {
+    def createDomain(String id, String name) {
         new Domain().with {
             it.id = id
             it.name = name
-            it.description = description
-            it.enabled = enabled
+            it.enabled = true
             return it
         }
     }
@@ -102,15 +100,15 @@ class V1Factory {
     }
 
     def createEndpointTemplate() {
-        return createEndpointTemplate(1, NAME, true, true)
+        return createEndpointTemplate(1, NAME)
     }
 
-    def createEndpointTemplate(int id, String name, boolean enabled, boolean global) {
+    def createEndpointTemplate(int id, String name) {
         new EndpointTemplate().with {
             it.id = id
             it.name = name
-            it.enabled = enabled
-            it.global = global
+            it.enabled = true
+            it.global = true
             return it
         }
     }
@@ -140,7 +138,7 @@ class V1Factory {
 
     def createImpersonationResponse(Token token) {
         new ImpersonationResponse().with {
-            it.token = token ? token : v2Factory.createToken()
+            it.token = token
             return it
         }
     }
@@ -158,30 +156,26 @@ class V1Factory {
     }
 
     def createPolicy() {
-        return createPolicy(ID, "blob", DESCRIPTION, true, true)
+        return createPolicy(ID, "blob")
     }
 
-    def createPolicy(String id, String blob, String description, boolean enabled, boolean global) {
+    def createPolicy(String id, String blob) {
         new Policy().with {
-            it.id = id ? id : ID
-            it.blob = blob ? blob : "blob"
-            it.description = description ? description : DESCRIPTION
-            it.enabled = enabled
-            it.global = global
+            it.id = id
+            it.blob = blob
+            it.enabled = true
+            it.global = true
             return it
         }
     }
 
     def createRole() {
-        return createRole(NAME, "serviceId", "tenantid")
+        return createRole(NAME)
     }
 
-    def createRole(String name, String serviceId, String tenantId) {
+    def createRole(String name) {
         new Role().with {
             it.name = name
-            it.description = DESCRIPTION
-            it.serviceId = serviceId
-            it.tenantId = tenantId
             return it
         }
     }
@@ -204,20 +198,19 @@ class V1Factory {
 
     def createSecretQA(String id, String answer, String question) {
         new SecretQA().with {
-            it.id = id ? id : "1"
+            it.id = id
             it.answer  = answer
             it.question = question
             return it
         }
     }
     def createService() {
-        return createService(ID, NAME, DESCRIPTION)
+        return createService(ID, NAME)
     }
 
-    def createService(String id, String name, String description) {
+    def createService(String id, String name) {
         new Service().with {
-            it.id = id ? id : ID
-            it.description = description ? description : DESCRIPTION
+            it.id = id
             it.name = name ? name : NAME
             return it
         }
@@ -236,16 +229,15 @@ class V1Factory {
     }
 
     def createUserForCreate() {
-        return createUserForCreate(USERNAME, PASSWORD, DISPLAY, EMAIL, true)
+        return createUserForCreate(USERNAME, PASSWORD, EMAIL)
     }
 
-    def createUserForCreate(String username, String password, String displayName, String email, boolean enabled) {
+    def createUserForCreate(String username, String password, String email) {
         new UserForCreate().with {
-            it.username = username ? username : USERNAME
+            it.username = username
             it.password = password
-            it.displayName = displayName ? displayName : DISPLAY
-            it.email = email ? email : EMAIL
-            it.enabled = enabled
+            it.email = email
+            it.enabled = true
             return it
         }
     }

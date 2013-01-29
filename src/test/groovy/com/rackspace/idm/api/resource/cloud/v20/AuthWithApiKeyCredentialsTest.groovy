@@ -21,7 +21,7 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
     def "authenticate validates apiKeyCredentials"() {
         given:
         def credential = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
-        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential, null)
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
 
         when:
         service.authenticate(authRequest)
@@ -36,7 +36,7 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
     def "authenticate sets User and UserScopeAccess in return values"() {
         given:
         def credential = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
-        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential, null)
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
         def user = entityFactory.createUser()
         def scopeAccess = createUserScopeAccess()
 

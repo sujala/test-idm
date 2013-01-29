@@ -1,31 +1,14 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
-import spock.lang.Specification
-import org.springframework.beans.factory.annotation.Autowired
-import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.util.AuthHeaderHelper
 import spock.lang.Shared
-import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.TenantDao
-import com.rackspace.idm.domain.dao.EndpointDao
-import com.rackspace.idm.domain.dao.ApplicationDao
-import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.dao.ScopeAccessDao
 import org.joda.time.DateTime
-import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.entity.UserScopeAccess
-
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-import com.unboundid.ldap.sdk.Attribute
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
@@ -349,7 +332,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", futureDate)
 
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", "userToBeImpersonated", "displayName", "email@email.com", true)
+            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
             return it
         }
 
@@ -543,9 +526,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     def "can get endpoints from getOpenstackEndpointsForUser"() {
         given:
         def user = entityFactory.createUser()
-        def tenant = entityFactory.createTenant("tenantId", null, null, null, true)
-        def tenantRoles = [entityFactory.createTenantRole("roleRsId", null, null, null, "tenantId")].asList()
-        def endpoint = entityFactory.createOpenstackEndpoint([entityFactory.createCloudBaseUrl()].asList())
+        def tenant = entityFactory.createTenant("tenantId", "tenantName")
+        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = "roleRsId"; it.tenantIds = [ "tenantId" ]; return it }
+        def tenantRoles = [ tenantRole ].asList()
+        def endpoint = entityFactory.createOpenstackEndpoint("tenantId", "tenantName").with { it.baseUrls = [ entityFactory.createCloudBaseUrl() ].asList(); return it }
 
         when:
         def endpoints = service.getOpenstackEndpointsForUser(user)

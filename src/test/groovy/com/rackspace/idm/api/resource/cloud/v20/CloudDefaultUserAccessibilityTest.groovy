@@ -16,8 +16,8 @@ class CloudDefaultUserAccessibilityTest extends RootServiceTest {
 
     def "caller has different id and cannot be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "caller", null, null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", null, null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain", "region")
+        def user = entityFactory.createUser("user", "2", "domain", "region")
         accessibility.caller = caller
 
         when:
@@ -30,8 +30,8 @@ class CloudDefaultUserAccessibilityTest extends RootServiceTest {
 
     def "caller has same id and can be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "user", null, null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", null, null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain", "region")
+        def user = entityFactory.createUser("user", "1", "domain", "region")
         accessibility.caller = caller
 
         when:

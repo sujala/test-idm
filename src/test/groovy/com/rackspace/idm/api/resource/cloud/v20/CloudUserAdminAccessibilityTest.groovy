@@ -19,11 +19,11 @@ class CloudUserAdminAccessibilityTest extends RootServiceTest {
 
     def "caller has different id and different domain and different role - cannot be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "caller", "domain", null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", "domain1", null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain1", "region")
+        def user = entityFactory.createUser("user", "2", "domain2", "region")
         accessibility.caller = caller
 
-        def tenantRole = entityFactory.createTenantRole(null, null, "role", null, null)
+        def tenantRole = entityFactory.createTenantRole("role")
         tenantService.getTenantRolesForUser(_) >> [tenantRole].asList()
         config.getString(_) >> "role"
 
@@ -37,11 +37,11 @@ class CloudUserAdminAccessibilityTest extends RootServiceTest {
 
     def "caller has different id and different role same domain - cannot be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "caller", "domain", null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", "domain", null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain", "region")
+        def user = entityFactory.createUser("user", "2", "domain", "region")
         accessibility.caller = caller
 
-        def tenantRole = entityFactory.createTenantRole(null, null, "role", null, null)
+        def tenantRole = entityFactory.createTenantRole("role")
         tenantService.getTenantRolesForUser(_) >> [tenantRole].asList()
         config.getString(_) >> "role2"
 
@@ -55,11 +55,11 @@ class CloudUserAdminAccessibilityTest extends RootServiceTest {
 
     def "caller has different id and same domain and same role - can be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "caller", "domain", null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", "domain", null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain", "region")
+        def user = entityFactory.createUser("user", "2", "domain", "region")
         accessibility.caller = caller
 
-        def tenantRole = entityFactory.createTenantRole(null, null, "role", null, null)
+        def tenantRole = entityFactory.createTenantRole("role")
         tenantService.getTenantRolesForUser(_) >> [tenantRole].asList()
         config.getString(_) >> "role"
 
@@ -73,8 +73,8 @@ class CloudUserAdminAccessibilityTest extends RootServiceTest {
 
     def "caller has same id and can be accessed"() {
         given:
-        def caller = entityFactory.createUser(null, null, "user", null, null, null, null, true)
-        def user = entityFactory.createUser(null, null, "user", null, null, null, null, true)
+        def caller = entityFactory.createUser("caller", "1", "domain", "region")
+        def user = entityFactory.createUser("user", "1", "domain", "region")
         accessibility.caller = caller
 
         when:
