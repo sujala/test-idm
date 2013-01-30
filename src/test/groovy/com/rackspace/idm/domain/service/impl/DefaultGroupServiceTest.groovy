@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
+import spock.lang.Specification
 import testHelpers.RootServiceTest
 
 /**
