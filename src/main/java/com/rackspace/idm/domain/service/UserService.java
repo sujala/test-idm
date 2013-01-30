@@ -105,7 +105,7 @@ public interface UserService {
 
     void setScopeAccesss(ScopeAccessDao scopeAccessObjectDao);
 
-    void setClientService(ApplicationService clientService);
+    void setApplicationService(ApplicationService clientService);
 
     void setConfig(Configuration config);
 

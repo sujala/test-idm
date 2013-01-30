@@ -18,8 +18,6 @@ import org.junit.Test;
 
 import javax.xml.bind.JAXBException;
 
-import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +92,7 @@ public class UserServiceTests {
         userService.setUserDao(mockUserDao);
         userService.setAuthDao(mockRackerDao);
         userService.setScopeAccesss(mockScopeAccessObjectDao);
-        userService.setClientService(mockClientService);
+        userService.setApplicationService(mockClientService);
         userService.setConfig(appConfig);
         userService.setPasswordComplexityService(mockPasswordComplexityService);
         userService.setCloudRegionService(cloudRegionService);
@@ -110,7 +108,7 @@ public class UserServiceTests {
         trustedUserService.setUserDao(mockUserDao);
         trustedUserService.setAuthDao(mockRackerDao);
         trustedUserService.setScopeAccesss(mockScopeAccessObjectDao);
-        trustedUserService.setClientService(mockClientService);
+        trustedUserService.setApplicationService(mockClientService);
         trustedUserService.setConfig(appConfig2);
         trustedUserService.setPasswordComplexityService(mockPasswordComplexityService);
     }

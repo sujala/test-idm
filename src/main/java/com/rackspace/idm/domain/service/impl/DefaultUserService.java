@@ -2,15 +2,12 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -48,7 +45,7 @@ public class DefaultUserService implements UserService {
     private AuthDao authDao;
 
     @Autowired
-    private ApplicationService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private Configuration config;
@@ -78,10 +75,10 @@ public class DefaultUserService implements UserService {
     private Validator validator;
 
     @Autowired
-    private LdapTenantRoleRepository tenantRoleDao;
+    private TenantRoleDao tenantRoleDao;
 
     @Autowired
-    private LdapApplicationRoleRepository applicationRoleDao;
+    private ApplicationRoleDao applicationRoleDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -493,7 +490,7 @@ public class DefaultUserService implements UserService {
         for (ScopeAccess service : services) {
             if (service instanceof UserScopeAccess) {
                 clientList
-                        .add(this.clientService.getById(service.getClientId()));
+                        .add(this.applicationService.getById(service.getClientId()));
             }
         }
 
@@ -548,8 +545,8 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void setClientService(ApplicationService clientService) {
-        this.clientService = clientService;
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
     }
 
     @Override
@@ -963,11 +960,11 @@ public class DefaultUserService implements UserService {
         this.authorizationService = authorizationService;
     }
 
-    public void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao) {
+    public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
         this.tenantRoleDao = tenantRoleDao;
     }
 
-    public void setApplicationRoleDao(LdapApplicationRoleRepository applicationRoleDao) {
+    public void setApplicationRoleDao(ApplicationRoleDao applicationRoleDao) {
         this.applicationRoleDao = applicationRoleDao;
     }
 

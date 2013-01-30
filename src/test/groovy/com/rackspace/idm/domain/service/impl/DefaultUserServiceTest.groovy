@@ -1,10 +1,12 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.Validator
+import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.entity.FilterParam
 import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
@@ -30,12 +32,51 @@ import testHelpers.RootServiceTest
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
 
+    @Shared def sharedRandomness = UUID.randomUUID()
+    @Shared def sharedRandom
+    @Shared def FilterParam[] roleFilter
+    @Shared def FilterParam[] domainAndRoleFilters
+    @Shared def userList
+    @Shared def userIdList
+    @Shared def users
+
     def setupSpec(){
         service = new DefaultUserService()
+        sharedRandom = ("$sharedRandomness").replace('-',"")
+        userList = new ArrayList<User>()
+        userIdList = new ArrayList<String>()
+        for (int i = 5; i > 0; i--) {
+            def id = UUID.randomUUID().toString().replace('-', "")
+            def user = entityFactory.createUser(i.toString(), id, "domainId", "region").with {
+                it.roles = [ entityFactory.createTenantRole().with { it.roleRsId = sharedRandom; it} ].asList()
+                return it
+            }
+            userList.add(user)
+            userIdList.add(id)
+        }
+        users = entityFactory.createUsers(userList)
+
+        roleFilter = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom)]
+        domainAndRoleFilters = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom),
+                                new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, sharedRandom)]
     }
 
     def setup() {
-        setupMocks()
+        mockPasswordComplexityService(service)
+        mockScopeAccessDao(service)
+        mockAuthDao(service)
+        mockApplicationService(service)
+        mockConfiguration(service)
+        mockUserDao(service)
+        mockScopeAccessService(service)
+        mockTenantService(service)
+        mockTenantDao(service)
+        mockEndpointService(service)
+        mockAuthorizationService(service)
+        mockCloudRegionService(service)
+        mockValidator(service)
+        mockTenantRoleDao(service)
+        mockApplicationRoleDao(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -256,6 +297,324 @@ class DefaultUserServiceTest extends RootServiceTest {
         results.users != null;
         results.users.size() == 2
         results.users.get(0).mossoId == 1
+    }
+
+
+    def "getUsersWithRole calls tenantDao.getMultipleTenantRoles"() {
+        given:
+        def stringPaginator = createStringPaginatorContext()
+
+        when:
+        service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
+
+        then:
+        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+    }
+
+    def "getUsersWithRole calls getUserById"() {
+        given:
+        def stringPaginator = createStringPaginatorContext().with {
+            it.valueList = [ "one", "two", "three" ].asList()
+            return it
+        }
+
+        when:
+        service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
+
+        then:
+        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+        3 * userDao.getUserById(_ as String)
+    }
+
+    def "getUsersWithRole calls first setUserContext"() {
+        given:
+        def listOfUsers = [ entityFactory.createUser() ].asList()
+        def listofUserIds = [ "1" ].asList()
+        def stringPaginator = createStringPaginatorContext().with {
+            it.valueList = listofUserIds
+            return it
+        }
+
+        when:
+        def userContext = service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
+
+        then:
+        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+        userDao.getUserById(_ as String) >>> [ entityFactory.createUser() ]
+
+        userContext.getValueList().equals(listOfUsers)
+        userContext.getLimit() == stringPaginator.getLimit()
+        userContext.getOffset() == stringPaginator.getOffset()
+        userContext.getTotalRecords() == stringPaginator.getTotalRecords()
+    }
+
+    def "getUsersWithRole calls second setUserContext"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = sharedRandom; return it}
+        tenantService.getGlobalRolesForUser(_) >> [tenantRole].asList()
+
+        when:
+        def userContext = service.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
+
+        then:
+        userDao.getAllUsersNoLimit(domainAndRoleFilters) >> entityFactory.createUsers(userList)
+
+        userContext.getValueList().equals(userList)
+        userContext.getLimit() == 10
+        userContext.getOffset() == 0
+        userContext.getTotalRecords() == 5
+
+    }
+
+    def "getUsersWithRole calls getAllUsersNoLimit"() {
+        given:
+        tenantService.getGlobalRolesForUser(_) >> [].asList()
+
+        when:
+        service.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
+
+        then:
+        userDao.getAllUsersNoLimit(domainAndRoleFilters) >> entityFactory.createUsers(userList)
+    }
+
+    def "getAllUsersNoLimit calls userDao getAllUsersNoLimit"() {
+        given:
+
+        when:
+        service.getAllUsersNoLimit(domainAndRoleFilters)
+        service.getAllUsers(roleFilter)
+
+        then:
+        1 * userDao.getAllUsersNoLimit(_ as FilterParam[])
+    }
+
+    def "getSubList throws BadRequest"() {
+        when:
+        service.getSubList(userList, 10, 5)
+
+        then:
+        thrown BadRequestException
+    }
+
+    def "getSubList returns same list"() {
+        when:
+        def returnedListOne = service.getSubList(userList, 0, 5)
+        def returnedListTwo = service.getSubList(userList, 0, 10)
+
+        then:
+        returnedListOne.equals(userList)
+        returnedListTwo.equals(userList)
+    }
+
+    def "getSubList returns subList"() {
+        when:
+        def listOne = service.getSubList(userList, 1, 2)
+        def listTwo = service.getSubList(userList, 0, 2)
+        def listThree = service.getSubList(userList, 3, 3)
+        def listFour = service.getSubList(userList, 3, 6)
+        def listFive = service.getSubList(userList, 0, 7)
+
+        then:
+        listOne.equals(userList.subList(1, 3))
+        listTwo.equals(userList.subList(0, 2))
+        listThree.equals(userList.subList(3, userList.size()))
+        listFour.equals(userList.subList(3, userList.size()))
+        listFive.equals(userList)
+    }
+
+    def "filterUsersForRole no Users have role"() {
+        given:
+        def list = new ArrayList<User>()
+        def roleId = String.format("%s%s", sharedRandom, "5")
+        tenantService.getGlobalRolesForUser(_) >> new ArrayList<TenantRole>();
+
+        when:
+        service.filterUsersForRole(users, list, roleId)
+
+        then:
+        list.empty
+    }
+
+    def "filterUsersForRole all Users have role"() {
+        given:
+        def list = [].asList()
+        tenantService.getGlobalRolesForUser(_) >> [].asList()
+
+        when:
+        service.filterUsersForRole(users, list, sharedRandom)
+
+        then:
+        list.equals(users.users)
+    }
+
+    def "filterUsersForRole some Users have role"() {
+        given:
+        def role = entityFactory.createTenantRole().with {
+            it.roleRsId = sharedRandom
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ role ].asList()
+            it.username = "userWithRole"
+            return it
+        }
+        def users = entityFactory.createUsers().with {
+            it.users = [ user, entityFactory.createUser() ].asList()
+            return it
+        }
+        def usersWithRole = [].asList()
+
+        tenantService.getGlobalRolesForUser(_ as User) >>> [ [].asList(), [].asList() ]
+
+        when:
+        service.filterUsersForRole(users, usersWithRole, sharedRandom)
+
+        then:
+        usersWithRole.size() == 1
+        usersWithRole.get(0) == user
+    }
+
+    def "getUsersWeight gets users tenantRoles"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = "3"; return it }
+        def user = entityFactory.createUser().with {
+            it.username = "username"
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+
+        when:
+        service.getUserWeight(user, "applicationId")
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(_, _) >> new ArrayList<TenantRole>()
+    }
+
+    def "getUsersWeight finds identity:serviceAdminRole role weight for user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "0"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+        def applicationRole = entityFactory.createClientRole("identity:service-admin").with { it.rsWeight = 0; return it }
+        def tenantRoles = [ tenantRole ].asList()
+
+        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
+        applicationRoleDao.getClientRole("0") >> applicationRole
+
+        when:
+        def weight = service.getUserWeight(user, "applicationId")
+
+        then:
+        weight == 0
+    }
+
+    def "getUsersWeight finds identity:admin role weight for user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "0"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+        def applicationRole = entityFactory.createClientRole("identity:admin").with { it.rsWeight = 100; return it }
+        def tenantRoles = [ tenantRole ].asList()
+
+        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
+        applicationRoleDao.getClientRole("0") >> applicationRole
+
+        when:
+        def weight = service.getUserWeight(user, "applicationId")
+
+        then:
+        weight == 100
+    }
+
+    def "getUsersWeight finds identity:user-admin role weight for user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "0"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+        def applicationRole = entityFactory.createClientRole("identity:user-admin").with { it.rsWeight = 1000; return it }
+        def tenantRoles = [ tenantRole ].asList()
+
+        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
+        applicationRoleDao.getClientRole("0") >> applicationRole
+
+        when:
+        def weight = service.getUserWeight(user, "applicationId")
+
+        then:
+        weight == 1000
+    }
+
+    def "getUsersWeight finds identity:default role weight for user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "0"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+        def applicationRole = entityFactory.createClientRole("identity:user").with { it.rsWeight = 2000; return it }
+        def tenantRoles = [ tenantRole ].asList()
+
+        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
+        applicationRoleDao.getClientRole("0") >> applicationRole
+
+        when:
+        def weight = service.getUserWeight(user, "applicationId")
+
+        then:
+        weight == 2000
+    }
+
+    def "getUsersWeight finds generic role weight for user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "0"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [ tenantRole ].asList()
+            return it
+        }
+        def applicationRole = entityFactory.createClientRole("role").with { it.rsWeight = 2000; return it }
+        def tenantRoles = [ tenantRole ].asList()
+
+        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
+        applicationRoleDao.getClientRole("0") >> applicationRole
+        config.getInt("cloudAuth.defaultUser.rsWeight") >> 2000
+
+        when:
+        def weight = service.getUserWeight(user, "applicationId")
+
+        then:
+        weight == 2000
+    }
+
+    def createStringPaginatorContext() {
+        return new PaginatorContext<String>().with {
+            it.limit = 25
+            it.offset = 0
+            it.totalRecords = 0
+            it.searchResultEntryList = [].asList()
+            it.valueList = [].asList()
+            return it
+        }
     }
 
     def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {

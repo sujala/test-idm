@@ -362,13 +362,12 @@ class EntityFactory extends Specification {
     }
 
     def createUsers() {
-        return createUsers(null)
+        return new Users()
     }
 
     def createUsers(List<User> userList) {
-        def list = userList ? userList : [].asList()
         new Users().with {
-            it.setUsers(list)
+            it.users = userList
             return it
         }
     }
