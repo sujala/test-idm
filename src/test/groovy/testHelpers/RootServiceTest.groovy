@@ -33,6 +33,7 @@ import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.dao.AuthDao
 import com.rackspace.idm.domain.dao.CustomerDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -83,6 +84,8 @@ import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.domain.service.impl.DefaultTokenService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.AuthHeaderHelper
+import com.rackspace.idm.util.RSAClient
+import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
@@ -106,10 +109,12 @@ class RootServiceTest extends Specification {
 
     @Shared Configuration config
     @Shared AtomHopperClient atomHopperClient
+    @Shared RSAClient rsaClient
     @Shared Validator validator
     @Shared Validator20 validator20
     @Shared PrecedenceValidator precedenceValidator
     @Shared PolicyValidator policyValidator
+    @Shared InputValidator inputValidator
     @Shared CloudGroupBuilder cloudGroupBuilder
     @Shared CloudKsGroupBuilder cloudKsGroupBuilder
 
@@ -184,6 +189,7 @@ class RootServiceTest extends Specification {
     @Shared TenantRoleDao tenantRoleDao
     @Shared CustomerDao customerDao
     @Shared ApplicationRoleDao applicationRoleDao
+    @Shared AuthDao authDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -556,7 +562,6 @@ class RootServiceTest extends Specification {
         service.delegateCloud20Service = delegateCloud20Service
     }
 
-
     /*
         Mock Dao
     */
@@ -601,6 +606,11 @@ class RootServiceTest extends Specification {
         service.applicationRoleDao = applicationRoleDao
     }
 
+    def mockAuthDao(service) {
+        authDao = Mock()
+        service.authDao = authDao
+    }
+
     /*
         Mock Builders
     */
@@ -637,6 +647,11 @@ class RootServiceTest extends Specification {
         service.precedenceValidator = precedenceValidator
     }
 
+    def mockInputValidator(service) {
+        inputValidator = Mock()
+        service.inputValidator = inputValidator
+    }
+
     /*
         Paginator Mocks
     */
@@ -668,6 +683,11 @@ class RootServiceTest extends Specification {
     def mockAtomHopperClient(service) {
         atomHopperClient = Mock()
         service.atomHopperClient = atomHopperClient
+    }
+
+    def mockRSAClient(service) {
+        rsaClient = Mock()
+        service.rsaClient = rsaClient
     }
 
     def mockConfiguration(service) {

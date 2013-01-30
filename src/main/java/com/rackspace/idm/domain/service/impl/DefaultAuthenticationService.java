@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.validation.groups.Default;
-import java.sql.DataTruncation;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,7 +37,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     public static final int YEARS = 100;
 
     @Autowired
-    private ApplicationDao clientDao;
+    private ApplicationDao applicationDao;
     @Autowired
     private TenantService tenantService;
     @Autowired
@@ -112,7 +111,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     @Override
     public void setApplicationDao(ApplicationDao applicationDao) {
-        this.clientDao = applicationDao;
+        this.applicationDao = applicationDao;
     }
 
     @Override
@@ -266,7 +265,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             throw new BadRequestException(msg);
         }
 
-        final ClientAuthenticationResult caResult = clientDao.authenticate(trParam.getClientId(), trParam.getClientSecret());
+        final ClientAuthenticationResult caResult = applicationDao.authenticate(trParam.getClientId(), trParam.getClientSecret());
         if (!caResult.isAuthenticated()) {
             final String message = "Bad Client credentials for " + trParam.getClientId();
             logger.warn(message);
@@ -593,7 +592,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             }
         }
         if (!hasRackerRole) {
-            List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(config.getString("idm.clientId"));
+            List<ClientRole> clientRoles = applicationDao.getClientRolesByClientId(config.getString("idm.clientId"));
             for (ClientRole clientRole : clientRoles) {
                 if (clientRole.getName().equals("Racker")) {
                     TenantRole tenantRole = new TenantRole();

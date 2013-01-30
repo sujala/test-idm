@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -85,6 +86,18 @@ class EntityFactory extends Specification {
             it.id = id
             it.name = name
             it.resources = [].asList()
+            return it
+        }
+    }
+
+    def createClientAuthenticationResult() {
+        return createClientAuthenticationResult(createApplication(), true)
+    }
+
+    def createClientAuthenticationResult(Application application, boolean isAuthenticated) {
+        new ClientAuthenticationResult().with {
+            it.client = application
+            it.authenticated = isAuthenticated
             return it
         }
     }
@@ -252,8 +265,13 @@ class EntityFactory extends Specification {
     }
 
     def createRacker() {
+        return createRacker("rackerId")
+    }
+
+    def createRacker(String rackerId) {
         new Racker().with {
             it.rackerId = rackerId
+            it.uniqueId = "rackerId=$rackerId,cn=rackers,ou=rackspace"
             return it
         }
     }
@@ -353,5 +371,9 @@ class EntityFactory extends Specification {
             it.setUsers(list)
             return it
         }
+    }
+
+    private createLdapEntryWithDn(String dn) {
+       return new ReadOnlyEntry(dn)
     }
 }
