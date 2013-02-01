@@ -1,6 +1,5 @@
 package com.rackspace.idm.aspect;
 
-import com.rackspace.idm.annotation.ValidateParam;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -49,7 +48,7 @@ public class ValidateAspect {
                     for (ConstraintViolation<Object> violation : violations) {
                         messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
                     }
-                    if (violations.size() > 0) {
+                    if (messages.size() > 0) {
                         throw new BadRequestException(StringUtils.join(messages, "\n"));
                     }
                 }
