@@ -1,6 +1,8 @@
 package com.rackspace.idm.aspect;
 
 import com.rackspace.idm.annotation.ValidateParam;
+import com.rackspace.idm.exception.BadRequestException;
+import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -9,9 +11,17 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import javax.ws.rs.POST;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Aspect
@@ -28,18 +38,20 @@ public class ValidateAspect {
     @Before("@annotation(post) && execution(* com.rackspace.idm.api.resource.cloud.v20..*.*(..))")
     public void validateAnnotatedField(JoinPoint joinPoint, POST post) {
         Object[] args = joinPoint.getArgs();
-        MethodSignature ms = (MethodSignature) joinPoint.getSignature();
-        Method m = ms.getMethod();
 
-        Annotation[][] parameterAnnotations = m.getParameterAnnotations();
-
-        for (int i = 0; i < parameterAnnotations.length; i++) {
-            Annotation[] annotations = parameterAnnotations[i];
-
-            for (Annotation annotation : annotations) {
-                if (annotation.annotationType() == ValidateParam.class) {
-                    Object param = args[i];
-                    //call validate on param
+        for (Object arg : args) {
+            for (Annotation annotation : arg.getClass().getAnnotations()) {
+                if (annotation.annotationType() == XmlRootElement.class) {
+                    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+                    Validator validator = factory.getValidator();
+                    Set<ConstraintViolation<Object>> violations = validator.validate(arg);
+                    List<String> messages = new ArrayList<String>();
+                    for (ConstraintViolation<Object> violation : violations) {
+                        messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
+                    }
+                    if (violations.size() > 0) {
+                        throw new BadRequestException(StringUtils.join(messages, "\n"));
+                    }
                 }
             }
         }

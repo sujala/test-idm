@@ -12,7 +12,7 @@
 
         <jaxb:bindings node="xs:complexType[@name='AuthenticationRequest']/xs:attribute[@name='tenantId']">
             <annox:annotate target="field">
-                <annox:annotate annox:class="javax.validation.constraints.Size" max="100"/>
+                <annox:annotate annox:class="javax.validation.constraints.Size" max="1"/>
             </annox:annotate>
         </jaxb:bindings>
 
