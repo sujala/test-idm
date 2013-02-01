@@ -1,5 +1,6 @@
 package com.rackspace.idm.aspect;
 
+import com.rackspace.idm.domain.entity.ObjectMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -18,6 +19,7 @@ import javax.ws.rs.POST;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -41,15 +43,24 @@ public class ValidateAspect {
         for (Object arg : args) {
             for (Annotation annotation : arg.getClass().getAnnotations()) {
                 if (annotation.annotationType() == XmlRootElement.class) {
-                    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-                    Validator validator = factory.getValidator();
-                    Set<ConstraintViolation<Object>> violations = validator.validate(arg);
-                    List<String> messages = new ArrayList<String>();
-                    for (ConstraintViolation<Object> violation : violations) {
-                        messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
+                    Object obj = null;
+                    try {
+                        ObjectMapper<Object> objectMapper = (ObjectMapper<Object>) arg;
+                        obj = objectMapper.convert();
+                    } catch (ClassCastException e) {
                     }
-                    if (messages.size() > 0) {
-                        throw new BadRequestException(StringUtils.join(messages, "\n"));
+
+                    if (obj != null) {
+                        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+                        Validator validator = factory.getValidator();
+                        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+                        List<String> messages = new ArrayList<String>();
+                        for (ConstraintViolation<Object> violation : violations) {
+                            messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
+                        }
+                        if (messages.size() > 0) {
+                            throw new BadRequestException(StringUtils.join(messages, "\n"));
+                        }
                     }
                 }
             }
