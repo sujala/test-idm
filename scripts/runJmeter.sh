@@ -6,6 +6,4 @@ rm ./jmeter/results.jtl
 
 # Run the tests
 echo "## Running the tests"
-cd "jmeter"
-
-jmeter -n -t AuthValidate_JenkinsUseOnly.jmx -l results.jtl
+jmeter -n -t ./jmeter/AuthValidate_JenkinsUseOnly.jmx -l ./jmeter/results.jtl
