@@ -2,6 +2,8 @@
 
 BASEDIR=$(dirname $(readlink -f $0))
 
+source $HOME/.bash_aliases
+
 echo "### Running JMeter performance test ###"
 
 # Clear out old results
