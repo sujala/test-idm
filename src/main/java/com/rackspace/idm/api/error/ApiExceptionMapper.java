@@ -233,6 +233,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
         logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
         logger.error(e.getMessage());
+        logger.error("Exception is :::",e);
         ServiceFault sfault = new ServiceFault();
         sfault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         sfault.setMessage("Server Error");
