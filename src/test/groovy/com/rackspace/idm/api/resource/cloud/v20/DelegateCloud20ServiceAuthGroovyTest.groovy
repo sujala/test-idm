@@ -9,6 +9,7 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
 
@@ -19,13 +20,8 @@ import javax.ws.rs.core.Response
  * Time: 4:51 PM
  * To change this template use File | Settings | File Templates.
  */
-class DelegateCloud20ServiceAuthGroovyTest extends Specification{
-    @Shared DelegateCloud20Service delegateCloud20Service
-    @Shared Validator20 validator20
-    @Shared ScopeAccessService scopeAccessService
-    @Shared DefaultCloud20Service defaultCloud20Service
+class DelegateCloud20ServiceAuthGroovyTest extends RootServiceTest {
     @Shared CloudClient cloudClient
-    @Shared Configuration config
     @Shared expiredDate
     @Shared futureDate
 
@@ -413,6 +409,18 @@ class DelegateCloud20ServiceAuthGroovyTest extends Specification{
     }
 
 
+    def "Add User: GA is Source of Truth - Routing true - token is invalid - return 401"() {
+        given:
+        config.getBoolean("useCloudAuth") >> true
+        config.getBoolean("gaIsSourceOfTruth") >> true
+        scopeAccessService.getAccessTokenByAuthHeader(_) >> null
+
+        when:
+        delegateCloud20Service.addUser(null, null, "invalid", null)
+
+        then:
+        thrown(NotAuthorizedException)
+    }
 
     def createScopeAccess(Date expTime) {
         new ScopeAccess().with {

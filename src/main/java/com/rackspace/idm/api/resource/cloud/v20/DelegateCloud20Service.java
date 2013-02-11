@@ -960,10 +960,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
-            {
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) {
 
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
+        if (isGASourceOfTruth()) {
+            if(accessTokenByAuthHeader == null) {
+                throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            }
+            authorizationService.verifyUserAdminLevelAccess(accessTokenByAuthHeader);
+        }
+
         boolean isUserAdminInGA = false;
 
         validator20.validateUserForCreate(user);

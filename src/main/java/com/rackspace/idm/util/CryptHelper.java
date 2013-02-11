@@ -24,6 +24,8 @@ import java.security.Security;
 @Component
 public class CryptHelper {
 
+    private CipherParameters keyParams;
+
     @Autowired
     public void setConfiguration(Configuration configuration){
         CryptHelper.config = configuration;
@@ -40,22 +42,25 @@ public class CryptHelper {
     public static final int IV_SIZE = 128;
 
     private CipherParameters getKeyParams() {
-        return getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
+        if (keyParams == null) {
+            keyParams = getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
+        }
+        return keyParams;
     }
 
     public CipherParameters getKeyParams(String passwordString, String saltString) {
-        CipherParameters keyParams = null;
+        CipherParameters result = null;
 		try {
             char[] password = passwordString.toCharArray();
             byte[] salt = fromHexString(saltString);
 			Security.addProvider(new BouncyCastleProvider());
 			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
 			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
-			keyParams = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
+			result = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
 		} catch (Exception e) {
 			throw new IdmException(e.getMessage());
 		}
-        return keyParams;
+        return result;
 	}
 
     private static CryptHelper instance = new CryptHelper();

@@ -2177,8 +2177,10 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void addUser_RoutingFalse_GASourceOfTruthTrue_callsDefaultService() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader(anyString())).thenReturn(scopeAccess);
         when(cloudClient.get(anyString(),Matchers.<HttpHeaders>anyObject())).thenReturn(responseBuilder);
         when(responseBuilder.build()).thenReturn(response);
         when(response.getStatus()).thenReturn(404);

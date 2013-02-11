@@ -114,12 +114,12 @@ public class XMLReader implements MessageBodyReader<Object> {
                 String en = writer.toString();
                 Unmarshaller m = getContext().createUnmarshaller();
                 JAXBElement<?> unMarshal = m.unmarshal(xsr, (Class) genericType);
-            return unMarshal.getValue();
+                return unMarshal.getValue();
             } catch (XMLStreamException e) {
-                throw new BadRequestException(e.toString(), e);
+                throw new BadRequestException("Invalid XML", e);
             }
-        } catch (JAXBException e) {
-            throw new BadRequestException(e.toString(), e);
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid XML", e);
         }
     }
 }
