@@ -271,6 +271,26 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         response.metadata.get("Location")[0] == "/v1.1/users/someName"
     }
 
+    def "doesBaseUrlBelongToRegion returns true when id is within range"(){
+        when:
+        setupMock()
+        config.getString("cloud.region") >> region
+        def result = defaultCloud11Service.doesBaseUrlBelongToRegion(baseUrl)
+
+        then:
+        result == expected
+
+        where:
+        expected    | baseUrl           | region
+        false       | cloudBaseUrl(null)| "UK"
+        false       | cloudBaseUrl(1)   | "UK"
+        false       | cloudBaseUrl(999) | "UK"
+        true        | cloudBaseUrl(1000)| "UK"
+        false       | cloudBaseUrl(1001)| "US"
+        true        | cloudBaseUrl(999) | "US"
+        true        | cloudBaseUrl(1)   | "US"
+    }
+
     def createUser(String id, String username, int mossoId, String nastId) {
         new com.rackspace.idm.domain.entity.User().with {
             it.id = id
@@ -287,6 +307,13 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
             it.regex = regex
             it.errMsg = errMsg
             it.description = description
+            return it
+        }
+    }
+
+    def cloudBaseUrl(Integer baseUrlId){
+        new CloudBaseUrl().with {
+            it.baseUrlId = baseUrlId
             return it
         }
     }

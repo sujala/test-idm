@@ -478,14 +478,25 @@ public class DefaultCloud11Service implements Cloud11Service {
     void addbaseUrlToTenant(Tenant tenant, String baseUrlType){
         List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByBaseUrlType(baseUrlType);
         for (CloudBaseUrl baseUrl : baseUrls) {
-            if ( (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) ||
-                    (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) ) {
+            if(doesBaseUrlBelongToRegion(baseUrl)){
                 addV1defaultToTenant(tenant, baseUrl, baseUrlType);
                 if (baseUrl.getDef()) {
                     tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
                 }
             }
         }
+    }
+
+    private boolean doesBaseUrlBelongToRegion(CloudBaseUrl baseUrl){
+        if (baseUrl.getBaseUrlId() != null){
+            if(isUkCloudRegion() &&  baseUrl.getBaseUrlId() >= 1000){
+                return true;
+            }
+            if(!isUkCloudRegion() && baseUrl.getBaseUrlId() < 1000){
+                return true;
+            }
+        }
+        return false;
     }
 
     void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {

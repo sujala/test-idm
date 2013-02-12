@@ -2643,21 +2643,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addbaseUrlToTenant_isUkCloudRegionAndRegionIsLon_addsBaseUrlIdToTenant() throws Exception {
-        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setRegion("Lon");
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrls.add(cloudBaseUrl);
-        Tenant tenant = new Tenant();
-        when(endpointService.getBaseUrlsByBaseUrlType(anyString())).thenReturn(cloudBaseUrls);
-        when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, "MOSSO");
-        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
-    }
-
-    @Test
     public void addBaseUrlToTenant_isUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
