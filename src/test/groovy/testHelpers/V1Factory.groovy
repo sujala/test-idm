@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
@@ -314,4 +315,16 @@ class V1Factory {
         }
     }
 
+    def createBaseUrlRef() {
+        return createBaseUrlRef(1,"href", true)
+    }
+
+    def createBaseUrlRef(Integer id, String href, Boolean v1Default) {
+        new BaseURLRef().with {
+            it.id = id
+            it.href = href
+            it.v1Default = v1Default
+            return it
+        }
+    }
 }

@@ -2,7 +2,9 @@ package com.rackspace.idm.validation.entity;
 
 import lombok.Data;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,4 +25,11 @@ public class UserForValidation {
     protected String displayName;
     @Size(max = 100)
     protected String password;
+    @Size(max = 100)
+    protected String nastId;
+    @Size(max = 100)
+    protected String key;
+    @Valid
+    protected BaseUrlRefListForValidation baseURLRefs;
+
 }

@@ -2,6 +2,8 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
+import com.rackspace.idm.validation.entity.BaseUrlRefForValidation
+import com.rackspace.idm.validation.entity.BaseUrlRefListForValidation
 import com.rackspace.idm.validation.entity.CredentialTypeForValidation
 import com.rackspace.idm.validation.entity.DefaultRegionServicesForValidation
 import com.rackspace.idm.validation.entity.DomainForValidation
@@ -22,6 +24,8 @@ import com.rackspace.idm.validation.entity.TenantForValidation
 import com.rackspace.idm.validation.entity.TokenForAuthenticationRequestForValidation
 import com.rackspace.idm.validation.entity.UserForValidation
 import com.rackspace.idm.validation.entity.VersionForServiceForValidation
+import com.rackspacecloud.docs.auth.api.v1.BaseURL
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import spock.lang.Specification
 
 /**
@@ -212,12 +216,20 @@ class EntityFactoryForValidation extends Specification{
     }
 
     def createUser(String id, String username, String email, String displayName, String password) {
+        return createUser(id, username, email, displayName, password, null, null, null);
+    }
+
+    def createUser(String id, String username, String email, String displayName, String password,
+                   String nastId, String key, baseURLRefs) {
         new UserForValidation().with {
             it.id = id
             it.username = username
             it.email = email
             it.displayName = displayName
             it.password = password
+            it.nastId = nastId
+            it.key = key
+            it.baseURLRefs = baseURLRefs
             return it
         }
     }
@@ -225,6 +237,20 @@ class EntityFactoryForValidation extends Specification{
     def createImpersonationRequest(user) {
         new ImpersonationRequestForValidation().with {
             it.user = user
+            return it
+        }
+    }
+
+    def createBaseUrlRef(String href) {
+        new BaseUrlRefForValidation().with {
+            it.href = href
+            return it
+        }
+    }
+
+    def createBaseUrlRefList(baseUrlRef) {
+        new BaseUrlRefListForValidation().with {
+            it.baseURLRef = baseUrlRef
             return it
         }
     }

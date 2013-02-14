@@ -4,6 +4,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.validation.entity.*;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import org.dozer.DozerBeanMapper;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -44,6 +47,8 @@ public class ObjectConverter {
         mapping.put(User.class, UserForValidation.class);
         mapping.put(UserForCreate.class, UserForValidation.class);
         mapping.put(ImpersonationRequest.class, ImpersonationRequestForValidation.class);
+        mapping.put(com.rackspacecloud.docs.auth.api.v1.User.class, UserForValidation.class);
+        mapping.put(BaseURLRef.class, BaseUrlRefForValidation.class);
     }
 
     public Object convert(Object object) {

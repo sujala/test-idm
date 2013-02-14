@@ -3,6 +3,7 @@ package com.rackspace.idm.validation
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
+import com.rackspace.idm.validation.entity.BaseUrlRefForValidation
 import com.rackspace.idm.validation.entity.DefaultRegionServicesForValidation
 import com.rackspace.idm.validation.entity.DomainForValidation
 import com.rackspace.idm.validation.entity.EndpointTemplateForValidation
@@ -17,6 +18,9 @@ import com.rackspace.idm.validation.entity.SecretQAForValidation
 import com.rackspace.idm.validation.entity.ServiceForValidation
 import com.rackspace.idm.validation.entity.TenantForValidation
 import com.rackspace.idm.validation.entity.UserForValidation
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
+import com.rackspacecloud.docs.auth.api.v1.User
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -354,4 +358,41 @@ class ObjectConverterTest extends RootServiceTest{
         result.user.username == "username"
     }
 
+    def "Convert BaseURLRef to BaseURLRefForValidation"(){
+        when:
+        def entity = v1Factory.createBaseUrlRef()
+        BaseUrlRefForValidation result = converter.convert(entity)
+
+        then:
+        result != null
+        result.href == "href"
+    }
+
+    def "Convert User(v1.1) to UserForValidation"(){
+        when:
+        def entity = new User().with {
+            it.id = "id"
+            it.nastId = "nast"
+            it.key = "key"
+            return it
+        }
+        def baseUrlRef = new BaseURLRef().with {
+            it.href = "href"
+            return it
+        }
+        def baseUrlRefList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef].asList()
+            return it
+        }
+        entity.baseURLRefs = baseUrlRefList
+
+        UserForValidation result = converter.convert(entity)
+
+        then:
+        result != null
+        result.id == "id"
+        result.key == "key"
+        result.nastId == "nast"
+        result.baseURLRefs.baseURLRef.get(0).href == "href"
+    }
 }
