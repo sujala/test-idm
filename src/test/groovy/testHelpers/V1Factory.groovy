@@ -1,9 +1,9 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
-import com.unboundid.ldif.LDIFEntrySource
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -204,6 +204,19 @@ class V1Factory {
             return it
         }
     }
+
+    def createSecretQA_Keystone() {
+        return createSecretQA_Keystone("username", "answer", "question")
+    }
+
+    def createSecretQA_Keystone(String username, String answer, String question) {
+        new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA().with{
+            it.username = username
+            it.answer  = answer
+            it.question = question
+            return it
+        }
+    }
     def createService() {
         return createService(ID, NAME)
     }
@@ -255,4 +268,50 @@ class V1Factory {
             return it
         }
     }
+
+    def createRegion(){
+        return createRegion("name",true, false)
+    }
+
+    def createRegion(String name, Boolean enabled, Boolean isDefault){
+        return new Region().with {
+            it.name = name
+            it.enabled = enabled
+            it.isDefault = isDefault
+            return it
+        }
+    }
+
+    def createGroup(){
+        return createGroup("name","id", "description")
+    }
+
+    def createGroup(String name, String id, String description){
+        return new Group().with {
+            it.name = name
+            it.id = id
+            it.description = description
+            return it
+        }
+    }
+
+    def createQuestion(){
+        return createQuestion("id", "question?")
+    }
+
+    def createQuestion(String id, String question){
+        return new Question().with {
+            it.id = id
+            it.question = question
+            return it
+        }
+    }
+
+    def createDefaultRegionServices(List<String> serviceName){
+        new DefaultRegionServices().with {
+            it.serviceName = serviceName
+            return it
+        }
+    }
+
 }

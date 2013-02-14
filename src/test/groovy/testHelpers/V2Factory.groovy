@@ -1,5 +1,7 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.openstack.docs.identity.api.v2.*
 
@@ -101,6 +103,33 @@ class V2Factory {
         return objFactory.createPasswordCredentials(credential)
     }
 
+
+    def createJAXBApiKeyCredentials(String username, String apiKey){
+        def credential = createApiKeyCredentials(username, apiKey)
+        return objFactory.createCredential(credential)
+    }
+
+    def createApiKeyCredentials(String username, String apiKey){
+        return new ApiKeyCredentials().with {
+            it.apiKey = apiKey
+            it.username = username
+            return it
+        }
+    }
+
+    def createJAXBRsaCredentials(String username, String tokenKey){
+        def credential = createRsaCredentials(username, tokenKey)
+        return objFactory.createCredential(credential)
+    }
+
+    def createRsaCredentials(String username, String tokenKey){
+        return new RsaCredentials().with {
+            it.tokenKey = tokenKey
+            it.username = username
+            return it
+        }
+    }
+
     def createRole() {
         return createRole(NAME, "applicationId", "tenantId")
     }
@@ -143,7 +172,7 @@ class V2Factory {
     def createTenant(String id, String name) {
         new Tenant().with {
             it.id = id
-            it.name =
+            it.name = name
             it.enabled = true
             return it
         }
@@ -163,6 +192,17 @@ class V2Factory {
 
     def createToken() {
         return createToken(ID)
+    }
+
+    def createTokenForAuthenticationRequest(){
+        return createTokenForAuthenticationRequest(ID)
+    }
+
+    def createTokenForAuthenticationRequest(id){
+        return new TokenForAuthenticationRequest().with {
+            it.id = id
+            return it
+        }
     }
 
     def createToken(String id) {
@@ -209,6 +249,19 @@ class V2Factory {
         def list = userList ? userList : [].asList()
         new UserList().with {
             it.getUser().addAll(list)
+            return it
+        }
+    }
+
+    def createVersionForService(){
+        return createVersionForService(1,"info","list")
+    }
+
+    def createVersionForService(int id, String info, String list){
+        new VersionForService().with {
+            it.id = id
+            it.info = info
+            it.list = list
             return it
         }
     }
