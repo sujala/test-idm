@@ -86,6 +86,7 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.RSAClient
 import com.rackspace.idm.validation.InputValidator
+import com.rackspace.idm.validation.ObjectConverter
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
@@ -134,6 +135,7 @@ class RootServiceTest extends Specification {
     @Shared RegionConverterCloudV20 regionConverter
     @Shared QuestionConverterCloudV20 questionConverter
     @Shared SecretQAConverterCloudV20 secretQAConverter
+    @Shared ObjectConverter objectConverter
 
     //services
     @Shared ApplicationService applicationService
@@ -650,6 +652,11 @@ class RootServiceTest extends Specification {
     def mockInputValidator(service) {
         inputValidator = Mock()
         service.inputValidator = inputValidator
+    }
+
+    def mockObjectConverter(service) {
+        objectConverter = Mock()
+        service.objectConverter = objectConverter
     }
 
     /*

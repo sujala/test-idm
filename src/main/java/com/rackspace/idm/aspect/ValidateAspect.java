@@ -1,39 +1,22 @@
 package com.rackspace.idm.aspect;
 
-import com.rackspace.idm.validation.ObjectConverter;
-import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.lang.StringUtils;
+import com.rackspace.idm.validation.ObjectValidator;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 @Aspect
 public class ValidateAspect {
+
     @Autowired
-    private ObjectConverter converter;
-
-    private Validator validator;
-
-    @PostConstruct
-    public void setup(){
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
+    ObjectValidator objectValidator;
 
     @Pointcut("execution(* com.rackspace.idm.api.resource..*.*(..))")
     public void resource() {
@@ -58,16 +41,8 @@ public class ValidateAspect {
             }
             for (Annotation annotation : arg.getClass().getAnnotations()) {
                 if (annotation.annotationType() == XmlRootElement.class) {
-                    if(converter != null && converter.isConvertible(arg)){
-                        Object obj = converter.convert(arg);
-                        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
-                        List<String> messages = new ArrayList<String>();
-                        for (ConstraintViolation<Object> violation : violations) {
-                            messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
-                        }
-                        if (messages.size() > 0) {
-                            throw new BadRequestException(StringUtils.join(messages, "\n"));
-                        }
+                    if (objectValidator != null) {
+                        objectValidator.validate(arg);
                     }
                 }
             }

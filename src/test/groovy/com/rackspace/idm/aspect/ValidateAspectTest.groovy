@@ -1,6 +1,6 @@
 package com.rackspace.idm.aspect
 
-import com.rackspace.idm.validation.ObjectConverter
+import com.rackspace.idm.validation.DefaultObjectValidator
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
 import org.aspectj.lang.JoinPoint
@@ -18,7 +18,7 @@ import javax.xml.namespace.QName
  */
 class ValidateAspectTest extends RootServiceTest {
     @Shared ValidateAspect validateAspect
-    @Shared ObjectConverter converter
+    @Shared DefaultObjectValidator objectValidator
 
     def setupSpec(){
         validateAspect = new ValidateAspect()
@@ -26,67 +26,52 @@ class ValidateAspectTest extends RootServiceTest {
 
     def setup() {
         setupMocks()
-        validateAspect.setup()
     }
 
-    def "Validate does not return exception" (){
+    def "Validate throws exception if not valid" (){
         given:
         JoinPoint joinPoint  = Mock()
         Object arg = v2Factory.createAuthenticationRequest()
 
         joinPoint.args >> [arg]
-
-        converter.isConvertible(_) >> true
-        converter.convert(_) >> new AuthenticationRequestForValidation().with {
-            it.tenantId = "tenantId"
-            it.otherAttributes.put(new QName("http://localhost"), "h123")
-            return it
-        }
-
-        when:
-        validateAspect.validateObject(joinPoint)
-
-        then:
-        notThrown(BadRequestException)
-    }
-
-    def "Validate throws exception" (){
-        given:
-        JoinPoint joinPoint  = Mock()
-        Object arg = v2Factory.createAuthenticationRequest()
-
-        joinPoint.args >> [arg]
-
-        converter.isConvertible(_) >> true
-        converter.convert(_) >> new AuthenticationRequestForValidation().with {
-            it.tenantId = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-            return it
-        }
 
         when:
         validateAspect.validateObject(joinPoint)
 
         then:
         thrown(BadRequestException)
+        1 * objectValidator.validate(arg) >> { throw new BadRequestException() }
     }
 
-    def "non convertible object does not get converted"() {
+    def "Validate does not thorw exception if valid" (){
         given:
         JoinPoint joinPoint  = Mock()
         Object arg = v2Factory.createAuthenticationRequest()
 
         joinPoint.args >> [arg]
-        converter.isConvertible(_) >> false
 
         when:
         validateAspect.validateObject(joinPoint)
 
         then:
-        0 * converter.convert(_)
+        notThrown(BadRequestException)
+        1 * objectValidator.validate(arg)
+    }
+
+    def "skip null args to avoid null pointer exception"() {
+        given:
+        JoinPoint joinPoint  = Mock()
+        joinPoint.args >> [null]
+
+        when:
+        validateAspect.validateObject(joinPoint)
+
+        then:
+        0 * objectValidator.validate(_)
     }
 
     def setupMocks(){
-        converter = Mock()
-        validateAspect.converter = converter
+        objectValidator = Mock()
+        validateAspect.objectValidator = objectValidator
     }
 }
