@@ -30,22 +30,23 @@ public class DefaultObjectValidator implements ObjectValidator {
 
     @Override
     public void validate(Object object) {
-        List<String> messages = getViolationMessages(object);
+        List<String> messages = new ArrayList<String>();
+        if(objectConverter.isConvertible(object)){
+            Object obj = objectConverter.convert(object);
+            messages = getViolationMessages(obj);
+        }
         if (messages.size() > 0) {
             throw new BadRequestException(StringUtils.join(messages, "\n"));
         }
     }
 
-    private List<String> getViolationMessages(Object object) {
+    private List<String> getViolationMessages(Object obj) {
         List<String> messages = new ArrayList<String>();
-        if(objectConverter.isConvertible(object)) {
-            Object obj = objectConverter.convert(object);
-            Set<ConstraintViolation<Object>> violations = validator.validate(obj);
-            for (ConstraintViolation<Object> violation : violations) {
-                messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
-            }
-
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        for (ConstraintViolation<Object> violation : violations) {
+            messages.add(String.format("%s: %s", violation.getPropertyPath(), violation.getMessage()));
         }
+
         return messages;
     }
 }

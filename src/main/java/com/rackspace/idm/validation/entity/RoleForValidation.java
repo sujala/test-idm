@@ -17,7 +17,7 @@ public class RoleForValidation {
     protected String id;
     @Size(max = 100)
     protected String name;
-    @Size(max = 100)
+    @Size(max = 1000)
     protected String description;
     @Size(max = 100)
     protected String serviceId;

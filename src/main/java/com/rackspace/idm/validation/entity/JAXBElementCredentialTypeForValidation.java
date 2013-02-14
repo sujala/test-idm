@@ -19,4 +19,8 @@ public class JAXBElementCredentialTypeForValidation extends JAXBElement<Credenti
     public JAXBElementCredentialTypeForValidation(){
         super(new QName("http://www.rackspace.com"), CredentialTypeForValidation.class,null);
     }
+
+    public JAXBElementCredentialTypeForValidation(CredentialTypeForValidation value){
+        super(new QName("http://www.rackspace.com"), CredentialTypeForValidation.class, value);
+    }
 }
