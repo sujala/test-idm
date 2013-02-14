@@ -27,8 +27,8 @@ import static org.mockito.Mockito.*;
  * Time: 9:49 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Cloud20VersionResourceTest {
-    Cloud20VersionResource cloud20VersionResource;
+public class Cloud20VersionResourceTestOld {
+    def cloud20VersionResource;
     Configuration config;
     CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
     FileSystemApiDocRepository fileSystemApiDocRepository;
@@ -48,7 +48,9 @@ public class Cloud20VersionResourceTest {
         config = mock(Configuration.class);
         cloudContractDescriptionBuilder = new CloudContractDescriptionBuilder(fileSystemApiDocRepository, serviceDescriptionTemplateUtil);
 
-        cloud20VersionResource = new Cloud20VersionResource(config, cloudContractDescriptionBuilder);
+        cloud20VersionResource = new Cloud20VersionResource();
+        cloud20VersionResource.config = config
+        cloud20VersionResource.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder
 
         // mock
         httpHeaders = mock(HttpHeaders.class);

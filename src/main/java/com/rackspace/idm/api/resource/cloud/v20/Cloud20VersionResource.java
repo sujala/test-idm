@@ -34,8 +34,11 @@ import java.io.StringReader;
 @Component
 public class Cloud20VersionResource {
 
-    private final Configuration config;
-    private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
+    @Autowired
+    private Configuration config;
+
+    @Autowired
+    private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 
@@ -45,11 +48,7 @@ public class Cloud20VersionResource {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
-    @Autowired
-    public Cloud20VersionResource(Configuration config,
-        CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
-        this.config = config;
-        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
+    public Cloud20VersionResource() {
     }
 
     @GET

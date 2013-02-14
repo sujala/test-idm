@@ -86,10 +86,12 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.RSAClient
 import com.rackspace.idm.validation.InputValidator
+import com.rackspace.idm.validation.ObjectConverter
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
@@ -105,6 +107,7 @@ import javax.ws.rs.core.UriInfo
  * Time: 2:26 PM
  * To change this template use File | Settings | File Templates.
  */
+
 class RootServiceTest extends Specification {
 
     @Shared Configuration config
@@ -134,6 +137,7 @@ class RootServiceTest extends Specification {
     @Shared RegionConverterCloudV20 regionConverter
     @Shared QuestionConverterCloudV20 questionConverter
     @Shared SecretQAConverterCloudV20 secretQAConverter
+    @Shared ObjectConverter objectConverter
 
     //services
     @Shared ApplicationService applicationService
@@ -205,6 +209,7 @@ class RootServiceTest extends Specification {
 
     @Shared def authToken = "token"
     @Shared def entityFactory = new EntityFactory()
+    @Shared def entityFactoryForValidation = new EntityFactoryForValidation()
     @Shared def v1Factory = new V1Factory()
     @Shared def v2Factory = new V2Factory()
 
@@ -652,6 +657,11 @@ class RootServiceTest extends Specification {
         service.inputValidator = inputValidator
     }
 
+    def mockObjectConverter(service) {
+        objectConverter = Mock()
+        service.objectConverter = objectConverter
+    }
+
     /*
         Paginator Mocks
     */
@@ -862,5 +872,17 @@ class RootServiceTest extends Specification {
 
     def allowAccess(scopeAccess) {
         scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
+    }
+
+    def m(String value){
+        return value.multiply(100)
+    }
+
+    def mm(String value){
+        return value.multiply(1000)
+    }
+
+    def mmm(String value){
+        return value.multiply(100000)
     }
 }
