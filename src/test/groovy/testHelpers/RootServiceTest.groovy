@@ -744,19 +744,21 @@ class RootServiceTest extends Specification {
     }
 
     def uriInfo(String absolutePath) {
-        def absPath
-        try {
-            absPath = new URI(absolutePath)
-        } catch (Exception ex) {
-            absPath = new URI("http://absolute.path/to/resource")
-        }
-
         def builderMock = Mock(UriBuilder)
         def uriInfo = Mock(UriInfo)
 
-        builderMock.path(_ as String) >> builderMock
+        builderMock.path(_ as String) >> { String arg1 ->
+            absolutePath = absolutePath + "/" + arg1
+            return builderMock
+        }
         builderMock.path(null) >> builderMock
-        builderMock.build() >> absPath
+        builderMock.build() >> {
+            try {
+                return new URI(absolutePath)
+            } catch (Exception ex) {
+                return new URI("http://absolute.path/to/resource")
+            }
+        }
         uriInfo.getRequestUriBuilder() >> builderMock
 
         return uriInfo

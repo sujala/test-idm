@@ -89,6 +89,47 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         builder.build().status == 201
     }
 
+    def "Create user should return userId in the location header and not username" () {
+        given:
+        allowAccess()
+        User user = new User();
+        user.id = "someN@me"
+        user.mossoId = 9876543210
+        def user1 = entityFactory.createUser().with {
+            it.username = "my_username"
+            it.mossoId = 1
+            return it
+        }
+        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
+        ldapPatternRepository.getPattern(_) >> pattern
+        userService.getUser(_) >> null
+        userConverterCloudV11.toUserDO(_) >> user1
+        userConverterCloudV11.toCloudV11User(_, _) >> v1Factory.createUser()
+        domainService.createNewDomain(_) >> "1"
+        endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
+        Application application = new Application()
+        application.openStackType = "someType"
+        applicationService.getByName(_) >> application
+        ClientRole clientRole = new ClientRole()
+        clientRole.id = "1"
+        clientRole.name = "name"
+        clientRole.clientId = "1"
+        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
+        endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
+        applicationService.getClientRoleById(_) >> clientRole
+
+        when:
+        def response = service.createUser(request, null, uriInfo(), user).build()
+
+        then:
+        1 * userService.addUser(_) >> { com.rackspace.idm.domain.entity.User arg1 ->
+            arg1.id = "userId"
+        }
+        response.status == 201
+        !response.getMetadata().get("Location").toString().contains("userId")
+        response.getMetadata().get("Location").toString().contains("my_username")
+    }
+
     def "Create User with valid username: start with a number" () {
         given:
         allowAccess()
