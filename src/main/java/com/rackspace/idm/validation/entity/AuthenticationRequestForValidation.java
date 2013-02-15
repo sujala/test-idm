@@ -10,12 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
+
 @Data
 public class AuthenticationRequestForValidation {
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String tenantId;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String tenantName;
 
     @Valid

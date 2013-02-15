@@ -4,6 +4,8 @@ import lombok.Data;
 
 import javax.validation.constraints.Size;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -13,12 +15,12 @@ import javax.validation.constraints.Size;
  */
 @Data
 public class SecretQAForValidation {
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String username;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String id;
-    @Size(max = 1000)
-    protected String question;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String answer;
+    @Size(max = LONG_MAX)
+    protected String question;
 }

@@ -4,7 +4,8 @@ import lombok.Data;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
-import java.util.List;
+
+import static com.rackspace.idm.validation.entity.Constants.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,19 +16,19 @@ import java.util.List;
  */
 @Data
 public class UserForValidation {
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String id;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String username;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String email;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String displayName;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String password;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String nastId;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String key;
     @Valid
     protected BaseUrlRefListForValidation baseURLRefs;

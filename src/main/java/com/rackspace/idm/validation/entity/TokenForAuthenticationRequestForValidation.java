@@ -4,6 +4,8 @@ import lombok.Data;
 
 import javax.validation.constraints.Size;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -13,7 +15,7 @@ import javax.validation.constraints.Size;
  */
 @Data
 public class TokenForAuthenticationRequestForValidation {
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String id;
 
 }

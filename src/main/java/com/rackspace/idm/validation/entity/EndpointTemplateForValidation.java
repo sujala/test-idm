@@ -5,6 +5,8 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -16,16 +18,16 @@ import javax.validation.constraints.Size;
 public class EndpointTemplateForValidation {
     @Valid
     protected VersionForServiceForValidation version;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String type;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String name;
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String region;
-    @Size(max = 1000)
+    @Size(max = LONG_MAX)
     protected String publicURL;
-    @Size(max = 1000)
+    @Size(max = LONG_MAX)
     protected String internalURL;
-    @Size(max = 1000)
+    @Size(max = LONG_MAX)
     protected String adminURL;
 }

@@ -6,6 +6,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.util.List;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -18,6 +20,6 @@ public class PoliciesForValidation {
     @Valid
     protected List<PolicyForValidation> policy;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String algorithm;
 }

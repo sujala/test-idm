@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.rackspace.idm.validation.entity.Constants.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,27 +21,27 @@ import java.util.Map;
  */
 @Data
 public class CredentialTypeForValidation {
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String username;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String password;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String tokenKey;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String key;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String signature;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String question;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String answer;
 
-    @Size(max = 100)
+    @Size(max = MAX)
     protected String apiKey;
 }
