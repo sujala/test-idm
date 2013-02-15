@@ -1373,24 +1373,21 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("unsupported credential type");
             }
             User user = this.userService.getUserById(userId);
-
-            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-
             User caller = getUser(scopeAccessByAccessToken);
 
-            if (callerIsDefaultUser || callerIsUserAdmin) {
-                if (callerIsUserAdmin && credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
-                    authorizationService.verifyDomain(caller, user);
-                } else if (!caller.getId().equals(userId)) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
-            }
-
             if (user == null) {
-                String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
+                String errMsg = String.format("User with id: %s does not exist", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
+            }
+
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+
+            if (callerIsUserAdmin && credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
+                authorizationService.verifyDomain(caller, user);
+            } else if (!callerIsServiceAdmin && !caller.getId().equals(userId)) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             JAXBElement<? extends CredentialType> creds = null;

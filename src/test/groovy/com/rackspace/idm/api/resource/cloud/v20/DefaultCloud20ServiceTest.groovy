@@ -1828,6 +1828,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserLevelAccess(_)
     }
 
+    def "identity:admin should not get other users password credentials"() {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser("user", "userId", "123456", "DFW")
+        def caller = entityFactory.createUser("caller", "callerId", null, "DFW")
+
+        userService.getUserById("userId") >> user
+        userService.getUser(_) >> caller
+
+        when:
+        def response = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS).build()
+
+        then:
+        1 * authorizationService.authorizeCloudServiceAdmin(_) >> false
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        then:
+        response.status == 403
+    }
+
     def "getUserCredential verifies credential type"() {
         given:
         allowUserAccess()
@@ -1850,7 +1870,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.getUserById("userId")
     }
 
-    def "getUserCredential gets caller and checks if caller is user-admin or default user"() {
+    def "getUserCredential authorizes caller as user-admin or service-admin"() {
         given:
         allowUserAccess()
 
@@ -1860,8 +1880,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
 
         then:
-        1 * authorizationService.authorizeCloudUser(_) >> false
         1 * authorizationService.authorizeCloudUserAdmin(_) >> false
+        1 * authorizationService.authorizeCloudServiceAdmin(_) >> false
         1 * userService.getUser(_) >> entityFactory.createUser()
     }
 
@@ -1906,7 +1926,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
 
-        authorizationService.authorizeCloudUser(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
@@ -1916,45 +1936,45 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 404
     }
 
-    def "getUserCredential gets user password credentials"() {
+    def "service-admin can get user password credential"() {
         given:
         allowUserAccess()
 
-        def user = Mock(User)
-        user.getPassword() >>> [ null, "Password1" ]
-        user.getUsername() >> "username"
-        def caller = Mock(User)
+        def user = entityFactory.createUser().with {
+            it.password = "Password1"
+            return it
+        }
+        def caller = entityFactory.createUser()
 
         userService.getUserById(_) >> user
         userService.getUser(_) >> caller
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
-        def response1 = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
         def response2 = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
 
         then:
-        response1.build().status == 404
         response2.build().status == 200
     }
 
-    def "getUserCredential gets user apikey credentials"() {
+    def "service-admin can get user apikey credentials"() {
         given:
         allowUserAccess()
 
-        def user = Mock(User)
-        user.getApiKey() >>> [ null, "apiKey" ]
-        user.getUsername() >> "username"
-        def caller = Mock(User)
+        def user = entityFactory.createUser().with {
+            it.apiKey = "apiKey"
+            return it
+        }
+        def caller = entityFactory.createUser()
 
         userService.getUserById(_) >> user
         userService.getUser(_) >> caller
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
-        def response1 = service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
         def response2 = service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
 
         then:
-        response1.build().status == 404
         response2.build().status == 200
     }
 

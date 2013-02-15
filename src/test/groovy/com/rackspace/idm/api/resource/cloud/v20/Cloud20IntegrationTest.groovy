@@ -1177,7 +1177,7 @@ class Cloud20IntegrationTest extends Specification {
     def "updateCredentials with valid passwords should be able to authenticate" () {
         given:
         String username = "userUpdateCred" + sharedRandom
-        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
+        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "domain$sharedRandom", "Password1"))
         User user = userForCreate.getEntity(User)
         String password = "Password1~!@#\$%^&*_#\$%^% <>?:\"^(%)'"
         PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {

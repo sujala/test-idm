@@ -2569,17 +2569,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getUserCredential_cloudUserIdNotMatchThrowsForbiddenException_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
-        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.getUserCredential(null, authToken, "", apiKeyCredentials), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
-    }
-
-    @Test
     public void getUserCredential_userIsNull_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -2597,18 +2586,6 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.getUserCredential(null, authToken, userId, passwordCredentials);
         verify(spy).getUser(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void getUserCredential_cloudAdminUserIdNotMatchThrowsForbiddenException_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response code",spy.getUserCredential(null, authToken, "", passwordCredentials), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
     }
 
     @Test
