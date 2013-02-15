@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
@@ -129,6 +130,7 @@ class RootServiceTest extends Specification {
     @Shared TenantConverterCloudV20 tenantConverter
     @Shared TokenConverterCloudV20 tokenConverter
     @Shared UserConverterCloudV20 userConverter
+    @Shared UserConverterCloudV11 userConverterV11
     @Shared DomainConverterCloudV20 domainConverter
     @Shared DomainsConverterCloudV20 domainsConverter
     @Shared PolicyConverterCloudV20 policyConverter
@@ -323,7 +325,6 @@ class RootServiceTest extends Specification {
         service.capabilityConverterCloudV20 = capabilityConverter
     }
 
-
     def mockRegionConverter(service) {
         regionConverter = Mock()
         regionConverter.fromRegion(_) >> entityFactory.createRegion()
@@ -346,6 +347,15 @@ class RootServiceTest extends Specification {
         secretQAConverter.toSecretQA(_) >> jaxbMock
         secretQAConverter.toSecretQAs(_) >> jaxbMock
         service.secretQAConverterCloudV20 = secretQAConverter
+    }
+
+    def mockUserConverter11(service) {
+        userConverterV11 = Mock()
+        userConverterV11.toUserDO(_) >> entityFactory.createUser()
+        userConverterV11.toCloudV11User(_) >> v1Factory.createUser()
+        userConverterV11.openstackToCloudV11User(_, _) >> v1Factory.createUser()
+        userConverterV11.toCloudV11User(_, _) >> entityFactory.createUser()
+        service.userConverterCloudV11 = userConverterV11
     }
 
     /*

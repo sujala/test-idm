@@ -7,7 +7,6 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
@@ -101,7 +100,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private CloudExceptionResponse cloudExceptionResponse;
 
     @Autowired
-    private ApplicationService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private TenantService tenantService;
@@ -180,7 +179,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (sa instanceof ImpersonatedScopeAccess){
                 ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                 if(isa.isAccessTokenExpired(new DateTime())){
-                    throw new NotFoundException(String.format("token %s not found", tokeId));
+                    throw new NotFoundException("Token not found");
                 }
                 UserScopeAccess usa = new UserScopeAccess();
                 usa.setAccessTokenString(isa.getAccessTokenString());
@@ -190,7 +189,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
-                throw new NotFoundException(String.format("token %s not found", tokeId));
+                throw new NotFoundException("Token not found");
             }
 
             UserScopeAccess usa = (UserScopeAccess) sa;
@@ -371,8 +370,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             userService.updateUser(userDO, false);
 
             //Add user-admin role
-            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            ClientRole cRole = this.clientService.getClientRoleById(roleId.getId());
+            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            ClientRole cRole = this.applicationService.getClientRoleById(roleId.getId());
 
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
@@ -431,9 +430,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
             }
             String serviceName = config.getString("serviceName.cloudFiles");
-            Application application = clientService.getByName(serviceName);
+            Application application = applicationService.getByName(serviceName);
             String defaultRoleName = application.getOpenStackType().concat(":default");
-            ClientRole clientRole = clientService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+            ClientRole clientRole = applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
             TenantRole tenantRole = new TenantRole();
             tenantRole.setClientId(clientRole.getClientId());
             tenantRole.setName(clientRole.getName());
@@ -462,9 +461,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
             }
             String serviceName = config.getString("serviceName.cloudServers");
-            Application application = clientService.getByName(serviceName);
+            Application application = applicationService.getByName(serviceName);
             String defaultRoleName = application.getOpenStackType().concat(":default");
-            ClientRole clientRole = clientService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+            ClientRole clientRole = applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
             TenantRole tenantRole = new TenantRole();
             tenantRole.setClientId(clientRole.getClientId());
             tenantRole.setName(clientRole.getName());
@@ -1423,7 +1422,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     public void setApplicationService(ApplicationService applicationService) {
-        this.clientService = applicationService;
+        this.applicationService = applicationService;
     }
 
     public void setTenantService(TenantService tenantService) {

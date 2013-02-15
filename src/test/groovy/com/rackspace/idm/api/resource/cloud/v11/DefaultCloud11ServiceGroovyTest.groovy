@@ -9,25 +9,12 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.service.ApplicationService
-import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.DomainService
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspacecloud.docs.auth.api.v1.User
-import com.sun.jersey.api.uri.UriBuilderImpl
-import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
-import spock.lang.Specification
+import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.core.Response
-import javax.ws.rs.core.UriBuilder
-import javax.ws.rs.core.UriInfo
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,63 +23,67 @@ import javax.ws.rs.core.UriInfo
  * Time: 1:11 PM
  * To change this template use File | Settings | File Templates.
  */
-class DefaultCloud11ServiceGroovyTest extends Specification{
-    @Shared Validator validator
-    @Shared LdapPatternRepository ldapPatternRepository
-    @Shared HttpServletRequest request
-    @Shared AuthHeaderHelper authHeaderHelper
-    @Shared ScopeAccessService scopeAccessService
-    @Shared Configuration config
-    @Shared AuthorizationService authorizationService
-    @Shared UserService userService
-    @Shared UserConverterCloudV11 userConverterCloudV11
-    @Shared DomainService domainService
-    @Shared TenantService tenantService
-    @Shared EndpointService endpointService
-    @Shared ApplicationService clientService
-    @Shared  UriInfo uriInfo
-    @Shared CloudExceptionResponse cloudExceptionResponse
+class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
-    @Shared DefaultCloud11Service defaultCloud11Service
+    @Shared DefaultCloud11Service service
+    @Shared LdapPatternRepository ldapPatternRepository
+    @Shared UserConverterCloudV11 userConverterCloudV11
+    @Shared HttpServletRequest request
 
     def setupSpec(){
-        defaultCloud11Service = new DefaultCloud11Service()
+        service = new DefaultCloud11Service()
+        validator = new Validator()
+        service.cloudExceptionResponse = new CloudExceptionResponse()
+        service.validator = validator
     }
 
     def cleanupSpec() {
     }
 
+    def setup(){
+        ldapPatternRepository = Mock()
+        userConverterCloudV11 = Mock()
+        validator.ldapPatternRepository = ldapPatternRepository
+        service.userConverterCloudV11 = userConverterCloudV11
+
+        mockAuthHeaderHelper(service)
+        mockScopeAccessService(service)
+        mockConfiguration(service)
+        mockAuthorizationService(service)
+        mockUserService(service)
+        mockDomainService(service)
+        mockTenantService(service)
+        mockEndpointService(service)
+        mockApplicationService(service)
+    }
+
     def "Create User with valid username" () {
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = "someN@me"
         user.mossoId = 9876543210
+        def user1 = entityFactory.createUser()
+        user1.mossoId = 1
         Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
         ldapPatternRepository.getPattern(_) >> pattern
         userService.getUser(_) >> null
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User()
-        user1.setId("1")
-        user1.setUsername("someN@me")
-        user1.setMossoId(1)
         userConverterCloudV11.toUserDO(_) >> user1
         domainService.createNewDomain(_) >> "1"
         endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
         Application application = new Application()
         application.openStackType = "someType"
-        clientService.getByName(_) >> application
+        applicationService.getByName(_) >> application
         ClientRole clientRole = new ClientRole()
         clientRole.id = "1"
         clientRole.name = "name"
         clientRole.clientId = "1"
-        clientService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
+        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
         endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
-        clientService.getClientRoleById(_) >> clientRole
-
+        applicationService.getClientRoleById(_) >> clientRole
 
         when:
-        Response.ResponseBuilder builder = defaultCloud11Service.createUser(request,null,uriInfo,user)
+        Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
 
         then:
         builder.build().status == 201
@@ -100,7 +91,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Create User with valid username: start with a number" () {
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = "1someN@me"
@@ -117,18 +107,18 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
         Application application = new Application()
         application.openStackType = "someType"
-        clientService.getByName(_) >> application
+        applicationService.getByName(_) >> application
         ClientRole clientRole = new ClientRole()
         clientRole.id = "1"
         clientRole.name = "name"
         clientRole.clientId = "1"
-        clientService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
+        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
         endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
-        clientService.getClientRoleById(_) >> clientRole
+        applicationService.getClientRoleById(_) >> clientRole
 
 
         when:
-        Response.ResponseBuilder builder = defaultCloud11Service.createUser(request,null,uriInfo,user)
+        Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
 
         then:
         builder.build().status == 201
@@ -136,7 +126,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Create User with invalid username: empty" () {
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = ""
@@ -145,7 +134,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.createUser(request,null,uriInfo,user)
+        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
 
         then:
         responseBuilder.build().status == 400
@@ -153,7 +142,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Create User with invalid username: null" () {
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = null
@@ -162,7 +150,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.createUser(request,null,uriInfo,user)
+        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
 
         then:
         responseBuilder.build().status == 400
@@ -170,7 +158,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Create User with invalid username: spaces" () {
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = "    "
@@ -179,7 +166,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         ldapPatternRepository.getPattern(_) >> pattern
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.createUser(request,null,uriInfo,user)
+        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
 
         then:
         responseBuilder.build().status == 400
@@ -187,7 +174,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Update user: valid username" (){
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = "jmunoz"
@@ -197,7 +183,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         userService.getUser(_) >> new com.rackspace.idm.domain.entity.User()
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.updateUser(request, "jmunoz", null, user)
+        Response.ResponseBuilder responseBuilder = service.updateUser(request, "jmunoz", null, user)
 
         then:
         responseBuilder.build().status == 200
@@ -205,7 +191,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Update user: invalid username" (){
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = "jmunoz!@#"
@@ -215,7 +200,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         userService.getUser(_) >> new com.rackspace.idm.domain.entity.User()
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.updateUser(request, "jmunoz", null, user)
+        Response.ResponseBuilder responseBuilder = service.updateUser(request, "jmunoz", null, user)
 
         then:
         responseBuilder.build().status == 400
@@ -223,7 +208,6 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "Update user: empty username" (){
         given:
-        setupMock()
         allowAccess()
         User user = new User();
         user.id = ""
@@ -233,7 +217,7 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         userService.getUser(_) >> new com.rackspace.idm.domain.entity.User()
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.updateUser(request, "jmunoz", null, user)
+        Response.ResponseBuilder responseBuilder = service.updateUser(request, "jmunoz", null, user)
 
         then:
         responseBuilder.build().status == 400
@@ -241,13 +225,12 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "GET - userByMossoId - returns 301" () {
         given:
-        setupMock()
         allowAccess()
         userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
 
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserFromMossoId(request,123,null)
+        Response.ResponseBuilder responseBuilder = service.getUserFromMossoId(request,123,null)
 
         then:
         Response response = responseBuilder.build()
@@ -257,13 +240,12 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "GET - userByNastId - returns 301" () {
         given:
-        setupMock()
         allowAccess()
         userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
 
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserFromNastId(request,"nast",null)
+        Response.ResponseBuilder responseBuilder = service.getUserFromNastId(request,"nast",null)
 
         then:
         Response response = responseBuilder.build()
@@ -273,9 +255,8 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
 
     def "doesBaseUrlBelongToRegion returns true when id is within range"(){
         when:
-        setupMock()
         config.getString("cloud.region") >> region
-        def result = defaultCloud11Service.doesBaseUrlBelongToRegion(baseUrl)
+        def result = service.doesBaseUrlBelongToRegion(baseUrl)
 
         then:
         result == expected
@@ -289,6 +270,24 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         false       | cloudBaseUrl(1001)| "US"
         true        | cloudBaseUrl(999) | "US"
         true        | cloudBaseUrl(1)   | "US"
+    }
+
+    def "validateToken should not return a token when the token is expired"() {
+        when:
+        allowAccess()
+        def token = "this_is_my_token"
+        scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
+
+        def response = service.validateToken(request, token, null, null, headers).build()
+
+        then:
+        response.status == 404
+        response.getEntity().message.contains(token) == expected
+
+        where:
+        expected    | scopeAccess
+        false       | expireScopeAccess(createUserScopeAccess())
+        false       | expireScopeAccess(createImpersonatedScopeAccess())
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {
@@ -328,36 +327,4 @@ class DefaultCloud11ServiceGroovyTest extends Specification{
         authorizationService.authorizeCloudServiceAdmin(_) >> true
     }
 
-    def setupMock(){
-        validator = new Validator();
-        ldapPatternRepository = Mock()
-        validator.ldapPatternRepository = ldapPatternRepository
-        authHeaderHelper = Mock()
-        scopeAccessService = Mock()
-        config = Mock()
-        authorizationService = Mock()
-        userService = Mock()
-        userConverterCloudV11 = Mock()
-        domainService = Mock()
-        tenantService = Mock()
-        endpointService = Mock()
-        clientService = Mock()
-        uriInfo = Mock(UriInfo)
-        UriBuilder builder = new UriBuilderImpl()
-        uriInfo.getRequestUriBuilder() >> builder
-        cloudExceptionResponse = new CloudExceptionResponse()
-
-        defaultCloud11Service.setValidator(validator)
-        defaultCloud11Service.setAuthHeaderHelper(authHeaderHelper)
-        defaultCloud11Service.setScopeAccessService(scopeAccessService)
-        defaultCloud11Service.setConfig(config)
-        defaultCloud11Service.setAuthorizationService(authorizationService)
-        defaultCloud11Service.setUserService(userService)
-        defaultCloud11Service.setUserConverterCloudV11(userConverterCloudV11)
-        defaultCloud11Service.setDomainService(domainService)
-        defaultCloud11Service.setTenantService(tenantService)
-        defaultCloud11Service.setEndpointService(endpointService)
-        defaultCloud11Service.setApplicationService(clientService)
-        defaultCloud11Service.setCloudExceptionResponse(cloudExceptionResponse)
-    }
 }
