@@ -1177,7 +1177,7 @@ class Cloud20IntegrationTest extends Specification {
     def "updateCredentials with valid passwords should be able to authenticate" () {
         given:
         String username = "userUpdateCred" + sharedRandom
-        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "domain$sharedRandom", "Password1"))
+        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
         User user = userForCreate.getEntity(User)
         String password = "Password1~!@#\$%^&*_#\$%^% <>?:\"^(%)'"
         PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {
@@ -1214,6 +1214,31 @@ class Cloud20IntegrationTest extends Specification {
         then:
         updateCreds.status == 400
     }
+
+    def "Disabling a user should return 404 when its token gets validated" () {
+        given:
+        String username = "disabledUser" + sharedRandom
+        def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
+        User user = userForCreate.getEntity(User)
+
+        when:
+        def authRequest = authenticateXML(username, "Password1")
+        String token = authRequest.getEntity(AuthenticateResponse).value.token.id
+        def userForUpdate = userForUpdate(null, username, null, "test@rackspace.com", false, null, null)
+        def updateUserResponse = updateUserXML(serviceAdminToken, user.id, userForUpdate)
+        def validateResponse = validateTokenXML(serviceAdminToken, token)
+        def deleteResponses = deleteUserXML(serviceAdminToken, user.id)
+        def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, user.id)
+
+        then:
+        authRequest.status == 200
+        token != null
+        updateUserResponse.status == 200
+        validateResponse.status == 404
+        deleteResponses.status == 204
+        hardDeleteRespones.status == 204
+    }
+
 
     //Resource Calls
     def createUserXML(String token, user) {
@@ -1433,6 +1458,11 @@ class Cloud20IntegrationTest extends Specification {
 
     def getRoleXML(String token, String roleId) {
         resource.path(path20).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def validateTokenXML(String token, String validateToken){
+        resource.path(path20).path("tokens").path(validateToken).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+
     }
 
     def impersonateXML(String token, User user) {
