@@ -6,8 +6,8 @@ source $HOME/.bash_aliases
 
 curl -X GET https://d-api2.cidm.iad2.corp.rackspace.com -H "Accept: application/json" --verbose --insecure
 
-# Sleep for 60 seconds
-sleep 60
+# Sleep for 120 seconds
+sleep 120
 
 echo "### Running JMeter performance test ###"
 
