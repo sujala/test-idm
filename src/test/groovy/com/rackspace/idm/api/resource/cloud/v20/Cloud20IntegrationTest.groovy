@@ -1492,7 +1492,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def updateCredentialsXML(String token, String userId, creds) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(creds).get(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(creds).post(ClientResponse)
     }
 
     //Helper Methods
