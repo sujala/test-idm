@@ -16,6 +16,13 @@ import static com.rackspace.idm.validation.entity.Constants.*;
 @Data
 public class StringForValidation {
 
+    StringForValidation() {
+    }
+
+    StringForValidation(String value) {
+        this.value = value;
+    }
+
     @Size(max = MAX)
     private String value;
 }

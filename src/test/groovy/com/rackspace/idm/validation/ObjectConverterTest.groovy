@@ -16,6 +16,7 @@ import com.rackspace.idm.validation.entity.RegionForValidation
 import com.rackspace.idm.validation.entity.RoleForValidation
 import com.rackspace.idm.validation.entity.SecretQAForValidation
 import com.rackspace.idm.validation.entity.ServiceForValidation
+import com.rackspace.idm.validation.entity.StringForValidation
 import com.rackspace.idm.validation.entity.TenantForValidation
 import com.rackspace.idm.validation.entity.UserForValidation
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
@@ -298,7 +299,9 @@ class ObjectConverterTest extends RootServiceTest{
 
         then:
         result != null
-        result.serviceName.get(0).value.toString() == "name"
+        def item = result.getServiceNames().get(0)
+        item instanceof StringForValidation
+        item.value.toString() == "name"
     }
 
     def "Convert User to UserForValidation"(){
