@@ -31,10 +31,6 @@
         <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>  
     </listener> 
 
-    <listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
-
 	<!--
 		<filter> <filter-name>jersey</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>

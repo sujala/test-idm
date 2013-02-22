@@ -63,14 +63,6 @@ public class CryptHelper {
         return result;
 	}
 
-    private static CryptHelper instance = new CryptHelper();
-
-    public CryptHelper(){};
-
-	public static CryptHelper getInstance() {
-		return instance;
-	}
-
 	public byte[] encrypt(String plainText) throws GeneralSecurityException, InvalidCipherTextException {
         return encrypt(plainText, getKeyParams());
     }

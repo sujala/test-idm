@@ -38,6 +38,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Autowired
     Paginator<User> paginator;
 
+    @Autowired
+    CryptHelper cryptHelper;
+
     @Override
     public void addRacker(Racker racker) {
         getLogger().info("Adding racker - {}", racker);
@@ -707,8 +710,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     Attribute[] getAddAttributes(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
-
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
@@ -973,7 +974,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
         user.setId(resultEntry.getAttributeValue(ATTR_ID));
         user.setUniqueId(resultEntry.getDN());
@@ -1060,7 +1060,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate) throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         checkForPasswordModification(uOld, uNew, isSelfUpdate, cryptHelper, mods);
@@ -1431,5 +1430,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     protected int getLdapPagingLimitDefault() {
         return config.getInt("ldap.paging.limit.default");
+    }
+
+    public void setCryptHelper(CryptHelper cryptHelper) {
+        this.cryptHelper = cryptHelper;
     }
 }

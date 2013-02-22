@@ -60,12 +60,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Before
     public void setUp() throws Exception {
-        spy = spy(ldapUserRepository);
 
         ldapInterface = mock(LDAPInterface.class);
 
         cryptHelper = new CryptHelper();
         cryptHelper.setConfiguration(configuration);
+        ldapUserRepository.setCryptHelper(cryptHelper);
+        spy = spy(ldapUserRepository);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
 

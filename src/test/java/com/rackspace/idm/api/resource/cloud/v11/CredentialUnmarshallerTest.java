@@ -73,7 +73,7 @@ public class CredentialUnmarshallerTest {
     @Test
     public void unmarshallCredentialsFromJSON_withUserCredentials_returnsUserCredentials() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON(userCredentialsJSON);
-        assertThat("credentials class", credentials.getValue() , is(UserCredentials.class));
+        assertThat("credentials class", (UserCredentials)credentials.getValue() , is(UserCredentials.class));
     }
 
     @Test
@@ -93,7 +93,7 @@ public class CredentialUnmarshallerTest {
     @Test
     public void unmarshallCredentialsFromJSON_withMossoCredentials_returnsMossoCredentials() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON(mossoCredentialsJSON);
-        assertThat("credentials class", credentials.getValue(), is(MossoCredentials.class));
+        assertThat("credentials class", (MossoCredentials)credentials.getValue(), is(MossoCredentials.class));
     }
 
     @Test
@@ -124,7 +124,7 @@ public class CredentialUnmarshallerTest {
     @Test
     public void unmarshallCredentialsFromJSON_withNastCredentials_returnsNastCredentials() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON(nastCredentialsJSON);
-        assertThat("credentials class", credentials.getValue(), is(NastCredentials.class));
+        assertThat("credentials class", (NastCredentials)credentials.getValue(), is(NastCredentials.class));
     }
 
     @Test
@@ -144,7 +144,7 @@ public class CredentialUnmarshallerTest {
     @Test
     public void unmarshallCredentialsFromJSON_withPasswordCredentials_returnsPasswordCredentials() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON(passwordCredentialsJSON);
-        assertThat("credentials class", credentials.getValue(), is(PasswordCredentials.class));
+        assertThat("credentials class", (PasswordCredentials)credentials.getValue(), is(PasswordCredentials.class));
     }
 
     @Test

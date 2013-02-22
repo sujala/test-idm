@@ -2,11 +2,13 @@
 *.ipr
 *.iws
 *.pyc
+.gradle/
 .classpath
 .idea/*
 .project
 .rvmrc
 .settings
+build
 tags
 target
 target/*

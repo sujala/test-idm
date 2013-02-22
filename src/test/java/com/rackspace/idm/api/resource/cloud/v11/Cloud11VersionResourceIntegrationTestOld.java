@@ -4,7 +4,7 @@ import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
-import org.hamcrest.text.StringContains;
+import org.hamcrest.core.StringContains;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

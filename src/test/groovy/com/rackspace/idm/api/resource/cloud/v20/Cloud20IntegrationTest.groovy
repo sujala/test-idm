@@ -1242,7 +1242,7 @@ class Cloud20IntegrationTest extends Specification {
 
     //Resource Calls
     def createUserXML(String token, user) {
-        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
 
     def getUserXML(String token, URI location) {
@@ -1266,11 +1266,11 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def updateUserXML(String token, String userId, user) {
-        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
 
     def addCredentialXML(String token, String userId, credential) {
-        resource.path(path20).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).post(ClientResponse)
     }
 
     def deleteUserXML(String token, String userId) {
@@ -1306,7 +1306,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def addUserToGroupXML(String token, String groupId, String userId) {
-        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
     def removeUserFromGroupXML(String token, String groupId, String userId) {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
@@ -1321,7 +1321,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def authenticateXML(username, password) {
-        resource.path(path20 + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+        resource.path(path20 + 'tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
     def createRegionXML(String token, region) {
@@ -1353,7 +1353,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def createRoleXML(String token, Role role) {
-        resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(role).post(ClientResponse)
     }
 
     def deleteRoleXML(String token, String roleId) {
@@ -1361,7 +1361,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def addApplicationRoleToUserXML(String token, String roleId, String userId) {
-        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
     def deleteApplicationRoleFromUserXML(String token, String roleId, String userId) {
@@ -1371,7 +1371,7 @@ class Cloud20IntegrationTest extends Specification {
     def addRoleToUserOnTenantXML(String token, String tenantId, String userId, String roleId) {
         resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)
-                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
     def deleteRoleFromUserOnTenantXML(String token, String tenantId, String userId, String roleId) {
@@ -1429,7 +1429,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def addPolicyToEndpointTemplateXML(String token, endpointTemplateId, policyId) {
-        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
     def deletePolicyToEndpointTemplateXML(String token, endpointTemplateId, policyId) {
@@ -1492,7 +1492,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def updateCredentialsXML(String token, String userId, creds) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(creds).post(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
     }
 
     //Helper Methods

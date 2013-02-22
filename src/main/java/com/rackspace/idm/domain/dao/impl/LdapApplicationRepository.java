@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -25,6 +26,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     public static final String ENCRYPTION_ERROR = "encryption error";
     public static final String FOUND_CLIENT = "Found client - {}";
+
+    @Autowired
+    CryptHelper cryptHelper;
 
     @Override
     public void addClient(Application client) {
@@ -353,7 +357,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_OBJECT_CLASS_VALUES));
@@ -409,7 +412,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     Application getClient(SearchResultEntry resultEntry) {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         Application client = new Application();
         client.setUniqueId(resultEntry.getDN());
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
@@ -509,7 +511,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     List<Modification> getModifications(Application cOld, Application cNew) throws InvalidCipherTextException, GeneralSecurityException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         checkForRCNModification(cOld, cNew, mods);
@@ -943,5 +944,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted application - {}", application);
+    }
+
+    public void setCryptHelper(CryptHelper cryptHelper) {
+        this.cryptHelper = cryptHelper;
     }
 }

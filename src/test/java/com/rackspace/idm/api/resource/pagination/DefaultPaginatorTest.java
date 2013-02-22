@@ -67,20 +67,6 @@ public class DefaultPaginatorTest {
     }
 
     @Test
-    public void createSearchRequest_setsControls() throws Exception {
-        SearchRequest searchRequest = makeSearchRequest();
-        SearchRequest compareRequest = makeSearchRequest();
-
-        VirtualListViewRequestControl vlvControlForCompare = new VirtualListViewRequestControl(1, 0, limit - 1, contentCount, null);
-        ServerSideSortRequestControl sortRequest = makeSortRequestControl();
-        compareRequest.setControls(sortRequest, vlvControlForCompare);
-
-        userPaginator.createSearchRequest(sortAttribute, searchRequest, offset, limit);
-
-        assert(searchRequest.equals(compareRequest));
-    }
-
-    @Test
     public void createSearchRequest_returnsContext() throws Exception {
         SearchRequest searchRequest = makeSearchRequest();
 

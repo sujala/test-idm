@@ -156,7 +156,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
 
     //Resource Calls v1.1
     def createUserXML(user) {
-        resource.path(path11).path('users').header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).entity(user).post(ClientResponse)
+        resource.path(path11).path('users').header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
 
     def getUserXML(String username) {
@@ -164,7 +164,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
     }
 
     def updateUserXML(String username, user) {
-        resource.path(path11).path('users').path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).entity(user).put(ClientResponse)
+        resource.path(path11).path('users').path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
     def deleteUserXML(String username) {
@@ -174,7 +174,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
     //Resource Calls v2.0
 
     def authenticate20XML(username, password) {
-        resource.path(path20 + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+        resource.path(path20 + 'tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
     def getUserByName20XML(String token, String name) {
@@ -182,7 +182,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
     }
 
     def createUser20XML(String token, user) {
-        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').accept(APPLICATION_XML).type(APPLICATION_XML).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def userForCreate20(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {

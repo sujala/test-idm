@@ -44,16 +44,18 @@ public class LdapApplicationRepositoryTest{
     private Configuration configuration;
 
     private CryptHelper cryptHelper;
+
     private LdapApplicationRepository spy;
     private LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapInterface = mock(LDAPInterface.class);
-        spy = spy(ldapApplicationRepository);
 
         cryptHelper = new CryptHelper();
         cryptHelper.setConfiguration(configuration);
+        ldapApplicationRepository.setCryptHelper(cryptHelper);
+        spy = spy(ldapApplicationRepository);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
 

@@ -13,12 +13,12 @@
         xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
         targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
 
-    <!-- <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
-         <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" /> -->
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" />
     
-    <!--<import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/common/xsd/api.xsd" />-->
-    <!--<import namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/extensions/RAX-KSKEY/xsd/RAX-KSKEY-credentials.xsd" />-->
-    <!--<import namespace="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/extensions/OS-KSCATALOG/xsd/OS-KSCATALOG.xsd" />-->
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="api.xsd" />
+    <import namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" schemaLocation="RAX-KSKEY-credentials.xsd" />
+    <import namespace="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0" schemaLocation="OS-KSCATALOG.xsd" />
     
     <attribute name="defaultRegion" type="xsd:string" />
     <attribute name="domainId" type="xsd:string" />

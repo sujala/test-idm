@@ -180,12 +180,12 @@ public class DefaultTokenService implements TokenService {
 
     @Override
     public void setUserDao(UserDao userDao) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        this.userDao = userDao;
     }
 
     @Override
     public void setTenantService(TenantService tenantService) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        this.tenantService = tenantService;
     }
 
     List<Application> getAllClientsForCustomerId(final String customerId) {
