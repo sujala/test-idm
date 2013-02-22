@@ -193,6 +193,7 @@ idea {
 }
 
 test {
+    jvmArgs "-Xmx=1024m -XX:MaxPermSize=512m"
     systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/OPENLDAP')
 }
 

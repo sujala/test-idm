@@ -86,6 +86,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
 
         then:
+        2 * domainService.addTenantToDomain(_,_)
         builder.build().status == 201
     }
 
