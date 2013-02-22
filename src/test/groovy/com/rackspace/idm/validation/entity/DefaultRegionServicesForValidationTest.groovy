@@ -24,8 +24,7 @@ class DefaultRegionServicesForValidationTest extends RootServiceTest{
 
     def "Validate fields"(){
         when:
-        def value = entityFactoryForValidation.createString(name)
-        def entity = entityFactoryForValidation.createDefaultRegionServices([value].asList())
+        def entity = entityFactoryForValidation.createDefaultRegionServices([name].asList())
         def result = objectValidator.getViolationMessages(entity)
 
         then:
