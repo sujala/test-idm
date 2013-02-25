@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.Pattern
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspacecloud.docs.auth.api.v1.User
 import spock.lang.Shared
@@ -55,6 +56,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockTenantService(service)
         mockEndpointService(service)
         mockApplicationService(service)
+        mockEndpointService(service)
     }
 
     def "Create User with valid username" () {
@@ -330,6 +332,91 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         expected    | scopeAccess
         false       | expireScopeAccess(createUserScopeAccess())
         false       | expireScopeAccess(createImpersonatedScopeAccess())
+    }
+
+    def "add nast Tenant - set user id" (){
+        given:
+        def user = new com.rackspacecloud.docs.auth.api.v1.User().with {
+            it.id = "id"
+            it.nastId = "nast"
+            it.mossoId = 123
+            it.enabled = true
+            return it
+        }
+        def cloudBaseUrl = new CloudBaseUrl().with {
+            it.enabled = true
+            it.adminUrl = "admin"
+            it.baseUrlId = 1
+            it.def = false
+            return it
+        }
+        endpointService.getBaseUrlsByBaseUrlType(_) >> [cloudBaseUrl].asList()
+        config.getList("v1defaultMosso") >> ["15","17","83","109","113","120"].asList()
+        config.getList("v1defaultNast") >> ["3","9"].asList()
+        config.getString("serviceName.cloudFiles") >> "cloudFiles"
+        applicationService.getByName(_) >> new Application().with {
+            it.enabled = true
+            it.openStackType = "cloudFiles"
+            return it
+        }
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole().with {
+            it.id = "id"
+            it.clientId = "clientId"
+            it.name = "name"
+            return it
+        }
+
+        when:
+        service.addNastTenant(user)
+
+        then:
+        1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
+            assert(tenantRole.getUserId() != null)
+        }
+
+    }
+
+
+    def "add mosso Tenant - set user id" (){
+        given:
+        def user = new com.rackspacecloud.docs.auth.api.v1.User().with {
+            it.id = "id"
+            it.nastId = "nast"
+            it.mossoId = 123
+            it.enabled = true
+            return it
+        }
+        def cloudBaseUrl = new CloudBaseUrl().with {
+            it.enabled = true
+            it.adminUrl = "admin"
+            it.baseUrlId = 1
+            it.def = false
+            return it
+        }
+        endpointService.getBaseUrlsByBaseUrlType(_) >> [cloudBaseUrl].asList()
+        config.getList("v1defaultMosso") >> ["15","17","83","109","113","120"].asList()
+        config.getList("v1defaultNast") >> ["3","9"].asList()
+        config.getString("serviceName.cloudFiles") >> "cloudFiles"
+        applicationService.getByName(_) >> new Application().with {
+            it.enabled = true
+            it.openStackType = "cloudFiles"
+            return it
+        }
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole().with {
+            it.id = "id"
+            it.clientId = "clientId"
+            it.name = "name"
+            return it
+        }
+
+        when:
+        service.addMossoTenant(user)
+
+        then:
+        1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
+            assert(tenantRole.getUserId() != null)
+        }
+
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

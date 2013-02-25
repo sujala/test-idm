@@ -442,6 +442,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.setUserId(user.getId());
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
@@ -473,6 +474,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.setUserId(user.getId());
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
