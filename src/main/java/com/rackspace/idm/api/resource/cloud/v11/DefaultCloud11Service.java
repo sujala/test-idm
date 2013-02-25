@@ -371,7 +371,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             // Add Tenants to Domains
             domainService.addTenantToDomain(userDO.getMossoId().toString(), userDO.getDomainId());
-            domainService.addTenantToDomain(userDO.getNastId(), userDO.getDomainId());
+            if (nastId != null) {
+                domainService.addTenantToDomain(userDO.getNastId(), userDO.getDomainId());
+            }
 
             //Add user-admin role
             ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());

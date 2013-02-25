@@ -11,6 +11,8 @@ import com.rackspace.idm.exception.ApiException;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,17 +22,19 @@ import java.net.MalformedURLException;
 @Component
 public class NastFacade {
     @Autowired
-    private NastConfiguration authConfiguration;
+    private NastConfiguration configuration;
 
     @Autowired
-    private NastXmlRpcClientWrapper nastXMLRpcClientWrapper;
+    private NastXmlRpcClientWrapper clientWrapper;
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public Boolean removeNastUser(String nastAccountId) {
         Boolean response = Boolean.FALSE;
 
-        if (authConfiguration.isNastXmlRpcEnabled()) {
+        if (configuration.isNastXmlRpcEnabled()) {
             try {
-                response = nastXMLRpcClientWrapper.removeResellerStorageAccount(nastAccountId);
+                response = clientWrapper.removeResellerStorageAccount(nastAccountId);
             } catch (Exception e) {
                 throw new ApiException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), "could not remove reseller", e);
             }
@@ -40,20 +44,19 @@ public class NastFacade {
     }
 
     public String addNastUser(User user) {
-        try {
-            if (!authConfiguration.isNastXmlRpcEnabled()) {
-                user.setNastId(null);
-                return null;
+        String nastAccountId = null;
+
+        if (configuration.isNastXmlRpcEnabled()) {
+            try {
+                nastAccountId = addNastUser();
+            } catch (Exception e) {
+                logger.error("could not add nast user: %s", e.getMessage());
             }
-
-            String nastAccountId;
-            nastAccountId = addNastUser();
-            user.setNastId(nastAccountId);
-
-            return nastAccountId;
-        } catch (Exception e) {
-            throw new ApiException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), "could not add nast user", e);
         }
+
+        user.setNastId(nastAccountId);
+
+        return nastAccountId;
     }
 
     /**
@@ -77,15 +80,15 @@ public class NastFacade {
      * @throws XmlRpcException       XmlRpcException
      */
     String addNastUser() throws MalformedURLException, XmlRpcException {
-        if (!authConfiguration.isNastXmlRpcEnabled()) {
+        if (!configuration.isNastXmlRpcEnabled()) {
             return null;
         }
 
-        return addNastUser(new String[]{authConfiguration.getNastResellerName()});
+        return addNastUser(new String[]{configuration.getNastResellerName()});
     }
 
     String addNastUser(String[] parameters) throws MalformedURLException, XmlRpcException {
-        String response = nastXMLRpcClientWrapper.addResellerStorageAccount(parameters);
+        String response = clientWrapper.addResellerStorageAccount(parameters);
 
         return !StringUtils.isEmpty(response) ? response : null;
     }
@@ -94,12 +97,12 @@ public class NastFacade {
         return !(StringUtils.isBlank(resellerName) || StringUtils.isBlank(resellerId));
     }
 
-    public void setAuthConfiguration(NastConfiguration authConfiguration) {
-        this.authConfiguration = authConfiguration;
+    public void setAuthConfiguration(NastConfiguration configuration) {
+        this.configuration = configuration;
     }
 
-    public void setNastXMLRpcClientWrapper(NastXmlRpcClientWrapper nastXMLRpcClientWrapper) {
-        this.nastXMLRpcClientWrapper = nastXMLRpcClientWrapper;
+    public void setNastXMLRpcClientWrapper(NastXmlRpcClientWrapper clientWrapper) {
+        this.clientWrapper = clientWrapper;
     }
 }
 

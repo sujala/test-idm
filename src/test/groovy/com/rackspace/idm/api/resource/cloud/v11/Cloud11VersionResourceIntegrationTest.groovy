@@ -84,7 +84,6 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         userCreateResponse.status == 201
         User createUser = userCreateResponse.getEntity(User)
         createUser.key == "1234567890"
-        createUser.nastId != null
         createUser.mossoId == randomMosso
         createUser.enabled == true
 

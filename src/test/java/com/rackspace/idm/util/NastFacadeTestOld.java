@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
  * Time: 5:10 PM
  * To change this template use File | Settings | File Templates.
  */
-public class NastFacadeTest {
+public class NastFacadeTestOld {
     private NastFacade nastFacade;
     private NastConfiguration nastConfiguration;
     private NastXmlRpcClientWrapper nastXmlRpcClientWrapper;
@@ -65,13 +65,6 @@ public class NastFacadeTest {
         when(nastConfiguration.isNastXmlRpcEnabled()).thenReturn(true);
         String response = nastFacade.addNastUser(new User());
         assertThat("string", response, equalTo("test"));
-    }
-
-    @Test (expected = ApiException.class)
-    public void addNastUser_throwsApiException() throws Exception {
-        doThrow(new ApiException(1, "message", "details")).when(nastXmlRpcClientWrapper).addResellerStorageAccount(any(String[].class));
-        when(nastConfiguration.isNastXmlRpcEnabled()).thenReturn(true);
-        nastFacade.addNastUser(new User());
     }
 
     @Test
