@@ -11,6 +11,7 @@ import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
+import com.rackspace.idm.api.converter.RolesConverter
 import com.rackspace.idm.api.converter.cloudv20.SecretQAConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
@@ -41,6 +42,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
@@ -126,6 +128,7 @@ class RootServiceTest extends Specification {
     @Shared AuthConverterCloudV20 authConverter
     @Shared EndpointConverterCloudV20 endpointConverter
     @Shared RoleConverterCloudV20 roleConverter
+    @Shared RolesConverter rolesConverter
     @Shared ServiceConverterCloudV20 serviceConverter
     @Shared TenantConverterCloudV20 tenantConverter
     @Shared TokenConverterCloudV20 tokenConverter
@@ -203,6 +206,7 @@ class RootServiceTest extends Specification {
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
+    @Shared Paginator clientPaginator
     @Shared AuthWithToken authWithToken
     @Shared AuthWithPasswordCredentials authWithPasswordCredentials
     @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
@@ -355,7 +359,17 @@ class RootServiceTest extends Specification {
         userConverterV11.toCloudV11User(_) >> v1Factory.createUser()
         userConverterV11.openstackToCloudV11User(_, _) >> v1Factory.createUser()
         userConverterV11.toCloudV11User(_, _) >> entityFactory.createUser()
+
         service.userConverterCloudV11 = userConverterV11
+    }
+
+    def mockRolesConverter(service) {
+        rolesConverter = Mock()
+        rolesConverter.toRoleJaxbFromClientRole(_) >> jaxbMock
+        rolesConverter.toRoleJaxbFromTenantRole(_) >> jaxbMock
+        rolesConverter.toRoleJaxbFromRoleString(_) >> jaxbMock
+        rolesConverter.toClientRole(_) >> entityFactory.createClientRole()
+        service.rolesConverter = rolesConverter
     }
 
     /*
@@ -696,6 +710,11 @@ class RootServiceTest extends Specification {
         service.tenantRolePaginator = tenantRolePaginator
     }
 
+    def mockClientPaginator(service) {
+        clientPaginator = Mock()
+        service.clientPaginator = clientPaginator
+    }
+
     /*
         misc. mocks
     */
@@ -762,6 +781,21 @@ class RootServiceTest extends Specification {
         uriInfo.getRequestUriBuilder() >> builderMock
 
         return uriInfo
+    }
+
+    def createScopeAccess() {
+        return createScopeAccess("tokenString", new DateTime().plusHours(1).toDate())
+    }
+
+    def createScopeAccess(String tokenString, Date expiration) {
+        tokenString = tokenString ? tokenString : "tokenString"
+        def dn = "accessToken=$tokenString,cn=TOKENS,rsId=1234"
+        new ScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.setLdapEntry(createEntryForScopeAccess(dn))
+            return it
+        }
     }
 
     def createClientScopeAccess() {

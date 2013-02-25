@@ -22,15 +22,13 @@ public interface TokenService {
 
     void revokeAllTokensForUser(String username) throws IOException, JAXBException;
 
-    void setClientService(ApplicationService clientService);
+    void setApplicationService(ApplicationService clientService);
 
     void setAuthorizationService(AuthorizationService authorizationService);
 
     void setConfig(Configuration appConfig);
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
-
-    void setUserDao(UserDao userDao);
 
     void setTenantService(TenantService tenantService);
 }

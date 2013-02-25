@@ -143,6 +143,19 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createCustomer() {
+        return createCustomer("id", "rcn")
+    }
+
+    def createCustomer(String id, String rcn) {
+        new Customer().with {
+            it.id = id
+            it.rcn = rcn
+            it.enabled = true
+            return it
+        }
+    }
+
     def createDomain() {
         return createDomain("domainId")
     }

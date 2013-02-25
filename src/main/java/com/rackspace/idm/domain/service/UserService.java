@@ -103,8 +103,6 @@ public interface UserService {
 
     void setAuthDao(AuthDao rackerDao);
 
-    void setScopeAccesss(ScopeAccessDao scopeAccessObjectDao);
-
     void setApplicationService(ApplicationService clientService);
 
     void setConfig(Configuration config);
@@ -124,6 +122,4 @@ public interface UserService {
     User getUserByUsernameForAuthentication(String username);
 
     User checkAndGetUserByName(String username);
-
-    void setTenantDao(TenantDao tenantDao);
 }

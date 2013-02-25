@@ -1,4 +1,3 @@
-
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -80,19 +79,5 @@ public interface ApplicationService {
 
     void softDeleteApplication(Application application);
 
-	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
-
-	void setApplicationDao(ApplicationDao applicationDao);
-
-	void setCustomerDao(CustomerDao customerDao);
-
-	void setUserDao(UserDao userDao);
-
-	void setTenantDao(TenantDao tenantDao);
-
-    void setApplicationRoleDao(ApplicationRoleDao applicationRoleDao);
-
     ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames);
-
-    void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 }

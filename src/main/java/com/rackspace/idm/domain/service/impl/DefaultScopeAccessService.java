@@ -1153,6 +1153,30 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
     }
 
+    @Override
+    public DefinedPermission definePermission(String parentDn, DefinedPermission permission) {
+        return null;
+//        return scopeAccessDao.definePermission(parentDn, permission);
+    }
+
+    @Override
+    public List<Permission> getPermissionsByPermission(Permission permission) {
+        return null;
+//        return scopeAccessDao.getPermissionsByPermission(permission);
+    }
+
+    @Override
+    public List<Permission> getPermissionsForParentByPermission(String parentDn, Permission permission) {
+        return null;
+//        return scopeAccessDao.getPermissionsByParentAndPermission(parentDn, permission);
+    }
+
+    @Override
+    public List<ScopeAccess> getScopeAccessesForParent(String parentDn) {
+        return null;
+//        return scopeAccessDao.getScopeAccessesByParent(parentDn);
+    }
+
     private String getBaseDnAsString(String dnString) {
         DN dn;
         try {

@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.service.ApplicationService;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.*;
@@ -601,6 +603,29 @@ public class DefaultTenantService implements TenantService {
 
         }
         return tenantList;
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesForClientRole(ClientRole role) {
+        return null;
+//        return tenantDao.getAllTenantRolesForClientRole(role);
+    }
+
+    @Override
+    public void deleteTenantRole(TenantRole role) {
+//        tenantDao.deleteTenantRole(role);
+    }
+
+    @Override
+    public TenantRole getTenantRoleForUser(User user, List<ClientRole> rolesForFilter) {
+        return null;
+//        return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
+    }
+
+    @Override
+    public PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit) {
+        return null;
+//        return tenantDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
     }
 
     public void setConfig(Configuration config) {

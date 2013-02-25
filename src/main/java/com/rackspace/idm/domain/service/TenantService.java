@@ -49,11 +49,17 @@ public interface TenantService {
     List<Tenant> getTenantsByDomainId(String domainId);
 
     List<Tenant> getTenantsFromNameList(String[] tenants);
-	void setTenantDao(TenantDao tenantDao);
-	void setApplicationDao(ApplicationDao applicationDao);
-	void setUserDao(UserDao userDao);
-	void setEndpointDao(EndpointDao endpointDao);
-	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
+    TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRolesForFilter);
+    PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
+	void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
+    void setApplicationDao(ApplicationDao applicationDao);
+    void setUserDao(UserDao userDao);
+    void setEndpointDao(EndpointDao endpointDao);
+    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
+
+    List<TenantRole> getTenantRolesForClientRole(ClientRole role);
+
+    void deleteTenantRole(TenantRole role);
 }

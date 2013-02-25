@@ -14,9 +14,6 @@ import java.util.Date;
 import java.util.List;
 
 public interface ScopeAccessService {
-
-    @Deprecated
-    List<Permission> getPermissionsForParent(String scopeAccessUniqueId);
         
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
@@ -31,8 +28,6 @@ public interface ScopeAccessService {
     void deleteScopeAccessesForParentByApplicationId(String parentUniqueId, String clientId);
     
     void deleteDelegatedToken(User user, String tokenString);
-
-    boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
     
     boolean doesAccessTokenHaveService(ScopeAccess token, String clientId);
     
@@ -51,8 +46,6 @@ public interface ScopeAccessService {
     ClientScopeAccess getClientScopeAccessForClientId(String clientUniqueId, String clientId);
 
     PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(User user);
-
-    Permission getPermissionForParent(String parentUniqueId, Permission permission);
 
     RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
@@ -84,30 +77,17 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
 
-    GrantedPermission grantPermissionToClient(String parentUniqueId, GrantedPermission permission);
-
-    GrantedPermission grantPermissionToUser(User user, GrantedPermission permission);
-    
-    void removePermission(Permission permission);
-
-    void updatePermission(Permission permission);
-
     void updateScopeAccess(ScopeAccess scopeAccess);
 
     DelegatedClientScopeAccess getScopeAccessByAuthCode(String authorizationCode);
 
-    DelegatedPermission delegatePermission(String scopeAccessUniqueId, DelegatedPermission permission);
-
-    ScopeAccess getDelegateScopeAccessForParentByClientId(
-        String parentUniqueID, String clientId);
+    ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueID, String clientId);
     
     List<ScopeAccess> getDelegateScopeAccessesForParent(String parentUniqueId);
 
-    List<ScopeAccess> getScopeAccessesForParentByClientId(String parentUniqueId,
-        String clientId);
+    List<ScopeAccess> getScopeAccessesForParentByClientId(String parentUniqueId, String clientId);
 
-    boolean doesUserHavePermissionForClient(User user, Permission permission,
-        Application client);
+    List<ScopeAccess> getScopeAccessesForParent(String parentDn);
 
     List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user);
 
@@ -119,23 +99,30 @@ public interface ScopeAccessService {
 
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
     
-    void setUserDao(UserDao userDao);
-
-    void setApplicationDao(ApplicationDao applicationDao);
-
-    void setTenantDao(TenantDao tenantDao);
-
-    void setEndpointDao(EndpointDao endpointDao);
-
-    void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
-
-    void setAppConfig(Configuration appConfig);
-
-    void setAtomHopperClient(AtomHopperClient atomHopperClient);
-
-    void setUserService(DefaultUserService userService);
-
-    void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
-
     void deleteScopeAccessByDn(String scopeAccessDn);
+
+    DefinedPermission definePermission(String parentDn, DefinedPermission permission);
+
+    @Deprecated
+    List<Permission> getPermissionsForParent(String scopeAccessUniqueId);
+
+    Permission getPermissionForParent(String parentUniqueId, Permission permission);
+
+    List<Permission> getPermissionsByPermission(Permission permission);
+
+    List<Permission> getPermissionsForParentByPermission(String parentDn, Permission permission);
+
+    DelegatedPermission delegatePermission(String scopeAccessUniqueId, DelegatedPermission permission);
+
+    boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
+
+    boolean doesUserHavePermissionForClient(User user, Permission permission, Application client);
+
+    GrantedPermission grantPermissionToClient(String parentUniqueId, GrantedPermission permission);
+
+    GrantedPermission grantPermissionToUser(User user, GrantedPermission permission);
+    
+    void removePermission(Permission permission);
+
+    void updatePermission(Permission permission);
 }
