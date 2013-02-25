@@ -56,4 +56,6 @@ public interface TenantService {
 	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
+
+    void addUserIdToTenantRole(TenantRole tenantRole);
 }

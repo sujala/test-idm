@@ -606,6 +606,22 @@ class DefaultUserServiceTest extends RootServiceTest {
         weight == 2000
     }
 
+    def "GET - Users by tenantId - verify that userId is not null"(){
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        tenantRole.userId = null
+        tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+
+
+        when:
+        service.getUsersByTenantId("1")
+
+        then:
+        1 * tenantService.addUserIdToTenantRole(_) >> {TenantRole tenantRole1 ->
+            tenantRole1.userId = "1"
+        }
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

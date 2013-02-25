@@ -332,6 +332,9 @@ public class DefaultUserService implements UserService {
         List<TenantRole> tenantRoles = tenantDao.getAllTenantRolesForTenant(tenantId);
         List<Filter> filterList = new ArrayList<Filter>();
         for(TenantRole t : tenantRoles){
+            if(t.getUserId() == null){
+                tenantService.addUserIdToTenantRole(t);
+            }
             filterList.add(Filter.createEqualityFilter("rsId", t.getUserId()));
         }
         Users users = userDao.getUsers(filterList);

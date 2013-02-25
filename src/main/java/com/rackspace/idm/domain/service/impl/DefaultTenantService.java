@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.RDN;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.*;
@@ -601,6 +603,24 @@ public class DefaultTenantService implements TenantService {
 
         }
         return tenantList;
+    }
+
+    @Override
+    public void addUserIdToTenantRole(TenantRole tenantRole) {
+        try{
+            DN dn = new DN(tenantRole.getUniqueId());
+            RDN rdn = dn.getParent().getParent().getRDN();
+            if(rdn.hasAttribute("rsId")){
+                String id = rdn.getAttributeValues()[0];
+                if(!StringUtils.isBlank(id)){
+                    tenantRole.setUserId(id);
+                    tenantDao.updateTenantRole(tenantRole);
+                }
+            }
+
+        }catch (Exception ex){
+            logger.warn("Failed to parse DN.");
+        }
     }
 
     public void setConfig(Configuration config) {

@@ -336,6 +336,8 @@ class EntityFactory extends Specification {
         new TenantRole().with {
             it.name = name
             it.tenantIds = []
+            it.userId = "1"
+            it.ldapEntry = new ReadOnlyEntry("roleRsId=1,cn=ROLES,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com")
             return it
         }
     }
