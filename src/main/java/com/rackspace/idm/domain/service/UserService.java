@@ -122,4 +122,8 @@ public interface UserService {
     User getUserByUsernameForAuthentication(String username);
 
     User checkAndGetUserByName(String username);
+
+    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
+
+    void setTenantDao(TenantDao tenantDao);
 }

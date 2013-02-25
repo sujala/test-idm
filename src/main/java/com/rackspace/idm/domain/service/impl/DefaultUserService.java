@@ -540,7 +540,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void setScopeAccesss(ScopeAccessDao scopeAccessObjectDao) {
+    public void setScopeAccessDao(ScopeAccessDao scopeAccessObjectDao) {
         this.scopeAccessDao = scopeAccessObjectDao;
     }
 

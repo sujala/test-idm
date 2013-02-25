@@ -22,8 +22,6 @@ public interface TokenService {
 
     void revokeAllTokensForUser(String username) throws IOException, JAXBException;
 
-    void setApplicationService(ApplicationService clientService);
-
     void setAuthorizationService(AuthorizationService authorizationService);
 
     void setConfig(Configuration appConfig);
@@ -31,4 +29,8 @@ public interface TokenService {
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
     void setTenantService(TenantService tenantService);
+
+    void setUserDao(UserDao userDao);
+
+    void setClientService(ApplicationService applicationService);
 }

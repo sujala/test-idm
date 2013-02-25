@@ -47,7 +47,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessService = new DefaultScopeAccessService();
         scopeAccessService.setUserDao(mockUserDao);
         scopeAccessService.setApplicationDao(mockClientDao);
-        scopeAccessService.setScopeAcessDao(scopeAccessDao);
+        scopeAccessService.setScopeAccessDao(scopeAccessDao);
         scopeAccessService.setTenantDao(tenantDao);
         scopeAccessService.setEndpointDao(endpointDao);
         scopeAccessService.setAuthHeaderHelper(authHeaderHelper);

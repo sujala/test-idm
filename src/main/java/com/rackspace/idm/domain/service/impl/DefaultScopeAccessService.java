@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -59,7 +60,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Autowired
     private AtomHopperClient atomHopperClient;
     @Autowired
-    private DefaultUserService defaultUserService;
+    private UserService defaultUserService;
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
 
@@ -1236,8 +1237,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void setScopeAcessDao(ScopeAccessDao scopeAccessDao) {
+    public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
         this.scopeAccessDao = scopeAccessDao;
+    }
+
+    @Override
+    public void setUserService(UserService userService) {
+        this.defaultUserService = userService;
     }
 
     String generateToken() {

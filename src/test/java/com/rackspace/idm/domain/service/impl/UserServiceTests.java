@@ -91,7 +91,7 @@ public class UserServiceTests {
         userService = new DefaultUserService();
         userService.setUserDao(mockUserDao);
         userService.setAuthDao(mockRackerDao);
-        userService.setScopeAccesss(mockScopeAccessObjectDao);
+        userService.setScopeAccessDao(mockScopeAccessObjectDao);
         userService.setApplicationService(mockClientService);
         userService.setConfig(appConfig);
         userService.setPasswordComplexityService(mockPasswordComplexityService);
@@ -107,7 +107,7 @@ public class UserServiceTests {
 
         trustedUserService.setUserDao(mockUserDao);
         trustedUserService.setAuthDao(mockRackerDao);
-        trustedUserService.setScopeAccesss(mockScopeAccessObjectDao);
+        trustedUserService.setScopeAccessDao(mockScopeAccessObjectDao);
         trustedUserService.setApplicationService(mockClientService);
         trustedUserService.setConfig(appConfig2);
         trustedUserService.setPasswordComplexityService(mockPasswordComplexityService);
