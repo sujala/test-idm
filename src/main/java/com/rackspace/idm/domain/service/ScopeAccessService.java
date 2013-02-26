@@ -127,12 +127,20 @@ public interface ScopeAccessService {
     void updatePermission(Permission permission);
 
     void setUserDao(UserDao userDao);
+
     void setApplicationDao(ApplicationDao applicationDao);
+
     void setTenantDao(TenantDao tenantDao);
+
     void setEndpointDao(EndpointDao endpointDao);
+
     void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
-    void setAppConfig(Configuration config);
-    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
+
+    void setAppConfig(Configuration appConfig);
+
     void setAtomHopperClient(AtomHopperClient atomHopperClient);
+
     void setUserService(UserService userService);
+
+    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 }

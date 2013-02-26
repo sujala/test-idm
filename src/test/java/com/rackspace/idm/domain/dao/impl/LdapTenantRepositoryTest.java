@@ -413,7 +413,7 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
         doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
 
-        spy.getMultipleTenantRoles("1", 0, 10);
+        spy.getIdsForUsersWithTenantRole("1", 0, 10);
         verify(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
     }
 
@@ -437,7 +437,7 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
         doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
 
-        spy.getMultipleTenantRoles("1", 0, 10);
+        spy.getIdsForUsersWithTenantRole("1", 0, 10);
         verify(spy).getMultipleEntries(any(SearchRequest.class));
     }
 
@@ -463,7 +463,7 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
         doReturn("123456").when(spy).getUserIdFromDN(any(DN.class));
 
-        PaginatorContext<String> userIdPaginatorContext = spy.getMultipleTenantRoles("1", 0, 10);
+        PaginatorContext<String> userIdPaginatorContext = spy.getIdsForUsersWithTenantRole("1", 0, 10);
 
         assertThat("valueList", userIdPaginatorContext.getValueList().size(), equalTo(1));
     }

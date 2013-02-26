@@ -397,7 +397,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit) {
+    public PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit) {
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
         searchBuilder.addEqualAttribute(ATTR_ROLE_RS_ID, roleId);

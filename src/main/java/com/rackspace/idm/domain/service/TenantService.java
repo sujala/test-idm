@@ -54,10 +54,6 @@ public interface TenantService {
     PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
 	void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
-    void setApplicationDao(ApplicationDao applicationDao);
-    void setUserDao(UserDao userDao);
-    void setEndpointDao(EndpointDao endpointDao);
-    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
     List<TenantRole> getTenantRolesForClientRole(ClientRole role);
 

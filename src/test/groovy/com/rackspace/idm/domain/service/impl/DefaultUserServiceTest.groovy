@@ -1,10 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.api.resource.cloud.Validator
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
-import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.TenantDao
-import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.FilterParam
 import com.rackspace.idm.domain.entity.Region
@@ -12,13 +8,9 @@ import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Users
-import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
-import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -308,7 +300,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
     }
 
     def "getUsersWithRole calls getUserById"() {
@@ -322,7 +314,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
         3 * userDao.getUserById(_ as String)
     }
 
@@ -339,7 +331,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def userContext = service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getMultipleTenantRoles(sharedRandom, 0, 10) >> stringPaginator
+        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
         userDao.getUserById(_ as String) >>> [ entityFactory.createUser() ]
 
         userContext.getValueList().equals(listOfUsers)

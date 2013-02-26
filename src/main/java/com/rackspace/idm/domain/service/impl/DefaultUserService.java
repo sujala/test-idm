@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
@@ -854,7 +852,7 @@ public class DefaultUserService implements UserService {
         PaginatorContext<User> userContext = new PaginatorContext<User>();
 
         if (filters.length == 1) {
-            PaginatorContext<String> context = this.tenantDao.getMultipleTenantRoles(roleId, offset, limit);
+            PaginatorContext<String> context = this.tenantDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
 
             ArrayList<User> userList = new ArrayList<User>();
             for (String userId : context.getValueList()) {

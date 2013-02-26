@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.*;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -35,16 +33,16 @@ public class DefaultTenantService implements TenantService {
     private TenantDao tenantDao;
 
     @Autowired
-    private ApplicationDao applicationDao;
+    private ApplicationService applicationService;
 
     @Autowired
-    private UserDao userDao;
+    private UserService userService;
 
     @Autowired
-    private EndpointDao endpointDao;
+    private EndpointService endpointService;
 
     @Autowired
-    private ScopeAccessDao scopeAccessDao;
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
@@ -253,14 +251,14 @@ public class DefaultTenantService implements TenantService {
                 "User cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application client = this.applicationDao.getClientByClientId(role.getClientId());
+        Application client = this.applicationService.getById(role.getClientId());
         if (client == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.applicationDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
@@ -299,14 +297,14 @@ public class DefaultTenantService implements TenantService {
                 "Client cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application owner = this.applicationDao.getClientByClientId(role.getClientId());
+        Application owner = this.applicationService.getById(role.getClientId());
         if (owner == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.applicationDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
@@ -417,7 +415,7 @@ public class DefaultTenantService implements TenantService {
     private void getRoleDetails(List<TenantRole> roles) {
         for (TenantRole role : roles) {
             if (role != null) {
-                ClientRole cRole = this.applicationDao.getClientRoleById(role.getRoleRsId());
+                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
             }
@@ -448,7 +446,7 @@ public class DefaultTenantService implements TenantService {
 
         List<TenantRole> returnedRoles = new ArrayList<TenantRole>();
         for (String roleId : roleIds) {
-            ClientRole cRole = this.applicationDao.getClientRoleById(roleId);
+            ClientRole cRole = this.applicationService.getClientRoleById(roleId);
             if (cRole != null) {
                 TenantRole newRole = new TenantRole();
                 newRole.setClientId(cRole.getClientId());
@@ -479,7 +477,7 @@ public class DefaultTenantService implements TenantService {
         }
 
         for (String userId : userIds) {
-            User user = this.userDao.getUserById(userId);
+            User user = this.userService.getUserById(userId);
             if (user != null && user.isEnabled()) {
                 users.add(user);
             }
@@ -513,7 +511,7 @@ public class DefaultTenantService implements TenantService {
         for (TenantRole role : roles) {
             if (role != null
                 && (role.getTenantIds() == null || role.getTenantIds().length == 0)) {
-                ClientRole cRole = this.applicationDao.getClientRoleById(role
+                ClientRole cRole = this.applicationService.getClientRoleById(role
                     .getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
@@ -562,7 +560,7 @@ public class DefaultTenantService implements TenantService {
         }
 
         for (String userId : userIds) {
-            User user = this.userDao.getUserById(userId);
+            User user = this.userService.getUserById(userId);
             if (user != null && user.isEnabled()) {
                 users.add(user);
             }
@@ -607,25 +605,22 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getTenantRolesForClientRole(ClientRole role) {
-        return null;
-//        return tenantDao.getAllTenantRolesForClientRole(role);
+        return tenantDao.getAllTenantRolesForClientRole(role);
     }
 
     @Override
     public void deleteTenantRole(TenantRole role) {
-//        tenantDao.deleteTenantRole(role);
+        tenantDao.deleteTenantRole(role);
     }
 
     @Override
     public TenantRole getTenantRoleForUser(User user, List<ClientRole> rolesForFilter) {
-        return null;
-//        return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
+        return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
     }
 
     @Override
     public PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit) {
-        return null;
-//        return tenantDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
+        return tenantDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
     }
 
     public void setConfig(Configuration config) {
@@ -639,27 +634,6 @@ public class DefaultTenantService implements TenantService {
 	@Override
 	public void setTenantDao(TenantDao tenantDao) {
 		this.tenantDao = tenantDao;
-	}
-
-	@Override
-	public void setApplicationDao(ApplicationDao applicationDao) {
-		this.applicationDao = applicationDao;
-		
-	}
-
-	@Override
-	public void setUserDao(UserDao userDao) {
-		this.userDao = userDao;
-	}
-
-	@Override
-	public void setEndpointDao(EndpointDao endpointDao) {
-		this.endpointDao = endpointDao;
-	}
-
-	@Override
-	public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
-		this.scopeAccessDao = scopeAccessDao;
 	}
 
     @Override

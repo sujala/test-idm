@@ -29,5 +29,5 @@ public interface TenantDao {
     boolean doesUserHaveTenantRole(String uniqueId, ClientRole role);
     List<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
 
-    PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit);
+    PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -14,11 +15,11 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockConfiguration(service)
         mockDomainService(service)
         mockTenantDao(service)
-        mockApplicationDao(service)
-        mockUserDao(service)
-        mockEndpointDao(service)
-        mockScopeAccessDao(service)
         mockTenantRoleDao(service)
+        mockApplicationService(service)
+        mockUserService(service)
+        mockEndpointService(service)
+        mockScopeAccessService(service)
     }
 
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
@@ -90,9 +91,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
 
         tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
-        applicationDao.getClientRoleById(_) >> entityFactory.createClientRole()
-        applicationDao.getClientByClientId(_) >> entityFactory.createApplication()
-        applicationDao.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
 
         when:
         service.addCallerTenantRolesToUser(caller, user)
@@ -105,6 +106,17 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         1 * tenantRoleDao.addTenantRoleToUser(user, _)
+    }
+
+    def "getRoleDetails uses ApplicationService to retrieve client role connected to tenant role"() {
+        given:
+        def roles = [ entityFactory.createTenantRole() ].asList()
+
+        when:
+        service.getRoleDetails(roles)
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
     }
 
     def "doesUserContainTenantRole returns false if user does not contain the role"() {
@@ -162,5 +174,124 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         thrown(IllegalStateException)
+    }
+
+    def "getTenantRolesForClientRole uses DAO to get all TenantRoles for ClientRole"() {
+        given:
+        def role = entityFactory.createClientRole()
+
+        when:
+        service.getTenantRolesForClientRole(role)
+
+        then:
+        1 * tenantDao.getAllTenantRolesForClientRole(role)
+    }
+
+    def "deleteTenantRole uses DAO to delete role"() {
+        given:
+        def role = entityFactory.createTenantRole()
+
+        when:
+        service.deleteTenantRole(role)
+
+        then:
+        1 * tenantDao.deleteTenantRole(role)
+    }
+
+    def "getTenantRoleForUser uses DAO to get tenantRole for user"() {
+        given:
+        def list = [].asList()
+        def user = entityFactory.createUser()
+
+        when:
+        service.getTenantRoleForUser(user, list)
+
+        then:
+        1 * tenantRoleDao.getTenantRoleForUser(user, list)
+    }
+
+    def "getIdsForUsersWithTenantRole calls DAO to retrieve context object"() {
+        when:
+        service.getIdsForUsersWithTenantRole("roleId", 0, 25)
+
+        then:
+        1 * tenantDao.getIdsForUsersWithTenantRole("roleId", 0, 25)
+    }
+
+    def "addTenantRoleToUser verifies that user is not null"() {
+        when:
+        service.addTenantRoleToUser(null, entityFactory.createTenantRole())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "addTenantRoleToUser verifies that role is not null"() {
+        when:
+        service.addTenantRoleToUser(entityFactory.createUser(), null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "addTenantRole verifies that user has uniqueId"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        def user = entityFactory.createUser()
+        user.uniqueId = ""
+
+        when:
+        service.addTenantRoleToUser(user, tenantRole)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "addTenantRole uses ApplicationService to retrieve application for role and verifies it exists"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        def user = entityFactory.createUser()
+
+        when:
+        service.addTenantRoleToUser(user, tenantRole)
+
+        then:
+        1 * applicationService.getById(_) >> null
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "addTenantRole uses ApplicationService to retrieve application role linked to tenantrole and verifies it exists"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        def user = entityFactory.createUser()
+        def application = entityFactory.createApplication()
+
+        applicationService.getById(_) >> application
+
+        when:
+        service.addTenantRoleToUser(user, tenantRole)
+
+        then:
+        1 * applicationService.getClientRoleByClientIdAndRoleName(_, _) >> null
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "addTenantRole uses DAO to add tenant role to user"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        def user = entityFactory.createUser()
+        def application = entityFactory.createApplication()
+        def cRole = entityFactory.createClientRole()
+
+        applicationService.getById(_) >> application
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+
+        when:
+        service.addTenantRoleToUser(user, tenantRole)
+
+        then:
+        tenantRoleDao.addTenantRoleToUser(user, tenantRole)
     }
 }
