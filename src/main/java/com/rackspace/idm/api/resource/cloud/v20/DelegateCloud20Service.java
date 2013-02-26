@@ -487,7 +487,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listGroups(httpHeaders, authToken, groupName, null, null);
+        return defaultCloud20Service.getGroup(httpHeaders, authToken, groupName);
     }
 
     @Override
