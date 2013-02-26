@@ -609,7 +609,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
-                this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
                 atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             }
             Boolean updateRegion = true;
@@ -623,7 +622,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
-            userService.updateUserById(retrievedUser, false);
+            userService.updateUser(retrievedUser, false);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2812,7 +2811,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             userDO.setEnabled(user.isEnabled());
 
             if (userDO.isDisabled()) {
-                this.scopeAccessService.expireAllTokensForUser(userDO.getUsername());
                 atomHopperClient.asyncPost(userDO, AtomHopperConstants.DISABLED);
             }
 

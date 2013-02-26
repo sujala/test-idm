@@ -925,7 +925,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
             if (gaUser.isDisabled()) {
-                scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
@@ -1008,7 +1007,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (gaUser.isDisabled()) {
-                scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 

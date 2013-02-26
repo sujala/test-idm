@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
@@ -598,25 +596,8 @@ public class DefaultUserService implements UserService {
         return newPassword.toExisting();
     }
 
-    @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
-        logger.info("Updating User: {}", user);
-        if(!validator.isBlank(user.getEmail())){
-            validator.isEmailValid(user.getEmail());
-        }
-
-        // Expire all User tokens if we are updating the password field
-        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
-        }
-
-        userDao.updateUser(user, hasSelfUpdatedPassword);
-        logger.info("Updated User: {}", user);
-    }
-
-    boolean checkForPasswordUpdate(User user) {
-        if(user != null) {
-            User currentUser = userDao.getUserById(user.getId());
+    boolean checkForPasswordUpdate(User currentUser, User user) {
+        if(user != null && !StringUtils.isEmpty(user.getPassword())) {
             if(currentUser != null && !StringUtils.isEmpty(currentUser.getPassword()) && !currentUser.getPassword().equals(user.getPassword())){
                 return true;
             }
@@ -624,22 +605,34 @@ public class DefaultUserService implements UserService {
         return false;
     }
 
-    public void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
         }
         // Expire all User tokens if we are updating the password field
-        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
+        User currentUser = userDao.getUserById(user.getId());
+        if(checkForPasswordUpdate(currentUser, user) || checkIfUserIsBeingDisabled(currentUser, user))  {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
-        userDao.updateUserById(user, hasSelfUpdatedPassword);
+        userDao.updateUser(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {
             ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
             scopeAccessService.updateScopeAccess(scopeAccess);
         }
         logger.info("Updated User: {}", user);
+    }
+
+    private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
+        if (currentUser != null && user != null && user.isEnabled() != null) {
+            boolean currentUserEnabled = currentUser.isEnabled();
+            boolean userEnabled = user.isEnabled();
+
+            return !userEnabled && userEnabled != currentUserEnabled;
+        }
+        return false;
     }
 
     private String getIdmClientId() {

@@ -98,6 +98,7 @@ public class UserServiceTests {
         userService.setCloudRegionService(cloudRegionService);
         userService.setValidator(validator);
         userService.setTenantDao(tenantDao);
+        userService.setScopeAccessService(mockScopeAccessService);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
@@ -287,21 +288,6 @@ public class UserServiceTests {
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldUpdateUser() throws IOException, JAXBException {
-        final User user = new User();
-        user.setUsername(username);
-        user.setCustomerId(customerId);
-        user.setMossoId(1);
-        user.setDomainId("1");
-        mockUserDao.updateUser(user, false);
-        EasyMock.replay(mockUserDao);
-        EasyMock.expect(validator.isBlank(EasyMock.anyObject(String.class))).andReturn(true);
-        EasyMock.replay(validator);
-
-        userService.updateUser(user, false);
     }
 
     @Test

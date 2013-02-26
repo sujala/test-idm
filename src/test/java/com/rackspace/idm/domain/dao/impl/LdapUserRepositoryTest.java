@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.sun.jersey.api.ConflictException;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -709,7 +708,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         user.setId("id");
         doNothing().when(spy).updateUser(any(User.class),any(User.class),anyBoolean());
         doReturn(user).when(spy).getUserById("id");
-        spy.updateUserById(user, false);
+        spy.updateUser(user, false);
         verify(spy).getUserById("id");
     }
 
@@ -722,7 +721,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("oldUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(false).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
     }
 
     @Test
@@ -734,7 +733,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("newUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(false).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -748,7 +747,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(true).when(spy).isUsernameUnique("newUser");
         doNothing().when(spy).updateUser(newUser, oldUser, false);
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -761,7 +760,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("newUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(true).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -769,9 +768,11 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void updateUser_callsUpdateUser() throws Exception {
         User newUser = new User();
         newUser.setUsername("username");
+        newUser.setId("id");
         User oldUser = new User();
         oldUser.setUsername("username");
-        doReturn(oldUser).when(spy).getUserByUsername("username");
+        oldUser.setId("id");
+        doReturn(oldUser).when(spy).getUserById("id");
         spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }

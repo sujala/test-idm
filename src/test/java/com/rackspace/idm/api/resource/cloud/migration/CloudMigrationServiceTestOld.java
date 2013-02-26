@@ -355,7 +355,7 @@ public class CloudMigrationServiceTestOld {
         when(userService.userExistsById(anyString())).thenReturn(true);
         doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class),any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", true, "1");
-        verify(userService).updateUserById(any(User.class), eq(false));
+        verify(userService).updateUser(any(User.class), eq(false));
     }
 
     @Test
@@ -599,7 +599,7 @@ public class CloudMigrationServiceTestOld {
         user.setInMigration(true);
         when(userService.getUser(null)).thenReturn(user);
         spy.setMigratedUserEnabledStatus(null, true);
-        verify(userService).updateUserById(any(User.class), eq(false));
+        verify(userService).updateUser(any(User.class), eq(false));
     }
 
     @Test (expected = BadRequestException.class)

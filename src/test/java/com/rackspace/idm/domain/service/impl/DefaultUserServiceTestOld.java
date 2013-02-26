@@ -19,7 +19,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -248,7 +247,7 @@ public class DefaultUserServiceTestOld {
     public void updateUserById_callsScopeService_getScopeAccessList() throws Exception {
         User user = new User("test");
         user.setId("foo");
-        defaultUserService.updateUserById(user, true);
+        defaultUserService.updateUser(user, true);
         verify(scopeAccessService).getScopeAccessListByUserId("foo");
     }
 
@@ -259,7 +258,7 @@ public class DefaultUserServiceTestOld {
         ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(new UserScopeAccess());
         when(scopeAccessService.getScopeAccessListByUserId("foo")).thenReturn(list);
-        defaultUserService.updateUserById(user, true);
+        defaultUserService.updateUser(user, true);
         verify(scopeAccessService).updateScopeAccess(any(ScopeAccess.class));
     }
 

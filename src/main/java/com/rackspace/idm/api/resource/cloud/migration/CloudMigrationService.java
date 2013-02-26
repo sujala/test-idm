@@ -12,7 +12,6 @@ import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -382,7 +381,7 @@ public class CloudMigrationService {
             addUserGroups(user.getId(), groups);
 
             newUser.setInMigration(false);
-            userService.updateUserById(newUser, false);
+            userService.updateUser(newUser, false);
 
             UserType userResponse = validateUser(user, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             userResponse.setNastId(user11.getNastId());
@@ -680,7 +679,7 @@ public class CloudMigrationService {
             throw new NotFoundException(USER_NOT_FOUND);
         }
         user.setInMigration(enable);
-        userService.updateUserById(user, false);
+        userService.updateUser(user, false);
     }
 
     public void unmigrateUserByUsername(String username) {

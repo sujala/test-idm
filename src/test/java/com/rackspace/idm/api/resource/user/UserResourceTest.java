@@ -154,7 +154,7 @@ public class UserResourceTest {
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(testUser);
         when(userService.loadUser("userId")).thenReturn(new User());
         userResource.updateUser("authHeader", "userId", holder);
-        verify(userService).updateUserById(any(User.class), eq(false));
+        verify(userService).updateUser(any(User.class), eq(false));
     }
 
     @Test

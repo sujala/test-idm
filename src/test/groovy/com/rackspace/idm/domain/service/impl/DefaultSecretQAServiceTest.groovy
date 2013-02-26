@@ -1,14 +1,9 @@
-package com.rackspace.idm.domain.service.impl;
+package com.rackspace.idm.domain.service.impl
 
-
-import junit.framework.TestCase
 import spock.lang.Shared
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import spock.lang.Specification
-import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
 import com.rackspace.idm.domain.entity.SecretQA
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.service.SecretQAService
 import com.rackspace.idm.domain.entity.SecretQAs
 import com.rackspace.idm.domain.entity.Question
 import com.rackspace.idm.exception.NotFoundException

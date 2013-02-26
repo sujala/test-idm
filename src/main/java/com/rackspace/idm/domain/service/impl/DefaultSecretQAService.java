@@ -45,7 +45,7 @@ public class DefaultSecretQAService implements SecretQAService{
         user.setSecretAnswer(secretQA.getAnswer());
         user.setSecretQuestion(question.getQuestion());
         user.setSecretQuestionId(question.getId());
-        defaultUserService.updateUser(user,false);
+        defaultUserService.updateUser(user, false);
     }
 
     private void validateSecretQA(SecretQA secretQA) {

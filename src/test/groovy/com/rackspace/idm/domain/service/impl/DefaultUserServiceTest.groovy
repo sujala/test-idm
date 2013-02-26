@@ -622,6 +622,49 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
+    def "updateUser expires tokens for user if the user is set to disabled"() {
+        given:
+        def currentUser = entityFactory.createUser().with {
+            it.enabled = true
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.enabled = false
+            return it
+        }
+
+        when:
+        service.updateUser(user, false)
+
+        then:
+        1 * scopeAccessService.expireAllTokensForUser(_)
+        userDao.getUserById(_) >> currentUser
+        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
+    }
+
+    def "checkIfUserIsBeingDisabled test"() {
+        when:
+        def currentUser = entityFactory.createUser().with {
+            it.enabled = currentUserEnabled
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.enabled = userEnabled
+            return it
+        }
+        def result = service.checkIfUserIsBeingDisabled(currentUser, user)
+
+        then:
+        expected == result
+
+        where:
+        expected    | currentUserEnabled    | userEnabled
+        false       | false                 | false
+        false       | false                 | true
+        true        | true                  | false
+        false       | true                  | true
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

@@ -501,21 +501,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
-    public void updateUserById(User user, boolean hasSelfUpdatedPassword){
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword){
         getLogger().info("Updating user to {}", user);
         throwIfEmptyUsername(user);
         User oldUser = getUserById(user.getId());
         if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
             throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
         }
-        updateUser(user, oldUser, hasSelfUpdatedPassword);
-    }
-
-    @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
-        getLogger().info("Updating user to {}", user);
-        throwIfEmptyUsername(user);
-        User oldUser = getUserByUsername(user.getUsername());
         updateUser(user, oldUser, hasSelfUpdatedPassword);
     }
 

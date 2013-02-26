@@ -883,9 +883,9 @@ public class DefaultCloud20ServiceOldTest {
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
-        doNothing().when(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        doNothing().when(userService).updateUser(argumentCaptor.capture(), anyBoolean());
         spy.updateUser(httpHeaders, authToken, userId, userNoRegion);
-        verify(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        verify(userService).updateUser(argumentCaptor.capture(), anyBoolean());
         assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
     }
 
@@ -901,9 +901,9 @@ public class DefaultCloud20ServiceOldTest {
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
-        doNothing().when(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        doNothing().when(userService).updateUser(argumentCaptor.capture(), anyBoolean());
         spy.updateUser(httpHeaders, authToken, userId, userWithRegion);
-        verify(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        verify(userService).updateUser(argumentCaptor.capture(), anyBoolean());
         assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("foo"));
     }
 
@@ -3289,7 +3289,7 @@ public class DefaultCloud20ServiceOldTest {
         userOS.setId(userId);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(userService).updateUserById(any(User.class), anyBoolean());
+        verify(userService).updateUser(any(User.class), anyBoolean());
     }
 
     @Test
@@ -3456,19 +3456,6 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         spy.updateUser(null, authToken, userId, userOS);
         verify(authorizationService).verifyDomain(user, user);
-    }
-
-    @Test
-    public void updateUser_userDisabled_callsScopeAccessServiceExpiresAllTokensForUsers() throws Exception {
-        userOS.setId(userId);
-        User user = mock(User.class);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
-        doNothing().when(user).copyChanges(any(User.class));
-        when(user.getId()).thenReturn(userId);
-        when(user.isDisabled()).thenReturn(true);
-        spy.updateUser(httpHeaders, authToken, userId, userOS);
-        verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
     }
 
     @Test

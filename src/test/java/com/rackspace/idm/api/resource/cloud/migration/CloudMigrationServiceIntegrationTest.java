@@ -326,7 +326,7 @@ public class CloudMigrationServiceIntegrationTest {
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
         spy.migrateUserByUsername("cmarin2", true, "1");
-        verify(userService, times(2)).updateUserById(any(User.class), eq(false));
+        verify(userService, times(2)).updateUser(any(User.class), eq(false));
     }
 
     @Ignore
@@ -428,7 +428,7 @@ public class CloudMigrationServiceIntegrationTest {
         user.setInMigration(true);
         when(userService.getUser(null)).thenReturn(user);
         spy.setMigratedUserEnabledStatus(null, true);
-        verify(userService).updateUserById(any(User.class), eq(false));
+        verify(userService).updateUser(any(User.class), eq(false));
     }
 
     @Test (expected = NotFoundException.class)
