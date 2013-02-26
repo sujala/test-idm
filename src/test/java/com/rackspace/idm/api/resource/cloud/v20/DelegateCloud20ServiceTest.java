@@ -2787,7 +2787,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test
@@ -2795,7 +2795,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test
@@ -2803,7 +2803,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test (expected = ApiException.class)
