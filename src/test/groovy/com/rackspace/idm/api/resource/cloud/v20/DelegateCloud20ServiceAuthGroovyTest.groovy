@@ -422,6 +422,18 @@ class DelegateCloud20ServiceAuthGroovyTest extends RootServiceTest {
         thrown(NotAuthorizedException)
     }
 
+    def "Verify that get group gets called when /RAX-GRPADM/grousp gets calls" (){
+        given:
+        config.getBoolean("useCloudAuth") >> true
+        config.getBoolean("gaIsSourceOfTruth") >> true
+
+        when:
+        delegateCloud20Service.getGroup(null, authToken, "name")
+
+        then:
+        1 * defaultCloud20Service.getGroup(_,_,_)
+    }
+
     def createScopeAccess(Date expTime) {
         new ScopeAccess().with {
             it.accessTokenExp = expTime
