@@ -2810,6 +2810,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = userService.checkAndGetUserById(userId);
 
             userDO.setEnabled(user.isEnabled());
+
+            if (userDO.isDisabled()) {
+                this.scopeAccessService.expireAllTokensForUser(userDO.getUsername());
+                atomHopperClient.asyncPost(userDO, AtomHopperConstants.DISABLED);
+            }
+
             this.userService.updateUser(userDO, false);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
