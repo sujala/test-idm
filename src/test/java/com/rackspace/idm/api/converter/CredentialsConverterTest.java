@@ -33,7 +33,7 @@ public class CredentialsConverterTest {
     @Test
     public void toCredentialsDO_withApiAuthCredentials_returnsDomainAuthCredentials() throws Exception {
         Credentials credentials = credentialsConverter.toCredentialsDO(authCredentials);
-        assertThat("credentials type", credentials, is(com.rackspace.idm.domain.entity.AuthCredentials.class));
+        assertThat("credentials type", (com.rackspace.idm.domain.entity.AuthCredentials)credentials, is(com.rackspace.idm.domain.entity.AuthCredentials.class));
     }
 
     @Test

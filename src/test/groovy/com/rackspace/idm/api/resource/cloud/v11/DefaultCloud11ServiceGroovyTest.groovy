@@ -367,7 +367,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         }
 
         when:
-        service.addNastTenant(user)
+        service.addNastTenant(user, "1")
 
         then:
         1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
@@ -410,7 +410,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         }
 
         when:
-        service.addMossoTenant(user)
+        service.addMossoTenant(user, "1")
 
         then:
         1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
