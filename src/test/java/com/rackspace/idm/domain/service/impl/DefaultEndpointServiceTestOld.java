@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * Time: 4:26 PM
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultEndpointServiceTest {
+public class DefaultEndpointServiceTestOld {
 
     @InjectMocks
     DefaultEndpointService defaultEndpointService = new DefaultEndpointService();

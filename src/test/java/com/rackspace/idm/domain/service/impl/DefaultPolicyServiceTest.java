@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
@@ -35,12 +35,12 @@ public class DefaultPolicyServiceTest{
     PolicyDao policyDao;
     @InjectMocks
     DefaultPolicyService defaultPolicyService = new DefaultPolicyService();
-    EndpointDao endpointDao = mock(EndpointDao.class);
+    EndpointService endpointService = mock(EndpointService.class);
     DefaultPolicyService spy;
 
     @Before
     public void setUp() throws Exception {
-        defaultPolicyService.setEndpointDao(endpointDao);
+        defaultPolicyService.setEndpointService(endpointService);
         spy = spy(defaultPolicyService);
     }
 
@@ -146,7 +146,7 @@ public class DefaultPolicyServiceTest{
         policy.setName("name");
         policy.setBlob("someBlob");
         policy.setPolicyType("someType");
-        when(endpointDao.getBaseUrlsWithPolicyId(anyString())).thenReturn(cloudBaseUrlList);
+        when(endpointService.getBaseUrlsWithPolicyId(anyString())).thenReturn(cloudBaseUrlList);
         when(policyDao.getPolicy(anyString())).thenReturn(policy);
         defaultPolicyService.deletePolicy("1");
         verify(policyDao).deletePolicy(policy.getPolicyId());

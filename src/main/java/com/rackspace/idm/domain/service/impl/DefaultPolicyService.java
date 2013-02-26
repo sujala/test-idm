@@ -4,19 +4,15 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
-import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.PolicyService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.identity.api.v2.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +32,7 @@ public class DefaultPolicyService implements PolicyService {
     private Configuration config;
 
     @Autowired
-    private EndpointDao endpointDao;
+    private EndpointService endpointService;
 
     @Autowired
     private PolicyDao policyDao;
@@ -124,7 +120,7 @@ public class DefaultPolicyService implements PolicyService {
     @Override
     public void deletePolicy(String policyId) {
         Policy policy = checkAndGetPolicy(policyId);
-        List<CloudBaseUrl> cloudBaseUrlList = this.endpointDao.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        List<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
         if (cloudBaseUrlList.isEmpty()) {
             policyDao.deletePolicy(policy.getPolicyId());
         }else{
@@ -136,7 +132,7 @@ public class DefaultPolicyService implements PolicyService {
     public void softDeletePolicy(String policyId) {
         logger.debug("SoftDeleting Policy: {}", policyId);
         Policy policy = checkAndGetPolicy(policyId);
-        List<CloudBaseUrl> cloudBaseUrlList = this.endpointDao.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        List<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
         if (cloudBaseUrlList.isEmpty()) {
             policyDao.softDeletePolicy(policy);
         }else{
@@ -145,7 +141,7 @@ public class DefaultPolicyService implements PolicyService {
         logger.debug("SoftDeleted User: {}", policyId);
     }
 
-    public void setEndpointDao(EndpointDao endpointDao) {
-        this.endpointDao = endpointDao;
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
     }
 }

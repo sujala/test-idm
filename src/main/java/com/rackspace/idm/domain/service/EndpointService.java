@@ -32,6 +32,8 @@ public interface EndpointService {
     
     List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType);
 
+    List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
+
     List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);

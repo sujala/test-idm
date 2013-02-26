@@ -166,6 +166,11 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
+    public List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
+        return endpointDao.getBaseUrlsWithPolicyId(policyId);
+    }
+
+    @Override
     public List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenantList) {
