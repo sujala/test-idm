@@ -64,12 +64,12 @@ public class PrecedenceValidator {
         }
     }
 
-    public void verifyCallerRolePrecendenceForAssignment(User user, TenantRole role) {
+    public void verifyCallerRolePrecedenceForAssignment(User user, TenantRole role) {
         ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
-        verifyCallerRolePrecendenceForAssignment(user, cRole);
+        verifyCallerRolePrecedenceForAssignment(user, cRole);
     }
 
-    public void verifyCallerRolePrecendenceForAssignment(User user, ClientRole role) {
+    public void verifyCallerRolePrecedenceForAssignment(User user, ClientRole role) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
         if (callerIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
@@ -99,17 +99,5 @@ public class PrecedenceValidator {
         names.add(config.getString("cloudAuth.adminRole"));
         names.add(config.getString("cloudAuth.serviceAdminRole"));
         return names;
-    }
-
-    private void setUserService(UserService service) {
-        this.userService = service;
-    }
-
-    private void setApplicationService(ApplicationService service) {
-        this.applicationService = service;
-    }
-
-    private void setConfig(Configuration config) {
-        this.config = config;
     }
 }

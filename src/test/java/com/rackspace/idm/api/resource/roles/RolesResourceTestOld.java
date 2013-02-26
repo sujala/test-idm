@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  * Date: 4/10/12
  * Time: 10:53 AM
  */
-public class RolesResourceTest {
+public class RolesResourceTestOld {
 
     RolesResource rolesResource;
     AuthorizationService authorizationService;

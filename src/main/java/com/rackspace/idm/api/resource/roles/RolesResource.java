@@ -52,7 +52,7 @@ public class RolesResource extends ParentResource {
     @Autowired
     private PrecedenceValidator precedenceValidator;
     @Autowired
-    private Paginator<ClientRole> paginator;
+    private Paginator<ClientRole> applicationRolePaginator;
     @Autowired
     private Configuration config;
     @Autowired
@@ -96,7 +96,7 @@ public class RolesResource extends ParentResource {
 
         PaginatorContext<ClientRole> context = applicationService.getClientRolesPaged(applicationId, name, 0, config.getInt("ldap.paging.limit.default"));
 
-        String linkHeader = paginator.createLinkHeader(uriInfo, context);
+        String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
 
         return Response.status(200)
                 .header("Link", linkHeader)
@@ -208,8 +208,8 @@ public class RolesResource extends ParentResource {
         this.config = config;
     }
 
-    public void setPaginator(Paginator<ClientRole> paginator) {
-        this.paginator = paginator;
+    public void setPaginator(Paginator<ClientRole> applicationRolePaginator) {
+        this.applicationRolePaginator = applicationRolePaginator;
     }
 
     public void setPrecedenceValidator(PrecedenceValidator validator) {

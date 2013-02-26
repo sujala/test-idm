@@ -996,7 +996,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
-        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, roleToAdd)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, roleToAdd)
     }
 
     def "addUserRole checks for existing identity:* role"() {
@@ -1077,7 +1077,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(("1$userId")) >> { throw new NotFoundException()}
 
         precedenceValidator.verifyCallerPrecedenceOverUser(caller1, user1) >> { throw new ForbiddenException() }
-        precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller2, user2) >> { throw new ForbiddenException() }
+        precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller2, user2) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById(roleId) >> roleToAdd
         userService.checkAndGetUserById(userId) >>> [ user1, user2, user3 ]
@@ -1515,7 +1515,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
-        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
     }
 
     def "addRolesToUserOnTenant adds role to user on tenant"() {
@@ -1643,7 +1643,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
-        1 * precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, _)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
     }
 
     def "deleteRoleFromUserOnTenant deletes role from user"() {

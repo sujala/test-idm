@@ -78,7 +78,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, role);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
         }
 
         if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
@@ -134,7 +134,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, tenantRole);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, tenantRole);
 
             if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
                 throw new BadRequestException("A user cannot delete their own identity role");
@@ -183,7 +183,7 @@ public class UserGlobalRoleResource {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecendenceForAssignment(caller, tenantRole);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, tenantRole);
         }
 
         List<String> identityRoleNames = getIdentityRoleNames();
@@ -277,23 +277,23 @@ public class UserGlobalRoleResource {
         this.config = config;
     }
 
-    public void setScopeAccessService(DefaultScopeAccessService scopeAccessService) {
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
     }
 
-    public void setUserService(DefaultUserService userService) {
+    public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
-    public void setApplicationService(DefaultApplicationService applicationService) {
+    public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
     }
 
-    public void setAuthorizationService(DefaultAuthorizationService authorizationService) {
+    public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
     }
 
-    public void setTenantService(DefaultTenantService tenantService) {
+    public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
     
