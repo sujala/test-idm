@@ -48,7 +48,7 @@ public class AtomHopperHelper {
         ScopeAccess access = scopeAccessService.getScopeAccessByUserId(user.getId());
         String clientId = access.getClientId();
         if(access.getAccessTokenExp().before(new Date())){
-            access = scopeAccessService.updateExpiredUserScopeAccess(user.getUniqueId(), clientId);
+            access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId);
         }
         return access.getAccessTokenString();
     }

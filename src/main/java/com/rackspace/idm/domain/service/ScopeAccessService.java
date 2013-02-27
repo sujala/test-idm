@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 
 public interface ScopeAccessService {
-        
+
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
@@ -65,7 +65,7 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
 
-    UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId);
+    UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId);
 
     RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId);
     
@@ -93,7 +93,7 @@ public interface ScopeAccessService {
 
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
-    UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId);
+    UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
 

@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -792,10 +791,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     // Return UserScopeAccess from directory, refreshes expired
     @Override
-    public UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId) {
+    public UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         //if expired update with new token
-        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(userUniqueId, clientId);
+        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(user, clientId);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -882,10 +881,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username,
                                                                                     String apiKey, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
-        final UserAuthenticationResult result = userService.authenticateByAPIKey(username, apiKey);
+        final UserAuthenticationResult result = userService.authenticateWithApiKey(username, apiKey);
         handleApiKeyUsernameAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId);
     }
 
     @Override
@@ -895,7 +894,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId);
     }
 
     @Override
@@ -1076,14 +1075,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId) {
-        List<ScopeAccess> scopeAccessList = scopeAccessDao.getDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+    public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId) {
+        List<ScopeAccess> scopeAccessList = scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), clientId);
         if (scopeAccessList.size() == 0) {
-            UserScopeAccess scopeAccess = provisionUserScopeAccess(parentUniqueId, clientId);
-            this.scopeAccessDao.addDirectScopeAccess(parentUniqueId, scopeAccess);
+            UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
+            this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccess);
             return scopeAccess;
         }
-        ScopeAccess mostRecent = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), clientId);
 
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
@@ -1095,10 +1094,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
 
-    private UserScopeAccess provisionUserScopeAccess(String parentUniqueId, String clientId) {
-        User user = this.userService.getUserByDn(parentUniqueId);
+    private UserScopeAccess provisionUserScopeAccess(User user, String clientId) {
         if (user == null) {
-            throw new NotFoundException(String.format("User %s not found", parentUniqueId));
+            throw new NotFoundException(String.format("User %s not found", user.getUniqueId()));
         }
 
         UserScopeAccess userScopeAccess = new UserScopeAccess();

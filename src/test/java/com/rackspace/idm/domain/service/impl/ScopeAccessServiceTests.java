@@ -45,11 +45,11 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         atomHopperClient = EasyMock.createMock(AtomHopperClient.class);
         userService = EasyMock.createMock(DefaultUserService.class);
         scopeAccessService = new DefaultScopeAccessService();
-        scopeAccessService.setUserDao(mockUserDao);
-        scopeAccessService.setApplicationDao(mockClientDao);
+        scopeAccessService.setUserService(mockUserDao);
+        scopeAccessService.setApplicationService(mockClientDao);
         scopeAccessService.setScopeAccessDao(scopeAccessDao);
-        scopeAccessService.setTenantDao(tenantDao);
-        scopeAccessService.setEndpointDao(endpointDao);
+        scopeAccessService.setTenantService(tenantDao);
+        scopeAccessService.setEndpointService(endpointDao);
         scopeAccessService.setAuthHeaderHelper(authHeaderHelper);
         scopeAccessService.setAppConfig(appConfig);
         scopeAccessService.setAtomHopperClient(atomHopperClient);
@@ -335,8 +335,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.expect(scopeAccessDao.deleteScopeAccess(usao)).andReturn(true);
 
         EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getValidUserScopeAccessForClientId("userUniqueId",
-            "clientId");
+        scopeAccessService.getValidUserScopeAccessForClientId(
+                user, "clientId");
         EasyMock.verify(scopeAccessDao);
     }
 

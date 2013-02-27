@@ -232,9 +232,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
 
         when:
-        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
-        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
-        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
+        service.getValidUserScopeAccessForClientId(user, "clientId")
+        service.getValidUserScopeAccessForClientId(user, "clientId")
+        service.getValidUserScopeAccessForClientId(user, "clientId")
 
         then:
         1 * scopeAccessDao.deleteScopeAccessByDn(_)

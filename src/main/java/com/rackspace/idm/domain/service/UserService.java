@@ -98,7 +98,6 @@ public interface UserService {
 
 	List<User> getSubUsers(User user);
 
-
     void setUserDao(UserDao userDao);
 
     void setAuthDao(AuthDao rackerDao);
