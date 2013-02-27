@@ -2213,7 +2213,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setLastname("abc");
         oldUser.setLastname("def");
-        ldapUserRepository.checkForLastNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForLastNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2245,7 +2245,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setSecretQuestion("abc");
         oldUser.setSecretQuestion("def");
-        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2277,7 +2277,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setSecretAnswer("abc");
         oldUser.setSecretAnswer("def");
-        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2310,7 +2310,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setApiKey("abc");
         oldUser.setApiKey("def");
-        ldapUserRepository.checkForApiKeyModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForApiKeyModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2374,7 +2374,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setEmail("abc");
         oldUser.setEmail("def");
-        ldapUserRepository.checkForEmailModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForEmailModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2406,7 +2406,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setFirstname("abc");
         oldUser.setFirstname("def");
-        ldapUserRepository.checkForFirstNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForFirstNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2470,7 +2470,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setDisplayName("abc");
         oldUser.setDisplayName("def");
-        ldapUserRepository.checkForDisplayNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForDisplayNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2568,7 +2568,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Password oldPassword = Password.existingInstance("abc", new DateTime(), true);
         oldUser.setPasswordObj(oldPassword);
         user.setPasswordObj(Password.newInstance("abc"));
-        ldapUserRepository.checkForPasswordModification(oldUser, user, false, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForPasswordModification(oldUser, user, false, cryptHelper, modificationList);
         assertThat("mod list", modificationList.isEmpty(), equalTo(false));
     }
 

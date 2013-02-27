@@ -27,11 +27,7 @@ public class CryptHelper {
     private CipherParameters keyParams;
 
     @Autowired
-    public void setConfiguration(Configuration configuration){
-        CryptHelper.config = configuration;
-    }
-    
-    private static Configuration config;
+    private Configuration config;
 
 	private static PBEParametersGenerator keyGenerator;
 
@@ -127,5 +123,9 @@ public class CryptHelper {
         } catch (Exception e) {
 			throw new IdmException("Error creating byte array from Hex string");
 		}
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.config = configuration;
     }
 }

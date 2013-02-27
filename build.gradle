@@ -193,7 +193,12 @@ idea {
 }
 
 test {
-    jvmArgs "-Xmx=1024m -XX:MaxPermSize=512m"
+    // set heap size for the test JVM(s)
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
+
+    // set JVM arguments for the test JVM(s)
+    jvmArgs '-XX:MaxPermSize=1024m'
     systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/OPENLDAP')
 }
 
