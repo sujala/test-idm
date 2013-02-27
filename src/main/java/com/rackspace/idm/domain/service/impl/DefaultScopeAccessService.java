@@ -7,8 +7,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -44,32 +43,26 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Autowired
     private ScopeAccessDao scopeAccessDao;
     @Autowired
-    private UserDao userDao;
+    private UserService userService;
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
     @Autowired
-    private EndpointDao endpointDao;
+    private EndpointService endpointService;
     @Autowired
     private AuthHeaderHelper authHeaderHelper;
     @Autowired
-    private ApplicationDao applicationDao;
+    private ApplicationService applicationService;
     @Autowired
     private Configuration config;
     @Autowired
-    private TenantRoleDao tenantRoleDao;
-    @Autowired
     private AtomHopperClient atomHopperClient;
-    @Autowired
-    private UserService defaultUserService;
-    @Autowired
-    private DefaultCloud20Service defaultCloud20Service;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
         // First get the tenantRoles for the token
-        List<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+        List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
 
         if (roles == null || roles.size() == 0) {
             return endpoints;
@@ -80,7 +73,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
                 for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    Tenant tenant = this.tenantService.getTenant(tenantId);
                     if (tenant != null) {
                         tenants.add(tenant);
                     }
@@ -90,7 +83,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointService.getOpenstackEndpointsForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -105,7 +98,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
         // First get the tenantRoles for the token
-        List<TenantRole> roles = this.tenantRoleDao.getTenantRolesForScopeAccess(token);
+        List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(token);
 
         if (roles == null || roles.size() == 0) {
             return endpoints;
@@ -116,7 +109,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
                 for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    Tenant tenant = this.tenantService.getTenant(tenantId);
                     if (tenant != null) {
                         tenants.add(tenant);
                     }
@@ -126,7 +119,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointService.getOpenstackEndpointsForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -442,7 +435,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             ((HasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
-        User user = defaultUserService.getUserByScopeAccess(scopeAccess);
+        User user = userService.getUserByScopeAccess(scopeAccess);
         if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
             logger.warn("Sending token feed to atom hopper.");
             atomHopperClient.asyncTokenPost(user, tokenString);
@@ -453,7 +446,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAllTokensForClient(String clientId) {
         logger.debug("Expiring all tokens for client {}", clientId);
-        final Application client = this.applicationDao.getClientByClientId(clientId);
+        final Application client = this.applicationService.getById(clientId);
         if (client == null) {
             return;
         }
@@ -485,7 +478,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAllTokensForUser(String username) throws IOException, JAXBException {
         logger.debug("Expiring all tokens for user {}", username);
-        final User user = this.userDao.getUserByUsername(username);
+        final User user = this.userService.getUser(username);
         if (user == null) {
             return;
         }
@@ -518,7 +511,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAllTokensForUserById(String userId) throws IOException, JAXBException {
         logger.debug("Expiring all tokens for user {}", userId);
-        final User user = this.userDao.getUserById(userId);
+        final User user = this.userService.getUserById(userId);
         if (user == null) {
             return;
         }
@@ -848,7 +841,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         final List<ScopeAccess> scopeAccessList = this.getScopeAccessesForParentByClientId(user.getUniqueId(), clientId);
-        Application client = this.applicationDao.getClientByClientId(clientId);
+        Application client = this.applicationService.getById(clientId);
 
         UserScopeAccess scopeAccess = null;
         int oldestIndex = 0;
@@ -889,7 +882,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username,
                                                                                     String apiKey, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
-        final UserAuthenticationResult result = userDao.authenticateByAPIKey(username, apiKey);
+        final UserAuthenticationResult result = userService.authenticateByAPIKey(username, apiKey);
         handleApiKeyUsernameAuthenticationFailure(username, result);
 
         return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
@@ -899,7 +892,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username,
                                                                               String password, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
-        final UserAuthenticationResult result = this.userDao.authenticate(username, password);
+        final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
         return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
@@ -915,7 +908,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.info("Granting permission {} to client {}", parentUniqueId,
                 permission.getPermissionId());
-        Application dClient = this.applicationDao.getClientByClientId(permission
+        Application dClient = this.applicationService.getById(permission
                 .getClientId());
 
         if (dClient == null) {
@@ -975,7 +968,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Granting permission {} to user {}", user.getUsername(),
                 permission.getPermissionId());
 
-        Application dClient = this.applicationDao.getClientByCustomerIdAndClientId(
+        Application dClient = this.applicationService.getClient(
                 permission.getCustomerId(), permission.getClientId());
         if (dClient == null) {
             String errMsg = String.format("Client %s not found",
@@ -1103,7 +1096,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private UserScopeAccess provisionUserScopeAccess(String parentUniqueId, String clientId) {
-        User user = this.userDao.getUserByDn(parentUniqueId);
+        User user = this.userService.getUserByDn(parentUniqueId);
         if (user == null) {
             throw new NotFoundException(String.format("User %s not found", parentUniqueId));
         }
@@ -1207,23 +1200,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
     }
 
     @Override
-    public void setApplicationDao(ApplicationDao applicationDao) {
-        this.applicationDao = applicationDao;
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
     }
 
     @Override
-    public void setTenantDao(TenantDao tenantDao) {
-        this.tenantDao = tenantDao;
-    }
-
-    @Override
-    public void setEndpointDao(EndpointDao endpointDao) {
-        this.endpointDao = endpointDao;
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
     }
 
     @Override
@@ -1243,7 +1231,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void setUserService(UserService userService) {
-        this.defaultUserService = userService;
+        this.userService = userService;
     }
 
     String generateToken() {
@@ -1257,7 +1245,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Applications clientsObj = applicationDao.getClientsByCustomerId(
+            final Applications clientsObj = applicationService.getClientsByCustomerId(
                     customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
@@ -1273,7 +1261,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userDao.getAllUsers(filters, offset, getPagingLimit());
+            final Users usersObj = userService.getAllUsers(filters, offset, getPagingLimit());
             usersList.addAll(usersObj.getUsers());
             total = usersObj.getTotalRecords();
         }
@@ -1344,7 +1332,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.atomHopperClient = atomHopperClient;
     }
 
-    public void setUserService(DefaultUserService defaultUserService) {
-        this.defaultUserService = defaultUserService;
+    public void setUserService(DefaultUserService userService) {
+        this.userService = userService;
     }
 }

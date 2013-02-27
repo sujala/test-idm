@@ -126,13 +126,11 @@ public interface ScopeAccessService {
 
     void updatePermission(Permission permission);
 
-    void setUserDao(UserDao userDao);
+    void setApplicationService(ApplicationService applicationService);
 
-    void setApplicationDao(ApplicationDao applicationDao);
+    void setTenantService(TenantService tenantService);
 
-    void setTenantDao(TenantDao tenantDao);
-
-    void setEndpointDao(EndpointDao endpointDao);
+    void setEndpointService(EndpointService endpointService);
 
     void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
 
