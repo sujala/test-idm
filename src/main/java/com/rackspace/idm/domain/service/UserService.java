@@ -128,4 +128,8 @@ public interface UserService {
     void setTenantDao(TenantDao tenantDao);
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
+
+    List<User> getUsersInDomain(String domainId, boolean enabled);
+
+    List<User> getUsersInDomain(String domainId);
 }

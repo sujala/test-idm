@@ -36,6 +36,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.AuthDao
 import com.rackspace.idm.domain.dao.CustomerDao
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantDao
@@ -195,6 +196,7 @@ class RootServiceTest extends Specification {
     @Shared CustomerDao customerDao
     @Shared ApplicationRoleDao applicationRoleDao
     @Shared AuthDao authDao
+    @Shared DomainDao domainDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -623,6 +625,11 @@ class RootServiceTest extends Specification {
     def mockAuthDao(service) {
         authDao = Mock()
         service.authDao = authDao
+    }
+
+    def mockDomainDao(service) {
+        domainDao = Mock()
+        service.domainDao = domainDao
     }
 
     /*

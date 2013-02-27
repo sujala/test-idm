@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultDomainServiceTest {
+public class DefaultDomainServiceTestOld {
 
     @InjectMocks
     DefaultDomainService defaultDomainService = new DefaultDomainService();

@@ -71,4 +71,8 @@ public interface UserDao {
     Users getAllUsersNoLimit(FilterParam[] filters);
 
     User getUserByDn(String userDn);
+
+    List<User> getUsersByDomain(String domainId);
+
+    List<User> getUsersByDomain(String domainId, boolean enabled);
 }

@@ -77,6 +77,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockValidator(service)
         mockTenantRoleDao(service)
         mockApplicationRoleDao(service)
+        mockDomainService(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -222,7 +223,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size 1" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -240,7 +240,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size > 1 - isUserAdmin=true" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -261,7 +260,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size > 1 - isUserAdmin=false" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -280,7 +278,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - users by tenant id - size > 1" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -692,6 +689,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -713,6 +711,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -731,6 +730,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -754,6 +754,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
 
         when:
         service.updateUser(user, false)
@@ -768,6 +769,62 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         1 * scopeAccessService.expireAllTokensForUser(user.getUsername());
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+    }
+
+    def "uses DAO to get users in domain with domainId and enabled filter"() {
+        when:
+        service.getUsersInDomain("domainId", true)
+
+        then:
+        1 * userDao.getUsersByDomain("domainId", true)
+    }
+
+    def "uses DAO to get users in domain with domainId and without enabled filter"() {
+        when:
+        service.getUsersInDomain("domainId")
+
+        then:
+        1 * userDao.getUsersByDomain("domainId")
+    }
+
+    def "disableUserAdminSubUsers verifies that user-admin is last user-admin of the domain"() {
+        given:
+        def userAdmin = entityFactory.createUser().with {
+            it.username = "userAdmin"
+            return it
+        }
+        authorizationService.hasUserAdminRole(userAdmin) >> true
+
+        when:
+        service.disableUserAdminSubUsers(userAdmin)
+
+        then:
+        1 * domainService.getDomainAdmins(userAdmin.getDomainId(), true) >> [ entityFactory.createUser() ].asList()
+        0 * userDao.getUsersByDomain(userAdmin.getDomainId())
+    }
+
+    def "disableUserAdmin disables subUsers if last admin of domain"() {
+        given:
+        def userAdmin = entityFactory.createUser().with {
+            it.username = "userAdmoin"
+            it.id = "1"
+            return it
+        }
+        def subUser = entityFactory.createUser().with {
+            it.username = "subUser"
+            it.id = "2"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        authorizationService.hasUserAdminRole(userAdmin) >> true
+        domainService.getDomainAdmins(_, true) >> [].asList()
+
+        when:
+        service.disableUserAdminSubUsers(userAdmin)
+
+        then:
+        1 * userDao.getUsersByDomainId(_) >> users
+        1 * userDao.updateUser(_, _)
     }
 
     def createStringPaginatorContext() {
@@ -809,18 +866,5 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.tenantIds = tenantIds
             return it
         }
-    }
-
-    def setupMocks() {
-        mockEndpointService(service)
-        mockTenantService(service)
-        mockCloudRegionService(service)
-        mockUserDao(service)
-        mockConfiguration(service)
-        mockValidator(service)
-        mockScopeAccessDao(service)
-        mockScopeAccessService(service)
-        mockTenantDao(service)
-        mockAuthorizationService(service)
     }
 }

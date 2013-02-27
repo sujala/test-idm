@@ -78,6 +78,9 @@ public class DefaultUserService implements UserService {
     @Autowired
     private ApplicationRoleDao applicationRoleDao;
 
+    @Autowired
+    private DomainService domainService;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -618,11 +621,11 @@ public class DefaultUserService implements UserService {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
 
+        userDao.updateUser(user, hasSelfUpdatedPassword);
         if (userIsBeingDisabled) {
             disableUserAdminSubUsers(user);
         }
 
-        userDao.updateUser(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {
             ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
@@ -633,6 +636,10 @@ public class DefaultUserService implements UserService {
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
         if (authorizationService.hasUserAdminRole(user)) {
+            List<User> enabledUserAdmins = domainService.getDomainAdmins(user.getDomainId(), true);
+            if (enabledUserAdmins.size() != 0) {
+                return;
+            }
             List<User> subUsers = getSubUsers(user);
 
             for (User subUser : subUsers) {
@@ -964,6 +971,16 @@ public class DefaultUserService implements UserService {
         this.scopeAccessService = scopeAccessService;
     }
 
+    @Override
+    public List<User> getUsersInDomain(String domainId, boolean enabled) {
+        return userDao.getUsersByDomain(domainId, enabled);
+    }
+
+    @Override
+    public List<User> getUsersInDomain(String domainId) {
+        return userDao.getUsersByDomain(domainId);
+    }
+
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
@@ -986,5 +1003,9 @@ public class DefaultUserService implements UserService {
 
     public void setTenantDao(TenantDao tenantDao){
         this.tenantDao = tenantDao;
+    }
+
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
     }
 }

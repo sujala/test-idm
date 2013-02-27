@@ -239,7 +239,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Racker racker = null;
 
         SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN,
-            SearchScope.ONE, searchFilter);
+                SearchScope.ONE, searchFilter);
         if (entry != null) {
             racker = new Racker();
             racker.setUniqueId(entry.getDN());
@@ -317,7 +317,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -402,7 +402,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addOrAttributes(filters)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -1413,6 +1413,70 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         } catch (InvalidCipherTextException e) {
             getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public List<User> getUsersByDomain(String domainId) {
+        if (!isValidDomainId(domainId)) {
+            return new ArrayList<User>();
+        }
+        return getUsersInDomain(domainId, getFilter(domainId));
+    }
+
+    @Override
+    public List<User> getUsersByDomain(String domainId, boolean enabled) {
+        if (!isValidDomainId(domainId)) {
+            return new ArrayList<User>();
+        }
+        return getUsersInDomain(domainId, getFilter(domainId, enabled));
+    }
+
+    private Filter getFilter(String domainId) {
+        return new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                    .build();
+    }
+
+    private Filter getFilter(String domainId, boolean enabled) {
+        return new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                    .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+                    .build();
+    }
+
+    private List<User> getUsersInDomain(String domainId, Filter filter) {
+        getLogger().info("getting users in domain {}", domainId);
+        List<User> userList = new ArrayList<User>();
+
+        getListOfUser(userList, filter);
+
+        getLogger().info(String.format("Got %s users in domain %s", userList.size(), domainId));
+        return userList;
+    }
+
+    private boolean isValidDomainId(String domainId) {
+        if (StringUtils.isBlank(domainId)) {
+            getLogger().error("domainId filter is null or empty");
+            getLogger().info("invalid domainId");
+            return false;
+        }
+        return true;
+    }
+
+    private void getListOfUser(List<User> userList, Filter filter) {
+        List<SearchResultEntry> results = getMultipleEntries(USERS_BASE_DN, SearchScope.SUB, filter);
+
+        try {
+            for (SearchResultEntry entry : results) {
+                userList.add(getUser(entry));
+            }
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
             throw new IllegalStateException(e);
         }
     }

@@ -60,6 +60,112 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
         users.getUsers() == null
     }
 
+    def "retrieving users in a domain returns all users within the domain"() {
+        given:
+        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+        ldapUserRepository.addUser(user3)
+
+        when:
+        def userList = ldapUserRepository.getUsersByDomain("1234567890")
+        ldapUserRepository.deleteUser("enabledUse")
+        ldapUserRepository.deleteUser("disabledUse")
+        ldapUserRepository.deleteUser("use")
+
+        then:
+        userList != null
+        userList.size() == 2
+    }
+
+    def "retrieving enabled users in a domain returns enabled users within the domain"() {
+        given:
+        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+        ldapUserRepository.addUser(user3)
+
+        when:
+        def userList = ldapUserRepository.getUsersByDomain("1234567890", true)
+        ldapUserRepository.deleteUser("enabledUse")
+        ldapUserRepository.deleteUser("disabledUse")
+        ldapUserRepository.deleteUser("use")
+
+        then:
+        userList != null
+        userList.size() == 1
+        userList.get(0).username.equals("enabledUse")
+    }
+
+
+    def "retrieving disabled users in a domain returns disabled users within the domain"() {
+        given:
+        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+        ldapUserRepository.addUser(user3)
+
+        when:
+        def userList = ldapUserRepository.getUsersByDomain("1234567890", false)
+        ldapUserRepository.deleteUser("enabledUse")
+        ldapUserRepository.deleteUser("disabledUse")
+        ldapUserRepository.deleteUser("use")
+
+        then:
+        userList != null
+        userList.size() == 1
+        userList.get(0).username.equals("disabledUse")
+    }
+
+    def "retrieving users in a domain with null domainId filter returns no users"() {
+        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+        ldapUserRepository.addUser(user3)
+
+        when:
+        def userList = ldapUserRepository.getUsersByDomain(null, false)
+        ldapUserRepository.deleteUser("enabledUse")
+        ldapUserRepository.deleteUser("disabledUse")
+        ldapUserRepository.deleteUser("use")
+
+        then:
+        userList != null
+        userList.size() == 0
+    }
+
+    def "retrieving users in a domain with null domainId filter and no domainId filter returns no users"() {
+        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+        ldapUserRepository.addUser(user3)
+
+        when:
+        def userList = ldapUserRepository.getUsersByDomain(null)
+        ldapUserRepository.deleteUser("enabledUse")
+        ldapUserRepository.deleteUser("disabledUse")
+        ldapUserRepository.deleteUser("use")
+
+        then:
+        userList != null
+        userList.size() == 0
+    }
+
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
             it.id = id
