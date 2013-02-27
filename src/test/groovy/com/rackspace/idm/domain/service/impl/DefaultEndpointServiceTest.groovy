@@ -29,4 +29,12 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         then:
         1 * endpointDao.getBaseUrlsWithPolicyId("policyId")
     }
+
+    def "dao is used to get OpenStackEndpoint for a tenant"() {
+        when:
+        service.getOpenStackEndpointForTenant(entityFactory.createTenant())
+
+        then:
+        1 * endpointDao.getOpenstackEndpointsForTenant(_)
+    }
 }

@@ -83,7 +83,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -119,7 +119,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -1245,7 +1245,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Applications clientsObj = applicationService.getClientsByCustomerId(
+            final Applications clientsObj = applicationService.getByCustomerId(
                     customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();

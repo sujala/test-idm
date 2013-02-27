@@ -182,7 +182,12 @@ public class DefaultEndpointService implements EndpointService {
         return endpoints;
     }
 
-	@Override
+    @Override
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
+        return endpointDao.getOpenstackEndpointsForTenant(tenant);
+    }
+
+    @Override
 	public void addPolicyToEndpoint(int baseUrlId, String policyId) {
         endpointDao.addPolicyToEndpoint(baseUrlId, policyId);
 	}
