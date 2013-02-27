@@ -665,6 +665,111 @@ class DefaultUserServiceTest extends RootServiceTest {
         false       | true                  | true
     }
 
+    def "disableUserAdminSubUsers does if user is not userAdmin"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.enabled = true
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        authorizationService.hasUserAdminRole(user) >> false
+        userDao.getUsersByDomainId(_) >> users
+        0 * userDao.updateUser(_, _)
+    }
+
+    def "disableUserAdminSubUsers disables sub users that are enabled"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+            assert (subUser1.enabled == false)
+        }
+    }
+
+    def "disableUserAdminSubUsers does not disable sub users that are disabled"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.enabled = false
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        authorizationService.hasUserAdminRole(user) >> true
+        userDao.getUsersByDomainId(_) >> users
+        0 * userDao.updateUser(_, _)
+    }
+
+    def "disableUserAdminSubUsers disables sub users tokens"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+    }
+
+    def "updateUser disables sub users that are enabled when user is disabled"() {
+        given:
+        def user = entityFactory.createUser().with {
+            it.enabled = false
+            return it
+        }
+        def currentUser = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.username = "subUserUsername"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.updateUser(user, false)
+
+        then:
+        userDao.getUserById(_) >> currentUser
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
+        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+            assert (subUser1.enabled == false)
+        }
+        1 * scopeAccessService.expireAllTokensForUser(user.getUsername());
+        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

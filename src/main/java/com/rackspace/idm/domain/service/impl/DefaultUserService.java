@@ -613,9 +613,15 @@ public class DefaultUserService implements UserService {
         }
         // Expire all User tokens if we are updating the password field
         User currentUser = userDao.getUserById(user.getId());
-        if(checkForPasswordUpdate(currentUser, user) || checkIfUserIsBeingDisabled(currentUser, user))  {
+        boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
+        if(checkForPasswordUpdate(currentUser, user) || userIsBeingDisabled)  {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
+
+        if (userIsBeingDisabled) {
+            disableUserAdminSubUsers(user);
+        }
+
         userDao.updateUser(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {
@@ -623,6 +629,20 @@ public class DefaultUserService implements UserService {
             scopeAccessService.updateScopeAccess(scopeAccess);
         }
         logger.info("Updated User: {}", user);
+    }
+
+    private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
+        if (authorizationService.hasUserAdminRole(user)) {
+            List<User> subUsers = getSubUsers(user);
+
+            for (User subUser : subUsers) {
+                if (subUser.isEnabled()) {
+                    subUser.setEnabled(false);
+                    userDao.updateUser(subUser, false);
+                    scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+                }
+            }
+        }
     }
 
     private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
