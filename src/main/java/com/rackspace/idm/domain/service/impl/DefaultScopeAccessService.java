@@ -1096,7 +1096,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private UserScopeAccess provisionUserScopeAccess(User user, String clientId) {
         if (user == null) {
-            throw new NotFoundException(String.format("User %s not found", user.getUniqueId()));
+            throw new NotFoundException("User not found");
         }
 
         UserScopeAccess userScopeAccess = new UserScopeAccess();
@@ -1328,9 +1328,5 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
-    }
-
-    public void setUserService(DefaultUserService userService) {
-        this.userService = userService;
     }
 }

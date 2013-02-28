@@ -3,6 +3,10 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -51,15 +55,13 @@ public class DefaultScopeAccessServiceTestOld {
     @Mock
     Configuration configuration;
     @Mock
-    private UserDao userDao;
+    private UserService userService;
     @Mock
-    private ApplicationDao clientDao;
+    private ApplicationService applicationService;
     @Mock
-    private TenantDao tenantDao;
+    private TenantService tenantService;
     @Mock
-    private TenantRoleDao tenantRoleDao;
-    @Mock
-    private EndpointDao endpointDao;
+    private EndpointService endpointService;
     @Mock
     private AuthHeaderHelper authHeaderHelper;
 
@@ -91,9 +93,9 @@ public class DefaultScopeAccessServiceTestOld {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry("test",attribute);
         DelegatedClientScopeAccess token = new DelegatedClientScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -103,9 +105,9 @@ public class DefaultScopeAccessServiceTestOld {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -114,9 +116,9 @@ public class DefaultScopeAccessServiceTestOld {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -124,7 +126,7 @@ public class DefaultScopeAccessServiceTestOld {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
     }
@@ -134,7 +136,7 @@ public class DefaultScopeAccessServiceTestOld {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(new ArrayList<TenantRole>());
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(new ArrayList<TenantRole>());
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
     }
@@ -150,11 +152,11 @@ public class DefaultScopeAccessServiceTestOld {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         Tenant tenant = new Tenant();
-        when(tenantRoleDao.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(tenant);
-        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(endpointDao).getOpenstackEndpointsForTenant(tenant);
+        verify(endpointService).getOpenStackEndpointForTenant(tenant);
     }
 
     @Test
@@ -167,14 +169,14 @@ public class DefaultScopeAccessServiceTestOld {
         role.setTenantIds(tenantIds);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(endpointDao,never()).getOpenstackEndpointsForTenant(any(Tenant.class));
+        verify(endpointService,never()).getOpenStackEndpointForTenant(any(Tenant.class));
     }
 
     @Test
-    public void getOpenStackEndpointsForScopeAccess_noTenantIds_doesNotCallTenantDaoMethod() throws Exception {
+    public void getOpenStackEndpointsForScopeAccess_noTenantIds_doesNotCallTenantServiceMethod() throws Exception {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
@@ -183,33 +185,33 @@ public class DefaultScopeAccessServiceTestOld {
         role.setTenantIds(tenantIds);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao,never()).getTenant(anyString());
+        verify(tenantService,never()).getTenant(anyString());
     }
 
     @Test
-    public void getOpenStackEndpointsForScopeAccess_tenantIdsNull_doesNotCallTenantDaoMethod() throws Exception {
+    public void getOpenStackEndpointsForScopeAccess_tenantIdsNull_doesNotCallTenantServiceMethod() throws Exception {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao,never()).getTenant(anyString());
+        verify(tenantService,never()).getTenant(anyString());
     }
 
     @Test
-    public void getOpenStackEndpointsForScopeAccess_rolesEmpty_doesNotCallTenantDaoMethod() throws Exception {
+    public void getOpenStackEndpointsForScopeAccess_rolesEmpty_doesNotCallTenantServiceMethod() throws Exception {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         List<TenantRole> roles = new ArrayList<TenantRole>();
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao,never()).getTenant(anyString());
+        verify(tenantService,never()).getTenant(anyString());
     }
 
     @Test
@@ -230,9 +232,9 @@ public class DefaultScopeAccessServiceTestOld {
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         endpoint.getBaseUrls().add(new CloudBaseUrl());
 
-        when(tenantRoleDao.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(tenant);
-        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
+        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(endpoint);
 
         List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size",endpointList.size(),equalTo(1));
@@ -257,9 +259,9 @@ public class DefaultScopeAccessServiceTestOld {
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         endpoint.getBaseUrls().add(new CloudBaseUrl());
 
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(tenant);
-        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(null);
 
         List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size",endpointList.size(),equalTo(0));
@@ -282,9 +284,9 @@ public class DefaultScopeAccessServiceTestOld {
         OpenstackEndpoint endpoint = new OpenstackEndpoint();
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
 
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(tenant);
-        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(endpoint);
 
         List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size",endpointList.size(),equalTo(0));
@@ -302,8 +304,8 @@ public class DefaultScopeAccessServiceTestOld {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 
-        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
-        when(tenantDao.getTenant("123")).thenReturn(null);
+        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
+        when(tenantService.getTenant("123")).thenReturn(null);
 
         List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size",endpointList.size(),equalTo(0));
@@ -1023,7 +1025,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToClient_permissionNotAssociatedWithClient_throwsNotFoundException() throws Exception {
         try{
-            when(clientDao.getClientByClientId(null)).thenReturn(new Application());
+            when(applicationService.getById(null)).thenReturn(new Application());
             defaultScopeAccessService.grantPermissionToClient(null,new GrantedPermission());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -1035,7 +1037,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToClient_noScopeAccessForParent_getsDataFromPermission() throws Exception {
         Permission perm = mock(Permission.class);
-        when(clientDao.getClientByClientId(null)).thenReturn(new Application());
+        when(applicationService.getById(null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1047,7 +1049,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToClient_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
         Permission perm = mock(Permission.class);
-        when(clientDao.getClientByClientId(null)).thenReturn(new Application());
+        when(applicationService.getById(null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1091,7 +1093,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToUser_nullClient_throwsNotFoundException() throws Exception {
         try{
-            when(clientDao.getClientByCustomerIdAndClientId(null, null)).thenReturn(null);
+            when(applicationService.getClient(null, null)).thenReturn(null);
             defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -1103,7 +1105,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToUser_permissionNotAssociatedWithClient_throwsNotFoundException() throws Exception {
         try{
-            when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+            when(applicationService.getClient(null,null)).thenReturn(new Application());
             defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -1115,7 +1117,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToUser_noScopeAccessForParent_getsDataFromPermission() throws Exception {
         Permission perm = mock(Permission.class);
-        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(applicationService.getClient(null,null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1128,7 +1130,7 @@ public class DefaultScopeAccessServiceTestOld {
     public void grantPermissionToUser_noScopeAccessForParent_getsDataFromUser() throws Exception {
         Permission perm = mock(Permission.class);
         User user = mock(User.class);
-        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(applicationService.getClient(null,null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1142,7 +1144,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void grantPermissionToUser_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
         Permission perm = mock(Permission.class);
-        when(clientDao.getClientByCustomerIdAndClientId(null, null)).thenReturn(new Application());
+        when(applicationService.getClient(null, null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1234,7 +1236,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test (expected = NotAuthenticatedException.class)
     public void getUserScopeAccessForClientIdByUsernameAndApiCredentials_notAuthenticated_throwsNotAuthenticated() throws Exception {
-        when(userDao.authenticateByAPIKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(new User(), false));
+        when(userService.authenticateWithApiKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(new User(), false));
         defaultScopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId");
     }
 

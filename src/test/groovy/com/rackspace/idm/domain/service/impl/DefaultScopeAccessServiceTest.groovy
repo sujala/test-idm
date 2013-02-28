@@ -42,9 +42,14 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def setup() {
-        mockDaos()
-        mockMisc()
-        mockServices()
+        mockConfiguration(service)
+        mockAtomHopperClient(service)
+        mockAuthHeaderHelper(service)
+        mockScopeAccessDao(service)
+        mockUserService(service)
+        mockTenantService(service)
+        mockEndpointService(service)
+        mockApplicationService(service)
 
         config.getInt("token.cloudAuthExpirationSeconds") >>  defaultExpirationSeconds
         config.getInt("token.expirationSeconds") >> defaultExpirationSeconds
@@ -125,7 +130,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "updateUserScopeAccessTokenForClientIdByUser gets all scopeAccess for clientId and User"() {
         given:
-        applicationDao.getClientByClientId(_) >> entityFactory.createApplication()
+        applicationService.getById(_) >> entityFactory.createApplication()
         def sa = createUserScopeAccess()
         sa.getAccessTokenExp() >> new DateTime().toDate()
 
@@ -142,7 +147,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         sa.getAccessTokenExp() >> new DateTime().toDate()
 
         scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >>  [ sa ].asList()
-        applicationDao.getClientByClientId(_) >> entityFactory.createApplication()
+        applicationService.getById(_) >> entityFactory.createApplication()
 
         when:
         service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", sa.getAccessTokenString(), new Date())
@@ -162,7 +167,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
 
         scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
-        applicationDao.getClientByClientId(_) >> entityFactory.createApplication()
+        applicationService.getById(_) >> entityFactory.createApplication()
 
         when:
         service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
@@ -193,17 +198,18 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
         def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
+        def user =  entityFactory.createUser()
+        user.setUniqueId(dn)
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >>> [
                 [ expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
-        userDao.getUserByDn(_) >> entityFactory.createUser()
 
         when:
-        service.updateExpiredUserScopeAccess("parentUniqueIdString", "clientId")
-        service.updateExpiredUserScopeAccess(dn, sharedRandom)
+        service.updateExpiredUserScopeAccess(user, "clientId")
+        service.updateExpiredUserScopeAccess(user, sharedRandom)
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(_)
@@ -223,6 +229,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
         given:
+        def user = entityFactory.createUser()
         def scopeAccessOne = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("refreshOne", "userRsId", "clientId", refreshDate)
         def scopeAccessThree = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
@@ -301,15 +308,15 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "provisionUserScopeAccess adds necessary values to scopeAccess"() {
         given:
-        userDao.getUserByDn(_) >> new User().with() {
+        def user = new User().with() {
             it.username = "username"
             it.id = "id"
             return it
-        } >> null
+        }
 
         when:
-        UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(dn, sharedRandom)
-        UserScopeAccess scopeAccessTwo = service.provisionUserScopeAccess(dn, sharedRandom)
+        UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(user, sharedRandom)
+        UserScopeAccess scopeAccessTwo = service.provisionUserScopeAccess(null, sharedRandom)
 
         then:
         scopeAccessOne.getUsername().equals("username")
@@ -368,7 +375,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userDao.getUserByUsername(_) >> user
+        userService.getUser(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
@@ -390,7 +397,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userDao.getUserByUsername(_) >> user
+        userService.getUserByUsername(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
@@ -409,7 +416,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userDao.getUserById(_) >> user
+        userService.getUserById(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
@@ -431,7 +438,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userDao.getUserById(_) >> user
+        userService.getUserById(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
@@ -450,7 +457,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        defaultUserService.getUserByScopeAccess(_) >> user
+        userService.getUserByScopeAccess(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", futureDate)
 
@@ -470,7 +477,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        defaultUserService.getUserByScopeAccess(_) >> user
+        userService.getUserByScopeAccess(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
@@ -537,9 +544,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         endpoints != null
         endpoints.size() == 1
-        tenantRoleDao.getTenantRolesForUser(user) >> tenantRoles
-        tenantDao.getTenant(_) >> tenant
-        endpointDao.getOpenstackEndpointsForTenant(_) >> endpoint
+        tenantService.getTenantRolesForUser(user) >> tenantRoles
+        tenantService.getTenant(_) >> tenant
+        endpointService.getOpenStackEndpointForTenant(_) >> endpoint
     }
 
     def "isScopeAccessExpired returns true when scopeAccess is null"() {
@@ -572,25 +579,5 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         result == false
-    }
-
-    def mockDaos() {
-        mockScopeAccessDao(service)
-        mockUserDao(service)
-        mockTenantDao(service)
-        mockEndpointDao(service)
-        mockApplicationDao(service)
-        mockTenantRoleDao(service)
-    }
-
-    def mockServices() {
-        mockDefaultUserService(service)
-        mockDefaultCloud20Service(service)
-    }
-
-    def mockMisc() {
-        mockConfiguration(service)
-        mockAtomHopperClient(service)
-        mockAuthHeaderHelper(service)
     }
 }
