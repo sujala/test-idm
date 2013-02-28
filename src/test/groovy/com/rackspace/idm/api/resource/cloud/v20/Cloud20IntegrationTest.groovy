@@ -1239,6 +1239,66 @@ class Cloud20IntegrationTest extends Specification {
         hardDeleteRespones.status == 204
     }
 
+    def "Disable a userAdmin disables his subUsers"() {
+        given:
+        def domain = "someDomain$sharedRandom"
+        def adminUsername = "userAdmin$sharedRandom"
+        def username = "user$sharedRandom"
+        def password = "Password1"
+        def userAdminForCreate = createUserXML(identityAdminToken, userForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
+        User userAdmin = userAdminForCreate.getEntity(User)
+
+        def userAdminToken = authenticateXML(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
+        def userForCreate = createUserXML(userAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
+
+        when:
+        userAdmin.enabled = false;
+        def updateUserResponse = updateUserXML(identityAdminToken, userAdmin.id, userAdmin)
+        def getUserResponse = getUserXML(serviceAdminToken, userForCreate.location)
+        User user = getUserResponse.getEntity(User)
+        destroyUser(user.id)
+        destroyUser(userAdmin.id)
+
+        then:
+        updateUserResponse.status == 200
+        user.enabled == false
+    }
+
+    def "Disable one of two user admins in domain does not disable subUsers"() {
+        given:
+        def domain = "someDomain$sharedRandom"
+        def username = "user$sharedRandom"
+        def password = "Password1"
+
+        def adminUsername1 = "userAdmin3$sharedRandom"
+        def userAdminForCreate1 = createUserXML(identityAdminToken, userForCreate(adminUsername1, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
+        User userAdmin1 = userAdminForCreate1.getEntity(User)
+
+        def adminUsername2 = "userAdmin4$sharedRandom"
+        def userAdminForCreate2 = createUserXML(identityAdminToken, userForCreate(adminUsername2, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
+        User userAdmin2 = userAdminForCreate2.getEntity(User)
+
+        def userAdminToken = authenticateXML(adminUsername1, password).getEntity(AuthenticateResponse).value.token.id
+        def userForCreate = createUserXML(userAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
+
+        when:
+        userAdmin.enabled = false;
+        def updateUserResponse = updateUserXML(identityAdminToken, userAdmin1.id, userAdmin1)
+        def getUserResponse = getUserXML(serviceAdminToken, userForCreate.location)
+        User user = getUserResponse.getEntity(User)
+        destroyUser(user.id)
+        destroyUser(userAdmin1.id)
+        destroyUser(userAdmin2.id)
+
+        then:
+        updateUserResponse.status == 200
+        user.enabled == true
+    }
+
+    def destroyUser(userId) {
+        def deleteResponses = deleteUserXML(serviceAdminToken, userId)
+        def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
+    }
 
     //Resource Calls
     def createUserXML(String token, user) {
