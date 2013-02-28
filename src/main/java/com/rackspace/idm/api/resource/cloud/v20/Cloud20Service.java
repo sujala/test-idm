@@ -259,4 +259,6 @@ public interface Cloud20Service {
     ResponseBuilder getSecretQAs(String authToken, String userId);
 
     ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA);
+
+    ResponseBuilder getAdminsForDefaultUser(String authToken, String userId);
 }

@@ -2696,7 +2696,73 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 200
     }
 
+    def "user accesslevel is verified by getAdminsForDefaultUser"() {
+        given:
+        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        domainService.getDomainAdmins(_, _) >> [].asList()
 
+        when:
+        service.getAdminsForDefaultUser(authToken, "userId")
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyUserLevelAccess(_)
+    }
+
+    def "when caller is defaultuser getAdminsForDefaultUser verifies caller is user"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        authorizationService.authorizeCloudUser(_) >> true
+
+        when:
+        service.getAdminsForDefaultUser(authToken, "userId")
+
+        then:
+        1 * userService.getUser(_) >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "when caller is userAdmin getAdminsForDefaultUser verifies user is in callers domain"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "callerDomain", "REGION")
+        def user = entityFactory.createUser("user", "userId", "userDomain", "REGION")
+
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        service.getAdminsForDefaultUser(authToken, "userId")
+
+        then:
+        1 * userService.getUser(_) >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "a list of enabled admins is returned by getAdminsForDefaultUser"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        userService.getUser(_) >> caller
+        userService.checkAndGetUserById(_) >> user
+
+        when:
+        def response = service.getAdminsForDefaultUser(authToken, "userId").build()
+
+        then:
+        1 * domainService.getDomainAdmins("domainId", true)
+        response.status == 200
+    }
 
     def mockServices() {
         mockAuthenticationService(service)

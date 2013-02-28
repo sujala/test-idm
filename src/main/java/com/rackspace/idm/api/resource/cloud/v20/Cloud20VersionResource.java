@@ -350,6 +350,14 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("users/{userId}/admins")
+    public Response getAdminsForUser(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return defaultCloud20Service.getAdminsForDefaultUser(authToken, userId).build();
+    }
+
+    @GET
     @Path("tenants")
     public Response listTenantsAndGetTenantByName(
             @Context HttpHeaders httpHeaders,

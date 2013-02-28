@@ -758,6 +758,11 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getAdminsForDefaultUser(String authToken, String userId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;

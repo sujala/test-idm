@@ -2493,6 +2493,30 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder getAdminsForDefaultUser(String authToken, String userId) {
+        ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserLevelAccess(callerScopeAccess);
+
+        User caller = getUser(callerScopeAccess);
+        User user = userService.checkAndGetUserById(userId);
+
+        boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(callerScopeAccess);
+        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(callerScopeAccess);
+
+        if (callerIsDefaultUser && (!caller.getId().equals(user.getId()))) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        } else if (callerIsUserAdmin && (!caller.getDomainId().equals(user.getDomainId()))) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
+        List<User> domainAdmins = domainService.getDomainAdmins(user.getDomainId(), true);
+
+        return Response.status(200)
+                .entity(objFactories.getOpenStackIdentityV2Factory()
+                        .createUsers(userConverterCloudV20.toUserList(domainAdmins)).getValue());
+    }
+
     private void isUserAllowed(String authToken, String userId) {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccess);

@@ -1295,6 +1295,24 @@ class Cloud20IntegrationTest extends Specification {
         user.enabled == true
     }
 
+    def "default user one cannot get default user two's admins"() {
+        when:
+        def response = getAdminsForUserXML(defaultUserToken, defaultUserTwo.id)
+
+        then:
+        response.status == 403
+    }
+
+    def "default user gets his admins"() {
+        when:
+        def response = getAdminsForUserXML(defaultUserToken, defaultUser.id)
+
+        then:
+        response.status == 200
+        def users = response.getEntity(UserList).value
+        users.getUser().size != 0
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
@@ -1522,7 +1540,6 @@ class Cloud20IntegrationTest extends Specification {
 
     def validateTokenXML(String token, String validateToken){
         resource.path(path20).path("tokens").path(validateToken).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
-
     }
 
     def impersonateXML(String token, User user) {
@@ -1553,6 +1570,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def updateCredentialsXML(String token, String userId, creds) {
         resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
+    }
+
+    def getAdminsForUserXML(String token, String userId) {
+        resource.path(path20).path("users").path(userId).path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods
