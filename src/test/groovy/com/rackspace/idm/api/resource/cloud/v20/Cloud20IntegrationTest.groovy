@@ -1313,6 +1313,70 @@ class Cloud20IntegrationTest extends Specification {
         users.getUser().size != 0
     }
 
+    def "Adding a group to user-admin also adds the group to its sub-users"(){
+        given:
+        String username = "groupUserAdmin" + sharedRandom
+        String domainId = "myGroupDomain" + sharedRandom
+        String subUsername = "groupDefaultUser" + sharedRandom
+
+
+        when:
+        def userAdminForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "email@rackspace.com", true, "ORD", domainId, "Password1"))
+        def userAdmin = userAdminForCreate.getEntity(User)
+        def authRequest = authenticateXML(username, "Password1")
+        String token = authRequest.getEntity(AuthenticateResponse).value.token.id
+        def defaultUserForCreate = createUserXML(token, userForCreate(subUsername, "displayName", "email@rackspace.com", true, "ORD", null, "Password1"))
+        def defaultUser = defaultUserForCreate.getEntity(User)
+        def groupName = "myGroup" + sharedRandom
+        def groupResponse = createGroupXML(serviceAdminToken, group(groupName,groupName))
+        def group = groupResponse.getEntity(Group)
+        def addUserToGroupResponse = addUserToGroupXML(serviceAdminToken, group.value.id, userAdmin.id)
+        //Get groups
+        def getUserAdminGroups = listGroupsForUserXML(serviceAdminToken, userAdmin.id)
+        def userAdminGroups = getUserAdminGroups.getEntity(Groups)
+        def getDefaultUserGroups = listGroupsForUserXML(serviceAdminToken, defaultUser.id)
+        def defaultUserGroups = getDefaultUserGroups.getEntity(Groups)
+        //Delete Group
+        def deleteUserAdminGroupResponse = removeUserFromGroupXML(serviceAdminToken, group.value.id,userAdmin.id)
+        //Get users with group deleted
+        def getUserAdminDeletedGroup = listGroupsForUserXML(serviceAdminToken, userAdmin.id)
+        def userAdminDeletedGroup = getUserAdminDeletedGroup.getEntity(Groups)
+        def getDefaultUserDeletedGroup = listGroupsForUserXML(serviceAdminToken, defaultUser.id)
+        def defaultUserDeletedGroup = getDefaultUserDeletedGroup.getEntity(Groups)
+
+        //Clean data
+        def deleteResponses = deleteUserXML(serviceAdminToken, defaultUser.id)
+        def deleteAdminResponses = deleteUserXML(serviceAdminToken, userAdmin.id)
+        def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, defaultUser.id)
+        def hardDeleteAdminRespones = hardDeleteUserXML(serviceAdminToken, userAdmin.id)
+        def deleteGroupResponse = deleteGroupXML(serviceAdminToken, group.value.id)
+        def deleteDomainResponse = deleteDomainXML(serviceAdminToken, domainId)
+
+        then:
+        userAdminForCreate.status == 201
+        authRequest.status == 200
+        token != null
+        defaultUserForCreate.status == 201
+        addUserToGroupResponse.status == 204
+
+        userAdminGroups.value.group.get(0).name == groupName
+        defaultUserGroups.value.group.get(0).name == groupName
+
+        deleteUserAdminGroupResponse.status == 204
+        getUserAdminDeletedGroup.status == 200
+        getDefaultUserDeletedGroup.status == 200
+
+        userAdminDeletedGroup.value.group.get(0).name == "Default"
+        defaultUserDeletedGroup.value.group.get(0).name == "Default"
+
+        deleteResponses.status == 204
+        deleteAdminResponses.status == 204
+        hardDeleteRespones.status == 204
+        hardDeleteAdminRespones.status == 204
+        deleteGroupResponse.status == 204
+        deleteDomainResponse.status == 204
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
@@ -1540,6 +1604,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def validateTokenXML(String token, String validateToken){
         resource.path(path20).path("tokens").path(validateToken).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def deleteDomainXML(String token, String domainId) {
+        resource.path(path20).path("RAX-AUTH").path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def impersonateXML(String token, User user) {
