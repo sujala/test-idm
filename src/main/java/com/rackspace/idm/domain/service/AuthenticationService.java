@@ -30,13 +30,13 @@ public interface AuthenticationService {
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
-    void setApplicationDao(ApplicationDao applicationDao);
+    void setApplicationService(ApplicationService applicationService);
 
     void setConfig(Configuration appConfig);
 
-    void setUserDao(UserDao userDao);
+    void setUserService(UserService userService);
 
-    void setCustomerDao(CustomerDao customerDao);
+    void setCustomerService(CustomerService customerService);
 
     void setInputValidator(InputValidator inputValidator);
 }

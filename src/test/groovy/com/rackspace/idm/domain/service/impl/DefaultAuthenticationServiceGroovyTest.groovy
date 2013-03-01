@@ -30,13 +30,13 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
     }
 
     def setup() {
-        mockApplicationDao(service)
+        mockApplicationService(service)
         mockTenantService(service)
         mockScopeAccessService(service)
         mockAuthDao(service)
         mockConfiguration(service)
-        mockUserDao(service)
-        mockCustomerDao(service)
+        mockUserService(service)
+        mockCustomerService(service)
         mockInputValidator(service)
         mockRSAClient(service)
 
@@ -204,9 +204,9 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
 
-        applicationDao.authenticate(_, _) >> authResult
+        applicationService.authenticate(_, _) >> authResult
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
-        userDao.getUserById(_) >> user
+        userService.getUserById(_) >> user
 
         when:
         def returned = service.getTokens(credentials, new DateTime())
@@ -239,7 +239,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
             return it
         }
 
-        applicationDao.authenticate(_, _) >> authResult
+        applicationService.authenticate(_, _) >> authResult
 
         scopeAccessService.getScopeAccessByAuthCode(_) >> scopeAccessOne
 

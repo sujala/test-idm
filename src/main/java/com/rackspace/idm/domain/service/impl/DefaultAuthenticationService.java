@@ -1,14 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
@@ -37,7 +32,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     public static final int YEARS = 100;
 
     @Autowired
-    private ApplicationDao applicationDao;
+    private ApplicationService applicationService;
     @Autowired
     private TenantService tenantService;
     @Autowired
@@ -45,14 +40,13 @@ public class DefaultAuthenticationService implements AuthenticationService {
     @Autowired
     private AuthDao authDao;
     @Autowired
-    private Configuration config;
+    private UserService userService;
     @Autowired
-    private UserDao userDao;
-    @Autowired
-    private CustomerDao customerDao;
+    private CustomerService customerService;
     @Autowired
     private InputValidator inputValidator;
-
+    @Autowired
+    private Configuration config;
     @Autowired
     private RSAClient rsaClient;
 
@@ -110,8 +104,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public void setApplicationDao(ApplicationDao applicationDao) {
-        this.applicationDao = applicationDao;
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
     }
 
     @Override
@@ -120,13 +114,13 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @Override
-    public void setCustomerDao(CustomerDao customerDao) {
-        this.customerDao = customerDao;
+    public void setCustomerService(CustomerService customerService) {
+        this.customerService = customerService;
     }
 
     @Override
@@ -265,7 +259,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             throw new BadRequestException(msg);
         }
 
-        final ClientAuthenticationResult caResult = applicationDao.authenticate(trParam.getClientId(), trParam.getClientSecret());
+        final ClientAuthenticationResult caResult = applicationService.authenticate(trParam.getClientId(), trParam.getClientSecret());
         if (!caResult.isAuthenticated()) {
             final String message = "Bad Client credentials for " + trParam.getClientId();
             logger.warn(message);
@@ -340,7 +334,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             if (scopeAccess instanceof UserScopeAccess) {
                 String username = ((UserScopeAccess) scopeAccess).getUsername();
                 String userId = ((UserScopeAccess) scopeAccess).getUserRsId();
-                User user = this.userDao.getUserById(userId);
+                User user = this.userService.getUserById(userId);
                 if (user == null || user.isDisabled()) {
                     String errMsg = String.format("User %S is disabled", username);
                     logger.info(errMsg);
@@ -592,7 +586,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             }
         }
         if (!hasRackerRole) {
-            List<ClientRole> clientRoles = applicationDao.getClientRolesByClientId(config.getString("idm.clientId"));
+            List<ClientRole> clientRoles = applicationService.getClientRolesByClientId(config.getString("idm.clientId"));
             for (ClientRole clientRole : clientRoles) {
                 if (clientRole.getName().equals("Racker")) {
                     TenantRole tenantRole = new TenantRole();
@@ -608,7 +602,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private UserAuthenticationResult authenticate(String username, String password) {
         logger.debug("Authenticating User: {}", username);
 
-        UserAuthenticationResult result = userDao.authenticate(username,
+        UserAuthenticationResult result = userService.authenticate(username,
                 password);
 
         logger.debug("Authenticated User: {} : {}", username, result);
@@ -633,11 +627,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
             throw new NotAuthorizedException("Unable to authenticate user with credentials provided.");
         }
 
-        Racker racker = userDao.getRackerByRackerId(username);
+        Racker racker = userService.getRackerByRackerId(username);
         if (racker == null) {
             racker = new Racker();
             racker.setRackerId(username);
-            this.userDao.addRacker(racker);
+            this.userService.addRacker(racker);
             TenantRole rackerTenantRole = new TenantRole();
             rackerTenantRole.setRoleRsId(getRackerRoleRsId());
             rackerTenantRole.setClientId(getFoundationClientId());
@@ -657,13 +651,13 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     DateTime getUserPasswordExpirationDate(String userName) {
-        User user = this.userDao.getUserByUsername(userName);
+        User user = this.userService.getUser(userName);
         if (user == null) {
             logger.debug("No user found, returning null.");
             return null;
         }
 
-        Customer customer = customerDao.getCustomerByCustomerId(user.getCustomerId());
+        Customer customer = customerService.getCustomer(user.getCustomerId());
         if (customer == null) {
             logger.debug("No customer found, returning null");
             return null;

@@ -116,6 +116,11 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
+        return applicationDao.authenticate(clientId, clientSecret);
+    }
+
+    @Override
     public void deleteDefinedPermission(DefinedPermission definedPermission) {
         logger.debug("Delete Permission: {}", definedPermission);
         Permission permission = new Permission();

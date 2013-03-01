@@ -12,7 +12,7 @@ public interface ApplicationService {
 
     void addDefinedPermission(DefinedPermission permission);
 
-//    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
+    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
 

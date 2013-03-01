@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.service.*;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -9,15 +10,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -46,15 +41,15 @@ import static org.mockito.Mockito.*;
 public class DefaultAuthenticationServiceTestOld {
 
     @Mock
-    ApplicationDao applicationDao;
+    ApplicationService applicationService;
     @Mock
-    UserDao userDao;
+    UserService userService;
     @Mock
     ScopeAccessService scopeAccessService;
     @Mock
     TenantService tenantService;
     @Mock
-    CustomerDao customerDao;
+    CustomerService customerService;
     @Mock
     InputValidator inputValidator;
     @Mock
@@ -72,8 +67,8 @@ public class DefaultAuthenticationServiceTestOld {
     @Before
     public void setUp() throws Exception {
         ClientAuthenticationResult value = new ClientAuthenticationResult(new Application(), true);
-        when(userDao.getUserByUsername(anyString())).thenReturn(new Racker());
-        when(applicationDao.authenticate(anyString(), anyString())).thenReturn(value);
+        when(userService.getUser(anyString())).thenReturn(new Racker());
+        when(applicationService.authenticate(anyString(), anyString())).thenReturn(value);
         when(rsaClient.authenticate(anyString(),anyString())).thenReturn(true);
         when(config.getBoolean(anyString(),anyBoolean())).thenReturn(true);
         defaultAuthenticationService.setRsaClient(rsaClient);
@@ -112,7 +107,7 @@ public class DefaultAuthenticationServiceTestOld {
         Racker racker = mock(Racker.class);
         doReturn(true).when(spy).isTrustedServer();
         when(authDao.authenticate(null,null)).thenReturn(true);
-        when(userDao.getRackerByRackerId(null)).thenReturn(racker);
+        when(userService.getRackerByRackerId(null)).thenReturn(racker);
         spy.authenticateDomainUsernamePassword(null,null,null);
         verify(spy).authenticateRacker(null,null,false);
     }
@@ -122,7 +117,7 @@ public class DefaultAuthenticationServiceTestOld {
         Racker racker = mock(Racker.class);
         doReturn(true).when(spy).isTrustedServer();
         when(authDao.authenticate(null,null)).thenReturn(true);
-        when(userDao.getRackerByRackerId(null)).thenReturn(racker);
+        when(userService.getRackerByRackerId(null)).thenReturn(racker);
         spy.authenticateDomainRSA(null,null,null);
         verify(spy).authenticateRacker(null,null,true);
     }
@@ -169,7 +164,7 @@ public class DefaultAuthenticationServiceTestOld {
             Credentials trParam = new Credentials();
             trParam.setGrantType("password");
             trParam.setClientId("123");
-            when(applicationDao.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(),false));
+            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(),false));
             defaultAuthenticationService.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -184,7 +179,7 @@ public class DefaultAuthenticationServiceTestOld {
             Credentials trParam = new RackerCredentials();
             trParam.setGrantType("password");
             trParam.setClientId("123");
-            when(applicationDao.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(),true));
+            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(),true));
             defaultAuthenticationService.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -200,7 +195,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("password");
             trParam.setClientId("123");
             trParam.setUsername("jsmith");
-            when(applicationDao.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
+            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
             doReturn(new UserAuthenticationResult(new User(), false)).when(spy).authenticateRacker("jsmith",null,false);
             spy.getTokens(trParam, new DateTime());
             assertTrue("should throw exception",false);
@@ -216,7 +211,7 @@ public class DefaultAuthenticationServiceTestOld {
             Credentials trParam = new RSACredentials();
             trParam.setGrantType("password");
             trParam.setClientId("123");
-            when(applicationDao.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
+            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
             doReturn(new UserAuthenticationResult(new User(), false)).when(spy).authenticateRacker(null, null, true);
             spy.getTokens(trParam, new DateTime());
             assertTrue("should throw exception",false);
@@ -232,7 +227,7 @@ public class DefaultAuthenticationServiceTestOld {
             Credentials trParam = new Credentials();
             trParam.setGrantType("password");
             trParam.setClientId("123");
-            when(applicationDao.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
+            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -253,7 +248,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("refresh_token");
             trParam.setClientId("123");
             when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -274,7 +269,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("refresh_token");
             trParam.setClientId("123");
             when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -296,7 +291,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("refresh_token");
             trParam.setClientId("123");
             when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -318,8 +313,8 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("refresh_token");
             trParam.setClientId("123");
             when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(userDao.getUserById(null)).thenReturn(null);
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(userService.getUserById(null)).thenReturn(null);
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
         } catch (Exception ex){
@@ -347,8 +342,8 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setClientId("123");
 
             when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(userDao.getUserById(null)).thenReturn(user);
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(userService.getUserById(null)).thenReturn(user);
 
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
@@ -368,7 +363,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("authorization_code");
             trParam.setClientId("123");
 
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(null);
 
             spy.getTokens(trParam,new DateTime());
@@ -393,7 +388,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("authorization_code");
             trParam.setClientId("123");
 
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
 
             spy.getTokens(trParam,new DateTime());
@@ -418,7 +413,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("authorization_code");
             trParam.setClientId("123");
 
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
 
             spy.getTokens(trParam,new DateTime());
@@ -444,7 +439,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("authorization_code");
             trParam.setClientId("123");
 
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
             when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
 
             spy.getTokens(trParam,new DateTime());
@@ -465,7 +460,7 @@ public class DefaultAuthenticationServiceTestOld {
             trParam.setGrantType("assertion");
             trParam.setClientId("123");
 
-            when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
+            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
 
             spy.getTokens(trParam,new DateTime());
             assertTrue("should throw exception",false);
@@ -680,7 +675,7 @@ public class DefaultAuthenticationServiceTestOld {
         when(tenantService.getTenantRolesForUser(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
-        verify(applicationDao,never()).getClientRolesByClientId(anyString());
+        verify(applicationService,never()).getClientRolesByClientId(anyString());
     }
 
     @Test
@@ -700,10 +695,10 @@ public class DefaultAuthenticationServiceTestOld {
 
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
-        when(applicationDao.getClientRolesByClientId("123")).thenReturn(clientRoles);
+        when(applicationService.getClientRolesByClientId("123")).thenReturn(clientRoles);
 
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
-        verify(applicationDao).getClientRolesByClientId("123");
+        verify(applicationService).getClientRolesByClientId("123");
     }
 
     @Test
@@ -723,10 +718,10 @@ public class DefaultAuthenticationServiceTestOld {
 
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
-        when(applicationDao.getClientRolesByClientId("123")).thenReturn(clientRoles);
+        when(applicationService.getClientRolesByClientId("123")).thenReturn(clientRoles);
 
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
-        verify(applicationDao).getClientRolesByClientId("123");
+        verify(applicationService).getClientRolesByClientId("123");
     }
 
     @Test
@@ -746,10 +741,10 @@ public class DefaultAuthenticationServiceTestOld {
 
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
-        when(applicationDao.getClientRolesByClientId("123")).thenReturn(clientRoles);
+        when(applicationService.getClientRolesByClientId("123")).thenReturn(clientRoles);
 
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
-        verify(applicationDao).getClientRolesByClientId("123");
+        verify(applicationService).getClientRolesByClientId("123");
     }
 
     @Test
@@ -769,7 +764,7 @@ public class DefaultAuthenticationServiceTestOld {
 
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
-        when(applicationDao.getClientRolesByClientId("123")).thenReturn(clientRoles);
+        when(applicationService.getClientRolesByClientId("123")).thenReturn(clientRoles);
 
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
         verify(tenantService,never()).addTenantRoleToUser(any(Racker.class), any(TenantRole.class));
@@ -803,8 +798,8 @@ public class DefaultAuthenticationServiceTestOld {
 
     @Test
     public void getUserPasswordExpirationDate_noCustomerAssociatedWithGivenId_returnsNull() throws Exception {
-        when(userDao.getUserByUsername(null)).thenReturn(new User());
-        when(customerDao.getCustomerByCustomerId(null)).thenReturn(null);
+        when(userService.getUser(null)).thenReturn(new User());
+        when(customerService.getCustomer(null)).thenReturn(null);
         assertThat("should return null value", defaultAuthenticationService.getUserPasswordExpirationDate(null), nullValue());
     }
 
@@ -812,8 +807,8 @@ public class DefaultAuthenticationServiceTestOld {
     public void getUserPasswordExpirationDate_passwordRotationDisabled_returnsNull() throws Exception {
         Customer customer = new Customer();
         customer.setPasswordRotationEnabled(false);
-        when(userDao.getUserByUsername(null)).thenReturn(new User());
-        when(customerDao.getCustomerByCustomerId(null)).thenReturn(customer);
+        when(userService.getUser(null)).thenReturn(new User());
+        when(customerService.getCustomer(null)).thenReturn(customer);
         assertThat("should return null value", defaultAuthenticationService.getUserPasswordExpirationDate(null), nullValue());
     }
 

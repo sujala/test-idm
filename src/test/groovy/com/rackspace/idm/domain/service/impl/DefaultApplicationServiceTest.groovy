@@ -403,4 +403,12 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         then:
         result == null
     }
+
+    def "authenticate passes control to the Dao level"() {
+        when:
+        service.authenticate("clientId", "Secret")
+
+        then:
+        1 * applicationDao.authenticate("clientId", "Secret")
+    }
 }

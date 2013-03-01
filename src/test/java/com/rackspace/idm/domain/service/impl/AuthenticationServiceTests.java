@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -19,16 +16,12 @@ import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 public class AuthenticationServiceTests {
@@ -39,13 +32,11 @@ public class AuthenticationServiceTests {
     AuthHeaderHelper authHeaderHelper;
     InputValidator inputValidator;
     ScopeAccessService mockScopeAccessService;
-    UserDao mockUserDao;
     TenantService mockTenantService;
     DefaultAuthenticationService authenticationService;
     DefaultAuthenticationService authSpy;
-    ApplicationDao mockApplicationDao;
     AuthDao mockAuthDao;
-    CustomerDao mockCustomerDao;
+    CustomerService mockCustomerService;
     List<TenantRole> tenantRoles;
 
     String customerId = "RACKSPACE";
@@ -73,11 +64,9 @@ public class AuthenticationServiceTests {
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         authHeaderHelper = new AuthHeaderHelper();
         inputValidator = EasyMock.createMock(InputValidator.class);
-        mockUserDao = EasyMock.createMock(UserDao.class);
         mockTenantService = mock(TenantService.class);
-        mockApplicationDao = EasyMock.createMock(ApplicationDao.class);
         mockAuthDao = EasyMock.createMock(AuthDao.class);
-        mockCustomerDao = EasyMock.createMock(CustomerDao.class);
+        mockCustomerService = EasyMock.createMock(CustomerService.class);
 
 
         tenantRoles = new ArrayList<TenantRole>();
@@ -93,10 +82,10 @@ public class AuthenticationServiceTests {
         authenticationService.setAuthDao(mockAuthDao);
         authenticationService.setTenantService(mockTenantService);
         authenticationService.setScopeAccessService(mockScopeAccessService);
-        authenticationService.setApplicationDao(mockApplicationDao);
+        authenticationService.setApplicationService(mockClientService);
         authenticationService.setConfig(appConfig);
-        authenticationService.setUserDao(mockUserDao);
-        authenticationService.setCustomerDao(mockCustomerDao);
+        authenticationService.setUserService(mockUserService);
+        authenticationService.setCustomerService(mockCustomerService);
         authenticationService.setInputValidator(inputValidator);
 
         authSpy = PowerMockito.spy(authenticationService);
@@ -114,11 +103,11 @@ public class AuthenticationServiceTests {
         final UserAuthenticationResult uaResult = new UserAuthenticationResult(testuser, false);
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
 
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockUserService.getUser(authCredentials.getUsername())).andReturn(testuser);
-        EasyMock.expect(mockUserDao.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
+        EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
 
-        EasyMock.replay(mockApplicationDao, mockUserDao);
+        EasyMock.replay(mockClientService, mockUserService);
 
         authenticationService.authenticate(authCredentials);
     }
@@ -129,10 +118,10 @@ public class AuthenticationServiceTests {
         authCredentials.setGrantType("none");
 
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockScopeAccessService.getUserScopeAccessForClientId(uniqueId, clientId)).andReturn(getFakeUserScopeAccess());
 
-        EasyMock.replay(mockApplicationDao, mockScopeAccessService);
+        EasyMock.replay(mockClientService, mockScopeAccessService);
 
         authenticationService.authenticate(authCredentials);
     }
@@ -150,13 +139,13 @@ public class AuthenticationServiceTests {
         final UserAuthenticationResult uaResult = new UserAuthenticationResult(user, true);
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
 
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockUserDao.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
-        EasyMock.expect(mockUserDao.getUserByUsername(authCredentials.getUsername())).andReturn(user);
-        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(customer);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
+        EasyMock.expect(mockUserService.getUser(authCredentials.getUsername())).andReturn(user);
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
         EasyMock.expect(mockScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user)).andReturn(getFakePasswordResetScopeAccess());
 
-        EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService, mockCustomerDao);
+        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService, mockCustomerService);
 
         final AuthData authData = authenticationService.authenticate(authCredentials);
 
@@ -178,12 +167,12 @@ public class AuthenticationServiceTests {
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
         final User user = getFakeUser();
 
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(null);
-        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
-        EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
+        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
 
         authenticationService.authenticate(authCredentials);
     }
@@ -200,12 +189,12 @@ public class AuthenticationServiceTests {
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
         final User user = getFakeUser();
 
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
-        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
-        EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
+        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
 
         authenticationService.authenticate(authCredentials);
     }
@@ -222,12 +211,12 @@ public class AuthenticationServiceTests {
         final Application testClient = getTestClient();
         final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
 
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
-        EasyMock.expect(mockUserDao.getUserById(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserById(username)).andReturn(user);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
-        EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
+        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
 
         authenticationService.authenticate(authCredentials);
     }
