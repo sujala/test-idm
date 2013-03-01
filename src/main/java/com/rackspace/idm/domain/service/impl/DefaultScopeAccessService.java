@@ -1076,7 +1076,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId) {
-        List<ScopeAccess> scopeAccessList = scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), clientId);
+        List<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccessesByParent(user.getUniqueId());
         if (scopeAccessList.size() == 0) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccess);

@@ -273,8 +273,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .andReturn(new UserAuthenticationResult(user, true));
 
         EasyMock.expect(
-            scopeAccessDao.getDirectScopeAccessForParentByClientId(
-                    user.getUniqueId(), client.getClientId())).andReturn(saList);
+            scopeAccessDao.getScopeAccessesByParent(
+                    user.getUniqueId())).andReturn(saList);
 
         EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
 
@@ -306,7 +306,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.expect(userService.authenticateWithApiKey(username, apiKey))
             .andReturn(new UserAuthenticationResult(user, true));
 
-        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), client.getClientId())).andReturn(saList);
+        EasyMock.expect(scopeAccessDao.getScopeAccessesByParent(user.getUniqueId())).andReturn(saList);
 
         EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
 
@@ -328,7 +328,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         User user = new User();
         user.setUniqueId("userUniqueId");
 
-        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId("userUniqueId", "clientId")).andReturn(saList);
+        EasyMock.expect(scopeAccessDao.getScopeAccessesByParent("userUniqueId")).andReturn(saList);
 
         EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("userUniqueId", "clientId")).andReturn(usao);
 
