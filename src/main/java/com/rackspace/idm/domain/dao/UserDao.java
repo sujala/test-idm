@@ -55,7 +55,6 @@ public interface UserDao {
      * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
     void updateUser(User user, boolean hasSelfUpdatedPassword);
-    void updateUserById(User user, boolean hasSelfUpdatedPassword);
     
     String getNextUserId();
 
@@ -72,4 +71,8 @@ public interface UserDao {
     Users getAllUsersNoLimit(FilterParam[] filters);
 
     User getUserByDn(String userDn);
+
+    List<User> getUsersByDomain(String domainId);
+
+    List<User> getUsersByDomain(String domainId, boolean enabled);
 }

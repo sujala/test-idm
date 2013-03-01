@@ -178,6 +178,19 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     }
 
+    def "update expired user scope access gets all scope access for parent"() {
+        given:
+        def sa = createUserScopeAccess()
+        def sa_2 = createUserScopeAccess("newToken", null, null, null)
+
+        when:
+        service.updateExpiredUserScopeAccess(dn, "clientId")
+
+        then:
+        1 * scopeAccessDao.getScopeAccessesByParent(dn) >> [sa].asList()
+        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa_2
+    }
+
     def "update expired user scope access adds new scope access entity to the directory"() {
         given:
         def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
@@ -201,7 +214,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def user =  entityFactory.createUser()
         user.setUniqueId(dn)
 
-        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >>> [
+        scopeAccessDao.getScopeAccessesByParent(_) >>> [
                 [ expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
 
@@ -235,7 +248,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccessThree = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
         def scopeAccessFour = createUserScopeAccess("goodOne", "userRsId", "clientId", futureDate)
 
-        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
+        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
 
         when:

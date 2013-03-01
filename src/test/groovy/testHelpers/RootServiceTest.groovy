@@ -37,6 +37,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.AuthDao
 import com.rackspace.idm.domain.dao.CustomerDao
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantDao
@@ -94,7 +95,6 @@ import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
-import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
@@ -199,6 +199,7 @@ class RootServiceTest extends Specification {
     @Shared CustomerDao customerDao
     @Shared ApplicationRoleDao applicationRoleDao
     @Shared AuthDao authDao
+    @Shared DomainDao domainDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -640,6 +641,11 @@ class RootServiceTest extends Specification {
         service.authDao = authDao
     }
 
+    def mockDomainDao(service) {
+        domainDao = Mock()
+        service.domainDao = domainDao
+    }
+
     /*
         Mock Builders
     */
@@ -793,7 +799,7 @@ class RootServiceTest extends Specification {
         new ScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
@@ -811,7 +817,7 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.clientId = clientId
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
@@ -833,7 +839,7 @@ class RootServiceTest extends Specification {
             it.username = username
             it.impersonatingUsername = impUsername
             it.impersonatingToken = impToken
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
@@ -852,7 +858,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
@@ -870,7 +876,7 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.rackerId = rackerId
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
@@ -895,12 +901,12 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createEntryForScopeAccess(dn))
+            it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
     }
 
-    def createEntryForScopeAccess(String dn) {
+    def createLdapEntryWithDn(String dn) {
         return new ReadOnlyEntry(dn)
     }
 

@@ -69,6 +69,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockValidator(service)
         mockTenantRoleDao(service)
         mockApplicationRoleDao(service)
+        mockDomainService(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -214,7 +215,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size 1" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -232,7 +232,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size > 1 - isUserAdmin=true" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -253,7 +252,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - user by tenant id - size > 1 - isUserAdmin=false" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -272,7 +270,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "GET - users by tenant id - size > 1" (){
         given:
-        setupMocks()
         String[] tenantIds = ["1","2"]
         tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
@@ -598,6 +595,230 @@ class DefaultUserServiceTest extends RootServiceTest {
         weight == 2000
     }
 
+    def "GET - Users by tenantId - verify that userId is not null"(){
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+        tenantRole.userId = null
+        tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+
+
+        when:
+        service.getUsersByTenantId("1")
+
+        then:
+        1 * tenantService.addUserIdToTenantRole(_) >> {TenantRole tenantRole1 ->
+            tenantRole1.userId = "1"
+        }
+    }
+
+    def "updateUser expires tokens for user if the user is set to disabled"() {
+        given:
+        def currentUser = entityFactory.createUser().with {
+            it.enabled = true
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.enabled = false
+            return it
+        }
+
+        when:
+        service.updateUser(user, false)
+
+        then:
+        1 * scopeAccessService.expireAllTokensForUser(_)
+        userDao.getUserById(_) >> currentUser
+        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
+    }
+
+    def "checkIfUserIsBeingDisabled test"() {
+        when:
+        def currentUser = entityFactory.createUser().with {
+            it.enabled = currentUserEnabled
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.enabled = userEnabled
+            return it
+        }
+        def result = service.checkIfUserIsBeingDisabled(currentUser, user)
+
+        then:
+        expected == result
+
+        where:
+        expected    | currentUserEnabled    | userEnabled
+        false       | false                 | false
+        false       | false                 | true
+        true        | true                  | false
+        false       | true                  | true
+    }
+
+    def "disableUserAdminSubUsers does if user is not userAdmin"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.enabled = true
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        authorizationService.hasUserAdminRole(user) >> false
+        userDao.getUsersByDomainId(_) >> users
+        0 * userDao.updateUser(_, _)
+    }
+
+    def "disableUserAdminSubUsers disables sub users that are enabled"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+            assert (subUser1.enabled == false)
+        }
+    }
+
+    def "disableUserAdminSubUsers does not disable sub users that are disabled"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.enabled = false
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        authorizationService.hasUserAdminRole(user) >> true
+        userDao.getUsersByDomainId(_) >> users
+        0 * userDao.updateUser(_, _)
+    }
+
+    def "disableUserAdminSubUsers disables sub users tokens"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+    }
+
+    def "updateUser disables sub users that are enabled when user is disabled"() {
+        given:
+        def user = entityFactory.createUser().with {
+            it.enabled = false
+            return it
+        }
+        def currentUser = entityFactory.createUser()
+        def subUser = entityFactory.createUser().with {
+            it.id = "subUserId"
+            it.username = "subUserUsername"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        domainService.getDomainAdmins(_, _) >> [].asList()
+
+        when:
+        service.updateUser(user, false)
+
+        then:
+        userDao.getUserById(_) >> currentUser
+        userDao.getUsersByDomainId(_) >> users
+        authorizationService.hasUserAdminRole(user) >> true
+        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
+        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+            assert (subUser1.enabled == false)
+        }
+        1 * scopeAccessService.expireAllTokensForUser(user.getUsername());
+        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+    }
+
+    def "uses DAO to get users in domain with domainId and enabled filter"() {
+        when:
+        service.getUsersInDomain("domainId", true)
+
+        then:
+        1 * userDao.getUsersByDomain("domainId", true)
+    }
+
+    def "uses DAO to get users in domain with domainId and without enabled filter"() {
+        when:
+        service.getUsersInDomain("domainId")
+
+        then:
+        1 * userDao.getUsersByDomain("domainId")
+    }
+
+    def "disableUserAdminSubUsers verifies that user-admin is last user-admin of the domain"() {
+        given:
+        def userAdmin = entityFactory.createUser().with {
+            it.username = "userAdmin"
+            return it
+        }
+        authorizationService.hasUserAdminRole(userAdmin) >> true
+
+        when:
+        service.disableUserAdminSubUsers(userAdmin)
+
+        then:
+        1 * domainService.getDomainAdmins(userAdmin.getDomainId(), true) >> [ entityFactory.createUser() ].asList()
+        0 * userDao.getUsersByDomain(userAdmin.getDomainId())
+    }
+
+    def "disableUserAdmin disables subUsers if last admin of domain"() {
+        given:
+        def userAdmin = entityFactory.createUser().with {
+            it.username = "userAdmoin"
+            it.id = "1"
+            return it
+        }
+        def subUser = entityFactory.createUser().with {
+            it.username = "subUser"
+            it.id = "2"
+            return it
+        }
+        def users = entityFactory.createUsers([subUser].asList())
+        authorizationService.hasUserAdminRole(userAdmin) >> true
+        domainService.getDomainAdmins(_, true) >> [].asList()
+
+        when:
+        service.disableUserAdminSubUsers(userAdmin)
+
+        then:
+        1 * userDao.getUsersByDomainId(_) >> users
+        1 * userDao.updateUser(_, _)
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25
@@ -637,18 +858,5 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.tenantIds = tenantIds
             return it
         }
-    }
-
-    def setupMocks() {
-        mockEndpointService(service)
-        mockTenantService(service)
-        mockCloudRegionService(service)
-        mockUserDao(service)
-        mockConfiguration(service)
-        mockValidator(service)
-        mockScopeAccessDao(service)
-        mockScopeAccessService(service)
-        mockTenantDao(service)
-        mockAuthorizationService(service)
     }
 }

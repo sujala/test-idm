@@ -58,4 +58,6 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForClientRole(ClientRole role);
 
     void deleteTenantRole(TenantRole role);
+
+    void addUserIdToTenantRole(TenantRole tenantRole);
 }

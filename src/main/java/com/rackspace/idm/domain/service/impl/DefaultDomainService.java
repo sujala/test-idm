@@ -1,14 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
@@ -41,6 +39,9 @@ public class DefaultDomainService implements DomainService{
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
@@ -178,6 +179,26 @@ public class DefaultDomainService implements DomainService{
                 new FilterParam(FilterParam.FilterParamName.ENABLED, String.valueOf(enabled))
             };
         return userService.getAllUsers(filters);
+    }
+
+    @Override
+    public List<User> getDomainAdmins(String domainId) {
+        return filterUserAdmins(userService.getUsersInDomain(domainId));
+    }
+
+    @Override
+    public List<User> getDomainAdmins(String domainId, boolean enabled) {
+        return filterUserAdmins(userService.getUsersInDomain(domainId, enabled));
+    }
+
+    private List<User> filterUserAdmins(List<User> userList) {
+        List<User> userAdmins = new ArrayList<User>();
+        for (User user : userList) {
+            if (authorizationService.hasUserAdminRole(user)) {
+                userAdmins.add(user);
+            }
+        }
+        return userAdmins;
     }
 
     List<String> setTenantIdList(Domain domain, String tenantId) {

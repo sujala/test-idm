@@ -35,7 +35,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -487,7 +486,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listGroups(httpHeaders, authToken, groupName, null, null);
+        return defaultCloud20Service.getGroup(httpHeaders, authToken, groupName);
     }
 
     @Override
@@ -758,6 +757,11 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getUserAdminsForUser(String authToken, String userId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;
@@ -930,13 +934,21 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
-             {
+    public ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
-            String request = getCloudAuthV20Url() + USERS + "/" + userId + OS_KSADM_CREDENTIALS + credentialType;
+            String request = getCloudAuthV20Url() + USERS + "/" + userId + OS_KSADM_CREDENTIALS + JSONConstants.PASSWORD_CREDENTIALS;
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.getUserCredential(httpHeaders, authToken, userId, credentialType);
+        return defaultCloud20Service.getUserPasswordCredentials(httpHeaders, authToken, userId);
+    }
+
+    @Override
+    public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String request = getCloudAuthV20Url() + USERS + "/" + userId + OS_KSADM_CREDENTIALS + JSONConstants.APIKEY_CREDENTIALS;
+            return cloudClient.get(request, httpHeaders);
+        }
+        return defaultCloud20Service.getUserApiKeyCredentials(httpHeaders, authToken, userId);
     }
 
     @Override

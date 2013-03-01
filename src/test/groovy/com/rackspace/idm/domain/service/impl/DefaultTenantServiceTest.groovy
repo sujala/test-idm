@@ -294,4 +294,26 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         tenantRoleDao.addTenantRoleToUser(user, tenantRole)
     }
+
+    def "Add userId To TenantRole if it does not have it set"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole()
+
+        when:
+        service.addUserIdToTenantRole(tenantRole)
+
+        then:
+        tenantRole.getUserId() != null
+        tenantRole.getUserId() == "1"
+        1 * tenantDao.updateTenantRole(_)
+
+    }
+
+    def "Add userId To TenantRole - sending null"() {
+        when:
+        service.addUserIdToTenantRole(null)
+
+        then:
+        notThrown(Exception)
+    }
 }

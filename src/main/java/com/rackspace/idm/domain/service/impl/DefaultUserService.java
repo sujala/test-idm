@@ -78,6 +78,9 @@ public class DefaultUserService implements UserService {
     @Autowired
     private ApplicationRoleDao applicationRoleDao;
 
+    @Autowired
+    private DomainService domainService;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -330,6 +333,9 @@ public class DefaultUserService implements UserService {
         List<TenantRole> tenantRoles = tenantDao.getAllTenantRolesForTenant(tenantId);
         List<Filter> filterList = new ArrayList<Filter>();
         for(TenantRole t : tenantRoles){
+            if(t.getUserId() == null){
+                tenantService.addUserIdToTenantRole(t);
+            }
             filterList.add(Filter.createEqualityFilter("rsId", t.getUserId()));
         }
         Users users = userDao.getUsers(filterList);
@@ -593,25 +599,8 @@ public class DefaultUserService implements UserService {
         return newPassword.toExisting();
     }
 
-    @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
-        logger.info("Updating User: {}", user);
-        if(!validator.isBlank(user.getEmail())){
-            validator.isEmailValid(user.getEmail());
-        }
-
-        // Expire all User tokens if we are updating the password field
-        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
-        }
-
-        userDao.updateUser(user, hasSelfUpdatedPassword);
-        logger.info("Updated User: {}", user);
-    }
-
-    boolean checkForPasswordUpdate(User user) {
-        if(user != null) {
-            User currentUser = userDao.getUserById(user.getId());
+    boolean checkForPasswordUpdate(User currentUser, User user) {
+        if(user != null && !StringUtils.isEmpty(user.getPassword())) {
             if(currentUser != null && !StringUtils.isEmpty(currentUser.getPassword()) && !currentUser.getPassword().equals(user.getPassword())){
                 return true;
             }
@@ -619,22 +608,58 @@ public class DefaultUserService implements UserService {
         return false;
     }
 
-    public void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
         }
         // Expire all User tokens if we are updating the password field
-        if(!StringUtils.isEmpty(user.getPassword()) && checkForPasswordUpdate(user)) {
+        User currentUser = userDao.getUserById(user.getId());
+        boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
+        if(checkForPasswordUpdate(currentUser, user) || userIsBeingDisabled)  {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
-        userDao.updateUserById(user, hasSelfUpdatedPassword);
+
+        userDao.updateUser(user, hasSelfUpdatedPassword);
+        if (userIsBeingDisabled) {
+            disableUserAdminSubUsers(user);
+        }
+
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {
             ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
             scopeAccessService.updateScopeAccess(scopeAccess);
         }
         logger.info("Updated User: {}", user);
+    }
+
+    private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
+        if (authorizationService.hasUserAdminRole(user)) {
+            List<User> enabledUserAdmins = domainService.getDomainAdmins(user.getDomainId(), true);
+            if (enabledUserAdmins.size() != 0) {
+                return;
+            }
+            List<User> subUsers = getSubUsers(user);
+
+            for (User subUser : subUsers) {
+                if (subUser.isEnabled()) {
+                    subUser.setEnabled(false);
+                    userDao.updateUser(subUser, false);
+                    scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+                }
+            }
+        }
+    }
+
+    private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
+        if (currentUser != null && user != null && user.isEnabled() != null) {
+            boolean currentUserEnabled = currentUser.isEnabled();
+            boolean userEnabled = user.isEnabled();
+
+            return !userEnabled && userEnabled != currentUserEnabled;
+        }
+        return false;
     }
 
     private String getIdmClientId() {
@@ -946,6 +971,16 @@ public class DefaultUserService implements UserService {
         this.scopeAccessService = scopeAccessService;
     }
 
+    @Override
+    public List<User> getUsersInDomain(String domainId, boolean enabled) {
+        return userDao.getUsersByDomain(domainId, enabled);
+    }
+
+    @Override
+    public List<User> getUsersInDomain(String domainId) {
+        return userDao.getUsersByDomain(domainId);
+    }
+
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
@@ -968,5 +1003,9 @@ public class DefaultUserService implements UserService {
 
     public void setTenantDao(TenantDao tenantDao){
         this.tenantDao = tenantDao;
+    }
+
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
     }
 }

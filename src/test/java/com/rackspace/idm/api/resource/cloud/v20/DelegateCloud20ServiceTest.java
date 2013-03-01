@@ -2070,16 +2070,16 @@ public class DelegateCloud20ServiceTest {
     public void getUserCredential_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.getUserCredential(null, null, userId, "type");
-        verify(defaultCloud20Service).getUserCredential(null, null, userId, "type");
+        delegateCloud20Service.getUserPasswordCredentials(null, null, userId);
+        verify(defaultCloud20Service).getUserPasswordCredentials(null, null, userId);
     }
 
     @Test
     public void getUserCredential_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.getUserCredential(null, null, userId, "type");
-        verify(defaultCloud20Service).getUserCredential(null, null, userId, "type");
+        delegateCloud20Service.getUserPasswordCredentials(null, null, userId);
+        verify(defaultCloud20Service).getUserPasswordCredentials(null, null, userId);
     }
 
     @Test
@@ -2087,16 +2087,16 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
-        delegateCloud20Service.getUserCredential(mockHeaders, null, userId, "type");
-        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials/type", mockHeaders);
+        delegateCloud20Service.getUserApiKeyCredentials(mockHeaders, null, userId);
+        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials", mockHeaders);
     }
 
     @Test
     public void getUserCredential_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.getUserCredential(null, null, userId, "type");
-        verify(defaultCloud20Service).getUserCredential(null, null, userId, "type");
+        delegateCloud20Service.getUserPasswordCredentials(null, null, userId);
+        verify(defaultCloud20Service).getUserPasswordCredentials(null, null, userId);
     }
 
     @Test
@@ -2787,7 +2787,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test
@@ -2795,7 +2795,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test
@@ -2803,7 +2803,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.getGroup(null, null, "groupName");
-        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+        verify(defaultCloud20Service).getGroup(null, null, "groupName");
     }
 
     @Test (expected = ApiException.class)

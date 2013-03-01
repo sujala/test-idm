@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.sun.jersey.api.ConflictException;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -60,12 +59,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Before
     public void setUp() throws Exception {
-        spy = spy(ldapUserRepository);
 
         ldapInterface = mock(LDAPInterface.class);
 
         cryptHelper = new CryptHelper();
         cryptHelper.setConfiguration(configuration);
+        ldapUserRepository.setCryptHelper(cryptHelper);
+        spy = spy(ldapUserRepository);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
 
@@ -708,7 +708,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         user.setId("id");
         doNothing().when(spy).updateUser(any(User.class),any(User.class),anyBoolean());
         doReturn(user).when(spy).getUserById("id");
-        spy.updateUserById(user, false);
+        spy.updateUser(user, false);
         verify(spy).getUserById("id");
     }
 
@@ -721,7 +721,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("oldUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(false).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
     }
 
     @Test
@@ -733,7 +733,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("newUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(false).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -747,7 +747,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(true).when(spy).isUsernameUnique("newUser");
         doNothing().when(spy).updateUser(newUser, oldUser, false);
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -760,7 +760,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         oldUser.setUsername("newUser");
         doReturn(oldUser).when(spy).getUserById("id");
         doReturn(true).when(spy).isUsernameUnique("newUser");
-        spy.updateUserById(newUser, false);
+        spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
 
@@ -768,9 +768,11 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void updateUser_callsUpdateUser() throws Exception {
         User newUser = new User();
         newUser.setUsername("username");
+        newUser.setId("id");
         User oldUser = new User();
         oldUser.setUsername("username");
-        doReturn(oldUser).when(spy).getUserByUsername("username");
+        oldUser.setId("id");
+        doReturn(oldUser).when(spy).getUserById("id");
         spy.updateUser(newUser, false);
         verify(spy).updateUser(newUser, oldUser, false);
     }
@@ -2211,7 +2213,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setLastname("abc");
         oldUser.setLastname("def");
-        ldapUserRepository.checkForLastNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForLastNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2243,7 +2245,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setSecretQuestion("abc");
         oldUser.setSecretQuestion("def");
-        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2275,7 +2277,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setSecretAnswer("abc");
         oldUser.setSecretAnswer("def");
-        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2308,7 +2310,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setApiKey("abc");
         oldUser.setApiKey("def");
-        ldapUserRepository.checkForApiKeyModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForApiKeyModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2372,7 +2374,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setEmail("abc");
         oldUser.setEmail("def");
-        ldapUserRepository.checkForEmailModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForEmailModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2404,7 +2406,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setFirstname("abc");
         oldUser.setFirstname("def");
-        ldapUserRepository.checkForFirstNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForFirstNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2468,7 +2470,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         List<Modification> modificationList = new ArrayList<Modification>();
         user.setDisplayName("abc");
         oldUser.setDisplayName("def");
-        ldapUserRepository.checkForDisplayNameModification(oldUser, user, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForDisplayNameModification(oldUser, user, cryptHelper, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
@@ -2566,7 +2568,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Password oldPassword = Password.existingInstance("abc", new DateTime(), true);
         oldUser.setPasswordObj(oldPassword);
         user.setPasswordObj(Password.newInstance("abc"));
-        ldapUserRepository.checkForPasswordModification(oldUser, user, false, new CryptHelper(), modificationList);
+        ldapUserRepository.checkForPasswordModification(oldUser, user, false, cryptHelper, modificationList);
         assertThat("mod list", modificationList.isEmpty(), equalTo(false));
     }
 

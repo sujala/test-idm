@@ -38,6 +38,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Autowired
     Paginator<User> paginator;
 
+    @Autowired
+    CryptHelper cryptHelper;
+
     @Override
     public void addRacker(Racker racker) {
         getLogger().info("Adding racker - {}", racker);
@@ -236,7 +239,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Racker racker = null;
 
         SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN,
-            SearchScope.ONE, searchFilter);
+                SearchScope.ONE, searchFilter);
         if (entry != null) {
             racker = new Racker();
             racker.setUniqueId(entry.getDN());
@@ -314,7 +317,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -399,7 +402,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addOrAttributes(filters)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -498,21 +501,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
-    public void updateUserById(User user, boolean hasSelfUpdatedPassword){
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword){
         getLogger().info("Updating user to {}", user);
         throwIfEmptyUsername(user);
         User oldUser = getUserById(user.getId());
         if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
             throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
         }
-        updateUser(user, oldUser, hasSelfUpdatedPassword);
-    }
-
-    @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
-        getLogger().info("Updating user to {}", user);
-        throwIfEmptyUsername(user);
-        User oldUser = getUserByUsername(user.getUsername());
         updateUser(user, oldUser, hasSelfUpdatedPassword);
     }
 
@@ -707,8 +703,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     Attribute[] getAddAttributes(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
-
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
@@ -973,7 +967,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
         user.setId(resultEntry.getAttributeValue(ATTR_ID));
         user.setUniqueId(resultEntry.getDN());
@@ -1060,7 +1053,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate) throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         checkForPasswordModification(uOld, uNew, isSelfUpdate, cryptHelper, mods);
@@ -1425,11 +1417,79 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
+    @Override
+    public List<User> getUsersByDomain(String domainId) {
+        if (!isValidDomainId(domainId)) {
+            return new ArrayList<User>();
+        }
+        return getUsersInDomain(domainId, getFilter(domainId));
+    }
+
+    @Override
+    public List<User> getUsersByDomain(String domainId, boolean enabled) {
+        if (!isValidDomainId(domainId)) {
+            return new ArrayList<User>();
+        }
+        return getUsersInDomain(domainId, getFilter(domainId, enabled));
+    }
+
+    private Filter getFilter(String domainId) {
+        return new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                    .build();
+    }
+
+    private Filter getFilter(String domainId, boolean enabled) {
+        return new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                    .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+                    .build();
+    }
+
+    private List<User> getUsersInDomain(String domainId, Filter filter) {
+        getLogger().info("getting users in domain {}", domainId);
+        List<User> userList = new ArrayList<User>();
+
+        getListOfUser(userList, filter);
+
+        getLogger().info(String.format("Got %s users in domain %s", userList.size(), domainId));
+        return userList;
+    }
+
+    private boolean isValidDomainId(String domainId) {
+        if (StringUtils.isBlank(domainId)) {
+            getLogger().error("domainId filter is null or empty");
+            getLogger().info("invalid domainId");
+            return false;
+        }
+        return true;
+    }
+
+    private void getListOfUser(List<User> userList, Filter filter) {
+        List<SearchResultEntry> results = getMultipleEntries(USERS_BASE_DN, SearchScope.SUB, filter);
+
+        try {
+            for (SearchResultEntry entry : results) {
+                userList.add(getUser(entry));
+            }
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        }
+    }
+
     protected int getLdapPagingOffsetDefault() {
         return config.getInt("ldap.paging.offset.default");
     }
 
     protected int getLdapPagingLimitDefault() {
         return config.getInt("ldap.paging.limit.default");
+    }
+
+    public void setCryptHelper(CryptHelper cryptHelper) {
+        this.cryptHelper = cryptHelper;
     }
 }

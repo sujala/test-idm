@@ -56,7 +56,9 @@ public interface Cloud20Service {
 
     ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) ;
 
-    ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
+    ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) ;
+
+    ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) ;
 
     ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
 
@@ -259,4 +261,6 @@ public interface Cloud20Service {
     ResponseBuilder getSecretQAs(String authToken, String userId);
 
     ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA);
+
+    ResponseBuilder getUserAdminsForUser(String authToken, String userId);
 }

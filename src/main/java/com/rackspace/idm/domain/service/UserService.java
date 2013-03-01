@@ -78,7 +78,7 @@ public interface UserService {
     boolean hasSubUsers(String userId);
     
     void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
-    void updateUserById(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
+
     Password resetUserPassword(User user);
 
 //    DateTime getUserPasswordExpirationDate(String userName);
@@ -125,4 +125,10 @@ public interface UserService {
     void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
     void setTenantDao(TenantDao tenantDao);
+
+    void setScopeAccessService(ScopeAccessService scopeAccessService);
+
+    List<User> getUsersInDomain(String domainId, boolean enabled);
+
+    List<User> getUsersInDomain(String domainId);
 }

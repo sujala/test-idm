@@ -364,10 +364,16 @@ public class DefaultCloud11Service implements Cloud11Service {
             userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
 
             userService.addUser(userDO);
-            addMossoTenant(user);
-            String nastId = addNastTenant(user);
+            addMossoTenant(user, userDO.getId());
+            String nastId = addNastTenant(user, userDO.getId());
             userDO.setNastId(nastId);
             userService.updateUser(userDO, false);
+
+            // Add Tenants to Domains
+            domainService.addTenantToDomain(userDO.getMossoId().toString(), userDO.getDomainId());
+            if (nastId != null) {
+                domainService.addTenantToDomain(userDO.getNastId(), userDO.getDomainId());
+            }
 
             //Add user-admin role
             ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
@@ -407,7 +413,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    String addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+    String addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user, String id) {
         //cloudFiles
         String nastId;
         if (isNastEnabled()) {
@@ -438,13 +444,14 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.setUserId(id);
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
         return nastId;
     }
 
-    void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+    void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user, String id) {
         //cloudServers
         Integer mossoId = user.getMossoId();
         if (mossoId != null) {
@@ -469,6 +476,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.setUserId(id);
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
@@ -999,7 +1007,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (gaUser.isDisabled()) {
-                scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
