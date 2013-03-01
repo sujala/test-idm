@@ -131,7 +131,7 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/default-region/services")
     public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
                                              DefaultRegionServices defaultRegionServices){
-        return defaultCloud20Service.setDefaultRegionServices(authToken,defaultRegionServices).build();
+        return defaultCloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
     }
 
     @POST
@@ -523,7 +523,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
+        return getCloud20Service().getUserApiKeyCredentials(httpHeaders, authToken, userId).build();
     }
 
     @GET
@@ -532,7 +532,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS).build();
+        return getCloud20Service().getUserPasswordCredentials(httpHeaders, authToken, userId).build();
     }
 
     @DELETE

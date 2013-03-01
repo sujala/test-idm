@@ -56,7 +56,9 @@ public interface Cloud20Service {
 
     ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) ;
 
-    ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
+    ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) ;
+
+    ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) ;
 
     ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
 

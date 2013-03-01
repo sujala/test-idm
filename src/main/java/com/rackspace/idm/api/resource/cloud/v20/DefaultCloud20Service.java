@@ -1362,15 +1362,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
+    public ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
-            if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)
-                    || credentialType.equals(JSONConstants.APIKEY_CREDENTIALS))) {
-                throw new BadRequestException("unsupported credential type");
-            }
             User user = this.userService.getUserById(userId);
             User caller = getUser(scopeAccessByAccessToken);
 
@@ -1383,33 +1379,56 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
 
-            if (callerIsUserAdmin && credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
-                authorizationService.verifyDomain(caller, user);
-            } else if (!callerIsServiceAdmin && !caller.getId().equals(userId)) {
+            if (!callerIsServiceAdmin && !caller.getId().equals(userId)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            JAXBElement<? extends CredentialType> creds = null;
+            if (StringUtils.isBlank(user.getPassword())) {
+                throw new NotFoundException("User doesn't have password credentials");
+            }
+            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+            userCreds.setPassword(user.getPassword());
+            userCreds.setUsername(user.getUsername());
+            JAXBElement<? extends CredentialType> creds = objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds);
 
-            if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
-                if (StringUtils.isBlank(user.getPassword())) {
-                    throw new NotFoundException("User doesn't have password credentials");
-                }
-                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                userCreds.setPassword(user.getPassword());
-                userCreds.setUsername(user.getUsername());
-                creds = objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds);
+            return Response.ok(creds.getValue());
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+
+            User user = this.userService.getUserById(userId);
+            User caller = getUser(scopeAccessByAccessToken);
+
+            if (user == null) {
+                String errMsg = String.format("User with id: %s does not exist", userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
             }
-            // credentialType will be APIKEY_CREDENTIALS if gets in this else
-            else {
-                if (StringUtils.isBlank(user.getApiKey())) {
-                    throw new NotFoundException("User doesn't have api key credentials");
-                }
-                ApiKeyCredentials userCreds = new ApiKeyCredentials();
-                userCreds.setApiKey(user.getApiKey());
-                userCreds.setUsername(user.getUsername());
-                creds = objFactories.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds);
+
+            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+
+            if (callerIsUserAdmin) {
+                authorizationService.verifyDomain(caller, user);
+            } else if (callerIsDefaultUser && !caller.getId().equals(userId)) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
+
+            if (StringUtils.isBlank(user.getApiKey())) {
+                throw new NotFoundException("User doesn't have api key credentials");
+            }
+            ApiKeyCredentials userCreds = new ApiKeyCredentials();
+            userCreds.setApiKey(user.getApiKey());
+            userCreds.setUsername(user.getUsername());
+            JAXBElement<? extends CredentialType> creds = objFactories.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds);
 
             return Response.ok(creds.getValue());
 

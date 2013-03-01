@@ -651,42 +651,42 @@ public class Cloud20VersionResourceTestOld {
 
     @Test
     public void getUserCredentialKey_callsGetCloud20Service() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.APIKEY_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserApiKeyCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         spy.getUserCredentialKey(httpHeaders, null, null);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void getUserCredentialKey_callsCloud20Service_callsGetUserCredential() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.APIKEY_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserApiKeyCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         spy.getUserCredentialKey(httpHeaders, null, null);
-        verify(delegateCloud20Service).getUserCredential(httpHeaders, null, null, JSONConstants.APIKEY_CREDENTIALS);
+        verify(delegateCloud20Service).getUserApiKeyCredentials(httpHeaders, null, null);
     }
 
     @Test
     public void getUserCredentialKey_responseOk_returns200() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.APIKEY_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserApiKeyCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         Response result = spy.getUserCredentialKey(httpHeaders, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
     @Test
     public void getUserCredential_callsGetCloud20Service() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.PASSWORD_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserPasswordCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         spy.getUserCredential(httpHeaders, null, null);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void getUserCredential_callsCloud20Service_callsGetUserCredential() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.PASSWORD_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserPasswordCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         spy.getUserCredential(httpHeaders, null, null);
-        verify(delegateCloud20Service).getUserCredential(httpHeaders, null, null, JSONConstants.PASSWORD_CREDENTIALS);
+        verify(delegateCloud20Service).getUserPasswordCredentials(httpHeaders, null, null);
     }
 
     @Test
     public void getUserCredential_responseOk_returns200() throws Exception {
-        when(delegateCloud20Service.getUserCredential(httpHeaders, null, null, JSONConstants.PASSWORD_CREDENTIALS)).thenReturn(Response.ok());
+        when(delegateCloud20Service.getUserPasswordCredentials(httpHeaders, null, null)).thenReturn(Response.ok());
         Response result = spy.getUserCredential(httpHeaders, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
