@@ -350,7 +350,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/admins")
+    @Path("users/{userId}/RAX-AUTH/admins")
     public Response getUserAdminsForUser(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
