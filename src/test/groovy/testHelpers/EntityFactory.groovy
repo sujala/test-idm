@@ -374,6 +374,20 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createGroup(Integer groupId, String name, String description) {
+        return new Group().with {
+            it.groupId = groupId
+            it.name = name
+            it.description = description
+            return it
+        }
+
+    }
+
+    def createGroups() {
+        return new ArrayList<Group>()
+    }
+
     private createLdapEntryWithDn(String dn) {
        return new ReadOnlyEntry(dn)
     }

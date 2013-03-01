@@ -701,6 +701,30 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.addCallerTenantRolesToUser(caller, _)
     }
 
+    def "addUser when caller is user-admin adds callers groups to user being added"() {
+        given:
+        mockUserConverter(service)
+
+        allowUserAccess()
+
+        def caller = entityFactory.createUser()
+        def groups = entityFactory.createGroups()
+        groups.add(entityFactory.createGroup(1,"groupId1","group description"))
+        groups.add(entityFactory.createGroup(2,"groupId2","group description"))
+
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        userService.getAllUsers(_) >> [].asList()
+        groupService.getGroupsForUser(_) >> groups
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
+
+        then:
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * tenantService.addCallerTenantRolesToUser(caller, _)
+        2 * groupService.addGroupToUser(_, _)
+    }
+
     def "setDomainId sets users domain to callers domain"() {
         given:
         def caller = entityFactory.createUser().with {
