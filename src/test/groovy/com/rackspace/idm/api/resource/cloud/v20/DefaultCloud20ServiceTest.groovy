@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -2764,6 +2765,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
+    def "A list of admins is not retrieve if the user has no domain"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", null, "REGION")
+        def user = entityFactory.createUser("user", "userId", null, "REGION")
+
+        userService.getUser(_) >> caller
+        userService.checkAndGetUserById(_) >> user
+
+        when:
+        def response = service.getAdminsForDefaultUser(authToken, "userId").build()
+
+        then:
+        response.status == 200
+        0 * domainService.getDomainAdmins(_, _)
+    }
+
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
@@ -2796,6 +2815,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthWithToken(service)
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
+        mockUserConverter(service)
     }
 
     def createLdapEntry(String dn) {

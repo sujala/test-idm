@@ -2510,11 +2510,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
 
-        List<User> domainAdmins = domainService.getDomainAdmins(user.getDomainId(), true);
+        List<User> admins = new ArrayList<User>();
+        if (user.getDomainId() != null ) {
+            admins = domainService.getDomainAdmins(user.getDomainId(), true);
+        }
 
         return Response.status(200)
                 .entity(objFactories.getOpenStackIdentityV2Factory()
-                        .createUsers(userConverterCloudV20.toUserList(domainAdmins)).getValue());
+                        .createUsers(userConverterCloudV20.toUserList(admins)).getValue());
     }
 
     private void isUserAllowed(String authToken, String userId) {

@@ -1313,6 +1313,16 @@ class Cloud20IntegrationTest extends Specification {
         users.getUser().size != 0
     }
 
+    def "if user has no domain then an empty list is returned for his admins"() {
+        when:
+        def response = getAdminsForUserXML(identityAdminToken, identityAdmin.id)
+
+        then:
+        response.status == 200
+        def users = response.getEntity(UserList).value
+        users.getUser().size == 0
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
