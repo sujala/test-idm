@@ -26,17 +26,16 @@ import java.util.Locale;
 public class UserServiceTests {
 
     UserDao mockUserDao;
-    CustomerDao mockCustomerDao;
+    CustomerService mockCustomerService;
     UserService userService;
     UserService trustedUserService;
     DomainService mockDomainService;
     AuthDao mockRackerDao;
     ApplicationService mockClientService;
     ScopeAccessService mockScopeAccessService;
-    ScopeAccessDao mockScopeAccessObjectDao;
     PasswordComplexityService mockPasswordComplexityService;
     CloudRegionService cloudRegionService;
-    TenantDao tenantDao;
+    TenantService tenantService;
     Validator validator = new Validator();
 
     String customerId = "123456";
@@ -73,32 +72,30 @@ public class UserServiceTests {
     public void setUp() throws Exception {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockCustomerDao = EasyMock.createMock(CustomerDao.class);
+        mockCustomerService = EasyMock.createMock(CustomerService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ApplicationService.class);
-        mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         mockDomainService = EasyMock.createMock(DomainService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         cloudRegionService = EasyMock.createMock(DefaultCloudRegionService.class);
         validator = EasyMock.createMock(Validator.class);
-        tenantDao = EasyMock.createMock(TenantDao.class);
+        tenantService = EasyMock.createMock(TenantService.class);
 
-        
+
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService();
         userService.setUserDao(mockUserDao);
         userService.setAuthDao(mockRackerDao);
-        userService.setScopeAccessDao(mockScopeAccessObjectDao);
+        userService.setScopeAccessService(mockScopeAccessService);
         userService.setApplicationService(mockClientService);
         userService.setConfig(appConfig);
         userService.setPasswordComplexityService(mockPasswordComplexityService);
         userService.setCloudRegionService(cloudRegionService);
         userService.setValidator(validator);
-        userService.setTenantDao(tenantDao);
-        userService.setScopeAccessService(mockScopeAccessService);
+        userService.setTenantService(tenantService);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
@@ -108,7 +105,7 @@ public class UserServiceTests {
 
         trustedUserService.setUserDao(mockUserDao);
         trustedUserService.setAuthDao(mockRackerDao);
-        trustedUserService.setScopeAccessDao(mockScopeAccessObjectDao);
+        trustedUserService.setScopeAccessService(mockScopeAccessService);
         trustedUserService.setApplicationService(mockClientService);
         trustedUserService.setConfig(appConfig2);
         trustedUserService.setPasswordComplexityService(mockPasswordComplexityService);
@@ -166,15 +163,12 @@ public class UserServiceTests {
         EasyMock.expect(validator.isEmpty(EasyMock.anyObject(String.class))).andReturn(true);
         mockUserDao.addUser(user);
 
+        EasyMock.expect(mockScopeAccessService.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
+        EasyMock.expect(mockScopeAccessService.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
 
-
-
-        EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
-        EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
-        
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockPasswordComplexityService);
-        EasyMock.replay(mockScopeAccessObjectDao);
+        EasyMock.replay(mockScopeAccessService);
         EasyMock.replay(validator);
 
         Region region = new Region();
@@ -229,8 +223,8 @@ public class UserServiceTests {
 
         EasyMock.expect(mockUserDao.getUsers(filterList)).andReturn(users);
         EasyMock.replay(mockUserDao);
-        EasyMock.expect(tenantDao.getAllTenantRolesForTenant("nastId")).andReturn(tenantRoles);
-        EasyMock.replay(tenantDao);
+        EasyMock.expect(tenantService.getTenantRolesForTenant("nastId")).andReturn(tenantRoles);
+        EasyMock.replay(tenantService);
 
         final User retrievedUser = userService.getUserByTenantId(nastId);
 
@@ -268,8 +262,8 @@ public class UserServiceTests {
 
         EasyMock.expect(mockUserDao.getUsers(filterList)).andReturn(users);
         EasyMock.replay(mockUserDao);
-        EasyMock.expect(tenantDao.getAllTenantRolesForTenant("6676")).andReturn(tenantRoles);
-        EasyMock.replay(tenantDao);
+        EasyMock.expect(tenantService.getTenantRolesForTenant("6676")).andReturn(tenantRoles);
+        EasyMock.replay(tenantService);
 
         final User retrievedUser = userService.getUserByTenantId(String.valueOf(mossoId));
 

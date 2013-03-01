@@ -55,20 +55,16 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def setup() {
         mockPasswordComplexityService(service)
-        mockScopeAccessDao(service)
+        mockScopeAccessService(service)
         mockAuthDao(service)
         mockApplicationService(service)
         mockConfiguration(service)
         mockUserDao(service)
-        mockScopeAccessService(service)
         mockTenantService(service)
-        mockTenantDao(service)
         mockEndpointService(service)
         mockAuthorizationService(service)
         mockCloudRegionService(service)
         mockValidator(service)
-        mockTenantRoleDao(service)
-        mockApplicationRoleDao(service)
         mockDomainService(service)
     }
 
@@ -216,7 +212,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "GET - user by tenant id - size 1" (){
         given:
         String[] tenantIds = ["1","2"]
-        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
         users.users = new ArrayList<User>();
         users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
@@ -233,7 +229,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "GET - user by tenant id - size > 1 - isUserAdmin=true" (){
         given:
         String[] tenantIds = ["1","2"]
-        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
         users.users = new ArrayList<User>();
         users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
@@ -253,7 +249,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "GET - user by tenant id - size > 1 - isUserAdmin=false" (){
         given:
         String[] tenantIds = ["1","2"]
-        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
         users.users = new ArrayList<User>();
         users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
@@ -271,7 +267,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "GET - users by tenant id - size > 1" (){
         given:
         String[] tenantIds = ["1","2"]
-        tenantDao.getAllTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
+        tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
         Users users = new Users()
         users.users = new ArrayList<User>();
         users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
@@ -289,7 +285,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     }
 
 
-    def "getUsersWithRole calls tenantDao.getMultipleTenantRoles"() {
+    def "getUsersWithRole calls tenantService.getMultipleTenantRoles"() {
         given:
         def stringPaginator = createStringPaginatorContext()
 
@@ -297,7 +293,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
+        tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
     }
 
     def "getUsersWithRole calls getUserById"() {
@@ -311,7 +307,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
+        tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
         3 * userDao.getUserById(_ as String)
     }
 
@@ -328,7 +324,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def userContext = service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
 
         then:
-        tenantDao.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
+        tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
         userDao.getUserById(_ as String) >>> [ entityFactory.createUser() ]
 
         userContext.getValueList().equals(listOfUsers)
@@ -476,7 +472,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.getUserWeight(user, "applicationId")
 
         then:
-        1 * tenantRoleDao.getTenantRolesForUser(_, _) >> new ArrayList<TenantRole>()
+        1 * tenantService.getGlobalRolesForUser(_, _) >> new ArrayList<TenantRole>()
     }
 
     def "getUsersWeight finds identity:serviceAdminRole role weight for user"() {
@@ -492,8 +488,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def applicationRole = entityFactory.createClientRole("identity:service-admin").with { it.rsWeight = 0; return it }
         def tenantRoles = [ tenantRole ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
-        applicationRoleDao.getClientRole("0") >> applicationRole
+        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
+        applicationService.getClientRoleById("0") >> applicationRole
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
@@ -515,8 +511,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def applicationRole = entityFactory.createClientRole("identity:admin").with { it.rsWeight = 100; return it }
         def tenantRoles = [ tenantRole ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
-        applicationRoleDao.getClientRole("0") >> applicationRole
+        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
+        applicationService.getClientRoleById("0") >> applicationRole
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
@@ -538,8 +534,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def applicationRole = entityFactory.createClientRole("identity:user-admin").with { it.rsWeight = 1000; return it }
         def tenantRoles = [ tenantRole ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
-        applicationRoleDao.getClientRole("0") >> applicationRole
+        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
+        applicationService.getClientRoleById("0") >> applicationRole
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
@@ -561,8 +557,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def applicationRole = entityFactory.createClientRole("identity:user").with { it.rsWeight = 2000; return it }
         def tenantRoles = [ tenantRole ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
-        applicationRoleDao.getClientRole("0") >> applicationRole
+        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
+        applicationService.getClientRoleById("0") >> applicationRole
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
@@ -584,8 +580,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def applicationRole = entityFactory.createClientRole("role").with { it.rsWeight = 2000; return it }
         def tenantRoles = [ tenantRole ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(user, "applicationId") >> tenantRoles
-        applicationRoleDao.getClientRole("0") >> applicationRole
+        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
+        applicationService.getClientRoleById("0") >> applicationRole
         config.getInt("cloudAuth.defaultUser.rsWeight") >> 2000
 
         when:
@@ -599,7 +595,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         given:
         def tenantRole = entityFactory.createTenantRole()
         tenantRole.userId = null
-        tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+        tenantService.getTenantRolesForTenant(_) >> [tenantRole].asList()
 
 
         when:

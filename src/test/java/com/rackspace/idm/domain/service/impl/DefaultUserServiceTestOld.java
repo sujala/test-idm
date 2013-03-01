@@ -47,8 +47,6 @@ public class DefaultUserServiceTestOld {
     @Mock
     private AuthDao authDao;
     @Mock
-    private ScopeAccessDao scopeAccessDao;
-    @Mock
     private ApplicationService applicationService;
     @Mock
     private Configuration config;
@@ -64,8 +62,6 @@ public class DefaultUserServiceTestOld {
     private EndpointService endpointService;
     @Mock
     private CloudRegionService cloudRegionService;
-    @Mock
-    private TenantDao tenantDao;
     @Mock
     private LdapPatternRepository patternDao;
 
@@ -139,7 +135,7 @@ public class DefaultUserServiceTestOld {
         users.setUsers(userArrayList);
         when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
         ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
+        when(scopeAccessService.getScopeAccessListByUserId(anyString())).thenReturn(list);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(false));
     }
@@ -519,7 +515,7 @@ public class DefaultUserServiceTestOld {
         rackerScopeAccess.setClientId("clientId");
         List<ScopeAccess> services = new ArrayList<ScopeAccess>();
         services.add(rackerScopeAccess);
-        when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
+        when(scopeAccessService.getScopeAccessesForParent("uniqueId")).thenReturn(services);
         Applications result = defaultUserService.getUserApplications(user);
         assertThat("clients", result.getClients().size(), equalTo(0));
     }

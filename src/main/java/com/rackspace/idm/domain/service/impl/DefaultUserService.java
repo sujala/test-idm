@@ -37,7 +37,7 @@ public class DefaultUserService implements UserService {
     private PasswordComplexityService passwordComplexityService;
 
     @Autowired
-    private ScopeAccessDao scopeAccessDao;
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private AuthDao authDao;
@@ -52,13 +52,7 @@ public class DefaultUserService implements UserService {
     private UserDao userDao;
 
     @Autowired
-    private ScopeAccessService scopeAccessService;
-
-    @Autowired
     private TenantService tenantService;
-
-    @Autowired
-    private TenantDao tenantDao;
 
     @Autowired
     private EndpointService endpointService;
@@ -71,12 +65,6 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private Validator validator;
-
-    @Autowired
-    private TenantRoleDao tenantRoleDao;
-
-    @Autowired
-    private ApplicationRoleDao applicationRoleDao;
 
     @Autowired
     private DomainService domainService;
@@ -133,7 +121,7 @@ public class DefaultUserService implements UserService {
         usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         usa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
+        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), usa);
 
         //Every user by default has the cloud auth application provisioned for them
         UserScopeAccess cloudUsa = new UserScopeAccess();
@@ -145,7 +133,7 @@ public class DefaultUserService implements UserService {
         cloudUsa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         cloudUsa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
+        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
 
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
@@ -330,7 +318,7 @@ public class DefaultUserService implements UserService {
     @Override
     public Users getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
-        List<TenantRole> tenantRoles = tenantDao.getAllTenantRolesForTenant(tenantId);
+        List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
         List<Filter> filterList = new ArrayList<Filter>();
         for(TenantRole t : tenantRoles){
             if(t.getUserId() == null){
@@ -438,9 +426,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public int getUserWeight(User user, String applicationId) {
-        List<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user, applicationId);
+        List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user, applicationId);
         for (TenantRole tenantRole : tenantRoles) {
-            ClientRole clientRole = applicationRoleDao.getClientRole(tenantRole.getRoleRsId());
+            ClientRole clientRole = applicationService.getClientRoleById(tenantRole.getRoleRsId());
             if (StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
                 return clientRole.getRsWeight();
             }
@@ -540,11 +528,6 @@ public class DefaultUserService implements UserService {
     @Override
     public void setAuthDao(AuthDao authDao) {
         this.authDao = authDao;
-    }
-
-    @Override
-    public void setScopeAccessDao(ScopeAccessDao scopeAccessObjectDao) {
-        this.scopeAccessDao = scopeAccessObjectDao;
     }
 
     @Override
@@ -876,7 +859,7 @@ public class DefaultUserService implements UserService {
         PaginatorContext<User> userContext = new PaginatorContext<User>();
 
         if (filters.length == 1) {
-            PaginatorContext<String> context = this.tenantDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
+            PaginatorContext<String> context = this.tenantService.getIdsForUsersWithTenantRole(roleId, offset, limit);
 
             ArrayList<User> userList = new ArrayList<User>();
             for (String userId : context.getValueList()) {
@@ -980,6 +963,7 @@ public class DefaultUserService implements UserService {
         return userDao.getUsersByDomain(domainId);
     }
 
+    @Override
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
@@ -990,18 +974,6 @@ public class DefaultUserService implements UserService {
 
     public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
-    }
-
-    public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
-        this.tenantRoleDao = tenantRoleDao;
-    }
-
-    public void setApplicationRoleDao(ApplicationRoleDao applicationRoleDao) {
-        this.applicationRoleDao = applicationRoleDao;
-    }
-
-    public void setTenantDao(TenantDao tenantDao){
-        this.tenantDao = tenantDao;
     }
 
     public void setDomainService(DomainService domainService) {

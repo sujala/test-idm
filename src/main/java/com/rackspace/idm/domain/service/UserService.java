@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
@@ -122,13 +120,11 @@ public interface UserService {
 
     User checkAndGetUserByName(String username);
 
-    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
-
-    void setTenantDao(TenantDao tenantDao);
-
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
     List<User> getUsersInDomain(String domainId, boolean enabled);
 
     List<User> getUsersInDomain(String domainId);
+
+    void setTenantService(TenantService tenantService);
 }
