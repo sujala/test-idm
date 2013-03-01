@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
@@ -16,7 +15,6 @@ import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -1812,7 +1810,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "getUserCredential verifies access token"() {
         when:
-        service.getUserCredential(headers, authToken, "userId", "credentialType")
+        service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(_)
@@ -1823,7 +1821,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         when:
-        service.getUserCredential(headers, authToken, "userId", "credentialType")
+        service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
@@ -1839,7 +1837,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUser(_) >> caller
 
         when:
-        def response = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS).build()
+        def response = service.getUserPasswordCredentials(headers, authToken, "userId").build()
 
         then:
         1 * authorizationService.authorizeCloudServiceAdmin(_) >> false
@@ -1849,41 +1847,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 403
     }
 
-    def "getUserCredential verifies credential type"() {
-        given:
-        allowUserAccess()
-
-        when:
-        def result = service.getUserCredential(headers, authToken, "userId", "invalidCredentialType")
-
-        then:
-        result.build().status == 400
-    }
-
     def "getUserCredential gets user"() {
         given:
         allowUserAccess()
 
         when:
-        service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+        service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
         1 * userService.getUserById("userId")
-    }
-
-    def "getUserCredential authorizes caller as user-admin or service-admin"() {
-        given:
-        allowUserAccess()
-
-        userService.getUserById(_) >> entityFactory.createUser()
-
-        when:
-        service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
-
-        then:
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
-        1 * authorizationService.authorizeCloudServiceAdmin(_) >> false
-        1 * userService.getUser(_) >> entityFactory.createUser()
     }
 
     def "getUserCredential verifies user is in callers domain when caller is user-admin" () {
@@ -1898,7 +1870,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
-        service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+        service.getUserApiKeyCredentials(headers, authToken, "userId")
 
         then:
         1 * authorizationService.verifyDomain(caller, user)
@@ -1917,7 +1889,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUser(_) >> true
 
         when:
-        def result = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+        def result = service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
         result.build().status == 403
@@ -1931,7 +1903,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
-        def result = service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+        def result = service.getUserApiKeyCredentials(headers, authToken, "userId")
 
         then:
         result.build().status == 404
@@ -1952,7 +1924,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
-        def response2 = service.getUserCredential(headers, authToken, "userId", JSONConstants.PASSWORD_CREDENTIALS)
+        def response2 = service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
         response2.build().status == 200
@@ -1973,7 +1945,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
-        def response2 = service.getUserCredential(headers, authToken, "userId", JSONConstants.APIKEY_CREDENTIALS)
+        def response2 = service.getUserApiKeyCredentials(headers, authToken, "userId")
 
         then:
         response2.build().status == 200
@@ -2703,7 +2675,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(_, _) >> [].asList()
 
         when:
-        service.getAdminsForDefaultUser(authToken, "userId")
+        service.getUserAdminsForUser(authToken, "userId")
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
@@ -2719,7 +2691,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUser(_) >> true
 
         when:
-        service.getAdminsForDefaultUser(authToken, "userId")
+        service.getUserAdminsForUser(authToken, "userId")
 
         then:
         1 * userService.getUser(_) >> caller
@@ -2738,7 +2710,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
-        service.getAdminsForDefaultUser(authToken, "userId")
+        service.getUserAdminsForUser(authToken, "userId")
 
         then:
         1 * userService.getUser(_) >> caller
@@ -2758,7 +2730,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> user
 
         when:
-        def response = service.getAdminsForDefaultUser(authToken, "userId").build()
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
 
         then:
         1 * domainService.getDomainAdmins("domainId", true)
@@ -2775,13 +2747,57 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> user
 
         when:
-        def response = service.getAdminsForDefaultUser(authToken, "userId").build()
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
 
         then:
         response.status == 200
         0 * domainService.getDomainAdmins(_, _)
     }
 
+    def "identity admin should be able to retrieve users api key"() {
+        given:
+        def caller = entityFactory.createUser().with {
+            it.id = "1"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.id = "2"
+            it.apiKey = "apiKey"
+            return it
+        }
+        allowUserAccess()
+
+        when:
+        def result = service.getUserApiKeyCredentials(headers, authToken, userId).build()
+
+        then:
+        result.status == 200
+        userService.getUserById(userId) >> user
+        userService.getUser(_) >> caller
+    }
+
+    def "default user should not be able to retrieve another default users api key"() {
+        given:
+        def caller = entityFactory.createUser().with {
+            it.id = "1"
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.id = "2"
+            it.apiKey = "apiKey"
+            return it
+        }
+        allowUserAccess()
+
+        when:
+        def result = service.getUserApiKeyCredentials(headers, authToken, userId).build()
+
+        then:
+        result.status == 403
+        userService.getUserById(userId) >> user
+        userService.getUser(_) >> caller
+        authorizationService.authorizeCloudUser(_) >> true
+    }
 
     def mockServices() {
         mockAuthenticationService(service)
