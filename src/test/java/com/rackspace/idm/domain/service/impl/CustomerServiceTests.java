@@ -5,13 +5,13 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.UserService;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Customer;
@@ -19,16 +19,15 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class CustomerServiceTests {
     CustomerService service;
 
-    ApplicationDao applicationDao;
+    ApplicationService applicationService;
     CustomerDao mockCustomerDao;
-    UserDao mockUserDao;
+    UserService userService;
 
     String customerId = "CustomerId";
     String username = "username";
@@ -38,14 +37,14 @@ public class CustomerServiceTests {
 
     @Before
     public void setUp() throws Exception {
-        applicationDao = EasyMock.createMock(ApplicationDao.class);
+        applicationService = EasyMock.createMock(ApplicationService.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
-        mockUserDao = EasyMock.createMock(UserDao.class);
+        userService = EasyMock.createMock(UserService.class);
 
         service = new DefaultCustomerService();
-        service.setApplicationDao(applicationDao);
+        service.setApplicationService(applicationService);
         service.setCustomerDao(mockCustomerDao);
-        service.setUserDao(mockUserDao);
+        service.setUserService(userService);
     }
 
     @Test
@@ -82,15 +81,15 @@ public class CustomerServiceTests {
         mockCustomerDao.deleteCustomer(customerId);
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);   
-        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(100))).andReturn(getFakeUsers());
-        mockUserDao.deleteUser(username);
-        EasyMock.replay(mockUserDao);
-        EasyMock.expect(applicationDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        applicationDao.deleteClient(EasyMock.anyObject(Application.class));
-        EasyMock.replay(applicationDao);
+        EasyMock.expect(userService.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(100))).andReturn(getFakeUsers());
+        userService.deleteUser(username);
+        EasyMock.replay(userService);
+        EasyMock.expect(applicationService.getByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
+        applicationService.delete(EasyMock.anyObject(String.class));
+        EasyMock.replay(applicationService);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
-        EasyMock.verify(mockUserDao);
+        EasyMock.verify(userService);
     }
     
     @Test(expected = NotFoundException.class)

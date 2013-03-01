@@ -1,12 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -22,11 +22,11 @@ import java.util.List;
 public class DefaultCustomerService implements CustomerService {
 
     @Autowired
-    private ApplicationDao clientDao;
+    private ApplicationService applicationService;
+    @Autowired
+    private UserService userService;
     @Autowired
     private CustomerDao customerDao;
-    @Autowired
-    private UserDao userDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -64,12 +64,12 @@ public class DefaultCustomerService implements CustomerService {
         
         List<User> users = this.getUserListForCustomerId(customerId);
         for (User user : users) {
-            userDao.deleteUser(user.getUsername());
+            userService.deleteUser(user.getUsername());
         }
         
         List<Application> clients = this.getClientListForCustomerId(customerId);
         for (Application client : clients) {
-            clientDao.deleteClient(client);
+            applicationService.delete(client.getClientId());
         }
         
         this.customerDao.deleteCustomer(customerId);
@@ -125,7 +125,7 @@ public class DefaultCustomerService implements CustomerService {
 //        String customerId = customer.getRcn();
 //
 //        // locks/unlockes all users under customer
-//        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
+//        userService.setUsersLockedFlagByCustomerId(customerId, locked);
 //
 //        // locks/unlocks all applications under customer
 //        applicationService.setClientsLockedFlagByCustomerId(customerId, locked);
@@ -144,7 +144,7 @@ public class DefaultCustomerService implements CustomerService {
         Users users = null;
 
         do {
-            users = userDao.getAllUsers(filters, offset, limit);
+            users = userService.getAllUsers(filters, offset, limit);
             offset = offset + limit;
             userList.addAll(users.getUsers());
 
@@ -160,7 +160,7 @@ public class DefaultCustomerService implements CustomerService {
         Applications clients = null;
 
         do {
-            clients = clientDao.getClientsByCustomerId(customerId, offset, limit);
+            clients = applicationService.getByCustomerId(customerId, offset, limit);
             offset = offset + limit;
             clientList.addAll(clients.getClients());
 
@@ -171,8 +171,8 @@ public class DefaultCustomerService implements CustomerService {
 
 
 	@Override
-	public void setApplicationDao(ApplicationDao applicationDao) {
-		this.clientDao = applicationDao;
+	public void setApplicationService(ApplicationService applicationDao) {
+		this.applicationService = applicationDao;
 	}
 
 
@@ -183,7 +183,7 @@ public class DefaultCustomerService implements CustomerService {
 
 
 	@Override
-	public void setUserDao(UserDao userDao) {
-		this.userDao = userDao;
+	public void setUserService(UserService userService) {
+		this.userService = userService;
 	}
 }

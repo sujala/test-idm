@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Customer;
 
 public interface CustomerService {
@@ -23,9 +21,9 @@ public interface CustomerService {
 
     void softDeleteCustomer(Customer customer);
 
-	void setApplicationDao(ApplicationDao applicationDao);
+	void setApplicationService(ApplicationService applicationService);
 
 	void setCustomerDao(CustomerDao customerDao);
 
-	void setUserDao(UserDao userDao);
+	void setUserService(UserService userService);
 }

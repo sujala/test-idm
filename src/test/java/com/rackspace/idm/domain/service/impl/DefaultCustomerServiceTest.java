@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.UserService;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -7,11 +9,7 @@ import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.service.TokenService;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.mockito.Mockito.verify;
@@ -28,11 +26,11 @@ public class DefaultCustomerServiceTest {
     @InjectMocks
     DefaultCustomerService defaultCustomerService = new DefaultCustomerService();
     @Mock
-    ApplicationDao clientDao;
+    ApplicationService applicationService;
     @Mock
     CustomerDao customerDao;
     @Mock
-    UserDao userDao;
+    UserService userService;
 
     @Test
     public void softDeleteCustomer_callsCustomerDao_softDeleteCustomer() throws Exception {
