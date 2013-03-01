@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import org.apache.commons.configuration.Configuration;
 
@@ -30,7 +29,7 @@ public interface TokenService {
 
     void setTenantService(TenantService tenantService);
 
-    void setUserDao(UserDao userDao);
+    void setUserService(UserService userService);
 
     void setClientService(ApplicationService applicationService);
 }

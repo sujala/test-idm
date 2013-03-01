@@ -495,7 +495,7 @@ public class DefaultUserServiceTestOld {
         User user = new User();
         user.setUniqueId("uniqueId");
         defaultUserService.getUserApplications(user);
-        verify(scopeAccessDao).getScopeAccessesByParent("uniqueId");
+        verify(scopeAccessService).getScopeAccessesForParent("uniqueId");
     }
 
     @Test
@@ -506,7 +506,7 @@ public class DefaultUserServiceTestOld {
         userScopeAccess.setClientId("clientId");
         List<ScopeAccess> services = new ArrayList<ScopeAccess>();
         services.add(userScopeAccess);
-        when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
+        when(scopeAccessService.getScopeAccessesForParent("uniqueId")).thenReturn(services);
         defaultUserService.getUserApplications(user);
         verify(applicationService).getById("clientId");
     }

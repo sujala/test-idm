@@ -30,14 +30,13 @@ import java.io.IOException;
 
 public class TokenServiceTests {
 
-    UserService mockUserService;
     ApplicationService mockClientService;
     AuthorizationService mockAuthorizationService;
     TokenService tokenService;
     AuthHeaderHelper authHeaderHelper;
     Configuration mockConfiguration;
     ScopeAccessService mockScopeAccessService;
-    UserDao mockUserDao;
+    UserService userService;
     TenantService mockTenantService;
 
     String customerId = "RACKSPACE";
@@ -57,15 +56,13 @@ public class TokenServiceTests {
 
     @Before
     public void setUp() {
-        mockUserService = EasyMock.createMock(UserService.class);
         mockClientService = EasyMock.createMock(ApplicationService.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
-        mockAuthorizationService = EasyMock
-        .createNiceMock(AuthorizationService.class);
+        mockAuthorizationService = EasyMock.createNiceMock(AuthorizationService.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         authHeaderHelper = new AuthHeaderHelper();
         mockConfiguration = EasyMock.createMock(Configuration.class);
-        mockUserDao = EasyMock.createMock(UserDao.class);
+        userService = EasyMock.createMock(UserService.class);
         mockTenantService = EasyMock.createMock(TenantService.class);
 
         final Configuration appConfig = new PropertiesConfiguration();
@@ -77,7 +74,7 @@ public class TokenServiceTests {
         tokenService.setAuthorizationService(mockAuthorizationService);
         tokenService.setConfig(appConfig);
         tokenService.setScopeAccessService(mockScopeAccessService);
-        tokenService.setUserDao(mockUserDao);
+        tokenService.setUserService(userService);
         tokenService.setTenantService(mockTenantService);
     }
 

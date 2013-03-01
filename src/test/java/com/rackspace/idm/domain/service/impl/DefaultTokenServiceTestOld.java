@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.service.*;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -7,12 +8,7 @@ import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,12 +29,12 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultTokenServiceTest {
+public class DefaultTokenServiceTestOld {
 
     @InjectMocks
     DefaultTokenService defaultTokenService = new DefaultTokenService();
     @Mock
-    UserDao userDao;
+    UserService userService;
     @Mock
     ApplicationService clientService;
     @Mock
@@ -228,7 +224,7 @@ public class DefaultTokenServiceTest {
         usersObj.setUsers(list);
         usersObj.setTotalRecords(0);
         doReturn(5).when(spy).getPagingLimit();
-        when(userDao.getAllUsers(any(FilterParam[].class), eq(0), eq(5))).thenReturn(usersObj);
+        when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(5))).thenReturn(usersObj);
         List<User> usersList = spy.getAllUsersForCustomerId(null);
         assertThat("size",usersList.size(),equalTo(1));
     }

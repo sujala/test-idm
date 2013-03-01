@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.DomainDao;
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;

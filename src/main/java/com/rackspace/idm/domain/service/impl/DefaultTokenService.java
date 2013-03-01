@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.*;
@@ -32,7 +31,7 @@ public class DefaultTokenService implements TokenService {
     @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
-    private UserDao userDao;
+    private UserService userService;
     @Autowired
 	private TenantService tenantService;
 
@@ -179,8 +178,8 @@ public class DefaultTokenService implements TokenService {
     }
 
     @Override
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @Override
@@ -212,7 +211,7 @@ public class DefaultTokenService implements TokenService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userDao.getAllUsers(filters,offset, getPagingLimit());
+            final Users usersObj = userService.getAllUsers(filters,offset, getPagingLimit());
             usersList.addAll(usersObj.getUsers());
             total = usersObj.getTotalRecords();
         }

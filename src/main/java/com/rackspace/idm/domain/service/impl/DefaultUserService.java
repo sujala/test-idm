@@ -486,8 +486,7 @@ public class DefaultUserService implements UserService {
             logger.debug(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccess> services = this.scopeAccessDao
-                .getScopeAccessesByParent(user.getUniqueId());
+        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForParent(user.getUniqueId());
 
         List<Application> clientList = new ArrayList<Application>();
 

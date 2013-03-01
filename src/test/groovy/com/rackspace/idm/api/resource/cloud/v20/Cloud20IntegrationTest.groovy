@@ -1650,7 +1650,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getAdminsForUserXML(String token, String userId) {
-        resource.path(path20).path("users").path(userId).path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("RAX-AUTH").path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods

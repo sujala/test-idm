@@ -182,12 +182,13 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         def sa = createUserScopeAccess()
         def sa_2 = createUserScopeAccess("newToken", null, null, null)
+        def user = entityFactory.createUser()
 
         when:
-        service.updateExpiredUserScopeAccess(dn, "clientId")
+        service.updateExpiredUserScopeAccess(user, "clientId")
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(dn) >> [sa].asList()
+        1 * scopeAccessDao.getScopeAccessesByParent(user.getUniqueId()) >> [sa].asList()
         1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa_2
     }
 
@@ -592,5 +593,37 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         result == false
+    }
+
+    def "the Dao is used to retrieve a list of ScopeAccess for the user"() {
+        when:
+        service.getScopeAccessesForParent("uniqueId")
+
+        then:
+        1 * scopeAccessDao.getScopeAccessesByParent(_)
+    }
+
+    def "the Dao is used to retrieve a list of permissions by parent and permission"() {
+        when:
+        service.getPermissionsForParentByPermission("parentDn", entityFactory.createPermission())
+
+        then:
+        1 * scopeAccessDao.getPermissionsByParentAndPermission(_, _)
+    }
+
+    def "the Dao is used to return a list of permssions by permission"() {
+        when:
+        service.getPermissionsByPermission(entityFactory.createPermission())
+
+        then:
+        1 * scopeAccessDao.getPermissionsByPermission(_)
+    }
+
+    def "the Dao is used to define a permission"() {
+        when:
+        service.definePermission("parentDn", entityFactory.createDefinedPermission())
+
+        then:
+        1 * scopeAccessDao.definePermission(_, _)
     }
 }
