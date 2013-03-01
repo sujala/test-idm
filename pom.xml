@@ -6,7 +6,7 @@
     <artifactId>idm</artifactId>
     <name>idm</name>
     <packaging>war</packaging>
-    <version>1.0.13.2-SNAPSHOT</version>
+    <version>1.0.13.3-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
