@@ -4,14 +4,9 @@ import com.rackspace.idm.api.resource.cloud.CloudClient
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.sun.grizzly.http.servlet.HttpServletRequestImpl
 import org.apache.commons.configuration.Configuration
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-
-import javax.servlet.http.HttpServletRequest
 
 /**
  * Created with IntelliJ IDEA.
@@ -136,7 +131,7 @@ class DelegateCloud11ServiceGroovyTest extends Specification{
         cloudClient = Mock()
 
         delegateCloud11Service.config = config
-        delegateCloud11Service.defaultUserService = defaultUserService
+        delegateCloud11Service.userService = defaultUserService
         delegateCloud11Service.defaultCloud11Service = defaultCloud11Service
         delegateCloud11Service.cloudClient = cloudClient
     }

@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
@@ -53,13 +54,10 @@ public class DelegateCloud11Service implements Cloud11Service {
     private Configuration config;
 
     @Autowired
-    private LdapUserRepository ldapUserRepository;
-
-    @Autowired
     private DefaultCloud11Service defaultCloud11Service;
 
     @Autowired
-    private DefaultUserService defaultUserService;
+    private UserService userService;
 
     private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory objFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
@@ -105,7 +103,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             }
         }
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
-        if(defaultUserService.isMigratedUser(user)) {
+        if(userService.isMigratedUser(user)) {
             return defaultCloud11Service.authenticate(request, uriInfo, httpHeaders, body);
         }
         return authenticateByCred(request, uriInfo, cred, user, body, httpHeaders, "auth");
@@ -118,7 +116,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
 
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
-        if(defaultUserService.isMigratedUser(user)) {
+        if(userService.isMigratedUser(user)) {
             return defaultCloud11Service.adminAuthenticate(request, uriInfo, httpHeaders, body);
         }
         return authenticateByCred(request, uriInfo, cred, user, body, httpHeaders, "auth-admin");
@@ -255,12 +253,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled()) {
-            com.rackspace.idm.domain.entity.User user = defaultUserService.getSoftDeletedUserByUsername(userId);
+            com.rackspace.idm.domain.entity.User user = userService.getSoftDeletedUserByUsername(userId);
             if(user == null){
-                user = defaultUserService.getUser(userId);
+                user = userService.getUser(userId);
             }
             if (user != null) {
-                if (defaultUserService.isMigratedUser(user)) {
+                if (userService.isMigratedUser(user)) {
                     User updateUser = new User();
                     updateUser.setId(user.getUsername());
                     updateUser.setEnabled(false);
@@ -406,7 +404,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGAByMossoId(int mossoId){
-        com.rackspace.idm.domain.entity.Users usersById = defaultUserService.getUsersByTenantId(String.valueOf(mossoId));
+        com.rackspace.idm.domain.entity.Users usersById = userService.getUsersByTenantId(String.valueOf(mossoId));
         if(usersById.getUsers() == null) {
             return false;
         } if(usersById.getUsers().size() == 0) {
@@ -416,7 +414,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGAByNastId(String nastId){
-        com.rackspace.idm.domain.entity.Users usersById = defaultUserService.getUsersByTenantId(nastId);
+        com.rackspace.idm.domain.entity.Users usersById = userService.getUsersByTenantId(nastId);
         if(usersById.getUsers() == null) {
             return false;
         } if (usersById.getUsers().size() == 0) {
@@ -426,7 +424,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGA(String username) {
-        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserByUsername(username);
+        com.rackspace.idm.domain.entity.User userById = userService.getUser(username);
         if (userById == null) {
             return false;
         }
@@ -518,16 +516,12 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.defaultCloud11Service = defaultCloud11Service;
     }
 
-    public void setLdapUserRepository(LdapUserRepository ldapUserRepository) {
-        this.ldapUserRepository = ldapUserRepository;
-    }
-
     public void setCloudUserExtractor(CloudUserExtractor cloudUserExtractor) {
         this.cloudUserExtractor = cloudUserExtractor;
     }
 
-    public void setDefaultUserService(DefaultUserService defaultUserService) {
-        this.defaultUserService = defaultUserService;
+    public void setUserService(DefaultUserService userService) {
+        this.userService = userService;
     }
 
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
