@@ -4,7 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
-import com.rackspace.idm.api.resource.cloud.Validator;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;

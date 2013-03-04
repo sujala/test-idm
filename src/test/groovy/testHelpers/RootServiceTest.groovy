@@ -17,7 +17,7 @@ import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
-import com.rackspace.idm.api.resource.cloud.Validator
+import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
