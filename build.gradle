@@ -4,9 +4,19 @@ apply plugin: 'maven'
 apply plugin: 'jetty'
 apply plugin: 'war'
 apply plugin: 'idea'
+apply plugin: 'nexus'
 
 buildscript {
     apply from: 'jacoco.gradle'
+
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+    }
 }
 
 group = 'com.rackspace'
@@ -204,6 +214,17 @@ test {
 
 jettyRun {
     httpPort = 8083
+}
+
+
+artifacts {
+    archives zipConfig
+}
+
+nexus {
+    sign = false
+    repositoryUrl = 'http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases/'
+    snapshotRepositoryUrl = 'http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/snapshots/'
 }
 
 task jaxb() {
