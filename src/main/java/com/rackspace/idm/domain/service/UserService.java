@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.api.resource.cloud.Validator;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;

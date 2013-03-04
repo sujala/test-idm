@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud
 
+import com.rackspace.idm.validation.Validator
 import spock.lang.Specification
 import spock.lang.Shared
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository

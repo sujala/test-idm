@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.validation;
 
 
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;

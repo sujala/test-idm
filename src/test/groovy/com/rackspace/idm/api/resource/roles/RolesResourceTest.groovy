@@ -19,7 +19,6 @@ class RolesResourceTest extends RootServiceTest {
 
     @Shared def randomness = UUID.randomUUID()
     @Shared def sharedRandom
-    @Shared def authToken = "authToken"
     @Shared def role
 
     def setupSpec() {

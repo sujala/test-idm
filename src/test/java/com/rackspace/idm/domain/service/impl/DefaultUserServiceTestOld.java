@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.api.resource.cloud.Validator;
-import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.unboundid.ldap.sdk.Filter;
 import org.junit.runner.RunWith;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
