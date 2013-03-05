@@ -5,6 +5,7 @@ apply plugin: 'jetty'
 apply plugin: 'war'
 apply plugin: 'idea'
 apply plugin: 'nexus'
+apply plugin: 'sonar'
 
 buildscript {
     apply from: 'jacoco.gradle'
@@ -337,5 +338,25 @@ sourceSets {
         groovy {
             srcDirs srcTestDelomboked
         }
+    }
+}
+
+sonar {
+    database {
+        url = "jdbc:h2:tcp://localhost:9092/sonar"
+        driverClassName = "org.h2.Driver"
+        username = "sonar"
+        password = "sonar"
+    }
+
+    project {
+        dynamicAnalysis = "reuseReports"
+        withProjectProperties { props ->
+            props["sonar.core.codeCoveragePlugin"] = "jacoco"
+            props["sonar.jacoco.reportPath"] = "build/tmp/jacoco/jacoco.exec"
+        }
+
+        name = "idm"
+        description = "Global Auth"
     }
 }
