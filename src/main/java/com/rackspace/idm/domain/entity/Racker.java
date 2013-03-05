@@ -32,6 +32,10 @@ public class Racker extends User implements Auditable {
         this.rackerRoles = rackerRoles;
     }
 
+    public boolean isDisabled() {
+    	return this.enabled == null ? false : !this.enabled;
+    }
+
     @Override
     public String getAuditContext() {
         return String.format("Racker(%s)", rackerId);

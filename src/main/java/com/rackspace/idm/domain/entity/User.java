@@ -53,7 +53,7 @@ public class User implements Auditable {
     
     private String secureId = null;
     
-    private Boolean enabled = null;
+    protected Boolean enabled = null;
 
     private List<TenantRole> roles = null;
 
