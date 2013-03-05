@@ -622,6 +622,24 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
+    def "when getting racker from scope access, return racker if enabled flag is missing"() {
+        given:
+        def racker = entityFactory.createRacker().with {
+            it.enabled = null
+            return it
+        }
+
+        when:
+        def result = service.getUserByScopeAccess(createRackerScopeAcccss())
+
+        then:
+        userDao.getRackerByRackerId(_) >> racker
+        result == racker
+
+        then:
+        notThrown(NotFoundException)
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25
