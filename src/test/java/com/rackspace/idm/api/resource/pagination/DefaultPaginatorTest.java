@@ -257,30 +257,6 @@ public class DefaultPaginatorTest {
         assertThat("link created", link, equalTo(compareTo));
     }
 
-    @Test
-    public void withinFirstPage_isTrue() {
-        boolean value = userPaginator.withinFirstPage(10, 10);
-        assertThat("on first page", value, equalTo(true));
-    }
-
-    @Test
-    public void withinFirstPage_isFalse() {
-        boolean value = userPaginator.withinFirstPage(20, 10);
-        assertThat("on first page", value, equalTo(false));
-    }
-
-    @Test
-    public void withinLastPage_isTrue() {
-        boolean value = userPaginator.withinLastPage(20, 10, 30);
-        assertThat("on first page", value, equalTo(true));
-    }
-
-    @Test
-    public void withinLastPage_isFalse() {
-        boolean value = userPaginator.withinLastPage(20, 10, 40);
-        assertThat("on first page", value, equalTo(false));
-    }
-
     protected VirtualListViewRequestControl makeVLVRequestControl() {
         return new VirtualListViewRequestControl(offset, 0, limit, contentCount, null);
     }

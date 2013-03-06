@@ -59,25 +59,29 @@ public class DefaultPaginator<T> implements Paginator<T> {
         int offset = context.getOffset();
         int limit = context.getLimit();
         if (offset > totalRecords) {
-            throw new BadRequestException(String.format("Offset greater than total number of records (%s)", totalRecords));
+            throw new BadRequestException(String.format("Offset greater than total number of records", totalRecords));
         }
 
         if (totalRecords > 0) {
             StringBuilder linkHeader = new StringBuilder();
             URI path = uriInfo.getAbsolutePath();
             String pathString = path.toString();
-            int lastIndex = (totalRecords - limit) < 0 ? 0 : (totalRecords - limit);
 
-            linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", 0, limit), "first"));
-            addComma(linkHeader);
+            if (offset >= limit) {
+                linkHeader.append(makeLink(pathString, String.format("?marker=0&limit=%s", limit), "first"));
 
-            addPrevLink(linkHeader, pathString, offset, limit);
-            addComma(linkHeader);
+                addComma(linkHeader);
+                addPrevLink(linkHeader, pathString, offset, limit);
+            }
 
-            addNextLink(linkHeader, pathString, offset, limit, totalRecords, lastIndex);
-            addComma(linkHeader);
+            if ((offset + limit) < totalRecords) {
+                int lastIndex = getLastIndex(totalRecords, limit, offset);
+                addComma(linkHeader);
+                linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", lastIndex, limit), "last"));
 
-            linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", lastIndex, limit), "last"));
+                addComma(linkHeader);
+                linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", offset + limit, limit), "next"));
+            }
 
             return linkHeader.toString();
         } else {
@@ -85,8 +89,12 @@ public class DefaultPaginator<T> implements Paginator<T> {
         }
     }
 
+    protected int getLastIndex(int totalRecords, int limit, int offset) {
+        return (limit * ((totalRecords - offset) / limit)) + offset;
+    }
+
     protected void addNextLink(StringBuilder header, String path, int offset, int limit, int totalRecords, int lastIndex) {
-        if (withinLastPage(offset, limit, totalRecords)) {
+        if ((offset + limit) < totalRecords) {
             header.append(makeLink(path, String.format("?marker=%s&limit=%s", lastIndex, limit), "next"));
         } else {
             header.append(makeLink(path, String.format("?marker=%s&limit=%s", offset + limit, limit), "next"));
@@ -94,8 +102,8 @@ public class DefaultPaginator<T> implements Paginator<T> {
     }
 
     protected void addPrevLink(StringBuilder header, String path, int offset, int limit) {
-        if (withinFirstPage(offset, limit)) {
-            header.append(makeLink(path, String.format("?marker=%s&limit=%s", 0, limit), "prev"));
+        if (offset < limit) {
+            header.append(makeLink(path, String.format("?marker=0&limit=%s", limit), "prev"));
         } else {
             header.append(makeLink(path, String.format("?marker=%s&limit=%s", offset - limit, limit), "prev"));
         }
@@ -112,13 +120,5 @@ public class DefaultPaginator<T> implements Paginator<T> {
         rel = String.format("\"%s\"", rel);
         link.append("<").append(path).append(query).append(">; rel=").append(rel);
         return link.toString();
-    }
-
-    protected boolean withinFirstPage(int offset, int limit) {
-        return (0 >= offset - limit);
-    }
-
-    protected boolean withinLastPage(int offset, int limit, int totalRecords) {
-        return (offset + limit > totalRecords - 1);
     }
 }
