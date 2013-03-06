@@ -134,23 +134,6 @@ public class DefaultPaginatorTestOld {
     }
 
     @Test
-    public void createLinkHeader_returnsLinkHeader() throws Exception {
-        PaginatorContext<User> context = setupContext(30, 10, 100);
-        String[] compareToHeader = {
-                "<http://path.to.resource/this?marker=0&limit=10>; rel=\"first\"",
-                "<http://path.to.resource/this?marker=20&limit=10>; rel=\"prev\"",
-                "<http://path.to.resource/this?marker=40&limit=10>; rel=\"next\"",
-                "<http://path.to.resource/this?marker=90&limit=10>; rel=\"last\""
-        };
-
-        String[] header = userPaginator.createLinkHeader(uriInfo, context).split(", ");
-        assertThat("headers", header[0], equalTo(compareToHeader[0]));
-        assertThat("headers", header[1], equalTo(compareToHeader[1]));
-        assertThat("headers", header[2], equalTo(compareToHeader[2]));
-        assertThat("headers", header[3], equalTo(compareToHeader[3]));
-    }
-
-    @Test
     public void createLinkHeader_returnsNull() throws Exception {
         PaginatorContext<User> context = new PaginatorContext<User>();
 
@@ -169,18 +152,6 @@ public class DefaultPaginatorTestOld {
         String prevLink = links[1].split(";")[0];
         String firstLink = links[0].split(";")[0];
         assertThat("prev == first", prevLink, equalToIgnoringCase(firstLink));
-    }
-
-    @Test
-    public void createLinkHeader_onLastPage_lastPageEqualsNextPage() throws Exception {
-        PaginatorContext<User> context = setupContext(10, 90, 100);
-
-        String header = userPaginator.createLinkHeader(uriInfo, context);
-
-        String[] links = header.split(", ");
-        String nextLink = links[2].split(";")[0];
-        String lasttLink = links[3].split(";")[0];
-        assertThat("next == last", nextLink, equalToIgnoringCase(lasttLink));
     }
 
     @Test
