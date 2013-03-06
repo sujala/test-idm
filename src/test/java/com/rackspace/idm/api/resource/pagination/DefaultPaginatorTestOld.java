@@ -44,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(VirtualListViewResponseControl.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class DefaultPaginatorTest {
+public class DefaultPaginatorTestOld {
 
     @Mock
     private Configuration config;
@@ -181,54 +181,6 @@ public class DefaultPaginatorTest {
         String nextLink = links[2].split(";")[0];
         String lasttLink = links[3].split(";")[0];
         assertThat("next == last", nextLink, equalToIgnoringCase(lasttLink));
-    }
-
-    @Test
-    public void addNextLink_onLastpage_setsNextLinkToLast() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addNextLink(builder, uriInfo.getAbsolutePath().toString(), 30, 10, 40, 30);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"next\"",
-                                            uriInfo.getAbsolutePath().toString(), 30, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addNextLink_setsLink() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addNextLink(builder, uriInfo.getAbsolutePath().toString(), 10, 10, 40, 30);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"next\"",
-                                            uriInfo.getAbsolutePath().toString(), 20, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addPrevLink_onFirstPage_setsPrevLinkToFirst() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addPrevLink(builder, uriInfo.getAbsolutePath().toString(), 10, 10);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"prev\"",
-                uriInfo.getAbsolutePath().toString(), 0, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addPrevLink_setsLink() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addPrevLink(builder, uriInfo.getAbsolutePath().toString(), 30, 10);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"prev\"",
-                uriInfo.getAbsolutePath().toString(), 20, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
     }
 
     @Test
