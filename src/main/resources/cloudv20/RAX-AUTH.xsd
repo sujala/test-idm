@@ -15,13 +15,15 @@
 
     <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
     <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" />
-    
+
     <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="api.xsd" />
     <import namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" schemaLocation="RAX-KSKEY-credentials.xsd" />
     <import namespace="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0" schemaLocation="OS-KSCATALOG.xsd" />
-    
+
     <attribute name="defaultRegion" type="xsd:string" />
     <attribute name="domainId" type="xsd:string" />
+    <attribute name="propagate" type="xsd:boolean" />
+    <attribute name="weight" type="int" />
 
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
     <element name="serviceApis" type="RAX-AUTH:ServiceApis" />

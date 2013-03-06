@@ -170,6 +170,7 @@ public abstract class LdapRepository {
     public static final String ATTR_QUESTION = "question";
     public static final String ATTR_CAPABILITY_ID = "capabilityId";
     public static final String ATTR_RS_WEIGHT = "rsWeight";
+    public static final String ATTR_RS_PROPAGATE = "rsPropagate";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
