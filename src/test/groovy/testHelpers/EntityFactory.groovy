@@ -404,4 +404,12 @@ class EntityFactory extends Specification {
     private createLdapEntryWithDn(String dn) {
        return new ReadOnlyEntry(dn)
     }
+
+    def createClientSecret() {
+        return createClientSecret("secret")
+    }
+
+    def createClientSecret(secret) {
+        return ClientSecret.newInstance(secret)
+    }
 }
