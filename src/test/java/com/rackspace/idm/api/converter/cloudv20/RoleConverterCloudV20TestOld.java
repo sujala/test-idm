@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
  * Time: 9:24 AM
  * To change this template use File | Settings | File Templates.
  */
-public class RoleConverterCloudV20Test {
+public class RoleConverterCloudV20TestOld {
 
     RoleConverterCloudV20 roleConverterCloudV20;
 

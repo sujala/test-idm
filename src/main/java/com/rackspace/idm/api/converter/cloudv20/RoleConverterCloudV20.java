@@ -3,11 +3,13 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.xml.namespace.QName;
 import java.util.List;
 
 @Component
@@ -15,6 +17,12 @@ public class RoleConverterCloudV20 {
 
     @Autowired
     private JAXBObjectFactories objFactories;
+
+    @Autowired
+    Configuration config;
+
+    public static final QName QNAME_WEIGHT = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "weight");
+    public static final QName QNAME_PROPAGATE = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "propagate");
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();
@@ -47,6 +55,27 @@ public class RoleConverterCloudV20 {
         return jaxbRoles;
     }
 
+    public ClientRole toClientRoleFromRole(Role role, String clientId) {
+        ClientRole clientRole = new ClientRole();
+        clientRole.setClientId(clientId);
+        clientRole.setDescription(role.getDescription());
+        clientRole.setName(role.getName());
+
+        if (role.getOtherAttributes().containsKey(QNAME_WEIGHT)) {
+            String weight = role.getOtherAttributes().get(QNAME_WEIGHT);
+            clientRole.setRsWeight(Integer.parseInt(weight));
+        } else {
+            clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
+        }
+
+        if (role.getOtherAttributes().containsKey(QNAME_PROPAGATE)) {
+            String propagate = role.getOtherAttributes().get(QNAME_PROPAGATE);
+            clientRole.setPropagate(Boolean.parseBoolean(propagate));
+        }
+
+        return clientRole;
+    }
+
     public RoleList toRoleListFromClientRoles(List<ClientRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();
         
@@ -55,11 +84,7 @@ public class RoleConverterCloudV20 {
         }
 
         for (ClientRole role : roles) {
-            Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
-            jaxbRole.setId(role.getId());
-            jaxbRole.setName(role.getName());
-            jaxbRole.setDescription(role.getDescription());
-            jaxbRole.setServiceId(role.getClientId());
+            Role jaxbRole = toRoleFromClientRole(role);
             jaxbRoles.getRole().add(jaxbRole);
         }
 
@@ -87,7 +112,14 @@ public class RoleConverterCloudV20 {
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getId());
         jaxbRole.setName(role.getName());
-        //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+        jaxbRole.setServiceId(role.getClientId());
+
+        jaxbRole.getOtherAttributes().put(QNAME_WEIGHT, Integer.toString(role.getRsWeight()));
+
+        if (role.getPropagate() != null) {
+            jaxbRole.getOtherAttributes().put(QNAME_PROPAGATE, Boolean.toString(role.getPropagate()));
+        }
+
         return jaxbRole;
     }
 
