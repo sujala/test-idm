@@ -4,9 +4,20 @@ apply plugin: 'maven'
 apply plugin: 'jetty'
 apply plugin: 'war'
 apply plugin: 'idea'
+apply plugin: 'nexus'
+apply plugin: 'sonar'
 
 buildscript {
     apply from: 'jacoco.gradle'
+
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+    }
 }
 
 group = 'com.rackspace'
@@ -193,6 +204,8 @@ idea {
 }
 
 test {
+    ignoreFailures = true
+
     // set heap size for the test JVM(s)
     minHeapSize = "128m"
     maxHeapSize = "512m"
@@ -204,6 +217,17 @@ test {
 
 jettyRun {
     httpPort = 8083
+}
+
+
+artifacts {
+    archives zipConfig
+}
+
+nexus {
+    sign = false
+    repositoryUrl = 'http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases/'
+    snapshotRepositoryUrl = 'http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/snapshots/'
 }
 
 task jaxb() {
@@ -316,5 +340,25 @@ sourceSets {
         groovy {
             srcDirs srcTestDelomboked
         }
+    }
+}
+
+sonar {
+    database {
+        url = "jdbc:h2:tcp://localhost:9092/sonar"
+        driverClassName = "org.h2.Driver"
+        username = "sonar"
+        password = "sonar"
+    }
+
+    project {
+        dynamicAnalysis = "reuseReports"
+        withProjectProperties { props ->
+            props["sonar.core.codeCoveragePlugin"] = "jacoco"
+            props["sonar.jacoco.reportPath"] = "build/tmp/jacoco/jacoco.exec"
+        }
+
+        name = "idm"
+        description = "Global Auth"
     }
 }

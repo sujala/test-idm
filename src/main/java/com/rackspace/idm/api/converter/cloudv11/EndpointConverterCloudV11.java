@@ -29,17 +29,24 @@ public class EndpointConverterCloudV11 {
         }
         BaseURL baseUrl = of.createBaseURL();
         baseUrl.setEnabled(url.getEnabled());
-        baseUrl.setAdminURL(url.getAdminUrl());
+        if (url.getAdminUrl() != null) {
+            baseUrl.setAdminURL(url.getAdminUrl().trim());
+        }
         baseUrl.setDefault(url.getDef());
         baseUrl.setId(url.getBaseUrlId());
-        baseUrl.setInternalURL(url.getInternalUrl());
-        baseUrl.setPublicURL(url.getPublicUrl());
+        if (url.getInternalUrl() != null) {
+            baseUrl.setInternalURL(url.getInternalUrl().trim());
+        }
+        if (url.getPublicUrl() != null) {
+            baseUrl.setPublicURL(url.getPublicUrl().trim());
+        }
         baseUrl.setRegion(url.getRegion());
         baseUrl.setServiceName(url.getServiceName());
         if (url.getBaseUrlType() != null) {
             baseUrl.setUserType(Enum.valueOf(UserType.class, url
-                    .getBaseUrlType().toUpperCase()));
+                    .getBaseUrlType().toUpperCase().trim()));
         }
+
         return baseUrl;
     }
 

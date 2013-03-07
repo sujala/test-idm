@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.converter.cloudv11
 
+import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
+import com.rackspacecloud.docs.auth.api.v1.UserType
 import spock.lang.Specification
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 
@@ -42,6 +44,32 @@ class EndpointConverterCloudV11Test extends Specification {
 
         then:
         removeDuplicates_called == true
+    }
+
+    def "converter trims the urls and baseUrlType"() {
+        given:
+        def adminUrl = "admin"
+        def internalUrl = "internal"
+        def publicUrl = "public"
+        def baseUrlType = "MOSSO"
+
+        def cloudBaseUrl = new CloudBaseUrl().with {
+            it.baseUrlId = 1
+            it.adminUrl = "$adminUrl "
+            it.internalUrl = "$internalUrl "
+            it.publicUrl = "$publicUrl "
+            it.baseUrlType = "$baseUrlType "
+            return it
+        }
+
+        when:
+        def result = endpointConverterCloudV11.toBaseUrl(cloudBaseUrl)
+
+        then:
+        result.adminURL == adminUrl
+        result.publicURL == publicUrl
+        result.internalURL == internalUrl
+        result.userType == UserType.MOSSO
     }
 
     def getBaseUrlRef(id) {
