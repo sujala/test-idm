@@ -22,7 +22,7 @@ import static org.junit.Assert.assertThat;
  * Time: 4:42 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JSONReaderForRoleTest {
+public class JSONReaderForRoleTestOld {
     JSONReaderForRole jsonReaderForRole;
 
     @Before

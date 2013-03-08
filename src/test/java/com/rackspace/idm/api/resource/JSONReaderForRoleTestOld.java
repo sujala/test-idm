@@ -20,7 +20,7 @@ import static org.junit.Assert.assertThat;
  * Time: 4:03 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JSONReaderForRoleTest {
+public class JSONReaderForRoleTestOld {
 
     private String roleJSON = "{" +
             "   \"role\" : {" +
