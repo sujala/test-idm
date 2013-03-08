@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Component
@@ -439,27 +440,22 @@ public class DefaultTenantService implements TenantService {
         List<TenantRole> roles = this.tenantDao
             .getAllTenantRolesForTenant(tenantId);
 
-        List<String> roleIds = new ArrayList<String>();
-        for (TenantRole role : roles) {
-            if (!roleIds.contains(role.getRoleRsId())) {
-                roleIds.add(role.getRoleRsId());
+        HashMap<String,ClientRole> clientRolesMap = new HashMap<String, ClientRole>();
+        for (TenantRole role : roles){
+            if(!clientRolesMap.containsKey(role.getRoleRsId())){
+                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                if(cRole != null){
+                    clientRolesMap.put(role.getRoleRsId(),cRole);
+                }
+            }
+            ClientRole clientRole = clientRolesMap.get(role.getRoleRsId());
+            if (clientRole != null) {
+                role.setDescription(clientRole.getDescription());
+                role.setName(clientRole.getName());
             }
         }
 
-        List<TenantRole> returnedRoles = new ArrayList<TenantRole>();
-        for (String roleId : roleIds) {
-            ClientRole cRole = this.applicationService.getClientRoleById(roleId);
-            if (cRole != null) {
-                TenantRole newRole = new TenantRole();
-                newRole.setClientId(cRole.getClientId());
-                newRole.setDescription(cRole.getDescription());
-                newRole.setName(cRole.getName());
-                newRole.setRoleRsId(cRole.getId());
-                newRole.setTenantIds(new String[]{tenantId});
-                returnedRoles.add(newRole);
-            }
-        }
-        return returnedRoles;
+        return roles;
     }
 
     @Override

@@ -316,4 +316,40 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         notThrown(Exception)
     }
+
+    def "GET - tenantRoles for tenant"(){
+        when:
+        def tenantRole = null
+        if (useTenantsRole){
+            tenantRole = entityFactory.createTenantRole()
+            tenantRole.name == null
+        }
+        def clientRole = null
+        if (useClientRole){
+            clientRole = entityFactory.createClientRole()
+            clientRole.description = "desc"
+            clientRole.name = "name"
+        }
+        if (tenantRole != null){
+            tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+        }else{
+            tenantDao.getAllTenantRolesForTenant(_) >> [].asList()
+        }
+        applicationService.getClientRoleById(_) >> clientRole
+        def result = service.getTenantRolesForTenant(value)
+
+        then:
+        if (result != null && result.size() != 0){
+            result.get(0).description == desc
+            result.get(0).name == name
+        }else{
+            result == [].asList()
+        }
+
+        where:
+        value   | desc    | name   | useTenantsRole  | useClientRole
+        null    | null    | null   | false           | false
+        "1"     | "desc"  | "name" | true            | true
+
+    }
 }
