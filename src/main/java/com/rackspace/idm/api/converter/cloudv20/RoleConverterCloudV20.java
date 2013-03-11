@@ -6,11 +6,12 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.xml.namespace.QName;
-import java.util.List;
+import static com.rackspace.idm.RaxAuthConstants.*;
 
 @Component
 public class RoleConverterCloudV20 {
@@ -20,9 +21,6 @@ public class RoleConverterCloudV20 {
 
     @Autowired
     Configuration config;
-
-    public static final QName QNAME_WEIGHT = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "weight");
-    public static final QName QNAME_PROPAGATE = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "propagate");
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();

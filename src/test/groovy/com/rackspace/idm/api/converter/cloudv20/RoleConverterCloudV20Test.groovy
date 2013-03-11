@@ -4,7 +4,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-import javax.xml.namespace.QName
+import static com.rackspace.idm.RaxAuthConstants.*
 
 class RoleConverterCloudV20Test extends RootServiceTest {
     @Shared RoleConverterCloudV20 converter
@@ -34,8 +34,8 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRoleFromClientRole(clientRole)
 
         then:
-        result.otherAttributes.get(RoleConverterCloudV20.QNAME_WEIGHT) == weight.toString()
-        result.otherAttributes.get(RoleConverterCloudV20.QNAME_PROPAGATE) == propagate.toString()
+        result.otherAttributes.get(QNAME_WEIGHT) == weight.toString()
+        result.otherAttributes.get(QNAME_PROPAGATE) == propagate.toString()
     }
 
     def "can convert jaxb role to clientRole"() {
@@ -44,8 +44,8 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def propagate = true
 
         def jaxbRole = v2Factory.createRole()
-        jaxbRole.otherAttributes.put(RoleConverterCloudV20.QNAME_WEIGHT, weight.toString())
-        jaxbRole.otherAttributes.put(RoleConverterCloudV20.QNAME_PROPAGATE, propagate.toString())
+        jaxbRole.otherAttributes.put(QNAME_WEIGHT, weight.toString())
+        jaxbRole.otherAttributes.put(QNAME_PROPAGATE, propagate.toString())
 
         when:
         def result = converter.toClientRoleFromRole(jaxbRole, "clientId");

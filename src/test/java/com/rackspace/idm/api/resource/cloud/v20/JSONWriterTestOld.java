@@ -54,7 +54,7 @@ import static org.mockito.Mockito.*;
  * Time: 10:12 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JSONWriterTest {
+public class JSONWriterTestOld {
 
     private JSONWriter writer = new JSONWriter();
     private XMLGregorianCalendar calendar;

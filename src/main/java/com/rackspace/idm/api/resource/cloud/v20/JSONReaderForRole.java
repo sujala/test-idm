@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import static com.rackspace.idm.RaxAuthConstants.*;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRole implements MessageBodyReader<Role> {
@@ -63,7 +65,9 @@ public class JSONReaderForRole implements MessageBodyReader<Role> {
                 Object description = obj3.get(JSONConstants.DESCRIPTION);
                 Object tenantId = obj3.get(JSONConstants.TENANT_ID);
                 Object serviceId = obj3.get(JSONConstants.SERVICE_ID);
-                
+                Object propagate = obj3.get(JSONConstants.RAX_AUTH_PROPAGATE);
+                Object weight = obj3.get(JSONConstants.RAX_AUTH_WEIGHT);
+
                 if (id != null) {
                     role.setId(id.toString());
                 }
@@ -78,6 +82,12 @@ public class JSONReaderForRole implements MessageBodyReader<Role> {
                 }
                 if (serviceId != null) {
                     role.setServiceId(serviceId.toString());
+                }
+                if (propagate != null) {
+                    role.getOtherAttributes().put(QNAME_PROPAGATE, propagate.toString());
+                }
+                if (weight != null) {
+                    role.getOtherAttributes().put(QNAME_WEIGHT, weight.toString());
                 }
             }
         } catch (ParseException e) {

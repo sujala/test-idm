@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.ServiceUnavailableFault;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
@@ -52,6 +53,8 @@ import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.rackspace.idm.RaxAuthConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -254,6 +257,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 list.add(serviceName);
             }
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION_SERVICES, list);
+            jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(Role.class)) {
+            JSONObject outer = new JSONObject();
+            JSONObject role = getRole((Role) object);
+            outer.put(JSONConstants.ROLE, role);
             jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(RoleList.class)) {
             JSONObject outer = new JSONObject();
@@ -858,6 +866,12 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         }
         if (role.getTenantId() != null) {
             outer.put(JSONConstants.TENANT_ID, role.getTenantId());
+        }
+        if (role.getOtherAttributes().containsKey(QNAME_PROPAGATE)) {
+            outer.put(JSONConstants.RAX_AUTH_PROPAGATE, role.getOtherAttributes().get(QNAME_PROPAGATE));
+        }
+        if (role.getOtherAttributes().containsKey(QNAME_WEIGHT)) {
+            outer.put(JSONConstants.RAX_AUTH_WEIGHT, role.getOtherAttributes().get(QNAME_WEIGHT));
         }
         return outer;
     }

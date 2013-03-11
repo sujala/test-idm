@@ -3,7 +3,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.idm.JSONConstants
 import org.apache.commons.io.IOUtils
+import org.json.simple.JSONObject
+import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import spock.lang.Specification
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
@@ -18,6 +21,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
+import javax.xml.namespace.QName
+
+import static com.rackspace.idm.RaxAuthConstants.*
 
 class JSONReaderWriterTest extends Specification {
 
@@ -35,6 +41,7 @@ class JSONReaderWriterTest extends Specification {
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
     @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
     @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
+    @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
 
     def "can read/write region as json"() {
         given:
@@ -320,6 +327,38 @@ class JSONReaderWriterTest extends Specification {
         readSecretQA.answer == "Himalayas"
     }
 
+    def "can read/write roles as json"() {
+        when:
+        def role = role(propagate, weight)
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(role, Role, null, null, null, null, arrayOutputStream)
+        String JSONString = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(JSONString)
+
+        def readJSONObject = readerForRole.readFrom(Role, null, null, null, null, inputStream)
+        def otherAttributes = readJSONObject.getOtherAttributes()
+        def readPropagate = null
+        def readWeight = null
+        if (otherAttributes.containsKey(QNAME_PROPAGATE)) {
+            readPropagate = otherAttributes.get(QNAME_PROPAGATE).toBoolean()
+        }
+        if (otherAttributes.containsKey(QNAME_WEIGHT)) {
+            readWeight = readJSONObject.otherAttributes.get(QNAME_WEIGHT).toInteger()
+        }
+
+        then:
+        readPropagate == propagate
+        readWeight == weight
+
+        where:
+        propagate   | weight
+        true        | null
+        null        | 500
+        false       | 100
+        null        | null
+    }
+
     def getSecretQA(String id, String question, String answer) {
         new SecretQA().with {
             it.id = id
@@ -419,5 +458,28 @@ class JSONReaderWriterTest extends Specification {
             it.isDefault = isDefault
             return it
         }
+    }
+
+    def role(propagate, weight) {
+        def other = createOtherMap(propagate, weight)
+        return new Role().with {
+            it.name = "name"
+            it.description = "desc"
+            it.serviceId = "serviceId"
+            it.tenantId = "tenantId"
+            it.otherAttributes = other
+            return it
+        }
+    }
+
+    def createOtherMap(propagate, weight) {
+        def map = new HashMap<QName, Object>()
+        if (propagate != null) {
+            map.put(QNAME_PROPAGATE, propagate)
+        }
+        if (weight != null) {
+            map.put(QNAME_WEIGHT, weight)
+        }
+        return map
     }
 }
