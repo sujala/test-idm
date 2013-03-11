@@ -130,4 +130,6 @@ public final class JSONConstants {
     public static final Object BLOB = "blob";
     public static final Object RAX_AUTH_RSA = "RAX-AUTH:rsaCredentials";
     public static final Object TOKEN_KEY = "tokenKey";
+    public static final Object PROPAGATE = "RAX-AUTH:propagate";
+    public static final Object WEIGHT = "RAX-AUTH:Weight";
 }
