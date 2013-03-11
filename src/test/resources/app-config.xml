@@ -44,7 +44,7 @@
 
     <aop:aspectj-autoproxy />
 
-    <bean id="validateAspect" class="com.rackspace.idm.aspect.ValidateAspect" factory-method="aspectOf" />
+    <!--bean id="validateAspect" class="com.rackspace.idm.aspect.ValidateAspect" factory-method="aspectOf" /-->
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
     <context:component-scan base-package="com.rackspace.idm"/>

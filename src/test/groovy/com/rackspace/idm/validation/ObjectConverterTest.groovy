@@ -28,6 +28,8 @@ import testHelpers.RootServiceTest
 
 import javax.xml.namespace.QName
 
+import static com.rackspace.idm.RaxAuthConstants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -139,6 +141,8 @@ class ObjectConverterTest extends RootServiceTest{
     def "Convert Role to RoleForValidation"(){
         when:
         def entity = v2Factory.createRole()
+        entity.otherAttributes.put(QNAME_WEIGHT, "weight")
+        entity.otherAttributes.put(QNAME_PROPAGATE, "propagate")
         entity.description = "description"
         entity.id = "id"
         RoleForValidation result = converter.convert(entity)
@@ -150,6 +154,8 @@ class ObjectConverterTest extends RootServiceTest{
         result.description == "description"
         result.tenantId == "tenantId"
         result.serviceId == "applicationId"
+        result.otherAttributes.get(QNAME_WEIGHT) == "weight"
+        result.otherAttributes.get(QNAME_PROPAGATE) == "propagate"
     }
 
     def "Convert Group to GroupForValidation"(){
