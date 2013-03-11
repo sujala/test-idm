@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -1152,6 +1153,7 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    @Ignore
     def "listRoles returns valid link headers"() {
         given:
         def response = listRoles(serviceAdminToken, null, "2", "1")
