@@ -785,6 +785,7 @@ class RootServiceTest extends Specification {
             }
         }
         uriInfo.getRequestUriBuilder() >> builderMock
+        uriInfo.getAbsolutePath() >> new URI(absolutePath)
 
         return uriInfo
     }

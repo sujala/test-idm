@@ -24,6 +24,8 @@ import java.net.URI;
 @Component
 public class DefaultPaginator<T> implements Paginator<T> {
 
+    static String PAGE_FORMAT_STRING = "?marker=%s&limit=%s";
+
     @Override
     public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit) {
     	int contentCount = 0;
@@ -59,25 +61,29 @@ public class DefaultPaginator<T> implements Paginator<T> {
         int offset = context.getOffset();
         int limit = context.getLimit();
         if (offset > totalRecords) {
-            throw new BadRequestException(String.format("Offset greater than total number of records (%s)", totalRecords));
+            throw new BadRequestException(String.format("Offset greater than total number of records", totalRecords));
         }
 
         if (totalRecords > 0) {
             StringBuilder linkHeader = new StringBuilder();
             URI path = uriInfo.getAbsolutePath();
             String pathString = path.toString();
-            int lastIndex = (totalRecords - limit) < 0 ? 0 : (totalRecords - limit);
 
-            linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", 0, limit), "first"));
-            addComma(linkHeader);
+            if (offset >= limit) {
+                linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, 0, limit), "first"));
 
-            addPrevLink(linkHeader, pathString, offset, limit);
-            addComma(linkHeader);
+                addComma(linkHeader);
+                linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, offset - limit, limit), "prev"));
+            }
 
-            addNextLink(linkHeader, pathString, offset, limit, totalRecords, lastIndex);
-            addComma(linkHeader);
+            if ((offset + limit) < totalRecords) {
+                int lastIndex = getLastIndex(totalRecords, limit, offset);
+                addComma(linkHeader);
+                linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, lastIndex, limit), "last"));
 
-            linkHeader.append(makeLink(pathString, String.format("?marker=%s&limit=%s", lastIndex, limit), "last"));
+                addComma(linkHeader);
+                linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, offset + limit, limit), "next"));
+            }
 
             return linkHeader.toString();
         } else {
@@ -85,20 +91,12 @@ public class DefaultPaginator<T> implements Paginator<T> {
         }
     }
 
-    protected void addNextLink(StringBuilder header, String path, int offset, int limit, int totalRecords, int lastIndex) {
-        if (withinLastPage(offset, limit, totalRecords)) {
-            header.append(makeLink(path, String.format("?marker=%s&limit=%s", lastIndex, limit), "next"));
-        } else {
-            header.append(makeLink(path, String.format("?marker=%s&limit=%s", offset + limit, limit), "next"));
+    protected int getLastIndex(int totalRecords, int limit, int offset) {
+        int index = (limit * ((totalRecords - offset) / limit)) + offset;
+        if (index == totalRecords) {
+            return totalRecords - limit;
         }
-    }
-
-    protected void addPrevLink(StringBuilder header, String path, int offset, int limit) {
-        if (withinFirstPage(offset, limit)) {
-            header.append(makeLink(path, String.format("?marker=%s&limit=%s", 0, limit), "prev"));
-        } else {
-            header.append(makeLink(path, String.format("?marker=%s&limit=%s", offset - limit, limit), "prev"));
-        }
+        return index;
     }
 
     protected void addComma(final StringBuilder builder) {
@@ -112,13 +110,5 @@ public class DefaultPaginator<T> implements Paginator<T> {
         rel = String.format("\"%s\"", rel);
         link.append("<").append(path).append(query).append(">; rel=").append(rel);
         return link.toString();
-    }
-
-    protected boolean withinFirstPage(int offset, int limit) {
-        return (0 >= offset - limit);
-    }
-
-    protected boolean withinLastPage(int offset, int limit, int totalRecords) {
-        return (offset + limit > totalRecords - 1);
     }
 }

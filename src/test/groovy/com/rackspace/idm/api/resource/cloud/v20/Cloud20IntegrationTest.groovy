@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -1152,6 +1153,28 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    @Ignore
+    def "listRoles returns valid link headers"() {
+        given:
+        def response = listRoles(serviceAdminToken, null, "2", "1")
+        List<String> links = response.headers.get("link")
+        links = links[0].split(",")
+        Map<String, String[]> params = new HashMap<String, String[]>()
+        setLinkParams(links, params)
+
+        when:
+        def first_response = listRoles(serviceAdminToken, null, params["first"][0], params["first"][1])
+        def last_response = listRoles(serviceAdminToken, null, params["last"][0], params["last"][1])
+        def prev_response = listRoles(serviceAdminToken, null, params["prev"][0], params["prev"][1])
+        def next_response = listRoles(serviceAdminToken, null, params["next"][0], params["next"][1])
+
+        then:
+        first_response.status == 200
+        last_response.status == 200
+        prev_response.status == 200
+        next_response.status == 200
+    }
+
     def "listRoles returns forbidden"() {
         expect:
         response.status == 403
@@ -1322,6 +1345,7 @@ class Cloud20IntegrationTest extends Specification {
         def users = response.getEntity(UserList).value
         users.getUser().size == 0
     }
+
     def "Adding a group to user-admin also adds the group to its sub-users"(){
         given:
         String username = "groupUserAdmin" + sharedRandom
@@ -1873,5 +1897,65 @@ class Cloud20IntegrationTest extends Specification {
             it.answer = answer
             return it
         }
+    }
+
+        def setLinkParams(List<String> links, Map<String, String[]> params) {
+        for (String link : links) {
+            def first = getFirstLink(link)
+            if (first) {
+                params.put("first", first)
+                continue
+            }
+            def last = getLastLink(link)
+            if (last) {
+                params.put("last", last)
+                continue
+            }
+            def prev = getPrevLink(link)
+            if (prev) {
+                params.put("prev", prev)
+                continue
+            }
+            def next = getNextLink(link)
+            if (next) {
+                params.put("next", next)
+                continue
+            }
+        }
+    }
+    def getFirstLink(String linkString) {
+        def pattern = /marker=(.*)&limit=(.*)>; rel="first"/
+        def matcher = (linkString =~ pattern)
+        if (matcher) {
+            return [ matcher[0][1], matcher[0][2] ]
+        }
+        return null
+    }
+
+    def getLastLink(String linkString) {
+        def pattern = /marker=(.*)&limit=(.*)>; rel="last"/
+        def matcher = (linkString =~ pattern)
+        if (matcher) {
+            return [ matcher[0][1], matcher[0][2] ]
+        }
+        return null
+    }
+
+    def getPrevLink(String linkString) {
+        def pattern = /marker=(.*)&limit=(.*)>; rel="prev"/
+        def matcher = (linkString =~ pattern)
+        if (matcher) {
+            return [ matcher[0][1], matcher[0][2] ]
+        }
+        return null
+    }
+
+    def getNextLink(String linkString) {
+        def pattern = /marker=(.*)&limit=(.*)>; rel="next"/
+        def matcher = (linkString =~ pattern)
+        if (matcher) {
+            return [ matcher[0][1], matcher[0][2] ]
+        }
+        return null
     }
 }

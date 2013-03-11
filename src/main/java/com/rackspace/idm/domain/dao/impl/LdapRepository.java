@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 import com.unboundid.util.LDAPSDKUsageException;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -304,6 +305,7 @@ public abstract class LdapRepository {
         try {
             return getAppInterface().search(searchRequest);
         } catch (LDAPException ldapEx) {
+            // ldapEx.getResultCode().intValue == 61 or 77 indicates offset out of range
             getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
             return null;
         }

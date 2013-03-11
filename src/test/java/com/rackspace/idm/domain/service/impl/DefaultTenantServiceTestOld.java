@@ -530,13 +530,16 @@ public class DefaultTenantServiceTestOld {
     public void getTenantRolesForTenant_clientRoleExists_returnsPopulatedTenantRoleList() throws Exception {
         TenantRole role = new TenantRole();
         role.setRoleRsId("123");
+        role.setClientId("456");
+        String[] tenantIds = {"id"};
+        role.setTenantIds(tenantIds);
         ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         ClientRole cRole = new ClientRole();
         cRole.setClientId("456");
         cRole.setDescription("this is a description");
         cRole.setName("John Smith");
-        cRole.setId("789");
+        cRole.setId("123");
         when(tenantDao.getAllTenantRolesForTenant("id")).thenReturn(roles);
         when(applicationService.getClientRoleById("123")).thenReturn(cRole);
         List<TenantRole> returnedRoles = defaultTenantService.getTenantRolesForTenant("id");
@@ -544,7 +547,7 @@ public class DefaultTenantServiceTestOld {
         assertThat("clientId",returnedRoles.get(0).getClientId(),equalTo("456"));
         assertThat("description",returnedRoles.get(0).getDescription(),equalTo("this is a description"));
         assertThat("name", returnedRoles.get(0).getName(),equalTo("John Smith"));
-        assertThat("role rs id", returnedRoles.get(0).getRoleRsId(),equalTo("789"));
+        assertThat("role rs id", returnedRoles.get(0).getRoleRsId(),equalTo("123"));
         assertThat("tenant ids",returnedRoles.get(0).getTenantIds()[0],equalTo("id"));
     }
 

@@ -204,8 +204,6 @@ idea {
 }
 
 test {
-    ignoreFailures = true
-
     // set heap size for the test JVM(s)
     minHeapSize = "128m"
     maxHeapSize = "512m"

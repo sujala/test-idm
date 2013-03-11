@@ -63,7 +63,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
 
     def setup(){
         Random random = new Random()
-        randomMosso = 100000 + random.nextInt(1000)
+        randomMosso = 10000000 + random.nextInt(1000000)
         authUser = "auth"
         authPassword = "auth123"
     }
@@ -77,8 +77,13 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         when:
         def userCreateResponse = createUserXML(user)
         def getUserResponse = getUserXML(username)
+        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+
         def updateUserResponse = updateUserXML(username, userForUpdate)
         def deleteUserResponse = deleteUserXML(username)
+        def hardDeleteUserResponse = hardDeleteUserXML(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = deleteTenantXML(serviceAdminToken, String.valueOf(randomMosso))
 
         then:
         userCreateResponse.status == 201
@@ -102,9 +107,43 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         updateUser.enabled == true
 
         deleteUserResponse.status == 204
+        hardDeleteUserResponse.status == 204
+        deleteTenantResponse.status == 204
     }
 
-    def "Don't allow disabled identity/service admin to get/create user"(){
+    def "Create User with existing mosso should return a 400" () {
+        given:
+        String username = "userExistingMosso" + sharedRandom
+        User user = createUser(username, "1234567890", randomMosso, null, true)
+
+        when:
+        def userCreateResponse = createUserXML(user)
+        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+        user.id = "userExistingMosso2"
+        def userCreateNewNameResponse = createUserXML(user)
+
+        def deleteUserResponse = deleteUserXML(username)
+        def hardDeleteUserResponse = hardDeleteUserXML(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = deleteTenantXML(serviceAdminToken, String.valueOf(randomMosso))
+
+        then:
+        userCreateResponse.status == 201
+        User createUser = userCreateResponse.getEntity(User)
+        createUser.key == "1234567890"
+        createUser.mossoId == randomMosso
+        createUser.enabled == true
+
+        userCreateNewNameResponse.status == 400
+
+        deleteUserResponse.status == 204
+        hardDeleteUserResponse.status == 204
+        deleteTenantResponse.status == 204
+    }
+
+
+
+        def "Don't allow disabled identity/service admin to get/create user"(){
         given:
         User userForUpdate = createUser(identityAdmin.username, null, null, null, false)
         String username = "userAdmin" + sharedRandom
@@ -182,6 +221,14 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
 
     def createUser20XML(String token, user) {
         resource.path(path20).path('users').accept(APPLICATION_XML).type(APPLICATION_XML).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+    }
+
+    def deleteTenantXML(String token, String tenantId) {
+        resource.path(path20).path('tenants').path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def hardDeleteUserXML(String token, String userId) {
+        resource.path(path20).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def userForCreate20(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {

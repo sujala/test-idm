@@ -44,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(VirtualListViewResponseControl.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class DefaultPaginatorTest {
+public class DefaultPaginatorTestOld {
 
     @Mock
     private Configuration config;
@@ -134,23 +134,6 @@ public class DefaultPaginatorTest {
     }
 
     @Test
-    public void createLinkHeader_returnsLinkHeader() throws Exception {
-        PaginatorContext<User> context = setupContext(30, 10, 100);
-        String[] compareToHeader = {
-                "<http://path.to.resource/this?marker=0&limit=10>; rel=\"first\"",
-                "<http://path.to.resource/this?marker=20&limit=10>; rel=\"prev\"",
-                "<http://path.to.resource/this?marker=40&limit=10>; rel=\"next\"",
-                "<http://path.to.resource/this?marker=90&limit=10>; rel=\"last\""
-        };
-
-        String[] header = userPaginator.createLinkHeader(uriInfo, context).split(", ");
-        assertThat("headers", header[0], equalTo(compareToHeader[0]));
-        assertThat("headers", header[1], equalTo(compareToHeader[1]));
-        assertThat("headers", header[2], equalTo(compareToHeader[2]));
-        assertThat("headers", header[3], equalTo(compareToHeader[3]));
-    }
-
-    @Test
     public void createLinkHeader_returnsNull() throws Exception {
         PaginatorContext<User> context = new PaginatorContext<User>();
 
@@ -169,66 +152,6 @@ public class DefaultPaginatorTest {
         String prevLink = links[1].split(";")[0];
         String firstLink = links[0].split(";")[0];
         assertThat("prev == first", prevLink, equalToIgnoringCase(firstLink));
-    }
-
-    @Test
-    public void createLinkHeader_onLastPage_lastPageEqualsNextPage() throws Exception {
-        PaginatorContext<User> context = setupContext(10, 90, 100);
-
-        String header = userPaginator.createLinkHeader(uriInfo, context);
-
-        String[] links = header.split(", ");
-        String nextLink = links[2].split(";")[0];
-        String lasttLink = links[3].split(";")[0];
-        assertThat("next == last", nextLink, equalToIgnoringCase(lasttLink));
-    }
-
-    @Test
-    public void addNextLink_onLastpage_setsNextLinkToLast() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addNextLink(builder, uriInfo.getAbsolutePath().toString(), 30, 10, 40, 30);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"next\"",
-                                            uriInfo.getAbsolutePath().toString(), 30, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addNextLink_setsLink() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addNextLink(builder, uriInfo.getAbsolutePath().toString(), 10, 10, 40, 30);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"next\"",
-                                            uriInfo.getAbsolutePath().toString(), 20, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addPrevLink_onFirstPage_setsPrevLinkToFirst() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addPrevLink(builder, uriInfo.getAbsolutePath().toString(), 10, 10);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"prev\"",
-                uriInfo.getAbsolutePath().toString(), 0, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
-    }
-
-    @Test
-    public void addPrevLink_setsLink() throws Exception {
-        StringBuilder builder = new StringBuilder();
-
-        userPaginator.addPrevLink(builder, uriInfo.getAbsolutePath().toString(), 30, 10);
-
-        String compareTo = String.format("<%s?marker=%s&limit=%s>; rel=\"prev\"",
-                uriInfo.getAbsolutePath().toString(), 20, 10);
-
-        assertThat("links match", builder.toString(), equalTo(compareTo));
     }
 
     @Test
@@ -255,30 +178,6 @@ public class DefaultPaginatorTest {
         String link = userPaginator.makeLink("path", "?query", "first");
         String compareTo = "<path?query>; rel=\"first\"";
         assertThat("link created", link, equalTo(compareTo));
-    }
-
-    @Test
-    public void withinFirstPage_isTrue() {
-        boolean value = userPaginator.withinFirstPage(10, 10);
-        assertThat("on first page", value, equalTo(true));
-    }
-
-    @Test
-    public void withinFirstPage_isFalse() {
-        boolean value = userPaginator.withinFirstPage(20, 10);
-        assertThat("on first page", value, equalTo(false));
-    }
-
-    @Test
-    public void withinLastPage_isTrue() {
-        boolean value = userPaginator.withinLastPage(20, 10, 30);
-        assertThat("on first page", value, equalTo(true));
-    }
-
-    @Test
-    public void withinLastPage_isFalse() {
-        boolean value = userPaginator.withinLastPage(20, 10, 40);
-        assertThat("on first page", value, equalTo(false));
     }
 
     protected VirtualListViewRequestControl makeVLVRequestControl() {
