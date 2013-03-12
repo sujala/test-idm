@@ -212,19 +212,19 @@ class Cloud20IntegrationTest extends Specification {
 
         deleteRoleXML(serviceAdminToken, sharedRole.getId())
         deleteRoleXML(serviceAdminToken, sharedRoleTwo.getId())
+        deleteRoleXML(serviceAdminToken, propagatingRole.getId())
 
-        deleteUserXML(serviceAdminToken, userAdmin.getId())
-        deleteUserXML(serviceAdminToken, userAdminTwo.getId())
+        destroyUser(userAdmin.getId())
+        destroyUser(userAdminTwo.getId())
 
-        deleteUserXML(serviceAdminToken, defaultUser.getId())
-        deleteUserXML(serviceAdminToken, defaultUserTwo.getId())
-        deleteUserXML(serviceAdminToken, defaultUserThree.getId())
-        deleteUserXML(serviceAdminToken, defaultUserForAdminTwo.getId())
+        destroyUser(defaultUser.getId())
+        destroyUser(defaultUserTwo.getId())
+        destroyUser(defaultUserThree.getId())
+        destroyUser(defaultUserForAdminTwo.getId())
 
-        deleteUserXML(serviceAdminToken, testUser.getId())
+        destroyUser(testUser.getId())
 
         //TODO: DELETE DOMAINS
-
         deleteEndpointTemplateXML(serviceAdminToken, endpointTemplateId)
         deletePolicyXML(serviceAdminToken, policyId)
     }
@@ -1488,21 +1488,20 @@ class Cloud20IntegrationTest extends Specification {
 
     def "adding a role which propagates to a user admin adds the role to the sub users"() {
         when:
-        addUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
         def defaultUserResponse1 = getUserRoleXML(serviceAdminToken, defaultUserForAdminTwo.getId(), propagatingRole.getId())
         def userAdminResponse1 = getUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
-        deleteUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+
+        def response = addUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+
         def defaultUserResponse2 = getUserRoleXML(serviceAdminToken, defaultUserForAdminTwo.getId(), propagatingRole.getId())
         def userAdminResponse2 = getUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
 
 
         then:
-        defaultUserResponse1.status == 200
-        userAdminResponse1.status == 200
-        defaultUserResponse2.status == 404
-        userAdminResponse2.status == 404
-
-        where:
+        defaultUserResponse1.status == 404
+        userAdminResponse1.status == 404
+        defaultUserResponse2.status == 200
+        userAdminResponse2.status == 200
     }
 
     def destroyUser(userId) {
@@ -1773,15 +1772,23 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def addUserRoleXML(String token, String userId, String roleId) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles").path("OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
     def removeUserRoleXML(String token, String userId, String roleId) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles").path("OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def getUserRoleXML(String token, String userId, String roleId) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles").path("OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def addRoleToUserOnTenant(String token, String roleId, String userId, String tenantId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId).path("roles").path("OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def deleteRoleFromUserOnTenant(String token, String roleId, String userId, String tenantId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId).path("roles").path("OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     //Helper Methods

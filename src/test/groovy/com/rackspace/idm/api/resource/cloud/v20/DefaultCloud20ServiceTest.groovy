@@ -1064,59 +1064,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * caller.getDomainId() >> user.getDomainId()
     }
 
-    def "addUserRole adds role to user-admin's sub users"() {
-        given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-        def caller = user
-        def roleToAdd = entityFactory.createClientRole("roleName").with {
-            it.propagate = true
-            return it
-        }
-        def subUser = entityFactory.createUser()
-
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        when:
-        service.addUserRole(headers, authToken, userId, roleId)
-
-        then:
-        1 * userService.getSubUsers(caller) >> [ subUser ].asList()
-        1 * tenantService.addTenantRoleToUser(subUser, _)
-        then:
-        1 * tenantService.addTenantRoleToUser(user, _)
-    }
-
-    def "addRolesToUserOnTenant adds role to user-admins sub users"() {
-        given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-        def caller = user
-        def subUser = entityFactory.createUser()
-        def role = entityFactory.createClientRole("role").with {
-            it.propagate = true
-            return it
-        }
-
-        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        applicationService.getClientRoleById(_) >> role
-
-        when:
-        service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
-
-        then:
-        1 * userService.getSubUsers(user) >> [ subUser ].asList()
-        1 * tenantService.addTenantRoleToUser(subUser, _)
-    }
-
     def "addUserRole adds role"() {
         given:
         allowUserAccess()
@@ -1288,7 +1235,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.deleteUserRole(headers, authToken, userId, roleId).build()
 
         then:
-        1 * tenantService.deleteGlobalRole(_)
+        1 * tenantService.deleteTenantRoleForUser(_, _)
         response.status == 204
     }
 

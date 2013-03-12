@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.ClientConflictException;
+import com.sun.jersey.api.ConflictException;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.RDN;
 import org.springframework.stereotype.Component;
@@ -269,8 +271,49 @@ public class DefaultTenantService implements TenantService {
         }
 
         tenantRoleDao.addTenantRoleToUser(user, role);
+        if (isUserAdmin(user) && cRole.getPropagate()) {
+            for (User subUser : userService.getSubUsers(user)) {
+                try {
+                    tenantRoleDao.addTenantRoleToUser(subUser, role);
+                } catch (ClientConflictException ex) {
+                    String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
+                    logger.warn(msg);
+                }
+            }
+        }
 
         logger.info("Adding tenantRole {} to user {}", role, user);
+    }
+
+    private boolean isDefaultUser(User user) {
+        String roleName = config.getString("cloudAuth.userRole");
+        return hasRole(user, roleName);
+    }
+
+    private boolean isUserAdmin(User user) {
+        String roleName = config.getString("cloudAuth.userAdminRole");
+        return hasRole(user, roleName);
+    }
+
+    private boolean isIdentityAdmin(User user) {
+        String roleName = config.getString("cloudAuth.adminRole");
+        return hasRole(user, roleName);
+    }
+
+    private boolean isServiceAdmin(User user) {
+        String roleName = config.getString("cloudAuth.serviceAdminRole");
+        return hasRole(user, roleName);
+    }
+
+    private boolean hasRole(User user, String roleName) {
+        List<TenantRole> roles = tenantRoleDao.getTenantRolesForUser(user);
+        for (TenantRole role : roles) {
+            ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
+            if (cRole.getName().equals(roleName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -324,7 +367,20 @@ public class DefaultTenantService implements TenantService {
         if (user == null || role == null) {
             throw new IllegalArgumentException();
         }
+
+        ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
+        if (cRole == null) {
+            String errMsg = String.format("ClientRole %s not found", role.getName());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
         tenantRoleDao.deleteTenantRoleForUser(user, role);
+        if (isUserAdmin(user) && cRole.getPropagate()) {
+            for (User subUser : userService.getSubUsers(user)) {
+                tenantRoleDao.deleteTenantRoleForUser(subUser, role);
+            }
+        }
     }
 
     @Override

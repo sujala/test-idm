@@ -340,9 +340,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
-            boolean userIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
 
-            if (userIsUserAdmin) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
                 if (!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
@@ -363,12 +362,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantRole.setRoleRsId(role.getId());
             tenantRole.setUserId(user.getId());
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
-
-            if (userIsUserAdmin && role.getPropagate()) {
-                for (User subUser : userService.getSubUsers(user)) {
-                    tenantService.addTenantRoleToUser(subUser, tenantRole);
-                }
-            }
 
             tenantService.addTenantRoleToUser(user, tenantRole);
 
@@ -723,12 +716,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
-                }
-
-                if (cRole.getPropagate()) {
-                    for (User subUser : userService.getSubUsers(caller)) {
-                        assignRoleToUser(subUser, cRole);
-                    }
                 }
             }
 
@@ -1158,7 +1145,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
-            this.tenantService.deleteGlobalRole(role);
+            this.tenantService.deleteTenantRoleForUser(user, role);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

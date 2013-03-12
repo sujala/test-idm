@@ -91,6 +91,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
 
         tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
+        tenantRoleDao.getTenantRolesForUser(_) >> [].asList()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         applicationService.getById(_) >> entityFactory.createApplication()
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
@@ -99,13 +100,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
-        1 * config.getString("cloudAuth.adminRole") >> ""
-        1 * config.getString("cloudAuth.serviceAdminRole") >> ""
-        1 * config.getString("cloudAuth.userAdminRole") >> ""
-        1 * config.getString("cloudAuth.userRole") >> ""
-
-        then:
-        1 * tenantRoleDao.addTenantRoleToUser(user, _)
+        config.getString("cloudAuth.adminRole") >> ""
+        config.getString("cloudAuth.serviceAdminRole") >> ""
+        config.getString("cloudAuth.userAdminRole") >> ""
+        config.getString("cloudAuth.userRole") >> ""
     }
 
     def "getRoleDetails uses ApplicationService to retrieve client role connected to tenant role"() {
@@ -185,6 +183,31 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         1 * tenantDao.getAllTenantRolesForClientRole(role)
+    }
+
+    def "deleteTenantRoleForUser deletes tenantRole from subUsers if user is user-admin"() {
+        given:
+        def roleName = "identity"
+        def identityRole = entityFactory.createTenantRole(roleName)
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {it.name = roleName; it.propagate = true; return it}
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser("subUser", "subUserId", "domainId", "REGION")
+
+        tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
+        applicationService.getClientRoleById(_) >> cRole
+        config.getString(_) >> roleName
+
+        when:
+        service.deleteTenantRoleForUser(user, role)
+
+        then:
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        then:
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+        then:
+        1 * userService.getSubUsers(user) >> [ subUser ].asList()
+        1 * tenantRoleDao.deleteTenantRoleForUser(subUser, role)
     }
 
     def "deleteTenantRole uses DAO to delete role"() {
@@ -287,12 +310,127 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         applicationService.getById(_) >> application
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        config.getString(_) >> ""
+        tenantRoleDao.getTenantRolesForUser(_) >> [].asList()
 
         when:
         service.addTenantRoleToUser(user, tenantRole)
 
         then:
         tenantRoleDao.addTenantRoleToUser(user, tenantRole)
+    }
+
+    def "isDefaultuser verifies if user has defaultUser role"() {
+        when:
+        def user = entityFactory.createUser()
+        def tRole = entityFactory.createTenantRole()
+        def cRole1 = entityFactory.createClientRole("roleOne")
+        def cRole2 = entityFactory.createClientRole("roleTwo")
+        tenantRoleDao.getTenantRolesForUser(_) >> [ tRole, tRole ].asList()
+        config.getString("cloudAuth.userRole") >> roleName
+        applicationService.getClientRoleById(_) >>> [ cRole1, cRole2 ]
+
+        def result = service.isDefaultUser(user)
+
+        then:
+        result == expected
+
+        where:
+        expected | roleName
+        false    | "roleThree"
+        true     | "roleOne"
+    }
+
+    def "isUserAdmin verifies if user has userAdmin role"() {
+        when:
+        def user = entityFactory.createUser()
+        def tRole = entityFactory.createTenantRole()
+        def cRole1 = entityFactory.createClientRole("roleOne")
+        def cRole2 = entityFactory.createClientRole("roleTwo")
+        tenantRoleDao.getTenantRolesForUser(_) >> [ tRole, tRole ].asList()
+        config.getString("cloudAuth.userAdminRole") >> userAdminRoleName
+        applicationService.getClientRoleById(_) >>> [ cRole1, cRole2 ]
+
+        def result = service.isUserAdmin(user)
+
+        then:
+        result == isUserAdmin
+
+        where:
+        isUserAdmin | userAdminRoleName
+        false       | "roleThree"
+        true        | "roleOne"
+    }
+
+    def "isIdentityAdmin verifies if user has identityAdmin role"() {
+        when:
+        def user = entityFactory.createUser()
+        def tRole = entityFactory.createTenantRole()
+        def cRole1 = entityFactory.createClientRole("roleOne")
+        def cRole2 = entityFactory.createClientRole("roleTwo")
+        tenantRoleDao.getTenantRolesForUser(_) >> [ tRole, tRole ].asList()
+        config.getString("cloudAuth.adminRole") >> roleName
+        applicationService.getClientRoleById(_) >>> [ cRole1, cRole2 ]
+
+        def result = service.isIdentityAdmin(user)
+
+        then:
+        result == expected
+
+        where:
+        expected | roleName
+        false    | "roleThree"
+        true     | "roleOne"
+    }
+
+    def "isServiceAdmin verifies if user has serviceAdmin role"() {
+        when:
+        def user = entityFactory.createUser()
+        def tRole = entityFactory.createTenantRole()
+        def cRole1 = entityFactory.createClientRole("roleOne")
+        def cRole2 = entityFactory.createClientRole("roleTwo")
+        tenantRoleDao.getTenantRolesForUser(_) >> [ tRole, tRole ].asList()
+        config.getString("cloudAuth.serviceAdminRole") >> roleName
+        applicationService.getClientRoleById(_) >>> [ cRole1, cRole2 ]
+
+        def result = service.isServiceAdmin(user)
+
+        then:
+        result == expected
+
+        where:
+        expected | roleName
+        false    | "roleThree"
+        true     | "roleOne"
+    }
+
+    def "addTenantRole adds role to subusers if user is user-admin"() {
+        given:
+        def roleName = "thisRole"
+        def role = entityFactory.createClientRole().with {
+            it.name = roleName
+            it.propagate = true
+            return it
+        }
+        def tenantRole = entityFactory.createTenantRole()
+        def identityRole = entityFactory.createTenantRole(roleName)
+        def user = entityFactory.createUser("user", "userId", "domainId", "region")
+        def subUser = entityFactory.createUser()
+
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> role
+        applicationService.getClientRoleById(_) >> role
+        tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
+        userService.getSubUsers(user) >> [ subUser ].asList()
+        config.getString("cloudAuth.userAdminRole") >> roleName
+
+        when:
+        service.addTenantRoleToUser(user, tenantRole)
+
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(user, tenantRole)
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(subUser, tenantRole)
     }
 
     def "Add userId To TenantRole if it does not have it set"() {
