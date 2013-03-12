@@ -32,6 +32,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -275,6 +276,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess tokenScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
+            User caller = userService.getUserByScopeAccess(tokenScopeAccess);
 
             if (role == null) {
                 String errMsg = "role cannot be null";
@@ -298,6 +300,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
 
             ClientRole clientRole = roleConverterCloudV20.toClientRoleFromRole(role, service.getClientId());
+            isRoleWeightValid(clientRole.getRsWeight());
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, clientRole);
 
             applicationService.addClientRole(clientRole);
 
@@ -317,6 +321,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    private void isRoleWeightValid(int weight) {
+        List<String> validWeights = config.getList("cloudAuth.allowedRoleWeights");
+        if (!validWeights.contains(Integer.toString(weight))) {
+            String errMsg = String.format("Allowed values for Weight field: %s", StringUtils.join(validWeights, " "));
+            throw new BadRequestException(errMsg);
+        }
+    }
+
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
@@ -328,8 +340,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
+            boolean userIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+            if (userIsUserAdmin) {
                 if (!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
@@ -344,14 +357,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
 
-            TenantRole tenantrole = new TenantRole();
-            tenantrole.setName(role.getName());
-            tenantrole.setClientId(role.getClientId());
-            tenantrole.setRoleRsId(role.getId());
-            tenantrole.setUserId(user.getId());
-            tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
+            TenantRole tenantRole = new TenantRole();
+            tenantRole.setName(role.getName());
+            tenantRole.setClientId(role.getClientId());
+            tenantRole.setRoleRsId(role.getId());
+            tenantRole.setUserId(user.getId());
+            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
 
-            this.tenantService.addTenantRoleToUser(user, tenantrole);
+            if (userIsUserAdmin && role.getPropagate()) {
+                for (User subUser : userService.getSubUsers(user)) {
+                    tenantService.addTenantRoleToUser(subUser, tenantRole);
+                }
+            }
+
+            tenantService.addTenantRoleToUser(user, tenantRole);
 
             return Response.ok();
 
@@ -704,6 +723,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+
+                if (cRole.getPropagate()) {
+                    for (User subUser : userService.getSubUsers(caller)) {
+                        assignRoleToUser(subUser, cRole);
+                    }
                 }
             }
 

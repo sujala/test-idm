@@ -3,9 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
-import com.rackspace.idm.JSONConstants
 import org.apache.commons.io.IOUtils
-import org.json.simple.JSONObject
 import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import spock.lang.Specification
@@ -21,11 +19,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
-import javax.xml.namespace.QName
+import testHelpers.RootServiceTest
 
 import static com.rackspace.idm.RaxAuthConstants.*
 
-class JSONReaderWriterTest extends Specification {
+class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONWriter writer = new JSONWriter();
     @Shared JSONReaderForRegion readerForRegion = new JSONReaderForRegion()
@@ -329,7 +327,7 @@ class JSONReaderWriterTest extends Specification {
 
     def "can read/write roles as json"() {
         when:
-        def role = role(propagate, weight)
+        def role = v2Factory.createRole(propagate, weight)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writer.writeTo(role, Role, null, null, null, null, arrayOutputStream)
@@ -458,28 +456,5 @@ class JSONReaderWriterTest extends Specification {
             it.isDefault = isDefault
             return it
         }
-    }
-
-    def role(propagate, weight) {
-        def other = createOtherMap(propagate, weight)
-        return new Role().with {
-            it.name = "name"
-            it.description = "desc"
-            it.serviceId = "serviceId"
-            it.tenantId = "tenantId"
-            it.otherAttributes = other
-            return it
-        }
-    }
-
-    def createOtherMap(propagate, weight) {
-        def map = new HashMap<QName, Object>()
-        if (propagate != null) {
-            map.put(QNAME_PROPAGATE, propagate)
-        }
-        if (weight != null) {
-            map.put(QNAME_WEIGHT, weight)
-        }
-        return map
     }
 }

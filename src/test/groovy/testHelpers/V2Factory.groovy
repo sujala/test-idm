@@ -5,6 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.openstack.docs.identity.api.v2.*
 
+import javax.xml.namespace.QName
+
+import static com.rackspace.idm.RaxAuthConstants.*
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -141,6 +145,27 @@ class V2Factory {
             it.tenantId = tenantId
             return it
         }
+    }
+
+    def createRole(propagate, weight) {
+        def other = createOtherMap(propagate, weight)
+        return new Role().with {
+            it.name = "name"
+            it.description = "desc"
+            it.otherAttributes = other
+            return it
+        }
+    }
+
+    def createOtherMap(propagate, weight) {
+        def map = new HashMap<QName, Object>()
+        if (propagate != null) {
+            map.put(QNAME_PROPAGATE, Boolean.toString(propagate))
+        }
+        if (weight != null) {
+            map.put(QNAME_WEIGHT, Integer.toString(weight))
+        }
+        return map
     }
 
     def createRoleList() {

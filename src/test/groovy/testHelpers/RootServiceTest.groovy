@@ -96,12 +96,15 @@ import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
+
+import static com.rackspace.idm.RaxAuthConstants.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -256,6 +259,9 @@ class RootServiceTest extends Specification {
         roleConverter.toRoleFromClientRole(_) >> v2Factory.createRole()
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
+
+        roleConverter.toClientRoleFromRole(_, _) >> entityFactory.createClientRole()
+
         service.roleConverterCloudV20 = roleConverter
     }
 

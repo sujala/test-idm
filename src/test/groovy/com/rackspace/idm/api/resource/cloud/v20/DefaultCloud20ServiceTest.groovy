@@ -59,7 +59,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockServices()
         mockMisc()
 
+        def weights = [ "0", "100", "500", "1000", "2000" ].asList()
         config.getBoolean("useCloudAuth") >> false
+        config.getList("cloudAuth.allowedRoleWeights") >> weights
 
         headers = Mock()
         jaxbMock = Mock(JAXBElement)
@@ -1062,6 +1064,59 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * caller.getDomainId() >> user.getDomainId()
     }
 
+    def "addUserRole adds role to user-admin's sub users"() {
+        given:
+        allowUserAccess()
+
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+        def caller = user
+        def roleToAdd = entityFactory.createClientRole("roleName").with {
+            it.propagate = true
+            return it
+        }
+        def subUser = entityFactory.createUser()
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        1 * userService.getSubUsers(caller) >> [ subUser ].asList()
+        1 * tenantService.addTenantRoleToUser(subUser, _)
+        then:
+        1 * tenantService.addTenantRoleToUser(user, _)
+    }
+
+    def "addRolesToUserOnTenant adds role to user-admins sub users"() {
+        given:
+        allowUserAccess()
+
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+        def caller = user
+        def subUser = entityFactory.createUser()
+        def role = entityFactory.createClientRole("role").with {
+            it.propagate = true
+            return it
+        }
+
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        applicationService.getClientRoleById(_) >> role
+
+        when:
+        service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
+
+        then:
+        1 * userService.getSubUsers(user) >> [ subUser ].asList()
+        1 * tenantService.addTenantRoleToUser(subUser, _)
+    }
+
     def "addUserRole adds role"() {
         given:
         allowUserAccess()
@@ -1351,38 +1406,27 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.getMetadata().get("location") != null
     }
 
-    def "addRole handles exceptions"() {
+    def "addRole verifies role is not null"() {
         given:
-        def scopeAccessMock = Mock(ScopeAccess)
-        def role = v2Factory.createRole("role", "service", null)
-        def namelessRole = v2Factory.createRole(null, null, null)
-        def identityRole = v2Factory.createRole("identity:role", null, null)
-        def roleWithService = v2Factory.createRole("role", "serviceId", null)
-
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
-        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
-        authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
-        applicationService.checkAndGetApplication("serviceId") >> { throw new NotFoundException() }
-        applicationService.checkAndGetApplication("service") >> entityFactory.createApplication()
-        applicationService.addClientRole(_) >> { throw new DuplicateException() }
+        allowUserAccess()
 
         when:
-        def response1 = service.addRole(headers, uriInfo(), authToken, role).build()
-        def response2 = service.addRole(headers, uriInfo(), authToken, role).build()
-        def response3 = service.addRole(headers, uriInfo(), authToken, null).build()
-        def response4 = service.addRole(headers, uriInfo(), authToken, namelessRole).build()
-        def response5 = service.addRole(headers, uriInfo(), authToken, identityRole).build()
-        def response6 = service.addRole(headers, uriInfo(), authToken, roleWithService).build()
-        def response7 = service.addRole(headers, uriInfo(), authToken, role).build()
+        def response = service.addRole(headers, uriInfo(), authToken, null).build()
 
         then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 400
-        response4.status == 400
-        response5.status == 403
-        response6.status == 404
-        response7.status == 409
+        response.status == 400
+    }
+
+    def "addRole verifies that name is not blank"() {
+        given:
+        allowUserAccess()
+        def role = v2Factory.createRole("", "serviceId", "tenantId")
+
+        when:
+        def response = service.addRole(headers, uriInfo(), authToken, role).build()
+
+        then:
+        response.status == 400
     }
 
     def "deleteRole verifies admin level access"() {
@@ -2821,6 +2865,21 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserById(userId) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
+    }
+
+    def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
+        given:
+        def weights = [ "0", "100", "500", "1000", "2000" ].asList()
+
+        when:
+        service.isRoleWeightValid(500)
+        service.isRoleWeightValid(3)
+
+        then:
+        notThrown(BadRequestException)
+
+        then:
+        thrown(BadRequestException)
     }
 
     def mockServices() {

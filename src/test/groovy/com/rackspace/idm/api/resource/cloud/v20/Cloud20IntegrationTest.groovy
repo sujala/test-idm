@@ -15,6 +15,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.V2Factory
 
 import javax.xml.namespace.QName
 
@@ -39,6 +40,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 
+import static com.rackspace.idm.RaxAuthConstants.*
+
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud20IntegrationTest extends Specification {
     @Autowired LdapConnectionPools connPools
@@ -47,9 +50,9 @@ class Cloud20IntegrationTest extends Specification {
 
     @Shared WebResource resource
     @Shared JAXBObjectFactories objFactories;
+    @Shared V2Factory v2Factory
 
     @Shared def path20 = "cloud/v2.0/"
-    @Shared def path11 = "cloud/v1.1/"
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
@@ -69,6 +72,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def propagatingRole
     @Shared def tenant
 
     @Shared def emptyDomainId
@@ -112,6 +116,7 @@ class Cloud20IntegrationTest extends Specification {
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
+        this.v2Factory = new V2Factory()
         serviceAdminToken = authenticateXML("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByNameXML(serviceAdminToken, "authQE").getEntity(User)
 
@@ -167,12 +172,16 @@ class Cloud20IntegrationTest extends Specification {
 
         //create role
         if (sharedRole == null) {
-            def roleResponse = createRoleXML(serviceAdminToken, role())
-            sharedRole = roleResponse.getEntity(Role).value
+            def response = createRoleXML(serviceAdminToken, role())
+            sharedRole = response.getEntity(Role).value
         }
         if (sharedRoleTwo == null) {
-            def roleResponse2 = createRoleXML(serviceAdminToken, role())
-            sharedRoleTwo = roleResponse2.getEntity(Role).value
+            def response = createRoleXML(serviceAdminToken, role())
+            sharedRoleTwo = response.getEntity(Role).value
+        }
+        if (propagatingRole == null) {
+            def response = createRoleXML(serviceAdminToken, v2Factory.createRole(true, null))
+            propagatingRole = response.getEntity(Role).value
         }
 
         if (tenant == null) {
@@ -1410,6 +1419,92 @@ class Cloud20IntegrationTest extends Specification {
         deleteDomainResponse.status == 204
     }
 
+    def "we can create a role when specifying weight and propagate values"() {
+        when:
+        def role = v2Factory.createRole(propagate, weight).with {
+            it.name = "role$sharedRandom"
+            return it
+        }
+        def response = createRoleXML(serviceAdminToken, role)
+        def createdRole = response.getEntity(Role).value
+        deleteRoleXML(serviceAdminToken, createdRole.getId())
+
+        def propagateValue = null
+        def weightValue = null
+
+        if (createdRole.otherAttributes.containsKey(QNAME_PROPAGATE)) {
+            propagateValue = createdRole.otherAttributes.get(QNAME_PROPAGATE).toBoolean()
+        }
+        if (createdRole.otherAttributes.containsKey(QNAME_WEIGHT)) {
+            weightValue = createdRole.otherAttributes.get(QNAME_WEIGHT).toInteger()
+        }
+
+        then:
+        propagateValue == expectedPropagate
+        weightValue == expectedWeight
+
+        where:
+        weight  | propagate | expectedWeight | expectedPropagate
+        null    | null      | 500            | false
+        100     | null      | 100            | false
+        null    | true      | 500            | true
+        null    | false     | 500            | false
+        1000    | true      | 1000           | true
+    }
+
+    def "when specifying an invalid weight we receive a bad request"() {
+        when:
+        def role = v2Factory.createRole(null, weight)
+        def response = createRoleXML(token, role)
+        if (response.status == 201) {
+            deleteRoleXML(serviceAdminToken, response.getEntity(Role).value.getId())
+        }
+
+        then:
+        response.status == 400
+
+        where:
+        token              | weight
+        identityAdminToken | 3
+        serviceAdminToken  | 50
+        serviceAdminToken  | 1234
+    }
+
+    def "we cannot specify a role weight which we cannot manage"() {
+        when:
+        def role = v2Factory.createRole(null, weight)
+        def response = createRoleXML(token, role)
+        if (response.status == 201) {
+            deleteRoleXML(serviceAdminToken, response.getEntity(Role).value.getId())
+        }
+
+        then:
+        response.status == 403
+
+        where:
+        token              | weight
+        identityAdminToken | 0
+    }
+
+    def "adding a role which propagates to a user admin adds the role to the sub users"() {
+        when:
+        addUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+        def defaultUserResponse1 = getUserRoleXML(serviceAdminToken, defaultUserForAdminTwo.getId(), propagatingRole.getId())
+        def userAdminResponse1 = getUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+        deleteUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+        def defaultUserResponse2 = getUserRoleXML(serviceAdminToken, defaultUserForAdminTwo.getId(), propagatingRole.getId())
+        def userAdminResponse2 = getUserRoleXML(serviceAdminToken, userAdminTwo.getId(), propagatingRole.getId())
+
+
+        then:
+        defaultUserResponse1.status == 200
+        userAdminResponse1.status == 200
+        defaultUserResponse2.status == 404
+        userAdminResponse2.status == 404
+
+        where:
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
@@ -1496,7 +1591,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def authenticateXML(username, password) {
-        resource.path(path20 + 'tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+        resource.path(path20).path('tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
     def createRegionXML(String token, region) {
@@ -1675,6 +1770,18 @@ class Cloud20IntegrationTest extends Specification {
 
     def getAdminsForUserXML(String token, String userId) {
         resource.path(path20).path("users").path(userId).path("RAX-AUTH").path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def addUserRoleXML(String token, String userId, String roleId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+    }
+
+    def removeUserRoleXML(String token, String userId, String roleId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def getUserRoleXML(String token, String userId, String roleId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM)").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods
