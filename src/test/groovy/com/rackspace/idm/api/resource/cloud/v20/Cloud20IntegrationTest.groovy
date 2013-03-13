@@ -1449,11 +1449,11 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         weight  | propagate | expectedWeight | expectedPropagate
-        null    | null      | 500            | false
+        null    | null      | 1000           | false
         100     | null      | 100            | false
-        null    | true      | 500            | true
-        null    | false     | 500            | false
-        1000    | true      | 1000           | true
+        null    | true      | 1000           | true
+        null    | false     | 1000           | false
+        2000    | true      | 2000           | true
     }
 
     def "when specifying an invalid weight we receive a bad request"() {
