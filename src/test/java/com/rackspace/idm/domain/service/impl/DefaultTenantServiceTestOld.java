@@ -194,30 +194,6 @@ public class DefaultTenantServiceTestOld {
     }
 
     @Test
-    public void deleteTenantRole_getTenantIdsNotNullAndTenantIdsNot0_doesNotCallDeleteTenantRoleOnParameterTenantRole() throws Exception {
-        TenantRole tenantRole = mock(TenantRole.class);
-        when(tenantRole.getRoleRsId()).thenReturn("rsId");
-        when(tenantRoleDao.getTenantRoleForApplication(any(Application.class), anyString())).thenReturn(new TenantRole());
-        when(tenantRole.getTenantIds()).thenReturn(new String[2]);
-        doNothing().when(tenantDao).deleteTenantRole(tenantRole);
-        defaultTenantService.deleteTenantRoleForUser(getUser(), tenantRole);
-        verify(tenantDao, times(0)).deleteTenantRole(tenantRole);
-    }
-
-    @Test
-    public void deleteTenantRole_roleExistsAndGivenTenantIdNotInExistingRole_doesNothing() throws Exception {
-        String[] tenantIds = {"123"};
-        String[] tenantIds2 = {"456"};
-        TenantRole tenantRole = new TenantRole();
-        tenantRole.setTenantIds(tenantIds);
-        TenantRole tenantRole2 = new TenantRole();
-        tenantRole2.setTenantIds(tenantIds2);
-        when(tenantRoleDao.getTenantRoleForApplication(null, null)).thenReturn(tenantRole2);
-        defaultTenantService.deleteTenantRoleForUser(getUser(), tenantRole);
-        verify(tenantDao,never()).deleteTenantRole(any(TenantRole.class));
-    }
-
-    @Test
     public void deleteGlobalRole_callsTenantDaoMethod() throws Exception {
         defaultTenantService.deleteGlobalRole(null);
         verify(tenantDao).deleteTenantRole(null);

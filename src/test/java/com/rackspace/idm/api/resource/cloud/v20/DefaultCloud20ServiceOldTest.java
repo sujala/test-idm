@@ -1285,14 +1285,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addRole_callsClientService_addClientRole() throws Exception {
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
-        when(clientService.checkAndGetApplication(role.getServiceId())).thenReturn(application);
-        spy.addRole(null, null, authToken, role);
-        verify(clientService).addClientRole(any(ClientRole.class));
-    }
-
-    @Test
     public void addRole_roleWithNullName_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -1312,16 +1304,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response bulider", spy.addRole(null, null, authToken, null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void addRole_roleWithNullServiceId_returnsDefaults() throws Exception {
-        Role role1 = new Role();
-        role1.setName("roleName");
-        role1.setServiceId("applicationId");
-        when(clientService.checkAndGetApplication("applicationId")).thenReturn(application);
-        spy.addRole(null, null, authToken, role1);
-        verify(clientService).addClientRole(any(ClientRole.class));
     }
 
     @Test
@@ -1348,54 +1330,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(ForbiddenException.class));
-    }
-
-    @Test
-    public void addRole_roleWithIdentityNameWithServiceAdmin_returns201Status() throws Exception {
-        Role role1 = new Role();
-        role1.setName("Identity:role");
-        role1.setServiceId("applicationId");
-        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(clientService.checkAndGetApplication("applicationId")).thenReturn(application);
-        UriBuilder uriBuilder = mock(UriBuilder.class);
-        URI uri = new URI("");
-        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
-        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        doReturn(uriBuilder).when(uriBuilder).path(anyString());
-        doReturn(uri).when(uriBuilder).build();
-        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
-        when(objectFactory.createRole(any(Role.class))).thenReturn(someValue);
-        when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role1);
-        Response response = spy.addRole(httpHeaders, uriInfo, authToken, role1).build();
-        assertThat("response status", response.getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void addRole_responseCreated() throws Exception {
-        UriBuilder uriBuilder = mock(UriBuilder.class);
-        URI uri = new URI("");
-        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
-        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
-        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        doReturn(uriBuilder).when(uriBuilder).path(anyString());
-        doReturn(uri).when(uriBuilder).build();
-        when(clientService.checkAndGetApplication(role.getServiceId())).thenReturn(application);
-        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
-        when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role);
-        when(objectFactory.createRole(role)).thenReturn(someValue);
-        Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void addRole_roleConflictThrowsDuplicateException_returnsResponseBuilder() throws Exception {
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(clientService.checkAndGetApplication(role.getServiceId())).thenReturn(application);
-        doThrow(new DuplicateException("role conflict")).when(clientService).addClientRole(any(ClientRole.class));
-        when(exceptionHandler.conflictExceptionResponse("role conflict")).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addRole(null, null, authToken, role), equalTo(responseBuilder));
     }
 
     @Test
