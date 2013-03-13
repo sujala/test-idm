@@ -375,7 +375,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) {
         try {
-            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
 
             if (service == null) {

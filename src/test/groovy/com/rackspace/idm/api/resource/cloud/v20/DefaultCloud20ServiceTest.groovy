@@ -13,6 +13,7 @@ import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
@@ -2654,9 +2655,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addService(headers, uriInfo(), authToken, null).build()
 
         then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
-        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
-        result.status == 403
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess("token", "1", "clientid", new Date().minus(1))
+        result.status == 401
     }
 
      def "deleteUserFromSoftDeleted checks if caller is service admin"() {
