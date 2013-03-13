@@ -36,6 +36,10 @@ public class TenantRole implements Auditable, UniqueId {
         return ldapEntry;
     }
 
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
     private String name;
     private String description;
 

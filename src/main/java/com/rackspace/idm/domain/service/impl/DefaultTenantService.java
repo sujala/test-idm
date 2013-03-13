@@ -274,6 +274,7 @@ public class DefaultTenantService implements TenantService {
         if (isUserAdmin(user) && cRole.getPropagate()) {
             for (User subUser : userService.getSubUsers(user)) {
                 try {
+                    role.setLdapEntry(null);
                     tenantRoleDao.addTenantRoleToUser(subUser, role);
                 } catch (ClientConflictException ex) {
                     String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
