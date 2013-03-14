@@ -195,11 +195,19 @@ task zipConfig(type: Zip) {
     }
 }
 
+task zipLdap(type: Zip) {
+    classifier = 'ldap'
+    def ldapDirName = "ldap/ldif/$version"
+    if (new File(ldapDirName).exists()) {
+        from ldapDirName
+    }
+}
+
 idea {
     module {
         sourceDirs += file(generatedSrc)
         excludeDirs.clear()
-        excludeDirs = [file(srcDelomboked)]
+        excludeDirs = []
     }
 }
 
@@ -220,6 +228,7 @@ jettyRun {
 
 artifacts {
     archives zipConfig
+    archives zipLdap
 }
 
 nexus {
@@ -322,6 +331,7 @@ copyBaseConfig.dependsOn copyConfig
 test.dependsOn copyBaseConfig
 zipConfig.dependsOn copyBaseConfig
 war.dependsOn zipConfig
+war.dependsOn zipLdap
 
 task echo << {
     println "source main sets=$sourceSets.main.java.srcDirs"
