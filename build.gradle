@@ -332,6 +332,7 @@ test.dependsOn copyBaseConfig
 zipConfig.dependsOn copyBaseConfig
 war.dependsOn zipConfig
 war.dependsOn zipLdap
+jettyRun.dependsOn copyBaseConfig
 
 task echo << {
     println "source main sets=$sourceSets.main.java.srcDirs"
