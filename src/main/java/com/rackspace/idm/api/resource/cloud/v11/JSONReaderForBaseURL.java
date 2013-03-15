@@ -53,11 +53,11 @@ public class JSONReaderForBaseURL implements MessageBodyReader<BaseURL>{
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.ENDPOINT_TEMPLATE)) {
+            if (outer.containsKey(JSONConstants.BASE_URL)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.ENDPOINT_TEMPLATE).toString());
+                    JSONConstants.BASE_URL).toString());
 
                 Object id = obj3.get(JSONConstants.ID);
                 Object adminURL = obj3.get(JSONConstants.ADMIN_URL);
