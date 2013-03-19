@@ -1130,21 +1130,6 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void getMultipleUsersPaginated_callsCreateSearchRequestWithPaging() throws Exception {
-        FilterParam filterParam = new FilterParam();
-        filterParam.setParam(FilterParam.FilterParamName.RCN);
-        filterParam.setValue("rcn");
-        FilterParam[] filterParamArray = {filterParam};
-        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
-        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
-        Filter filter = searchBuilder.build();
-
-        spy.getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
-        verify(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
-    }
-
-    @Test
     public void getMultipleUsersPaginated_returnsEmptyPaginator() throws Exception {
         PaginatorContext<User> userContext = new PaginatorContext<User>();
         FilterParam filterParam = new FilterParam();

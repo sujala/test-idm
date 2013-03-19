@@ -23,7 +23,7 @@ import java.util.List;
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     @Autowired
-    DefaultPaginator<String> userIdPaginator;
+    DefaultPaginator<String> stringPaginator;
 
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_TENANT_OBJECT = "Error getting tenant object";
@@ -404,15 +404,11 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         Filter searchFilter = searchBuilder.build();
 
         SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, "*");
-        PaginatorContext<String> context = userIdPaginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
+        PaginatorContext<String> context = stringPaginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
 
         SearchResult searchResult = this.getMultipleEntries(searchRequest);
 
-        if (searchResult == null) {
-            return context;
-        }
-
-        userIdPaginator.createPage(searchResult, context);
+        stringPaginator.createPage(searchResult, context);
         List<String> userIds = new ArrayList<String>();
         for (SearchResultEntry entry : searchResult.getSearchEntries()) {
             try {

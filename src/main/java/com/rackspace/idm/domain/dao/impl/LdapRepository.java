@@ -305,9 +305,11 @@ public abstract class LdapRepository {
         try {
             return getAppInterface().search(searchRequest);
         } catch (LDAPException ldapEx) {
-            // ldapEx.getResultCode().intValue == 61 or 77 indicates offset out of range
             getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
-            return null;
+            List<SearchResultEntry> results = new ArrayList<SearchResultEntry>();
+            List<SearchResultReference> resultRefs = new ArrayList<SearchResultReference>();
+            return new SearchResult(ldapEx.getResultCode().intValue(), ldapEx.getResultCode(),
+                    ldapEx.getDiagnosticMessage(), null, ldapEx.getReferralURLs(), results, resultRefs, 0, 0, ldapEx.getResponseControls());
         }
     }
 

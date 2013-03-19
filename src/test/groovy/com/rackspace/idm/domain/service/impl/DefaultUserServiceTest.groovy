@@ -363,8 +363,6 @@ class DefaultUserServiceTest extends RootServiceTest {
     }
 
     def "getAllUsersNoLimit calls userDao getAllUsersNoLimit"() {
-        given:
-
         when:
         service.getAllUsersNoLimit(domainAndRoleFilters)
         service.getAllUsers(roleFilter)
@@ -373,12 +371,12 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * userDao.getAllUsersNoLimit(_ as FilterParam[])
     }
 
-    def "getSubList throws BadRequest"() {
+    def "getSubList returns empty list"() {
         when:
-        service.getSubList(userList, 10, 5)
+        def list = service.getSubList(userList, 100, 50)
 
         then:
-        thrown BadRequestException
+        list.size == 0
     }
 
     def "getSubList returns same list"() {

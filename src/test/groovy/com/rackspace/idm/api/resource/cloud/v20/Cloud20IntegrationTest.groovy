@@ -201,7 +201,6 @@ class Cloud20IntegrationTest extends Specification {
         addApplicationRoleToUserXML(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
 
         //testIdentityRole = getRoleXML(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
-
     }
 
     def setup() {
@@ -453,7 +452,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "Group CRUD" () {
         when:
-        def random = ("$randomness").replace('-', "")
+        def random = ((String) UUID.randomUUID()).replace("-", "")
         def createGroupResponse = createGroupXML(serviceAdminToken, group("group$random", "this is a group"))
 
         def getGroupResponse = getGroupXML(serviceAdminToken, createGroupResponse.location)
@@ -718,13 +717,13 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole pages results"() {
         when:
-        def userAdminResponse1 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 0, 1)
-        def userAdminResponse2 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 1, 1)
-        def userAdminResponse3 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 2, 1)
-        def serviceAdminResponse1 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 1, 2)
-        def serviceAdminResponse2 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 0, 2)
-        def serviceAdminResponse3 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 2, 2)
-        def serviceAdminResponse4 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 3, 4)
+        def userAdminResponse1 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), "0", "1")
+        def userAdminResponse2 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), "1", "1")
+        def userAdminResponse3 = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), "2", "1")
+        def serviceAdminResponse1 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "1", "2")
+        def serviceAdminResponse2 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "0", "2")
+        def serviceAdminResponse3 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "2", "2")
+        def serviceAdminResponse4 = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "3", "4")
 
         then:
         userAdminResponse1.getEntity(UserList).value.user.size == 1
@@ -742,24 +741,38 @@ class Cloud20IntegrationTest extends Specification {
         userAdminHeaders.getFirst("Link") != null
     }
 
-    def "listUsersWithRole offset greater than result set length returns 400"() {
-        when:
-        def responseOne = listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), 100, 10)
-        def responseTwo = listUsersWithRoleXML(userAdminToken, sharedRole.getId(), 100, 10)
+    def "listUsersWithRole returns bad request with invalid paging paramters"() {
+        expect:
+        response.status == 400
 
-        then:
-        responseOne.status == 400
-        responseTwo.status == 400
+        where:
+        response << [
+                listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "abC", "5"),
+                listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "5", "bCg"),
+                listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "abC", "asdf")
+        ]
+    }
+
+    def "listUsersWithRole offset greater than result set length returns 200 with empty list"() {
+        expect:
+        response.status == 200
+        response.getEntity(UserList).value.user.size == 0
+
+        where:
+        response << [
+                listUsersWithRoleXML(serviceAdminToken, sharedRole.getId(), "100", "10"),
+                listUsersWithRoleXML(userAdminToken, sharedRole.getId(), "100", "10")
+        ]
     }
 
     def "listUsersWithRole role assigned to no one"() {
         when:
         def responseOne = listUsersWithRoleXML(serviceAdminToken, sharedRoleTwo.getId())
-        def responseTwo = listUsersWithRoleXML(serviceAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseTwo = listUsersWithRoleXML(serviceAdminToken, sharedRoleTwo.getId(), "0", "10")
         def responseThree = listUsersWithRoleXML(identityAdminToken, sharedRoleTwo.getId())
-        def responseFour = listUsersWithRoleXML(identityAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseFour = listUsersWithRoleXML(identityAdminToken, sharedRoleTwo.getId(), "0", "10")
         def responseFive = listUsersWithRoleXML(userAdminToken, sharedRoleTwo.getId())
-        def responseSix = listUsersWithRoleXML(userAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseSix = listUsersWithRoleXML(userAdminToken, sharedRoleTwo.getId(), "0", "10")
 
         then:
         responseOne.getEntity(UserList).value.user.size == 0
@@ -867,11 +880,11 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 listUsersXML(identityAdminToken),
-                listUsersXML(identityAdminToken, 0, 10),
-                listUsersXML(identityAdminToken, 15, 10),
+                listUsersXML(identityAdminToken, "0", "10"),
+                listUsersXML(identityAdminToken, "15", "10"),
                 listUsersXML(serviceAdminToken),
-                listUsersXML(serviceAdminToken, 0, 10),
-                listUsersXML(serviceAdminToken, 15, 10),
+                listUsersXML(serviceAdminToken, "0", "10"),
+                listUsersXML(serviceAdminToken, "15", "10"),
         ]
     }
 
@@ -881,10 +894,20 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsersXML(serviceAdminToken, 100000000, 25),
-                listUsersXML(identityAdminToken, 10000000, 50),
-                listUsersXML(serviceAdminToken, 0, "abc"),
-                listUsersXML(serviceAdminToken, "abc", 10)
+                listUsersXML(serviceAdminToken, "0", "abc"),
+                listUsersXML(serviceAdminToken, "abc", "10")
+        ]
+    }
+
+    def "listUsers returns 200 and empty list when offset exceedes result set size"() {
+        expect:
+        response.status == 200
+        response.getEntity(UserList).value.user.size == 0
+
+        where:
+        response << [
+                listUsersXML(serviceAdminToken, "100000000", "25"),
+                listUsersXML(identityAdminToken, "10000000", "50"),
         ]
     }
 
@@ -1166,7 +1189,6 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    @Ignore
     def "listRoles returns valid link headers"() {
         given:
         def response = listRoles(serviceAdminToken, null, "2", "1")
@@ -1621,7 +1643,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsersWithRoleXML(String token, String roleId, int offset, int limit) {
+    def listUsersWithRoleXML(String token, String roleId, String offset, String limit) {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
@@ -1879,10 +1901,10 @@ class Cloud20IntegrationTest extends Specification {
         }
     }
 
-    def pageParams(offset, limit) {
+    def pageParams(String offset, String limit) {
         new MultivaluedMapImpl().with {
-            it.add("marker", "$offset")
-            it.add("limit", "$limit")
+            it.add("marker", offset)
+            it.add("limit", limit)
             return it
         }
     }

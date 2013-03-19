@@ -49,7 +49,7 @@ public class DefaultPaginator<T> implements Paginator<T> {
             VirtualListViewResponseControl vlvResponseControl = VirtualListViewResponseControl.get(searchResult);
             context.setTotalRecords(vlvResponseControl.getContentCount());
         } catch (LDAPException e) {
-            context.setTotalRecords(0);
+            context.setTotalRecords(context.getSearchResultEntryList().size());
         } catch (NullPointerException npe) {
             context.setTotalRecords(context.getSearchResultEntryList().size());
         }
@@ -60,11 +60,8 @@ public class DefaultPaginator<T> implements Paginator<T> {
         int totalRecords = context.getTotalRecords();
         int offset = context.getOffset();
         int limit = context.getLimit();
-        if (offset > totalRecords) {
-            throw new BadRequestException(String.format("Offset greater than total number of records", totalRecords));
-        }
 
-        if (totalRecords > 0) {
+        if (totalRecords > 0 && offset <= totalRecords) {
             StringBuilder linkHeader = new StringBuilder();
             URI path = uriInfo.getAbsolutePath();
             String pathString = path.toString();

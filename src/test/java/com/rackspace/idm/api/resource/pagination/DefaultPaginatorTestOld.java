@@ -126,13 +126,6 @@ public class DefaultPaginatorTestOld {
         assertThat("context pageLinks", context.getTotalRecords(), equalTo(0));
     }
 
-    @Test (expected = BadRequestException.class)
-    public void formatLinkHeader_throwsBadRequest_offsetOutOfBounds() {
-        PaginatorContext<User> context = setupContext(100, 10, 25);
-
-        userPaginator.createLinkHeader(uriInfo, context);
-    }
-
     @Test
     public void createLinkHeader_returnsNull() throws Exception {
         PaginatorContext<User> context = new PaginatorContext<User>();

@@ -812,10 +812,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         SearchResult searchResult = this.getMultipleEntries(searchRequest);
 
-        if (searchResult == null) {
-            return paginatorContext;
-        }
-
         paginator.createPage(searchResult, paginatorContext);
         List<User> userList = new ArrayList<User>();
         try {
