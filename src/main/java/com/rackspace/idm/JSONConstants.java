@@ -14,6 +14,7 @@ public final class JSONConstants {
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object BASE_URLS = "baseURLs";
+    public static final Object BASE_URL = "baseURL";
     public static final String CREATED = "created";
     public static final String CREDENTIALS = "credentials";
     public static final String DESCRIPTION = "description";

@@ -45,7 +45,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void readFrom_returnsBaseURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -64,7 +64,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectId() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -82,7 +82,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectAdminURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -100,7 +100,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectInternalURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -118,7 +118,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectUserType() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -136,7 +136,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectPublicURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -154,7 +154,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectServiceName() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -172,7 +172,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLCorrectRegion() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -190,7 +190,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLIsDefault() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -208,7 +208,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_validJsonBody_returnsBaseURLNotEnabled() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -260,7 +260,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullID_returnsBaseURLNullID() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
                 "    \"userType\": \"CLOUD\",\n" +
@@ -277,7 +277,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullAdminURL_returnsBaseURLNullAdminURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
                 "    \"userType\": \"CLOUD\",\n" +
@@ -294,7 +294,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullInternalURL_returnsBaseURLNullInternalURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"userType\": \"CLOUD\",\n" +
@@ -311,7 +311,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullUserType_returnsBaseURLNullUserType() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -328,7 +328,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullPublicURL_returnsBaseURLNullPublicURL() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -345,7 +345,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullServiceName_returnsBaseURLNullServiceName() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -362,7 +362,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_nullRegion_returnsBaseURLNullRegion() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -379,7 +379,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_DefaultFalse_returnsBaseURLDefaultFalse() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
@@ -396,7 +396,7 @@ public class JSONReaderForBaseURLTest {
     @Test
     public void getBaseURLFromJSONString_EnabledTrue_returnsBaseURLEnabledTrue() throws Exception {
         String body = "{\n" +
-                "  \"OS-KSCATALOG:endpointTemplate\": {\n" +
+                "  \"baseURL\": {\n" +
                 "    \"id\": 123456,\n" +
                 "    \"adminURL\": \"www.adminURL.com\",\n" +
                 "    \"internalURL\": \"www.internalURL.com\",\n" +
