@@ -37,7 +37,7 @@ public class ValidateAspect {
     }
 
     private void validateObject(JoinPoint joinPoint) {
-        if (!config.getBoolean("validate.entities")) {
+        if (config != null && !config.getBoolean("validate.entities")) {
             return;
         }
 
