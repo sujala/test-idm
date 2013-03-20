@@ -40,6 +40,7 @@ class ValidateAspectTest extends RootServiceTest {
 
         then:
         thrown(BadRequestException)
+        1 * config.getBoolean("validate.entities") >> true
         1 * objectValidator.validate(arg) >> { throw new BadRequestException() }
     }
 
@@ -55,6 +56,7 @@ class ValidateAspectTest extends RootServiceTest {
 
         then:
         notThrown(BadRequestException)
+        1 * config.getBoolean("validate.entities") >> true
         1 * objectValidator.validate(arg)
     }
 
@@ -70,8 +72,39 @@ class ValidateAspectTest extends RootServiceTest {
         0 * objectValidator.validate(_)
     }
 
+    def "validateObject does not validate entities if disabled"() {
+        given:
+        JoinPoint joinPoint  = Mock()
+        Object arg = v2Factory.createAuthenticationRequest()
+
+        joinPoint.args >> [arg]
+
+        when:
+        validateAspect.validateObject(joinPoint)
+
+        then:
+        1 * config.getBoolean("validate.entities") >> false
+        0 * objectValidator.validate(_)
+    }
+
+    def "validateObject validates entities if enabled"() {
+        given:
+        JoinPoint joinPoint  = Mock()
+        Object arg = v2Factory.createAuthenticationRequest()
+
+        joinPoint.args >> [arg]
+
+        when:
+        validateAspect.validateObject(joinPoint)
+
+        then:
+        1 * config.getBoolean("validate.entities") >> true
+        1 * objectValidator.validate(_)
+    }
+
     def setupMocks(){
         objectValidator = Mock()
         validateAspect.objectValidator = objectValidator
+        mockConfiguration(validateAspect)
     }
 }
