@@ -34,15 +34,15 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LdapScopeAccessPeristenceRepositoryTestOld extends InMemoryLdapIntegrationTest{
+public class LdapScopeAccessRepositoryTestOld extends InMemoryLdapIntegrationTest{
 
     @Mock
     Configuration config;
     @Mock
     LdapConnectionPools ldapConnectionPools;
     @InjectMocks
-    LdapScopeAccessPeristenceRepository ldapScopeAccessPeristenceRepository = new LdapScopeAccessPeristenceRepository();
-    LdapScopeAccessPeristenceRepository spy;
+    LdapScopeAccessRepository ldapScopeAccessPeristenceRepository = new LdapScopeAccessRepository();
+    LdapScopeAccessRepository spy;
 
     @Before
     public void setUp() throws Exception {

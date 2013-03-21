@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.List;
 
 @Component
-public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessDao {
+public class LdapScopeAccessRepository extends LdapRepository implements ScopeAccessDao {
 
     public static final String FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID = "Find ScopeAccess for Parent: {} by ClientId: {}";
     public static final String ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID = "Error reading scope access by clientId";

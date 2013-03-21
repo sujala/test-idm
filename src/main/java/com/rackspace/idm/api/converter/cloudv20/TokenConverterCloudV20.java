@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
+import com.rackspace.idm.RaxAuthConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -50,6 +52,16 @@ public class TokenConverterCloudV20 {
                 logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
             token.setExpires(expiresDate);
+
+            if (scopeAccess.getAuthenticatedBy().size() > 0) {
+                AuthenticatedBy authenticatedByEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy();
+
+                for (String authenticatedBy : scopeAccess.getAuthenticatedBy()) {
+                    authenticatedByEntity.getCredential().add(authenticatedBy);
+                }
+
+                token.getAny().add(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy(authenticatedByEntity));
+            }
         }
 
         return token;

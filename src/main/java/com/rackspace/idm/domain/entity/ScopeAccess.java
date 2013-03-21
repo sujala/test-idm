@@ -6,11 +6,15 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import lombok.Data;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+@Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS)
 public class ScopeAccess implements Auditable, HasAccessToken {
 
@@ -29,7 +33,17 @@ public class ScopeAccess implements Auditable, HasAccessToken {
     @LDAPField(attribute = LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private Date accessTokenExp;
 
+    @LDAPField(attribute = LdapRepository.ATTR_RS_TYPE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private List<String> authenticatedBy;
+
     public ScopeAccess() {}
+
+    public List<String> getAuthenticatedBy() {
+        if (authenticatedBy == null) {
+            authenticatedBy =  new ArrayList<String>();
+        }
+        return authenticatedBy;
+    }
 
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
@@ -42,42 +56,6 @@ public class ScopeAccess implements Auditable, HasAccessToken {
         else {
             return ldapEntry.getDN();
         }
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getClientRCN() {
-        return clientRCN;
-    }
-
-    public void setClientRCN(String clientRCN) {
-        this.clientRCN = clientRCN;
-    }
-
-    @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
     }
 
     @Override

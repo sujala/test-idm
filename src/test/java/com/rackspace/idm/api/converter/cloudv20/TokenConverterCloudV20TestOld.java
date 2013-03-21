@@ -27,7 +27,7 @@ import static org.mockito.Mockito.spy;
  * Time: 9:25 AM
  * To change this template use File | Settings | File Templates.
  */
-public class TokenConverterCloudV20Test {
+public class TokenConverterCloudV20TestOld {
     private TokenConverterCloudV20 tokenConverterCloudV20;
     private JAXBObjectFactories jaxbObjectFactories;
     private TokenConverterCloudV20 spy;

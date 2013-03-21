@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
+public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest{
 
     @Autowired
     private LdapCustomerRepository customerRepo;
