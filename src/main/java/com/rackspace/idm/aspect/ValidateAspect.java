@@ -1,6 +1,7 @@
 package com.rackspace.idm.aspect;
 
 import com.rackspace.idm.validation.ObjectValidator;
+import org.apache.commons.configuration.Configuration;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -18,6 +19,9 @@ public class ValidateAspect {
     @Autowired
     ObjectValidator objectValidator;
 
+    @Autowired
+    Configuration config;
+
     @Pointcut("execution(* com.rackspace.idm.api.resource..*.*(..))")
     public void resource() {
     }
@@ -33,6 +37,10 @@ public class ValidateAspect {
     }
 
     private void validateObject(JoinPoint joinPoint) {
+        if (config != null && !config.getBoolean("validate.entities")) {
+            return;
+        }
+
         Object[] args = joinPoint.getArgs();
 
         for (Object arg : args) {
