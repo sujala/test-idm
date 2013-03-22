@@ -133,4 +133,5 @@ public final class JSONConstants {
     public static final Object TOKEN_KEY = "tokenKey";
     public static final Object RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
     public static final Object RAX_AUTH_WEIGHT = "RAX-AUTH:Weight";
+    public static final Object RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
 }

@@ -3,8 +3,11 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.*
 
+import javax.xml.datatype.DatatypeFactory
+import javax.xml.datatype.XMLGregorianCalendar
 import javax.xml.namespace.QName
 
 import static com.rackspace.idm.RaxAuthConstants.*
@@ -49,6 +52,11 @@ class V2Factory {
             return it
         }
 
+    }
+
+    def createJAXBAuthenticateResponse() {
+        def authenticateResponse = createAuthenticateResponse()
+        return objFactory.createAccess(authenticateResponse)
     }
 
     def createAuthenticateResponse() {
@@ -233,7 +241,7 @@ class V2Factory {
     def createToken(String id) {
         new Token().with {
             it.id = id ? id : ID
-            it.expires = new XMLGregorianCalendarImpl()
+            it.expires = DatatypeFactory.newInstance().newXMLGregorianCalendar(new DateTime().toGregorianCalendar())
             it.tenant = new TenantForAuthenticateResponse()
             return it
         }
