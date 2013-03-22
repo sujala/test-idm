@@ -27,7 +27,7 @@ public class Cloud10VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getVersion_withValidLocalOnly_returns204() throws Exception {
         WebResource resource = resource().path("cloud/v1.0");
-        ClientResponse clientResponse = resource.header("X-Auth-User", "mkovacs")
+        ClientResponse clientResponse = resource.header("X-Auth-User", "cloud10User_DoNotDelete")
                 .header("X-Auth-Key", "1234567890")
                 .get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(204));
@@ -36,7 +36,7 @@ public class Cloud10VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getVersion_withValidLocalOnlyStorage_returns204() throws Exception {
         WebResource resource = resource().path("cloud/v1.0");
-        ClientResponse clientResponse = resource.header("X-Storage-User", "mkovacs")
+        ClientResponse clientResponse = resource.header("X-Storage-User", "cloud10User_DoNotDelete")
                 .header("X-Storage-Pass", "1234567890")
                 .get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(204));
