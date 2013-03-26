@@ -65,9 +65,9 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
 
-    UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId);
+    UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
 
-    RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId);
+    RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId, List<String> authenticatedBy);
     
     DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     
@@ -93,7 +93,7 @@ public interface ScopeAccessService {
 
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
-    UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId);
+    UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
 

@@ -336,7 +336,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getValidUserScopeAccessForClientId(
-                user, "clientId");
+                user, "clientId", null);
         EasyMock.verify(scopeAccessDao);
     }
 

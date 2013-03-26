@@ -10,6 +10,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
@@ -32,7 +33,6 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -738,11 +738,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // Core Service Methods
 
-    ResponseBuilder authenticateFederatedDomain(HttpHeaders httpHeaders,
-                                                        AuthenticationRequest authenticationRequest,
-                                                        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+    AuthenticateResponse authenticateFederatedDomain(AuthenticationRequest authenticationRequest,
+                                                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         // ToDo: Validate Domain
-        if(!domain.getName().toUpperCase().equals("RACKSPACE")){
+        if(!domain.getName().toUpperCase().equals(GlobalConstants.RACKSPACE_DOMAIN)){
             throw new BadRequestException("Invalid domain specified");
         }// The below is only for Racker Auth for now....
 
@@ -750,6 +749,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         User user = null;
         UserScopeAccess usa = null;
         RackerScopeAccess rsa = null;
+        List<String> authenticatedBy = new ArrayList<String>();
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
             PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
@@ -758,6 +758,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
             user = result.getUser();
             user.setId(((Racker) result.getUser()).getRackerId());
+            authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
@@ -766,13 +767,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
             user = result.getUser();
             user.setId(((Racker) result.getUser()).getRackerId());
+            authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_RSAKEY);
         }
-        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId());
+        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId(), authenticatedBy);
 
         usa = new UserScopeAccess();
         usa.setUsername(rsa.getRackerId());
         usa.setAccessTokenExp(rsa.getAccessTokenExp());
         usa.setAccessTokenString(rsa.getAccessTokenString());
+        usa.setAuthenticatedBy(authenticatedBy);
 
         List<TenantRole> roleList = tenantService.getTenantRolesForUser(user);
         //Add Racker eDir Roles
@@ -788,9 +791,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, tenantEndpoints);
 
         // removing serviceId from response for now
-        auth = removeServiceIdFromAuthResponse(auth);
-
-        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
+        return removeServiceIdFromAuthResponse(auth);
     }
 
     @Override
@@ -806,7 +807,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Check for domain in request
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = checkDomainFromAuthRequest(authenticationRequest);
             if(domain != null) {
-                return authenticateFederatedDomain(httpHeaders, authenticationRequest, domain);
+                AuthenticateResponse auth = authenticateFederatedDomain(authenticationRequest, domain);
+                return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             }
 
             if (authenticationRequest.getToken() != null) {

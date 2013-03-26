@@ -178,7 +178,7 @@ class AuthWithTokenTest extends RootServiceTest {
         then:
         1 * mockedImpersonatedScopeAccess.isAccessTokenExpired(_) >> false
         1 * mockedUserScopeAccess.isAccessTokenExpired(_) >> false
-        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _) >> { return createUserScopeAccess() }
+        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> { return createUserScopeAccess() }
 
         then:
         1 * tenantService.hasTenantAccess(_, _) >> false
@@ -200,7 +200,7 @@ class AuthWithTokenTest extends RootServiceTest {
 
         then:
         1 * mockedUserScopeAccess.isAccessTokenExpired(_) >> false
-        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _) >> { return createUserScopeAccess() }
+        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> { return createUserScopeAccess() }
 
         then:
         1 * tenantService.hasTenantAccess(_, _) >> false

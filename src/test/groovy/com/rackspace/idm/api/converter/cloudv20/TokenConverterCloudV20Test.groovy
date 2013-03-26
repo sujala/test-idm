@@ -6,6 +6,8 @@ import spock.lang.Shared
 import testHelpers.RootServiceTest
 import org.openstack.docs.identity.api.v2.Token
 
+import javax.xml.bind.JAXBElement
+
 class TokenConverterCloudV20Test extends RootServiceTest {
 
     @Shared TokenConverterCloudV20 converter
@@ -24,8 +26,8 @@ class TokenConverterCloudV20Test extends RootServiceTest {
         Token result = converter.toToken(scopeAccess)
 
         then:
-        AuthenticatedBy authenticatedByEntity = result.any.get(0)
-        expected as Set == authenticatedByEntity.credential as Set
+        JAXBElement<AuthenticatedBy> authenticatedByEntity = result.any.get(0)
+        expected as Set == authenticatedByEntity.getValue().credential as Set
 
         where:
         authenticatedBy     | expected

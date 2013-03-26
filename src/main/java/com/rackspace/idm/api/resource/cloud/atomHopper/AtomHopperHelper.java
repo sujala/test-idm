@@ -1,21 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper;
 
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Date;
@@ -48,7 +41,7 @@ public class AtomHopperHelper {
         ScopeAccess access = scopeAccessService.getScopeAccessByUserId(user.getId());
         String clientId = access.getClientId();
         if(access.getAccessTokenExp().before(new Date())){
-            access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId);
+            access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId, null);
         }
         return access.getAccessTokenString();
     }

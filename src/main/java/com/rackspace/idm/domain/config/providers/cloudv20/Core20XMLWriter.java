@@ -66,10 +66,8 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
                     "com.rackspace.docs.identity.api.ext.rax_auth.v1"
             );
 
-            classes = PackageClassDiscoverer.findClassesIn(
-                    "org.openstack.docs.identity.api.v2:" +
-                    "com.rackspace.docs.identity.api.ext.rax_auth.v1"
-            );
+            classes.addAll(PackageClassDiscoverer.findClassesIn("org.openstack.docs.identity.api.v2"));
+            classes.addAll(PackageClassDiscoverer.findClassesIn("com.rackspace.docs.identity.api.ext.rax_auth.v1"));
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
             throw new IdmException(e);
