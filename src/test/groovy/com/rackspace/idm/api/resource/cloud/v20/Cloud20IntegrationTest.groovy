@@ -7,11 +7,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import org.apache.commons.lang.StringUtils
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -117,11 +119,11 @@ class Cloud20IntegrationTest extends Specification {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
         this.v2Factory = new V2Factory()
-        serviceAdminToken = authenticateXML("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
+        serviceAdminToken = authenticatePasswordXML("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByNameXML(serviceAdminToken, "authQE").getEntity(User)
 
         identityAdmin = getUserByNameXML(serviceAdminToken, "auth").getEntity(User)
-        identityAdminToken = authenticateXML("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+        identityAdminToken = authenticatePasswordXML("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
 
         createUserXML(serviceAdminToken, userForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
         testUser = getUserByNameXML(serviceAdminToken, "admin$sharedRandom").getEntity(User)
@@ -145,8 +147,8 @@ class Cloud20IntegrationTest extends Specification {
         createUserXML(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
         userAdminTwo = getUserByNameXML(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
 
-        userAdminToken = authenticateXML("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
-        userAdminTwoToken = authenticateXML("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminToken = authenticatePasswordXML("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminTwoToken = authenticatePasswordXML("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         // Default Users
         createUserXML(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
@@ -158,7 +160,7 @@ class Cloud20IntegrationTest extends Specification {
         createUserXML(userAdminTwoToken, userForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserForAdminTwo = getUserByNameXML(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
 
-        defaultUserToken = authenticateXML("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        defaultUserToken = authenticatePasswordXML("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         //create group
         def createGroupResponse = createGroupXML(serviceAdminToken, group("group$sharedRandom", "this is a group"))
@@ -234,8 +236,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating where total access tokens remains unchanged"() {
         when:
-        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
-        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
@@ -246,7 +248,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating where token is within refresh window adds new token"() {
         when:
-        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, scopeAccessOne.token.id)
 
         def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
@@ -263,8 +265,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating where token is valid returns existing token"() {
         when:
-        def scopeAccessOne = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
-        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessOne = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         then:
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
@@ -272,11 +274,11 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticate with two valid tokens"() {
         when:
-        def firstScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def firstScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
-        def secondScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def secondScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
-        def thirdScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def thirdScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         then:
         secondScopeAccess.token.id.equals(thirdScopeAccess.token.id)
@@ -284,12 +286,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
         when:
-        def firstScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def firstScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
-        def secondScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def secondScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         expireToken(USER_FOR_AUTH, firstScopeAccess.token.id, 12)
         setTokenInRefreshWindow(USER_FOR_AUTH, secondScopeAccess.token.id)
-        def thirdScopeAccess = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def thirdScopeAccess = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=authQE))", "*")
 
@@ -1247,7 +1249,7 @@ class Cloud20IntegrationTest extends Specification {
         when:
         def updateCreds = updateCredentialsXML(identityAdminToken, user.id, creds)
         String updatePassword = updateCreds.getEntity(PasswordCredentialsRequiredUsername).value.password
-        def authenticate = authenticateXML(user.username,updatePassword)
+        def authenticate = authenticatePasswordXML(user.username,updatePassword)
 
         then:
         updateCreds.status == 200
@@ -1280,7 +1282,7 @@ class Cloud20IntegrationTest extends Specification {
         User user = userForCreate.getEntity(User)
 
         when:
-        def authRequest = authenticateXML(username, "Password1")
+        def authRequest = authenticatePasswordXML(username, "Password1")
         String token = authRequest.getEntity(AuthenticateResponse).value.token.id
         def userForUpdate = userForUpdate(null, username, null, "test@rackspace.com", false, null, null)
         def updateUserResponse = updateUserXML(serviceAdminToken, user.id, userForUpdate)
@@ -1306,7 +1308,7 @@ class Cloud20IntegrationTest extends Specification {
         def userAdminForCreate = createUserXML(identityAdminToken, userForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin = userAdminForCreate.getEntity(User)
 
-        def userAdminToken = authenticateXML(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
+        def userAdminToken = authenticatePasswordXML(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
         def userForCreate = createUserXML(userAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
 
         when:
@@ -1336,7 +1338,7 @@ class Cloud20IntegrationTest extends Specification {
         def userAdminForCreate2 = createUserXML(identityAdminToken, userForCreate(adminUsername2, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin2 = userAdminForCreate2.getEntity(User)
 
-        def userAdminToken = authenticateXML(adminUsername1, password).getEntity(AuthenticateResponse).value.token.id
+        def userAdminToken = authenticatePasswordXML(adminUsername1, password).getEntity(AuthenticateResponse).value.token.id
         def userForCreate = createUserXML(userAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
 
         when:
@@ -1391,7 +1393,7 @@ class Cloud20IntegrationTest extends Specification {
         when:
         def userAdminForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "email@rackspace.com", true, "ORD", domainId, "Password1"))
         def userAdmin = userAdminForCreate.getEntity(User)
-        def authRequest = authenticateXML(username, "Password1")
+        def authRequest = authenticatePasswordXML(username, "Password1")
         String token = authRequest.getEntity(AuthenticateResponse).value.token.id
         def defaultUserForCreate = createUserXML(token, userForCreate(subUsername, "displayName", "email@rackspace.com", true, "ORD", null, "Password1"))
         def defaultUser = defaultUserForCreate.getEntity(User)
@@ -1530,12 +1532,55 @@ class Cloud20IntegrationTest extends Specification {
         userAdminResponse2.status == 200
     }
 
+    def "authenticate returns password authentication type in response"() {
+        when:
+        def response = authenticatePasswordXML("admin$sharedRandom", "Password1")
+        def tokenAny = response.getEntity(AuthenticateResponse).value.token.any
+        def attributes = []
+        for (attr in tokenAny) {
+            attributes.add(StringUtils.lowerCase(attr.name))
+        }
+
+        then:
+        response.status == 200
+        attributes.contains("rax-auth:authenticatedby")
+    }
+
+    @Ignore
+    def "authenticate returns apiKey authentication type in response"() {
+        when:
+        def response = getUserApiKey(serviceAdminToken, userAdmin.getId()).getEntity(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials).value
+        def authResp = authenticateApiKeyXML(userAdmin.name, response.apiKey)
+
+        then:
+        authResp.getEntity(AuthenticateResponse).getToken().getAny().contains("rax-auth:authenticatedBy")
+    }
+
+    def "validate returns password authentication type in response"() {
+        when:
+        def response = validateTokenXML(serviceAdminToken, userAdminToken)
+        def blah = response.getEntity(AuthenticateResponse).value
+        def tokenAny = blah.token.any
+        def attributes = []
+        for (attr in tokenAny) {
+            attributes.add(StringUtils.lowerCase(attr.name))
+        }
+
+        then:
+        response.status == 200
+        attributes.contains("rax-auth:authenticatedby")
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
     }
 
     //Resource Calls
+    def getUserApiKey(String token, String userId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def createUserXML(String token, user) {
         resource.path(path20).path('users').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
@@ -1615,8 +1660,16 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticateXML(username, password) {
-        resource.path(path20).path('tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+    def authenticatePasswordXML(String username, String password) {
+        authenticateXML(getPasswordCredentials(username, password))
+    }
+
+    def authenticateApiKeyXML(String username, String apiKey) {
+        authenticateXML(getApiKeyCredentials(username, apiKey))
+    }
+
+    def authenticateXML(request) {
+        resource.path(path20).path('tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
     def createRegionXML(String token, region) {
@@ -1808,21 +1861,36 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     //Helper Methods
-    def getCredentials(String username, String password) {
+    def getPasswordCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
             it.username = username
             it.password = password
             return it
         }
     }
+    def getApiKeyCredentials(String username, String apiKey) {
+        new ApiKeyCredentials().with {
+            it.username = username
+            it.apiKey = apiKey
+            return it
+        }
+    }
 
-    def authenticateRequest(String username, String password) {
-        def credentials = getCredentials(username, password)
-
+    def authenticateRequest(String username, String password, String apiKey) {
         def objectFactory = new ObjectFactory()
+        def credentialObj
+        def credentials
+        if (apiKey != null) {
+            credentials = getApiKeyCredentials(username, apiKey)
+            credentialObj = objectFactory.createCredential(credentials)
+        } else {
+            credentials = getPasswordCredentials(username, password)
+            credentialObj = objectFactory.createPasswordCredentials(credentials)
+        }
+
 
         new AuthenticationRequest().with {
-            it.setCredential(objectFactory.createPasswordCredentials(credentials))
+            it.setCredential(credentialObj)
             return it
         }
     }
