@@ -51,7 +51,7 @@ class AtomHopperHelperTest extends Specification{
         scopeAccess2.setAccessTokenExp(date.plus(1))
         scopeAccess2.setClientId("1")
         scopeAccess2.setAccessTokenString("token")
-        scopeAccessService.updateExpiredUserScopeAccess(_,_) >> scopeAccess2
+        scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> scopeAccess2
 
         when:
         String token = atomHopperHelper.getAuthToken()

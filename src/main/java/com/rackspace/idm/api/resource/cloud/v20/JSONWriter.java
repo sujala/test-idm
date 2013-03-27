@@ -700,6 +700,24 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             tenantInner.put(JSONConstants.ID, token.getTenant().getId());
             tenantInner.put(JSONConstants.NAME, token.getTenant().getName());
         }
+
+        if (token.getAny().size() > 0) {
+            for (Object response : token.getAny()) {
+                if (response instanceof JAXBElement) {
+                    JAXBElement jaxbElement = ((JAXBElement)response);
+
+                    if (jaxbElement.getDeclaredType().isAssignableFrom(AuthenticatedBy.class)) {
+                        AuthenticatedBy authenticatedBy = (AuthenticatedBy) ((JAXBElement) response).getValue();
+                        JSONArray credentials = new JSONArray();
+                        for (String credential : authenticatedBy.getCredential()) {
+                            credentials.add(credential);
+                        }
+                        tokenInner.put(JSONConstants.RAX_AUTH_AUTHENTICATED_BY, credentials);
+                    }
+                }
+            }
+        }
+
         return tokenInner;
     }
 

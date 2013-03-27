@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
@@ -22,7 +22,7 @@ import java.util.List;
 public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     UserService userService;
-    LdapScopeAccessPeristenceRepository scopeAccessDao;
+    LdapScopeAccessRepository scopeAccessDao;
     ApplicationService applicationService;
     TenantService tenantService;
     EndpointService endpointService;
@@ -37,7 +37,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         userService = EasyMock.createMock(UserService.class);
         applicationService = EasyMock.createMock(ApplicationService.class);
-        scopeAccessDao = EasyMock.createMock(LdapScopeAccessPeristenceRepository.class);
+        scopeAccessDao = EasyMock.createMock(LdapScopeAccessRepository.class);
         endpointService = EasyMock.createMock(EndpointService.class);
         tenantService = EasyMock.createMock(TenantService.class);
         atomHopperClient = EasyMock.createMock(AtomHopperClient.class);
@@ -336,7 +336,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getValidUserScopeAccessForClientId(
-                user, "clientId");
+                user, "clientId", null);
         EasyMock.verify(scopeAccessDao);
     }
 

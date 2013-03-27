@@ -809,7 +809,7 @@ public class DefaultCloud20ServiceOldTest {
         authenticationRequest.getAny().add(domain);
         authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
         spy.authenticate(null, authenticationRequest);
-        verify(spy).authenticateFederatedDomain(null, authenticationRequest, domain);
+        verify(spy).authenticateFederatedDomain(authenticationRequest, domain);
     }
 
     @Test
@@ -3238,24 +3238,6 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.updateUser(null, authToken, userId, userOS);
         verify(scopeAccessService).getScopeAccessByUserId(userId);
-    }
-
-    @Test
-    public void updateUser_userIsDefaultUser_callsDefaultRegionService() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        UserScopeAccess scopeAccessForDefaultUser = new UserScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForDefaultUser);
-        when(authorizationService.authorizeCloudUser(scopeAccessForDefaultUser)).thenReturn(true);
-        ScopeAccess value = new ScopeAccess();
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
-        when(authorizationService.hasDefaultUserRole(user)).thenReturn(true);
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test

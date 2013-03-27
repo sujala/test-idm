@@ -13,4 +13,9 @@ public final class GlobalConstants {
 
     public static final String USER_PREFERRED_LANG_DEFAULT = "en_US";
     public static final String USER_TIME_ZONE_DEFAULT = "America/Chicago";
+
+    public static final String RACKSPACE_DOMAIN = "RACKSPACE";
+    public static final String AUTHENTICATED_BY_PASSWORD = "PASSWORD";
+    public static final String AUTHENTICATED_BY_RSAKEY = "RSAKEY";
+    public static final String AUTHENTICATED_BY_APIKEY = "APIKEY";
 }

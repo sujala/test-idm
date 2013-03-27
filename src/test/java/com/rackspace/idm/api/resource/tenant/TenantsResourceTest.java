@@ -2,9 +2,6 @@ package com.rackspace.idm.api.resource.tenant;
 
 import com.rackspace.api.idm.v1.Tenant;
 import com.rackspace.idm.api.converter.TenantConverter;
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
@@ -12,7 +9,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Spy;
 
 import javax.ws.rs.WebApplicationException;
 

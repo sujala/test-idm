@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -185,7 +187,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        service.updateExpiredUserScopeAccess(user, "clientId")
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
 
         then:
         1 * scopeAccessDao.getScopeAccessesByParent(user.getUniqueId()) >> [sa].asList()
@@ -222,8 +224,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
 
         when:
-        service.updateExpiredUserScopeAccess(user, "clientId")
-        service.updateExpiredUserScopeAccess(user, sharedRandom)
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
+        service.updateExpiredUserScopeAccess(user, sharedRandom, null)
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(_)
@@ -253,9 +255,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
 
         when:
-        service.getValidUserScopeAccessForClientId(user, "clientId")
-        service.getValidUserScopeAccessForClientId(user, "clientId")
-        service.getValidUserScopeAccessForClientId(user, "clientId")
+        service.getValidUserScopeAccessForClientId(user, "clientId", null)
+        service.getValidUserScopeAccessForClientId(user, "clientId", null)
+        service.getValidUserScopeAccessForClientId(user, "clientId", null)
 
         then:
         1 * scopeAccessDao.deleteScopeAccessByDn(_)
@@ -270,7 +272,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
 
         when:
-        service.getValidRackerScopeAccessForClientId("1", "12345", "12345")
+        service.getValidRackerScopeAccessForClientId("1", "12345", "12345", null)
 
         then:
         1 * scopeAccessDao.addDirectScopeAccess("1", _)
@@ -288,9 +290,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 
         when:
-        service.getValidRackerScopeAccessForClientId("1", "12345", "12345")
-        service.getValidRackerScopeAccessForClientId("2", "12345", "12345")
-        service.getValidRackerScopeAccessForClientId("3", "12345", "12345")
+        service.getValidRackerScopeAccessForClientId("1", "12345", "12345", null)
+        service.getValidRackerScopeAccessForClientId("2", "12345", "12345", null)
+        service.getValidRackerScopeAccessForClientId("3", "12345", "12345", null)
 
         then:
         2 * scopeAccessDao.addDirectScopeAccess(_, _)
@@ -625,5 +627,109 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.definePermission(_, _)
+    }
+
+    def "calling getValidRackerScopeAccessForClientId sets authenticatedBy"() {
+        given:
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.getValidRackerScopeAccessForClientId("uniqueId", "rackerId", "clientId", authenticatedBy)
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
+        }
+    }
+
+    def "calling updateExpiredUserScopeAccess without scopeAccess sets authenticatedBy"() {
+        given:
+        def user = entityFactory.createUser()
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
+
+        then:
+        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
+        }
+    }
+
+    def "calling updateExpiredUserScopeAccess with scopeAccess sets authenticatedBy"() {
+        given:
+        def user = entityFactory.createUser()
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
+
+        then:
+        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
+        }
+    }
+
+    def "calling getValidUserScopeAccessForClientId sets authenticatedBy"() {
+        given:
+        def user = entityFactory.createUser()
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.getValidUserScopeAccessForClientId(user, "clientId", authenticatedBy)
+
+        then:
+        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
+        }
+    }
+
+    def "calling getUserScopeAccessForClientIdByUsernameAndApiCredentials sets authenticatedBy"() {
+        given:
+        def user = entityFactory.createUser()
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId")
+
+        then:
+        1 * userService.authenticateWithApiKey(_, _) >> new UserAuthenticationResult(user, true)
+
+        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_APIKEY] as Set)
+        }
+    }
+
+    def "calling getUserScopeAccessForClientIdByUsernameAndPassword sets authenticatedBy"() {
+        given:
+        def user = entityFactory.createUser()
+        def authenticatedBy = ["RSA"].asList()
+
+        when:
+        service.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")
+
+        then:
+        1 * userService.authenticate(_, _) >> new UserAuthenticationResult(user, true)
+
+        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+            assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_PASSWORD] as Set)
+        }
     }
 }

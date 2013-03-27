@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
@@ -791,16 +792,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     // Return UserScopeAccess from directory, refreshes expired
     @Override
-    public UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId) {
+    public UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         //if expired update with new token
-        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(user, clientId);
+        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(user, clientId, authenticateBy);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
 
     @Override
-    public RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId) {
+    public RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId, List<String> authenticatedBy) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessForClientId(uniqueId, clientId);
         if (scopeAccess == null){
@@ -809,6 +810,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccess.setRackerId(rackerId);
             scopeAccess.setAccessTokenString(generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccess.setAuthenticatedBy(authenticatedBy);
             scopeAccessDao.addDirectScopeAccess(uniqueId, scopeAccess);
         }
         //if expired update with new token
@@ -884,7 +886,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = userService.authenticateWithApiKey(username, apiKey);
         handleApiKeyUsernameAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId);
+        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_APIKEY));
+    }
+
+    private List<String> authenticateBy(String type) {
+        List<String> authenticatedBy = new ArrayList<String>();
+        authenticatedBy.add(type);
+        return authenticatedBy;
     }
 
     @Override
@@ -894,7 +902,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId);
+        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
     }
 
     @Override
@@ -1075,10 +1083,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId) {
+    public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
         List<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccessesByParent(user.getUniqueId());
         if (scopeAccessList.size() == 0) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
+            if (authenticatedBy != null) {
+                scopeAccess.setAuthenticatedBy(authenticatedBy);
+            }
             this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccess);
             return scopeAccess;
         }
@@ -1090,6 +1101,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     scopeAccessDao.deleteScopeAccess(scopeAccess);
                 }
             }
+        }
+        if (authenticatedBy != null) {
+            mostRecent.setAuthenticatedBy(authenticatedBy);
         }
         return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
@@ -1117,6 +1131,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setUsername(scopeAccess.getUsername());
         scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
+        scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
         if (impersonated) {
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
         } else {

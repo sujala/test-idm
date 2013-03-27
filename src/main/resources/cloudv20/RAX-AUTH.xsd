@@ -25,6 +25,7 @@
     <attribute name="propagate" type="xsd:boolean" />
     <attribute name="weight" type="int" />
 
+    <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
     <element name="serviceApis" type="RAX-AUTH:ServiceApis" />
     <element name="impersonation" type="RAX-AUTH:ImpersonationRequest" />
@@ -60,6 +61,12 @@
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
 
     <!-- Complex Types -->
+    <complexType name="AuthenticatedBy">
+        <sequence>
+            <element name="credential" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="ImpersonationRequest">
         <sequence>
             <element name="user" type="identity:User" >

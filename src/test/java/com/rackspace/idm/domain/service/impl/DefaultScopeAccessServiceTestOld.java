@@ -26,7 +26,6 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.sql.DataTruncation;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -1216,7 +1215,7 @@ public class DefaultScopeAccessServiceTestOld {
         rackerScopeAccess.setAccessTokenString("1234567890");
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
         when(scopeAccessDao.updateScopeAccess(rackerScopeAccess)).thenReturn(true);
-        RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345");
+        RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345", null);
         verify(scopeAccessDao).addDirectScopeAccess(anyString(), Matchers.<ScopeAccess>anyObject());
         rsa.isAccessTokenExpired(new DateTime());
         assertThat("newRackerScopeAccess", rsa.getAccessTokenString(), not("1234567890"));

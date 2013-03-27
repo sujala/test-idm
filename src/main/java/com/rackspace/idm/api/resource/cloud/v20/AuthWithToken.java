@@ -62,7 +62,7 @@ public class AuthWithToken {
 
         authResponseTuple.setUser(getUserByIdForAuthentication(authResponseTuple.getUserScopeAccess().getUserRsId()));
 
-        scopeAccessService.updateExpiredUserScopeAccess(authResponseTuple.getUser(), sa.getClientId());
+        scopeAccessService.updateExpiredUserScopeAccess(authResponseTuple.getUser(), sa.getClientId(), null);
 
         if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
             String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
