@@ -253,7 +253,7 @@ class Cloud20IntegrationTest extends Specification {
 
         def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
-        def scopeAccessTwo = authenticateXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
+        def scopeAccessTwo = authenticatePasswordXML(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
 
@@ -343,7 +343,7 @@ class Cloud20IntegrationTest extends Specification {
                 getUserByNameXML(serviceAdminToken, "badName"),
                 updateUserXML(serviceAdminToken, "badId", new User()),
                 deleteUserXML(serviceAdminToken, "badId"),
-                addCredentialXML(serviceAdminToken, "badId", getCredentials("someUser", "SomePassword1"))
+                addCredentialXML(serviceAdminToken, "badId", getPasswordCredentials("someUser", "SomePassword1"))
         ]
     }
 
@@ -1661,11 +1661,11 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def authenticatePasswordXML(String username, String password) {
-        authenticateXML(getPasswordCredentials(username, password))
+        authenticateXML(authenticateRequest(username, password, null))
     }
 
     def authenticateApiKeyXML(String username, String apiKey) {
-        authenticateXML(getApiKeyCredentials(username, apiKey))
+        authenticateXML(authenticateRequest(username, null, apiKey))
     }
 
     def authenticateXML(request) {
