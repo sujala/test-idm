@@ -55,6 +55,8 @@ class Cloud20IntegrationTest extends Specification {
     @Shared V2Factory v2Factory
 
     @Shared def path20 = "cloud/v2.0/"
+    @Shared int MAX_TRIES = 20
+
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
@@ -1194,16 +1196,13 @@ class Cloud20IntegrationTest extends Specification {
     def "listRoles returns valid link headers"() {
         given:
         def response = listRoles(serviceAdminToken, null, "2", "1")
-        List<String> links = response.headers.get("link")
-        links = links[0].split(",")
-        Map<String, String[]> params = new HashMap<String, String[]>()
-        setLinkParams(links, params)
+        def queryParams = parseLinks(response.headers.get("link"))
 
         when:
-        def first_response = listRoles(serviceAdminToken, null, params["first"][0], params["first"][1])
-        def last_response = listRoles(serviceAdminToken, null, params["last"][0], params["last"][1])
-        def prev_response = listRoles(serviceAdminToken, null, params["prev"][0], params["prev"][1])
-        def next_response = listRoles(serviceAdminToken, null, params["next"][0], params["next"][1])
+        def first_response = listRoles(serviceAdminToken, null, queryParams["first"][0], queryParams["first"][1])
+        def last_response = listRoles(serviceAdminToken, null, queryParams["last"][0], queryParams["last"][1])
+        def prev_response = listRoles(serviceAdminToken, null, queryParams["prev"][0], queryParams["prev"][1])
+        def next_response = listRoles(serviceAdminToken, null, queryParams["next"][0], queryParams["next"][1])
 
         then:
         first_response.status == 200
@@ -1232,6 +1231,41 @@ class Cloud20IntegrationTest extends Specification {
                 listRoles("token", null, null, null),
                 listRoles("token", cloudAuthClientId, null, null)
         ]
+    }
+
+    def "Can iterate through paged roles"() {
+        when:
+        Map<Integer, Integer> results = followPages()
+
+        then:
+        for (result in results) {
+            assert(result.value == 200)
+        }
+    }
+
+    def followPages() {
+        int page = 0
+        def response = listRoles(serviceAdminToken, null, "0", "3")
+        def queryParams = parseLinks(response.headers.get("link"))
+        Map<Integer, Integer> responseStatus = new HashMap<Integer, Integer>()
+
+        while (queryParams.containsKey("next")) {
+            page++
+            if (page > MAX_TRIES) {
+                break
+            }
+            response = listRoles(serviceAdminToken, null, queryParams["next"][0], queryParams["next"][1])
+            queryParams = parseLinks(response.headers.get("link"))
+            responseStatus.put(page, response.status)
+        }
+        return responseStatus
+    }
+
+    def parseLinks(List<String> header) {
+        List<String> links = header[0].split(",")
+        Map<String, String[]> params = new HashMap<String, String[]>()
+        setLinkParams(links, params)
+        return params
     }
 
     def "updateCredentials with valid passwords should be able to authenticate" () {
@@ -2097,7 +2131,7 @@ class Cloud20IntegrationTest extends Specification {
         }
     }
 
-        def setLinkParams(List<String> links, Map<String, String[]> params) {
+    def setLinkParams(List<String> links, Map<String, String[]> params) {
         for (String link : links) {
             def first = getFirstLink(link)
             if (first) {

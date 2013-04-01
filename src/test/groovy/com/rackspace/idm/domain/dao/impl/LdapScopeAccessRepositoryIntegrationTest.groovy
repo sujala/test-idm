@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.ClientSecret
 import com.rackspace.idm.domain.entity.ScopeAccess
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,7 +57,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
     }
 
     def createScopeAccess(clientId, authenticatedBy) {
-        new ScopeAccess().with {
+        new ClientScopeAccess().with {
             it.clientId = clientId
             it.clientRCN = clientRCN
             it.accessTokenExp = new Date()

@@ -2407,7 +2407,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def notFoundResponse = service.checkToken(headers, "differentToken", "tokenId", "tenantId").build()
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(scopeAccessOne) >> { throw new ForbiddenException() }
+        (1.._) * authorizationService.verifyIdentityAdminLevelAccess(scopeAccessOne) >> { throw new ForbiddenException() }
 
         notAuthedResponse.status == 401
         forbiddenResponse.status == 403
