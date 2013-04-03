@@ -2,6 +2,8 @@ package com.rackspace.idm.validation;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentialsWithOnlyApiKey;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.validation.entity.*;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
@@ -12,10 +14,7 @@ import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.Tenant;
-import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -49,6 +48,9 @@ public class ObjectConverter {
         mapping.put(ImpersonationRequest.class, ImpersonationRequestForValidation.class);
         mapping.put(com.rackspacecloud.docs.auth.api.v1.User.class, UserForValidation.class);
         mapping.put(BaseURLRef.class, BaseUrlRefForValidation.class);
+        mapping.put(BaseURL.class, BaseUrlForValidation.class);
+        mapping.put(PasswordCredentialsRequiredUsername.class, CredentialTypeForValidation.class);
+        mapping.put(ApiKeyCredentials.class, CredentialTypeForValidation.class);
     }
 
     public Object convert(Object object) {

@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -324,6 +325,24 @@ class V1Factory {
             it.id = id
             it.href = href
             it.v1Default = v1Default
+            return it
+        }
+    }
+
+    def createBaseUrl(){
+        return createBaseUrl(1,"serviceName", "DFW", true, false, "http://public", "http://admin", "http://internal")
+    }
+
+    def createBaseUrl(Integer id, String serviceName, String region, Boolean enabled, Boolean defaul, String publicURL, String adminURL, String internalURL) {
+        new BaseURL().with {
+            it.id = id
+            it.serviceName = serviceName
+            it.region = region
+            it.enabled = enabled
+            it.default = defaul
+            it.publicURL = publicURL
+            it.adminURL = adminURL
+            it.internalURL = internalURL
             return it
         }
     }

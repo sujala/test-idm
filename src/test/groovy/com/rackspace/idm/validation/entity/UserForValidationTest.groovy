@@ -4,6 +4,8 @@ import com.rackspace.idm.validation.DefaultObjectValidator
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import javax.xml.namespace.QName
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -44,4 +46,20 @@ class UserForValidationTest extends RootServiceTest{
         1           | "id"      | "username"    | "email"   | "displayName"     | "password"    | "key"     | m("nastId")   | "href"
         1           | "id"      | "username"    | "email"   | "displayName"     | "password"    | "key"     | "nastId"      | mm("href")
     }
+
+    def "Validate other attr fields"(){
+        when:
+        def entity = entityFactoryForValidation.createUser(id, username, email, displayName, password, nastId, key, null)
+        entity.otherAttributes.put(new QName(""), String.valueOf(attr))
+        def result = objectValidator.getViolationMessages(entity)
+
+        then:
+        result.size() == expected
+
+        where:
+        expected    |  id       | username      | email     | displayName       | password      | key       | nastId        | href      | attr
+        2           | "id"      | m("username") | "email"   | "displayName"     | "password"    | "key"     | "nastId"      | "href"    | m("attr")
+    }
+
+
 }

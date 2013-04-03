@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
+import com.rackspace.idm.validation.entity.BaseUrlForValidation
 import com.rackspace.idm.validation.entity.BaseUrlRefForValidation
 import com.rackspace.idm.validation.entity.BaseUrlRefListForValidation
 import com.rackspace.idm.validation.entity.CredentialTypeForValidation
@@ -251,6 +252,17 @@ class EntityFactoryForValidation extends Specification{
     def createBaseUrlRefList(baseUrlRef) {
         new BaseUrlRefListForValidation().with {
             it.baseURLRef = baseUrlRef
+            return it
+        }
+    }
+
+    def createBaseUrl(String serviceName, String region, String adminURL, String publicURL, String internalURL){
+        new BaseUrlForValidation().with {
+            it.serviceName = serviceName
+            it.region = region
+            it.adminURL = adminURL
+            it.publicURL = publicURL
+            it.internalURL = internalURL
             return it
         }
     }

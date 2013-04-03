@@ -2,8 +2,11 @@ package com.rackspace.idm.validation
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
+import com.rackspace.idm.validation.entity.BaseUrlForValidation
 import com.rackspace.idm.validation.entity.BaseUrlRefForValidation
+import com.rackspace.idm.validation.entity.CredentialTypeForValidation
 import com.rackspace.idm.validation.entity.DefaultRegionServicesForValidation
 import com.rackspace.idm.validation.entity.DomainForValidation
 import com.rackspace.idm.validation.entity.EndpointTemplateForValidation
@@ -23,6 +26,7 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -377,6 +381,20 @@ class ObjectConverterTest extends RootServiceTest{
         result.href == "href"
     }
 
+    def "Convert BaseURL to BaseURLForValidation"(){
+        when:
+        def entity = v1Factory.createBaseUrl()
+        BaseUrlForValidation result = converter.convert(entity)
+
+        then:
+        result != null
+        result.region == "DFW"
+        result.adminURL == "http://admin"
+        result.internalURL == "http://internal"
+        result.adminURL == "http://admin"
+        result.serviceName == "serviceName"
+    }
+
     def "Convert User(v1.1) to UserForValidation"(){
         when:
         def entity = new User().with {
@@ -403,5 +421,32 @@ class ObjectConverterTest extends RootServiceTest{
         result.key == "key"
         result.nastId == "nast"
         result.baseURLRefs.baseURLRef.get(0).href == "href"
+    }
+
+    def "Convert Credentials to CredentialsForValidation"(){
+        when:
+        def passwordCred = new PasswordCredentialsRequiredUsername().with {
+            it.username = "name"
+            it.password = "password"
+            return it
+        }
+
+        def apiKeyCred = new ApiKeyCredentials().with {
+            it.username = "name"
+            it.apiKey = "key"
+            return it
+        }
+
+        CredentialTypeForValidation resultPwd = converter.convert(passwordCred)
+        CredentialTypeForValidation resultApiKey = converter.convert(apiKeyCred)
+
+        then:
+        resultPwd != null
+        resultPwd.username == "name"
+        resultPwd.password == "password"
+
+        resultApiKey != null
+        resultApiKey.username == "name"
+        resultApiKey.apiKey == "key"
     }
 }
