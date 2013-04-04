@@ -42,6 +42,8 @@ public interface Cloud20Service {
 
     ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
+    ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) ;
+
     ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) ;
 
     ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) ;

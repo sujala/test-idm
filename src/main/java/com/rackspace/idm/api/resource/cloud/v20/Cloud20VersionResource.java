@@ -299,13 +299,16 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("email") String email,
             @QueryParam("name") String name,
             @QueryParam("marker") String marker,
             @QueryParam("limit") String limit) {
-        if (StringUtils.isBlank(name)) {
-            return getCloud20Service().listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
-        } else {
+        if (!StringUtils.isBlank(name)) {
             return getCloud20Service().getUserByName(httpHeaders, authToken, name).build();
+        } else if (!StringUtils.isBlank(email)) {
+            return getCloud20Service().getUsersByEmail(httpHeaders, authToken, email).build();
+        } else {
+            return getCloud20Service().listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
         }
     }
 

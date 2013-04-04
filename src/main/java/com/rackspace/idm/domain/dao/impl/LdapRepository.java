@@ -106,7 +106,7 @@ public abstract class LdapRepository {
     public static final String ATTR_MIGRATION_DATE = "migrationDate";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
-    public static final String ATTR_MAIL = "rsMail";
+    public static final String ATTR_MAIL = "mail";
     public static final String ATTR_MEMBER_OF = "rsGroupDN";
     public static final String ATTR_MIDDLE_NAME = "middleName";
     public static final String ATTR_MOSSO_ID = "rsMossoId";

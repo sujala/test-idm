@@ -1100,7 +1100,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("country", result[2].getValue(), equalTo("us"));
         assertThat("display name", cryptHelper.decrypt(result[3].getValueByteArray()), equalTo("test"));
         assertThat("first name", cryptHelper.decrypt(result[4].getValueByteArray()), equalTo("john"));
-        assertThat("email", cryptHelper.decrypt(result[5].getValueByteArray()), equalTo("john.smith@email.com"));
+        assertThat("email", result[5].getValue(), equalTo("john.smith@email.com"));
         assertThat("middle name", result[6].getValue(), equalTo("jon"));
         assertThat("locale", result[7].getValue(), equalTo("en"));
         assertThat("customer id", result[8].getValue(), equalTo("456"));

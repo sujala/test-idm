@@ -137,6 +137,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean hasSameDomain(User caller, User retrievedUser) {
+        return caller.getDomainId() != null && caller.getDomainId().equals(retrievedUser.getDomainId());
+    }
+
+    @Override
     public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 

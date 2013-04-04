@@ -32,6 +32,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
     public static final String ENCRYPTION_ERROR = "encryption error";
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
+    public static final String NULL_OR_EMPTY_EMAIL_PARAMETER = "Null or Empty email parameter";
     public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
 
@@ -390,6 +391,29 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public Users getUsersByEmail(String email) {
+        // This method returns a user whether or not the user has been
+        // soft-deleted
+        getLogger().debug("Doing search for username by email " + email);
+        if (StringUtils.isBlank(email)) {
+            getLogger().error(NULL_OR_EMPTY_EMAIL_PARAMETER);
+            getLogger().info("Invalid email parameter.");
+            return new Users();
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_MAIL, email)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
+
+        getLogger().debug(FOUND_USERS, users);
+
+        return users;
+    }
+
+    @Override
     public Users getUsers(List<Filter> filters) {
         getLogger().debug("Doing search for users");
 
@@ -724,7 +748,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getEmail())) {
-            atts.add(new Attribute(ATTR_MAIL, cryptHelper.encrypt(user.getEmail())));
+            atts.add(new Attribute(ATTR_MAIL, user.getEmail()));
         }
 
         if (!StringUtils.isBlank(user.getMiddlename())) {
@@ -970,7 +994,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
         user.setDisplayName(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_DISPLAY_NAME)));
         user.setFirstname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_GIVEN_NAME)));
-        user.setEmail(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_MAIL)));
+        user.setEmail(resultEntry.getAttributeValue(ATTR_MAIL));
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
         user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
         user.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
@@ -1224,7 +1248,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getEmail())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
             } else if (!StringUtils.equals(uOld.getEmail(), uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, cryptHelper.encrypt(uNew.getEmail())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, uNew.getEmail()));
             }
         }
     }

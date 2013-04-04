@@ -46,6 +46,8 @@ public interface UserDao {
 
     User getUserByUsername(String username);
 
+    Users getUsersByEmail(String email);
+
     Users getUsers(List<Filter> filters);
 
     boolean isUsernameUnique(String username);

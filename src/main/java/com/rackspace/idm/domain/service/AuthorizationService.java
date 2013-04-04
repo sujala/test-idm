@@ -29,6 +29,7 @@ public interface AuthorizationService {
     boolean hasDefaultUserRole(User user);
     boolean hasUserAdminRole(User user);
     boolean hasServiceAdminRole(User user);
+    boolean hasSameDomain(User caller, User retrievedUser);
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);

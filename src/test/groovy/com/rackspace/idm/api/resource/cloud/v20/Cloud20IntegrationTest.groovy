@@ -316,6 +316,7 @@ class Cloud20IntegrationTest extends Specification {
         //Get user by id
         def getUserByIdResponse = getUserByIdXML(serviceAdminToken, userEntity.getId())
         def getUserByNameResponse = getUserByNameXML(serviceAdminToken, userEntity.getUsername())
+        def getUserByEmailResponse = getUsersByEmailXML(serviceAdminToken, userEntity.getEmail())
         //Update User
         def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = updateUserXML(serviceAdminToken, userEntity.getId(), userForUpdate)
@@ -330,6 +331,7 @@ class Cloud20IntegrationTest extends Specification {
         getUserResponse.status == 200
         getUserByIdResponse.status == 200
         getUserByNameResponse.status == 200
+        getUserByEmailResponse.status == 200
         updateUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponses.status == 204
@@ -1637,6 +1639,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def getUserByNameXML(String token, String name) {
         resource.path(path20).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def getUsersByEmailXML(String token, String email) {
+        resource.path(path20).path('users').queryParam("email", email).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUserXML(String token, String userId, user) {
