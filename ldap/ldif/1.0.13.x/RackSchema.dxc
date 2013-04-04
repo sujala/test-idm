@@ -738,7 +738,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         inMigration,
         migrationDate,
         useMultiFactorAuthentication,
-        telephoneNumber
+        telephoneNumber,
+        mail
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
