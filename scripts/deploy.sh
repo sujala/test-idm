@@ -23,7 +23,7 @@ if [ $DEPLOY == "dev2" ]
 then
     HOST=d-api2.cidm.iad2.corp.rackspace.com
 
-    $BASEDIR/editProperties.sh useCloudAuth=true useCloudAuth=false
+    $BASEDIR/editProperties.sh useCloudAuth=false useCloudAuth=true
     $BASEDIR/editProperties.sh gaIsSourceOfTruth=false gaIsSourceOfTruth=true
     $BASEDIR/copyProperties.sh $HOST DEV
 fi
