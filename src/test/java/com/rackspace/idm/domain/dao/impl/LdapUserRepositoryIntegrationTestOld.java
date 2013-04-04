@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
+public class LdapUserRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest{
 
     @Autowired
     private LdapUserRepository repo;

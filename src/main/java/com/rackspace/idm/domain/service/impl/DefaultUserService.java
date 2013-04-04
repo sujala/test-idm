@@ -293,6 +293,14 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    @Override
+    public Users getUsersByEmail(String email) {
+        logger.debug(GETTING_USER, email);
+        Users users = userDao.getUsersByEmail(email);
+        logger.debug(GOT_USER, users);
+        return users;
+    }
+
     public User getUserByAuthToken(String authToken) {
         if (authToken == null) {
             return null;

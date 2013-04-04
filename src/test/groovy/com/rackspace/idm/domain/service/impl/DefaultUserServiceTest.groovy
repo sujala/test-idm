@@ -831,6 +831,22 @@ class DefaultUserServiceTest extends RootServiceTest {
         notThrown(NotFoundException)
     }
 
+    def "callig getUsersByEmail returns the user"() {
+        given:
+        def user = entityFactory.createUser()
+
+        when:
+        def result = service.getUsersByEmail("email@email.com")
+
+        then:
+        1 * userDao.getUsersByEmail(_) >> entityFactory.createUsers([user].asList())
+
+        then:
+        result.users.get(0).username == user.username
+        result.users.get(0).email == user.email
+
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

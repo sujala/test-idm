@@ -43,6 +43,8 @@ public interface UserService {
 
     User getUser(String username);
 
+    Users getUsersByEmail(String email);
+
     User getUserByAuthToken(String authToken);
     
     User getUserById(String id);

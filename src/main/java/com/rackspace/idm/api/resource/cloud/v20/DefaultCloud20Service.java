@@ -1372,6 +1372,38 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) {
+        try {
+            ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserLevelAccess(requesterScopeAccess);
+
+            Users users = userService.getUsersByEmail(email);
+
+            User caller = userService.getUserByScopeAccess(requesterScopeAccess);
+            if (authorizationService.authorizeCloudUserAdmin(requesterScopeAccess) ||
+                authorizationService.authorizeCloudUser(requesterScopeAccess)) {
+                users = filterUsersInDomain(users, caller);
+            }
+
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private Users filterUsersInDomain(Users users, User caller) {
+        Users result = new Users();
+        result.setUsers(new ArrayList<User>());
+        for (User user : users.getUsers()) {
+            if (authorizationService.hasSameDomain(caller, user)) {
+                result.getUsers().add(user);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);

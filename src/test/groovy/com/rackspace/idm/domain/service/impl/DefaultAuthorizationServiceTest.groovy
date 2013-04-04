@@ -407,6 +407,30 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         1 * tenantService.doesUserContainTenantRole(_, _) >> true
     }
 
+    def "hasSameDomain checks if user is in domain"() {
+        when:
+        def user1 = entityFactory.createUser().with {
+            it.domainId = domain1
+            it
+        }
+        def user2 = entityFactory.createUser().with {
+            it.domainId = domain2
+            it
+        }
+        def result = service.hasSameDomain(user1, user2)
+
+        then:
+        result == expectedResult
+
+        where:
+        expectedResult  | domain1   | domain2
+        true            | "domain1" | "domain1"
+        false           | "domain1" | "domain2"
+        false           | null      | "domain2"
+        false           | "domain1" | null
+        false           | null      | null
+    }
+
     def retrieveAccessControlRoles() {
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
         service.retrieveAccessControlRoles()

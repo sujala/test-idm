@@ -16,7 +16,7 @@ import spock.lang.Specification
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapUserRepositoryGroovyIntegrationTest extends Specification{
+class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
     LdapUserRepository ldapUserRepository;
 
@@ -164,6 +164,21 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
         then:
         userList != null
         userList.size() == 0
+    }
+
+    def "calling getUserByEmail returns the user"() {
+        given:
+        def email = "email$random@email.com"
+        def user1 = createUser("1$random", "username$random", "1234567890", email, true, "DFW", "Password1")
+
+        when:
+        ldapUserRepository.addUser(user1)
+        def user = ldapUserRepository.getUsersByEmail(email)
+        ldapUserRepository.deleteUser(user.users.get(0))
+
+        then:
+        user != null
+        user1.email == user.users.get(0).email
     }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {

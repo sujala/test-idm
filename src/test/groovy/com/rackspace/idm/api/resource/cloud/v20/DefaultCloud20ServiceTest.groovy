@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
@@ -18,6 +17,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -2883,6 +2883,53 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             assert (arg2.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
             new AuthenticateResponse()
         }
+    }
+
+    def "calling getUserByEmail returns the user"() {
+        given:
+        def user = entityFactory.createUser()
+        allowUserAccess()
+
+        when:
+        def result = service.getUsersByEmail(headers, authToken, "email@email.com").build()
+
+        then:
+        userService.getUsersByEmail(_) >> entityFactory.createUsers([user].asList())
+
+        then:
+        result.status == 200
+    }
+
+    def "userAdmin calling getUsersByEmail filters subUsers by domain"() {
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+
+        def email = "email@gmail.com"
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def subUser1 = entityFactory.createUser("subUser1", "userId1", "domainId", "region").with {
+            it.email = email
+            it
+        }
+        def subUser2 = entityFactory.createUser("subUser2", "userId2", "notDomainId", "region").with {
+            it.email = email
+            it
+        }
+
+        when:
+        def result = service.getUsersByEmail(headers, authToken, email).build()
+
+        then:
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.getUsersByEmail(_) >> entityFactory.createUsers([subUser1, subUser2].asList())
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * authorizationService.hasSameDomain(caller, subUser1) >> true
+        1 * authorizationService.hasSameDomain(caller, subUser2) >> false
+
+        then:
+        result.status == 200
+        UserList users = result.entity
+        users.user.size() == 1
     }
 
     def mockServices() {
