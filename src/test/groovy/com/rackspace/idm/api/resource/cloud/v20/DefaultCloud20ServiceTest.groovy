@@ -2396,6 +2396,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         def scopeAccessOne = createUserScopeAccess()
         def scopeAccessTwo = createUserScopeAccess()
+        scopeAccessTwo.accessTokenString = "token2"
+        scopeAccessTwo.userRsId = "userRsId2"
 
         scopeAccessService.getScopeAccessByAccessToken(authToken) >> scopeAccessOne
         scopeAccessService.getScopeAccessByAccessToken("differentToken") >> scopeAccessTwo
