@@ -362,17 +362,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (user.getUpdated() != null) {
                 inner.put(JSONConstants.UPDATED, String.valueOf(user.getUpdated()));
             }
-            JSONArray baseUrls = new JSONArray();
             BaseURLRefList baseList = user.getBaseURLRefs();
-            if (baseList != null) {
-                for (BaseURLRef url : baseList.getBaseURLRef()) {
-                    JSONObject urlItem = new JSONObject();
-                    urlItem.put(JSONConstants.ID, url.getId());
-                    urlItem.put(JSONConstants.HREF, url.getHref());
-                    urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
-                    baseUrls.add(urlItem);
-                }
-            }
+            JSONArray baseUrls = getBaseUrls(baseList);
             inner.put(JSONConstants.BASE_URL_REFS, baseUrls);
             outer.put(JSONConstants.USER, inner);
             jsonText = JSONValue.toJSONString(outer);
@@ -380,20 +371,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(BaseURLRefList.class)) {
 
             BaseURLRefList baseList = (BaseURLRefList) object;
-
             JSONObject outer = new JSONObject();
-            JSONArray baseUrls = new JSONArray();
-
-            if (baseList != null) {
-                for (BaseURLRef url : baseList.getBaseURLRef()) {
-                    JSONObject urlItem = new JSONObject();
-                    urlItem.put(JSONConstants.ID, url.getId());
-                    urlItem.put(JSONConstants.HREF, url.getHref());
-                    urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
-                    baseUrls.add(urlItem);
-                }
-            }
-
+            JSONArray baseUrls = getBaseUrls(baseList);
             outer.put(JSONConstants.BASE_URL_REFS, baseUrls);
             jsonText = JSONValue.toJSONString(outer);
             
@@ -1049,6 +1028,21 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         }
         baseURL.put(JSONConstants.ID, url.getId());
         return baseURL;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONArray getBaseUrls(BaseURLRefList baseList) {
+        JSONArray baseUrls = new JSONArray();
+        if (baseList != null) {
+            for (BaseURLRef url : baseList.getBaseURLRef()) {
+                JSONObject urlItem = new JSONObject();
+                urlItem.put(JSONConstants.ID, url.getId());
+                urlItem.put(JSONConstants.HREF, url.getHref());
+                urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
+                baseUrls.add(urlItem);
+            }
+        }
+        return baseUrls;
     }
 
     @SuppressWarnings("unchecked")
