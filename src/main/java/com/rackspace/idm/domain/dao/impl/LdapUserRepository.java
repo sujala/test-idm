@@ -406,7 +406,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug(FOUND_USERS, users);
 
