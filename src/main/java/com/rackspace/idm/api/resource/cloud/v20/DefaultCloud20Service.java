@@ -278,23 +278,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
             User caller = userService.getUserByScopeAccess(tokenScopeAccess);
 
-            if (role == null) {
-                String errMsg = "role cannot be null";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-            if (StringUtils.isBlank(role.getServiceId())) { // We now default to an application for all roles not specifying one
-                role.setServiceId(config.getString("cloudAuth.clientId"));
+            validateRole(role);
+
+            if (StringUtils.isBlank(role.getServiceId())) {
+                String msg = String.format("Setting default service to role %s",role.getName());
+                logger.warn(msg);
+                role.setServiceId(config.getString("cloudAuth.globalRoles.clientId"));
             }
 
-            if (StringUtils.isBlank(role.getName())) {
-                String errMsg = "Expecting name";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
-            if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                authorizationService.verifyServiceAdminLevelAccess(tokenScopeAccess);
+            if (!authorizationService.authorizeCloudServiceAdmin(tokenScopeAccess)) {
+                if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
+                        || role.getServiceId().equals(config.getString("idm.clientId"))) {
+                    String errMsg = "Cannot add roles to identity/Foundation service accounts";
+                    throw new ForbiddenException(errMsg);
+                }
+                if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                    throw new ForbiddenException("Not Authorized");
+                }
             }
 
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
@@ -313,7 +313,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             Role value = roleConverterCloudV20.toRoleFromClientRole(clientRole);
             return response.entity(openStackIdentityV2Factory.createRole(value).getValue());
 
-
         } catch (DuplicateException bre) {
             return exceptionHandler.conflictExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
@@ -325,6 +324,20 @@ public class DefaultCloud20Service implements Cloud20Service {
         List<String> validWeights = config.getList("cloudAuth.allowedRoleWeights");
         if (!validWeights.contains(Integer.toString(weight))) {
             String errMsg = String.format("Allowed values for Weight field: %s", StringUtils.join(validWeights, " "));
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    private void validateRole(Role role) {
+        if (role == null) {
+            String errMsg = "role cannot be null";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (StringUtils.isBlank(role.getName())) {
+            String errMsg = "Expecting name";
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
     }
@@ -1018,7 +1031,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
             Application client = applicationService.checkAndGetApplication(serviceId);
             this.applicationService.delete(client.getClientId());
             return Response.noContent();

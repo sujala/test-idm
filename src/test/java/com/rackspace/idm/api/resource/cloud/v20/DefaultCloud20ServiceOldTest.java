@@ -363,7 +363,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void setDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
-        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+        assertThat("response builder", responseBuilder, Matchers.notNullValue());
     }
 
     @Test
@@ -389,7 +389,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void listDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
-        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+        assertThat("response builder", responseBuilder, Matchers.notNullValue());
     }
 
     @Test
@@ -1316,7 +1316,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addRole(null, null, authToken, role1);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).authorizeCloudServiceAdmin(scopeAccess);
     }
 
     @Test
@@ -1484,7 +1484,7 @@ public class DefaultCloud20ServiceOldTest {
     public void listUserGroups_withValidUser_returnsNonNullEntity() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getEntity(), Matchers.<Object>notNullValue());
+        assertThat("code", responseBuilder.build().getEntity(), Matchers.notNullValue());
     }
 
     @Test
@@ -1967,7 +1967,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteService(null, authToken, null);
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test

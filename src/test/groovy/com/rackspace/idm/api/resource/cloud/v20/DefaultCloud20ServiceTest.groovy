@@ -376,7 +376,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
-    def "updateCapabilities updates capability" (){
+    def "updateCapabilities updates capability"() {
         given:
         mockCapabilityConverter(service)
         allowUserAccess()
@@ -388,7 +388,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 204
     }
 
-    def "updateCapabilities handles exceptions" (){
+    def "updateCapabilities handles exceptions"() {
         given:
         mockCapabilityConverter(service)
 
@@ -420,7 +420,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
-    def "Capabilities get gets and returns capabilities" () {
+    def "Capabilities get gets and returns capabilities"() {
         given:
         mockCapabilityConverter(service)
         allowUserAccess()
@@ -438,7 +438,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
-    def "capabilities get handles exceptions" () {
+    def "capabilities get handles exceptions"() {
         given:
         mockCapabilityConverter(service)
 
@@ -470,7 +470,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
-    def "deleteCapabilities deletes capability" () {
+    def "deleteCapabilities deletes capability"() {
         given:
         mockCapabilityConverter(service)
         allowUserAccess()
@@ -1326,13 +1326,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
 
         then:
-        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+        1 * authorizationService.authorizeCloudServiceAdmin(_)
     }
 
     def "addRole gets service"() {
         given:
         mockRoleConverter(service)
         allowUserAccess()
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         when:
         service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
@@ -1345,6 +1346,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockRoleConverter(service)
         allowUserAccess()
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
 
         applicationService.checkAndGetApplication(_) >> entityFactory.createApplication()
 
@@ -1360,6 +1362,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "addRole verifies role is not null"() {
         given:
         allowUserAccess()
+        def scopeAccessMock = Mock(ScopeAccess)
+        def role = v2Factory.createRole("role", "service", null)
+        def namelessRole = v2Factory.createRole(null, null, null)
+        def identityRole = v2Factory.createRole("identity:role", null, null)
+        def roleWithService = v2Factory.createRole("role", "serviceId", null)
+        config.getString("cloudAuth.clientId") >> "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        config.getString("idm.clientId") >> "18e7a7032733486cd32f472d7bd58f709ac0d221"
+        config.getString("cloudAuth.globalRoles.clientId") >> "6ae999552a0d2dca14d62e2bc8b764d377b1dd6c"
 
         when:
         def response = service.addRole(headers, uriInfo(), authToken, null).build()
@@ -1684,7 +1694,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 204
     }
 
-    def "getSecretQA returns 200" () {
+    def "getSecretQA returns 200"() {
         given:
         mockSecretQAConverter(service)
         allowUserAccess()
@@ -1703,7 +1713,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
-    def "createSecretQA returns 200" () {
+    def "createSecretQA returns 200"() {
         given:
         mockSecretQAConverter(service)
         allowUserAccess()
@@ -1723,7 +1733,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
 
-    def "Impersonate a disabled user" () {
+    def "Impersonate a disabled user"() {
         given:
         mockAuthConverterCloudV20(service)
 
@@ -1877,7 +1887,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.getUserById("userId")
     }
 
-    def "getUserCredential verifies user is in callers domain when caller is user-admin" () {
+    def "getUserCredential verifies user is in callers domain when caller is user-admin"() {
         given:
         allowUserAccess()
 
@@ -2983,6 +2993,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "validate role for create - throws BadRequestException"(){
+        when:
+        def role = null;
+        if (name != null || serviceId != null){
+            role = v2Factory.createRole(name, serviceId, null)
+        }
+        service.validateRole(role)
+
+        then:
+        thrown(ex)
+
+        where:
+        name    | serviceId | ex
+        null    | null      | BadRequestException
+        null    | "service" | BadRequestException
+    }
+
+    def "validate role for create - if service id is null set it"(){
+        given:
+        def role = v2Factory.createRole("name", null, null)
+        allowUserAccess()
+
+        when:
+        service.addRole(headers,uriInfo(),authToken, role)
+
+        then:
+        1 * config.getString("cloudAuth.globalRoles.clientId") >> "123"
+        role.serviceId == "123"
     }
 
     def mockServices() {

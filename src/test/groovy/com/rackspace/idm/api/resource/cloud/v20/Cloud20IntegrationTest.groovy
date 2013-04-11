@@ -14,6 +14,7 @@ import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.apache.commons.lang.StringUtils
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -456,7 +457,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Group CRUD" () {
+    def "Group CRUD"() {
         when:
         def random = ((String) UUID.randomUUID()).replace("-", "")
         def createGroupResponse = createGroupXML(serviceAdminToken, group("group$random", "this is a group"))
@@ -485,7 +486,7 @@ class Cloud20IntegrationTest extends Specification {
         deleteGroupResponse.status == 204
     }
 
-    def "Group Assignment CRUD for serviceAdmin modifying identityAdmin" () {
+    def "Group Assignment CRUD for serviceAdmin modifying identityAdmin"() {
         when:
         def addUserToGroupResponse = addUserToGroupXML(serviceAdminToken, group.getId(), identityAdmin.getId())
 
@@ -508,7 +509,7 @@ class Cloud20IntegrationTest extends Specification {
         removeUserFromGroupRespone.status == 204
     }
 
-    def "Group Assignment CRUD for identityAdmin modifying userAdmin" () {
+    def "Group Assignment CRUD for identityAdmin modifying userAdmin"() {
         when:
         def addUserToGroupResponse = addUserToGroupXML(identityAdminToken, group.getId(), userAdmin.getId())
 
@@ -1031,7 +1032,7 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "add policy to endpoint without endpoint without policy returns 404" () {
+    def "add policy to endpoint without endpoint without policy returns 404"() {
         when:
         def response = addPolicyToEndpointTemplateXML(identityAdminToken, "111111", "111111")
 
@@ -1039,7 +1040,7 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 404
     }
 
-    def "add policy to endpoint with endpoint without policy returns 404" () {
+    def "add policy to endpoint with endpoint without policy returns 404"() {
         when:
         def response = addPolicyToEndpointTemplateXML(identityAdminToken, endpointTemplateId, "111111")
 
@@ -1086,7 +1087,7 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 404
     }
 
-    def "Create secretQA and get secretQA" () {
+    def "Create secretQA and get secretQA"() {
         when:
         def response = createSecretQAXML(serviceAdminToken,defaultUser.getId(), secretQA("1","answer"))
         def secretQAResponse = getSecretQAXML(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
@@ -1096,7 +1097,7 @@ class Cloud20IntegrationTest extends Specification {
         secretQAResponse.secretqa.get(0).answer == "answer"
     }
 
-    def "Create/Get secretQA returns 403" () {
+    def "Create/Get secretQA returns 403"() {
         expect:
         response.status == 403
 
@@ -1120,7 +1121,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Create/Get secretQA returns 401" () {
+    def "Create/Get secretQA returns 401"() {
         expect:
         response.status == 401
 
@@ -1138,7 +1139,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Create/Get secretQA returns 400" () {
+    def "Create/Get secretQA returns 400"() {
         expect:
         response.status == 400
 
@@ -1150,7 +1151,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Create/Get secretQA returns 404" () {
+    def "Create/Get secretQA returns 404"() {
         expect:
         response.status == 404
 
@@ -1163,7 +1164,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Create/Get secretQA returns 200" () {
+    def "Create/Get secretQA returns 200"() {
         expect:
         response.status == 200
 
@@ -1270,7 +1271,7 @@ class Cloud20IntegrationTest extends Specification {
         return params
     }
 
-    def "updateCredentials with valid passwords should be able to authenticate" () {
+    def "updateCredentials with valid passwords should be able to authenticate"() {
         given:
         String username = "userUpdateCred" + sharedRandom
         def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
@@ -1292,7 +1293,7 @@ class Cloud20IntegrationTest extends Specification {
         authenticate.status == 200
     }
 
-    def "updateCredentials with invalid password should return BadRequestException" () {
+    def "updateCredentials with invalid password should return BadRequestException"() {
         given:
         String username = "userUpdateCred2" + sharedRandom
         def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
@@ -1311,7 +1312,7 @@ class Cloud20IntegrationTest extends Specification {
         updateCreds.status == 400
     }
 
-    def "Disabling a user should return 404 when its token gets validated" () {
+    def "Disabling a user should return 404 when its token gets validated"() {
         given:
         String username = "disabledUser" + sharedRandom
         def userForCreate = createUserXML(identityAdminToken, userForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
@@ -1628,6 +1629,82 @@ class Cloud20IntegrationTest extends Specification {
         attributes.contains("rax-auth:authenticatedby")
     }
 
+    def "Identity-Admin should not be allowd to delete a service"() {
+        given:
+        def serviceName = "someTestApplication" + sharedRandom
+        def serviceType = "identity"
+        def service = createService(serviceName, serviceType)
+
+        when:
+        def createServiceResponse = createServiceXML(serviceAdminToken, service)
+        def serviceEntity = createServiceResponse.getEntity(Service)
+        def deleteServiceIdentityAdminTokenResponse = deleteServiceXML(identityAdminToken, serviceEntity.id)
+        def deleteServiceResponse = deleteServiceXML(serviceAdminToken, serviceEntity.id)
+
+        then:
+        createServiceResponse.status == 201
+        serviceEntity.name == serviceName
+        serviceEntity.type == serviceType
+        deleteServiceIdentityAdminTokenResponse.status == 403
+        deleteServiceResponse.status == 204
+    }
+
+    def "Service admin should be the only one to add Identity roles"() {
+        when:
+        String roleName = "identity:someRole" + sharedRandom
+        def result = createRoleXML((String)token, createRole(roleName, serviceId))
+        if (result.status == 201){
+            deleteRoleXML(serviceAdminToken, result.getEntity(Role).value.id)
+        }
+
+        then:
+        result.status == expectedResult
+
+        where:
+        token                | serviceId                                  | expectedResult
+        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        userAdminToken       | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        defaultUserToken     | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        serviceAdminToken    | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 201
+
+    }
+
+    def "Service admin should be the only one to add roles in CI/Foundation"() {
+        when:
+        String roleName = "someServiceRole" + sharedRandom
+        def result = createRoleXML((String)token, createRole(roleName, serviceId))
+        if (result.status == 201){
+            deleteRoleXML(serviceAdminToken, result.getEntity(Role).value.id)
+        }
+
+        then:
+        result.status == expectedResult
+
+        where:
+        token                | serviceId                                  | expectedResult
+        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        identityAdminToken   | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
+        userAdminToken       | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        userAdminToken       | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
+        defaultUserToken     | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+        defaultUserToken     | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
+        serviceAdminToken    | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 201
+        serviceAdminToken    | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 201
+    }
+
+    def "Creating a role without specifying the serviceId should create it under IdentityGlobalRoles"() {
+        given:
+        String roleName = "identityGlobalRole" + sharedRandom
+
+        when:
+        def identityAdminResponse = createRoleXML(identityAdminToken, createRole(roleName, null))
+        def deleteResponse = deleteRoleXML(serviceAdminToken, identityAdminResponse.getEntity(Role).value.id)
+
+        then:
+        identityAdminResponse.status == 201
+        deleteResponse.status == 204
+    }
+
     def destroyUser(userId) {
         def deleteResponses = deleteUserXML(serviceAdminToken, userId)
         def hardDeleteRespones = hardDeleteUserXML(serviceAdminToken, userId)
@@ -1921,6 +1998,14 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path20).path("users").path(userId).path("RAX-AUTH").path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def createServiceXML(String token, service) {
+        resource.path(path20).path("OS-KSADM").path("services").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(service).post(ClientResponse)
+    }
+
+    def deleteServiceXML(String token, String serviceId) {
+        resource.path(path20).path("OS-KSADM").path("services").path(serviceId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
     //Helper Methods
     def getPasswordCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -2154,6 +2239,22 @@ class Cloud20IntegrationTest extends Specification {
         new SecretQA().with {
             it.id = id
             it.answer = answer
+            return it
+        }
+    }
+
+    def createService(String name, String type) {
+        new Service().with {
+            it.name = name
+            it.type = type
+            return it
+        }
+    }
+
+    def createRole(String name, String serviceId) {
+        new Role().with {
+            it.name = name
+            it.serviceId = serviceId
             return it
         }
     }
