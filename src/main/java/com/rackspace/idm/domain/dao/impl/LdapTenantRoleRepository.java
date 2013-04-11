@@ -188,7 +188,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         }
 
         if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
-            deleteObject(role);
+            deleteObject(existingRole);
         } else if (existingRole.containsTenantId(role.getTenantIds()[0])) {
             if (existingRole.getTenantIds().length == 1) {
                 deleteObject(existingRole);

@@ -1568,6 +1568,27 @@ class Cloud20IntegrationTest extends Specification {
         userAdminResponse2.status == 200
     }
 
+    def "removing a propagating role from a user-admin removes the role from the sub users"() {
+        given:
+        addApplicationRoleToUserXML(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
+
+        when:
+        def defaultUserResponse1 = getUserApplicationRoleXML(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
+        def userAdminResponse1 = getUserApplicationRoleXML(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
+
+        def response = deleteApplicationRoleFromUserXML(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
+
+        def defaultUserResponse2 = getUserApplicationRoleXML(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
+        def userAdminResponse2 = getUserApplicationRoleXML(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
+
+        then:
+        defaultUserResponse1.status == 200
+        userAdminResponse1.status == 200
+        response.status == 204
+        defaultUserResponse2.status == 404
+        userAdminResponse2.status == 404
+    }
+
     def "authenticate returns password authentication type in response"() {
         when:
         def response = authenticatePasswordXML("admin$sharedRandom", "Password1")
