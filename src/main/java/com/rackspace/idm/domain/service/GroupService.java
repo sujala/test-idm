@@ -17,7 +17,7 @@ public interface GroupService {
     List<Group> getGroups(String marker, Integer limit);
     List<Group> getGroupsByMossoId(Integer mossoAccountId);
     List<Group> getGroupListByMossoId(Integer mossoAccountId);
-    Group getGroupById(Integer groupId);
+    Group getGroupById(Integer groupId); 
     Group checkAndGetGroupById(Integer groupId);
     Group getGroupByName(String groupName);
     void addGroup(Group group);
