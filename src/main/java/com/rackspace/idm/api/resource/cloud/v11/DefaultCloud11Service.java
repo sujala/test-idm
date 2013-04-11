@@ -921,10 +921,12 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
+            Boolean isDisabled = gaUser.isDisabled();
+
             gaUser.setEnabled(user.isEnabled());
 
             this.userService.updateUser(gaUser, false);
-            if (gaUser.isDisabled()) {
+            if (gaUser.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
@@ -977,6 +979,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
+            boolean isDisabled = gaUser.isDisabled();
+
             gaUser.setMossoId(user.getMossoId());
             gaUser.setNastId(user.getNastId());
             gaUser.setEnabled(user.isEnabled());
@@ -1006,7 +1010,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            if (gaUser.isDisabled()) {
+            if (gaUser.isDisabled() && !isDisabled ) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 

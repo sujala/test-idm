@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspacecloud.docs.auth.api.v1.User
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -33,18 +35,14 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
     def setupSpec(){
         service = new DefaultCloud11Service()
-        validator = new Validator()
         service.cloudExceptionResponse = new CloudExceptionResponse()
-        service.validator = validator
     }
 
     def cleanupSpec() {
     }
 
     def setup(){
-        ldapPatternRepository = Mock()
         userConverterCloudV11 = Mock()
-        validator.ldapPatternRepository = ldapPatternRepository
         service.userConverterCloudV11 = userConverterCloudV11
 
         mockAuthHeaderHelper(service)
@@ -57,6 +55,8 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockEndpointService(service)
         mockApplicationService(service)
         mockEndpointService(service)
+        mockAtomHopperClient(service)
+        mockValidator(service)
     }
 
     def "Create User with valid username" () {
@@ -168,51 +168,18 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         builder.build().status == 201
     }
 
-    def "Create User with invalid username: empty" () {
+    def "Create User - validates username" () {
         given:
         allowAccess()
         User user = new User();
         user.id = ""
         user.mossoId = 9876543210
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
 
         when:
         Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
 
         then:
-        responseBuilder.build().status == 400
-    }
-
-    def "Create User with invalid username: null" () {
-        given:
-        allowAccess()
-        User user = new User();
-        user.id = null
-        user.mossoId = 9876543210
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
-
-        then:
-        responseBuilder.build().status == 400
-    }
-
-    def "Create User with invalid username: spaces" () {
-        given:
-        allowAccess()
-        User user = new User();
-        user.id = "    "
-        user.mossoId = 9876543210
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-
-        when:
-        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
-
-        then:
+        1 * validator.isUsernameValid(_) >> {throw new BadRequestException()}
         responseBuilder.build().status == 400
     }
 
@@ -417,6 +384,100 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
             assert(tenantRole.getUserId() != null)
         }
 
+    }
+
+    def "Updating enabled user to disabled sends a feed to atomHopper"(){
+        given:
+        allowAccess()
+        mockValidator(service)
+        User user = new User().with {
+            it.id = "jmunoz"
+            it.key = "1234567890"
+            it.enabled = false
+            it.nastId = "nastId"
+            it.mossoId = 10001
+            return it
+        }
+        com.rackspace.idm.domain.entity.User updateUser = createUser("jmunoz","jorge",10001, "nastId")
+        updateUser.enabled = true
+
+        userService.getUser(_) >> updateUser
+
+        when:
+        service.updateUser(request, "jmunoz", null, user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+
+    }
+
+    def "Updating disabled user to disabled does not send a feed to atomHopper"(){
+        given:
+        allowAccess()
+        mockValidator(service)
+        User user = new User().with {
+            it.id = "jmunoz"
+            it.key = "1234567890"
+            it.enabled = false
+            it.nastId = "nastId"
+            it.mossoId = 10001
+            return it
+        }
+
+        com.rackspace.idm.domain.entity.User updateUser = createUser("jmunoz","jorge",10001, "nastId")
+        updateUser.enabled = false
+
+        userService.getUser(_) >> updateUser
+
+        when:
+        service.updateUser(request, "jmunoz", null, user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
+
+    }
+
+    def "Set enabled user to disabled sends a feed to atomHopper"(){
+        given:
+        allowAccess()
+        mockValidator(service)
+        UserWithOnlyEnabled user = new UserWithOnlyEnabled().with {
+            it.id = "jmunoz"
+            it.enabled = false
+            return it
+        }
+        com.rackspace.idm.domain.entity.User updateUser = createUser("jmunoz","jorge",10001, "nastId")
+        updateUser.enabled = true
+
+        userService.getUser(_) >> updateUser
+
+        when:
+        service.setUserEnabled(request, "jmunoz",  user, null)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+
+    }
+
+    def "Set disabled user to disabled does not send a feed to atomHopper"(){
+        given:
+        allowAccess()
+        mockValidator(service)
+        UserWithOnlyEnabled user = new UserWithOnlyEnabled().with {
+            it.id = "jmunoz"
+            it.enabled = false
+            return it
+        }
+        com.rackspace.idm.domain.entity.User updateUser = createUser("jmunoz","jorge",10001, "nastId")
+        updateUser.enabled = false
+
+        userService.getUser(_) >> updateUser
+
+        when:
+        service.setUserEnabled(request, "jmunoz",  user, null)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

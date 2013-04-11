@@ -586,6 +586,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
             User retrievedUser = userService.checkAndGetUserById(userId);
+            boolean isDisabled = retrievedUser.isDisabled();
             if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
@@ -616,7 +617,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User userDO = this.userConverterCloudV20.toUserDO(user);
-            if (userDO.isDisabled()) {
+            if (userDO.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             }
             Boolean updateRegion = true;

@@ -53,7 +53,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
@@ -73,7 +73,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
-        config.getString(_) >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "DFW" >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
 
         when:
@@ -93,7 +93,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
@@ -112,7 +112,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.MIGRATED)
@@ -130,7 +130,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "GLOBAL" >>"GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         client.postToken(user, "someToken", "revokedToken")
@@ -168,7 +168,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        config.getString(_) >> "GLOBAL"  >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         client.createEntryForRevokeToken(user, "token")

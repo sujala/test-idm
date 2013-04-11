@@ -852,6 +852,7 @@ public class DefaultCloud20ServiceOldTest {
         userForCreate.setId("notSameId");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
 
         assertThat("response builder", spy.updateUser(httpHeaders, authToken, "123", userForCreate), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -869,6 +870,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         assertThat("response code", spy.updateUser(httpHeaders, authToken, userId, userForCreate), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }

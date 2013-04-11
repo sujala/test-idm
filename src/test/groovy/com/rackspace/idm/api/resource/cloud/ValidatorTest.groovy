@@ -216,6 +216,19 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "Validate username: spaces username"(){
+        given:
+        setupMock()
+        Pattern patterns = pattern("username", "^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
+        ldapPatternRepository.getPattern(_) >> patterns
+
+        when:
+        validator.isUsernameValid("           ")
+
+        then:
+        thrown(BadRequestException)
+    }
+
 
     def setupMock(){
         ldapPatternRepository = Mock();

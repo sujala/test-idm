@@ -148,7 +148,10 @@ public class AtomHopperClient {
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
             }
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                String errorMsg = reader.readLine();
                 logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
+                logger.warn(errorMsg);
             }
 
         } catch (Exception e) {
@@ -162,7 +165,10 @@ public class AtomHopperClient {
             Writer writer = marshalEntry(entry);
             HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_REVOKED_URL));
             if(response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                String errorMsg = reader.readLine();
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
+                logger.warn(errorMsg);
             }
         } catch (Exception e){
             logger.warn("AtomHopperClient Exception: " + e);
@@ -220,12 +226,7 @@ public class AtomHopperClient {
         v1Element.setType(eventType);
         v1Element.setResourceId(user.getId());
         v1Element.setResourceName(user.getUsername());
-        for(Region region : Region.values()){
-            if(region.value().equals(user.getRegion())){
-                v1Element.setRegion(Region.fromValue(user.getRegion()));
-            }
-        }
-
+        v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
@@ -271,12 +272,7 @@ public class AtomHopperClient {
         logger.warn("Encrypting token ...");
         v1Element.setResourceId(encrypt(token));
         logger.warn("Token encrypted");
-        for(Region region : Region.values()){
-            if(region.value().equals(user.getRegion())){
-                v1Element.setRegion(Region.fromValue(user.getRegion()));
-            }
-        }
-
+        v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);

@@ -1902,7 +1902,9 @@ public class DefaultCloud11ServiceTestOld {
     @Test
     public void setUserEnabled_withValidDisabledUser_notifiesAtomFeed() throws Exception {
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
+        enabledUser.setEnabled(false);
         doNothing().when(spy).authenticateCloudAdminUser(request);
+        userDO.setEnabled(true);
         when(userService.getUser("userId")).thenReturn(userDO);
         when(enabledUser.isEnabled()).thenReturn(false);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(any(HttpServletRequest.class));
@@ -2092,18 +2094,6 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(currentEndpoints);
         spy.updateUser(request, "userId", null, user);
         verify(userService).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void updateUser_userIsDisabled_callsAtomHopperClient_postUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        user.setEnabled(false);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(request);
-        spy.updateUser(request, "userId", null, user);
-        verify(atomHopperClient).asyncPost(any(com.rackspace.idm.domain.entity.User.class), eq("disabled"));
     }
 
     @Test

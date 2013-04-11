@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
@@ -2932,6 +2933,56 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 200
         UserList users = result.entity
         users.user.size() == 1
+    }
+
+    def "Disabling a enabled user sends an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Disabling a disabled user does not send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
     }
 
     def mockServices() {
