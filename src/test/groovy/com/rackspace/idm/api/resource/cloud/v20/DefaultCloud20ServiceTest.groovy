@@ -3026,10 +3026,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         role.serviceId == "123"
     }
 
-    def "Add Group to user"(){
+    def "Add Group to user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1,"nameone","desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3039,15 +3039,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        1 * groupService.addGroupToUser(_,_)
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * groupService.addGroupToUser(_, _)
+        1 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
 
-    def "Add Group to user with subUsers sends an atom feed for each user"(){
+    def "Add Group to user with subUsers sends an atom feed for each user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1,"nameone","desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3057,65 +3057,65 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        2 * groupService.addGroupToUser(_,_)
-        2 * atomHopperClient.asyncPost(_,_)
+        2 * groupService.addGroupToUser(_, _)
+        2 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
 
-    def "Add an existing Group to user"(){
+    def "Add an existing Group to user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1,"nameone","desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
-        groupService.isUserInGroup(_,_) >> true
+        groupService.isUserInGroup(_, _) >> true
         userService.getSubUsers(_) >> [].asList()
 
         when:
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        0 * groupService.addGroupToUser(_,_)
-        0 * atomHopperClient.asyncPost(_,_)
+        0 * groupService.addGroupToUser(_, _)
+        0 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
 
     def "Delete Group from user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1,"nameone","desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.getSubUsers(_) >> [].asList()
-        groupService.isUserInGroup(_,_) >> true
+        groupService.isUserInGroup(_, _) >> true
 
         when:
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", "2")
 
         then:
-        1 * groupService.deleteGroupFromUser(_,_)
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * groupService.deleteGroupFromUser(_, _)
+        1 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
 
     def "Delete Group from user with subUsers sends an atom feed for each user"(){
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1,"nameone","desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.getSubUsers(_) >> [entityFactory.createUser()].asList()
-        groupService.isUserInGroup(_,_) >> true
+        groupService.isUserInGroup(_, _) >> true
 
         when:
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", "2")
 
         then:
-        2 * groupService.deleteGroupFromUser(_,_)
-        2 * atomHopperClient.asyncPost(_,_)
+        2 * groupService.deleteGroupFromUser(_, _)
+        2 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
 

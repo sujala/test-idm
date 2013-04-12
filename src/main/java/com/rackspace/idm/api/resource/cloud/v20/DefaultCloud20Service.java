@@ -2727,7 +2727,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
             boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
-            if(!groupService.isUserInGroup(userId, group.getGroupId())){
+            if (!groupService.isUserInGroup(userId, group.getGroupId())) {
                 if (isDefaultUser) {
                     throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
                 } else if (isUserAdmin) {
@@ -2738,9 +2738,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                     }
                 }
-
                 groupService.addGroupToUser(Integer.parseInt(groupId), userId);
-
                 atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             }
             return Response.noContent();
