@@ -146,8 +146,12 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.CREATE, true);
                 writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
+            } else if (userStatus.equals(AtomHopperConstants.GROUP)) {
+                entry = createEntryForUser(user, EventType.UPDATE, false);
+                writer = marshalEntry(entry);
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_GROUPS_URL));
             }
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+            if (response != null && response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
                 String errorMsg = reader.readLine();
                 logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());

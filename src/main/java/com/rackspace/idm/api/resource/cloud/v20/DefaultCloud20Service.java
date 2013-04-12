@@ -2727,17 +2727,22 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
             boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
-            if (isDefaultUser) {
-                throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
-            } else if (isUserAdmin) {
-                List<User> subUsers = userService.getSubUsers(user);
+            if(!groupService.isUserInGroup(userId, group.getGroupId())){
+                if (isDefaultUser) {
+                    throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
+                } else if (isUserAdmin) {
+                    List<User> subUsers = userService.getSubUsers(user);
 
-                for (User subUser : subUsers) {
-                    groupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+                    for (User subUser : subUsers) {
+                        groupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
+                    }
                 }
-            }
 
-            groupService.addGroupToUser(Integer.parseInt(groupId), userId);
+                groupService.addGroupToUser(Integer.parseInt(groupId), userId);
+
+                atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
+            }
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
@@ -2773,9 +2778,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 for (User subUser : subUsers) {
                     groupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                 }
             }
             groupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
+            atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
