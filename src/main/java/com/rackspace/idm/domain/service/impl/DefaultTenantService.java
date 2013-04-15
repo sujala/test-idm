@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ClientConflictException;
@@ -51,6 +53,9 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
+
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -270,12 +275,12 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        tenantRoleDao.addTenantRoleToUser(user, role);
         if (isUserAdmin(user) && cRole.getPropagate()) {
             for (User subUser : userService.getSubUsers(user)) {
                 try {
                     role.setLdapEntry(null);
                     tenantRoleDao.addTenantRoleToUser(subUser, role);
+                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                 } catch (ClientConflictException ex) {
                     String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
                     logger.warn(msg);
@@ -283,6 +288,8 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
+        tenantRoleDao.addTenantRoleToUser(user, role);
+        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
 
@@ -712,5 +719,9 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
         this.tenantRoleDao = tenantRoleDao;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
     }
 }

@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -20,6 +22,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockUserService(service)
         mockEndpointService(service)
         mockScopeAccessService(service)
+        mockAtomHopperClient(service)
     }
 
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
@@ -320,6 +323,115 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenantRoleDao.addTenantRoleToUser(user, tenantRole)
     }
 
+    def "addTenantRole sends atom feed for user"() {
+        given:
+        force_user_admin()
+        def user = entityFactory.createUser()
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = false
+            return it
+        }
+
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+
+
+        when:
+        service.addTenantRoleToUser(user, role)
+
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(user, role)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+    }
+
+    def "addTenantRole to user admin with sub users sends atom feed for all users"() {
+        given:
+        force_user_admin()
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser("subuser", "subuserid", "domainid", "region")
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        userService.getSubUsers(_) >> [ subUser ].asList()
+
+        when:
+        service.addTenantRoleToUser(user, role)
+
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(user, role)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+        1 * tenantRoleDao.addTenantRoleToUser(subUser, role)
+        1 * atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE)
+    }
+
+    def "addTenantRole does not send atom feed if user already has role"() {
+        force_user_admin()
+        def user = entityFactory.createUser()
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        tenantRoleDao.addTenantRoleToUser(user, role) >> {throw new ClientConflictException()}
+        userService.getSubUsers(user) >> [].asList()
+
+        when:
+        try {
+            service.addTenantRoleToUser(user, role)
+        } catch (ClientConflictException ex) {
+            //we forced this exception
+        }
+
+        then:
+        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+    }
+
+    def "addTenantRole to useradmin with role and subusers sends feed to only to subusers without role"() {
+        given:
+        force_user_admin()
+        def user = entityFactory.createUser()
+        def subUserWithRole = entityFactory.createUser("subUser1", "subUser1", null, null)
+        def subUserWithOutRole = entityFactory.createUser("subUser2", "subUser2", null, null)
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        tenantRoleDao.addTenantRoleToUser(user, role) >> {throw new ClientConflictException()}
+        tenantRoleDao.addTenantRoleToUser(subUserWithRole, role) >> {throw new ClientConflictException()}
+        userService.getSubUsers(user) >> [subUserWithRole, subUserWithOutRole].asList()
+
+        when:
+        try {
+            service.addTenantRoleToUser(user, role)
+        } catch (ClientConflictException ex) {
+            //we forced this exception
+        }
+
+        then:
+        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+        0 * atomHopperClient.asyncPost(subUserWithRole, AtomHopperConstants.ROLE)
+        1 * atomHopperClient.asyncPost(subUserWithOutRole, AtomHopperConstants.ROLE)
+    }
+
+    def force_user_admin() {
+        tenantRoleDao.getTenantRolesForUser(_) >> [ entityFactory.createTenantRole("admin_role") ].asList()
+        config.getString("cloudAuth.userAdminRole") >> "admin_role"
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole("admin_role")
+    }
+
     def "isDefaultuser verifies if user has defaultUser role"() {
         when:
         def user = entityFactory.createUser()
@@ -428,9 +540,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addTenantRoleToUser(user, tenantRole)
 
         then:
-        1 * tenantRoleDao.addTenantRoleToUser(user, tenantRole)
-        then:
         1 * tenantRoleDao.addTenantRoleToUser(subUser, tenantRole)
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(user, tenantRole)
     }
 
     def "Add userId To TenantRole if it does not have it set"() {
