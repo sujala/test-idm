@@ -279,21 +279,6 @@ public class DefaultTenantServiceTestOld {
 
     }
 
-    @Test
-    public void addTenantRoleToUser_scopeAccessNotNull_doesNotCallScopeAccessServiceMethodAdd() throws Exception {
-        User user = new User();
-        user.setUniqueId("123");
-        TenantRole role = new TenantRole();
-        when(applicationService.getById(null)).thenReturn(new Application());
-        when(applicationService.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(new ClientRole());
-        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
-        when(scopeAccessService.addDirectScopeAccess(eq("123"),any(UserScopeAccess.class))).thenReturn(new ScopeAccess());
-        doNothing().when(spy).addTenantRoleToUser(null, role);
-        spy.addTenantRoleToUser(user, role);
-        verify(scopeAccessService,never()).addDirectScopeAccess(anyString(),any(ScopeAccess.class));
-
-    }
-
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToClient_clientIsNullAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.addTenantRoleToClient(null,null);
