@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
@@ -207,10 +208,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
         then:
-        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
-        then:
         1 * userService.getSubUsers(user) >> [ subUser ].asList()
         1 * tenantRoleDao.deleteTenantRoleForUser(subUser, role)
+        then:
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
     }
 
     def "deleteTenantRole uses DAO to delete role"() {
@@ -427,9 +428,117 @@ class DefaultTenantServiceTest extends RootServiceTest {
     }
 
     def force_user_admin() {
+        force_user_admin(entityFactory.createClientRole())
+    }
+
+    def force_user_admin(ClientRole role) {
         tenantRoleDao.getTenantRolesForUser(_) >> [ entityFactory.createTenantRole("admin_role") ].asList()
         config.getString("cloudAuth.userAdminRole") >> "admin_role"
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole("admin_role")
+        role.name = "admin_role"
+        applicationService.getClientRoleById(_) >> role
+    }
+
+    def "deleteTenantRole sends atom feed for user"() {
+        given:
+        def user = entityFactory.createUser()
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = false
+            return it
+        }
+
+        force_user_admin(cRole)
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+
+
+        when:
+        service.deleteTenantRoleForUser(user, role)
+
+        then:
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+    }
+
+    def "deleteTenantRole to user admin with sub users sends atom feed for all users"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUser = entityFactory.createUser("subuser", "subuserid", "domainid", "region")
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        force_user_admin(cRole)
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        userService.getSubUsers(_) >> [ subUser ].asList()
+
+        when:
+        service.deleteTenantRoleForUser(user, role)
+
+        then:
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+        1 * tenantRoleDao.deleteTenantRoleForUser(subUser, role)
+        1 * atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE)
+    }
+
+    def "deleteTenantRole does not send atom feed if user already has role"() {
+        def user = entityFactory.createUser()
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        force_user_admin(cRole)
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        tenantRoleDao.deleteTenantRoleForUser(user, role) >> {throw new NotFoundException()}
+        userService.getSubUsers(user) >> [].asList()
+
+        when:
+        try {
+            service.deleteTenantRoleForUser(user, role)
+        } catch (NotFoundException ex) {
+            //we forced this exception
+        }
+
+        then:
+        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+    }
+
+    def "deleteTenantRole to useradmin with role and subusers sends feed to only to subusers without role"() {
+        given:
+        def user = entityFactory.createUser()
+        def subUserWithRole = entityFactory.createUser("subUser1", "subUser1", null, null)
+        def subUserWithOutRole = entityFactory.createUser("subUser2", "subUser2", null, null)
+        def role = entityFactory.createTenantRole()
+        def cRole = entityFactory.createClientRole().with {
+            it.propagate = true
+            return it
+        }
+
+        force_user_admin(cRole)
+        applicationService.getById(_) >> entityFactory.createApplication()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        tenantRoleDao.deleteTenantRoleForUser(user, role) >> {throw new NotFoundException()}
+        tenantRoleDao.deleteTenantRoleForUser(subUserWithOutRole, role) >> {throw new NotFoundException()}
+        userService.getSubUsers(user) >> [subUserWithRole, subUserWithOutRole].asList()
+
+        when:
+        try {
+            service.deleteTenantRoleForUser(user, role)
+        } catch (NotFoundException ex) {
+            //we forced this exception
+        }
+
+        then:
+        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
+        1 * atomHopperClient.asyncPost(subUserWithRole, AtomHopperConstants.ROLE)
+        0 * atomHopperClient.asyncPost(subUserWithOutRole, AtomHopperConstants.ROLE)
     }
 
     def "isDefaultuser verifies if user has defaultUser role"() {

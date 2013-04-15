@@ -383,12 +383,21 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        tenantRoleDao.deleteTenantRoleForUser(user, role);
         if (isUserAdmin(user) && cRole.getPropagate()) {
             for (User subUser : userService.getSubUsers(user)) {
-                tenantRoleDao.deleteTenantRoleForUser(subUser, role);
+                try {
+                    role.setLdapEntry(null);
+                    tenantRoleDao.deleteTenantRoleForUser(subUser, role);
+                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                } catch (NotFoundException ex) {
+                    String msg = String.format("User %s does not have tenantRole %s", user.getId(), role.getName());
+                    logger.warn(msg);
+                }
             }
         }
+
+        tenantRoleDao.deleteTenantRoleForUser(user, role);
+        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
     }
 
     @Override
