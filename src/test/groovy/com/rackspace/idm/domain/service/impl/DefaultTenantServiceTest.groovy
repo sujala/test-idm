@@ -208,10 +208,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
         then:
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+        then:
         1 * userService.getSubUsers(user) >> [ subUser ].asList()
         1 * tenantRoleDao.deleteTenantRoleForUser(subUser, role)
-        then:
-        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
     }
 
     def "deleteTenantRole uses DAO to delete role"() {
@@ -396,37 +396,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
     }
 
-    def "addTenantRole to useradmin with role and subusers sends feed to only to subusers without role"() {
-        given:
-        force_user_admin()
-        def user = entityFactory.createUser()
-        def subUserWithRole = entityFactory.createUser("subUser1", "subUser1", null, null)
-        def subUserWithOutRole = entityFactory.createUser("subUser2", "subUser2", null, null)
-        def role = entityFactory.createTenantRole()
-        def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
-            return it
-        }
-
-        applicationService.getById(_) >> entityFactory.createApplication()
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
-        tenantRoleDao.addTenantRoleToUser(user, role) >> {throw new ClientConflictException()}
-        tenantRoleDao.addTenantRoleToUser(subUserWithRole, role) >> {throw new ClientConflictException()}
-        userService.getSubUsers(user) >> [subUserWithRole, subUserWithOutRole].asList()
-
-        when:
-        try {
-            service.addTenantRoleToUser(user, role)
-        } catch (ClientConflictException ex) {
-            //we forced this exception
-        }
-
-        then:
-        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
-        0 * atomHopperClient.asyncPost(subUserWithRole, AtomHopperConstants.ROLE)
-        1 * atomHopperClient.asyncPost(subUserWithOutRole, AtomHopperConstants.ROLE)
-    }
-
     def force_user_admin() {
         force_user_admin(entityFactory.createClientRole())
     }
@@ -508,37 +477,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
-    }
-
-    def "deleteTenantRole to useradmin with role and subusers sends feed to only to subusers without role"() {
-        given:
-        def user = entityFactory.createUser()
-        def subUserWithRole = entityFactory.createUser("subUser1", "subUser1", null, null)
-        def subUserWithOutRole = entityFactory.createUser("subUser2", "subUser2", null, null)
-        def role = entityFactory.createTenantRole()
-        def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
-            return it
-        }
-
-        force_user_admin(cRole)
-        applicationService.getById(_) >> entityFactory.createApplication()
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
-        tenantRoleDao.deleteTenantRoleForUser(user, role) >> {throw new NotFoundException()}
-        tenantRoleDao.deleteTenantRoleForUser(subUserWithOutRole, role) >> {throw new NotFoundException()}
-        userService.getSubUsers(user) >> [subUserWithRole, subUserWithOutRole].asList()
-
-        when:
-        try {
-            service.deleteTenantRoleForUser(user, role)
-        } catch (NotFoundException ex) {
-            //we forced this exception
-        }
-
-        then:
-        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE)
-        1 * atomHopperClient.asyncPost(subUserWithRole, AtomHopperConstants.ROLE)
-        0 * atomHopperClient.asyncPost(subUserWithOutRole, AtomHopperConstants.ROLE)
     }
 
     def "isDefaultuser verifies if user has defaultUser role"() {
@@ -649,9 +587,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addTenantRoleToUser(user, tenantRole)
 
         then:
-        1 * tenantRoleDao.addTenantRoleToUser(subUser, tenantRole)
-        then:
         1 * tenantRoleDao.addTenantRoleToUser(user, tenantRole)
+        then:
+        1 * tenantRoleDao.addTenantRoleToUser(subUser, tenantRole)
     }
 
     def "Add userId To TenantRole if it does not have it set"() {

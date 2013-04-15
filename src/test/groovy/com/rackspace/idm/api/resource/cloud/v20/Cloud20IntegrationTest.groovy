@@ -338,6 +338,41 @@ class Cloud20IntegrationTest extends Specification {
         hardDeleteResponses.status == 204
     }
 
+    def "a user can be retrieved by email"() {
+        when:
+        def createUser = userForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
+        def createdUser = createUserXML(serviceAdminToken, createUser).getEntity(User)
+        destroyUser(createdUser.getId())
+        def response = getUsersByEmailXML(serviceAdminToken, email)
+
+        then:
+        response.status == expected
+
+        where:
+        expected | email
+        200      | "user1$sharedRandom@email.com"
+        200      | "$sharedRandom@random.com"
+    }
+
+    def "a list of users can be retrieved by email"() {
+        when:
+        def user1 = userForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
+        def user2 = userForCreate("user2$sharedRandom", "user2$sharedRandom", email, true, "ORD", null, "Password1")
+        def createdUser1 = createUserXML(serviceAdminToken, user1).getEntity(User)
+        def createUser2 = createUserXML(serviceAdminToken, user2).getEntity(User)
+        destroyUser(createdUser1.getId())
+        destroyUser(createUser2.getId())
+        def response = getUsersByEmailXML(serviceAdminToken, email)
+
+        then:
+        response.status == expected
+
+        where:
+        expected | email
+        200      | "user$sharedRandom@email.com"
+        200      | "$sharedRandom@random.com"
+    }
+
     def "operations on non-existent users return 'not found'"() {
         expect:
         response.status == 404
@@ -968,6 +1003,17 @@ class Cloud20IntegrationTest extends Specification {
                 deleteApplicationRoleFromUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
                 deleteApplicationRoleFromUserXML(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
         ]
+    }
+
+    def "deleting role from user without role returns not found (404)"() {
+        given:
+        deleteApplicationRoleFromUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+
+        when:
+        def response = deleteApplicationRoleFromUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+
+        then:
+        response.status == 404
     }
 
     def "adding to and deleting roles from user on tenant return 403"() {

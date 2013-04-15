@@ -275,6 +275,8 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
+        tenantRoleDao.addTenantRoleToUser(user, role);
+        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
         if (isUserAdmin(user) && cRole.getPropagate()) {
             for (User subUser : userService.getSubUsers(user)) {
                 try {
@@ -288,8 +290,6 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
-        tenantRoleDao.addTenantRoleToUser(user, role);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
 
@@ -383,6 +383,9 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
+        tenantRoleDao.deleteTenantRoleForUser(user, role);
+        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+
         if (isUserAdmin(user) && cRole.getPropagate()) {
             for (User subUser : userService.getSubUsers(user)) {
                 try {
@@ -395,9 +398,6 @@ public class DefaultTenantService implements TenantService {
                 }
             }
         }
-
-        tenantRoleDao.deleteTenantRoleForUser(user, role);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
     }
 
     @Override
