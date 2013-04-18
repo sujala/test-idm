@@ -17,6 +17,7 @@ import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
@@ -162,6 +163,7 @@ class RootServiceTest extends Specification {
     @Shared EndpointService endpointService
     @Shared AuthorizationService authorizationService
     @Shared UserService userService
+    @Shared ExceptionHandler exceptionHandler
     @Shared AuthenticationService authenticationService
     @Shared GroupService groupService
     @Shared CloudRegionService cloudRegionService
@@ -451,6 +453,11 @@ class RootServiceTest extends Specification {
     def mockUserService(service) {
         userService = Mock()
         service.userService = userService
+    }
+
+    def mockExceptionHandler(service){
+        exceptionHandler = Mock()
+        service.exceptionHandler = exceptionHandler
     }
 
     def mockAuthenticationService(service) {

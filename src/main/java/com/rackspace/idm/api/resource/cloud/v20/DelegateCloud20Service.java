@@ -758,7 +758,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserAdminsForUser(String authToken, String userId) {
-        throw new NotImplementedException();
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
     }
 
     @Override
@@ -775,7 +775,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) {
-        throw new NotImplementedException();
+        if (isCloudAuthRoutingEnabled()) {
+            Users users = userService.getUsersByEmail(email);
+            if(users == null || users.getUsers().size() == 0){
+                return exceptionHandler.exceptionResponse(new NotImplementedException());
+            }
+        }
+        return defaultCloud20Service.getUsersByEmail(httpHeaders, authToken, email);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.api.resource.cloud.CloudClient
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
@@ -9,6 +10,7 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -34,6 +36,8 @@ class DelegateCloud20ServiceAuthGroovyTest extends RootServiceTest {
 
     def setup(){
         setupMocks()
+        mockUserService(delegateCloud20Service)
+        mockExceptionHandler(delegateCloud20Service)
         config.getBoolean("useCloudAuth") >> "true"
     }
 
@@ -422,7 +426,7 @@ class DelegateCloud20ServiceAuthGroovyTest extends RootServiceTest {
         thrown(NotAuthorizedException)
     }
 
-    def "Verify that get group gets called when /RAX-GRPADM/grousp gets calls" (){
+    def "Verify that get group gets called when /RAX-GRPADM/groups gets calls" (){
         given:
         config.getBoolean("useCloudAuth") >> true
         config.getBoolean("gaIsSourceOfTruth") >> true
@@ -432,6 +436,37 @@ class DelegateCloud20ServiceAuthGroovyTest extends RootServiceTest {
 
         then:
         1 * defaultCloud20Service.getGroup(_,_,_)
+    }
+
+    def "Verity that get user by email goes to default if user exist is ga"(){
+        given:
+        config.getBoolean("useCloudAuth") >> true
+        config.getBoolean("gaIsSourceOfTruth") >> true
+        Users users = new Users();
+        users.users = [entityFactory.createUser()].asList()
+
+        when:
+        delegateCloud20Service.getUsersByEmail(null, authToken, "email@rackspace.com")
+
+        then:
+        1 * userService.getUsersByEmail(_) >> users
+        1 * defaultCloud20Service.getUsersByEmail(_,_,_)
+
+    }
+
+    def "Verity that get user by email goes to cloud if users do not exist is ga"(){
+        given:
+        config.getBoolean("useCloudAuth") >> true
+        config.getBoolean("gaIsSourceOfTruth") >> true
+        Users users = new Users();
+        users.users = [].asList()
+
+        when:
+        delegateCloud20Service.getUsersByEmail(null, authToken, "email@rackspace.com")
+
+        then:
+        1 * exceptionHandler.exceptionResponse(_)
+
     }
 
     def createScopeAccess(Date expTime) {
