@@ -27,7 +27,6 @@ import javax.xml.bind.JAXBElement
 
 class DefaultCloud20ServiceTest extends RootServiceTest {
 
-    @Shared ExceptionHandler exceptionHandler
     @Shared JAXBObjectFactories objFactories
     @Shared DefaultCloud20Service service
 
