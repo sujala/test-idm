@@ -27,11 +27,7 @@ public class CryptHelper {
     private CipherParameters keyParams;
 
     @Autowired
-    public void setConfiguration(Configuration configuration){
-        CryptHelper.config = configuration;
-    }
-    
-    private static Configuration config;
+    private Configuration config;
 
     @Autowired
     private EncryptionPasswordSource encryptionPasswordSource;
@@ -49,12 +45,12 @@ public class CryptHelper {
         keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
     }
 
-    private CipherParameters getKeyParams() {
+    /*private CipherParameters getKeyParams() {
         if (keyParams == null) {
             keyParams = getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
         }
         return keyParams;
-    }
+    }*/
 
     public CipherParameters getKeyParams(String passwordString, String saltString) {
         CipherParameters result = null;
@@ -70,7 +66,7 @@ public class CryptHelper {
 	}
 
 	public byte[] encrypt(String plainText) throws GeneralSecurityException, InvalidCipherTextException {
-        return encrypt(plainText, getKeyParams());
+        return encrypt(plainText, getKeyParams(encryptionPasswordSource.getPassword(),config.getString("crypto.salt")));
     }
 
     public byte[] encrypt(String plainText, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
@@ -97,7 +93,7 @@ public class CryptHelper {
 	}
 
 	public String decrypt(final byte[] bytes) throws GeneralSecurityException, InvalidCipherTextException {
-        return decrypt(bytes, getKeyParams());
+        return decrypt(bytes, getKeyParams(encryptionPasswordSource.getPassword(), config.getString("crypto.salt")));
     }
 
     public String decrypt(final byte[] bytes, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {

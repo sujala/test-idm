@@ -7,22 +7,11 @@ import spock.lang.Specification
 class CryptHelperTest extends Specification {
     @Shared CryptHelper cryptHelper
     @Shared Configuration config
+    @Shared EncryptionPasswordSource encryptionPasswordSource
+
 
     def setup() {
-        config = Mock()
-        cryptHelper = new CryptHelper();
-        cryptHelper.config = config
-    }
-
-    def "cryptHelper should cache the keyparams"() {
-        when:
-        def result1 = cryptHelper.getKeyParams()
-        def result2 = cryptHelper.getKeyParams()
-
-        then:
-        result1.is(result2)
-        1 * config.getString("crypto.password") >> "password"
-        1 * config.getString("crypto.salt") >> "aa bb"
+       setupMock()
     }
 
     def "crypHelper performance test" (){
@@ -37,4 +26,24 @@ class CryptHelperTest extends Specification {
         endTime - startTime > 1
     }
 
+    def "Encrypt value"() {
+        when:
+        byte[] encryptedValue = cryptHelper.encrypt("hello")
+        String value = cryptHelper.decrypt(encryptedValue)
+
+        then:
+        2 * config.getString("crypto.salt") >> "aa bb"
+        2 * encryptionPasswordSource.getPassword() >> "password"
+        value == "hello"
+    }
+
+    def setupMock(){
+        cryptHelper = new CryptHelper()
+
+        config = Mock()
+        cryptHelper.config = config
+
+        encryptionPasswordSource = Mock()
+        cryptHelper.encryptionPasswordSource = encryptionPasswordSource
+    }
 }
