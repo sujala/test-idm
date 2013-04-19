@@ -33,6 +33,9 @@ public class CryptHelper {
     
     private static Configuration config;
 
+    @Autowired
+    private EncryptionPasswordSource encryptionPasswordSource;
+
 	private static PBEParametersGenerator keyGenerator;
 
     public static final int ITERATION_COUNT = 20;
@@ -40,6 +43,11 @@ public class CryptHelper {
     public static final int KEY_SIZE = 256;
 
     public static final int IV_SIZE = 128;
+
+    public CryptHelper () {
+        Security.addProvider(new BouncyCastleProvider());
+        keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
+    }
 
     private CipherParameters getKeyParams() {
         if (keyParams == null) {
@@ -53,8 +61,6 @@ public class CryptHelper {
 		try {
             char[] password = passwordString.toCharArray();
             byte[] salt = fromHexString(saltString);
-			Security.addProvider(new BouncyCastleProvider());
-			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
 			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
 			result = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
 		} catch (Exception e) {
