@@ -22,12 +22,14 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
 
     private HashMap<Integer, String> map;
     private String filename;
+    private Integer latestVersion;
 
     public DefaultEncryptionPasswordSource() {
         map = new LinkedHashMap<Integer, String>();
     }
 
     public void init() throws IOException {
+        latestVersion = 0;
         map.put(map.size(), this.config.getString("crypto.password"));
         filename = config.getString("crypto.password.file");
 
@@ -38,7 +40,11 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
             String password;
             while((password = br.readLine()) != null){
                 if(password.trim().length() > 0){
-                    map.put(map.size(), password);
+                    String[] parts = password.split("\\|");
+
+                    final Integer version = Integer.parseInt(parts[0]);
+                    map.put(version, parts[1]);
+                    latestVersion = Math.max(latestVersion,version);
                 }
             }
             fileReader.close();
@@ -47,7 +53,7 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
 
     @Override
     public String getPassword() {
-        return map.get(map.size()-1);
+        return map.get(latestVersion);
     }
 
     @Override
@@ -57,7 +63,9 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
 
     @Override
     public void setPassword(String password) throws IOException {
-        map.put(map.size(),password);
+        map.put(latestVersion+1,password);
+
+        latestVersion++;
 
         FileWriter fileWriter = new FileWriter(new File(filename));
         fileWriter.append(password);

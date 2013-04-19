@@ -28,7 +28,7 @@ class DefaultEncryptionPasswordSourceTest extends Specification{
 
     def setup(){
         def writer = new FileWriter(new File(filename))
-        writer.write("newPassword")
+        writer.write("1|newPassword")
         writer.flush()
     }
 

@@ -37,5 +37,4 @@ class CryptHelperTest extends Specification {
         endTime - startTime > 1
     }
 
-    def ""
 }
