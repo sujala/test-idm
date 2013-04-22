@@ -681,6 +681,19 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.92) = {
     description = "is multi-factor authentication enabled?"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.93) = {
+    name = value
+    ldap-names = value
+    equality = caseIgnoreMatch
+    syntax = directoryString
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.94) = {
+    name = encryptedValue
+    ldap-names = encryptedValue
+    syntax = octetString
+};
+
 schema set attribute (1.3.6.1.4.1.20988.2.1.95) = {
     name = rsPropagate
     ldap-names = rsPropagate
@@ -1168,4 +1181,16 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.32) = {
         errMsg
     may-contain
         description
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.33) = {
+    name = rsProperty
+    ldap-names = rsProperty
+    subclass-of top
+    kind = structural
+    must-contain
+        cn
+    may-contain
+        encryptedValue,
+        value
 };
