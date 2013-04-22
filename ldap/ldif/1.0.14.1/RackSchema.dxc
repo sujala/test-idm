@@ -696,6 +696,22 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.96) = {
     description = "type of the object"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.97) = {
+    name = encryptionVersionId
+    ldap-names = encryptionVersionId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "version id of encryption"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.98) = {
+    name = encryptionSalt
+    ldap-names = encryptionSalt
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "salt for encryption"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -739,7 +755,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         migrationDate,
         useMultiFactorAuthentication,
         telephoneNumber,
-        mail
+        mail,
+        encryptionVersionId,
+        encryptionSalt
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
