@@ -52,6 +52,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_QUESTION = "rsQuestion";
     public static final String OBJECTCLASS_REGION = "rsCloudRegion";
     public static final String OBJECTCLASS_PATTERN = "rsPattern";
+    public static final String OBJECTCLASS_PROPERTY = "rsProperty";
 
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
@@ -170,6 +171,8 @@ public abstract class LdapRepository {
     public static final String ATTR_QUESTION = "question";
     public static final String ATTR_CAPABILITY_ID = "capabilityId";
     public static final String ATTR_RS_WEIGHT = "rsWeight";
+    public static final String ATTR_VALUE = "value";
+
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
@@ -199,6 +202,7 @@ public abstract class LdapRepository {
     protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";

@@ -65,6 +65,8 @@ public class User implements Auditable {
 
     private String secretQuestionId;
 
+    private String encryptionVersion;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -406,6 +408,14 @@ public class User implements Auditable {
 
     public boolean isDisabled() {
     	return this.enabled == null ? true : !this.enabled;
+    }
+
+    public void setEncryptionVersion(String encryptionVersion) {
+        this.encryptionVersion = encryptionVersion;
+    }
+
+    public String getEncryptionVersion() {
+        return encryptionVersion;
     }
 
     public void setDefaults() {

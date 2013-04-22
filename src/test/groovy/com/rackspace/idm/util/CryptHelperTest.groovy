@@ -26,14 +26,14 @@ class CryptHelperTest extends Specification {
         endTime - startTime > 1
     }
 
-    def "Encrypt value"() {
+    def "Encypt value with password version uses the version" () {
         when:
-        byte[] encryptedValue = cryptHelper.encrypt("hello")
-        String value = cryptHelper.decrypt(encryptedValue)
+        byte[] encryptedValue = cryptHelper.encrypt("hello", "0")
+        String value = cryptHelper.decrypt(encryptedValue, "0")
 
         then:
         2 * config.getString("crypto.salt") >> "aa bb"
-        2 * encryptionPasswordSource.getPassword() >> "password"
+        2 * encryptionPasswordSource.getPassword("0") >> "password"
         value == "hello"
     }
 

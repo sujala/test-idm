@@ -14,6 +14,7 @@ import java.security.InvalidParameterException;
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -22,13 +23,18 @@ public class CryptHelperTestsOld {
     Configuration configuration;
     CryptHelper cryptHelper;
     CryptHelper spy;
+    DefaultEncryptionPasswordSource encryptionPasswordSource;
 
     @Before
     public void setUp() throws Exception {
         configuration = mock(Configuration.class);
+        encryptionPasswordSource = mock(DefaultEncryptionPasswordSource.class);
         cryptHelper = new CryptHelper();
         cryptHelper.setConfiguration(configuration);
+        cryptHelper.setEncryptionPasswordSource(encryptionPasswordSource);
         spy = spy(cryptHelper);
+
+        when(encryptionPasswordSource.getPassword(anyString())).thenReturn("password");
     }
 
 	@Test
@@ -36,10 +42,10 @@ public class CryptHelperTestsOld {
 		String secret = "This is a secret";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		byte[] ciphertext = cryptHelper.encrypt(secret);
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = cryptHelper.decrypt(ciphertext);
+		String decrypt = cryptHelper.decrypt(ciphertext, "0");
 		Assert.assertEquals(secret, decrypt);
 	}
 	
@@ -48,11 +54,10 @@ public class CryptHelperTestsOld {
 		String secret = "";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		CryptHelper crypto = new CryptHelper();
-		byte[] ciphertext = crypto.encrypt(secret);
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = crypto.decrypt(ciphertext);
+		String decrypt = cryptHelper.decrypt(ciphertext, "0");
 		Assert.assertEquals(secret, decrypt);
 	}
 	
@@ -61,21 +66,19 @@ public class CryptHelperTestsOld {
 		String secret = RandomStringUtils.random(1024);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		CryptHelper crypto = new CryptHelper();
-		byte[] ciphertext = crypto.encrypt(secret);
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = crypto.decrypt(ciphertext);
+		String decrypt = cryptHelper.decrypt(ciphertext, "0");
 		Assert.assertEquals(secret, decrypt);
 	}
 
     @Test
     public void encrypt_nullPlainText_throwsInvalidParameterException() throws Exception {
         try{
-            CryptHelper cryptHelper = new CryptHelper();
             when(configuration.getString("crypto.password")).thenReturn("password");
             when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-            cryptHelper.encrypt(null);
+            cryptHelper.encrypt(null, "0");
             assertTrue("should throw exception",false);
         }catch (InvalidParameterException ex){
             assertThat("message",ex.getMessage(),equalTo("Null argument is not valid"));
@@ -87,7 +90,7 @@ public class CryptHelperTestsOld {
         String secret = "This is a secret";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("in va lid");
-        byte[] ciphertext = cryptHelper.encrypt(secret);
+        byte[] ciphertext = cryptHelper.encrypt(secret, "0");
         assertTrue("should throw exception",false);
     }
 

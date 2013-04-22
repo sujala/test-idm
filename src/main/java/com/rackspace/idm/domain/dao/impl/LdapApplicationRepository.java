@@ -7,9 +7,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -379,7 +377,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret())));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret(), "0")));
         }
 
         if (client.isEnabled() != null) {
@@ -417,7 +415,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
 
         try {
-            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), "0");
             ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
             client.setClientSecretObj(secret);
         } catch (GeneralSecurityException e) {
@@ -584,7 +582,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         //TODO null pointer?
         if (cNew.getClientSecretObj() != null && cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue(), "0")));
         }
     }
 

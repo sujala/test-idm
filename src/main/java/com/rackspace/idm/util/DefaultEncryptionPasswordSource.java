@@ -1,6 +1,9 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.domain.dao.impl.LdapPropertyRepository;
+import com.rackspace.idm.domain.entity.Property;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,55 +23,45 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
     @Autowired
     private Configuration config;
 
-    private HashMap<Integer, String> map;
-    private String filename;
-    private Integer latestVersion;
+    @Autowired
+    private LdapPropertyRepository propertyRepository;
+
+    private static String encryptionVersion = "encryptionVersionId";
+
+    private HashMap<String, String> map;
+    private String currentVersion;
 
     public DefaultEncryptionPasswordSource() {
-        map = new LinkedHashMap<Integer, String>();
+        map = new LinkedHashMap<String, String>();
     }
 
     public void init() throws IOException {
-        latestVersion = 0;
-        map.put(map.size(), this.config.getString("crypto.password"));
-        filename = config.getString("crypto.password.file");
+        Property property = propertyRepository.getProperty(encryptionVersion);
+        currentVersion = property.getValue();
 
-        File file = new File(filename);
-        if(file.exists()){
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
-            String password;
-            while((password = br.readLine()) != null){
-                if(password.trim().length() > 0){
-                    String[] parts = password.split("\\|");
+        readPasswords();
+    }
 
-                    final Integer version = Integer.parseInt(parts[0]);
-                    map.put(version, parts[1]);
-                    latestVersion = Math.max(latestVersion,version);
-                }
-            }
-            fileReader.close();
+    private void readPasswords() throws IOException {
+        String[] stringArray = config.getStringArray("crypto.password");
+        for (String item: stringArray) {
+            String[] keyValue = item.split("\\|");
+            map.put(keyValue[0], keyValue[1]);
         }
     }
 
     @Override
     public String getPassword() {
-        return map.get(latestVersion);
+        return getPassword(currentVersion);
     }
 
     @Override
-    public String getPassword(Integer version) {
-        return map.get(version);
-    }
-
-    @Override
-    public void setPassword(String password) throws IOException {
-        map.put(latestVersion+1,password);
-
-        latestVersion++;
-
-        FileWriter fileWriter = new FileWriter(new File(filename));
-        fileWriter.append(password);
-        fileWriter.close();
+    public String getPassword(String version) {
+        String password = map.get(version);
+        if(StringUtils.isBlank(password)){
+            String errMsg = String.format("%s is not a valid password version", version);
+            throw new IllegalStateException(errMsg);
+        }
+        return password;
     }
 }

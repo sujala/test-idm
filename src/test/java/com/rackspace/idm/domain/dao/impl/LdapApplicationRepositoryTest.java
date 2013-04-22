@@ -2,10 +2,8 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
+import com.rackspace.idm.util.DefaultEncryptionPasswordSource;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import org.apache.commons.configuration.Configuration;
@@ -41,8 +39,6 @@ public class LdapApplicationRepositoryTest{
     @Mock
     private LdapConnectionPools ldapConnectionPools;
     @Mock
-    private Configuration configuration;
-
     private CryptHelper cryptHelper;
 
     private LdapApplicationRepository spy;
@@ -52,12 +48,11 @@ public class LdapApplicationRepositoryTest{
     public void setUp() throws Exception {
         ldapInterface = mock(LDAPInterface.class);
 
-        cryptHelper = new CryptHelper();
-        cryptHelper.setConfiguration(configuration);
         ldapApplicationRepository.setCryptHelper(cryptHelper);
         spy = spy(ldapApplicationRepository);
-        when(configuration.getString("crypto.password")).thenReturn("password");
-        when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
+
+        when(cryptHelper.encrypt(anyString(),anyString())).thenReturn(new byte[0]);
+        when(cryptHelper.decrypt(any(byte[].class),anyString())).thenReturn("someString");
 
         doReturn(ldapInterface).when(spy).getAppInterface();
     }
@@ -367,7 +362,7 @@ public class LdapApplicationRepositoryTest{
         assertThat("name", result[3].getValue(), equalTo("name"));
         assertThat("rcn", result[4].getValue(), equalTo("rcn"));
         assertThat("client secret", result[5].getValue(), equalTo("secret"));
-        assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray()), equalTo("secret"));
+        assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray(), "0"), equalTo("someString"));
         assertThat("enabled", result[7].getValue(), equalTo("TRUE"));
         assertThat("title", result[8].getValue(), equalTo("title"));
         assertThat("description", result[9].getValue(), equalTo("description"));
@@ -406,7 +401,7 @@ public class LdapApplicationRepositoryTest{
         assertThat("open stack type", result.getOpenStackType(), equalTo("openStack"));
         assertThat("name", result.getName(), equalTo("name"));
         assertThat("rcn", result.getRCN(), equalTo("rcn"));
-        assertThat("client secret", result.getClientSecret(), equalTo("secret"));
+        assertThat("client secret", result.getClientSecret(), equalTo("someString"));
         assertThat("enabled", result.isEnabled(), equalTo(true));
         assertThat("title",result.getTitle(), equalTo("title"));
         assertThat("description", result.getDescription(), equalTo("description"));

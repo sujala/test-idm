@@ -11,6 +11,5 @@ import java.io.IOException;
  */
 public interface EncryptionPasswordSource {
     String getPassword();
-    String getPassword(Integer version);
-    void setPassword(String password) throws IOException;
+    String getPassword(String version);
 }
