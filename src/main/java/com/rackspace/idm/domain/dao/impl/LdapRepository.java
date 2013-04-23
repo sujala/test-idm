@@ -172,6 +172,8 @@ public abstract class LdapRepository {
     public static final String ATTR_CAPABILITY_ID = "capabilityId";
     public static final String ATTR_RS_WEIGHT = "rsWeight";
     public static final String ATTR_VALUE = "value";
+    public static final String ATTR_ENCRYPTION_SALT = "encryptionSalt";
+    public static final String ATTR_ENCRYPTION_VERSION_ID = "encryptionVersionId";
 
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";

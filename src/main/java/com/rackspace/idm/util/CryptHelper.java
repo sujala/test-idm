@@ -65,8 +65,8 @@ public class CryptHelper {
         return result;
 	}
 
-	public byte[] encrypt(String plainText, String version) throws GeneralSecurityException, InvalidCipherTextException {
-        return encrypt(plainText, getKeyParams(encryptionPasswordSource.getPassword(version), config.getString("crypto.salt")));
+	public byte[] encrypt(String plainText, String versionId, String salt) throws GeneralSecurityException, InvalidCipherTextException {
+        return encrypt(plainText, getKeyParams(encryptionPasswordSource.getPassword(versionId), salt));
     }
 
     public byte[] encrypt(String plainText, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
@@ -92,8 +92,8 @@ public class CryptHelper {
 		return results;
 	}
 
-	public String decrypt(final byte[] bytes, String version) throws GeneralSecurityException, InvalidCipherTextException {
-        return decrypt(bytes, getKeyParams(encryptionPasswordSource.getPassword(version), config.getString("crypto.salt")));
+	public String decrypt(final byte[] bytes, String versionId, String salt) throws GeneralSecurityException, InvalidCipherTextException {
+        return decrypt(bytes, getKeyParams(encryptionPasswordSource.getPassword(versionId), salt));
     }
 
     public String decrypt(final byte[] bytes, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {

@@ -56,7 +56,8 @@ public interface UserDao {
      */
     void updateUser(User user, boolean hasSelfUpdatedPassword);
     void updateUserById(User user, boolean hasSelfUpdatedPassword);
-    
+    void updateUserEncryption(String userId, String versionId);
+
     String getNextUserId();
 
     void softDeleteUser(User user);

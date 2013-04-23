@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
 import com.rackspace.docs.core.event.EventType
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -10,16 +8,13 @@ import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.configuration.Configuration
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ObjectFactory
-import org.openstack.docs.identity.api.v2.Token
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
 import org.apache.http.client.HttpClient;
 
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 /**
  * Created with IntelliJ IDEA.
@@ -174,7 +169,7 @@ class AtomHopperClientGroovyTest extends Specification {
         client.createEntryForRevokeToken(user, "token")
 
         then:
-        1 * cryptHelper.encrypt(_,_)
+        1 * cryptHelper.encrypt(_, _)
     }
 
     def createTenantRole(String name, String roleRsId, String description) {

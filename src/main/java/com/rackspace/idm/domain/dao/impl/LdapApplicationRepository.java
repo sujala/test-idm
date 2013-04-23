@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.service.PropertiesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Autowired
     CryptHelper cryptHelper;
+
+    @Autowired
+    PropertiesService propertiesService;
 
     @Override
     public void addClient(Application client) {
@@ -354,8 +358,35 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clients;
     }
 
+    private String getEncryptionVersionId(Application application) {
+        if (application.getEncryptionVersion() == null) {
+            return propertiesService.getValue("encryptionVersionId");
+        } else {
+            return application.getEncryptionVersion();
+        }
+    }
+
+    private String getSalt(Application application) {
+        if (application.getSalt() == null) {
+            return config.getString("crypto.salt");
+        } else {
+            return application.getSalt();
+        }
+    }
+
     Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
         List<Attribute> atts = new ArrayList<Attribute>();
+
+        String versionId = getEncryptionVersionId(client);
+        String salt = getSalt(client);
+
+        if (!StringUtils.isBlank(client.getEncryptionVersion())) {
+            atts.add(new Attribute(ATTR_ENCRYPTION_VERSION_ID, client.getEncryptionVersion()));
+        }
+
+        if (!StringUtils.isBlank(client.getSalt())) {
+            atts.add(new Attribute(ATTR_ENCRYPTION_SALT, client.getSalt()));
+        }
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_OBJECT_CLASS_VALUES));
 
@@ -377,7 +408,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret(), "0")));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret(), versionId, salt)));
         }
 
         if (client.isEnabled() != null) {
@@ -414,8 +445,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         client.setUniqueId(resultEntry.getDN());
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
 
+        client.setEncryptionVersion(resultEntry.getAttributeValue(ATTR_ENCRYPTION_VERSION_ID));
+        client.setSalt(resultEntry.getAttributeValue(ATTR_ENCRYPTION_SALT));
+
+        String versionId = getEncryptionVersionId(client);
+        String salt = getSalt(client);
+
         try {
-            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), "0");
+            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), versionId, salt);
             ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
             client.setClientSecretObj(secret);
         } catch (GeneralSecurityException e) {
@@ -580,9 +617,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         //TODO null pointer?
+
+        String versionId = getEncryptionVersionId(cNew);
+        String salt = getSalt(cNew);
+
         if (cNew.getClientSecretObj() != null && cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue(), "0")));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue(), versionId, salt)));
         }
     }
 

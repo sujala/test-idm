@@ -2,11 +2,13 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.domain.dao.impl.LdapPropertyRepository;
 import com.rackspace.idm.domain.entity.Property;
+import com.rackspace.idm.domain.service.impl.DefaultPropertiesService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,7 +26,7 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
     private Configuration config;
 
     @Autowired
-    private LdapPropertyRepository propertyRepository;
+    private DefaultPropertiesService propertiesService;
 
     private static String encryptionVersion = "encryptionVersionId";
 
@@ -35,10 +37,9 @@ public class DefaultEncryptionPasswordSource implements EncryptionPasswordSource
         map = new LinkedHashMap<String, String>();
     }
 
+    @PostConstruct
     public void init() throws IOException {
-        Property property = propertyRepository.getProperty(encryptionVersion);
-        currentVersion = property.getValue();
-
+        currentVersion = propertiesService.getValue(encryptionVersion);
         readPasswords();
     }
 

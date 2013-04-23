@@ -27,13 +27,17 @@ class CryptHelperTest extends Specification {
     }
 
     def "Encypt value with password version uses the version" () {
+        given:
+        def version = "0"
+        def salt = "aa bb"
+
         when:
-        byte[] encryptedValue = cryptHelper.encrypt("hello", "0")
-        String value = cryptHelper.decrypt(encryptedValue, "0")
+        byte[] encryptedValue = cryptHelper.encrypt("hello", version, salt)
+        String value = cryptHelper.decrypt(encryptedValue, version, salt)
 
         then:
-        2 * config.getString("crypto.salt") >> "aa bb"
-        2 * encryptionPasswordSource.getPassword("0") >> "password"
+        0 * config.getString("crypto.salt") >> salt
+        2 * encryptionPasswordSource.getPassword(version) >> "password"
         value == "hello"
     }
 

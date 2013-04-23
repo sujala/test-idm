@@ -33,6 +33,10 @@ public class Application implements Auditable {
 
     private Boolean useForDefaultRegion = null;
 
+    private String encryptionVersion;
+
+    private String salt;
+
     private List<TenantRole> roles = null;
     public Application() {
     }
@@ -168,6 +172,14 @@ public class Application implements Auditable {
 
         if (modifiedClient.getTitle() != null) {
             setTitle(modifiedClient.getTitle());
+        }
+
+        if (modifiedClient.getSalt() != null) {
+            setSalt(modifiedClient.getSalt());
+        }
+
+        if (modifiedClient.getEncryptionVersion() != null) {
+            setEncryptionVersion(modifiedClient.getEncryptionVersion());
         }
     }
 
@@ -328,5 +340,21 @@ public class Application implements Auditable {
 
     public void setUseForDefaultRegion(Boolean useForDefaultRegion) {
         this.useForDefaultRegion = useForDefaultRegion;
+    }
+
+    public String getEncryptionVersion() {
+        return encryptionVersion;
+    }
+
+    public void setEncryptionVersion(String encryptionVersion) {
+        this.encryptionVersion = encryptionVersion;
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
     }
 }

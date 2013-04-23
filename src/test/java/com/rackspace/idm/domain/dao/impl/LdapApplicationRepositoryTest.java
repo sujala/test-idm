@@ -2,8 +2,8 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.PropertiesService;
 import com.rackspace.idm.util.CryptHelper;
-import com.rackspace.idm.util.DefaultEncryptionPasswordSource;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import org.apache.commons.configuration.Configuration;
@@ -41,6 +41,12 @@ public class LdapApplicationRepositoryTest{
     @Mock
     private CryptHelper cryptHelper;
 
+    @Mock
+    private PropertiesService propertiesService;
+
+    @Mock
+    protected Configuration config;
+
     private LdapApplicationRepository spy;
     private LDAPInterface ldapInterface;
 
@@ -51,8 +57,10 @@ public class LdapApplicationRepositoryTest{
         ldapApplicationRepository.setCryptHelper(cryptHelper);
         spy = spy(ldapApplicationRepository);
 
-        when(cryptHelper.encrypt(anyString(),anyString())).thenReturn(new byte[0]);
-        when(cryptHelper.decrypt(any(byte[].class),anyString())).thenReturn("someString");
+        when(cryptHelper.encrypt(anyString(), anyString(), anyString())).thenReturn(new byte[0]);
+        when(cryptHelper.decrypt(any(byte[].class), anyString(), anyString())).thenReturn("someString");
+        when(propertiesService.getValue(anyString())).thenReturn("0");
+        when(config.getString(anyString())).thenReturn("a1 b1");
 
         doReturn(ldapInterface).when(spy).getAppInterface();
     }
@@ -362,7 +370,7 @@ public class LdapApplicationRepositoryTest{
         assertThat("name", result[3].getValue(), equalTo("name"));
         assertThat("rcn", result[4].getValue(), equalTo("rcn"));
         assertThat("client secret", result[5].getValue(), equalTo("secret"));
-        assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray(), "0"), equalTo("someString"));
+        assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
         assertThat("enabled", result[7].getValue(), equalTo("TRUE"));
         assertThat("title", result[8].getValue(), equalTo("title"));
         assertThat("description", result[9].getValue(), equalTo("description"));

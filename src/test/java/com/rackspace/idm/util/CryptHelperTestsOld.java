@@ -42,10 +42,10 @@ public class CryptHelperTestsOld {
 		String secret = "This is a secret";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0", "a1 b1");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = cryptHelper.decrypt(ciphertext, "0");
+		String decrypt = cryptHelper.decrypt(ciphertext, "0", "a1 b1");
 		Assert.assertEquals(secret, decrypt);
 	}
 	
@@ -54,10 +54,10 @@ public class CryptHelperTestsOld {
 		String secret = "";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0", "a1 b1");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = cryptHelper.decrypt(ciphertext, "0");
+		String decrypt = cryptHelper.decrypt(ciphertext, "0", "a1 b1");
 		Assert.assertEquals(secret, decrypt);
 	}
 	
@@ -66,10 +66,10 @@ public class CryptHelperTestsOld {
 		String secret = RandomStringUtils.random(1024);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-		byte[] ciphertext = cryptHelper.encrypt(secret, "0");
+		byte[] ciphertext = cryptHelper.encrypt(secret, "0", "a1 b1");
 		Assert.assertFalse(ciphertext.length == 0);
 		Assert.assertFalse(ciphertext.equals(secret.getBytes()));
-		String decrypt = cryptHelper.decrypt(ciphertext, "0");
+		String decrypt = cryptHelper.decrypt(ciphertext, "0", "a1 b1");
 		Assert.assertEquals(secret, decrypt);
 	}
 
@@ -78,7 +78,7 @@ public class CryptHelperTestsOld {
         try{
             when(configuration.getString("crypto.password")).thenReturn("password");
             when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-            cryptHelper.encrypt(null, "0");
+            cryptHelper.encrypt(null, "0", "a1 b1");
             assertTrue("should throw exception",false);
         }catch (InvalidParameterException ex){
             assertThat("message",ex.getMessage(),equalTo("Null argument is not valid"));
@@ -90,7 +90,7 @@ public class CryptHelperTestsOld {
         String secret = "This is a secret";
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("in va lid");
-        byte[] ciphertext = cryptHelper.encrypt(secret, "0");
+        byte[] ciphertext = cryptHelper.encrypt(secret, "0", "in va lid");
         assertTrue("should throw exception",false);
     }
 

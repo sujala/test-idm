@@ -7,6 +7,8 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -20,7 +22,7 @@ public class Property implements UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_PROPERTY, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String name;
     @LDAPField(attribute = LdapRepository.ATTR_VALUE, objectClass = LdapRepository.OBJECTCLASS_PROPERTY, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
-    private String value;
+    private List<String> value;
 
     @Override
     public String getUniqueId() {

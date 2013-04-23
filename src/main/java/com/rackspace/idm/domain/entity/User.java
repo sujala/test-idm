@@ -67,6 +67,8 @@ public class User implements Auditable {
 
     private String encryptionVersion;
 
+    private String salt;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -550,6 +552,14 @@ public class User implements Auditable {
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
     }
 
     public static class Builder {

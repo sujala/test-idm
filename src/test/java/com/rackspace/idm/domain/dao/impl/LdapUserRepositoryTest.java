@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.service.PropertiesService;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -55,6 +56,9 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     @Mock
     CryptHelper cryptHelper;
 
+    @Mock
+    private PropertiesService propertiesService;
+
     LdapUserRepository spy;
     LDAPInterface ldapInterface;
 
@@ -67,8 +71,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         spy = spy(ldapUserRepository);
         when(configuration.getString("crypto.password")).thenReturn("password");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
-        when(cryptHelper.encrypt(anyString(),anyString())).thenReturn(new byte[0]);
-        when(cryptHelper.decrypt(any(byte[].class),anyString())).thenReturn("someString");
+        when(cryptHelper.encrypt(anyString(), anyString(), anyString())).thenReturn(new byte[0]);
+        when(cryptHelper.decrypt(any(byte[].class), anyString(), anyString())).thenReturn("someString");
+        when(propertiesService.getValue(anyString())).thenReturn("0");
+        when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
         doReturn(ldapInterface).when(spy).getAppInterface();
 
     }
@@ -1097,17 +1103,17 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] result = ldapUserRepository.getAddAttributes(user);
         assertThat("id", result[1].getValue(), equalTo("123"));
         assertThat("country", result[2].getValue(), equalTo("us"));
-        assertThat("display name", cryptHelper.decrypt(result[3].getValueByteArray(), "0"), equalTo("someString"));
-        assertThat("first name", cryptHelper.decrypt(result[4].getValueByteArray(), "0"), equalTo("someString"));
-        assertThat("email", cryptHelper.decrypt(result[5].getValueByteArray(), "0"), equalTo("someString"));
+        assertThat("display name", cryptHelper.decrypt(result[3].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
+        assertThat("first name", cryptHelper.decrypt(result[4].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
+        assertThat("email", cryptHelper.decrypt(result[5].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
         assertThat("middle name", result[6].getValue(), equalTo("jon"));
         assertThat("locale", result[7].getValue(), equalTo("en"));
         assertThat("customer id", result[8].getValue(), equalTo("456"));
         assertThat("person id", result[9].getValue(), equalTo("789"));
-        assertThat("api key", cryptHelper.decrypt(result[10].getValueByteArray(), "0"), equalTo("someString"));
-        assertThat("secret answer", cryptHelper.decrypt(result[11].getValueByteArray(), "0"), equalTo("someString"));
-        assertThat("secret question", cryptHelper.decrypt(result[12].getValueByteArray(), "0"), equalTo("someString"));
-        assertThat("last name", cryptHelper.decrypt(result[13].getValueByteArray(), "0"), equalTo("someString"));
+        assertThat("api key", cryptHelper.decrypt(result[10].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
+        assertThat("secret answer", cryptHelper.decrypt(result[11].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
+        assertThat("secret question", cryptHelper.decrypt(result[12].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
+        assertThat("last name", cryptHelper.decrypt(result[13].getValueByteArray(), "0", "a1 b1"), equalTo("someString"));
         assertThat("time zone", result[14].getValue(), equalTo("UTC"));
         assertThat("username", result[15].getValue(), equalTo("jsmith"));
         assertThat("password", result[16].getValue(), equalTo("secret"));
