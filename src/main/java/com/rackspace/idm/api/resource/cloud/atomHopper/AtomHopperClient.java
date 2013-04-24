@@ -166,7 +166,7 @@ public class AtomHopperClient {
                 }
 
                 HttpEntity enty = response.getEntity();
-                entityConsume(enty);
+                atomHopperHelper.entityConsume(enty);
             }else{
                 logger.warn("AtomHopperClient: Response was null");
             }
@@ -327,12 +327,6 @@ public class AtomHopperClient {
                     config.getString("atom.hopper.crypto.password"),
                     config.getString("atom.hopper.crypto.salt")
             );
-    }
-
-    private void entityConsume(HttpEntity entity) throws IOException {
-        if(entity != null){
-            EntityUtils.consume(entity);
-        }
     }
 
     public void setConfig(Configuration config) {

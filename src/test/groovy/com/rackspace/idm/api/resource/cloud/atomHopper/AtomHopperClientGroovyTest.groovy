@@ -12,6 +12,7 @@ import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
 import org.apache.http.util.EntityUtils
+import org.mockito.Spy
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
@@ -198,7 +199,7 @@ class AtomHopperClientGroovyTest extends Specification {
         then:
         1 * httpClient.execute(_) >> response
         1 * response.entity >> enty
-        1 * client.entityConsume(_)
+        1 * atomHopperHelper.entityConsume(_)
     }
 
     def createTenantRole(String name, String roleRsId, String description) {
