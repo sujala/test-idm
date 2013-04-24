@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
 import com.rackspace.docs.core.event.EventType
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -10,16 +8,16 @@ import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.configuration.Configuration
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.StatusLine
+import org.apache.http.util.EntityUtils
 import org.openstack.docs.identity.api.v2.ObjectFactory
-import org.openstack.docs.identity.api.v2.Token
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
-import org.apache.http.client.HttpClient;
-
+import org.apache.http.client.HttpClient
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 /**
  * Created with IntelliJ IDEA.
@@ -175,6 +173,32 @@ class AtomHopperClientGroovyTest extends Specification {
 
         then:
         1 * cryptHelper.encrypt(_,_)
+    }
+
+    def "create atom entry - make sure entry is consume" () {
+        given:
+        setupMock()
+        HttpResponse response = Mock()
+        StatusLine sl = Mock()
+        response.statusLine >> sl
+        sl.statusCode >> 201
+        HttpEntity enty = Mock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+
+        when:
+        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
+
+        then:
+        1 * httpClient.execute(_) >> response
+        1 * response.entity >> enty
+        1 * client.entityConsume(_)
     }
 
     def createTenantRole(String name, String roleRsId, String description) {

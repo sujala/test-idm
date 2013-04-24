@@ -22,6 +22,7 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
@@ -155,11 +156,19 @@ public class AtomHopperClient {
                 writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_ROLES_URL));
             }
-            if (response != null && response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                String errorMsg = reader.readLine();
-                logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
-                logger.warn(errorMsg);
+
+            if(response != null){
+                if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                    String errorMsg = reader.readLine();
+                    logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
+                    logger.warn(errorMsg);
+                }
+
+                HttpEntity enty = response.getEntity();
+                entityConsume(enty);
+            }else{
+                logger.warn("AtomHopperClient: Response was null");
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
@@ -187,7 +196,6 @@ public class AtomHopperClient {
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
-
         return httpClient.execute(httpPost);
     }
 
@@ -319,6 +327,12 @@ public class AtomHopperClient {
                     config.getString("atom.hopper.crypto.password"),
                     config.getString("atom.hopper.crypto.salt")
             );
+    }
+
+    private void entityConsume(HttpEntity entity) throws IOException {
+        if(entity != null){
+            EntityUtils.consume(entity);
+        }
     }
 
     public void setConfig(Configuration config) {

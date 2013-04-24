@@ -287,11 +287,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (!authorizationService.authorizeCloudServiceAdmin(tokenScopeAccess)) {
-                if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
+                /*if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
                         || role.getServiceId().equals(config.getString("idm.clientId"))) {
                     String errMsg = "Cannot add roles to identity/Foundation service accounts";
                     throw new ForbiddenException(errMsg);
-                }
+                }*/
                 if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
                     throw new ForbiddenException("Not Authorized");
                 }
