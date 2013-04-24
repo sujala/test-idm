@@ -41,6 +41,15 @@ class CryptHelperTest extends Specification {
         value == "hello"
     }
 
+    def "generate a random salt"() {
+        when:
+        def salt1 = cryptHelper.generateSalt()
+        def salt2 = cryptHelper.generateSalt()
+
+        then:
+        salt1 != salt2
+    }
+
     def setupMock(){
         cryptHelper = new CryptHelper()
 

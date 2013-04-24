@@ -90,7 +90,7 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
 
         when:
         ldapUserRepository.addUser(user);
-        ldapUserRepository.updateUserEncryption(rsId, "0");
+        ldapUserRepository.updateUserEncryption(rsId);
         User retrievedUser = ldapUserRepository.getUserById(rsId)
 
         then:

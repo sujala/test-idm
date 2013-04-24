@@ -2,6 +2,7 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -17,9 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidParameterException;
+import java.security.SecureRandom;
 import java.security.Security;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CryptHelper {
@@ -39,6 +44,8 @@ public class CryptHelper {
     public static final int KEY_SIZE = 256;
 
     public static final int IV_SIZE = 128;
+
+    private SecureRandom secureRandom = new SecureRandom();
 
     public CryptHelper () {
         Security.addProvider(new BouncyCastleProvider());
@@ -67,6 +74,19 @@ public class CryptHelper {
 
 	public byte[] encrypt(String plainText, String versionId, String salt) throws GeneralSecurityException, InvalidCipherTextException {
         return encrypt(plainText, getKeyParams(encryptionPasswordSource.getPassword(versionId), salt));
+    }
+
+    public String generateSalt() {
+        String random = new BigInteger(130, secureRandom).toString(16);
+        List<String> splitString = new ArrayList<String>();
+
+        while(random.length() > 2) {
+            String head = random.substring(0, 2);
+            String tail = random.substring(2);
+            splitString.add(head);
+            random = tail;
+        }
+        return StringUtils.join(splitString, " ");
     }
 
     public byte[] encrypt(String plainText, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {

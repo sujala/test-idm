@@ -35,6 +35,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
     public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
+    public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
 
     @Autowired
     Paginator<User> paginator;
@@ -516,24 +517,31 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public void updateUserEncryption(String userId, String versionId) {
+    public void updateUserEncryption(String userId) {
         User user = getUserById(userId);
 
-        String encryptionVersionId = getEncryptionVersionId(user);
-        String userSalt = getSalt(user);
+        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
+        String userSalt = cryptHelper.generateSalt();
+
+        getLogger().info("Updating user encryption to {}", user.getUsername());
+
+        user.setEncryptionVersion(encryptionVersionId);
+        user.setSalt(userSalt);
 
         try {
-            List<Modification> modifications = getEncryptedModifications(user, encryptionVersionId, userSalt);
+            List<Modification> modifications = getEncryptedModifications(user);
             getAppInterface().modify(user.getUniqueId(), modifications);
         } catch (GeneralSecurityException e) {
         } catch (InvalidCipherTextException e) {
         } catch (LDAPException e) {
         }
+
+        getLogger().info("Updated user encryption to {}", user.getUsername());
     }
 
     private String getEncryptionVersionId(User user) {
         if (user.getEncryptionVersion() == null) {
-            return propertiesService.getValue("encryptionVersionId");
+            return propertiesService.getValue(ENCRYPTION_VERSION_ID);
         } else {
             return user.getEncryptionVersion();
         }
@@ -547,9 +555,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    List<Modification> getEncryptedModifications(User user, String encryptionVersionId, String userSalt)
+    List<Modification> getEncryptedModifications(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
         List<Modification> mods = new ArrayList<Modification>();
+
+        String encryptionVersionId = user.getEncryptionVersion();
+        String userSalt = user.getSalt();
+
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId));
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_SALT, userSalt));
 
         if (!StringUtils.isBlank(user.getDisplayName())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, userSalt)));
@@ -561,7 +575,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (!StringUtils.isBlank(user.getEmail())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, cryptHelper.encrypt(user.getEmail(), encryptionVersionId, userSalt)));
-
         }
 
         if (!StringUtils.isBlank(user.getApiKey())) {
