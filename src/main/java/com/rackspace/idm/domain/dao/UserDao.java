@@ -48,6 +48,8 @@ public interface UserDao {
 
     Users getUsers(List<Filter> filters);
 
+    PaginatorContext<User> getUsersToReEncrypt(int offset, int limit);
+
     boolean isUsernameUnique(String username);
 
     /**

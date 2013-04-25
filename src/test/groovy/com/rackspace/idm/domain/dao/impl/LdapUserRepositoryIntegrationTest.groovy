@@ -16,7 +16,7 @@ import spock.lang.Specification
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapUserRepositoryGroovyIntegrationTest extends Specification{
+class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
     LdapUserRepository ldapUserRepository;
 
@@ -103,6 +103,37 @@ class LdapUserRepositoryGroovyIntegrationTest extends Specification{
         retrievedUser.secretQuestionId == user.secretQuestionId
         retrievedUser.lastname == user.lastname
         retrievedUser.passwordObj.value == user.passwordObj.value
+    }
+
+    def "updateUserEncryption with no salt or encryptionversion updates user encryption"() {
+        given:
+        def rsId = random
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+
+        when:
+        ldapUserRepository.addUser(user);
+        ldapUserRepository.updateUserEncryption(rsId);
+        User retrievedUser = ldapUserRepository.getUserById(rsId)
+
+        then:
+        retrievedUser.displayName == user.displayName
+        retrievedUser.firstname == user.firstname
+        retrievedUser.email == user.email
+        retrievedUser.apiKey == user.apiKey
+        retrievedUser.secretAnswer == user.secretAnswer
+        retrievedUser.secretQuestion == user.secretQuestion
+        retrievedUser.secretQuestionId == user.secretQuestionId
+        retrievedUser.lastname == user.lastname
+        retrievedUser.passwordObj.value == user.passwordObj.value
+    }
+
+    def "calling getUsersToReEncrypt gets the users that need to be re-encrypted"() {
+        when:
+        def users = ldapUserRepository.getUsersToReEncrypt(0, 50)
+
+        then:
+        users != null
+        users.valueList.size() == 50
     }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {

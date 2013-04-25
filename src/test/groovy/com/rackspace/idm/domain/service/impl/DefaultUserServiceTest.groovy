@@ -640,6 +640,28 @@ class DefaultUserServiceTest extends RootServiceTest {
         notThrown(NotFoundException)
     }
 
+    def "reEncryptUsers re-encrypts users"() {
+        given:
+        def userId = "userId"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it
+        }
+        PaginatorContext<User> context1 = new PaginatorContext<>();
+        context1.totalRecords = 1;
+        context1.valueList = [user].asList()
+        PaginatorContext<User> context2 = new PaginatorContext<>();
+        context2.totalRecords = 1;
+        context2.valueList = [].asList()
+
+        when:
+        service.reEncryptUsers()
+
+        then:
+        2 * userDao.getUsersToReEncrypt(_, _) >>> [context1, context2]
+        1 * userDao.updateUserEncryption(userId)
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

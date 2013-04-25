@@ -126,4 +126,6 @@ public interface UserService {
     User checkAndGetUserByName(String username);
 
     void setTenantDao(TenantDao tenantDao);
+
+    void reEncryptUsers();
 }

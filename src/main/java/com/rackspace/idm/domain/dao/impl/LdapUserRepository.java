@@ -322,7 +322,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -407,11 +407,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .addOrAttributes(filters)
                 .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
         getLogger().debug(FOUND_USERS, users);
 
         return users;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersToReEncrypt(int offset, int limit) {
+        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
+        Filter filter = Filter.createANDFilter(
+                Filter.createORFilter(
+                        Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENCRYPTION_VERSION_ID)),
+                        Filter.createNOTFilter(Filter.createEqualityFilter(ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId))
+                ),
+                Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        );
+
+        return getMultipleUsersPaged(filter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
     }
 
     @Override
@@ -541,7 +555,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private String getEncryptionVersionId(User user) {
         if (user.getEncryptionVersion() == null) {
-            return propertiesService.getValue(ENCRYPTION_VERSION_ID);
+            return "0";
         } else {
             return user.getEncryptionVersion();
         }
@@ -929,16 +943,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         paginator.createPage(searchResult, paginatorContext);
         List<User> userList = new ArrayList<User>();
-        try {
-            for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
+        for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
+            try {
                 userList.add(getUser(entry));
+            } catch (InvalidCipherTextException e) {
+                getLogger().error(e.getMessage());
+            } catch (GeneralSecurityException e) {
+                getLogger().error(e.getMessage());
+            } catch (Exception e) {
+                getLogger().error(e.getMessage());
             }
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
         }
 
         paginatorContext.setValueList(userList);

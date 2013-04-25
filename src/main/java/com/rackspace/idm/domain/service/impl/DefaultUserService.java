@@ -974,4 +974,21 @@ public class DefaultUserService implements UserService {
     public void setTenantDao(TenantDao tenantDao){
         this.tenantDao = tenantDao;
     }
+
+    @Override
+    public void reEncryptUsers() {
+        int offset = 0;
+        int limit = 50;
+
+        PaginatorContext<User> context = userDao.getUsersToReEncrypt(offset, limit);
+
+        while(offset < context.getTotalRecords()) {
+            for (User user : context.getValueList()) {
+                userDao.updateUserEncryption(user.getId());
+            }
+
+            offset += limit;
+            context = userDao.getUsersToReEncrypt(offset, limit);
+        }
+    }
 }
