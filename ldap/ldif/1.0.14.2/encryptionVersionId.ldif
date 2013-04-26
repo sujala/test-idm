@@ -1,0 +1,14 @@
+version: 1
+
+dn: ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: properties
+
+dn: cn=encryptionVersionId,ou=properties,ou=configuration,ou=cloud,o=rackspa
+ ce,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsProperty
+cn: encryptionVersionId
+value: 0
+

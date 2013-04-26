@@ -7,21 +7,56 @@ import spock.lang.Specification
 class CryptHelperTest extends Specification {
     @Shared CryptHelper cryptHelper
     @Shared Configuration config
+    @Shared EncryptionPasswordSource encryptionPasswordSource
+
 
     def setup() {
-        config = Mock()
-        cryptHelper = new CryptHelper();
-        cryptHelper.config = config
+       setupMock()
     }
 
-    def "cryptHelper should cache the keyparams"() {
+    def "crypHelper performance test" (){
         when:
-        def result1 = cryptHelper.getKeyParams()
-        def result2 = cryptHelper.getKeyParams()
+        def startTime = System.nanoTime()
+        for(int i = 0; i < 1000; i++){
+            cryptHelper.getKeyParams("password","aa bb")
+        }
+        def endTime = System.nanoTime()
 
         then:
-        result1.is(result2)
-        1 * config.getString("crypto.password") >> "password"
-        1 * config.getString("crypto.salt") >> "aa bb"
+        endTime - startTime > 1
+    }
+
+    def "Encypt value with password version uses the version" () {
+        given:
+        def version = "0"
+        def salt = "aa bb"
+
+        when:
+        byte[] encryptedValue = cryptHelper.encrypt("hello", version, salt)
+        String value = cryptHelper.decrypt(encryptedValue, version, salt)
+
+        then:
+        0 * config.getString("crypto.salt") >> salt
+        2 * encryptionPasswordSource.getPassword(version) >> "password"
+        value == "hello"
+    }
+
+    def "generate a random salt"() {
+        when:
+        def salt1 = cryptHelper.generateSalt()
+        def salt2 = cryptHelper.generateSalt()
+
+        then:
+        salt1 != salt2
+    }
+
+    def setupMock(){
+        cryptHelper = new CryptHelper()
+
+        config = Mock()
+        cryptHelper.config = config
+
+        encryptionPasswordSource = Mock()
+        cryptHelper.encryptionPasswordSource = encryptionPasswordSource
     }
 }

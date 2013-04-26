@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,6 +46,12 @@ public class AtomHopperHelper {
             access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId, null);
         }
         return access.getAccessTokenString();
+    }
+
+    public void entityConsume(HttpEntity entity) throws IOException {
+        if(entity != null){
+            EntityUtils.consume(entity);
+        }
     }
 
     public void setConfig(Configuration config) {

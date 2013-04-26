@@ -65,6 +65,10 @@ public class User implements Auditable {
 
     private String secretQuestionId;
 
+    private String encryptionVersion;
+
+    private String salt;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -408,6 +412,14 @@ public class User implements Auditable {
     	return this.enabled == null ? true : !this.enabled;
     }
 
+    public void setEncryptionVersion(String encryptionVersion) {
+        this.encryptionVersion = encryptionVersion;
+    }
+
+    public String getEncryptionVersion() {
+        return encryptionVersion;
+    }
+
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -540,6 +552,14 @@ public class User implements Auditable {
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
     }
 
     public static class Builder {

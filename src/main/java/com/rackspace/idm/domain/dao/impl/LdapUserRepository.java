@@ -6,6 +6,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.service.PropertiesService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
@@ -35,12 +36,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final String NULL_OR_EMPTY_EMAIL_PARAMETER = "Null or Empty email parameter";
     public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
+    public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
 
     @Autowired
     Paginator<User> paginator;
 
     @Autowired
     CryptHelper cryptHelper;
+
+    @Autowired
+    PropertiesService propertiesService;
 
     @Override
     public void addRacker(Racker racker) {
@@ -434,6 +439,20 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public PaginatorContext<User> getUsersToReEncrypt(int offset, int limit) {
+        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
+        Filter filter = Filter.createANDFilter(
+                Filter.createORFilter(
+                        Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENCRYPTION_VERSION_ID)),
+                        Filter.createNOTFilter(Filter.createEqualityFilter(ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId))
+                ),
+                Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        );
+
+        return getMultipleUsersPaged(filter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+    }
+
+    @Override
     public PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit) {
         getLogger().debug("Getting paged users");
 
@@ -534,6 +553,90 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
         }
         updateUser(user, oldUser, hasSelfUpdatedPassword);
+    }
+
+    @Override
+    public void updateUserEncryption(String userId) {
+        User user = getUserById(userId);
+
+        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
+        String userSalt = cryptHelper.generateSalt();
+
+        getLogger().info("Updating user encryption to {}", user.getUsername());
+
+        user.setEncryptionVersion(encryptionVersionId);
+        user.setSalt(userSalt);
+
+        try {
+            List<Modification> modifications = getEncryptedModifications(user);
+            getAppInterface().modify(user.getUniqueId(), modifications);
+        } catch (GeneralSecurityException e) {
+        } catch (InvalidCipherTextException e) {
+        } catch (LDAPException e) {
+        }
+
+        getLogger().info("Updated user encryption to {}", user.getUsername());
+    }
+
+    private String getEncryptionVersionId(User user) {
+        if (user.getEncryptionVersion() == null) {
+            return "0";
+        } else {
+            return user.getEncryptionVersion();
+        }
+    }
+
+    private String getSalt(User user) {
+        if (user.getSalt() == null) {
+            return config.getString("crypto.salt");
+        } else {
+            return user.getSalt();
+        }
+    }
+
+    List<Modification> getEncryptedModifications(User user)
+        throws GeneralSecurityException, InvalidCipherTextException {
+        List<Modification> mods = new ArrayList<Modification>();
+
+        String encryptionVersionId = user.getEncryptionVersion();
+        String userSalt = user.getSalt();
+
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId));
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_SALT, userSalt));
+
+        if (!StringUtils.isBlank(user.getDisplayName())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getFirstname())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getApiKey())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getSecretAnswer())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getSecretQuestion())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getSecretQuestionId())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getLastname())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(user.getLastname(), encryptionVersionId, userSalt)));
+        }
+
+        if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword(), encryptionVersionId, userSalt)));
+        }
+
+        return mods;
     }
 
     void updateUser(User newUser, User oldUser, boolean hasSelfUpdatedPassword) {
@@ -731,6 +834,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
 
+        String encryptionVersionId = getEncryptionVersionId(user);
+        String userSalt = getSalt(user);
+
         if (!StringUtils.isBlank(user.getId())) {
             atts.add(new Attribute(ATTR_ID, user.getId()));
         }
@@ -740,11 +846,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getDisplayName())) {
-            atts.add(new Attribute(ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName())));
+            atts.add(new Attribute(ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getFirstname())) {
-            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname())));
+            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getEmail())) {
@@ -768,23 +874,23 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getApiKey())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey())));
+            atts.add(new Attribute(ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getSecretAnswer())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getSecretQuestion())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getSecretQuestionId())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId(), encryptionVersionId, userSalt)));
         }
 
         if (!StringUtils.isBlank(user.getLastname())) {
-            atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user.getLastname())));
+            atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user.getLastname(), encryptionVersionId, userSalt)));
         }
 
         if (user.getTimeZoneObj() != null) {
@@ -795,7 +901,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
             atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword())));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword(), encryptionVersionId, userSalt)));
             atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString().toUpperCase()));
             atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
         }
@@ -825,6 +931,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_MIGRATION_DATE, StaticUtils.encodeGeneralizedTime(user.getMigrationDate().toDate())));
         }
 
+        if (user.getSalt() != null) {
+            atts.add(new Attribute(ATTR_ENCRYPTION_SALT, user.getSalt()));
+        }
+
+        if (user.getEncryptionVersion() != null) {
+            atts.add(new Attribute(ATTR_ENCRYPTION_VERSION_ID, user.getEncryptionVersion()));
+        }
+
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes to add", attributes.length);
         return attributes;
@@ -838,16 +952,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         paginator.createPage(searchResult, paginatorContext);
         List<User> userList = new ArrayList<User>();
-        try {
-            for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
+        for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
+            try {
                 userList.add(getUser(entry));
+            } catch (InvalidCipherTextException e) {
+                getLogger().error(e.getMessage());
+            } catch (GeneralSecurityException e) {
+                getLogger().error(e.getMessage());
+            } catch (Exception e) {
+                getLogger().error(e.getMessage());
             }
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
         }
 
         paginatorContext.setValueList(userList);
@@ -987,23 +1101,31 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
+
+
         User user = new User();
+        user.setEncryptionVersion(resultEntry.getAttributeValue(ATTR_ENCRYPTION_VERSION_ID));
+        user.setSalt(resultEntry.getAttributeValue(ATTR_ENCRYPTION_SALT));
+
+        String encryptionVersionId = getEncryptionVersionId(user);
+        String userSalt = getSalt(user);
+
         user.setId(resultEntry.getAttributeValue(ATTR_ID));
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
-        user.setDisplayName(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_DISPLAY_NAME)));
-        user.setFirstname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_GIVEN_NAME)));
+        user.setDisplayName(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_DISPLAY_NAME), encryptionVersionId, userSalt));
+        user.setFirstname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_GIVEN_NAME), encryptionVersionId, userSalt));
         user.setEmail(resultEntry.getAttributeValue(ATTR_MAIL));
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
         user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
         user.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         user.setPersonId(resultEntry.getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
-        user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY)));
-        user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
-        user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
-        user.setSecretQuestionId(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q_ID)));
-        user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN)));
+        user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY), encryptionVersionId, userSalt));
+        user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q), encryptionVersionId, userSalt));
+        user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A), encryptionVersionId, userSalt));
+        user.setSecretQuestionId(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q_ID), encryptionVersionId, userSalt));
+        user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN), encryptionVersionId, userSalt));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
 
@@ -1012,7 +1134,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setMigrationDate(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_MIGRATION_DATE)));
         }
 
-        String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+        String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), encryptionVersionId, userSalt);
         Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
         boolean wasSelfUpdated = false;
         if(resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED) != null){
@@ -1187,7 +1309,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getLastname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
             } else if (!StringUtils.equals(uOld.getLastname(), uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(uNew.getLastname())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(uNew.getLastname(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1197,7 +1319,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getSecretQuestion())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
             } else if (!StringUtils.equals(uOld.getSecretQuestion(), uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1207,7 +1329,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getSecretQuestionId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q_ID));
             } else if (!StringUtils.equals(uOld.getSecretQuestionId(), uNew.getSecretQuestionId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(uNew.getSecretQuestionId())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(uNew.getSecretQuestionId(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1217,7 +1339,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getSecretAnswer())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
             } else if (!StringUtils.equals(uOld.getSecretAnswer(), uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew.getSecretAnswer())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew.getSecretAnswer(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1227,7 +1349,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew.getApiKey())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew.getApiKey(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1258,7 +1380,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getFirstname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
             } else if (!StringUtils.equals(uOld.getFirstname(), uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1279,7 +1401,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
             } else if (!StringUtils.equals(uOld.getDisplayName(),
                 uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew.getDisplayName())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew.getDisplayName(), getEncryptionVersionId(uNew), getSalt(uNew))));
             }
         }
     }
@@ -1319,7 +1441,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate).toUpperCase()));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue(), getEncryptionVersionId(uNew), getSalt(uNew))));
         }
     }
 

@@ -2,6 +2,7 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -17,9 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidParameterException;
+import java.security.SecureRandom;
 import java.security.Security;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CryptHelper {
@@ -29,6 +34,9 @@ public class CryptHelper {
     @Autowired
     private Configuration config;
 
+    @Autowired
+    private EncryptionPasswordSource encryptionPasswordSource;
+
 	private static PBEParametersGenerator keyGenerator;
 
     public static final int ITERATION_COUNT = 20;
@@ -37,20 +45,25 @@ public class CryptHelper {
 
     public static final int IV_SIZE = 128;
 
-    private CipherParameters getKeyParams() {
+    private SecureRandom secureRandom = new SecureRandom();
+
+    public CryptHelper () {
+        Security.addProvider(new BouncyCastleProvider());
+        keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
+    }
+
+    /*private CipherParameters getKeyParams() {
         if (keyParams == null) {
             keyParams = getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
         }
         return keyParams;
-    }
+    }*/
 
     public CipherParameters getKeyParams(String passwordString, String saltString) {
         CipherParameters result = null;
 		try {
             char[] password = passwordString.toCharArray();
             byte[] salt = fromHexString(saltString);
-			Security.addProvider(new BouncyCastleProvider());
-			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
 			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
 			result = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
 		} catch (Exception e) {
@@ -59,8 +72,21 @@ public class CryptHelper {
         return result;
 	}
 
-	public byte[] encrypt(String plainText) throws GeneralSecurityException, InvalidCipherTextException {
-        return encrypt(plainText, getKeyParams());
+	public byte[] encrypt(String plainText, String versionId, String salt) throws GeneralSecurityException, InvalidCipherTextException {
+        return encrypt(plainText, getKeyParams(encryptionPasswordSource.getPassword(versionId), salt));
+    }
+
+    public String generateSalt() {
+        String random = new BigInteger(130, secureRandom).toString(16);
+        List<String> splitString = new ArrayList<String>();
+
+        while(random.length() > 2) {
+            String head = random.substring(0, 2);
+            String tail = random.substring(2);
+            splitString.add(head);
+            random = tail;
+        }
+        return StringUtils.join(splitString, " ");
     }
 
     public byte[] encrypt(String plainText, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
@@ -86,8 +112,8 @@ public class CryptHelper {
 		return results;
 	}
 
-	public String decrypt(final byte[] bytes) throws GeneralSecurityException, InvalidCipherTextException {
-        return decrypt(bytes, getKeyParams());
+	public String decrypt(final byte[] bytes, String versionId, String salt) throws GeneralSecurityException, InvalidCipherTextException {
+        return decrypt(bytes, getKeyParams(encryptionPasswordSource.getPassword(versionId), salt));
     }
 
     public String decrypt(final byte[] bytes, CipherParameters cipherParameters) throws GeneralSecurityException, InvalidCipherTextException {
@@ -127,5 +153,9 @@ public class CryptHelper {
 
     public void setConfiguration(Configuration configuration) {
         this.config = configuration;
+    }
+
+    public void setEncryptionPasswordSource(EncryptionPasswordSource encryptionPasswordSource) {
+        this.encryptionPasswordSource = encryptionPasswordSource;
     }
 }

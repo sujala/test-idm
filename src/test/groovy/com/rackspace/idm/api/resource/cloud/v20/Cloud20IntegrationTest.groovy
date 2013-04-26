@@ -1728,14 +1728,17 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         token                | serviceId                                  | expectedResult
-        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
-        identityAdminToken   | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
+        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 201
+        identityAdminToken   | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 201
         userAdminToken       | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
         userAdminToken       | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
         defaultUserToken     | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
         defaultUserToken     | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
         serviceAdminToken    | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 201
         serviceAdminToken    | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 201
+        //Used when global roles are in its own application
+//        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
+//        identityAdminToken   | "18e7a7032733486cd32f472d7bd58f709ac0d221" | 403
     }
 
     def "Creating a role without specifying the serviceId should create it under IdentityGlobalRoles"() {

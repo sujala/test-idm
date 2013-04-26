@@ -987,4 +987,21 @@ public class DefaultUserService implements UserService {
     public void setDomainService(DomainService domainService) {
         this.domainService = domainService;
     }
+
+    @Override
+    public void reEncryptUsers() {
+        int offset = 0;
+        int limit = 50;
+
+        PaginatorContext<User> context = userDao.getUsersToReEncrypt(offset, limit);
+
+        while(offset < context.getTotalRecords()) {
+            for (User user : context.getValueList()) {
+                userDao.updateUserEncryption(user.getId());
+            }
+
+            offset += limit;
+            context = userDao.getUsersToReEncrypt(offset, limit);
+        }
+    }
 }
