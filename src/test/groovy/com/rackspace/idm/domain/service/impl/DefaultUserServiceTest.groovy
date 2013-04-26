@@ -66,6 +66,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockCloudRegionService(service)
         mockValidator(service)
         mockDomainService(service)
+        mockPropertiesService(service)
+        mockCryptHelper(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -866,6 +868,25 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         2 * userDao.getUsersToReEncrypt(_, _) >>> [context1, context2]
         1 * userDao.updateUserEncryption(userId)
+    }
+
+    def "Create User sets salt and encryption version"(){
+        given:
+        def encryptionVersion = "1"
+        def salt = "a1 b2"
+
+        when:
+        service.addUser(entityFactory.createUser())
+
+        then:
+        1 * propertiesService.getValue(_) >> encryptionVersion
+        1 * cryptHelper.generateSalt() >> salt
+        1 * userDao.isUsernameUnique(_) >> true
+        1 * userDao.addUser(_) >> { User arg1 ->
+            assert(arg1.encryptionVersion == encryptionVersion)
+            assert(arg1.salt == salt)
+        }
+
     }
 
     def createStringPaginatorContext() {

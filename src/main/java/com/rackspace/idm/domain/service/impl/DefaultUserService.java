@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.*;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class DefaultUserService implements UserService {
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
+    public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -69,6 +71,12 @@ public class DefaultUserService implements UserService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private PropertiesService propertiesService;
+
+    @Autowired
+    private CryptHelper cryptHelper;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -86,6 +94,9 @@ public class DefaultUserService implements UserService {
         if(!validator.isEmpty(user.getEmail())){
             validator.isEmailValid(user.getEmail());
         }
+        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+        user.setSalt(cryptHelper.generateSalt());
+
         validateUsername(user);
         setPasswordIfNecessary(user);
 

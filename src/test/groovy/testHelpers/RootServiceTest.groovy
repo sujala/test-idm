@@ -17,7 +17,10 @@ import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.domain.service.PropertiesService
+import com.rackspace.idm.domain.service.impl.DefaultPropertiesService
 import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
@@ -97,15 +100,12 @@ import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.Role
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
-
-import static com.rackspace.idm.RaxAuthConstants.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -193,6 +193,8 @@ class RootServiceTest extends Specification {
     @Shared DefaultRegionService defaultRegionService
     @Shared DefaultCloud20Service defaultCloud20Service
     @Shared DelegateCloud20Service delegateCloud20Service
+    @Shared PropertiesService propertiesService
+    @Shared CryptHelper cryptHelper
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -498,6 +500,16 @@ class RootServiceTest extends Specification {
     def mockDefaultTenantService(service) {
         defaultTenantService = Mock()
         service.defaultTenantService = defaultTenantService
+    }
+
+    def mockPropertiesService(service){
+        propertiesService = Mock()
+        service.propertiesService = propertiesService
+    }
+
+    def mockCryptHelper(service) {
+        cryptHelper = Mock()
+        service.cryptHelper = cryptHelper
     }
 
     def mockDefaultGroupService(service) {
