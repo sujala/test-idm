@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -132,4 +133,8 @@ public interface UserService {
     void setTenantService(TenantService tenantService);
 
     void reEncryptUsers();
+
+    void setCryptHelper(CryptHelper cryptHelper);
+
+    void setPropertiesService(PropertiesService propertiesService);
 }

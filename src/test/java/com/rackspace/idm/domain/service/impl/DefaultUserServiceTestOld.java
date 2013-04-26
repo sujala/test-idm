@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.unboundid.ldap.sdk.Filter;
@@ -62,6 +63,10 @@ public class DefaultUserServiceTestOld {
     private CloudRegionService cloudRegionService;
     @Mock
     private LdapPatternRepository patternDao;
+    @Mock
+    private CryptHelper cryptHelper;
+    @Mock
+    private PropertiesService propertiesService;
 
     private Validator validator;
 

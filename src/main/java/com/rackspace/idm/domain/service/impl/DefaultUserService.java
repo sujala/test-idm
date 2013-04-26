@@ -1015,4 +1015,14 @@ public class DefaultUserService implements UserService {
             context = userDao.getUsersToReEncrypt(offset, limit);
         }
     }
+
+    @Override
+    public void setCryptHelper(CryptHelper cryptHelper) {
+        this.cryptHelper = cryptHelper;
+    }
+
+    @Override
+    public void setPropertiesService(PropertiesService propertiesService) {
+        this.propertiesService = propertiesService;
+    }
 }

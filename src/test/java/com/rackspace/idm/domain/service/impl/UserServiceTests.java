@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
@@ -34,6 +35,8 @@ public class UserServiceTests {
     CloudRegionService cloudRegionService;
     TenantService tenantService;
     Validator validator = new Validator();
+    PropertiesService propertiesService;
+    CryptHelper cryptHelper;
 
     String customerId = "123456";
     String username = "testuser";
@@ -78,6 +81,8 @@ public class UserServiceTests {
         cloudRegionService = EasyMock.createMock(DefaultCloudRegionService.class);
         validator = EasyMock.createMock(Validator.class);
         tenantService = EasyMock.createMock(TenantService.class);
+        propertiesService = EasyMock.createMock(PropertiesService.class);
+        cryptHelper = EasyMock.createMock(CryptHelper.class);
 
 
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
@@ -93,6 +98,8 @@ public class UserServiceTests {
         userService.setCloudRegionService(cloudRegionService);
         userService.setValidator(validator);
         userService.setTenantService(tenantService);
+        userService.setCryptHelper(cryptHelper);
+        userService.setPropertiesService(propertiesService);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
