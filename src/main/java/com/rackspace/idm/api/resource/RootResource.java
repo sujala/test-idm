@@ -26,10 +26,17 @@ import javax.ws.rs.core.UriInfo;
 @Component
 public class RootResource {
 
-    private final CloudVersionsResource cloudVersionsResource;
-    private final Version10Resource versionResource;
-    private final MigrationResource migrationResource;
-    private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
+    @Autowired
+    private CloudVersionsResource cloudVersionsResource;
+    @Autowired
+    private Version10Resource versionResource;
+    @Autowired
+    private MigrationResource migrationResource;
+    @Autowired
+    private DevOpsResource devOpsResource;
+    @Autowired
+    private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -37,17 +44,6 @@ public class RootResource {
 
     @Context
     private UriInfo uriInfo;
-    
-    @Autowired
-    public RootResource(CloudVersionsResource cloudVersionsResource, Version10Resource versionResource,
-                        MigrationResource migrationResource, Configuration config,
-                        ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder ) {
-        this.cloudVersionsResource = cloudVersionsResource;
-        this.versionResource = versionResource;
-        this.migrationResource = migrationResource;
-        this.config = config;
-        this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
-    }
 
     /**
      * Gets the internal service profile. The root resource defaults to the internal service profile.
@@ -94,6 +90,11 @@ public class RootResource {
         return migrationResource;
     }
 
+    @Path("devops")
+    public DevOpsResource getDevOpsResource() {
+        return devOpsResource;
+    }
+
     @Path("buildInfo")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -114,5 +115,21 @@ public class RootResource {
 
     public void setConfig(Configuration config) {
         this.config = config;
+    }
+
+    public void setCloudVersionResource(CloudVersionsResource cloudVersionResource) {
+        this.cloudVersionsResource = cloudVersionResource;
+    }
+
+    public void setVersion10Resource(Version10Resource version10Resource) {
+        this.versionResource = version10Resource;
+    }
+
+    public void setMigrationResource(MigrationResource migrationResource) {
+        this.migrationResource = migrationResource;
+    }
+
+    public void setServiceProfileDescriptionBuilder(ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder) {
+        this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
     }
 }

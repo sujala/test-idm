@@ -180,6 +180,82 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         user != null
         user1.email == user.users.get(0).email
     }
+        
+    def "create user with salt and encryption version id"() {
+        given:
+        def rsId = random
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password").with {
+            it.salt = "A1 B1"
+            it.encryptionVersion = "0"
+            return it
+        }
+
+        when:
+        ldapUserRepository.addUser(user);
+        User retrievedUser = ldapUserRepository.getUserById(rsId)
+        ldapUserRepository.deleteUser(retrievedUser)
+
+        then:
+        retrievedUser.salt == user.salt
+        retrievedUser.encryptionVersion == user.encryptionVersion
+    }
+
+    def "updateUserEncryption updates user encryption"() {
+        given:
+        def rsId = random
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password").with {
+            it.salt = "A1 B1"
+            it.encryptionVersion = "0"
+            return it
+        }
+
+        when:
+        ldapUserRepository.addUser(user);
+        ldapUserRepository.updateUserEncryption(rsId);
+        User retrievedUser = ldapUserRepository.getUserById(rsId)
+
+        then:
+        retrievedUser.displayName == user.displayName
+        retrievedUser.firstname == user.firstname
+        retrievedUser.email == user.email
+        retrievedUser.apiKey == user.apiKey
+        retrievedUser.secretAnswer == user.secretAnswer
+        retrievedUser.secretQuestion == user.secretQuestion
+        retrievedUser.secretQuestionId == user.secretQuestionId
+        retrievedUser.lastname == user.lastname
+        retrievedUser.passwordObj.value == user.passwordObj.value
+    }
+
+    def "updateUserEncryption with no salt or encryptionversion updates user encryption"() {
+        given:
+        def rsId = random
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+
+        when:
+        ldapUserRepository.addUser(user);
+        ldapUserRepository.updateUserEncryption(rsId);
+        User retrievedUser = ldapUserRepository.getUserById(rsId)
+
+        then:
+        retrievedUser.displayName == user.displayName
+        retrievedUser.firstname == user.firstname
+        retrievedUser.email == user.email
+        retrievedUser.apiKey == user.apiKey
+        retrievedUser.secretAnswer == user.secretAnswer
+        retrievedUser.secretQuestion == user.secretQuestion
+        retrievedUser.secretQuestionId == user.secretQuestionId
+        retrievedUser.lastname == user.lastname
+        retrievedUser.passwordObj.value == user.passwordObj.value
+    }
+
+    def "calling getUsersToReEncrypt gets the users that need to be re-encrypted"() {
+        when:
+        def users = ldapUserRepository.getUsersToReEncrypt(0, 50)
+
+        then:
+        users != null
+        users.valueList.size() == 50
+    }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {

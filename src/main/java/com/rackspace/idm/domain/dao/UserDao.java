@@ -50,6 +50,8 @@ public interface UserDao {
 
     Users getUsers(List<Filter> filters);
 
+    PaginatorContext<User> getUsersToReEncrypt(int offset, int limit);
+
     boolean isUsernameUnique(String username);
 
     /**
@@ -57,7 +59,9 @@ public interface UserDao {
      * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
     void updateUser(User user, boolean hasSelfUpdatedPassword);
-    
+
+    void updateUserEncryption(String userId);
+
     String getNextUserId();
 
     void softDeleteUser(User user);

@@ -173,7 +173,7 @@ class AtomHopperClientGroovyTest extends Specification {
         client.createEntryForRevokeToken(user, "token")
 
         then:
-        1 * cryptHelper.encrypt(_,_)
+        1 * cryptHelper.encrypt(_, _)
     }
 
     def "create atom entry - make sure entry is consume" () {

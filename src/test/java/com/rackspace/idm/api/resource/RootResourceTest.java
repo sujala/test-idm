@@ -40,8 +40,12 @@ public class RootResourceTest {
         migrationResource = mock(MigrationResource.class);
         config = mock(Configuration.class);
         serviceProfileDescriptionBuilder = mock(ServiceProfileDescriptionBuilder.class);
-        rootResource = new RootResource(cloudVersionsResource, version10Resource, migrationResource, config, serviceProfileDescriptionBuilder);
+        rootResource = new RootResource();
+        rootResource.setCloudVersionResource(cloudVersionsResource);
+        rootResource.setVersion10Resource(version10Resource);
+        rootResource.setMigrationResource(migrationResource);
         rootResource.setConfig(config);
+        rootResource.setServiceProfileDescriptionBuilder(serviceProfileDescriptionBuilder);
     }
 
     @Test

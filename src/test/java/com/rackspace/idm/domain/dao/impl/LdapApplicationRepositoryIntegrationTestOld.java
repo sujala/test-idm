@@ -25,7 +25,7 @@ import java.util.Locale;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
+public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest{
 
     @Autowired
     private LdapUserRepository userRepo;

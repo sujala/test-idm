@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -129,4 +130,6 @@ public interface UserService {
     List<User> getUsersInDomain(String domainId);
 
     void setTenantService(TenantService tenantService);
+
+    void reEncryptUsers();
 }
