@@ -59,7 +59,7 @@ public class CryptHelper {
         return keyParams;
     }*/
 
-    public CipherParameters getKeyParams(String passwordString, String saltString) {
+    synchronized public CipherParameters getKeyParams(String passwordString, String saltString) {
         CipherParameters result = null;
 		try {
             char[] password = passwordString.toCharArray();
