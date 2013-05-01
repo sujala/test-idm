@@ -97,9 +97,9 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @Test
     public void shouldFindOneClientThatExists() {
-        Application client = repo.getClientByClientId("ABCDEF");
+        Application client = repo.getClientByClientId("18e7a7032733486cd32f472d7bd58f709ac0d221");
         Assert.assertNotNull(client);
-        Assert.assertEquals("ABCDEF", client.getClientId());
+        Assert.assertEquals("18e7a7032733486cd32f472d7bd58f709ac0d221", client.getClientId());
     }
 
     @Test

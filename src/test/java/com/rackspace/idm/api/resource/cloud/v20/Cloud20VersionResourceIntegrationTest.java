@@ -269,15 +269,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void validateToken_belongsToIsTrue_returns200() throws Exception {
-        String token = authenticate(userAdminName, "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + token).queryParam("belongsTo", "kurtTestTenant");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
-
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
-    }
-
-    @Test
     public void checkToken_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
@@ -316,15 +307,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void checkToken_belongsToIsTrue_returns200() throws Exception {
-        String token = authenticate(userAdminName, "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + token).queryParam("belongsTo", "kurtTestTenant");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
-
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     @Test
@@ -479,13 +461,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getUser_withServiceAdmin_searchingServiceAdmin_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", identityUserName);
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listUserGlobalRoles() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/users/10043198/roles");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -769,12 +744,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void getAccessibleDomains_serviceAdmin_emptyList() throws JAXBException {
-        Domains domains = getAccessibleDomains(identityToken);
-        assertThat("domains", domains.getDomain().size(), equalTo(25));
-    }
-
-    @Test
     public void getAccessibleDomains_userAdmin_returnsListDomains() throws Exception {
         Domains domains = getAccessibleDomains(userAdminToken);
         assertThat("domains", domains.getDomain().size(), equalTo(1));
@@ -802,44 +771,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     public void getAccessibleDomainsForUser_defaultUserToken_userAdmin_return403() throws JAXBException {
         try {
             getAccessibleDomainsForUser(defaultUserToken, testUserAdmin.getId());
-            assertThat("make it fail", false, equalTo(true));
-        } catch (Exception ex) {
-            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
-        }
-    }
-
-    @Test
-    public void getAccessibleDomainsEndpointsForUser_identityAdminToken_identityAdmin_returnsEmptyList() throws JAXBException {
-        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(identityToken, testIdentityAdminUser.getId(), testDomainId);
-        assertThat("endpoints", endpointList.getEndpoint().size(), equalTo(0));
-    }
-
-    @Test
-    public void getAccessibleDomainsEndpointsForUser_identityAdminToken_userAdmin_returnsList() throws JAXBException {
-        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(identityToken, testUserAdmin.getId(), testDomainId);
-        assertThat("endpoints", endpointList.getEndpoint().size(), equalTo(5));
-    }
-
-    @Test
-    public void getAccessibleDomainsEndpointsForUser_userAdminToken_defaultUser_returnsList() throws JAXBException {
-        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(userAdminToken, testDefaultUser.getId(), testDomainId);
-        assertThat("endpoints", endpointList.getEndpoint().size(), equalTo(5));
-    }
-
-    @Test
-    public void getAccessibleDomainsEndpointsForUser_userAdminToken_identityAdmin_returns401() throws JAXBException {
-        try {
-            getAccessibleDomainsEndpointsForUser(userAdminToken, testIdentityAdminUser.getId(), testDomainId);
-            assertThat("make it fail", false, equalTo(true));
-        } catch (Exception ex) {
-            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
-        }
-    }
-
-    @Test
-    public void getAccessibleDomainsEndpointsForUser_defaultUserToken_UserAdmin_returns401() throws JAXBException {
-        try {
-            getAccessibleDomainsEndpointsForUser(defaultUserToken, testUserAdmin.getId(), testDomainId);
             assertThat("make it fail", false, equalTo(true));
         } catch (Exception ex) {
             assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
