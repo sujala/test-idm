@@ -360,7 +360,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private String getEncryptionVersionId(Application application) {
         if (application.getEncryptionVersion() == null) {
-            return propertiesService.getValue("encryptionVersionId");
+            return "0";
         } else {
             return application.getEncryptionVersion();
         }
