@@ -77,9 +77,6 @@ public class AtomHopperClient {
     @Autowired
     private AtomHopperHelper atomHopperHelper;
 
-    @Autowired
-    CryptHelper cryptHelper;
-
     private HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -284,9 +281,7 @@ public class AtomHopperClient {
 
         V1Element v1Element = new V1Element();
         v1Element.setType(EventType.DELETE);
-        logger.warn("Encrypting token ...");
-        v1Element.setResourceId(encrypt(token));
-        logger.warn("Token encrypted");
+        v1Element.setResourceId(token);
         v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
@@ -310,23 +305,6 @@ public class AtomHopperClient {
         usageEntry.setTitle(title);
         logger.warn("Created Identity token entry with id: " + id);
         return usageEntry;
-    }
-
-    private String encrypt(String text) throws GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
-        byte[] bytes = cryptHelper.encrypt(text, getCipherParameters());
-        return new Base64().encodeToString(bytes);
-    }
-
-    private String decrypt(String text) throws GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
-        String encryptedBytes = cryptHelper.decrypt(new Base64().decode(text), getCipherParameters());
-        return new String(encryptedBytes);
-    }
-
-    private CipherParameters getCipherParameters() {
-        return cryptHelper.getKeyParams(
-                    config.getString("atom.hopper.crypto.password"),
-                    config.getString("atom.hopper.crypto.salt")
-            );
     }
 
     public void setConfig(Configuration config) {

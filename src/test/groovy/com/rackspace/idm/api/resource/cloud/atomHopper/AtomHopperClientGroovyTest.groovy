@@ -138,44 +138,6 @@ class AtomHopperClientGroovyTest extends Specification {
         1 * httpClient.execute(_)
     }
 
-    def "client can encrypt token"() {
-        given:
-        def token = "this-is-my-token"
-
-        setupMock()
-        cryptHelper = new CryptHelper()
-        cryptHelper.configuration = config
-        client.cryptHelper = cryptHelper
-
-        when:
-        def encryptedToken = client.encrypt(token)
-        def decryptedToken = client.decrypt(encryptedToken)
-
-        then:
-        token == decryptedToken
-    }
-
-    def "client calls encrypt token" () {
-        given:
-        def token = "this-is-my-token"
-
-        setupMock()
-        User user = new User()
-        user.username = "testUser"
-        user.id = "1"
-        user.region = "DFW"
-        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL"  >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
-
-        when:
-        client.createEntryForRevokeToken(user, "token")
-
-        then:
-        1 * cryptHelper.encrypt(_, _)
-    }
-
     def "create atom entry - make sure entry is consume" () {
         given:
         setupMock()
@@ -229,8 +191,6 @@ class AtomHopperClientGroovyTest extends Specification {
         client.config = config
         httpClient = Mock()
         client.httpClient = httpClient
-        cryptHelper = Mock()
-        client.cryptHelper = cryptHelper
         atomHopperHelper = Mock()
         client.atomHopperHelper = atomHopperHelper
 
