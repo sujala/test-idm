@@ -8,8 +8,8 @@ then
 else
     HOST=$1
     ENV=$2
-    scp $BASEDIR/../src/main/config/$ENV/idm.properties gauth@$HOST:/home/gauth/config/
-    scp $BASEDIR/../src/main/config/base.idm.properties gauth@$HOST:/home/gauth/config/
-    scp $BASEDIR/../src/main/config/$ENV/idm.secrets.properties gauth@$HOST:/home/gauth/config/
-    scp $BASEDIR/../src/main/config/log4j.xml gauth@$HOST:/home/gauth/config/
+    scp $BASEDIR/../build/config/$ENV/idm.properties gauth@$HOST:/home/gauth/config/
+    scp $BASEDIR/../build/config/base.idm.properties gauth@$HOST:/home/gauth/config/
+    scp $BASEDIR/../build/config/$ENV/idm.secrets.properties gauth@$HOST:/home/gauth/config/
+    scp $BASEDIR/../build/config/log4j.xml gauth@$HOST:/home/gauth/config/
 fi
