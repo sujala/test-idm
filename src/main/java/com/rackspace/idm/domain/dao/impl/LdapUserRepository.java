@@ -11,6 +11,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.StaticUtils;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
@@ -30,7 +31,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
-    private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
     public static final String ENCRYPTION_ERROR = "encryption error";
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
     public static final String NULL_OR_EMPTY_EMAIL_PARAMETER = "Null or Empty email parameter";
@@ -46,6 +46,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Autowired
     PropertiesService propertiesService;
+
+    @Autowired
+    Configuration config;
 
     @Override
     public void addRacker(Racker racker) {
@@ -748,9 +751,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
+        String stalePasswordMsg = config.getString("stalePasswordMsg");
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
-            && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
-            audit.fail(STALE_PASSWORD_MESSAGE);
+            && stalePasswordMsg.equals(ldapEx.getMessage())) {
+            audit.fail(stalePasswordMsg);
             throw new StalePasswordException("Past 10 passwords for the user cannot be re-used.");
         }
     }

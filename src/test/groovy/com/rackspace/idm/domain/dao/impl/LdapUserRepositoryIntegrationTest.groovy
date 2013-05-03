@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Users
+import com.rackspace.idm.exception.StalePasswordException
 import com.unboundid.ldap.sdk.Filter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -256,6 +257,22 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         users != null
         users.valueList.size() > 0
     }
+
+    def "updateUserPassword thows a StalePasswordException"() {
+        given:
+        def rsId = random
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+        User updateUser = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+
+        when:
+        ldapUserRepository.addUser(user);
+        ldapUserRepository.updateUser(updateUser, user, false)
+
+        then:
+        thrown(StalePasswordException.class)
+        ldapUserRepository.deleteUser(user)
+    }
+
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
