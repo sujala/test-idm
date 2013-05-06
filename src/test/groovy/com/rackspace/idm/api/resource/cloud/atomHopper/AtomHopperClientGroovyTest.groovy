@@ -164,6 +164,32 @@ class AtomHopperClientGroovyTest extends Specification {
         1 * atomHopperHelper.entityConsume(_)
     }
 
+    def "create atom entry for token - make sure entry is consume" () {
+        given:
+        setupMock()
+        HttpResponse response = Mock()
+        StatusLine sl = Mock()
+        response.statusLine >> sl
+        sl.statusCode >> 201
+        HttpEntity enty = Mock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+
+        when:
+        client.postToken(user, "someToken", "revokedToken")
+
+        then:
+        1 * httpClient.execute(_) >> response
+        1 * response.entity >> enty
+        1 * atomHopperHelper.entityConsume(_)
+    }
+
     def createTenantRole(String name, String roleRsId, String description) {
         new TenantRole().with {
             it.name = name

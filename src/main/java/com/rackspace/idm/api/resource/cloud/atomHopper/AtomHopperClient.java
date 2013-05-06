@@ -183,6 +183,9 @@ public class AtomHopperClient {
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
                 logger.warn(errorMsg);
             }
+
+            HttpEntity enty = response.getEntity();
+            atomHopperHelper.entityConsume(enty);
         } catch (Exception e){
             logger.warn("AtomHopperClient Exception: " + e);
         }
