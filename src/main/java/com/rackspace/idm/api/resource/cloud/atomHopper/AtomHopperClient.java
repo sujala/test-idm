@@ -135,23 +135,23 @@ public class AtomHopperClient {
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
                 entry = createEntryForUser(user, EventType.DELETE, false);
                 writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DELETED_URL));
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.DISABLED)) {
-                entry = createEntryForUser(user, EventType.UPDATE, false);
+                entry = createEntryForUser(user, EventType.SUSPEND, false);
                 writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DISABLED_URL));
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
                 entry = createEntryForUser(user, EventType.CREATE, true);
                 writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.GROUP)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
                 writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_GROUPS_URL));
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.ROLE)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
                 writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_ROLES_URL));
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             }
 
             if(response != null){
@@ -176,7 +176,7 @@ public class AtomHopperClient {
         try{
             UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
             Writer writer = marshalEntry(entry);
-            HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_REVOKED_URL));
+            HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             if(response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
                 String errorMsg = reader.readLine();
