@@ -55,6 +55,8 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     DefaultPaginator<User> paginator;
     @Mock
     CryptHelper cryptHelper;
+    @Mock
+    Configuration config;
 
     @Mock
     private PropertiesService propertiesService;
@@ -75,6 +77,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         when(cryptHelper.decrypt(any(byte[].class), anyString(), anyString())).thenReturn("someString");
         when(propertiesService.getValue(anyString())).thenReturn("0");
         when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
+        when(config.getString("stalePasswordMsg")).thenReturn("Password match in history");
         doReturn(ldapInterface).when(spy).getAppInterface();
 
     }
