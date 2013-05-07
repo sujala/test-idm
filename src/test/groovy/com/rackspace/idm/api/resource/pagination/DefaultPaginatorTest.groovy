@@ -113,13 +113,14 @@ class DefaultPaginatorTest extends RootServiceTest {
         contextId == null
     }
 
-    def "createSearchRequest sets the contextId"() {
+    def "createSearchRequest sets the contextId and contentCount"() {
         when:
-        paginator.createSearchRequest("rsId", searchRequest, contextId, 0, 25)
+        paginator.createSearchRequest("rsId", searchRequest, contextId, 100, 0, 25)
 
         then:
-        def value = searchRequest.getControl(VirtualListViewRequestControl.VIRTUAL_LIST_VIEW_REQUEST_OID).contextID
-        value.equals(expected)
+        def control = searchRequest.getControl(VirtualListViewRequestControl.VIRTUAL_LIST_VIEW_REQUEST_OID)
+        control.contextID.equals(expected)
+        control.contentCount == 100
 
         where:
         searchRequest           | contextId               | expected

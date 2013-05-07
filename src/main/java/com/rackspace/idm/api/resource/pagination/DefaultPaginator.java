@@ -29,12 +29,11 @@ public class DefaultPaginator<T> implements Paginator<T> {
 
     @Override
     public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit) {
-        return createSearchRequest(sortAttribute, searchRequest, null, offset, limit);
+        return createSearchRequest(sortAttribute, searchRequest, null, 0, offset, limit);
     }
 
     @Override
-    public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, ASN1OctetString contextId, int offset, int limit) {
-        int contentCount = 0;
+    public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, ASN1OctetString contextId, int contentCount, int offset, int limit) {
         PaginatorContext<T> context = new PaginatorContext<T>();
         context.setOffset(offset);
         context.setLimit(limit);
