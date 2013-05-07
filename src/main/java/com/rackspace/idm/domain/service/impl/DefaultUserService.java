@@ -1011,7 +1011,7 @@ public class DefaultUserService implements UserService {
                 userDao.updateUserEncryption(user.getId());
             }
 
-            offset += limit;
+            offset += (limit - context.getValueList().size());
             context = userDao.getUsersToReEncrypt(offset, limit);
         }
     }
