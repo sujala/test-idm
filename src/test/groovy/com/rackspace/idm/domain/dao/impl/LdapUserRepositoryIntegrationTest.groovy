@@ -255,7 +255,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         users != null
-        users.valueList.size() > 0
+        users.valueList != null
     }
 
     def "updateUserPassword thows a StalePasswordException"() {
