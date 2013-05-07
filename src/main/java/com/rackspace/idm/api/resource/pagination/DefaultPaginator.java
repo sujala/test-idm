@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.pagination;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.exception.BadRequestException;
+import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -28,14 +29,19 @@ public class DefaultPaginator<T> implements Paginator<T> {
 
     @Override
     public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit) {
-    	int contentCount = 0;
+        return createSearchRequest(sortAttribute, searchRequest, null, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, ASN1OctetString contextId, int offset, int limit) {
+        int contentCount = 0;
         PaginatorContext<T> context = new PaginatorContext<T>();
         context.setOffset(offset);
         context.setLimit(limit);
 
     	ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(true, new SortKey(sortAttribute));
 
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(offset + 1, 0, context.getLimit() - 1, contentCount, null, true);
+        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(offset + 1, 0, context.getLimit() - 1, contentCount, contextId, true);
         searchRequest.setControls(sortRequest, vlvRequest);
 
         return context;

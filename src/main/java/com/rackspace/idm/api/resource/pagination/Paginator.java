@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.pagination;
 
+import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -19,6 +20,8 @@ import java.util.List;
 public interface Paginator<T> {
 
     PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
+
+    PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, ASN1OctetString contextId, int offset, int limit);
 
     void createPage(SearchResult searchResult, PaginatorContext<T> context);
 
