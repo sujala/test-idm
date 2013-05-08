@@ -21,7 +21,7 @@ buildscript {
 }
 
 group = 'com.rackspace'
-version = '1.0.14.4'
+version = '1.0.14.5'
 
 description = """idm"""
 
@@ -146,6 +146,7 @@ dependencies {
 
 def resourceDirs = [
     'DEV',
+    'DEV2',
     'JENKINS',
     'LOCAL-DEV',
     'EXT/PRODUCTION/DFW',
@@ -165,7 +166,8 @@ def resourceDirs = [
     'INT/TEST',
     'INT/UAT',
     'OPENLDAP',
-    'TEST'
+    'TEST',
+    'TEST2'
 ]
 
 task copyConfig(type: Copy) {
