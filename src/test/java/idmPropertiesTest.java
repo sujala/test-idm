@@ -31,6 +31,8 @@ public class idmPropertiesTest {
             ArrayList<String> propertyNameErrorList = propertyHashMap.get(fileName);
             propertyNameErrorList.remove("virtualPath");
             propertyNameErrorList.remove("atom.hopper.dataCenter");
+            propertyNameErrorList.remove("cloudAuthUK11url");
+            propertyNameErrorList.remove("cloudAuthUK20url");
             if (!propertyNameErrorList.isEmpty()) {
                 error += fileName + ":\n";
                 error += "\t" + propertyNameErrorList.toString() + "\n\n";
