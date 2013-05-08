@@ -210,7 +210,7 @@ function deploy_app() {
     # start server
     ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --passwordfile /opt/glassfish/passwords/${SSH_USER}pass start-domain ${SSH_USER}"
     echo -n "Domain startup in progress ..."
-    sleep 60
+    sleep 120
  
     deploy_status_check
   done
