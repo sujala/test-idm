@@ -112,7 +112,7 @@ function verify_md5_remote() {
 # Verify deployment status of application
 
 function deploy_status_check() {
-  APP=`echo $WAR_DEPLOY_FILE | gawk -F/ {'print $8'} |cut -d . -f1`
+  APP=`echo $WAR_DEPLOY_FILE | awk -F/ {'print $8'} |cut -d . -f1`
   ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass list-applications | grep $APP  > /dev/null 2>&1"
     if [ $? -ne 0 ]
     then
