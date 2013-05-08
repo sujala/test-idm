@@ -116,7 +116,7 @@ function deploy_status_check() {
   SUCCESS="false"
   START=$(date +"%s")
 
-  while [SUCCESS == "false" && $(($DIFF % 60)) -lt 120]
+  while [ $SUCCESS == "false" || $(($DIFF % 60)) -lt 120 ]
   do
     ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass list-applications | grep $APP  > /dev/null 2>&1"
     if [ $? -eq 0 ]; then
@@ -127,6 +127,12 @@ function deploy_status_check() {
     DIFF=$(($NOW - $START))
     echo "Current time = " + $NOW
   done
+
+  if [ $SUCCESS == "false" ]; then
+    echo "Deployment Failed!!!"
+    exit -1
+  fi
+
 }
 
 # This function should be called with the first argument as a version number (2.1.1) and
