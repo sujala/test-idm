@@ -198,7 +198,7 @@ function deploy_app() {
   echo
   for SERVER in ${SERVERS}; do
     echo -n "Deploying to server '${SERVER}'..."
-    echo -e "undeploying Signup application ...\n"
+    echo -e "undeploying CloudIdentity application ...\n"
     ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass undeploy idm"
     # stop server
 
