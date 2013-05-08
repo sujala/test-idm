@@ -113,28 +113,14 @@ function verify_md5_remote() {
 
 function deploy_status_check() {
   APP=`echo $WAR_DEPLOY_FILE | awk -F/ {'print $8'} |cut -d . -f1`
-  SUCCESS="false"
-  START=$(date +"%s")
-  DIFF=START
-
-  while [ $SUCCESS == "false" || $(($DIFF % 60)) -lt 120 ]
-  do
-    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass list-applications | grep $APP  > /dev/null 2>&1"
-    if [ $? -eq 0 ]; then
-        SUCCESS="true"
+  ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass list-applications | grep $APP  > /dev/null 2>&1"
+    if [ $? -ne 0 ]
+    then
+        echo "Deployment Failed!!!"
+        exit 1
+    else
         echo "Deployment Success!!!"
     fi
-    NOW=$(date + "%s")
-    DIFF=$(($NOW - $START))
-    echo "Current time = " + $NOW
-    sleep 1
-  done
-
-  if [ $SUCCESS == "false" ]; then
-    echo "Deployment Failed!!!"
-    exit -1
-  fi
-
 }
 
 # This function should be called with the first argument as a version number (2.1.1) and
@@ -224,7 +210,8 @@ function deploy_app() {
     # start server
     ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --passwordfile /opt/glassfish/passwords/${SSH_USER}pass start-domain ${SSH_USER}"
     echo -n "Domain startup in progress ..."
-
+    sleep 120
+ 
     deploy_status_check
   done
   echo
