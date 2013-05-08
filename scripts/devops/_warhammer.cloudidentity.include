@@ -1,0 +1,234 @@
+#!/bin/bash
+
+#
+# WAR Hammer - Deployment script for Rackspace Glassfish installations.
+#
+# A simple script that fetches a single Java WAR file and a ZIP file from Nexus and deploys them to one or more Glassfish servers.
+#
+# This script is meant to be included from another bash script that defines a deploy_config() block similar to the one listed below.
+# After defining deploy_config(), the only other line necessary is
+#
+#   deploy_app "$@"
+#
+# This will pass all arguments from the command line to this script, preserving quotation/whitespace distinction (not that any
+# arguments passed to this script should normally contain whitespace).
+#
+
+## Any script that includes this script must have a deploy_config() function defined before calling deploy_app().
+## This function is called after ${VERSION} and ${SERVERS} is defined, so those variables are safe to use in the function.
+## Do not uncomment this sample function.  Instead, copy it into the calling script and uncomment it there.
+
+#function deploy_config() {
+#  # Base URL at which war file and zip file can be found.  Script assumes *.war.md5 and *.zip.md5 files exist in same directory.
+#  URLBASE="http://nexus.rackspace.corp/nexus/content/repositories/releases/com/rackspace/api/change/change-service/${VERSION}"
+#
+#  # Java war file containing binary code to be deployed. (Filename only, no path.  Should be available at ${URLBASE}/${WAR_FILE})
+#  WAR_FILE="change-service-${VERSION}.war"
+#
+#  # Zip file containing configuration data. (Filename only, no path.  Should be available at ${URLBASE}/${ZIP_FILE})
+#  ZIP_FILE="change-service-${VERSION}-config.zip"
+#
+#  # Path on server to file that should be replaced with newly deployed war.
+#  WAR_DEPLOY_FILE="/opt/glassfish/glassfish/domains/change/autodeploy/change-service.war"
+#
+#  # Path on server to directory into which zip file should be extracted.
+#  ZIP_DEPLOY_DIR="/home/incident/config/"
+#
+#  # User to SSH into servers as.  WARNING: Hudson user must have publickey (passwordless) access to this user on all servers.
+#  SSH_USER='change'
+#
+#  # Directory on server to save copy of zip/war in (for rollback purposes).
+#  ARTIFACTS_DIR="/home/change/artifacts"
+#}
+
+#####################################################################################
+#####################################################################################
+
+# Utility function to print an error and exit.
+function exit_error() {
+  echo "$@"
+  exit 1
+}
+
+# Utility function to display usage statement and exit.
+function exit_app_usage() {
+  printf "Usage: %s <version> <environment>\n\n   version: Application version number to be deployed. (2.1.1)\n    environment: Environment to deploy code and configuration to.  Possible values are dev,test,uat\n\n    Note: Local user '%s' must have password-less publickey SSH\n          authentication to all servers or script will fail.\n\n" "$0" "${USER}"
+  exit 1
+}
+
+function deploy_config_check() {
+  # SSH options (don't change unless you know what you are doing)
+  #SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o VerifyHostKeyDNS=no -o CheckHostIP=no -o BatchMode=yes -o ConnectTimeout=30'
+  SSH_OPTS='-o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no -o BatchMode=no -o ConnectTimeout=30'
+
+  deploy_config || exit_error "Error executing deploy_config() function.  Is it properly defined by calling script?"
+
+  for TVAR in URLBASE WAR_FILE ZIP_FILE WAR_DEPLOY_FILE ZIP_DEPLOY_DIR SSH_USER ARTIFACTS_DIR ; do
+    if [[ "$(eval 'echo ${'"${TVAR}"'}')" == "" ]]; then
+      echo "Required variable '${TVAR}' not defined!  Please add it to deploy_config() block!"
+      exit 1
+    fi
+  done
+}
+
+# Verify that the md5sum of file matches that stored in file.md5.
+# This version checks the local disk copy on the build server.
+function verify_md5_local() {
+  MD5_FILE="$1"
+  MD5_MD5FILE="$2"
+  ( [[ "${MD5_FILE}"    == "" ]] || \
+    [[ "${MD5_MD5FILE}" == "" ]] ) && exit_error "Error: Insufficient arguments supplied to verify_md5_local()."
+
+  MD5_MD5SUM="$(md5sum "${MD5_FILE}" | awk '{print $1}')"
+  if [[ "${MD5_MD5SUM}" != "$(cat "${MD5_MD5FILE}")" ]]; then
+    printf "MD5 check failed for file:\n  %32s  %s\n  %32s  %s\n" \
+           "${MD5_MD5SUM}" "${MD5_FILE}" "$(cat "${MD5_MD5FILE}")" "${MD5_MD5FILE}"
+    exit 1
+  else
+    printf "OK %32s  %s\n" "${MD5_MD5SUM}" "${MD5_FILE}"
+  fi
+}
+
+# Verify that the md5sum of file matches that stored in file.md5.
+# This version checks the copy deployed to a remote app server.
+function verify_md5_remote() {
+  MD5_SERVER="$1"
+  MD5_FILE="$2"
+  MD5_MD5FILE="$3"
+  ( [[ "${MD5_SERVER}"  == "" ]] || \
+    [[ "${MD5_FILE}"    == "" ]] || \
+    [[ "${MD5_MD5FILE}" == "" ]] ) && exit_error "Error: Insufficient arguments supplied to verify_md5_remote()."
+
+  MD5_MD5SUM="$(ssh ${SSH_OPTS} ${SSH_USER}@${MD5_SERVER} md5sum '"'"${MD5_FILE}"'"' | awk '{print $1}')"
+  if [[ "${MD5_MD5SUM}" != "$(cat "${MD5_MD5FILE}")" ]]; then
+    printf "MD5 check failed for file on remote server:\n  %32s  %s:%s\n  %32s  %s\n" \
+           "${MD5_MD5SUM}" "${MD5_SERVER}" "${MD5_FILE}" "$(cat "${MD5_MD5FILE}")" "${MD5_MD5FILE}"
+    exit 1
+  else
+    printf "OK %32s  %s:%s\n" "${MD5_MD5SUM}" "${MD5_SERVER}" "${MD5_FILE}"
+  fi
+}
+
+# Verify deployment status of application
+
+function deploy_status_check() {
+  APP=`echo $WAR_DEPLOY_FILE | gawk -F/ {'print $8'} |cut -d . -f1`
+  ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass list-applications | grep $APP  > /dev/null 2>&1"
+    if [ $? -ne 0 ]
+    then
+        echo "Deployment Failed!!!"
+        exit 1
+    else
+        echo "Deployment Success!!!"
+    fi
+}
+
+# This function should be called with the first argument as a version number (2.1.1) and
+# the subsequent arguments as the environment to deploy to.
+# Most of the time, we will just want to pass all arguments given on the command line like such:
+#
+#   deploy_app "$@"
+#
+function deploy_app() {
+  VERSION="$1"
+  [[ "${VERSION}" == "" ]] && exit_app_usage
+  shift
+
+  ENVIRONMENT="$1"
+  echo "environment in warhammer is ${ENVIRONMENT}"
+  [[ "${ENVIRONMENT}" == "" ]] && exit_app_usage
+  shift
+
+  DOMAIN="$1"
+  [[ "${DOMAIN}" == "" ]] && exit_app_usage
+  shift
+
+  #deploy_environment_check
+  SERVERS="$*"
+  [[ "${SERVERS}" == "" ]] && exit_app_usage
+
+  deploy_config_check
+
+  echo "======================= Starting Deployment ======================="
+  printf "Version:\t'%s'\n" "${VERSION}"
+  printf "Server:"
+  printf "\t\t'%s'\n" ${SERVERS}
+  echo "==================================================================="
+  echo
+
+  echo
+  TMPDIR="$(mktemp -d /tmp/deploy.XXXXX)"
+  echo "Using temporary directory '${TMPDIR}'."
+  echo
+
+  echo
+  echo "Fetching files..."
+  wget --progress=dot:mega --timeout=30 --no-proxy --directory-prefix="${TMPDIR}" \
+       "${URLBASE}/${WAR_FILE}"{,.md5} "${URLBASE}/${ZIP_FILE}"{,.md5} \
+    || exit_error "Error: Failed to fetch deployment artifacts from repository."
+  echo "...done."
+  echo
+
+  echo
+  echo "Verifying MD5s..."
+  verify_md5_local "${TMPDIR}/${WAR_FILE}"{,.md5}
+  verify_md5_local "${TMPDIR}/${ZIP_FILE}"{,.md5}
+  echo "done."
+  echo
+
+  echo
+  for SERVER in ${SERVERS}; do
+    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} '[ -d "'"${ARTIFACTS_DIR}"'" ] || mkdir -p "'"${ARTIFACTS_DIR}"'"' \
+    || exit_error "Error: Unable to create artifacts dir on server '${SERVER}'.  Is ~/.ssh/authorized_keys properly set up for user '${SSH_USER}' on this server?"
+
+    echo "Copying files to server '${SERVER}'..."
+    scp ${SSH_OPTS} "${TMPDIR}/${WAR_FILE}" "${TMPDIR}/${ZIP_FILE}" ${SSH_USER}@${SERVER}:"${ARTIFACTS_DIR}" \
+    || exit_error "Error copying files to server."
+    echo "...done."
+    echo
+
+    echo "Verifying MD5s..."
+    verify_md5_remote ${SERVER} "${ARTIFACTS_DIR}/${WAR_FILE}" "${TMPDIR}/${WAR_FILE}.md5"
+    verify_md5_remote ${SERVER} "${ARTIFACTS_DIR}/${ZIP_FILE}" "${TMPDIR}/${ZIP_FILE}.md5"
+    echo "...done."
+    echo
+  done
+  echo
+
+  echo
+  for SERVER in ${SERVERS}; do
+    echo -n "Deploying to server '${SERVER}'..."
+    echo -e "undeploying Signup application ...\n"
+    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --port 4899 --user ${SSH_USER} --passwordfile /opt/glassfish/passwords/${SSH_USER}pass undeploy idm"
+    # stop server
+
+    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin stop-domain ${SSH_USER}"
+    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} 'unzip -ojqd "'"${ZIP_DEPLOY_DIR}"'" "'"${ARTIFACTS_DIR}/${ZIP_FILE}"'" "'"${ENVIRONMENT}/*"'" && \
+                            cp -a "'"${ARTIFACTS_DIR}/${WAR_FILE}"'" "'"${WAR_DEPLOY_FILE}"'"' \
+      || exit_error "Error: Failure deploying to server '${SERVER}'."
+    echo "done."
+    # start server
+    ssh ${SSH_OPTS} ${SSH_USER}@${SERVER} "/opt/glassfish/glassfish/bin/asadmin --passwordfile /opt/glassfish/passwords/${SSH_USER}pass start-domain ${SSH_USER}"
+    echo -n "Domain startup in progress ..."
+    sleep 60
+ 
+    deploy_status_check
+  done
+  echo
+
+  echo
+  echo -n "Cleaning up..."
+  rm -rf "${TMPDIR}"
+  echo "done."
+  echo
+
+  echo
+  echo "======================= Deployment Complete ======================="
+  echo
+}
+
+# Sanity check
+if [[ "$BASH_SOURCE" == "$0" ]]; then
+  echo "Error: This file is meant to be sourced from another script, not run directly."
+  exit 1
+fi
