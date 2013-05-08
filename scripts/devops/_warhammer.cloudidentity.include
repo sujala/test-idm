@@ -115,6 +115,7 @@ function deploy_status_check() {
   APP=`echo $WAR_DEPLOY_FILE | awk -F/ {'print $8'} |cut -d . -f1`
   SUCCESS="false"
   START=$(date +"%s")
+  DIFF=START
 
   while [ $SUCCESS == "false" || $(($DIFF % 60)) -lt 120 ]
   do
@@ -126,6 +127,7 @@ function deploy_status_check() {
     NOW=$(date + "%s")
     DIFF=$(($NOW - $START))
     echo "Current time = " + $NOW
+    sleep 1
   done
 
   if [ $SUCCESS == "false" ]; then
