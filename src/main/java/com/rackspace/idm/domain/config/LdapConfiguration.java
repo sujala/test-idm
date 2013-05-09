@@ -86,6 +86,7 @@ public class LdapConfiguration {
             }
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
+            connPool.setRetryFailedOperationsDueToInvalidConnections(true);
 
             int maxConnectionAge = config.getInt("ldap.server.pool.age.max", -1);
             if (maxConnectionAge >= 0) {
