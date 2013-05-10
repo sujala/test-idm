@@ -21,7 +21,11 @@ buildscript {
 }
 
 group = 'com.rackspace'
-version = '1.0.14.5'
+featureVersion = '1.0.14'
+ldapVersion = '1.0.14.5'
+buildVersion = System.currentTimeMillis() 
+version = "$featureVersion-$buildVersion"
+
 
 description = """idm"""
 
@@ -173,7 +177,8 @@ def resourceDirs = [
 task copyConfig(type: Copy) {
     from 'src/main/config'
     into 'build/config'
-    ant.property(name: 'version', value: version)
+    ant.property(name: 'version', value: featureVersion)
+    ant.property(name: 'buildVersion', value: buildVersion)
     filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
 }
 
@@ -182,7 +187,8 @@ task copyBaseConfig << {
         copy {
             from ('src/main/config/base.idm.properties', 'src/main/config/log4j.xml')
             into "build/config/$destDir"
-            ant.property(name: 'version', value: version)
+            ant.property(name: 'version', value: featureVersion)
+            ant.property(name: 'buildVersion', value: buildVersion)
             filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
         }
     }
@@ -199,7 +205,7 @@ task zipConfig(type: Zip) {
 
 task zipLdap(type: Zip) {
     classifier = 'ldap'
-    def ldapDirName = "ldap/ldif/$version"
+    def ldapDirName = "ldap/ldif/$ldapVersion"
     if (new File(ldapDirName).exists()) {
         from ldapDirName
     }

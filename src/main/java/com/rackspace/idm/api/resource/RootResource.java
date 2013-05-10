@@ -5,6 +5,8 @@ import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.serviceprofile.ServiceProfileDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,9 +99,12 @@ public class RootResource {
 
     @Path("buildInfo")
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public String getBuildInfo() {
-        return config.getString("version");
+        JSONObject version = new JSONObject();
+        version.put("version", config.getString("version"));
+        version.put("build", config.getString("buildVersion"));
+        return version.toJSONString();
     }
 
     @Path("{versionId: v[1-9](\\.[0-9])?}")
