@@ -789,7 +789,7 @@ public class CloudMigrationService {
         domainService.createNewDomain(domainId);
 
         String defaultRegion = getDefaultRegion(user);
-        if (defaultRegion != null) {
+        if (StringUtils.isNotBlank(defaultRegion)) {
             newUser.setRegion(defaultRegion);
         }
 
@@ -803,10 +803,13 @@ public class CloudMigrationService {
                 if (isUkCloudRegion() && group.getId().equals("1"))  {// Set Default (1) to Default (0)
                     group.setId("0");
                 }
-                cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
+                com.rackspace.idm.domain.entity.Group globalAuthGroup = cloudGroupService.getGroupByName(group.getName());
+                if (globalAuthGroup != null) {
+                    cloudGroupService.addGroupToUser(globalAuthGroup.getGroupId(), userId);
+                }
             }
         } catch (Exception ex) {
-        
+            logger.debug("could not add group to user: %", userId);
         }
     }
 

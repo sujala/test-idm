@@ -26,9 +26,18 @@ class CloudMigrationServiceTest extends Specification{
         cloudMigrationService = new CloudMigrationService()
     }
 
+    def setup(){
+        config = Mock()
+        client = Mock()
+        cloudGroupService = Mock()
+
+        cloudMigrationService.config = config
+        cloudMigrationService.client = client
+        cloudMigrationService.cloudGroupService = cloudGroupService
+    }
+
     def "Do not allow duplicate groups with the same name to be migrated" () {
         given:
-        setMocks()
         Groups groups = new Groups()
         groups.group = [createGroup("1","groupName", "desc")].asList()
         config.getString("cloudAuth20url") >> "https://auth.staging.us.ccp.rackspace.net/v2.0/"
@@ -45,7 +54,6 @@ class CloudMigrationServiceTest extends Specification{
 
     def "Create new group if not found." () {
         given:
-        setMocks()
         Groups groups = new Groups()
         groups.group = [createGroup("1","groupName", "desc")].asList()
         config.getString("cloudAuth20url") >> "https://auth.staging.us.ccp.rackspace.net/v2.0/"
@@ -58,6 +66,50 @@ class CloudMigrationServiceTest extends Specification{
 
         then:
         1 * cloudGroupService.insertGroup(_)
+    }
+
+    def "addUserGroups adds group based on name"() {
+        given:
+        String userId = "userId"
+        Group group = createGroup("id", "name", "desc")
+        Groups groups = new Groups().with {
+            it.group = [group].asList()
+            return it
+        }
+        def groupId = 2
+
+        when:
+        cloudMigrationService.addUserGroups(userId, groups)
+
+        then:
+        1 * config.getString("cloud.region") >> "US"
+        1 * cloudGroupService.getGroupByName("name") >> {
+            createEntityGroup(groupId, "name", "desc")
+        }
+        1 * cloudGroupService.addGroupToUser(groupId, userId)
+    }
+
+    def "addUserGroups does not add user to group if group is missing"() {
+        given:
+        String userId = "userId"
+        Group group = createGroup("id", "name", "desc")
+        Groups groups = new Groups().with {
+            it.group = [group].asList()
+            return it
+        }
+
+        when:
+        cloudMigrationService.addUserGroups(userId, groups)
+
+        then:
+        1 * config.getString("cloud.region") >> "US"
+        1 * cloudGroupService.getGroupByName("name") >> {
+            throw new NotFoundException()
+        }
+        0 * cloudGroupService.addGroupToUser(_, _)
+
+        then:
+        notThrown(NotFoundException)
     }
 
     def createEntityGroup(Integer id, String name, String description) {
@@ -78,13 +130,5 @@ class CloudMigrationServiceTest extends Specification{
         }
     }
 
-    def setMocks(){
-        config = Mock()
-        client = Mock()
-        cloudGroupService = Mock()
 
-        cloudMigrationService.config = config
-        cloudMigrationService.client = client
-        cloudMigrationService.cloudGroupService = cloudGroupService
-    }
 }
