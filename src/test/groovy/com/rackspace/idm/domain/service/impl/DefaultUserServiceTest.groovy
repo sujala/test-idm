@@ -163,6 +163,21 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
+    def "addUser generates random uid for rsId"() {
+        given:
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("notthesame", "cloud", true)
+        userDao.isUsernameUnique(_) >> true
+
+        when:
+        service.addUser(createUser("region", true, null, "email@email.com", 1, "nast"))
+
+        then:
+        0 * userDao.getNextUserId()
+        1 * userDao.addUser(_) >> { User user ->
+            assert(user.id != null)
+        }
+    }
+
     def "addUser adds region to user if not present"() {
         given:
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)

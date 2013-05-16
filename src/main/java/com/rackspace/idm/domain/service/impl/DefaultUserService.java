@@ -114,7 +114,7 @@ public class DefaultUserService implements UserService {
         }
 
         if (user.getId() == null) {
-            user.setId(this.userDao.getNextUserId());
+            user.setId(generateUniqueId());
         }
 
         userDao.addUser(user);
@@ -147,6 +147,10 @@ public class DefaultUserService implements UserService {
         this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
 
         logger.info("Added User Scope Access for Idm to user {}", user);
+    }
+
+    private String generateUniqueId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     //TODO: consider removing this method. Just here so code doesn't break

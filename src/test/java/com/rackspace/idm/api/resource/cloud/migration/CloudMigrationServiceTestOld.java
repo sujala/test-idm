@@ -1387,6 +1387,10 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         groups.getGroup().add(group);
         groups.getGroup().add(group);
+        Group entityGroup = new Group();
+        entityGroup.setName("name");
+        entityGroup.setGroupId(1);
+        when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService, times(3)).addGroupToUser(anyInt(), eq("userId"));
     }
@@ -1397,6 +1401,10 @@ public class CloudMigrationServiceTestOld {
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         group.setId("1");
         groups.getGroup().add(group);
+        Group entityGroup = new Group();
+        entityGroup.setName("name");
+        entityGroup.setGroupId(1);
+        when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("notUk");
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService).addGroupToUser(1, "userId");
@@ -1408,6 +1416,10 @@ public class CloudMigrationServiceTestOld {
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         group.setId("1");
         groups.getGroup().add(group);
+        Group entityGroup = new Group();
+        entityGroup.setName("name");
+        entityGroup.setGroupId(0);
+        when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("UK");
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService).addGroupToUser(0, "userId");
@@ -1419,6 +1431,10 @@ public class CloudMigrationServiceTestOld {
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         group.setId("123");
         groups.getGroup().add(group);
+        Group entityGroup = new Group();
+        entityGroup.setName("name");
+        entityGroup.setGroupId(123);
+        when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("notUk");
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService).addGroupToUser(123, "userId");
@@ -1430,6 +1446,10 @@ public class CloudMigrationServiceTestOld {
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         group.setId("123");
         groups.getGroup().add(group);
+        Group entityGroup = new Group();
+        entityGroup.setName("name");
+        entityGroup.setGroupId(123);
+        when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("UK");
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService).addGroupToUser(123, "userId");
