@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import javax.annotation.PostConstruct;
 import javax.naming.ldap.SortControl;
 import java.util.ArrayList;
 import java.util.List;
@@ -417,28 +418,31 @@ public abstract class LdapRepository {
 
 
     protected String getNextId(String type) {
-        Filter filter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
-            .addEqualAttribute(ATTR_NAME, type).build();
-        
-        SearchResultEntry entry = this.getSingleEntry(NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
-        
-        long nextId = entry.getAttributeValueAsLong(ATTR_ID);
-        
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE,ATTR_ID, String.valueOf(nextId)));
-        mods.add(new Modification(ModificationType.ADD,ATTR_ID, String.valueOf(nextId + 1)));
-        
-        try {
-            getAppInterface().modify(entry.getDN(), mods);
-        } catch (LDAPException ex) {
-            if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
-                // Another applicaiton already got the number so
-                // we have to repeat the call
-                return getNextId(type);
+        long nextId = 0;
+
+        while(true) {
+            Filter filter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
+                    .addEqualAttribute(ATTR_NAME, type).build();
+
+            SearchResultEntry entry = this.getSingleEntry(NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
+
+            nextId = entry.getAttributeValueAsLong(ATTR_ID);
+
+            List<Modification> mods = new ArrayList<Modification>();
+            mods.add(new Modification(ModificationType.DELETE,ATTR_ID, String.valueOf(nextId)));
+            mods.add(new Modification(ModificationType.ADD,ATTR_ID, String.valueOf(nextId + 1)));
+
+            try {
+                getAppInterface().modify(entry.getDN(), mods);
+                break;
+            } catch (LDAPException ex) {
+                if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
+                    continue;
+                }
+                getLogger().error("Error getting next id of type {}", type, ex);
+                throw new IllegalStateException(ex.getMessage(), ex);
             }
-            getLogger().error("Error getting next id of type {}", type, ex);
-            throw new IllegalStateException(ex.getMessage(), ex);
         }
         return String.valueOf(nextId);
     }

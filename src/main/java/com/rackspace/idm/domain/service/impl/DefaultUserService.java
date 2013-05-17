@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,6 +77,13 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private CryptHelper cryptHelper;
+
+    private boolean userUUIDEnabled = false;
+
+    @PostConstruct
+    public void initialize() {
+        userUUIDEnabled = config.getBoolean("user.uuid.enabled");
+    }
 
     @Override
     public void addRacker(Racker racker) {
@@ -150,7 +158,11 @@ public class DefaultUserService implements UserService {
     }
 
     private String generateUniqueId() {
-        return UUID.randomUUID().toString().replace("-", "");
+        if (userUUIDEnabled) {
+            return UUID.randomUUID().toString().replace("-", "");
+        } else {
+            return this.userDao.getNextUserId();
+        }
     }
 
     //TODO: consider removing this method. Just here so code doesn't break

@@ -384,18 +384,6 @@ public class LdapEndpointRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void getNextId_throwsLdapExceptionResultCodeNoSuchAttribute_makesRecursiveCall() throws Exception {
-        Attribute[] attributes = {new Attribute("rsId","123")};
-        SearchResultEntry searchResultEntry = new SearchResultEntry("testDn",attributes);
-        doReturn(searchResultEntry).when(spy).getSingleEntry(eq("ou=nextIds,o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.ONE), any(Filter.class));
-        doReturn(ldapInterface).when(spy).getAppInterface();
-        doThrow(new LDAPException(ResultCode.NO_SUCH_ATTRIBUTE)).when(ldapInterface).modify(eq("testDn"), any(List.class));
-        doCallRealMethod().doReturn("success").when(spy).getNextId("type");
-        spy.getNextId("type");
-        verify(spy,times(2)).getNextId("type");
-    }
-
-    @Test
     public void queryPairConstructor_attributeIsBlank_throwsIllegalArgumentException() throws Exception {
         try{
             new LdapRepository.QueryPair("","comparer","value");

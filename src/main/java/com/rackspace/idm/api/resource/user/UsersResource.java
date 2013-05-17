@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
+import java.util.UUID;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -109,6 +110,10 @@ public class UsersResource extends ParentResource {
         User userDO = userConverter.toUserDO(jaxbUser);
         userDO.setDefaults();
         validateDomainObject(userDO);
+
+        if (userDO.getId() == null && config.getBoolean("user.uuid.enabled.foundation")) {
+            userDO.setId(UUID.randomUUID().toString().replace("-", ""));
+        }
 
         this.userService.addUser(userDO);
 
