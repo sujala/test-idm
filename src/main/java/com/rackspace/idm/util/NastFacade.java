@@ -50,7 +50,8 @@ public class NastFacade {
             try {
                 nastAccountId = addNastUser();
             } catch (Exception e) {
-                logger.error("could not add nast user: %s", e.getMessage());
+                String errMsg = String.format("could not add nast user: %s", e.getMessage());
+                logger.error(errMsg);
             }
         }
 

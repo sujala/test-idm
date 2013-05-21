@@ -53,6 +53,6 @@ class NastFacadeTest extends RootServiceTest {
         clientWrapper.addResellerStorageAccount(_) >> { throw new XmlRpcException() }
 
         then:
-        1 * logger.error(_, _)
+        1 * logger.error(_)
     }
 }
