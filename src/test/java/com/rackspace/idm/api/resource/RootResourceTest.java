@@ -75,8 +75,9 @@ public class RootResourceTest {
     @Test
     public void getBuildInfo_callsConfig_getStringVersion() throws Exception {
         when(config.getString("version")).thenReturn("version");
+        when(config.getString("buildVersion")).thenReturn("build");
         String buildInfo = rootResource.getBuildInfo();
-        assertThat("version", buildInfo, equalTo("version"));
+        assertThat("version", buildInfo, equalTo("{\"build\":\"build\",\"version\":\"version\"}"));
     }
 
     @Test
