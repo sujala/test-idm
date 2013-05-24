@@ -438,6 +438,9 @@ public abstract class LdapRepository {
                 break;
             } catch (LDAPException ex) {
                 if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
+                    getLogger().info("Could not user nextId, trying again...");
+                    String errMsg = String.format("Message: %s - Exception Message %s", ex.getMessage(), ex.getExceptionMessage());
+                    getLogger().error(errMsg, ex);
                     continue;
                 }
                 getLogger().error("Error getting next id of type {}", type, ex);
