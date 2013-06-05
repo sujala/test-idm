@@ -23,7 +23,7 @@ buildscript {
 group = 'com.rackspace'
 featureVersion = '1.0.14'
 ldapVersion = '1.0.14.5'
-buildVersion = System.currentTimeMillis() 
+buildVersion = System.currentTimeMillis()
 version = "$featureVersion-$buildVersion"
 
 
@@ -151,24 +151,28 @@ dependencies {
 def resourceDirs = [
     'DEV',
     'DEV2',
-    'JENKINS',
-    'LOCAL-DEV',
     'EXT/PRODUCTION/DFW',
     'EXT/PRODUCTION/IAD',
     'EXT/PRODUCTION/LON',
     'EXT/PRODUCTION/ORD',
+    'EXT/PRODUCTION/SYD',
     'EXT/STAGING/LON',
     'EXT/STAGING/ORD',
+    'EXT/STAGING/SYD',
     'EXT/TEST',
     'EXT/UAT',
     'INT/PRODUCTION/DFW',
     'INT/PRODUCTION/IAD',
     'INT/PRODUCTION/LON',
     'INT/PRODUCTION/ORD',
+    'INT/PRODUCTION/SYD',
     'INT/STAGING/LON',
     'INT/STAGING/ORD',
+    'INT/STAGING/SYD',
     'INT/TEST',
     'INT/UAT',
+    'JENKINS',
+    'LOCAL-DEV',
     'OPENLDAP',
     'TEST',
     'TEST2'
