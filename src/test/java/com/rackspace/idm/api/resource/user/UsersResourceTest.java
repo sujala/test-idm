@@ -96,18 +96,6 @@ public class UsersResourceTest {
         verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
     }
 
-    //TODO
-    @Ignore
-    @Test
-    public void addUser_callsUserValidatorFoundation_checkUsername() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        usersResource.addUser("authHeader", user);
-        verify(userValidator).checkCloudAuthForUsername(user.getUsername());
-    }
-
     @Test
     public void addUser_callsUserService_addUser() throws Exception {
         User user = new User();

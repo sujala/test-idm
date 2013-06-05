@@ -172,19 +172,6 @@ public class AuthenticationFilterTests {
     }
 
     @Test
-    public void shouldMigrateUrl_withMigrationAdminRole_returnsRequest() throws Exception {
-        when(requestMock.getMethod()).thenReturn("GET");
-        when(requestMock.getPath()).thenReturn("migration/some/path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
-        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-        ArrayList<String> roles = new ArrayList<String>();
-        roles.add("migrationAdminGroup");
-        when(userService.getRackerRoles(anyString())).thenReturn(roles);
-        when(configuration.getString("migrationAdminGroup")).thenReturn("migrationAdminGroup");
-        authenticationFilterWithMock.filter(requestMock);
-    }
-
-    @Test
     public void shouldIgnoreCloudResourceRequest() {
         EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/auth");
         EasyMock.expect(request.getMethod()).andReturn("GET");
@@ -387,26 +374,6 @@ public class AuthenticationFilterTests {
         when(requestMock.getPath()).thenReturn("somePath/xsltUsers.xslt");
         ContainerRequest containerRequest = authFilter.filter(requestMock);
         assertThat("request", containerRequest, notNullValue());
-    }
-
-    @Test
-    public void filter_withoutMigrationAdminRole_returnsRequest() throws Exception {
-        try{
-            when(requestMock.getMethod()).thenReturn("GET");
-            when(requestMock.getPath()).thenReturn("migration/some/path");
-            when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
-            when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-            ArrayList<String> roles = new ArrayList<String>();
-            roles.add("migrationAdminGroup");
-            when(userService.getRackerRoles(anyString())).thenReturn(roles);
-            when(configuration.getString("migrationAdminGroup")).thenReturn("foo");
-            authenticationFilterWithMock.filter(requestMock);
-            assertTrue("should throw exception",false);
-
-        } catch (NotAuthenticatedException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Authentication Failed."));
-        }
-
     }
 
     @Test(expected = NotAuthenticatedException.class)
