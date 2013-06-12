@@ -715,7 +715,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             ClientRole cRole = checkAndGetClientRole(roleId);
 
@@ -1690,7 +1690,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             PaginatorContext<ClientRole> context;
             User caller = userService.getUserByAuthToken(authToken);
-            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
 
             if (StringUtils.isBlank(serviceId)) {
                 context = this.applicationService.getAvailableClientRolesPaged(offset, resultSize, userIdentityRole.getRsWeight());
@@ -3309,7 +3309,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
-        if (user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:")) {
+        if (user.getRoles() == null ||
+            roleToAdd == null ||
+            !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:") ||
+            roleToAdd.getName().equalsIgnoreCase("identity:user-manage")
+        ) {
             return;
         }
 

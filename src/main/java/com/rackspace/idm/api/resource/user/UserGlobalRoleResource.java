@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -82,7 +81,7 @@ public class UserGlobalRoleResource {
         }
 
         if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-            ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
             if (userIdentityRole != null) {
                 throw new BadRequestException("A user cannot have more than one identity:* role");
             }
@@ -186,7 +185,7 @@ public class UserGlobalRoleResource {
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, tenantRole);
         }
 
-        List<String> identityRoleNames = getIdentityRoleNames();
+        List<String> identityRoleNames =  applicationService.getIdentityRoleNames();
 
         if (identityRoleNames.contains(tenantRole.getName())) {
             throw new BadRequestException("Cannot add identity roles to tenant.");

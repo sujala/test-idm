@@ -63,6 +63,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def userAdminToken
     @Shared def userAdminTwoToken
     @Shared def defaultUserToken
+    @Shared def defaultUserManageRoleToken
     @Shared def serviceAdmin
 
     @Shared def identityAdmin
@@ -72,6 +73,8 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
     @Shared def defaultUserForAdminTwo
+    @Shared def defaultUserWithManageRole
+    @Shared def defaultUserWithManageRole2
     @Shared def testUser
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -93,6 +96,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def group
     @Shared Region sharedRegion
 
+    static def USER_MANAGE_ROLE_ID = "7"
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
     static def OS_KSCATALOG = "OS-KSCATALOG"
@@ -163,6 +167,13 @@ class Cloud20IntegrationTest extends Specification {
         createUserXML(userAdminTwoToken, userForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserForAdminTwo = getUserByNameXML(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
 
+        createUserXML(userAdminToken, userForCreate("defaultUserWithManageRole$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserWithManageRole = getUserByNameXML(userAdminToken, "defaultUserWithManageRole$sharedRandom").getEntity(User)
+        defaultUserManageRoleToken = authenticatePasswordXML("defaultUserWithManageRole$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        createUserXML(userAdminToken, userForCreate("defaultUserWithManageRole2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserWithManageRole2 = getUserByNameXML(userAdminToken, "defaultUserWithManageRole2$sharedRandom").getEntity(User)
+
         defaultUserToken = authenticatePasswordXML("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         //create group
@@ -229,6 +240,8 @@ class Cloud20IntegrationTest extends Specification {
         destroyUser(defaultUserTwo.getId())
         destroyUser(defaultUserThree.getId())
         destroyUser(defaultUserForAdminTwo.getId())
+        destroyUser(defaultUserWithManageRole.getId())
+        destroyUser(defaultUserWithManageRole2.getId())
 
         destroyUser(testUser.getId())
 
@@ -1752,6 +1765,16 @@ class Cloud20IntegrationTest extends Specification {
         then:
         identityAdminResponse.status == 201
         deleteResponse.status == 204
+    }
+
+    def "user-admin manage role can add user manage role to default user"() {
+        when:
+        def addRoleResult = addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def addRoleResult2 = addApplicationRoleToUserXML(defaultUserManageRoleToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole2.getId())
+
+        then:
+        addRoleResult.status == 200
+        addRoleResult2.status == 200
     }
 
     def destroyUser(userId) {

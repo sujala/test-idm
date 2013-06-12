@@ -1004,7 +1004,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole(null)
     }
 
@@ -3116,6 +3116,47 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         2 * groupService.deleteGroupFromUser(_, _)
         2 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
+    }
+
+    def "user admin can add user-managed role to a default user"() {
+        given:
+        allowUserAccess()
+        def userId = "1"
+        def roleId = "7"
+
+        def cRole = entityFactory.createClientRole().with {
+            it.id = roleId
+            it.name = "identity:user-manage"
+            return it
+        }
+
+        def user = entityFactory.createUser().with {
+            it.username = "user"
+            it.id = userId
+            return it
+        }
+
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.name = "identity:default"
+            return it
+        }
+        def userRoles = [tenantRole].asList()
+
+        when:
+        service.addUserRole(headers, authToken, userId, roleId)
+
+        then:
+        applicationService.getClientRoleById(roleId) >> cRole
+        userService.checkAndGetUserById(userId) >> user
+        userService.getUserByAuthToken(authToken) >> caller
+        tenantService.getGlobalRolesForUser(_) >> userRoles
+
+        then:
+        1 * tenantService.addTenantRoleToUser(_, _)
     }
 
     def mockServices() {

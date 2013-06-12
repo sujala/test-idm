@@ -1798,14 +1798,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserRole(null, authToken, authToken, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);

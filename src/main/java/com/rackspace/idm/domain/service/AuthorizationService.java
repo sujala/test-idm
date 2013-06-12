@@ -20,6 +20,7 @@ public interface AuthorizationService {
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
     boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
+    boolean authorizeUserManageRole(ScopeAccess scopeAccess);
     boolean authorizeCloudUser(ScopeAccess scopeAccess);
     boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
     boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
@@ -36,6 +37,7 @@ public interface AuthorizationService {
     void verifyRackerOrIdentityAdminAccess(ScopeAccess authScopeAccess);
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyUserManagedLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);

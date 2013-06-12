@@ -74,10 +74,12 @@ public interface ApplicationService {
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
 
     PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit);
-    
+
     List<Application> getOpenStackServices();
 
     void softDeleteApplication(Application application);
 
-    ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames);
+    ClientRole getUserIdentityRole(User user);
+
+    List<String> getIdentityRoleNames();
 }

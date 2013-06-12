@@ -27,30 +27,11 @@ class PrecedenceValidatorTest extends RootServiceTest {
         mockConfiguration(service)
     }
     
-    def "getIdentityRoleNames calls config to retrieve identity roles"() {
-        when:
-        service.getIdentityRoleNames()
-        
-        then:
-        1 * config.getString("cloudAuth.userRole") >> ""
-        1 * config.getString("cloudAuth.userAdminRole") >> ""
-        1 * config.getString("cloudAuth.adminRole") >> ""
-        1 * config.getString("cloudAuth.serviceAdminRole") >> ""
-    }
-    
-    def "getCloudAuthClientId calls config to retrieve cloudAuthClientId"() {
-        when:
-        service.getCloudAuthClientId()
-        
-        then:
-        1 * config.getString("cloudAuth.clientId") >> ""
-    }
-    
     def "compareWeights throws forbidden exception if caller weight is greater than role weight"() {
         when:
         service.compareWeights(100, 500)
         service.compareWeights(500, 100)
-        
+
         then:
         notThrown(ForbiddenException)
         
@@ -67,7 +48,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
         service.verifyCallerRolePrecedenceForAssignment(user, role)
 
         then:
-        1 * applicationService.getUserIdentityRole(_, _, _) >> null
+        1 * applicationService.getUserIdentityRole(_) >> null
 
         then:
         thrown(ForbiddenException)
@@ -81,13 +62,13 @@ class PrecedenceValidatorTest extends RootServiceTest {
             return it
         }
 
-        applicationService.getUserIdentityRole(_, _, _) >> role
+        applicationService.getUserIdentityRole(_) >> role
 
         when:
         service.verifyCallerRolePrecedenceForAssignment(user, role)
 
         then:
-        2 * config.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
+        1 * config.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
         1 * config.getInt("cloudAuth.special.rsWeight") >> 500
     }
 
@@ -121,8 +102,8 @@ class PrecedenceValidatorTest extends RootServiceTest {
         service.verifyCallerPrecedenceOverUser(caller, user)
 
         then:
-        1 * applicationService.getUserIdentityRole(caller, _, _) >> callerRole
-        1 * applicationService.getUserIdentityRole(user, _, _) >> userRole
+        1 * applicationService.getUserIdentityRole(caller) >> callerRole
+        1 * applicationService.getUserIdentityRole(user) >> userRole
     }
 
     def "verifyCallerPrecedenceOverUser throws ForbiddenException if caller does not have identity role"() {
@@ -136,8 +117,8 @@ class PrecedenceValidatorTest extends RootServiceTest {
         service.verifyCallerPrecedenceOverUser(caller, user)
 
         then:
-        1 * applicationService.getUserIdentityRole(caller, _, _) >> callerRole
-        1 * applicationService.getUserIdentityRole(user, _, _) >> userRole
+        1 * applicationService.getUserIdentityRole(caller) >> callerRole
+        1 * applicationService.getUserIdentityRole(user) >> userRole
 
         then:
         thrown(ForbiddenException)
@@ -171,7 +152,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
         service.verifyCallerRolePrecedence(user, clientRole)
 
         then:
-        1 * applicationService.getUserIdentityRole(user, _, _) >> null
+        1 * applicationService.getUserIdentityRole(user) >> null
 
         then:
         thrown(ForbiddenException)
