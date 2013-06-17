@@ -308,22 +308,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
 
             String baseUrlRefId = String.valueOf(baseUrlRef.getId());
-            //Adding v1Default
-            if (tenant.getV1Defaults() == null && baseUrlRef.isV1Default()) {
-                tenant.addV1Default(baseUrlRefId);
-            } else if (tenant.getV1Defaults() != null) {
-                // Check for existing v1Default for replace by Service Name
-                CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
-                for (String v1d : tenant.getV1Defaults()) {
-                    CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1d));
-                    if (newBaseUrl.getServiceName().equals(cloudBaseUrl.getServiceName())) {
-                        tenant.removeV1Default(v1d);
-                    }
-                }
-                tenant.addV1Default(baseUrlRefId);
-            }
 
-
+            replaceAddV1Default(baseUrlRef, tenant, baseUrlRefId);
             this.tenantService.updateTenant(tenant);
 
             return Response
@@ -332,6 +318,22 @@ public class DefaultCloud11Service implements Cloud11Service {
                     .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    private void replaceAddV1Default(BaseURLRef baseUrlRef, Tenant tenant, String baseUrlRefId) {
+        if(baseUrlRef.isV1Default()) {
+            if (tenant.getV1Defaults() != null) {
+                // Check for existing v1Default for replace by Service Name
+                CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+                for (String v1d : tenant.getV1Defaults()) {
+                    CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1d));
+                    if (newBaseUrl.getServiceName().equals(cloudBaseUrl.getServiceName())) {
+                        tenant.removeV1Default(v1d);
+                    }
+                }
+            }
+            tenant.addV1Default(baseUrlRefId);
         }
     }
 

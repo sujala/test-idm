@@ -480,6 +480,34 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         0 * atomHopperClient.asyncPost(_,_)
     }
 
+    def "Do not add v1Default if set to false and tenant contains v1Defaults" ()  {
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        baseUrlRef.v1Default = false
+        def tenant = entityFactory.createTenant()
+        tenant.v1Defaults = ["2"].asList()
+
+        when:
+        service.replaceAddV1Default(baseUrlRef, tenant, "1")
+
+        then:
+        0 * endpointService.getBaseUrlById(_)
+    }
+
+    def "Do not add v1Default if set to true and tenant contains v1Defaults" ()  {
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        baseUrlRef.v1Default = true
+        def tenant = entityFactory.createTenant()
+        tenant.v1Defaults = ["2"].asList()
+        def cloudBaseUrl = entityFactory.createCloudBaseUrl()
+        cloudBaseUrl.serviceName = "serviceName"
+
+        when:
+        service.replaceAddV1Default(baseUrlRef, tenant, "1")
+
+        then:
+        2 * endpointService.getBaseUrlById(_) >> cloudBaseUrl
+    }
+
     def createUser(String id, String username, int mossoId, String nastId) {
         new com.rackspace.idm.domain.entity.User().with {
             it.id = id
