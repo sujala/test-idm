@@ -948,7 +948,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointId);
-            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+            String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+            tenant.removeBaseUrlId(baseUrlId);
+            tenant.removeV1Default(baseUrlId);
             tenantService.updateTenant(tenant);
             return Response.noContent();
         } catch (Exception ex) {

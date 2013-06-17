@@ -2680,18 +2680,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void deleteBaseURLRef_baseUrlDefaultIsTrue_throwsBadRequest_returns400() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setDef(true);
-        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(user);
-        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(request, "userId", "1", httpHeaders);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
     public void getBaseURLRef_baseUrlIdDoesNotMatchCloudBaseUrlId_responseNotFound_returns404() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlId(2);

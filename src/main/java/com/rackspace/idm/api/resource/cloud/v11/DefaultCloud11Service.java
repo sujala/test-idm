@@ -567,10 +567,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
 
-            if (baseUrl.getDef()) {
-                throw new BadRequestException(String.format("Cannot delete default BaseUrlId %s.", baseUrl.getBaseUrlId()));
-            }
-
             String tenantId;
             //if (baseUrl.getBaseUrlType().equals("NAST"))
                 tenantId = user.getNastId();
@@ -598,7 +594,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (!found) {
-                throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
+                throw new NotFoundException(String.format("Attempting to delete nonexistent baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
             }
 
             return Response.noContent();

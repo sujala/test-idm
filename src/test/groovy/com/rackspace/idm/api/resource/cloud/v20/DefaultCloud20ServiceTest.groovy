@@ -3118,6 +3118,43 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == 204
     }
 
+    def "Remove v1Default if it exists" () {
+        given:
+        allowUserAccess()
+        def tenant = entityFactory.createTenant()
+        tenant.v1Defaults = ["1","2"].asList()
+        tenant.baseUrlIds = ["1","2", "3"].asList()
+        def cloudBaseUrl = entityFactory.createCloudBaseUrl()
+        cloudBaseUrl.baseUrlId = 1
+
+        when:
+        service.deleteEndpoint(headers, authToken, "1", "1")
+
+        then:
+        1 * tenantService.checkAndGetTenant(_) >> tenant
+        1 * endpointService.checkAndGetEndpointTemplate(_) >> cloudBaseUrl
+        1 * tenantService.updateTenant(_)
+        tenant.v1Defaults.size() == 1
+    }
+
+    def "Remove endpoint if it exists" () {
+        given:
+        allowUserAccess()
+        def tenant = entityFactory.createTenant()
+        tenant.baseUrlIds = ["1","2", "3"].asList()
+        def cloudBaseUrl = entityFactory.createCloudBaseUrl()
+        cloudBaseUrl.baseUrlId = 1
+
+        when:
+        service.deleteEndpoint(headers, authToken, "1", "1")
+
+        then:
+        1 * tenantService.checkAndGetTenant(_) >> tenant
+        1 * endpointService.checkAndGetEndpointTemplate(_) >> cloudBaseUrl
+        1 * tenantService.updateTenant(_)
+        tenant.baseUrlIds.size() == 2
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
