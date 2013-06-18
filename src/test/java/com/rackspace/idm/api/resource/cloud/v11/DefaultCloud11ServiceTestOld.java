@@ -22,6 +22,7 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -426,7 +427,7 @@ public class DefaultCloud11ServiceTestOld {
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -1463,7 +1464,7 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUser(null)).thenReturn(userDO);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
         spy.getBaseURLRef(null, null, "0", null);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -1489,7 +1490,7 @@ public class DefaultCloud11ServiceTestOld {
         cloudBaseUrlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(cloudBaseUrlList);
         endpointsForUser.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(endpointsForUser);
+        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(endpointsForUser);
         Response.ResponseBuilder responseBuilder = spy.getBaseURLRef(null, null, "1", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -1507,7 +1508,7 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUser("userId")).thenReturn(userDO);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
         spy.getBaseURLRefs(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -1525,7 +1526,7 @@ public class DefaultCloud11ServiceTestOld {
         cloudBaseUrlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(cloudBaseUrlList);
         endpointsForUser.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(endpointsForUser);
+        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(endpointsForUser);
         spy.getBaseURLRefs(null, "userId", null);
         verify(endpointConverterCloudV11).openstackToBaseUrlRefs(endpointsForUser);
     }
@@ -1619,7 +1620,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUser(null, "userId", null);
-        verify(scopeAccessService).getUserScopeAccessForClientId(anyString(), anyString());
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -1628,7 +1629,7 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUser("userId")).thenReturn(userDO);
         when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         spy.getUser(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(userScopeAccess);
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -2065,7 +2066,7 @@ public class DefaultCloud11ServiceTestOld {
         user.setBaseURLRefs(new BaseURLRefList());
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.updateUser(request, "userId", null, user);
-        verify(scopeAccessService).getUserScopeAccessForClientId(null, null);
+        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -2091,7 +2092,7 @@ public class DefaultCloud11ServiceTestOld {
         cloudBaseUrlList.add(baseUrl);
         openstackEndpoint.setBaseUrls(cloudBaseUrlList);
         currentEndpoints.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(currentEndpoints);
+        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(currentEndpoints);
         spy.updateUser(request, "userId", null, user);
         verify(userService).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }

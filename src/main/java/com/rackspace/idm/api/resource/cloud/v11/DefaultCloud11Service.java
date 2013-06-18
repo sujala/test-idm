@@ -404,8 +404,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(userDO.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(userDO);
 
             URI uri = uriInfo.getRequestUriBuilder().path(userDO.getUsername()).build();
             com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpointsForUser);
@@ -666,8 +665,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             BaseURLRef baseURLRef = new BaseURLRef();
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(user);
             for (OpenstackEndpoint openstackEndpoint : endpointsForUser) {
                 for (CloudBaseUrl baseUrl : openstackEndpoint.getBaseUrls()) {
                     if (String.valueOf(baseUrl.getBaseUrlId()).equals(baseURLId)) {
@@ -703,8 +701,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
             JAXBElement<BaseURLRefList> baseURLRefsNew = OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpointsForUser));
             return Response.ok(baseURLRefsNew.getValue());
 
@@ -727,8 +724,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 
             return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)).getValue());
         } catch (Exception ex) {
@@ -757,8 +753,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserWithEndpoints(User user) {
-        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
         return OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints));
     }
 
@@ -783,8 +778,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserEnabledWithEndpoints(User user) {
-        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
         return OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user,endpoints));
     }
 
@@ -899,8 +893,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserKeyWithEndpoints(User user) {
-        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
         return OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user,endpoints));
     }
 
@@ -985,14 +978,13 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the
                 // old
                 // endpoints
                 // and then re-add the new list
 
-                List<OpenstackEndpoint> currentEndpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+                List<OpenstackEndpoint> currentEndpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 
                 // Delete all old baseUrls
                 for (OpenstackEndpoint endpoint : currentEndpoints) {
@@ -1012,7 +1004,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
 
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(gaUser, endpoints)).getValue());
         } catch (Exception ex) {
@@ -1200,7 +1192,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String password = passCreds.getPassword();
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (NotAuthenticatedException nae) {
             return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
