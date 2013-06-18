@@ -1192,7 +1192,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String password = passCreds.getPassword();
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (NotAuthenticatedException nae) {
             return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");

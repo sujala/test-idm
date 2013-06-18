@@ -427,7 +427,7 @@ public class DefaultCloud11ServiceTestOld {
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
+        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
     }
 
     @Test

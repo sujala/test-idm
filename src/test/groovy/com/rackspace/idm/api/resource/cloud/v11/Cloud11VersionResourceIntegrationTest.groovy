@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -66,6 +67,26 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         randomMosso = 10000000 + random.nextInt(1000000)
         authUser = "auth"
         authPassword = "auth123"
+    }
+
+    def "Authenticate with password credentials returns 200" () {
+        given:
+        String username = "auth" + sharedRandom
+        String password = "Password1"
+        String domain = "domain" + sharedRandom
+        def user = userForCreate20(username, "displayName", "test@email.com", true, "DFW", domain, password)
+
+        when:
+        createUser20XML(identityAdminToken, user)
+        def authResponse = authenticateWithPasswordXML(username, password)
+
+        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+        deleteUserXML(username)
+        hardDeleteUserXML(serviceAdminToken, userEntity.id)
+
+        then:
+        authResponse.status == 200
     }
 
     def "CRUD user v1.1" () {
@@ -193,6 +214,15 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
     }
 
     //Resource Calls v1.1
+    def authenticateWithPasswordXML(String username, String password){
+        def cred = new PasswordCredentials().with {
+            it.username = username
+            it.password = password
+            return it
+        }
+        resource.path(path11).path("auth-admin").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(cred).post(ClientResponse)
+    }
+
     def createUserXML(user) {
         resource.path(path11).path('users').header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
