@@ -21,8 +21,8 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '1.0.14'
-ldapVersion = '1.0.14.5'
+featureVersion = '1.0.14.6'
+ldapVersion = '1.0.14.6'
 buildVersion = System.currentTimeMillis()
 version = "$featureVersion-$buildVersion"
 
