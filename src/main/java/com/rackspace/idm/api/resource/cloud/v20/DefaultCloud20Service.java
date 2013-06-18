@@ -1423,22 +1423,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyServiceAdminLevelAccess(scopeAccessByAccessToken);
 
             User user = this.userService.getUserById(userId);
-            User caller = getUser(scopeAccessByAccessToken);
 
             if (user == null) {
                 String errMsg = String.format("User with id: %s does not exist", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
-            }
-
-            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-
-            if (!callerIsServiceAdmin && !caller.getId().equals(userId)) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             if (StringUtils.isBlank(user.getPassword())) {

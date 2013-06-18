@@ -1853,7 +1853,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
-        1 * authorizationService.verifyUserLevelAccess(_)
+        0 * authorizationService.verifyUserLevelAccess(_)
     }
 
     def "identity:admin should not get other users password credentials"() {
@@ -1869,8 +1869,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.getUserPasswordCredentials(headers, authToken, "userId").build()
 
         then:
-        1 * authorizationService.authorizeCloudServiceAdmin(_) >> false
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
+        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> {throw new ForbiddenException()}
 
         then:
         response.status == 403
@@ -1915,7 +1914,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUserById(_) >> user
         userService.getUser(_) >> caller
-        authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.verifyServiceAdminLevelAccess(_) >> {throw new ForbiddenException()}
 
         when:
         def result = service.getUserPasswordCredentials(headers, authToken, "userId")
@@ -3153,6 +3152,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * endpointService.checkAndGetEndpointTemplate(_) >> cloudBaseUrl
         1 * tenantService.updateTenant(_)
         tenant.baseUrlIds.size() == 2
+    }
+
+    def "Only service-admin are allow" () {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser()
+        user.password = "Password1"
+
+        when:
+        def response = service.getUserPasswordCredentials(headers, authToken, "1")
+
+        then:
+        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+        1 * userService.getUserById(_) >> user
+
+        then:
+        response.build().status == 200
+
+
     }
 
     def mockServices() {

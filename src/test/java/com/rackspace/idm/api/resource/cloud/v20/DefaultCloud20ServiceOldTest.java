@@ -2480,14 +2480,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.getUserPasswordCredentials(null, authToken, null);
-        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
-    }
-
-    @Test
     public void getUserCredential_cloudUser_callsGetUser() throws Exception {
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         spy.getUserApiKeyCredentials(null, authToken, userId);
@@ -2505,13 +2497,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserApiKeyCredentials(null, authToken, "id"), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotFoundException.class));
-    }
-
-    @Test
-    public void getUserCredential_cloudAdminUser_callsGetUser() throws Exception {
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        spy.getUserPasswordCredentials(null, authToken, userId);
-        verify(spy).getUser(any(ScopeAccess.class));
     }
 
     @Test
