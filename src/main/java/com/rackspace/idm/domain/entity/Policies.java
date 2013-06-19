@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
  * Time: 3:16 PM
  * To change this template use File | Settings | File Templates.
  */
+@Data
 public class Policies{
     private List<Policy> policy;
 
@@ -22,13 +24,5 @@ public class Policies{
             policy = new ArrayList<Policy>();
         }
         return this.policy;
-    }
-
-    public PolicyAlgorithm getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(PolicyAlgorithm value) {
-        this.algorithm = value;
     }
 }
