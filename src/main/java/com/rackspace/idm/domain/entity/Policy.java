@@ -6,6 +6,7 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import lombok.Data;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +15,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
  * Time: 3:51 PM
  * To change this template use File | Settings | File Templates.
  */
+@Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_POLICY)
 public class Policy implements Auditable{
 
@@ -41,65 +43,12 @@ public class Policy implements Auditable{
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
 
-
-    public String getPolicyId() {
-        return policyId;
-    }
-
-    public void setPolicyId(String policyId) {
-        this.policyId = policyId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public Boolean isGlobal() {
         return global;
-    }
-
-    public void setGlobal(Boolean global) {
-        this.global = global;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getPolicyType() {
-        return policyType;
-    }
-
-    public void setPolicyType(String policyType) {
-        this.policyType = policyType;
-    }
-
-    public String getBlob() {
-        return blob;
-    }
-
-    public void setBlob(String blob) {
-        this.blob = blob;
-    }
-
-    public ReadOnlyEntry getLDAPEntry() {
-        return ldapEntry;
     }
 
     public String getUniqueId() {
@@ -108,6 +57,10 @@ public class Policy implements Auditable{
         } else {
             return ldapEntry.getDN();
         }
+    }
+
+    public void setUniqueId(String id){
+        this.ldapEntry.setDN(id);
     }
 
     @Override
@@ -119,13 +72,5 @@ public class Policy implements Auditable{
     @Override
     public String toString() {
         return getAuditContext();
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
-    }
-
-    public void setUniqueId(String id){
-        this.ldapEntry.setDN(id);
     }
 }
