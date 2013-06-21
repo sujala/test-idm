@@ -196,52 +196,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role) {
-        getLogger().debug("Does Scope Access Have Tenant Role");
-
-        DN searchDn = null;
-        try {
-            if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                searchDn = getBaseDnForSearch(new DN(scopeAccess.getUniqueId()));
-            } else {
-                searchDn = getBaseDnForSearch(scopeAccess.getLDAPEntry().getParentDN());
-            }
-        } catch (Exception ex) {
-            throw new IllegalStateException();
-        }
-
-        if (searchDn == null) {
-            throw new BadRequestException("token was not tied to a user");
-        }
-        TenantRole exists = getTenantRole(searchDn.toString(), role.getId());
-
-        boolean hasRole = exists != null;
-        getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);
-        return hasRole;
-    }
-
-    @Override
-    public boolean doesUserHaveTenantRole(String uniqueId, ClientRole role) {
-        getLogger().debug("Does User Have Tenant Role");
-
-        DN searchDn;
-        try {
-            searchDn = new DN(uniqueId);
-        } catch (Exception ex) {
-            throw new IllegalStateException();
-        }
-
-        if (searchDn == null) {
-            throw new BadRequestException("User is invalid");
-        }
-        TenantRole exists = getTenantRole(searchDn.toString(), role.getId());
-
-        boolean hasRole = exists != null;
-        getLogger().debug("Does User Have Tenant Role: {}", hasRole);
-        return hasRole;
-    }
-
-    @Override
     public TenantRole getTenantRoleForApplication(Application application, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), application.getUniqueId(), SearchScope.SUB);
     }
@@ -254,11 +208,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
         return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
-    }
-
-    @Override
-    public TenantRole getTenantRoleForScopeAccess(ScopeAccess scopeAccess, String roleId) {
-        return getTenantRole(scopeAccess.getUniqueId(), roleId);
     }
 
     private TenantRole getTenantRole(String dn, Filter filter) {

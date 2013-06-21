@@ -20,14 +20,11 @@ public interface TenantRoleDao {
     List<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
     TenantRole getTenantRoleForApplication(Application application, String roleId);
     TenantRole getTenantRoleForUser(User user, String roleId);
-    TenantRole getTenantRoleForScopeAccess(ScopeAccess scopeAccess, String roleId);
     void updateTenantRole(TenantRole tenantRole);
     void deleteTenantRoleForUser(User user, TenantRole tenantRole);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
     PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
-    boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role);
-    boolean doesUserHaveTenantRole(String uniqueId, ClientRole role);
 
     TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
 }
