@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.List;
 
 @Component
-public class LdapUserRepository extends LdapRepository implements UserDao {
+public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
@@ -52,80 +52,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public void addRacker(Racker racker) {
-        getLogger().info("Adding racker - {}", racker);
-        if (racker == null) {
-            String errmsg = "Null instance of Racer was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        String userDN = new LdapDnBuilder(RACKERS_BASE_DN).addAttribute(ATTR_RACKER_ID, racker.getRackerId()).build();
-
-        racker.setUniqueId(userDN);
-
-        Audit audit = Audit.log(racker).add();
-
-        Attribute[] attributes = getRackerAddAttributes(racker);
-
-        addEntry(userDN, attributes, audit);
-
-        audit.succeed();
-
-        getLogger().info("Added racker {}", racker);
+        addObject(racker);
     }
 
     @Override
     public void addUser(User user) {
-        getLogger().info("Adding user - {}", user);
-        if (user == null) {
-            String errmsg = "Null instance of User was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, user.getId()).build();
-
-        user.setUniqueId(userDN);
-
-        Audit audit = Audit.log(user).add();
-
-        Attribute[] attributes = null;
-
-        try {
-            attributes = getAddAttributes(user);
-            if (isUsernameUnique(user.getUsername())) { // one more check
-                addEntry(userDN, attributes, audit);
-            }else{
-                throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
-            }
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        }
-
-        // Now that it's in LDAP we'll set the password to the "existing" type
-        user.setPasswordObj(user.getPasswordObj().toExisting());
-
-        audit.succeed();
-
-        getLogger().info("Added user {}", user);
+        addObject(user);
     }
 
     @Override
     public UserAuthenticationResult authenticate(String username, String password) {
         getLogger().debug("Authenticating User {}", username);
-        if (StringUtils.isBlank(username)) {
-            String errmsg = NULL_OR_EMPTY_USERNAME_PARAMETER;
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        User user = getUserByUsername(username);
+        User user  = getObject(searchFilterGetUserByName(username));
         getLogger().debug("Found user {}, authenticating...", user);
         return authenticateByPassword(user, password);
     }
@@ -133,222 +71,66 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public UserAuthenticationResult authenticateByAPIKey(String username, String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
-        if (StringUtils.isBlank(username)) {
-            String errmsg = NULL_OR_EMPTY_USERNAME_PARAMETER;
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        User user = getUserByUsername(username);
+        User user  = getObject(searchFilterGetUserByName(username));
         getLogger().debug("Found user {}, authenticating...", user);
         return authenticateUserByApiKey(user, apiKey);
     }
 
     @Override
     public void deleteRacker(String rackerId) {
-        getLogger().info("Deleting racker - {}", rackerId);
-        if (StringUtils.isBlank(rackerId)) {
-            getLogger().error("Null or Empty rackerId parameter");
-            throw new IllegalArgumentException("Null or Empty rackerId parameter.");
-        }
-
-        Audit audit = Audit.log(rackerId).delete();
-
-        Racker racker = this.getRackerByRackerId(rackerId);
-        if (racker == null) {
-            String errorMsg = String.format("Racker %s not found", rackerId);
-            audit.fail(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        getLogger().debug("Found Racker {}, deleting...", racker);
-
-        this.deleteEntryAndSubtree(racker.getUniqueId(), audit);
-        audit.succeed();
-        getLogger().info("Deleted racker - {}", rackerId);
+        getLogger().debug("Deleting Racker with id: {}", rackerId);
+        deleteObject(searchFilterGetRackerById(rackerId));
+        getLogger().debug("Racker with id: {}", rackerId);
     }
 
     @Override
     public void deleteUser(User user) {
-        getLogger().info("Deleting user - {}", user.getUsername());
-
-        Audit audit = Audit.log(user.getUsername()).delete();
-
-        deleteEntryAndSubtree(user.getUniqueId(), audit);
-
-        audit.succeed();
-
-        getLogger().info("Deleted username - {}", user.getUsername());
+        deleteObject(user);
     }
 
     @Override
     public void deleteUser(String username) {
-        getLogger().info("Deleting username - {}", username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            throw new IllegalArgumentException("Null or Empty username parameter.");
-        }
-
-        Audit audit = Audit.log(username).delete();
-
-        User user = this.getUserByUsername(username);
-        if (user == null) {
-            String errorMsg = String.format("User %s not found", username);
-            audit.fail(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        getLogger().debug("Found user {}, deleting... {}", user);
-
-        this.deleteEntryAndSubtree(user.getUniqueId(), audit);
-
-        audit.succeed();
-        getLogger().info("Deleted username - {}", username);
-    }
-
-    @Override
-    public String[] getGroupIdsForUser(String username) {
-        getLogger().debug("Getting GroupIds for User {}", username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter");
-            return null;
-        }
-
-        String[] groupIds = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_MEMBER_OF);
-
-        if (entry != null) {
-            groupIds = entry.getAttributeValues(ATTR_MEMBER_OF);
-        }
-
-        getLogger().debug("Got GroupIds for User {} - {}", username, groupIds);
-
-        return groupIds;
+        getLogger().debug("Deleting User {}", username);
+        deleteObject(searchFilterGetUserByName(username));
+        getLogger().debug("User deleted {}", username);
     }
 
     @Override
     public Racker getRackerByRackerId(String rackerId) {
         getLogger().debug("Getting Racker {}", rackerId);
-        if (StringUtils.isBlank(rackerId)) {
-            getLogger().error("Null or Empty rackerId parameter");
-            getLogger().info("Invalid rackerId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKER_ID, rackerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKER).build();
-
-        Racker racker = null;
-
-        SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN,
-                SearchScope.ONE, searchFilter);
-        if (entry != null) {
-            racker = new Racker();
-            racker.setUniqueId(entry.getDN());
-            racker.setRackerId(entry.getAttributeValue(ATTR_RACKER_ID));
-        }
-
+        Racker racker = (Racker) getObject(searchFilterGetRackerById(rackerId));
         getLogger().debug("Got Racker {}", racker);
         return racker;
     }
 
     @Override
     public User getUserByCustomerIdAndUsername(String customerId, String username) {
-
         getLogger().debug("LdapUserRepository.findUser() - customerId: {}, username: {} ", customerId, username);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            getLogger().info("Invalid customerId parameter.");
-            return null;
-        }
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        User user = getObject(searchFilterGetCustomer(customerId, username));
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
-
         return user;
     }
 
     @Override
     public User getUserById(String id) {
-        // NOTE: This method returns a user regardless of whether the
-        // softDeleted flag is set or not because this method is only
-        // used internally.
-        getLogger().debug("Doing search for id " + id);
-        if (StringUtils.isBlank(id)) {
-            getLogger().error("Null or Empty id parameter");
-            getLogger().info("Invalid id parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        getLogger().debug("Get user by id: " + id);
+        User user = getObject(searchFilterGetUserById(id));
         getLogger().debug(FOUND_USER, user);
-
         return user;
     }
 
     @Override
-    public Users getUsersByDomainId(String domainId) {
+    public List<User> getUsersByDomainId(String domainId) {
         getLogger().debug("Doing search for domainId " + domainId);
-        if (StringUtils.isBlank(domainId)) {
-            getLogger().error("Null or Empty domainId parameter");
-            getLogger().info("Invalid domainId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
-
+        List<User> users = getObjects(searchFilterGetUsersByDomainId(domainId));
         getLogger().debug(FOUND_USERS, users);
-
         return users;
     }
 
     @Override
     public User getUserByRPN(String rpn) {
         getLogger().debug("Doing User search by rpn " + rpn);
-        if (StringUtils.isBlank(rpn)) {
-            getLogger().error("Null or Empty rpn parameter");
-            getLogger().info("Invalid rpn parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        User user = getObject(searchFilterGetUserByRpn(rpn));
         getLogger().debug(FOUND_USER, user);
 
         return user;
@@ -357,72 +139,29 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public User getUserBySecureId(String secureId) {
         getLogger().debug("Doing User search by secureId " + secureId);
-        if (StringUtils.isBlank(secureId)) {
-            getLogger().error("Null or Empty secureId parameter");
-            getLogger().info("Invalid secureId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_SECURE_ID, secureId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        User user = getObject(searchFilterGetUserBySecureId(secureId));
         getLogger().debug(FOUND_USER, user);
-
         return user;
     }
 
     @Override
     public User getUserByUsername(String username) {
-        // This method returns a user whether or not the user has been
-        // soft-deleted
         getLogger().debug("Doing search for username " + username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        User user = getObject(searchFilterGetUserByUsername(username));
         getLogger().debug(FOUND_USER, user);
-
         return user;
     }
 
     @Override
-    public Users getUsersByEmail(String email) {
-        // This method returns a user whether or not the user has been
-        // soft-deleted
+    public List<User> getUsersByEmail(String email) {
         getLogger().debug("Doing search for username by email " + email);
-        if (StringUtils.isBlank(email)) {
-            getLogger().error(NULL_OR_EMPTY_EMAIL_PARAMETER);
-            getLogger().info("Invalid email parameter.");
-            return new Users();
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MAIL, email)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        List<User> users = getObjects(searchFilterGetUsersByEmail(email));
         getLogger().debug(FOUND_USERS, users);
-
         return users;
     }
 
     @Override
-    public Users getUsers(List<Filter> filters) {
+    public List<User> getUsers(List<Filter> filters) {
         getLogger().debug("Doing search for users");
 
         if(filters == null || filters.size() == 0){
@@ -1637,5 +1376,69 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     public void setCryptHelper(CryptHelper cryptHelper) {
         this.cryptHelper = cryptHelper;
+    }
+
+    private Filter searchFilterGetUserByName(String name) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_NAME, name)
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByUsername(String username) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_UID, username)
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserById(String userId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_ID, userId)
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetRackerById(String rackerId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_RACKER_ID, rackerId)
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_RACKER)
+                .build();
+    }
+
+    private Filter searchFilterGetCustomer(String customerId, String username){
+        return new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+    }
+
+    private Filter searchFilterGetUsersByDomainId(String domainId){
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByRpn(String rpn){
+        return new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+    }
+
+    private Filter searchFilterGetUserBySecureId(String secureId){
+        return new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_SECURE_ID, secureId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+    }
+
+    private Filter searchFilterGetUsersByEmail(String email){
+        return new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_MAIL, email)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
     }
 }

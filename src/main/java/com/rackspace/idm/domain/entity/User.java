@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.Entry;
@@ -20,7 +21,7 @@ import java.util.Date;
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
         postDecodeMethod="doPostDecode",
         postEncodeMethod="doPostEncode")
-public class User implements Auditable, ApplicationContextAware {
+public class User implements Auditable, ApplicationContextAware, UniqueId {
 
     private ApplicationContext applicationContext;
     private CryptHelper cryptHelper;
