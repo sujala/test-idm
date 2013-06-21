@@ -84,7 +84,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         baseUrl.openstackType = "NAST"
 
         Tenant tenant = new Tenant()
-        tenant.addBaseUrlId("2")
+        tenant.getBaseUrlIds().add("2")
         tenant.setTenantId("tenantId")
 
         endpointService.getBaseUrlById(_) >> baseUrl
@@ -111,7 +111,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         baseUrl.openstackType = "NAST"
 
         Tenant tenant = new Tenant()
-        tenant.addBaseUrlId("1")
+        tenant.getBaseUrlIds().add("1")
         tenant.setTenantId("tenantId")
 
         endpointService.getBaseUrlById(_) >> baseUrl

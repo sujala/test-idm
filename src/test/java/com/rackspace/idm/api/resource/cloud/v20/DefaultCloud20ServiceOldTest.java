@@ -211,7 +211,6 @@ public class DefaultCloud20ServiceOldTest {
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         tenant = new Tenant();
         tenant.setTenantId(tenantId);
-        tenant.setBaseUrlIds(new String[]{});
         clientRole = new ClientRole();
         clientRole.setClientId("clientId");
         clientRole.setId("clientRoleId");
@@ -2148,7 +2147,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void getEndpoint_callsCheckAndGetTenant() throws Exception {
-        tenant.addBaseUrlId("endpointId");
+        tenant.getBaseUrlIds().add("endpointId");
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
         spy.getEndpoint(null, authToken, tenantId, "endpointId");
         verify(tenantService).checkAndGetTenant(tenantId);
@@ -2156,7 +2155,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void getEndpoint_callsCheckAndGetEndPointTemplate() throws Exception {
-        tenant.addBaseUrlId("endpointId");
+        tenant.getBaseUrlIds().add("endpointId");
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
         spy.getEndpoint(null, authToken, tenantId, "endpointId");
         verify(endpointService).checkAndGetEndpointTemplate("endpointId");
@@ -2164,7 +2163,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void getEndpoint_responseOk_returns200() throws Exception {
-        tenant.addBaseUrlId("endpointId");
+        tenant.getBaseUrlIds().add("endpointId");
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
         when(endpointService.checkAndGetEndpointTemplate("endpointId")).thenReturn(cloudBaseUrl);
         Response.ResponseBuilder responseBuilder = spy.getEndpoint(httpHeaders, authToken, tenantId, "endpointId");
@@ -2689,8 +2688,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listEndpoints_baseUrlIdsIsNotNullCallsEndpointService_getBaseUrlById() throws Exception {
-        String[] ids = {"1"};
-        tenant.setBaseUrlIds(ids);
+        tenant.getBaseUrlIds().add("1");
         ArrayList<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);

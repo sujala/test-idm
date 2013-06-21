@@ -73,8 +73,8 @@ public class TokenConverterCloudV20 {
             // TODO: Check for other names? This is to match the Mosso Type
             if (tenant.getName().equals("compute:default")) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
-                tenantForAuthenticateResponse.setId(tenant.getTenantIds()[0]);
-                tenantForAuthenticateResponse.setName(tenant.getTenantIds()[0]);
+                tenantForAuthenticateResponse.setId(tenant.getTenantIds().iterator().next());
+                tenantForAuthenticateResponse.setName(tenant.getTenantIds().iterator().next());
                 return tenantForAuthenticateResponse;
             }
         }

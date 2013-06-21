@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
@@ -696,7 +697,7 @@ public class LdapEndpointRepositoryTest extends InMemoryLdapIntegrationTest{
         Tenant tenant = new Tenant();
         tenant.setName("name");
         tenant.setTenantId("tenantId");
-        tenant.setBaseUrlIds(baseUrlIds);
+        tenant.getBaseUrlIds().addAll(Arrays.asList(baseUrlIds));
         doReturn(null).when(spy).getBaseUrlById(1);
         doReturn(cloudBaseUrl).when(spy).getBaseUrlById(2);
         OpenstackEndpoint result = spy.getOpenstackEndpointsForTenant(tenant);

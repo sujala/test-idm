@@ -842,7 +842,7 @@ public class DefaultUserService implements UserService {
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
-        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().length != 0) {
+        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().size() != 0) {
             for (String bId : tenant.getBaseUrlIds()) {
                 if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
                     throw new BadRequestException("BaseUrl already exists.");
@@ -850,7 +850,7 @@ public class DefaultUserService implements UserService {
             }
         }
 
-        tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        tenant.getBaseUrlIds().add(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
     }
 
@@ -865,7 +865,7 @@ public class DefaultUserService implements UserService {
         }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
-        tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        tenant.getBaseUrlIds().remove(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
     }
 

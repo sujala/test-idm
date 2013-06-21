@@ -748,7 +748,7 @@ public class DefaultUserServiceTestOld {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setOpenstackType("NAST");
         Tenant tenant = new Tenant();
-        tenant.setBaseUrlIds(new String[0]);
+        tenant.getBaseUrlIds().clear();
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
         when(tenantService.getTenant("nastId")).thenReturn(tenant);
         defaultUserService.addBaseUrlToUser(1, user);
@@ -762,7 +762,7 @@ public class DefaultUserServiceTestOld {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setOpenstackType("MOSSO");
         Tenant tenant = new Tenant();
-        tenant.setBaseUrlIds(new String[0]);
+        tenant.getBaseUrlIds().clear();
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
         when(tenantService.getTenant("1")).thenReturn(tenant);
         defaultUserService.addBaseUrlToUser(1, user);
@@ -777,8 +777,7 @@ public class DefaultUserServiceTestOld {
         cloudBaseUrl.setOpenstackType("MOSSO");
         cloudBaseUrl.setBaseUrlId(1);
         Tenant tenant = new Tenant();
-        String[] ids = {"1"};
-        tenant.setBaseUrlIds(ids);
+        tenant.getBaseUrlIds().add("1");
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
         when(tenantService.getTenant("1")).thenReturn(tenant);
         defaultUserService.addBaseUrlToUser(1, user);
@@ -792,8 +791,7 @@ public class DefaultUserServiceTestOld {
         cloudBaseUrl.setOpenstackType("MOSSO");
         cloudBaseUrl.setBaseUrlId(2);
         Tenant tenant = new Tenant();
-        String[] ids = {"1"};
-        tenant.setBaseUrlIds(ids);
+        tenant.getBaseUrlIds().add("1");
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
         when(tenantService.getTenant("1")).thenReturn(tenant);
         defaultUserService.addBaseUrlToUser(1, user);

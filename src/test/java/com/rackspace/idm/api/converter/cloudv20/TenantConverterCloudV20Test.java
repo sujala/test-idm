@@ -142,7 +142,7 @@ public class TenantConverterCloudV20Test {
         com.rackspace.idm.domain.entity.Tenant tenant = tenantConverterCloudV20.toTenantDO(jaxbTenant);
         assertThat("description", tenant.getDescription(), equalTo("description"));
         assertThat("display name", tenant.getDisplayName(), equalTo("displayName"));
-        assertThat("enabled", tenant.isEnabled(), equalTo(true));
+        assertThat("enabled", tenant.getEnabled(), equalTo(true));
         assertThat("id", tenant.getTenantId(), equalTo("id"));
         assertThat("name", tenant.getName(), equalTo("name"));
     }
