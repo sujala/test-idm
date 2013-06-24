@@ -1117,10 +1117,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         userScopeAccess.setUsername(user.getUsername());
         userScopeAccess.setUserRsId(user.getId());
         userScopeAccess.setClientId(clientId);
-        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         userScopeAccess.setAccessTokenString(generateToken());
 
         return userScopeAccess;
+    }
+
+    private Integer getTokenExpirationSeconds(int value) {
+        Double entropy = getTokenEntropy();
+        Integer min = (int)Math.floor(value * (1 - entropy));
+        Integer max = (int)Math.ceil(value * (1 + entropy));
+        Random random = new Random();
+        return random.nextInt(max - min + 1) + min;
     }
 
     @Override
@@ -1132,11 +1141,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
+
+        int expirationSeconds;
         if (impersonated) {
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+            expirationSeconds = getTokenExpirationSeconds(getDefaultImpersonatedTokenExpirationSeconds());
         } else {
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
+        scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
@@ -1280,6 +1292,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     int getDefaultCloudAuthTokenExpirationSeconds() {
         return config.getInt("token.cloudAuthExpirationSeconds");
+    }
+
+    Double getTokenEntropy(){
+        return config.getDouble("token.entropy");
     }
 
     int getRefreshTokenWindow() {
