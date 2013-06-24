@@ -351,6 +351,35 @@ class Cloud20IntegrationTest extends Specification {
         hardDeleteResponses.status == 204
     }
 
+    def 'User-managed role CRUD'() {
+        when:
+        //Create user
+        def random = ("$randomness").replace('-', "")
+        def user = userForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = createUserXML(defaultUserManageRoleToken, user)
+        //Get user
+        def getUserResponse = getUserXML(defaultUserManageRoleToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+        //Update User
+        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def updateUserResponse = updateUserXML(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+        //Delete user
+        def deleteResponses = deleteUserXML(defaultUserManageRoleToken, userEntity.getId())
+        //Delte user as service admin
+        def deleteResponsesServiceAdmin = deleteUserXML(serviceAdminToken, userEntity.getId())
+        //Hard delete user
+        def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        updateUserResponse.status == 200
+        deleteResponses.status == 403
+        deleteResponsesServiceAdmin.status == 403
+        hardDeleteResponses.status == 204
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = userForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
@@ -1767,14 +1796,30 @@ class Cloud20IntegrationTest extends Specification {
         deleteResponse.status == 204
     }
 
-    def "user-admin manage role can add user manage role to default user"() {
+    def "user-admin and manage role can add user manage role to default user"() {
         when:
         def addRoleResult = addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
         def addRoleResult2 = addApplicationRoleToUserXML(defaultUserManageRoleToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole2.getId())
+        def deleteRoleResult = deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def deleteRoleResult2 = deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole2.getId())
 
         then:
         addRoleResult.status == 200
         addRoleResult2.status == 200
+        deleteRoleResult.status == 204
+        deleteRoleResult2.status == 204
+    }
+
+    def "user-admin managed role cannot delete role from user-managed" () {
+        when:
+        def addRoleResult = addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def deleteRoleResult = deleteApplicationRoleFromUserXML(defaultUserManageRoleToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole2.getId())
+        def deleteRoleResultAsServiceAdmin = deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        addRoleResult.status == 200
+        deleteRoleResult.status == 403
+        deleteRoleResultAsServiceAdmin.status == 204
     }
 
     def destroyUser(userId) {

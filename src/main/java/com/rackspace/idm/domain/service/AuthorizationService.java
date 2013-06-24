@@ -29,6 +29,7 @@ public interface AuthorizationService {
 
     boolean hasDefaultUserRole(User user);
     boolean hasUserAdminRole(User user);
+    boolean hasUserManageRole(User user);
     boolean hasServiceAdminRole(User user);
     boolean hasSameDomain(User caller, User retrievedUser);
 

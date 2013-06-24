@@ -465,7 +465,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate userForCreate) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             validator.validate20User(userForCreate);
 
             String password = userForCreate.getPassword();
@@ -482,11 +482,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            boolean callerIsUserAdminOrHasUserManageRole = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
+                authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
             boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
 
-            if (callerIsUserAdmin) {
+            if (callerIsUserAdminOrHasUserManageRole) {
                 //TODO pagination index and offset
                 Users users;
                 String domainId = caller.getDomainId();
@@ -512,7 +513,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 domainId = domainId.trim();
             }
 
-            if (StringUtils.isEmpty(domainId) && callerIsUserAdmin) {
+            if (StringUtils.isEmpty(domainId) && callerIsUserAdminOrHasUserManageRole) {
                 throw new BadRequestException("A Domain ID must be specified.");
             } else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
@@ -523,7 +524,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 domainService.createNewDomain(userDO.getDomainId());
             }
 
-            if (callerIsIdentityAdmin || callerIsUserAdmin) {
+            if (callerIsIdentityAdmin || callerIsUserAdminOrHasUserManageRole) {
                 if (userDO.getRegion() != null) {
                     defaultRegionService.validateDefaultRegion(userDO.getRegion());
                 }
@@ -532,7 +533,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
             //after user is created and caller is a user admin, add tenant roles to default user
-            if (callerIsUserAdmin) {
+            if (callerIsUserAdminOrHasUserManageRole) {
                 tenantService.addCallerTenantRolesToUser(caller, userDO);
 
                 if (caller != null) {
@@ -1056,15 +1057,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             User user = userService.checkAndGetUserById(userId);
             //is same domain?
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+
+            if (callerIsUserAdmin || callerHasUserManageRole) {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
             if (authorizationService.hasUserAdminRole(user) && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
+            }
+            if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
+                throw new NotAuthorizedException("Cannot delete user with same access level");
             }
             userService.softDeleteUser(user);
 

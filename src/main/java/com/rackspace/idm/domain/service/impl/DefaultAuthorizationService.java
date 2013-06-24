@@ -131,6 +131,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean hasUserManageRole(User user) {
+        if (user == null) {
+            return false;
+        }
+        return tenantService.doesUserContainTenantRole(user, cloudUserManagedRole.getId());
+    }
+
+    @Override
     public boolean hasIdentityAdminRole(User user) {
         if (user == null) {
             return false;

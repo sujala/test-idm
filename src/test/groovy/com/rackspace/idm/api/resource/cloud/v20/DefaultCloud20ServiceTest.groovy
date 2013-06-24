@@ -512,7 +512,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * validator.validate20User(_)
         1 * validator.validatePasswordForCreateOrUpdate(_) >> { throw new BadRequestException() }
         response.status == 400
@@ -3157,6 +3157,61 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * tenantService.addTenantRoleToUser(_, _)
+    }
+
+    def "User with user-manage role can create new user" () {
+        given:
+        allowUserAccess()
+        def user = v1Factory.createUserForCreate()
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.getAllUsers(_) >> null
+        notThrown(BadRequestException)
+        1 * defaultRegionService.validateDefaultRegion(_)
+        1 * userService.addUser(_)
+        1 * groupService.getGroupsForUser(_) >> [].asList()
+    }
+
+    def "User with user-manage role can delete user" () {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser()
+
+        when:
+        service.deleteUser(headers, authToken, "userId")
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.verifyDomain(_, _)
+        1 * userService.softDeleteUser(_)
+    }
+
+    def "User with user-manage role cannot delete user with user-manage role" () {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser()
+
+        when:
+        def result = service.deleteUser(headers, authToken, "userId")
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.hasUserManageRole(_) >> true
+        result.build().status == 401
     }
 
     def mockServices() {
