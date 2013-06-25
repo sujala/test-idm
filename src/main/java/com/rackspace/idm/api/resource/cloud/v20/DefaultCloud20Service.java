@@ -583,7 +583,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
         }
         //if caller is a user admin, give user default role
-        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
+            authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
             role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
         }
 
@@ -594,7 +595,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             if (user.getPassword() != null) {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
@@ -605,20 +606,23 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
 
-            //if caller is default user, usedId must match callers user id
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
+
+            if (!callerHasUserManageRole && authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getId().equals(retrievedUser.getId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
-            //if user admin, verify domain
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-            if (callerIsUserAdmin) {
+
+            if (callerIsUserAdmin || callerHasUserManageRole) {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
-
+            if(callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) {
+                throw new NotAuthorizedException("Cannot delete user with same access level");
+            }
             if (!StringUtils.isBlank(user.getUsername())) {
                 validator.isUsernameValid(user.getUsername());
             }

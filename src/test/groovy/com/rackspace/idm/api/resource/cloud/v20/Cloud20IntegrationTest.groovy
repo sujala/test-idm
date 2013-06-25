@@ -351,32 +351,33 @@ class Cloud20IntegrationTest extends Specification {
         hardDeleteResponses.status == 204
     }
 
-    def 'User-managed role CRUD'() {
+    def 'User-manage role CRUD'() {
         when:
         //Create user
+        addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
         def random = ("$randomness").replace('-', "")
-        def user = userForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
         def response = createUserXML(defaultUserManageRoleToken, user)
         //Get user
-        def getUserResponse = getUserXML(defaultUserManageRoleToken, response.location)
+        def getUserResponse = getUserXML(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
         //Update User
         def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = updateUserXML(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUserXML(defaultUserManageRoleToken, userEntity.getId())
-        //Delte user as service admin
-        def deleteResponsesServiceAdmin = deleteUserXML(serviceAdminToken, userEntity.getId())
         //Hard delete user
         def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
+
+        deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         then:
         response.status == 201
         response.location != null
         getUserResponse.status == 200
         updateUserResponse.status == 200
-        deleteResponses.status == 403
-        deleteResponsesServiceAdmin.status == 403
+        deleteResponses.status == 204
         hardDeleteResponses.status == 204
     }
 
@@ -450,7 +451,6 @@ class Cloud20IntegrationTest extends Specification {
                 createUserXML(serviceAdminToken, userForCreate("f$sharedRandom", "displ:ay", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
                 createUserXML(identityAdminToken, userForCreate("g$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
                 //updateUserXML(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                updateUserXML(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1")),
                 updateUserXML(identityAdminToken, defaultUser.getId(), userForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
         ]
     }
@@ -953,7 +953,7 @@ class Cloud20IntegrationTest extends Specification {
         def users = listUsersXML(userAdminToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 4
+        users.size() == 6
     }
 
     def "listUsers caller is identity-admin or higher returns paged results"() {

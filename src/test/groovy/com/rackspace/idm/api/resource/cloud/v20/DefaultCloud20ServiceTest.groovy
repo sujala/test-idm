@@ -3173,7 +3173,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * authorizationService.authorizeUserManageRole(_) >> true
+        2 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.getAllUsers(_) >> null
         notThrown(BadRequestException)
@@ -3210,6 +3210,54 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.hasUserManageRole(_) >> true
+        result.build().status == 401
+    }
+
+    def "User with user-manage role can update user"() {
+        given:
+        allowUserAccess()
+        userId = "1"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            return it
+        }
+        User updateUser = entityFactory.createUser().with {
+            it.id = userId
+            return it
+        }
+
+        when:
+        service.updateUser(headers, authToken, "1", user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * authorizationService.verifyDomain(_, _)
+    }
+
+    def "User with user-manage role cannot update user with user-manage role"() {
+        given:
+        allowUserAccess()
+        userId = "1"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            return it
+        }
+        User updateUser = entityFactory.createUser().with {
+            it.id = userId
+            return it
+        }
+
+        when:
+        def result = service.updateUser(headers, authToken, "1", user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> true
         result.build().status == 401
     }
