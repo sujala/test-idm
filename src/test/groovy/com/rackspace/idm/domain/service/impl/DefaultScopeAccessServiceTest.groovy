@@ -900,6 +900,26 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         false             | defaultExpirationSeconds | 0.05
     }
 
+    def ".getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
+        given:
+        def entropy = 0.01
+        def uniqueId = "uniqueId"
+        def rackerId = "rackerId"
+        def clientId = "clientId"
+        def authedBy = ["PASSWORD"].asList()
+        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
+
+        when:
+        def scopeAccess = service.getValidRackerScopeAccessForClientId(uniqueId, rackerId, clientId, authedBy)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+    }
+
     def getRange(seconds, entropy) {
         HashMap<String, Date> range = new HashMap<>()
         range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())

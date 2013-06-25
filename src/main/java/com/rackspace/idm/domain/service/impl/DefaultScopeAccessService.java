@@ -813,11 +813,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessForClientId(uniqueId, clientId);
         if (scopeAccess == null){
+            int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setClientId(clientId);
             scopeAccess.setRackerId(rackerId);
             scopeAccess.setAccessTokenString(generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccess.setAuthenticatedBy(authenticatedBy);
             scopeAccessDao.addDirectScopeAccess(uniqueId, scopeAccess);
         }
