@@ -1122,11 +1122,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException("User not found");
         }
 
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setUsername(user.getUsername());
         userScopeAccess.setUserRsId(user.getId());
         userScopeAccess.setClientId(clientId);
-        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         userScopeAccess.setAccessTokenString(generateToken());
 
