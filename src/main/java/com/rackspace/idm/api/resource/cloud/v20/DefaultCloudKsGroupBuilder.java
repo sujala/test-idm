@@ -16,7 +16,7 @@ public class DefaultCloudKsGroupBuilder implements CloudKsGroupBuilder{
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         groupKs.setName(group.getName());
         groupKs.setDescription(group.getDescription());
-        groupKs.setId(group.getGroupId().toString());
+        groupKs.setId(group.getGroupId());
         return groupKs;
     }
 }

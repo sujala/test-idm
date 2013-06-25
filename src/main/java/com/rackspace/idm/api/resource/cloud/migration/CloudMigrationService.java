@@ -534,7 +534,7 @@ public class CloudMigrationService {
             for (com.rackspace.idm.domain.entity.Group newGroup : newGroups) {
                 if (group.getName().equals(newGroup.getName())) {
                     newGroupName = newGroup.getName();
-                    newGroupId = String.valueOf(newGroup.getGroupId());
+                    newGroupId = newGroup.getGroupId();
                     break;
                 }
             }

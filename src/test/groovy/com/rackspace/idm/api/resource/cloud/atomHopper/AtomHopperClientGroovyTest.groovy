@@ -58,9 +58,9 @@ class AtomHopperClientGroovyTest extends Specification {
         UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
 
         then:
-        entry.title.value == "Identity Event"
-        entry.content.type == MediaType.APPLICATION_XML
-        entry.content.event.resourceName == "testUser"
+        entry.title.value.equals("Identity Event")
+        entry.content.type.equals(MediaType.APPLICATION_XML)
+        entry.content.event.resourceName.equals("testUser")
     }
 
     def "atom entry posts Groud Id not Group Name " () {
@@ -83,7 +83,7 @@ class AtomHopperClientGroovyTest extends Specification {
         def cloudIdentityType = (com.rackspace.docs.event.identity.user.CloudIdentityType) entry.content.event.any.get(0)
         def groupInfo = cloudIdentityType.getGroups().get(0)
         then:
-        groupInfo != groupName
+        !groupInfo.equals(groupName)
         Integer.parseInt(groupInfo) == groupId
     }
 

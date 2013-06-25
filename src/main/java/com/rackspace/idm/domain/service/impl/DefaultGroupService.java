@@ -101,7 +101,7 @@ public class DefaultGroupService implements GroupService {
         if(group.getGroupId() == null){
             throw new IllegalArgumentException("GroupId cannot be null");
         }
-        if(String.valueOf(group.getGroupId()).equals(config.getString("defaultGroupId"))){
+        if(group.getGroupId().equals(config.getString("defaultGroupId"))){
             throw new BadRequestException("Default Group can not be updated.");
         }
         String groupId = group.getGroupId();
