@@ -57,7 +57,7 @@ public class DefaultGroupService implements GroupService {
     }
 
     @Override
-    public Group getGroupById(Integer groupId) {
+    public Group getGroupById(String groupId) {
         return groupDao.getGroupById(groupId);
     }
 
@@ -82,7 +82,7 @@ public class DefaultGroupService implements GroupService {
 
         logger.info("Adding Client Group: {}", group);
         verifyDuplicateGroup(group);
-        group.setGroupId(Integer.parseInt(this.groupDao.getNextGroupId()));
+        group.setGroupId(this.groupDao.getNextGroupId());
         groupDao.addGroup(group);
     }
 
@@ -104,7 +104,7 @@ public class DefaultGroupService implements GroupService {
         if(String.valueOf(group.getGroupId()).equals(config.getString("defaultGroupId"))){
             throw new BadRequestException("Default Group can not be updated.");
         }
-        Integer groupId = group.getGroupId();
+        String groupId = group.getGroupId();
         Group groupDo = groupDao.getGroupById(groupId);
 
         if(groupDo.getName() == null){
@@ -137,7 +137,7 @@ public class DefaultGroupService implements GroupService {
         if(groupId.equals(config.getString("defaultGroupId"))){
             throw new BadRequestException("Default Group can not be deleted");
         }
-        int grpId = Integer.parseInt(groupId);
+        String grpId = groupId;
         Group exists = groupDao.getGroupById(grpId);
         if (exists == null) {
             String errMsg = String.format("Group %s not found", groupId);
@@ -158,16 +158,16 @@ public class DefaultGroupService implements GroupService {
                 deleteGroupFromUser(grpId,user.getId());
             }
         }
-        groupDao.deleteGroup(Integer.parseInt(groupId));
+        groupDao.deleteGroup(groupId);
     }
 
     @Override
-    public void addGroupToUser(int groupId, String userId) {
+    public void addGroupToUser(String groupId, String userId) {
         groupDao.addGroupToUser(groupId, userId);
     }
 
     @Override
-    public void deleteGroupFromUser(int groupId, String userId) {
+    public void deleteGroupFromUser(String groupId, String userId) {
         groupDao.deleteGroupFromUser(groupId, userId);
     }
 
@@ -199,7 +199,7 @@ public class DefaultGroupService implements GroupService {
     }
 
 	@Override
-	public Group checkAndGetGroupById(Integer groupId) {
+	public Group checkAndGetGroupById(String groupId) {
 		Group group = getGroupById(groupId);
         
         if (group == null) {
@@ -211,7 +211,7 @@ public class DefaultGroupService implements GroupService {
 	}
 
 	@Override
-	public boolean isUserInGroup(String userId, Integer groupId) {
+	public boolean isUserInGroup(String userId, String groupId) {
 		List<Group> groups = getGroupsForUser(userId);
 		
         for (Group currentGroup : groups) {

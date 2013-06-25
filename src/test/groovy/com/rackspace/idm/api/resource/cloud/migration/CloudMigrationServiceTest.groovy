@@ -43,7 +43,7 @@ class CloudMigrationServiceTest extends Specification{
         config.getString("cloudAuth20url") >> "https://auth.staging.us.ccp.rackspace.net/v2.0/"
         config.getString("cloudAuth11url") >> "https://auth.staging.us.ccp.rackspace.net/v1.1/"
         client.getGroups(_) >> groups
-        cloudGroupService.getGroupByName(_) >> createEntityGroup(1, "groupName", "new desc")
+        cloudGroupService.getGroupByName(_) >> createEntityGroup("1", "groupName", "new desc")
 
         when:
         cloudMigrationService.addOrUpdateGroups("someToken")
@@ -76,7 +76,7 @@ class CloudMigrationServiceTest extends Specification{
             it.group = [group].asList()
             return it
         }
-        def groupId = 2
+        def groupId = "2"
 
         when:
         cloudMigrationService.addUserGroups(userId, groups)
@@ -112,7 +112,7 @@ class CloudMigrationServiceTest extends Specification{
         notThrown(NotFoundException)
     }
 
-    def createEntityGroup(Integer id, String name, String description) {
+    def createEntityGroup(String id, String name, String description) {
         new com.rackspace.idm.domain.entity.Group().with {
             it.groupId = id
             it.name = name

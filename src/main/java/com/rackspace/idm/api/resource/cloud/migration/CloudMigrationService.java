@@ -907,7 +907,7 @@ public class CloudMigrationService {
         if (groups != null) {
             for (Group group : groups.getGroup()) {
                 com.rackspace.idm.domain.entity.Group newGroup = new com.rackspace.idm.domain.entity.Group();
-                newGroup.setGroupId(Integer.parseInt(group.getId()));
+                newGroup.setGroupId(group.getId());
                 newGroup.setName(group.getName());
                 if (StringUtils.isBlank(group.getDescription())) {
                     newGroup.setDescription(group.getName());

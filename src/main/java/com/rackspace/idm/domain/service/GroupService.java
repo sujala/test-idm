@@ -17,16 +17,16 @@ public interface GroupService {
     List<Group> getGroups(String marker, Integer limit);
     List<Group> getGroupsByMossoId(Integer mossoAccountId);
     List<Group> getGroupListByMossoId(Integer mossoAccountId);
-    Group getGroupById(Integer groupId); 
-    Group checkAndGetGroupById(Integer groupId);
+    Group getGroupById(String groupId);
+    Group checkAndGetGroupById(String groupId);
     Group getGroupByName(String groupName);
     void addGroup(Group group);
     void insertGroup(Group group);
     void updateGroup(Group group);
     void deleteGroup(String groupId);
-    void addGroupToUser(int groupId, String userId);
-    void deleteGroupFromUser(int groupId, String userId);
+    void addGroupToUser(String groupId, String userId);
+    void deleteGroupFromUser(String groupId, String userId);
     List<Group> getGroupsForUser(String userId);
     Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit);
-	boolean isUserInGroup(String userId, Integer groupId);
+	boolean isUserInGroup(String userId, String groupId);
 }
