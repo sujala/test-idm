@@ -800,10 +800,83 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         result >= min
     }
 
+    def "setImpersonatedScopeAccess adds entropy to token expiration"() {
+        given:
+        config.getInt("token.impersonatedByRackerMaxSeconds") >> exSeconds * 2
+        config.getInt("token.impersonatedByServiceMaxSeconds") >> exSeconds * 2
+        config.getInt("token.impersonatedByRackerDefaultSeconds") >> exSeconds
+        config.getInt("token.impersonatedByServiceDefaultSeconds") >> exSeconds
+
+        def impersonationRequest = v1Factory.createImpersonationRequest(v2Factory.createUser())
+        if (notNullExpireIn) {
+            impersonationRequest.expireInSeconds = exSeconds
+        }
+
+        def caller
+        def range
+        if (isRacker) {
+            caller = entityFactory.createRacker()
+            range = getRange(exSeconds, entropy)
+        } else {
+            caller = entityFactory.createUser()
+            range = getRange(exSeconds, entropy)
+        }
+        def scopeAccess = createImpersonatedScopeAccess().with {
+            it.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+            return it
+        }
+
+        when:
+        def returnedSA = service.setImpersonatedScopeAccess(caller, impersonationRequest, scopeAccess)
+
+        then:
+        if (notNullExpireIn) {
+            2 * config.getDouble("token.entropy") >> entropy
+        } else {
+            1 * config.getDouble("token.entropy") >> entropy
+        }
+        returnedSA.accessTokenExp <= range.get("max")
+        returnedSA.accessTokenExp >= range.get("min")
+
+        where:
+        isRacker | exSeconds | entropy | notNullExpireIn
+        true     | 3600      | 0.01    | false
+        false    | 9000      | 0.05    | false
+        true     | 3600      | 0.01    | true
+        false    | 9000      | 0.05    | true
+    }
+
+    def "validateExpireInElement accounts for expiration entropy"() {
+        given:
+        config.getInt("token.impersonatedByRackerMaxSeconds") >> expireIn * 2
+        config.getInt("token.impersonatedByServiceMaxSeconds") >> expireIn * 2
+
+        def caller
+        if (isRacker) {
+            caller = entityFactory.createRacker()
+        } else {
+            caller = entityFactory.createUser()
+        }
+
+        def request = v1Factory.createImpersonationRequest(v2Factory.createUser())
+        request.expireInSeconds = expireIn
+
+        when:
+        service.validateExpireInElement(caller, request)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+
+        where:
+        isRacker | expireIn | entropy
+        true     | 3600     | 0.01
+        false    | 3600     | 0.01
+    }
+
     def getRange(seconds, entropy) {
         HashMap<String, Date> range = new HashMap<>()
-        range.put('min', new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
-        range.put('max', new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate())
+        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
+        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate())
         return range
 
     }

@@ -189,21 +189,25 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
         validateExpireInElement(caller, impersonationRequest);
+        int expirationSeconds = 0;
+
         if (impersonationRequest.getExpireInSeconds() == null) {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(config.getInt("token.impersonatedByRackerDefaultSeconds")).toDate());
+                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByRackerDefaultSeconds"));
             } else {
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds")).toDate());
+                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds"));
             }
         } else {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
+                expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
             } else {
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
+                expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
             }
         }
+
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         return impersonatedScopeAccess;
     }
 
@@ -216,11 +220,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         if (caller instanceof Racker) {
             int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
+            rackerMax = (int)Math.ceil(rackerMax * (1 + config.getDouble("token.entropy")));
+
             if (impersonationRequest.getExpireInSeconds() > rackerMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
             }
         } else {
             int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
+            serviceMax = (int)Math.ceil(serviceMax * (1 + config.getDouble("token.entropy")));
+
             if (impersonationRequest.getExpireInSeconds() > serviceMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
             }
