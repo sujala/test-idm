@@ -915,9 +915,33 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccess = service.getValidRackerScopeAccessForClientId(uniqueId, rackerId, clientId, authedBy)
 
         then:
-        1 * config.getDouble("token.entropy") >> entropy
+        // The second call is made in updateExpiredRackerScopeAccess
+        2 * config.getDouble("token.entropy") >> entropy
         scopeAccess.accessTokenExp <= range.get("max")
         scopeAccess.accessTokenExp >= range.get("min")
+    }
+
+    def "updateExpiredRackerScopeAccess sets token expiration with entropy"() {
+        given:
+        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+        def scopeAccess = createRackerScopeAcccss()
+        scopeAccess.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+        if (refresh) {
+            scopeAccess.accessTokenExp = new DateTime().plusSeconds(defaultRefreshSeconds - 60).toDate()
+        }
+
+        when:
+        def sa = service.updateExpiredRackerScopeAccess(scopeAccess)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        sa.accessTokenExp <= range.get("max")
+        sa.accessTokenExp >= range.get("min")
+
+        where:
+        refresh | entropy
+        true    | 0.01
+        false   | 0.01
     }
 
     def getRange(seconds, entropy) {
