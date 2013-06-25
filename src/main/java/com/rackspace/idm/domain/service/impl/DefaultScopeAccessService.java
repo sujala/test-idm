@@ -189,8 +189,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
         validateExpireInElement(caller, impersonationRequest);
-        int expirationSeconds = 0;
 
+        int expirationSeconds;
         if (impersonationRequest.getExpireInSeconds() == null) {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
@@ -612,13 +612,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             prsa = null;
         }
         PasswordResetScopeAccess scopeAccessToAdd = new PasswordResetScopeAccess();
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
 
         if (prsa == null) {
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRCN(user.getCustomerId());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(
-                    this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setClientId(PASSWORD_RESET_CLIENT_ID);
             scopeAccessToAdd.setClientRCN(PASSWORD_RESET_CLIENT_ID);
@@ -632,7 +632,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 scopeAccessToAdd.setUserRCN(prsa.getUserRCN());
                 scopeAccessToAdd.setClientId(prsa.getClientId());
                 scopeAccessToAdd.setClientRCN(prsa.getClientRCN());
-                scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+                scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
                 scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
                 this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);

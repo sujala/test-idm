@@ -873,6 +873,33 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         false    | 3600     | 0.01
     }
 
+    def ".getOrCreatePasswordResetScopeAccessForUser sets token expiration with entropy"() {
+        given:
+        def user = entityFactory.createUser()
+        def sa = null
+
+        if (scopeAccessExists) {
+            sa = createPasswordResetScopeAccess()
+            sa.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+        }
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
+
+        def range = getRange(exSeconds, entropy)
+
+        when:
+        def scopeAccess = service.getOrCreatePasswordResetScopeAccessForUser(user)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+
+        where:
+        scopeAccessExists | exSeconds                | entropy
+        true              | defaultExpirationSeconds | 0.01
+        false             | defaultExpirationSeconds | 0.05
+    }
+
     def getRange(seconds, entropy) {
         HashMap<String, Date> range = new HashMap<>()
         range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
