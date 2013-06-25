@@ -1134,7 +1134,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return userScopeAccess;
     }
 
-    private Integer getTokenExpirationSeconds(int value) {
+    @Override
+    public int getTokenExpirationSeconds(int value) {
         Double entropy = getTokenEntropy();
         Integer min = (int)Math.floor(value * (1 - entropy));
         Integer max = (int)Math.ceil(value * (1 + entropy));

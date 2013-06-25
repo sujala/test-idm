@@ -141,4 +141,6 @@ public interface ScopeAccessService {
     void setUserService(UserService userService);
 
     void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
+
+    int getTokenExpirationSeconds(int value);
 }

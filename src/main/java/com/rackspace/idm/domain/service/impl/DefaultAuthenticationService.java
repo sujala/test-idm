@@ -344,14 +344,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 ((UserScopeAccess) scopeAccess).setUsername(username);
             }
 
-            scopeAccessToAdd.setAccessTokenString(this
-                    .generateToken());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime()
-                    .plusSeconds(this.getDefaultTokenExpirationSeconds())
-                    .toDate());
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
 
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
             scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
 
@@ -384,9 +380,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new NotAuthenticatedException(msg);
             }
 
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
             scopeAccessToAdd.setRefreshTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(currentTime.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(currentTime.plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
             scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
             scopeAccessToAdd.setAuthCode(null);
@@ -444,8 +441,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 : new DateTime(scopeAccessToAdd.getAccessTokenExp());
 
         if (accessExpiration.isBefore(current)) {
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(expirationSeconds).toDate());
         }
 
         DateTime refreshExpiration = scopeAccessToAdd.getRefreshTokenExp() == null ? new DateTime().minusDays(1)
@@ -498,8 +496,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                                                                 : new DateTime(scopeAccessToAdd.getAccessTokenExp());
 
         if (accessExpiration.isBefore(current)) {
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(expirationSeconds).toDate());
             logger.debug("Updating ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
         }
 
@@ -549,8 +548,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                                                        : new DateTime(scopeAccessToAdd.getAccessTokenExp());
 
         if (accessExpiration.isBefore(current)) {
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(expirationSeconds).toDate());
         }
 
         DateTime refreshExpiration = scopeAccessToAdd.getRefreshTokenExp() == null ? new DateTime().minusDays(1)
