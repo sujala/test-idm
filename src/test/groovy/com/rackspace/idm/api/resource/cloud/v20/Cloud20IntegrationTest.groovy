@@ -381,6 +381,40 @@ class Cloud20IntegrationTest extends Specification {
         hardDeleteResponses.status == 204
     }
 
+    def "user-manage cannot update/delete another user with user-manage"() {
+        when:
+        //Create user
+        addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def random = ("$randomness").replace('-', "")
+        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = createUserXML(defaultUserManageRoleToken, user)
+        //Get user
+        def getUserResponse = getUserXML(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+        addApplicationRoleToUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        //Update User
+        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def updateUserResponse = updateUserXML(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+        //Delete user
+        def deleteResponses = deleteUserXML(defaultUserManageRoleToken, userEntity.getId())
+        //Hard delete user
+        deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def actualDelete = deleteUserXML(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
+
+        deleteApplicationRoleFromUserXML(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        updateUserResponse.status == 401
+        deleteResponses.status == 401
+        actualDelete.status == 204
+        hardDeleteResponses.status == 204
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = userForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
