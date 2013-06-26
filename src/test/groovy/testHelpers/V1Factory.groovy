@@ -5,7 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
+import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -44,6 +47,14 @@ class V1Factory {
         new ApiKeyCredentials().with {
             it.username = username
             it.apiKey = apiKey
+            return it
+        }
+    }
+
+    def createUserKeyCredentials(String username, String apiKey) {
+        new UserCredentials().with {
+            it.username = username
+            it.key = apiKey
             return it
         }
     }
@@ -271,6 +282,17 @@ class V1Factory {
         }
     }
 
+    def createUser(String id, String key, Integer mossoId, String nastId, Boolean enabled) {
+        new User().with {
+            it.id = id
+            it.key = key
+            it.mossoId = mossoId
+            it.nastId = nastId
+            it.enabled = enabled
+            return it
+        }
+    }
+
     def createRegion(){
         return createRegion("name",true, false)
     }
@@ -343,6 +365,14 @@ class V1Factory {
             it.publicURL = publicURL
             it.adminURL = adminURL
             it.internalURL = internalURL
+            return it
+        }
+    }
+
+    def createPasswordCredentials(String username, String password) {
+        new PasswordCredentials().with {
+            it.password = password
+            it.username = username
             return it
         }
     }

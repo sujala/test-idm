@@ -51,7 +51,15 @@ class V2Factory {
             it.token = token
             return it
         }
+    }
 
+    def createAuthenticationRequest(String username, String password) {
+        def credentials = createPasswordCredentialsRequiredUsername(username, password)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createPasswordCredentials(credentials))
+            return it
+        }
     }
 
     def createJAXBAuthenticateResponse() {
@@ -259,6 +267,26 @@ class V2Factory {
             return it
         }
     }
+
+    def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
+        new org.openstack.docs.identity.api.v2.User().with {
+            it.username = (username != null) ? username : null
+            it.displayName = (displayName != null) ? displayName : null
+            it.email = (email != null) ? email : null
+            it.enabled = (enabled != null) ? enabled : null
+            if (defaultRegion != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
+            }
+            if (domainId != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "domainId"), domainId)
+            }
+            if (password != null) {
+                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
+            }
+            return it
+        }
+    }
+
 
     def createUserForAuthenticateResponse() {
         return createUserForAuthenticateResponse(ID, NAME, null)

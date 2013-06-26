@@ -1,23 +1,18 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
-import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
+import com.rackspace.api.idm.v1.AuthData
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
-import com.sun.jersey.api.client.ClientResponse
-import com.sun.jersey.api.client.WebResource
-import com.sun.jersey.core.util.Base64
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.AuthenticationRequest
-import org.openstack.docs.identity.api.v2.ObjectFactory
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
-import spock.lang.Specification
+import testHelpers.RootIntegrationTest
 
-import javax.xml.namespace.QName
+import javax.mail.search.DateTerm
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
-import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,84 +22,77 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class Cloud11IntegrationTest extends Specification{
+class Cloud11IntegrationTest extends RootIntegrationTest {
 
-    @Shared WebResource resource
-    @Shared def path11 = "cloud/v1.1/"
-    @Shared def path20 = "cloud/v2.0/"
     @Shared def serviceAdmin
     @Shared def serviceAdminToken
-    @Shared org.openstack.docs.identity.api.v2.User identityAdmin
+    @Shared def identityAdmin
     @Shared def identityAdminToken
-    @Shared authUser
-    @Shared authPassword
     @Shared def randomness = UUID.randomUUID()
     @Shared def sharedRandom
-    @Shared Integer randomMosso
-
-    static def X_AUTH_TOKEN = "X-Auth-Token"
+    @Shared def randomMosso
 
     def setupSpec(){
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
 
         sharedRandom = ("$randomness").replace('-',"")
 
-        serviceAdminToken = authenticate20XML("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
-        serviceAdmin = getUserByName20XML(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User)
+        serviceAdminToken = authenticate20("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
+        serviceAdmin = getUserByName20(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User)
 
         String adminUsername = "identityAdmin" + sharedRandom
-        createUser20XML(serviceAdminToken, userForCreate20(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
-        identityAdmin = getUserByName20XML(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
-        identityAdminToken = authenticate20XML(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
+        createUser20(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
+        identityAdmin = getUserByName20(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
+        identityAdminToken = authenticate20(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
     }
 
     def cleanupSpec() {
-        deleteUserXML(identityAdmin.username)
+        deleteUser11(identityAdmin.username)
     }
 
     def setup(){
         Random random = new Random()
         randomMosso = 10000000 + random.nextInt(1000000)
-        authUser = "auth"
-        authPassword = "auth123"
+        authUser11 = "auth"
+        authUserPwd11 = "auth123"
     }
 
-    def "Authenticate with password credentials returns 200" () {
+    def "Authenticate with password credentials returns 200"() {
         given:
         String username = "auth" + sharedRandom
         String password = "Password1"
         String domain = "domain" + sharedRandom
-        def user = userForCreate20(username, "displayName", "test@email.com", true, "DFW", domain, password)
+        def user = v2Factory.createUserForCreate(username, "displayName", "test@email.com", true, "DFW", domain, password)
 
         when:
-        createUser20XML(identityAdminToken, user)
-        def authResponse = authenticateWithPasswordXML(username, password)
+        createUser20(identityAdminToken, user)
+        def authResponse = authenticate11(v1Factory.createPasswordCredentials(username, password))
 
-        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def getUser20Response = getUserByName20(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
-        deleteUserXML(username)
-        hardDeleteUserXML(serviceAdminToken, userEntity.id)
+        deleteUser11(username)
+        hardDeleteUser(serviceAdminToken, userEntity.id)
 
         then:
         authResponse.status == 200
     }
 
-    def "CRUD user v1.1" () {
+    def "CRUD user v1.1"() {
         given:
         String username = "userIT" + sharedRandom
-        User user = createUser(username, "1234567890", randomMosso, null, true)
-        User userForUpdate = createUser(username, null, randomMosso+1, "someNastId1", true)
+        User user = v1Factory.createUser(username, "1234567890", randomMosso, null, true)
+        User userForUpdate = v1Factory.createUser(username, null, randomMosso+1, "someNastId1", true)
 
         when:
-        def userCreateResponse = createUserXML(user)
-        def getUserResponse = getUserXML(username)
-        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def userCreateResponse = createUser11(user)
+        def getUserResponse = getUserByName11(username)
+        def getUser20Response = getUserByName20(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
 
-        def updateUserResponse = updateUserXML(username, userForUpdate)
-        def deleteUserResponse = deleteUserXML(username)
-        def hardDeleteUserResponse = hardDeleteUserXML(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = deleteTenantXML(serviceAdminToken, String.valueOf(randomMosso))
+        def updateUserResponse = updateUser11(username, userForUpdate)
+        def deleteUserResponse = deleteUser11(username)
+        def hardDeleteUserResponse = hardDeleteUser(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = deleteTenant20(serviceAdminToken, String.valueOf(randomMosso))
 
         then:
         userCreateResponse.status == 201
@@ -132,21 +120,21 @@ class Cloud11IntegrationTest extends Specification{
         deleteTenantResponse.status == 204
     }
 
-    def "Create User with existing mosso should return a 400" () {
+    def "Create User with existing mosso should return a 400"() {
         given:
         String username = "userExistingMosso" + sharedRandom
-        User user = createUser(username, "1234567890", randomMosso, null, true)
+        User user = v1Factory.createUser(username, "1234567890", randomMosso, null, true)
 
         when:
-        def userCreateResponse = createUserXML(user)
-        def getUser20Response = getUserByName20XML(serviceAdminToken, username)
+        def userCreateResponse = createUser11(user)
+        def getUser20Response = getUserByName20(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
         user.id = "userExistingMosso2"
-        def userCreateNewNameResponse = createUserXML(user)
+        def userCreateNewNameResponse = createUser11(user)
 
-        def deleteUserResponse = deleteUserXML(username)
-        def hardDeleteUserResponse = hardDeleteUserXML(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = deleteTenantXML(serviceAdminToken, String.valueOf(randomMosso))
+        def deleteUserResponse = deleteUser11(username)
+        def hardDeleteUserResponse = hardDeleteUser(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = deleteTenant20(serviceAdminToken, String.valueOf(randomMosso))
 
         then:
         userCreateResponse.status == 201
@@ -162,23 +150,21 @@ class Cloud11IntegrationTest extends Specification{
         deleteTenantResponse.status == 204
     }
 
-
-
-        def "Don't allow disabled identity/service admin to get/create user"(){
+    def "Don't allow disabled identity/service admin to get/create user"() {
         given:
-        User userForUpdate = createUser(identityAdmin.username, null, null, null, false)
+        User userForUpdate = v1Factory.createUser(identityAdmin.username, null, null, null, false)
         String username = "userAdmin" + sharedRandom
-        User user = createUser(username, "1234567890", randomMosso, null, true)
+        User user = v1Factory.createUser(username, "1234567890", randomMosso, null, true)
         String username2 = "userAdmin2" + sharedRandom
-        User userForCreate = createUser(username2, "1234567890", randomMosso+1, null, true)
+        User userForCreate = v1Factory.createUser(username2, "1234567890", randomMosso+1, null, true)
 
         when:
-        def updateUser = updateUserXML(identityAdmin.username, userForUpdate)
-        createUserXML(user)
-        authUser = identityAdmin.username
-        authPassword = "Password1"
-        def getUser = getUserXML(user.id)
-        def createUser = createUserXML(userForCreate)
+        def updateUser = updateUser11(identityAdmin.username, userForUpdate)
+        createUser11(user)
+        authUser11 = identityAdmin.username
+        authUserPwd11 = "Password1"
+        def getUser = getUserByName11(user.id)
+        def createUser = createUser11(userForCreate)
 
         then:
         updateUser.status == 200
@@ -187,120 +173,53 @@ class Cloud11IntegrationTest extends Specification{
     }
 
     @Ignore
-    def "Identity admin should not be allowed to delete himself" () {
+    def "Identity admin should not be allowed to delete himself"() {
         given:
-        User userForUpdate = createUser(identityAdmin.username, null, null, null, true)
+        User userForUpdate = v1Factory.createUser(identityAdmin.username, null, null, null, true)
 
         when:
-        def updateUser = updateUserXML(identityAdmin.username, userForUpdate)
-        authUser = identityAdmin.username
-        authPassword = "Password1"
-        def deleteAdminUser = deleteUserXML(identityAdmin.username)
+        def updateUser = updateUser11(identityAdmin.username, userForUpdate)
+        authUser11 = identityAdmin.username
+        authUserPwd11 = "Password1"
+        def deleteAdminUser = deleteUser11(identityAdmin.username)
 
         then:
         updateUser.status == 200
         deleteAdminUser.status == 403
     }
 
-    def createUser(String id, String key, Integer mossoId, String nastId, Boolean enabled) {
-        new User().with {
-            it.id = id
-            it.key = key
-            it.mossoId = mossoId
-            it.nastId = nastId
-            it.enabled = enabled
-            return it
-        }
+    def "authenticate and verify token entropy"() {
+        given:
+        def username = "user$sharedRandom"
+        def key = "$sharedRandom"
+        def credential = v1Factory.createApiKeyCredentials(username, key)
+
+        def user = v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", sharedRandom, "Password1")
+        def userId = createUser20(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).id
+        addApiKeyToUser(serviceAdminToken, userId, credential)
+
+        when:
+        def startTime = new DateTime()
+        def expOne = authAndExpire(username, key)
+        def expTwo = authAndExpire(username, key)
+        def expThree = authAndExpire(username, key)
+        def endTime = new DateTime()
+
+        def range = getRange(defaultExpirationSeconds, startTime, endTime)
+        hardDeleteUser(serviceAdminToken, userId)
+
+        then:
+        expOne <= range.get("max")
+        expOne >= range.get("min")
+        expTwo <= range.get("max")
+        expTwo <= range.get("min")
+        expThree >= range.get("max")
+        expThree >= range.get("min")
     }
 
-    //Resource Calls v1.1
-    def authenticateWithPasswordXML(String username, String password){
-        def cred = new PasswordCredentials().with {
-            it.username = username
-            it.password = password
-            return it
-        }
-        resource.path(path11).path("auth-admin").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(cred).post(ClientResponse)
+    def authAndExpire(username, key) {
+        def token = authenticate11(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).accessToken
+        revokeToken11(authUser11, authUserPwd11, token.id)
+        return token.id
     }
-
-    def createUserXML(user) {
-        resource.path(path11).path('users').header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
-    }
-
-    def getUserXML(String username) {
-        resource.path(path11).path('users').path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def updateUserXML(String username, user) {
-        resource.path(path11).path('users').path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
-    }
-
-    def deleteUserXML(String username) {
-        resource.path(path11).path('users').path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).delete(ClientResponse)
-    }
-
-    //Resource Calls v2.0
-
-    def authenticate20XML(username, password) {
-        resource.path(path20 + 'tokens').accept(APPLICATION_XML).type(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
-    }
-
-    def getUserByName20XML(String token, String name) {
-        resource.path(path20).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
-    }
-
-    def createUser20XML(String token, user) {
-        resource.path(path20).path('users').accept(APPLICATION_XML).type(APPLICATION_XML).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
-    }
-
-    def deleteTenantXML(String token, String tenantId) {
-        resource.path(path20).path('tenants').path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
-    }
-
-    def hardDeleteUserXML(String token, String userId) {
-        resource.path(path20).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
-    }
-
-    def userForCreate20(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
-        new org.openstack.docs.identity.api.v2.User().with {
-            it.username = (username != null) ? username : null
-            it.displayName = (displayName != null) ? displayName : null
-            it.email = (email != null) ? email : null
-            it.enabled = (enabled != null) ? enabled : null
-            if (defaultRegion != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
-            }
-            if (domainId != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "domainId"), domainId)
-            }
-            if (password != null) {
-                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
-            }
-            return it
-        }
-    }
-
-    def authenticateRequest(String username, String password) {
-        def credentials = getCredentials(username, password)
-
-        def objectFactory = new ObjectFactory()
-
-        new AuthenticationRequest().with {
-            it.setCredential(objectFactory.createPasswordCredentials(credentials))
-            return it
-        }
-    }
-
-    def getCredentials(String username, String password) {
-        new PasswordCredentialsRequiredUsername().with {
-            it.username = username
-            it.password = password
-            return it
-        }
-    }
-
-    def baseEncoding(String username, String password){
-        return Base64.encode(username + ":" + password);
-    }
-
 }
