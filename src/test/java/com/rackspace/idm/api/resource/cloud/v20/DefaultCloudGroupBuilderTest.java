@@ -44,7 +44,7 @@ public class DefaultCloudGroupBuilderTest{
     @Test
     public void build_withValidGroup_setsGroupDOId() throws Exception {
         Group groupDO = defaultCloudGroupBuilder.build(group);
-        assertThat("group Id", groupDO.getGroupId(), equalTo(Integer.parseInt(group.getId())));
+        assertThat("group Id", groupDO.getGroupId(), equalTo(group.getId()));
     }
 
     @Test

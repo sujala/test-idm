@@ -260,7 +260,7 @@ public class CloudMigrationServiceTestOld {
         Group group = new Group();
         group.setName("group");
         doReturn("").when(spy).getAdminToken();
-        when(groupService.getGroupById(anyInt())).thenReturn(group);
+        when(groupService.getGroupById(anyString())).thenReturn(group);
         when(config.getString("cloud.region")).thenReturn("notUK");
         spy.migrateGroups();
         verify(spy).addOrUpdateGroups(anyString());
@@ -1037,7 +1037,7 @@ public class CloudMigrationServiceTestOld {
         group.setName("groupName");
         group.setId("123456");
         newGroup.setName("groupName");
-        newGroup.setGroupId(123456);
+        newGroup.setGroupId("123456");
 
         UserType result = new UserType();
         spy.validateGroups(groups, newGroups, result);
@@ -1055,7 +1055,7 @@ public class CloudMigrationServiceTestOld {
         group.setName("groupName");
         group.setId("12345");
         newGroup.setName("groupName");
-        newGroup.setGroupId(123456);
+        newGroup.setGroupId("123456");
 
         UserType result = new UserType();
         spy.validateGroups(groups, newGroups, result);
@@ -1074,7 +1074,7 @@ public class CloudMigrationServiceTestOld {
         group.setName("groupName2");
         group.setId("123456");
         newGroup.setName("groupName");
-        newGroup.setGroupId(123456);
+        newGroup.setGroupId("123456");
 
         UserType result = new UserType();
         spy.validateGroups(groups, newGroups, result);
@@ -1389,10 +1389,10 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         Group entityGroup = new Group();
         entityGroup.setName("name");
-        entityGroup.setGroupId(1);
+        entityGroup.setGroupId("1");
         when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService, times(3)).addGroupToUser(anyInt(), eq("userId"));
+        verify(groupService, times(3)).addGroupToUser(anyString(), eq("userId"));
     }
 
     @Test
@@ -1403,11 +1403,11 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         Group entityGroup = new Group();
         entityGroup.setName("name");
-        entityGroup.setGroupId(1);
+        entityGroup.setGroupId("1");
         when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("notUk");
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService).addGroupToUser(1, "userId");
+        verify(groupService).addGroupToUser("1", "userId");
     }
 
     @Test
@@ -1418,11 +1418,11 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         Group entityGroup = new Group();
         entityGroup.setName("name");
-        entityGroup.setGroupId(0);
+        entityGroup.setGroupId("0");
         when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("UK");
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService).addGroupToUser(0, "userId");
+        verify(groupService).addGroupToUser("0", "userId");
     }
 
     @Test
@@ -1433,11 +1433,11 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         Group entityGroup = new Group();
         entityGroup.setName("name");
-        entityGroup.setGroupId(123);
+        entityGroup.setGroupId("123");
         when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("notUk");
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService).addGroupToUser(123, "userId");
+        verify(groupService).addGroupToUser("123", "userId");
     }
 
     @Test
@@ -1448,18 +1448,18 @@ public class CloudMigrationServiceTestOld {
         groups.getGroup().add(group);
         Group entityGroup = new Group();
         entityGroup.setName("name");
-        entityGroup.setGroupId(123);
+        entityGroup.setGroupId("123");
         when(groupService.getGroupByName(anyString())).thenReturn(entityGroup);
         when(config.getString("cloud.region")).thenReturn("UK");
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService).addGroupToUser(123, "userId");
+        verify(groupService).addGroupToUser("123", "userId");
     }
 
     @Test
     public void addUserGroups_withZeroGroups_callsGroupServiceZeroTimes() throws Exception {
         Groups groups = new Groups();
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService, never()).addGroupToUser(anyInt(), eq("userId"));
+        verify(groupService, never()).addGroupToUser(anyString(), eq("userId"));
     }
 
     @Test
@@ -1467,7 +1467,7 @@ public class CloudMigrationServiceTestOld {
         Groups groups = new Groups();
         groups.getGroup().add(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
         cloudMigrationService.addUserGroups("userId", groups);
-        verify(groupService, never()).addGroupToUser(anyInt(), eq("userId"));
+        verify(groupService, never()).addGroupToUser(anyString(), eq("userId"));
     }
 
     @Test
