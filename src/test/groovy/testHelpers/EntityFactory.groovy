@@ -253,6 +253,18 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createPolicy(String blob, String name, String policyType, String policyId) {
+        new Policy().with {
+            it.blob = blob
+            it.name = name
+            it.policyType = policyType
+            it.policyId = policyId
+            it.enabled = true
+            it.global = true
+            return it
+        }
+    }
+
     def createQuestion() {
         return createQuestion(ID, "question")
     }

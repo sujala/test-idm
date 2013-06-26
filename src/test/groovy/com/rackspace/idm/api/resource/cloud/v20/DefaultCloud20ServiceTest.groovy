@@ -2246,7 +2246,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
 
         then:
-        1 * policyService.updatePolicy(_, _)
+        1 * policyService.updatePolicy(_,_)
         response.build().status == 204
     }
 

@@ -18,6 +18,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.RootServiceTest
 import testHelpers.V2Factory
 
 import javax.xml.namespace.QName
@@ -46,14 +47,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import static com.rackspace.idm.RaxAuthConstants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class Cloud20IntegrationTest extends Specification {
+class Cloud20IntegrationTest extends RootServiceTest {
     @Autowired LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultCloud20Service cloud20Service
 
     @Shared WebResource resource
     @Shared JAXBObjectFactories objFactories;
-    @Shared V2Factory v2Factory
 
     @Shared def path20 = "cloud/v2.0/"
     @Shared int MAX_TRIES = 20
@@ -1124,9 +1124,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def "update policy to endpoint with endpoint without policy returns 404"() {
         when:
-        Policies policies = new Policies()
-        Policy policy = policy("name")
-        policies.policy.add(policy)
+        Policies policies = new Policies();
+        policies.policy.add(v1Factory.createPolicy("id$sharedRandom", "blob"))
         def response = updatePoliciesForEndpointTemplateXML(serviceAdminToken, endpointTemplateId, policies)
 
         then:
