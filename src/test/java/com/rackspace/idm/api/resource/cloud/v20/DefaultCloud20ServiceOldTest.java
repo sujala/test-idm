@@ -237,7 +237,7 @@ public class DefaultCloud20ServiceOldTest {
         group = new Group();
         group.setName("Group1");
         group.setDescription("Group Description");
-        group.setGroupId(1);
+        group.setGroupId("1");
         groupKs = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
         groupKs.setId("1");
         groupKs.setName("Group1");
@@ -271,7 +271,7 @@ public class DefaultCloud20ServiceOldTest {
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
-        when(userGroupService.checkAndGetGroupById(anyInt())).thenReturn(group);
+        when(userGroupService.checkAndGetGroupById(anyString())).thenReturn(group);
         when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
 
         spy = spy(defaultCloud20Service);
@@ -1440,7 +1440,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listUserGroups_noGroup_ReturnDefaultGroup() throws Exception {
-        when(userGroupService.getGroupById(config.getInt(org.mockito.Matchers.<String>any()))).thenReturn(group);
+        when(userGroupService.getGroupById(config.getString(org.mockito.Matchers.<String>any()))).thenReturn(group);
         when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null, authToken, userId);
         assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups)responseBuilder.build().getEntity()).getGroup().get(0).getName(), equalTo("Group1"));
@@ -3841,7 +3841,7 @@ public class DefaultCloud20ServiceOldTest {
         Users users = new Users();
         users.setUsers(userList);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userGroupService.getGroupById(1)).thenReturn(group);
+        when(userGroupService.getGroupById("1")).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", "1");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3877,7 +3877,7 @@ public class DefaultCloud20ServiceOldTest {
         userList.add(user);
         Users users = new Users();
         users.setUsers(userList);
-        when(userGroupService.getGroupById(1)).thenReturn(group);
+        when(userGroupService.getGroupById("1")).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));

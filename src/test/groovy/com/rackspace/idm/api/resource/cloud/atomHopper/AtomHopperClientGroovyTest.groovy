@@ -58,9 +58,33 @@ class AtomHopperClientGroovyTest extends Specification {
         UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
 
         then:
-        entry.title.value == "Identity Event"
-        entry.content.type == MediaType.APPLICATION_XML
-        entry.content.event.resourceName == "testUser"
+        entry.title.value.equals("Identity Event")
+        entry.content.type.equals(MediaType.APPLICATION_XML)
+        entry.content.event.resourceName.equals("testUser")
+    }
+
+    def "atom entry posts Groud Id not Group Name " () {
+        given:
+        setupMock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        def groupName = "MyGroup"
+        def groupId = 1
+        defaultGroupService.getGroupsForUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+
+        when:
+        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
+
+        def cloudIdentityType = (com.rackspace.docs.event.identity.user.CloudIdentityType) entry.content.event.any.get(0)
+        def groupInfo = cloudIdentityType.getGroups().get(0)
+        then:
+        !groupInfo.equals(groupName)
+        Integer.parseInt(groupInfo) == groupId
     }
 
     def "Post deleted user" () {

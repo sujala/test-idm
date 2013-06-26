@@ -222,7 +222,7 @@ public class AtomHopperClient {
         List<Group> groupList = defaultGroupService.getGroupsForUser(user.getId());
         if(groupList != null){
             for(Group group : groupList){
-                cloudIdentityType.getGroups().add(group.getName());
+                cloudIdentityType.getGroups().add(group.getGroupId());
             }
         }
         List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
