@@ -27,7 +27,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class Cloud11VersionResourceIntegrationTest extends Specification{
+class Cloud11IntegrationTest extends Specification{
 
     @Shared WebResource resource
     @Shared def path11 = "cloud/v1.1/"

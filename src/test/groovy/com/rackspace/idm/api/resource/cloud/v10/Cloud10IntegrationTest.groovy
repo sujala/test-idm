@@ -36,6 +36,7 @@ class Cloud10IntegrationTest extends Specification {
     @Shared String authPwd = "auth123"
 
     @Shared int defaultExpirationSeconds
+    @Shared double entropy
 
 
     def setupSpec() {
@@ -45,6 +46,7 @@ class Cloud10IntegrationTest extends Specification {
 
     def setup() {
         defaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds")
+        entropy = config.getDouble("token.entropy")
     }
 
     def "authenticate using username and apiKey"() {
@@ -59,24 +61,47 @@ class Cloud10IntegrationTest extends Specification {
         def response = authenticateV10("auth", "thisismykey")
         String token = response.headers.get("X-Auth-Token")[0]
         revokeTokenV11(token)
-        def range = getRange(defaultExpirationSeconds)
 
         when:
-        token = authenticateV10("auth", "thisismykey").headers.get("X-Auth-Token")[0]
-        def validateResponseOne = validateTokenV20(token, token)
-        def expiration = validateResponseOne.getEntity(AuthenticateResponse).value.token.expires
-        expiration = expiration.toGregorianCalendar().getTime()
+        def startTime = new DateTime()
+        def expirationOne = authAndExpire("auth", "thisismykey")
+        def expirationTwo = authAndExpire("auth", "thisismykey")
+        def expirationThree = authAndExpire("auth", "thisismykey")
+        def endTime = new DateTime()
+
+        def range = getRange(defaultExpirationSeconds, startTime, endTime)
 
         then:
-        expiration >= range.get("min")
-        expiration <= range.get("max")
+        expirationOne >= range.get("min")
+        expirationOne <= range.get("max")
+        expirationTwo >= range.get("min")
+        expirationTwo >= range.get("min")
+        expirationThree <= range.get("max")
+        expirationThree <= range.get("max")
+    }
+
+    def authAndExpire(String username, String key) {
+        def token = authenticateV10(username, key).headers.get("X-Auth-Token")[0]
+        def validateResponseOne = validateTokenV20(token, token)
+        revokeTokenV11(token)
+
+        def expiration = validateResponseOne.getEntity(AuthenticateResponse).value.token.expires
+        return expiration.toGregorianCalendar().getTime()
     }
 
     def getRange(seconds) {
-        def entropy = config.getDouble("token.entropy")
         HashMap<String, Date> range = new HashMap<>()
         def min = new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate()
         def max = new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate()
+        range.put("min", min)
+        range.put("max", max)
+        return range
+    }
+
+    def getRange(seconds, start, end) {
+        HashMap<String, Date> range = new HashMap<>()
+        def min = start.plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate()
+        def max = end.plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate()
         range.put("min", min)
         range.put("max", max)
         return range
