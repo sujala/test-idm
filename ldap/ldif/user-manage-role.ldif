@@ -1,0 +1,11 @@
+version: 1
+
+dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4
+ ,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:user-manage
+rsId: 7
+description: User manage role
+rsWeight: 1500
+
