@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
@@ -731,5 +733,24 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_PASSWORD] as Set)
         }
+    }
+
+    def "Duplicate tenant reference in roles doesn't create duplicate endpoints" (){
+            def role = Mock(com.rackspace.idm.domain.entity.TenantRole)
+            def listRoles = [role, role].asList()
+            def token = Mock(ScopeAccess)
+            def endPoint = Mock(OpenstackEndpoint)
+            def tenant = Mock(com.rackspace.idm.domain.entity.Tenant)
+            def tenant2 = Mock(com.rackspace.idm.domain.entity.Tenant)
+
+            tenantService.getTenantRolesForScopeAccess(_) >>listRoles
+            tenantService.getTenant(_)>>>[tenant, tenant2];
+            role.getTenantIds() >> ["1"].asList()
+            endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
+            endpointService.getOpenStackEndpointForTenant(_) >> endPoint
+        when:
+            def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
+        then:
+            endPointList.size() == 1
     }
 }

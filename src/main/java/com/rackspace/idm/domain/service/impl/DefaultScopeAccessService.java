@@ -69,17 +69,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        List<Tenant> tenants = new ArrayList<Tenant>();
-        for (TenantRole role : roles) {
-            if (role.getTenantIds() != null) {
-                for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantService.getTenant(tenantId);
-                    if (tenant != null) {
-                        tenants.add(tenant);
-                    }
-                }
-            }
-        }
+        List<Tenant> tenants = getTenants(roles);
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
@@ -105,17 +95,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        List<Tenant> tenants = new ArrayList<Tenant>();
-        for (TenantRole role : roles) {
-            if (role.getTenantIds() != null) {
-                for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantService.getTenant(tenantId);
-                    if (tenant != null) {
-                        tenants.add(tenant);
-                    }
-                }
-            }
-        }
+        List<Tenant> tenants = getTenants(roles);
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
@@ -126,6 +106,25 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         return endpoints;
+    }
+
+    private List<Tenant> getTenants(List<TenantRole> roles) {
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        List<String> tenantIdList = new ArrayList<String>();
+        for (TenantRole role : roles) {
+            if (role.getTenantIds() != null) {
+                for (String tenantId : role.getTenantIds()) {
+                    if(!tenantIdList.contains(tenantId)){
+                        tenantIdList.add(tenantId);
+                        Tenant tenant = this.tenantService.getTenant(tenantId);
+                        if (tenant != null) {
+                            tenants.add(tenant);
+                        }
+                    }
+                }
+            }
+        }
+        return tenants;
     }
 
     @Override
