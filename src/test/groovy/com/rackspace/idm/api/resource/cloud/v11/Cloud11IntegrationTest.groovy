@@ -1,13 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
-import com.rackspace.api.idm.v1.AuthData
+import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
+import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
+import testHelpers.Cloud11Methods
+import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
 
 import javax.mail.search.DateTerm
@@ -21,8 +25,9 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * Time: 4:22 PM
  * To change this template use File | Settings | File Templates.
  */
-@ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud11IntegrationTest extends RootIntegrationTest {
+
+    @Autowired Configuration config
 
     @Shared def serviceAdmin
     @Shared def serviceAdminToken
@@ -31,31 +36,37 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     @Shared def randomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def randomMosso
+    @Shared def adminUser = "auth"
+    @Shared def adminPassword = "auth123"
 
     def setupSpec(){
-        this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
-
         sharedRandom = ("$randomness").replace('-',"")
 
-        serviceAdminToken = authenticate20("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
-        serviceAdmin = getUserByName20(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User)
+        serviceAdminToken = cloud20.authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
+        serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User)
 
         String adminUsername = "identityAdmin" + sharedRandom
-        createUser20(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
-        identityAdmin = getUserByName20(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
-        identityAdminToken = authenticate20(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
-    }
-
-    def cleanupSpec() {
-        deleteUser11(identityAdmin.username)
+        cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
+        identityAdmin = cloud20.getUserByName(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
+        identityAdminToken = cloud20.authenticate(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
     }
 
     def setup(){
+        cloud11.authUser = adminUser
+        cloud11.authPassword = adminPassword
         Random random = new Random()
         randomMosso = 10000000 + random.nextInt(1000000)
-        authUser11 = "auth"
-        authUserPwd11 = "auth123"
+
+        entropy = config.getDouble("token.entropy")
+        defaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds")
+
     }
+
+    def cleanupSpec() {
+        cloud11.deleteUser(identityAdmin.username)
+    }
+
+
 
     def "Authenticate with password credentials returns 200"() {
         given:
@@ -65,13 +76,13 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def user = v2Factory.createUserForCreate(username, "displayName", "test@email.com", true, "DFW", domain, password)
 
         when:
-        createUser20(identityAdminToken, user)
-        def authResponse = authenticate11(v1Factory.createPasswordCredentials(username, password))
+        cloud20.createUser(identityAdminToken, user)
+        def authResponse = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(username, password))
 
-        def getUser20Response = getUserByName20(serviceAdminToken, username)
+        def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
-        deleteUser11(username)
-        hardDeleteUser(serviceAdminToken, userEntity.id)
+        cloud11.deleteUser(username)
+        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
 
         then:
         authResponse.status == 200
@@ -84,15 +95,15 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         User userForUpdate = v1Factory.createUser(username, null, randomMosso+1, "someNastId1", true)
 
         when:
-        def userCreateResponse = createUser11(user)
-        def getUserResponse = getUserByName11(username)
-        def getUser20Response = getUserByName20(serviceAdminToken, username)
+        def userCreateResponse = cloud11.createUser(user)
+        def getUserResponse = cloud11.getUserByName(username)
+        def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
 
-        def updateUserResponse = updateUser11(username, userForUpdate)
-        def deleteUserResponse = deleteUser11(username)
-        def hardDeleteUserResponse = hardDeleteUser(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = deleteTenant20(serviceAdminToken, String.valueOf(randomMosso))
+        def updateUserResponse = cloud11.updateUser(username, userForUpdate)
+        def deleteUserResponse = cloud11.deleteUser(username)
+        def hardDeleteUserResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
 
         then:
         userCreateResponse.status == 201
@@ -126,15 +137,15 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         User user = v1Factory.createUser(username, "1234567890", randomMosso, null, true)
 
         when:
-        def userCreateResponse = createUser11(user)
-        def getUser20Response = getUserByName20(serviceAdminToken, username)
+        def userCreateResponse = cloud11.createUser(user)
+        def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
         user.id = "userExistingMosso2"
-        def userCreateNewNameResponse = createUser11(user)
+        def userCreateNewNameResponse = cloud11.createUser(user)
 
-        def deleteUserResponse = deleteUser11(username)
-        def hardDeleteUserResponse = hardDeleteUser(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = deleteTenant20(serviceAdminToken, String.valueOf(randomMosso))
+        def deleteUserResponse = cloud11.deleteUser(username)
+        def hardDeleteUserResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
+        def deleteTenantResponse = cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
 
         then:
         userCreateResponse.status == 201
@@ -159,12 +170,16 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         User userForCreate = v1Factory.createUser(username2, "1234567890", randomMosso+1, null, true)
 
         when:
-        def updateUser = updateUser11(identityAdmin.username, userForUpdate)
-        createUser11(user)
-        authUser11 = identityAdmin.username
-        authUserPwd11 = "Password1"
-        def getUser = getUserByName11(user.id)
-        def createUser = createUser11(userForCreate)
+        def updateUser = cloud11.updateUser(identityAdmin.username, userForUpdate)
+        cloud11.createUser(user)
+        cloud11.authUser = identityAdmin.username
+        cloud11.authPassword = "Password1"
+        def getUser = cloud11.getUserByName(user.id)
+        def createUser = cloud11.createUser(userForCreate)
+        cloud11.authUser = adminUser
+        cloud11.authPassword = adminPassword
+        cloud11.setUserEnabled(identityAdmin.username, v1Factory.createUserWithOnlyEnabled(true))
+        identityAdminToken = cloud20.authenticate(identityAdmin.username, "Password1").getEntity(AuthenticateResponse).value.token.id
 
         then:
         updateUser.status == 200
@@ -172,31 +187,15 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         createUser.status == 403
     }
 
-    @Ignore
-    def "Identity admin should not be allowed to delete himself"() {
-        given:
-        User userForUpdate = v1Factory.createUser(identityAdmin.username, null, null, null, true)
-
-        when:
-        def updateUser = updateUser11(identityAdmin.username, userForUpdate)
-        authUser11 = identityAdmin.username
-        authUserPwd11 = "Password1"
-        def deleteAdminUser = deleteUser11(identityAdmin.username)
-
-        then:
-        updateUser.status == 200
-        deleteAdminUser.status == 403
-    }
-
     def "authenticate and verify token entropy"() {
         given:
-        def username = "user$sharedRandom"
+        def username = "userTestEntroy$sharedRandom"
         def key = "$sharedRandom"
         def credential = v1Factory.createApiKeyCredentials(username, key)
 
         def user = v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", sharedRandom, "Password1")
-        def userId = createUser20(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).id
-        addApiKeyToUser(serviceAdminToken, userId, credential)
+        def userId = cloud20.createUser(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).id
+        cloud20.addApiKeyToUser(serviceAdminToken, userId, credential)
 
         when:
         def startTime = new DateTime()
@@ -206,20 +205,20 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def endTime = new DateTime()
 
         def range = getRange(defaultExpirationSeconds, startTime, endTime)
-        hardDeleteUser(serviceAdminToken, userId)
+        cloud20.hardDeleteUser(serviceAdminToken, userId)
 
         then:
         expOne <= range.get("max")
         expOne >= range.get("min")
         expTwo <= range.get("max")
-        expTwo <= range.get("min")
-        expThree >= range.get("max")
+        expTwo >= range.get("min")
+        expThree <= range.get("max")
         expThree >= range.get("min")
     }
 
     def authAndExpire(username, key) {
-        def token = authenticate11(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).accessToken
-        revokeToken11(authUser11, authUserPwd11, token.id)
-        return token.id
+        def token = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).token
+        cloud11.revokeToken(token.id)
+        return token.expires.toGregorianCalendar().getTime()
     }
 }

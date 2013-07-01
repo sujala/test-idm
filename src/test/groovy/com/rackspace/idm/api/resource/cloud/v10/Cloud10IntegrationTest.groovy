@@ -4,10 +4,7 @@ import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,14 +14,9 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * To change this template use File | Settings | File Templates.
  */
 
-@ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud10IntegrationTest extends RootIntegrationTest {
 
     @Autowired Configuration config
-
-    def setupSpec() {
-        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
-    }
 
     def setup() {
         defaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds")
@@ -33,16 +25,16 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
 
     def "authenticate using username and apiKey"() {
         when:
-        def response = authenticate10("auth", "thisismykey")
+        def response = cloud10.authenticate("auth", "thisismykey")
         then:
         response.status == 204
     }
 
     def "authenticate and verify token entropy"() {
         given:
-        def response = authenticate10("auth", "thisismykey")
+        def response = cloud10.authenticate("auth", "thisismykey")
         String token = response.headers.get("X-Auth-Token")[0]
-        revokeToken11("auth", "auth123", token)
+        cloud11.revokeToken(token)
 
         when:
         def startTime = new DateTime()
@@ -57,15 +49,15 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         expirationOne >= range.get("min")
         expirationOne <= range.get("max")
         expirationTwo >= range.get("min")
-        expirationTwo >= range.get("min")
-        expirationThree <= range.get("max")
+        expirationTwo <= range.get("max")
+        expirationThree >= range.get("min")
         expirationThree <= range.get("max")
     }
 
     def authAndExpire(String username, String key) {
-        def token = authenticate10(username, key).headers.get("X-Auth-Token")[0]
-        def validateResponseOne = validateToken20(token, token)
-        revokeToken11("auth", "auth123", token)
+        def token = cloud10.authenticate(username, key).headers.get("X-Auth-Token")[0]
+        def validateResponseOne = cloud20.validateToken(token, token)
+        cloud11.revokeToken(token)
 
         def expiration = validateResponseOne.getEntity(AuthenticateResponse).value.token.expires
         return expiration.toGregorianCalendar().getTime()
