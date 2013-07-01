@@ -17,6 +17,7 @@ buildscript {
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+        classpath 'com.rackspace.api.clients:veracode-client:1.3'
     }
 }
 
@@ -45,6 +46,7 @@ configurations {
     delombokJava
     delombokTestJava
     jaxb
+    veracode
 }
 
 repositories {
@@ -273,6 +275,17 @@ task jaxb() {
             arg(value: '-Xannotate')
         }
     }
+}
+
+task veracode() << {
+    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out) 
+    def directory = fileTree(war.destinationDir) {
+        include '**/*.war'
+    }
+    directory.each {File file ->
+	    client.scanArtifacts([file].asList(), buildVersion as int, "GlobalAuth", "Linux")
+    }
+
 }
 
 def delombok(srcDir, targetDir) {
