@@ -87,7 +87,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test (expected = IllegalStateException.class)
     public void getGroupById_callsLDAPInterfaceSearch_throwsLDAPSearchException() throws Exception {
         doThrow(new LDAPSearchException(ResultCode.LOCAL_ERROR, "error")).when(ldapInterface).search(anyString(), any(SearchScope.class), any(Filter.class));
-        spy.getGroupById(1);
+        spy.getGroupById("1");
     }
 
     @Test (expected = IllegalStateException.class)
@@ -98,7 +98,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         ResultCode resultCode = ResultCode.SUCCESS;
         SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 2, 1, new Control[0]);
         when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
-        spy.getGroupById(1);
+        spy.getGroupById("1");
     }
 
     @Test (expected = NotFoundException.class)
@@ -109,7 +109,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         ResultCode resultCode = ResultCode.SUCCESS;
         SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 0, 1, new Control[0]);
         when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
-        spy.getGroupById(1);
+        spy.getGroupById("1");
     }
 
     @Test
@@ -122,7 +122,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 1, 1, new Control[0]);
         when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
         doReturn(group).when(spy).getGroup(searchResultEntry);
-        Group result = spy.getGroupById(1);
+        Group result = spy.getGroupById("1");
         assertThat("group", result, equalTo(group));
     }
 
@@ -166,7 +166,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void addGroup_callsAddEntry() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         doReturn(new Attribute[0]).when(spy).getAddAttributes(group);
         doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
         spy.addGroup(group);
@@ -176,9 +176,9 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void updateGroup_modSizeLessThanOne_returns() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Modification> mods = new ArrayList<Modification>();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(mods).when(spy).getModifications(group, group);
         spy.updateGroup(group);
         verify(spy).getModifications(group, group);
@@ -187,12 +187,12 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test (expected = IllegalStateException.class)
     public void updateGroup_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         group.setUniqueId("uniqueId");
         Modification modification = new Modification(ModificationType.ADD, "attr");
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(modification);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(mods).when(spy).getModifications(group, group);
         doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
         spy.updateGroup(group);
@@ -201,12 +201,12 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void updateGroup_callsLDAPInterface_modify() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         group.setUniqueId("uniqueId");
         Modification modification = new Modification(ModificationType.ADD, "attr");
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(modification);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(mods).when(spy).getModifications(group, group);
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(null);
         spy.updateGroup(group);
@@ -216,19 +216,19 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test (expected = IllegalStateException.class)
     public void deleteGroup_callsLDAPInterfaceDelete_throwsLDAPException() throws Exception {
         doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).delete(anyString());
-        spy.deleteGroup(1);
+        spy.deleteGroup("1");
     }
 
     @Test (expected = IllegalStateException.class)
     public void deleteGroup_resultCodeIsNotSuccess_throwsIllegalStateException() throws Exception {
         when(ldapInterface.delete(anyString())).thenReturn(new LDAPResult(1, ResultCode.LOCAL_ERROR));
-        spy.deleteGroup(1);
+        spy.deleteGroup("1");
     }
 
     @Test
     public void deleteGroup_deletesGroup_resultCodeSuccess() throws Exception {
         when(ldapInterface.delete(anyString())).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.deleteGroup(1);
+        spy.deleteGroup("1");
     }
 
     @Test
@@ -240,82 +240,82 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Test (expected = NotFoundException.class)
     public void addGroupToUser_callsGetGroupById_throwsNotFoundException() throws Exception {
-        doThrow(new NotFoundException()).when(spy).getGroupById(1);
-        spy.addGroupToUser(1, "userId");
+        doThrow(new NotFoundException()).when(spy).getGroupById("1");
+        spy.addGroupToUser("1", "userId");
     }
 
     @Test (expected = BadRequestException.class)
     public void addGroupToUser_callsGetGroupsForUser_throwsBadRequestException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
-        doReturn(group).when(spy).getGroupById(1);
+        group.setGroupId("1");
+        doReturn(group).when(spy).getGroupById("1");
         doThrow(new BadRequestException()).when(spy).getGroupsForUser("userId");
-        spy.addGroupToUser(1, "userId");
+        spy.addGroupToUser("1", "userId");
     }
 
     @Test (expected = IllegalStateException.class)
     public void addGroupToUser_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.addGroupToUser(1, "userId");
+        spy.addGroupToUser("1", "userId");
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addGroupToUser_resultCodeNotSuccess_throwsIllegalArgumentException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
         oldGroups.add(group);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.LOCAL_ERROR));
-        spy.addGroupToUser(1, "userId");
+        spy.addGroupToUser("1", "userId");
     }
 
     @Test
     public void addGroupToUser_groupAdded_resultCodeSuccess() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
         oldGroups.add(group);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.addGroupToUser(1, "userId");
+        spy.addGroupToUser("1", "userId");
     }
 
     @Test (expected = NotFoundException.class)
     public void deleteGroupFromUser_groupIsNull_throwsNotFoundException() throws Exception {
-        doReturn(null).when(spy).getGroupById(1);
-        spy.deleteGroupFromUser(1, "userId");
+        doReturn(null).when(spy).getGroupById("1");
+        spy.deleteGroupFromUser("1", "userId");
     }
 
     @Test (expected = BadRequestException.class)
     public void deleteGroupFromUser_callsGetGroupsForUser_throwsBadRequest() throws Exception {
         Group group = new Group();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doThrow(new BadRequestException()).when(spy).getGroupsForUser("userId");
-        spy.deleteGroupFromUser(1, "userId");
+        spy.deleteGroupFromUser("1", "userId");
     }
 
     @Test
     public void deleteGroupFromUser_groupsSizeIsOneOrMore_addsReplaceMod() throws Exception {
         ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         Group anotherGroup = new Group();
-        anotherGroup.setGroupId(2);
+        anotherGroup.setGroupId("2");
         List<Group> oldGroups = new ArrayList<Group>();
         oldGroups.add(group);
         oldGroups.add(anotherGroup);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.deleteGroupFromUser(1, "userId");
+        spy.deleteGroupFromUser("1", "userId");
         verify(ldapInterface).modify(anyString(), argumentCaptor.capture());
         List<Modification> result = argumentCaptor.getValue();
         assertThat("mod", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
@@ -325,12 +325,12 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     public void deleteGroupFromUser_groupsSizeLessThanOne_addsDeleteMod() throws Exception {
         ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.deleteGroupFromUser(1, "userId");
+        spy.deleteGroupFromUser("1", "userId");
         verify(ldapInterface).modify(anyString(), argumentCaptor.capture());
         List<Modification> result = argumentCaptor.getValue();
         assertThat("mod", result.get(0).getModificationType().toString(), equalTo("DELETE"));
@@ -339,23 +339,23 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test (expected = IllegalStateException.class)
     public void deleteGroupFromUser_callsLdapInterfaceModify_throwsLDAPException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
-        spy.deleteGroupFromUser(1, "userId");
+        spy.deleteGroupFromUser("1", "userId");
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteGroupFromUser_resultCodeNotSuccess_throwsIllegalArgumentException() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         List<Group> oldGroups = new ArrayList<Group>();
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         doReturn(oldGroups).when(spy).getGroupsForUser("userId");
         when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.LOCAL_ERROR));
-        spy.deleteGroupFromUser(1, "userId");
+        spy.deleteGroupFromUser("1", "userId");
     }
 
     @Test (expected = IllegalStateException.class)
@@ -409,15 +409,15 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         ResultCode resultCode = ResultCode.SUCCESS;
         SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 1, 1, new Control[0]);
         when(ldapInterface.search(anyString(),  any(SearchScope.class), any(Filter.class), any(String[].class))).thenReturn(searchResult);
-        doThrow(new NotFoundException()).when(spy).getGroupById(1);
+        doThrow(new NotFoundException()).when(spy).getGroupById("1");
         List<Group> result = spy.getGroupsForUser("2");
-        assertThat("group id", result.get(0).getGroupId(), equalTo(1));
+        assertThat("group id", result.get(0).getGroupId(), equalTo("1"));
     }
 
     @Test
     public void getGroupsForUser_foundGroupForUser_returnsGroup() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         Attribute attribute = new Attribute(LdapRepository.ATTR_GROUP_ID, "1");
         Attribute[] attributes = new Attribute[2];
         attributes[0] = attribute;
@@ -428,9 +428,9 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         ResultCode resultCode = ResultCode.SUCCESS;
         SearchResult searchResult = new SearchResult(1, resultCode, "diag", "match", new String[0], searchResultEntryList, null, 1, 1, new Control[0]);
         when(ldapInterface.search(anyString(),  any(SearchScope.class), any(Filter.class), any(String[].class))).thenReturn(searchResult);
-        doReturn(group).when(spy).getGroupById(1);
+        doReturn(group).when(spy).getGroupById("1");
         List<Group> result = spy.getGroupsForUser("2");
-        assertThat("group id", result.get(0).getGroupId(), equalTo(1));
+        assertThat("group id", result.get(0).getGroupId(), equalTo("1"));
     }
 
     @Test
@@ -442,7 +442,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", attributes);
         Group result = ldapGroupRepository.getGroup(searchResultEntry);
         assertThat("unique id", result.getUniqueId(), equalTo("uniqueId"));
-        assertThat("group id", result.getGroupId(), equalTo(1));
+        assertThat("group id", result.getGroupId(), equalTo("1"));
         assertThat("group name", result.getName(), equalTo("groupName"));
         assertThat("group description", result.getDescription(), equalTo("description"));
     }
@@ -450,7 +450,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void getAddAttributes_addsAllAttributes_returnsArray() throws Exception {
         Group group = new Group();
-        group.setGroupId(1);
+        group.setGroupId("1");
         group.setDescription("description");
         group.setName("groupName");
         Attribute[] result = ldapGroupRepository.getAddAttributes(group);
@@ -462,7 +462,7 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void getAddAttributes_doesNotAddAnyAttribute_returnsArray() throws Exception {
         Group group = new Group();
-        group.setGroupId(0);
+        group.setGroupId("0");
         Attribute[] result = ldapGroupRepository.getAddAttributes(group);
         assertThat("list size", result.length, equalTo(2));
     }

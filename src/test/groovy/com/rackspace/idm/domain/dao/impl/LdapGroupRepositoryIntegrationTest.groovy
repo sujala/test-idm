@@ -24,8 +24,8 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         def groupName = "group$random"
 
         when:
-        groupRepository.addGroup(getGroup(1010101, groupName, ""))
-        groupRepository.addGroup(getGroup(1010102, groupName, ""))
+        groupRepository.addGroup(getGroup("1010101", groupName, ""))
+        groupRepository.addGroup(getGroup("1010102", groupName, ""))
 
         def group = null
         try {
@@ -33,8 +33,8 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         } catch (e) {
         }
 
-        groupRepository.deleteGroup(1010101)
-        groupRepository.deleteGroup(1010102)
+        groupRepository.deleteGroup("1010101")
+        groupRepository.deleteGroup("1010102")
 
         then:
         group != null

@@ -384,7 +384,7 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createGroup(Integer groupId, String name, String description) {
+    def createGroup(String groupId, String name, String description) {
         return new Group().with {
             it.groupId = groupId
             it.name = name

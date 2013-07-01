@@ -21,7 +21,7 @@ public class DefaultCloudGroupBuilder implements CloudGroupBuilder {
         }
         groupDO.setName(group.getName());
         if (group.getId() != null) {
-            groupDO.setGroupId(Integer.parseInt(group.getId()));
+            groupDO.setGroupId(group.getId());
         }
 
         return groupDO;

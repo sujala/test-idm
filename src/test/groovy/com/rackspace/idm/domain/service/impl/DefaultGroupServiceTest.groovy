@@ -39,7 +39,7 @@ class DefaultGroupServiceTest extends RootServiceTest {
         setupMocks()
         config.getString("defaultGroupId") >> "0"
         Group group = new Group().with {
-            it.groupId = 0
+            it.groupId = "0"
             it.name = "someNewName"
             it.description = "newDesc"
             return it

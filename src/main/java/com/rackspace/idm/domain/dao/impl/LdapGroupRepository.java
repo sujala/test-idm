@@ -50,7 +50,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     }
 
     @Override
-    public Group getGroupById(int groupId) {
+    public Group getGroupById(String groupId) {
         getLogger().debug("Get group by Id {}", groupId);
         Group group = null;
         SearchResult searchResult = null;
@@ -117,7 +117,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             throw new IllegalArgumentException("Null instance of group was passed.");
         }
 
-        String groupDN = new LdapDnBuilder(GROUP_BASE_DN).addAttribute(ATTR_ID, group.getGroupId().toString()).build();
+        String groupDN = new LdapDnBuilder(GROUP_BASE_DN).addAttribute(ATTR_ID, group.getGroupId()).build();
 
         group.setUniqueId(groupDN);
 
@@ -156,7 +156,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     }
 
     @Override
-    public void deleteGroup(int groupId) {
+    public void deleteGroup(String groupId) {
         getLogger().debug("Deleting group - {}", groupId);
 
         LDAPResult result = null;
@@ -187,14 +187,14 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     }
 
     @Override
-    public void addGroupToUser(int groupId, String userId) {
+    public void addGroupToUser(String groupId, String userId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
         Group group = null;
         List<String> groups = new ArrayList<String>();
 
         try{ //TODO: should this catch exist... The getGroupById method already logs and throws accordingly
             group = this.getGroupById(groupId);
-            groups.add(group.getGroupId().toString());
+            groups.add(group.getGroupId());
         } catch (NotFoundException e){
             String errMsg = String.format("Group %s not found", groupId);
             getLogger().error(errMsg);
@@ -207,8 +207,8 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             oldGroups = this.getGroupsForUser(userId);
 
             for (Group s : oldGroups) {
-                if(s.getGroupId() != 0){
-                    groups.add(s.getGroupId().toString());
+                if(!s.getGroupId().equals("0")){
+                    groups.add(s.getGroupId());
                 }
             }
 
@@ -243,7 +243,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     }
 
     @Override
-    public void deleteGroupFromUser(int groupId, String userId) {
+    public void deleteGroupFromUser(String groupId, String userId) {
         getLogger().debug("Removing group {} from user {}", groupId, userId);
         Group group = this.getGroupById(groupId);
         if (group == null) {
@@ -266,7 +266,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
         for (Group s : oldGroups) {
             if (!s.getGroupId().equals(groupId)) {
-                groups.add(s.getGroupId().toString());
+                groups.add(s.getGroupId());
             }
         }
 
@@ -332,11 +332,11 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             if(list != null) {
                 for(String id : list) {
                     try{
-                        Group groupById = getGroupById(Integer.parseInt(id));
+                        Group groupById = getGroupById(id);
                         groups.add(groupById);
                     }catch (NotFoundException ex){
                         Group missingGroup = new Group();
-                        missingGroup.setGroupId(Integer.parseInt(id));
+                        missingGroup.setGroupId(id);
                         groups.add(missingGroup);
                         getLogger().error("User "+ userId+" had a reference to non-existant group "+id, ex);
 
@@ -357,7 +357,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         getLogger().debug("Inside getCloudGroup");
         Group group = new Group();
         group.setUniqueId(resultEntry.getDN());
-        group.setGroupId(Integer.parseInt(resultEntry.getAttributeValue(ATTR_ID)));
+        group.setGroupId(resultEntry.getAttributeValue(ATTR_ID));
         group.setName(resultEntry.getAttributeValue(ATTR_GROUP_NAME));
         group.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
         getLogger().debug("Exiting getCloudGroup");
@@ -370,8 +370,8 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_GROUP_OBJECT_CLASS_VALUES));
 
-        if (!StringUtils.isBlank(group.getGroupId().toString())) {
-            atts.add(new Attribute(ATTR_ID, group.getGroupId().toString()));
+        if (!StringUtils.isBlank(group.getGroupId())) {
+            atts.add(new Attribute(ATTR_ID, group.getGroupId()));
         }
 
         if (!StringUtils.isBlank(group.getName())) {
