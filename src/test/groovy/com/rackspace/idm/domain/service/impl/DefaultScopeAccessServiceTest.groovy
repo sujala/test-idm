@@ -873,7 +873,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         false    | 3600     | 0.01
     }
 
-    def ".getOrCreatePasswordResetScopeAccessForUser sets token expiration with entropy"() {
+    def "calling getOrCreatePasswordResetScopeAccessForUser sets token expiration with entropy"() {
         given:
         def user = entityFactory.createUser()
         def sa = null
@@ -900,7 +900,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         false             | defaultExpirationSeconds | 0.05
     }
 
-    def ".getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
+    def "calling getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
         given:
         def entropy = 0.01
         def uniqueId = "uniqueId"
