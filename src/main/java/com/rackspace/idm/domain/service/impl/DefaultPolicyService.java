@@ -85,8 +85,10 @@ public class DefaultPolicyService implements PolicyService {
 
     @Override
     public Policy getPolicy(String policyId) {
-        Policy policy = checkAndGetPolicy(policyId);
-        return policy;
+        if(policyId == null) {
+            throw new NotFoundException("Policy Id cannot be null");
+        }
+        return policyDao.getPolicy(policyId);
     }
 
     @Override
@@ -100,9 +102,12 @@ public class DefaultPolicyService implements PolicyService {
     }
 
     @Override
-    public void updatePolicy(Policy policy, String policyId) {
+    public void updatePolicy(String policyId, Policy policy) {
         if(policy == null){
             throw new BadRequestException(POLICY_CANNOT_BE_NULL);
+        }
+        if(policyId == null) {
+            throw new BadRequestException("Policy ID must not be null");
         }
         if(StringUtils.isBlank(policy.getBlob())){
             policy.setBlob(null);
@@ -113,8 +118,9 @@ public class DefaultPolicyService implements PolicyService {
         if(StringUtils.isBlank(policy.getPolicyType())) {
             policy.setPolicyType(null);
         }
+        policy.setLdapEntry(policyDao.getPolicy(policyId).getLdapEntry());
         logger.info("Updating Policy: {}", policy);
-        policyDao.updatePolicy(policy, policyId);
+        policyDao.updatePolicy(policy);
     }
 
     @Override

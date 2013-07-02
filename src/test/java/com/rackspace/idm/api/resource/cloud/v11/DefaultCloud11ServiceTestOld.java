@@ -1681,7 +1681,7 @@ public class DefaultCloud11ServiceTestOld {
         when(userGroupService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserGroups(request, "userId", null);
-        verify(cloudGroupService).getGroupById(anyInt());
+        verify(cloudGroupService).getGroupById(anyString());
     }
 
     @Test

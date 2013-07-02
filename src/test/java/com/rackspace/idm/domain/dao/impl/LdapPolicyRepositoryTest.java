@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.unboundid.ldap.sdk.*;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -9,10 +10,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Policy;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPInterface;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.SearchResultEntry;
 import junit.framework.TestCase;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -54,6 +51,7 @@ public class LdapPolicyRepositoryTest{
         spy = spy(ldapPolicyRepository);
         doReturn(ldapInterface).when(spy).getAppInterface();
         policy = new Policy();
+        policy.setLdapEntry(new ReadOnlyEntry("dn:rsId=id,ou=rackspace", "policy:policyId"));
         policy.setPolicyType("someType");
         policy.setBlob("someBlob");
         policy.setDescription("someDescription");
@@ -79,13 +77,6 @@ public class LdapPolicyRepositoryTest{
         spy.addPolicy(new Policy());
     }
 
-    @Test
-    public void getPolicy_getValidPolicy_returnsPolicy() throws Exception {
-        doReturn(policy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        Policy policy = spy.getPolicy("123");
-        assertThat("policy",policy.getPolicyId(),equalTo("123"));
-    }
-
    @Test
     public void getPolicy_emptyPolicyId_returnsNull() throws Exception {
         Policy policy = spy.getPolicy("");
@@ -93,35 +84,9 @@ public class LdapPolicyRepositoryTest{
     }
 
     @Test
-    public void getPolicy_nullPolicyId_returnsNull() throws Exception {
-        Policy policy = spy.getPolicy(null);
-        assertThat("policy",policy,equalTo(null));
-    }
-
-    @Test
-    public void getPolicyByName_getValidPolicy_returnsPolicy() throws Exception {
-        doReturn(policy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        Policy policy = spy.getPolicyByName("someName");
-        assertThat("policy",policy.getPolicyId(),equalTo("123"));
-    }
-
-   @Test
-    public void getPolicyByName_emptyPolicyName_returnsNull() throws Exception {
-        Policy policy = ldapPolicyRepository.getPolicyByName("");
-        assertThat("policy",policy,equalTo(null));
-    }
-
-    @Test
-    public void getPolicyByName_nullPolicyName_returnsNull() throws Exception {
-        doReturn(policy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        Policy policy = ldapPolicyRepository.getPolicy(null);
-        assertThat("policy",policy,equalTo(null));
-    }
-
-    @Test
     public void updatePolicy_noDifferences_returns() throws Exception {
         doReturn(policy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        spy.updatePolicy(policy,"123");
+        spy.updatePolicy(policy);
     }
 
     @Test
@@ -129,46 +94,8 @@ public class LdapPolicyRepositoryTest{
         Policy oldPolicy = new Policy();
         oldPolicy.setPolicyId("123");
         doReturn(oldPolicy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        spy.updatePolicy(policy,"123");
-        verify(spy,times(4)).getLogger();
+        spy.updatePolicy(policy);
+        verify(spy,times(2)).getLogger();
     }
 
-    @Test
-    public void listModifications_noDifferences() throws Exception {
-        Policy oldPolicy = new Policy();
-        oldPolicy.setDescription("someDes");
-        oldPolicy.setEnabled(true);
-        oldPolicy.setGlobal(false);
-        oldPolicy.setName("name");
-        oldPolicy.setBlob("blob");
-        oldPolicy.setPolicyType("type");
-        oldPolicy.setPolicyId("2");
-        Policy newPolicy = new Policy();
-        newPolicy.setDescription("someDes");
-        newPolicy.setName("name");
-        List<Modification> mod = ldapPolicyRepository.getModifications(oldPolicy,newPolicy);
-        assertThat("Check Modification",mod.size(),equalTo(0));
-    }
-
-    @Test
-    public void listModifications_someDifferences() throws Exception {
-        Policy oldPolicy = new Policy();
-        oldPolicy.setDescription("someDes");
-        oldPolicy.setEnabled(true);
-        oldPolicy.setGlobal(false);
-        oldPolicy.setName("name");
-        oldPolicy.setBlob("blob");
-        oldPolicy.setPolicyType("type");
-        oldPolicy.setPolicyId("2");
-        Policy newPolicy = new Policy();
-        newPolicy.setDescription("newDes");
-        newPolicy.setName("newName");
-        newPolicy.setGlobal(true);
-        newPolicy.setEnabled(false);
-        newPolicy.setBlob("newBlob");
-        newPolicy.setPolicyId("2");
-        newPolicy.setPolicyType("newType");
-        List<Modification> mod = ldapPolicyRepository.getModifications(oldPolicy,newPolicy);
-        assertThat("Check Modification",mod.size(),equalTo(6));
-    }
 }

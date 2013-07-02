@@ -715,8 +715,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def caller = entityFactory.createUser()
         def groups = entityFactory.createGroups()
-        groups.add(entityFactory.createGroup(1,"groupId1","group description"))
-        groups.add(entityFactory.createGroup(2,"groupId2","group description"))
+        groups.add(entityFactory.createGroup("1","groupId1","group description"))
+        groups.add(entityFactory.createGroup("2","groupId2","group description"))
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getAllUsers(_) >> [].asList()
@@ -2246,7 +2246,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
 
         then:
-        1 * policyService.updatePolicy(_, _)
+        1 * policyService.updatePolicy(_,_)
         response.build().status == 204
     }
 
@@ -3027,7 +3027,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Add Group to user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3045,7 +3045,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Add Group to user with subUsers sends an atom feed for each user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3063,7 +3063,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Add an existing Group to user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3082,7 +3082,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Delete Group from user"() {
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
@@ -3101,7 +3101,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Delete Group from user with subUsers sends an atom feed for each user"(){
         given:
         allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup(1, "nameone", "desc")
+        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true

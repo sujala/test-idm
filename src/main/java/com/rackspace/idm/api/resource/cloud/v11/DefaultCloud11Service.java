@@ -852,7 +852,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
             if (groups.size() == 0) {
-                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
+                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getString("defaultGroupId"));
                 groups.add(defGroup);
             }
             GroupsList groupList = new GroupsList();

@@ -535,7 +535,7 @@ public class CloudMigrationService {
             for (com.rackspace.idm.domain.entity.Group newGroup : newGroups) {
                 if (group.getName().equals(newGroup.getName())) {
                     newGroupName = newGroup.getName();
-                    newGroupId = String.valueOf(newGroup.getGroupId());
+                    newGroupId = newGroup.getGroupId();
                     break;
                 }
             }
@@ -908,7 +908,7 @@ public class CloudMigrationService {
         if (groups != null) {
             for (Group group : groups.getGroup()) {
                 com.rackspace.idm.domain.entity.Group newGroup = new com.rackspace.idm.domain.entity.Group();
-                newGroup.setGroupId(Integer.parseInt(group.getId()));
+                newGroup.setGroupId(group.getId());
                 newGroup.setName(group.getName());
                 if (StringUtils.isBlank(group.getDescription())) {
                     newGroup.setDescription(group.getName());

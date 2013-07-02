@@ -31,8 +31,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
 
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
-    public static final String ERROR_GETTING_DOMAIN_OBJECT = "Error getting domain object";
-    public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
 
     @Override
     public void addDomain(Domain domain) {
@@ -77,8 +75,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
         }
         Filter orFilter = Filter.createORFilter(filterList);
         Filter andFilter = Filter.createANDFilter(Filter.createEqualityFilter(ATTR_OBJECT_CLASS,OBJECTCLASS_DOMAIN),orFilter);
-
-        List<Domain> domains = new ArrayList<Domain>();
 
         return getObjects(andFilter);
     }

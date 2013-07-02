@@ -97,8 +97,8 @@ public class DefaultGroupServiceTestOld {
     @Test
     public void getGroupById_returnsGroup() throws Exception {
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        when(groupDao.getGroupById(0)).thenReturn(group);
-        assertThat("group",defaultGroupService.getGroupById(0),instanceOf(com.rackspace.idm.domain.entity.Group.class));
+        when(groupDao.getGroupById("0")).thenReturn(group);
+        assertThat("group",defaultGroupService.getGroupById("0"),instanceOf(com.rackspace.idm.domain.entity.Group.class));
     }
 
     @Test (expected = NotFoundException.class)
@@ -147,7 +147,7 @@ public class DefaultGroupServiceTestOld {
         when(groupDao.getNextGroupId()).thenReturn("12");
         doNothing().when(groupDao).addGroup(group);
         spy.addGroup(group);
-        assertThat("groupID",group.getGroupId(),equalTo(12));
+        assertThat("groupID",group.getGroupId(),equalTo("12"));
     }
 
     @Test
@@ -180,24 +180,24 @@ public class DefaultGroupServiceTestOld {
     @Test (expected = BadRequestException.class)
     public void updateGroup_nullGroupName_callsGroupDaoMethod() throws Exception {
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        group.setGroupId(123);
+        group.setGroupId("123");
         when(config.getString("defaultGroupId")).thenReturn("0");
-        when(groupDao.getGroupById(123)).thenReturn(group);
+        when(groupDao.getGroupById("123")).thenReturn(group);
         defaultGroupService.updateGroup(group);
     }
 
     @Test
     public void updateGroup_groupExists_callsGroupDaoMethodGet() throws Exception {
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        group.setGroupId(123);
+        group.setGroupId("123");
         group.setName("John Smith");
         when(config.getString("defaultGroupId")).thenReturn("0");
-        when(groupDao.getGroupById(123)).thenReturn(group);
+        when(groupDao.getGroupById("123")).thenReturn(group);
         doNothing().when(groupDao).updateGroup(group);
 
         defaultGroupService.updateGroup(group);
 
-        verify(groupDao).getGroupById(123);
+        verify(groupDao).getGroupById("123");
 
     }
 
@@ -205,11 +205,11 @@ public class DefaultGroupServiceTestOld {
     public void updateGroup_groupNamesNotEqual_callsVerifiyDuplicateGroup() throws Exception {
         com.rackspace.idm.domain.entity.Group group1 = new com.rackspace.idm.domain.entity.Group();
         com.rackspace.idm.domain.entity.Group group2 = new com.rackspace.idm.domain.entity.Group();
-        group1.setGroupId(123);
+        group1.setGroupId("123");
         group1.setName("John Smith");
         group2.setName("Adam Smith");
         when(config.getString("defaultGroupId")).thenReturn("0");
-        when(groupDao.getGroupById(123)).thenReturn(group2);
+        when(groupDao.getGroupById("123")).thenReturn(group2);
         doNothing().when(groupDao).updateGroup(group1);
         doNothing().when(spy).verifyDuplicateGroup(group1);
 
@@ -222,9 +222,9 @@ public class DefaultGroupServiceTestOld {
     @Test
     public void updateGroup_groupExists_callsGroupDaoMethodUpdate() throws Exception {
         com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        group.setGroupId(123);
+        group.setGroupId("123");
         group.setName("John Smith");
-        when(groupDao.getGroupById(123)).thenReturn(group);
+        when(groupDao.getGroupById("123")).thenReturn(group);
         doNothing().when(groupDao).updateGroup(group);
 
         defaultGroupService.updateGroup(group);
@@ -268,7 +268,7 @@ public class DefaultGroupServiceTestOld {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
         users.getUsers().add(user);
-        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
         when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
         defaultGroupService.deleteGroup("123");
     }
@@ -280,47 +280,47 @@ public class DefaultGroupServiceTestOld {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
         users.getUsers().add(user);
-        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
         when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(spy).deleteGroupFromUser(123, null);
-        doNothing().when(groupDao).deleteGroup(123);
+        doNothing().when(spy).deleteGroupFromUser("123", null);
+        doNothing().when(groupDao).deleteGroup("123");
         spy.deleteGroup("123");
-        verify(spy).deleteGroupFromUser(123,null);
+        verify(spy).deleteGroupFromUser("123",null);
     }
 
     @Test
     public void deleteGroup_existsNotNullAndNoUsers_callsGroupDaoMethod() throws Exception {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
-        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
         when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(groupDao).deleteGroup(123);
+        doNothing().when(groupDao).deleteGroup("123");
         defaultGroupService.deleteGroup("123");
-        verify(groupDao).deleteGroup(123);
+        verify(groupDao).deleteGroup("123");
     }
 
     @Test
     public void deleteGroup_existsNotNullAndNoUsers_doesNotCallDeleteGroupFromUser() throws Exception {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
-        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
         when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(spy).deleteGroupFromUser(123, null);
-        doNothing().when(groupDao).deleteGroup(123);
+        doNothing().when(spy).deleteGroupFromUser("123", null);
+        doNothing().when(groupDao).deleteGroup("123");
         spy.deleteGroup("123");
-        verify(spy,never()).deleteGroupFromUser(anyInt(), anyString());
+        verify(spy,never()).deleteGroupFromUser(anyString(), anyString());
     }
 
     @Test
     public void addGroupToUser_callsGroupDaoMethod() throws Exception {
-        defaultGroupService.addGroupToUser(0,null);
-        verify(groupDao).addGroupToUser(0,null);
+        defaultGroupService.addGroupToUser("0",null);
+        verify(groupDao).addGroupToUser("0",null);
     }
 
     @Test
     public void deleteGroupFromUser_callsGroupDaoMethod() throws Exception {
-        defaultGroupService.deleteGroupFromUser(0,null);
-        verify(groupDao).deleteGroupFromUser(0,null);
+        defaultGroupService.deleteGroupFromUser("0",null);
+        verify(groupDao).deleteGroupFromUser("0",null);
     }
 
     @Test

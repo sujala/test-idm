@@ -2169,7 +2169,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         for (Policy policy : policies.getPolicy()) {
             String policyId = policy.getId();
-            this.policyService.getPolicy(policyId);
+            this.policyService.checkAndGetPolicy(policyId);
             cloudBaseUrl.getPolicyList().add(policyId);
         }
 
@@ -2183,7 +2183,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.getPolicy(policyId);
+        com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.checkAndGetPolicy(policyId);
 
         endpointService.addPolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyEntity.getPolicyId());
         return Response.noContent();
@@ -2628,7 +2628,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             List<Group> groups = groupService.getGroupsForUser(userId);
             if (groups.size() == 0) {
-                Group defGroup = groupService.getGroupById(config.getInt("defaultGroupId"));
+                Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
                 groups.add(defGroup);
             }
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
@@ -2648,7 +2648,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
-            Group group = groupService.getGroupById(Integer.parseInt(groupId));
+            Group group = groupService.getGroupById(groupId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
@@ -2715,7 +2715,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
-            Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            Group group = groupService.checkAndGetGroupById(groupId);
 
             User user = userService.checkAndGetUserById(userId);
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
@@ -2728,11 +2728,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                     List<User> subUsers = userService.getSubUsers(user);
 
                     for (User subUser : subUsers) {
-                        groupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+                        groupService.addGroupToUser(groupId, subUser.getId());
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                     }
                 }
-                groupService.addGroupToUser(Integer.parseInt(groupId), userId);
+                groupService.addGroupToUser(groupId, userId);
                 atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             }
             return Response.noContent();
@@ -2747,7 +2747,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
-            Group group = groupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            Group group = groupService.checkAndGetGroupById(groupId);
 
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
@@ -2769,11 +2769,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
-                    groupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                    groupService.deleteGroupFromUser(groupId, subUser.getId());
                     atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                 }
             }
-            groupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
+            groupService.deleteGroupFromUser(groupId, userId);
             atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             return Response.noContent();
         } catch (Exception e) {
@@ -2789,7 +2789,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             String iMarker = validateMarker(marker);
             int iLimit = validateLimit(limit);
-            groupService.checkAndGetGroupById(Integer.parseInt(groupId));
+            groupService.checkAndGetGroupById(groupId);
             Users users = groupService.getAllEnabledUsers(filters, iMarker, iLimit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
@@ -3232,7 +3232,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getPolicy(String authToken, String policyId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Policy policyEnt = this.policyService.getPolicy(policyId);
+            com.rackspace.idm.domain.entity.Policy policyEnt = this.policyService.checkAndGetPolicy(policyId);
             com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
             Policy policy = policyConverterCloudV20.toPolicy(policyEnt);
             return Response.ok().entity(objectFactory.createPolicy(policy).getValue());
@@ -3245,10 +3245,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            policyService.checkAndGetPolicy(policyId);
             policyValidator.validatePolicyName(policy.getName());
+            policyService.checkAndGetPolicy(policyId);
             com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
-            this.policyService.updatePolicy(updatePolicy, policyId);
+            this.policyService.updatePolicy(policyId, updatePolicy);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

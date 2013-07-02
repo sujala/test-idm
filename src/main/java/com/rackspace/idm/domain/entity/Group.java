@@ -10,7 +10,7 @@ package com.rackspace.idm.domain.entity;
 public class Group implements Auditable {
 
     private String uniqueId = null;
-    private Integer groupId = null;
+    private String groupId = null;
     private String name = null;
     private String description = null;
 
@@ -22,11 +22,11 @@ public class Group implements Auditable {
         this.uniqueId = uniqueId;
     }
 
-    public Integer getGroupId() {
+    public String getGroupId() {
         return groupId;
     }
 
-    public void setGroupId(Integer groupId) {
+    public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
 

@@ -8,6 +8,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +18,7 @@ import lombok.Data;
  * To change this template use File | Settings | File Templates.
  */
 @Data
+@EqualsAndHashCode(exclude = "ldapEntry")
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_POLICY)
 public class Policy implements Auditable, UniqueId {
 
