@@ -23,10 +23,8 @@ import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
-import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithToken
@@ -34,7 +32,6 @@ import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
-import com.rackspace.idm.api.resource.cloud.v20.DelegateCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.dao.ApplicationDao
@@ -187,12 +184,9 @@ class RootServiceTest extends Specification {
     @Shared DefaultPolicyService defaultPolicyService
     @Shared PolicyService policyService
     @Shared Cloud11Service cloud11Service
-    @Shared DelegateCloud11Service delegateCloud11Service
     @Shared DefaultCloud11Service defaultCloud11Service
-    @Shared CloudMigrationService cloudMigrationService
     @Shared DefaultRegionService defaultRegionService
     @Shared DefaultCloud20Service defaultCloud20Service
-    @Shared DelegateCloud20Service delegateCloud20Service
     @Shared PropertiesService propertiesService
     @Shared CryptHelper cryptHelper
 
@@ -587,19 +581,9 @@ class RootServiceTest extends Specification {
         service.cloud11Service = cloud11Service
     }
 
-    def mockDelegateCloud11Service(service) {
-        delegateCloud11Service = Mock()
-        service.delegateCloud11Service = delegateCloud11Service
-    }
-
     def mockDefaultCloud11Service(service) {
         defaultCloud11Service = Mock()
         service.defaultCloud11Service = defaultCloud11Service
-    }
-
-    def mockCloudMigrationService(service) {
-        cloudMigrationService = Mock()
-        service.cloudMigrationService = cloudMigrationService
     }
 
     def mockDefaultRegionService(service) {
@@ -610,11 +594,6 @@ class RootServiceTest extends Specification {
     def mockDefaultCloud20Service(service) {
         defaultCloud20Service = Mock()
         service.defaultCloud20Service = defaultCloud20Service
-    }
-
-    def mockDelegateCloud20Service(service) {
-        delegateCloud20Service = Mock()
-        service.delegateCloud20Service = delegateCloud20Service
     }
 
     /*

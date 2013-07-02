@@ -3,10 +3,12 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
+import lombok.Data;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.Arrays;
 
+@Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_GRANTEDPERMISSION, requestAllAttributes = true)
 public class GrantedPermission extends Permission implements Auditable {
 
@@ -36,49 +38,8 @@ public class GrantedPermission extends Permission implements Auditable {
         }
     }
 
-    public String[] getResourceGroups() {
-        return resourceGroups;
-    }
-
     public void setResourceGroups(String[] resourceGroups) {
         this.resourceGroups = (String[]) ArrayUtils.clone(resourceGroups);
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result
-                + ((ldapEntry == null) ? 0 : ldapEntry.hashCode());
-        result = prime * result + Arrays.hashCode(resourceGroups);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-
-        GrantedPermission other = (GrantedPermission) obj;
-        if (ldapEntry == null) {
-            if (other.ldapEntry != null) {
-                return false;
-            }
-        } else if (!ldapEntry.equals(other.ldapEntry)) {
-            return false;
-        }
-        if (!Arrays.equals(resourceGroups, other.resourceGroups)) {
-            return false;
-        }
-        return true;
     }
 
     public void copyChanges(GrantedPermission modified) {

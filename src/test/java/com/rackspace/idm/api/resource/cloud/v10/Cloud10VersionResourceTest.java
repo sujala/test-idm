@@ -75,58 +75,8 @@ public class Cloud10VersionResourceTest {
     }
 
     @Test
-    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_with204ResponseAndNotNullStorageUser_callsScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
-        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
-        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204).header("x-auth-token", "token"));
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, null, null, "username", "password");
-        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
-        assertThat("response status", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_with204ResponseAndNotNullUser_callsScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
-        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
-        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204).header("x-auth-token", "token"));
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
-        assertThat("response status", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_withAnyResponseAndNullUser_DoesNotCallScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
-        when(userService.getUser("username")).thenReturn(null);
-        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
-        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204));
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        verify(scopeAccessService, never()).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
-        assertThat("response status", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_withNon204ResponseAndUser_DoesNotCallScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
-        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
-        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(404));
-        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
-        when(userScopeAccess.getAccessTokenString()).thenReturn("token");
-        when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
-        when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        verify(scopeAccessService, never()).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
-        assertThat("response status", response.getStatus(), equalTo(204));
-    }
-
-    @Test
     public void getCloud10VersionInfo_notRouting_withNullUser_returnsUnauthorizedResponse() throws Exception {
         when(userService.getUser("username")).thenReturn(null);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response status", response.getStatus(), equalTo(401));
     }
@@ -134,7 +84,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_setsXAuthTokenHeader() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -148,7 +97,6 @@ public class Cloud10VersionResourceTest {
         User user = new User();
         when(userService.getUser("username")).thenReturn(user);
         when(userService.isMigratedUser(user)).thenReturn(true);
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getStatus(), equalTo(401));
@@ -157,7 +105,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withDisabledUser_returns403Status() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getStatus(), equalTo(403));
@@ -167,7 +114,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesService_withEndpoints_setsProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -191,7 +137,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withEndpoints_setsProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -212,7 +157,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withEndpoints_withEmptyPublicUrl_doesNotAddHeader() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -233,7 +177,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudServersService_withEndpoints_setsProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -255,7 +198,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -295,7 +237,6 @@ public class Cloud10VersionResourceTest {
         openstackEndpoint.setTenantId(tenant.getTenantId());
         List<OpenstackEndpoint> cloudEndpoint = Arrays.asList(openstackEndpoint);
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(tenantService.getTenant(anyString())).thenReturn(tenant);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
@@ -329,7 +270,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -354,7 +294,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudServersService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -379,7 +318,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withNoServices_setsNoHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -398,7 +336,6 @@ public class Cloud10VersionResourceTest {
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_setsCacheControlHeader() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");

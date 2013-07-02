@@ -134,9 +134,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     @Autowired
-    private DelegateCloud20Service delegateCloud20Service;
-
-    @Autowired
     private AtomHopperClient atomHopperClient;
 
     @Autowired
@@ -224,10 +221,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<Extensions> currentExtensions;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
-
-    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
@@ -1879,32 +1872,27 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.getUser(impersonatingUsername);
-            if (user == null && isCloudAuthRoutingEnabled()) {
-                logger.info("Impersonation call - calling cloud auth to get user");
-                // Get from cloud.
-                impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
-            } else {
-                if(user == null){
-                    throw new NotFoundException(String.format("User %s not found", impersonatingUsername));
-                }
-                if (!isValidImpersonatee(user)) {
-                    throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
-                }
 
-                UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+            if(user == null){
+                throw new NotFoundException(String.format("User %s not found", impersonatingUsername));
+            }
+            if (!isValidImpersonatee(user)) {
+                throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
+            }
 
-                if (impAccess.isAccessTokenExpired(new DateTime())) {
-                    UserScopeAccess scopeAccess;
-                    if (!user.isEnabled()) {
-                        logger.info("Impersonating a disabled user");
-                        scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
-                    } else {
-                        scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
-                    }
-                    impersonatingToken = scopeAccess.getAccessTokenString();
+            UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+
+            if (impAccess.isAccessTokenExpired(new DateTime())) {
+                UserScopeAccess scopeAccess;
+                if (!user.isEnabled()) {
+                    logger.info("Impersonating a disabled user");
+                    scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
                 } else {
-                    impersonatingToken = impAccess.getAccessTokenString();
+                    scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
                 }
+                impersonatingToken = scopeAccess.getAccessTokenString();
+            } else {
+                impersonatingToken = impAccess.getAccessTokenString();
             }
 
             if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
@@ -3452,10 +3440,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return names;
     }
 
-    boolean isCloudAuthRoutingEnabled() {
-        return config.getBoolean(CLOUD_AUTH_ROUTING);
-    }
-
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
@@ -3538,10 +3522,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setServiceConverterCloudV20(ServiceConverterCloudV20 serviceConverterCloudV20) {
         this.serviceConverterCloudV20 = serviceConverterCloudV20;
-    }
-
-    public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
-        this.delegateCloud20Service = delegateCloud20Service;
     }
 
     public void setGroupService(GroupService groupService) {
