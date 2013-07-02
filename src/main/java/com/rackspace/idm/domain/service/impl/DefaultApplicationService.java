@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,8 @@ public class DefaultApplicationService implements ApplicationService {
     private ScopeAccessService scopeAccessService;
     @Autowired
     private TenantService tenantService;
+    @Autowired
+    private Configuration config;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -448,20 +451,48 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames) {
+    public ClientRole getUserIdentityRole(User user) {
+        List<ClientRole> result = new ArrayList<ClientRole>();
+
         logger.debug("getting identity:* role for user: {}", user);
-        Application application = applicationDao.getClientByClientId(applicationId);
-        List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, roleNames);
+        Application application = applicationDao.getClientByClientId(getCloudAuthClientId());
+        List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames());
 
-        TenantRole match = tenantService.getTenantRoleForUser(user, identityRoles);
+        for (ClientRole role : identityRoles) {
+            TenantRole match = tenantService.getTenantRoleForUserById(user, role.getId());
+            if (match != null) {
+                result.add(role);
+            }
+        }
 
-        if (match != null) {
-            for (ClientRole role : identityRoles) {
-                if (role.getId().equals(match.getRoleRsId())) {
-                    return role;
+        return getRoleWithLowestWeight(result);
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
+    @Override
+    public List<String> getIdentityRoleNames() {
+        List<String> names = new ArrayList<String>();
+        names.add(config.getString("cloudAuth.userRole"));
+        names.add(config.getString("cloudAuth.userAdminRole"));
+        names.add(config.getString("cloudAuth.adminRole"));
+        names.add(config.getString("cloudAuth.userManagedRole"));
+        names.add(config.getString("cloudAuth.serviceAdminRole"));
+        return names;
+    }
+
+    private ClientRole getRoleWithLowestWeight(List<ClientRole> userIdentityRoles) {
+        ClientRole result = null;
+
+        if (userIdentityRoles.size() != 0) {
+            for (ClientRole role : userIdentityRoles) {
+                if (result == null || result.getRsWeight() > role.getRsWeight()) {
+                    result = role;
                 }
             }
         }
-        return null;
+        return result;
     }
 }
