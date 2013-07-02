@@ -946,14 +946,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUser_callsVerifyUserAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUser(null, null, authToken, userOS);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
     public void addUser_withUserMissingUsername_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
@@ -1797,14 +1789,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserRole(null, authToken, authToken, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -1992,14 +1976,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteTenant(null, authToken, tenantId);
         verify(tenantService).checkAndGetTenant(tenantId);
-    }
-
-    @Test
-    public void deleteUser_callsVerifyUserAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.deleteUser(null, authToken, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3176,14 +3152,6 @@ public class DefaultCloud20ServiceOldTest {
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
         Response.ResponseBuilder responseBuilder = spy.updateTenant(null, authToken, tenantId, tenant1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void updateUser_callsVerifyUserLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.updateUser(null, authToken, null, null);
-        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
