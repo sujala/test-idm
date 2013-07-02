@@ -36,7 +36,7 @@ public class PrecedenceValidator {
     private final String NOT_AUTHORIZED = "Not Authorized";
 
     public void verifyCallerRolePrecedence(User user, ClientRole role) {
-        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
         if (userIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
@@ -44,7 +44,7 @@ public class PrecedenceValidator {
     }
 
     public void verifyCallerRolePrecedence(User user, TenantRole role) {
-        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
         ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
         if (userIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
@@ -53,8 +53,8 @@ public class PrecedenceValidator {
     }
 
     public void verifyCallerPrecedenceOverUser(User caller, User user) {
-        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
-        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller);
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole != null) {
             if (userIdentityRole != null) {
                 compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
@@ -70,7 +70,7 @@ public class PrecedenceValidator {
     }
 
     public void verifyCallerRolePrecedenceForAssignment(User user, ClientRole role) {
-        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
@@ -86,18 +86,5 @@ public class PrecedenceValidator {
         if (callerWeight > roleWeight) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
-    private List<String> getIdentityRoleNames() {
-        List<String> names = new ArrayList<String>();
-        names.add(config.getString("cloudAuth.userRole"));
-        names.add(config.getString("cloudAuth.userAdminRole"));
-        names.add(config.getString("cloudAuth.adminRole"));
-        names.add(config.getString("cloudAuth.serviceAdminRole"));
-        return names;
     }
 }

@@ -50,6 +50,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def userAdminToken
     @Shared def userAdminTwoToken
     @Shared def defaultUserToken
+    @Shared def defaultUserManageRoleToken
     @Shared def serviceAdmin
 
     @Shared def identityAdmin
@@ -59,6 +60,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
     @Shared def defaultUserForAdminTwo
+    @Shared def defaultUserWithManageRole
+    @Shared def defaultUserWithManageRole2
     @Shared def testUser
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -79,6 +82,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def group
     @Shared Region sharedRegion
 
+    static def USER_MANAGE_ROLE_ID = "7"
     @Shared REFRESH_WINDOW_HOURS
     @Shared CLOUD_CLIENT_ID
     @Shared BASE_DN = "o=rackspace,dc=rackspace,dc=com"
@@ -92,8 +96,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def identityAdminRoleId = "1"
     @Shared def serviceAdminRoleId = "4"
 
-    @Shared def testIdentityRoleId = "testIdentityRoleForDelete"
-    @Shared def testIdentityRole
     @Shared def cloudAuthClientId
 
     def setupSpec() {
@@ -102,9 +104,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         testDomainId2 = "domain2$sharedRandom"
         emptyDomainId = "domain3$sharedRandom"
 
-        //this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
         this.objFactories = new JAXBObjectFactories()
-        //this.v2Factory = new V2Factory()
         serviceAdminToken = cloud20.authenticatePassword("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(User)
 
@@ -145,6 +145,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         defaultUserThree = cloud20.getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
         cloud20.createUser(userAdminTwoToken, v2Factory.createUserForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserForAdminTwo = cloud20.getUserByName(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
+        defaultUserToken = cloud20.authenticatePassword("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUserWithManageRole$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserWithManageRole = cloud20.getUserByName(userAdminToken, "defaultUserWithManageRole$sharedRandom").getEntity(User)
+        defaultUserManageRoleToken = cloud20.authenticate("defaultUserWithManageRole$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUserWithManageRole2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserWithManageRole2 = cloud20.getUserByName(userAdminToken, "defaultUserWithManageRole2$sharedRandom").getEntity(User)
 
         defaultUserToken = cloud20.authenticatePassword("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
@@ -219,6 +226,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, defaultUserTwo.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserThree.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserForAdminTwo.getId())
+        cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole.getId())
+        cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole2.getId())
 
         cloud20.destroyUser(serviceAdminToken, testUser.getId())
 
@@ -328,6 +337,68 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         hardDeleteResponses.status == 204
     }
 
+    def 'User-manage role CRUD'() {
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+        //Get user
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+        //Update User
+        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def updateUserResponse = cloud20.updateUser(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        updateUserResponse.status == 200
+        deleteResponses.status == 204
+    }
+
+    def "user-manage cannot update/delete another user with user-manage"() {
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+        //Get user
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        //Update User
+        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def updateUserResponse = cloud20.updateUser(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        //Hard delete user
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def actualDelete = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        updateUserResponse.status == 401
+        deleteResponses.status == 401
+        actualDelete.status == 204
+        hardDeleteResponses.status == 204
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = v2Factory.createUserForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
@@ -398,7 +469,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("f$sharedRandom", "displ:ay", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
                 cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate("g$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
                 //updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                cloud20.updateUser(defaultUserToken, defaultUser.getId(), v2Factory.createUserForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1")),
                 cloud20.updateUser(identityAdminToken, defaultUser.getId(), v2Factory.createUserForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
         ]
     }
@@ -901,7 +971,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def users = cloud20.listUsers(userAdminToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 4
+        users.size() == 6
     }
 
     def "listUsers caller is identity-admin or higher returns paged results"() {

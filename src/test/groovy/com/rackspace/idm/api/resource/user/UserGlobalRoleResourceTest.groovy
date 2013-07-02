@@ -102,7 +102,7 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         service.grantGlobalRoleToUser(AUTH_TOKEN, USER_ID, ROLE_ID)
 
         then:
-        1 * applicationService.getUserIdentityRole(user, _, _) >> entityFactory.createClientRole()
+        1 * applicationService.getUserIdentityRole(user) >> entityFactory.createClientRole()
         then:
         thrown(BadRequestException)
     }
@@ -296,6 +296,7 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         service.grantTenantRoleToUser(AUTH_TOKEN, USER_ID, TENANT_ID, ROLE_ID)
 
         then:
+        1 * applicationService.getIdentityRoleNames() >> [].asList()
         1 * userService.getUserByAuthToken(AUTH_TOKEN)
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
@@ -318,6 +319,7 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         service.grantTenantRoleToUser(AUTH_TOKEN, USER_ID, TENANT_ID, ROLE_ID)
 
         then:
+        1 * applicationService.getIdentityRoleNames() >> [].asList()
         1 * tenantService.addTenantRoleToUser(user, _)
     }
 

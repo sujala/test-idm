@@ -17,6 +17,7 @@ buildscript {
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+        classpath 'com.rackspace.api.clients:veracode-client:1.3'
     }
 }
 
@@ -45,6 +46,8 @@ configurations {
     delombokJava
     delombokTestJava
     jaxb
+    veracode
+    wadl.extendsFrom compile
 }
 
 repositories {
@@ -61,6 +64,10 @@ repositories {
 }
 
 dependencies {
+    wadl "com.lunatech.jax-doclets:doclets:0.8.1"
+    wadl "com.sun.jersey:jersey-bundle:1.6"
+    wadl "asm:asm:3.3.1"
+
     jaxb group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.2.4-1'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-ant', version: '0.6.4'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-annotate', version: '0.6.4'
@@ -275,6 +282,17 @@ task jaxb() {
     }
 }
 
+task veracode() << {
+    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out) 
+    def directory = fileTree(war.destinationDir) {
+        include '**/*.war'
+    }
+    directory.each {File file ->
+	    client.scanArtifacts([file].asList(), buildVersion as int, "GlobalAuth", "Linux")
+    }
+
+}
+
 def delombok(srcDir, targetDir) {
     FileCollection collection = files(configurations.compile)
     FileCollection sumTree = collection + fileTree(dir: 'bin')
@@ -322,6 +340,14 @@ def aspectjWeave(srcDirs, destDir) {
             }
         }
     }
+}
+
+task wadl << {
+    ant.taskdef(name: 'wadl', classname: 'com.sun.jersey.api.wadl.WadlGeneratorTask', classpath: configurations.wadl.asPath )
+    ant.wadl(destFile: sourceSets.main.output.classesDir.toString()+'/application.wadl',
+        classpath: sourceSets.main.output.classesDir,
+        baseUri: 'http://localhost:8083'
+    )
 }
 
 task compileJava(dependsOn: JavaPlugin.PROCESS_RESOURCES_TASK_NAME, overwrite: true) {
