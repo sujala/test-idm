@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
-import spock.lang.Specification
 import testHelpers.RootServiceTest
 
 class DefaultApplicationServiceTest extends RootServiceTest {
@@ -26,6 +25,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
     }
 
     def setup() {
+        mockConfiguration(service)
         mockApplicationDao(service)
         mockApplicationRoleDao(service)
         mockScopeAccessService(service)
@@ -356,7 +356,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        service.getUserIdentityRole(user, "applicationId", [ "role1", "role2" ].asList())
+        service.getUserIdentityRole(user)
 
         then:
         1 * applicationDao.getClientByClientId(_) >> application
@@ -376,15 +376,14 @@ class DefaultApplicationServiceTest extends RootServiceTest {
             return it
         }
 
-        applicationDao.getClientByClientId("applicationId") >> application
+        applicationDao.getClientByClientId(_) >> application
         applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
 
         when:
-        service.getUserIdentityRole(user, "applicationId", [].asList())
+        service.getUserIdentityRole(user)
 
         then:
-        0 * tenantRoleDao.getTenantRoleForUser(_, _)
-        1 * tenantService.getTenantRoleForUser(_, _) >> tenantRole
+        1 * tenantService.getTenantRoleForUserById(_, _) >> tenantRole
     }
 
     def "getUserIdentityRole returns null if user has no identityRole"() {
@@ -393,12 +392,12 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def clientRole = entityFactory.createClientRole()
 
-        applicationDao.getClientByClientId("applicationId") >> application
+        applicationDao.getClientByClientId(_) >> application
         applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
-        tenantService.getTenantRoleForUser(_, _) >> null
+        tenantService.getTenantRoleForUserById(_, _) >> null
 
         when:
-        def result = service.getUserIdentityRole(user, "applicationId", [].asList())
+        def result = service.getUserIdentityRole(user)
 
         then:
         result == null
@@ -410,5 +409,35 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         then:
         1 * applicationDao.authenticate("clientId", "Secret")
+    }
+
+    def "calling getRoleWithLowestWeight returns clientRole with lowers weight"() {
+        given:
+
+        def defaultRole = entityFactory.createClientRole().with {
+            it.name = "identity:default"
+            it.rsWeight = 2000
+            return it
+        }
+
+        def userManageRole = entityFactory.createClientRole().with {
+            it.name = "identity:user-manage"
+            it.rsWeight = 1500
+            return it
+        }
+
+        when:
+        def result = service.getRoleWithLowestWeight([defaultRole, userManageRole].asList())
+
+        then:
+        result == userManageRole
+    }
+
+    def "calling getRoleWithLowestWeight returns null with empty list"() {
+        when:
+        def result = service.getRoleWithLowestWeight([].asList())
+
+        then:
+        result == null
     }
 }
