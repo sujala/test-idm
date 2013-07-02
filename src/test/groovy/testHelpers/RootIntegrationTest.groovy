@@ -57,8 +57,6 @@ class RootIntegrationTest extends Specification {
         return range
     }
 
-
-
     def setLinkParams(List<String> links, Map<String, String[]> params) {
         for (String link : links) {
             def first = getFirstLink(link)
@@ -83,6 +81,7 @@ class RootIntegrationTest extends Specification {
             }
         }
     }
+
     def getFirstLink(String linkString) {
         def pattern = /marker=(.*)&limit=(.*)>; rel="first"/
         def matcher = (linkString =~ pattern)

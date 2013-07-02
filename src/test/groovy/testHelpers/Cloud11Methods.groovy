@@ -35,7 +35,6 @@ class Cloud11Methods {
         resource.path(path11).path("token").path(token).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).delete(ClientResponse)
     }
 
-
     def getUserByName(String username) {
         resource.path(path11).path("users").path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).get(ClientResponse)
     }

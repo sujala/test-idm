@@ -67,7 +67,6 @@ class V2Factory {
             it.setCredential(objFactory.createCredential(credentials))
             return it
         }
-
     }
 
     def createJAXBAuthenticateResponse() {
@@ -251,7 +250,6 @@ class V2Factory {
             it.enabled = enabled
             return it
         }
-
     }
 
     def createTenants() {

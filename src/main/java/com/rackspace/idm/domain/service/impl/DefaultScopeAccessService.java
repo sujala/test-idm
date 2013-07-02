@@ -201,10 +201,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         } else {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
-            } else {
-                expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
             }
+
+            expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
         }
 
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
