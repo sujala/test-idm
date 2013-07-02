@@ -59,72 +59,82 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
-        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
-
-        // First get the tenantRoles for the token
         List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
 
-        if (roles == null || roles.size() == 0) {
-            return endpoints;
-        }
-
-        // Second get the tenants from each of those roles
-        List<Tenant> tenants = getTenants(roles);
-
-        // Third get the endppoints for each tenant
-        for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
-            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
-                endpoints.add(endpoint);
-            }
-        }
-
-        return endpoints;
+        return getEndpointsFromRoles(roles);
     }
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
-
-        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
-
-        // First get the tenantRoles for the token
         List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(token);
 
+        return getEndpointsFromRoles(roles);
+    }
+
+    private List<OpenstackEndpoint> getEndpointsFromRoles(List<TenantRole> roles) {
         if (roles == null || roles.size() == 0) {
-            return endpoints;
+            return new ArrayList<OpenstackEndpoint>();
         }
 
-        // Second get the tenants from each of those roles
         List<Tenant> tenants = getTenants(roles);
 
-        // Third get the endppoints for each tenant
+        return getEndPointsFromTenants(tenants);
+    }
+
+    private List<OpenstackEndpoint> getEndPointsFromTenants(List<Tenant> tenants) {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenants) {
             OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
         }
-
         return endpoints;
     }
 
     private List<Tenant> getTenants(List<TenantRole> roles) {
-        List<Tenant> tenants = new ArrayList<Tenant>();
-        List<String> tenantIdList = new ArrayList<String>();
-        for (TenantRole role : roles) {
-            if (role.getTenantIds() != null) {
-                for (String tenantId : role.getTenantIds()) {
-                    if(!tenantIdList.contains(tenantId)){
-                        tenantIdList.add(tenantId);
-                        Tenant tenant = this.tenantService.getTenant(tenantId);
-                        if (tenant != null) {
-                            tenants.add(tenant);
-                        }
-                    }
+
+        List<String[]> tenantsPerRole = getTenantIdsPerRole(roles);
+
+        List<String> allTenantIds = getAllTenantIdsWithoutDuplicate(tenantsPerRole);
+
+        return getTenantsFromIds(allTenantIds);
+    }
+
+    private List<Tenant> getTenantsFromIds(List<String> allTenantIds) {
+        List<Tenant> allTenants = new ArrayList<Tenant>();
+        Tenant tenant;
+        for (String tenantId: allTenantIds){
+            tenant = this.tenantService.getTenant(tenantId);
+            if (tenant!=null){
+                allTenants.add(tenant);
+            }
+        }
+        return allTenants;
+    }
+
+    private List<String> getAllTenantIdsWithoutDuplicate(List<String[]> tenantsPerRole) {
+        List<String> allTenantIds = new ArrayList<String>();
+        for(String[] tenantIds: tenantsPerRole){
+            for(String tenantId: tenantIds){
+                if (!allTenantIds.contains(tenantId)){
+                    allTenantIds.add(tenantId);
                 }
             }
         }
-        return tenants;
+        return allTenantIds;
+    }
+
+    private List<String[]> getTenantIdsPerRole(List<TenantRole> roles) {
+        List<String[]> tenantsPerRole = new ArrayList<String[]>();
+        String[] tenantIdsForRole;
+        for (TenantRole role : roles) {
+            tenantIdsForRole = role.getTenantIds();
+            if (tenantIdsForRole!=null){
+                tenantsPerRole.add(tenantIdsForRole);
+            }
+        }
+        return tenantsPerRole;
     }
 
     @Override
