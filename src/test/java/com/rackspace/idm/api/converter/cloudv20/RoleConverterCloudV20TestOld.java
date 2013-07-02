@@ -9,6 +9,7 @@ import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,7 +54,7 @@ public class RoleConverterCloudV20TestOld {
         tenantRole.setName("John Smith");
         tenantRole.setRoleRsId("123");
         tenantRole.setClientId("456");
-        tenantRole.setTenantIds(ids);
+        tenantRole.getTenantIds().addAll(Arrays.asList(ids));
         List<TenantRole> list = new ArrayList<TenantRole>();
         list.add(tenantRole);
         RoleList roleList = roleConverterCloudV20.toRoleListJaxb(list);
@@ -67,20 +68,18 @@ public class RoleConverterCloudV20TestOld {
         assertThat("roleId",roleList.getRole().get(1).getId(),equalTo("123"));
         assertThat("roleServiceId",roleList.getRole().get(0).getServiceId(),equalTo("456"));
         assertThat("roleServiceId",roleList.getRole().get(1).getServiceId(),equalTo("456"));
-        assertThat("roleTenantId",roleList.getRole().get(0).getTenantId(),equalTo("id1"));
-        assertThat("roleServiceId",roleList.getRole().get(1).getTenantId(),equalTo("id2"));
-
+        assertThat("roleTenantId",roleList.getRole().get(1).getTenantId().contains("id1"), equalTo(true));
+        assertThat("roleTenantId",roleList.getRole().get(0).getTenantId().contains("id2"), equalTo(true));
     }
 
     @Test
     public void toRoleListJaxb_roleTenantIdsListEmpty_returnsRoleList() throws Exception {
-        String[] ids = {};
         TenantRole tenantRole = new TenantRole();
         tenantRole.setDescription("this is a description");
         tenantRole.setName("John Smith");
         tenantRole.setRoleRsId("123");
         tenantRole.setClientId("456");
-        tenantRole.setTenantIds(ids);
+        tenantRole.getTenantIds().clear();
         List<TenantRole> list = new ArrayList<TenantRole>();
         list.add(tenantRole);
         RoleList roleList = roleConverterCloudV20.toRoleListJaxb(list);
@@ -91,7 +90,6 @@ public class RoleConverterCloudV20TestOld {
         assertThat("roleId",roleList.getRole().get(0).getId(),equalTo("123"));
         assertThat("roleServiceId",roleList.getRole().get(0).getServiceId(),equalTo("456"));
         assertThat("roleTenantId",roleList.getRole().get(0).getTenantId(),nullValue());
-
     }
 
     @Test

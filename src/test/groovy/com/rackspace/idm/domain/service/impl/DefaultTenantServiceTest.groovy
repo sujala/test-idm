@@ -85,7 +85,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
-        1 * tenantDao.getTenantRolesForUser(caller) >> [].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(caller) >> [].asList()
     }
 
     def "addCallerTenantRolesToUser verifies that role to be added is not an identity:* role"() {
@@ -186,7 +186,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getTenantRolesForClientRole(role)
 
         then:
-        1 * tenantDao.getAllTenantRolesForClientRole(role)
+        1 * tenantRoleDao.getAllTenantRolesForClientRole(role)
     }
 
     def "deleteTenantRoleForUser deletes tenantRole from subUsers if user is user-admin"() {
@@ -222,7 +222,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.deleteTenantRole(role)
 
         then:
-        1 * tenantDao.deleteTenantRole(role)
+        1 * tenantRoleDao.deleteTenantRole(role)
     }
 
     def "getTenantRoleForUser uses DAO to get tenantRole for user"() {
@@ -242,7 +242,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getIdsForUsersWithTenantRole("roleId", 0, 25)
 
         then:
-        1 * tenantDao.getIdsForUsersWithTenantRole("roleId", 0, 25)
+        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId", 0, 25)
     }
 
     def "addTenantRoleToUser verifies that user is not null"() {
@@ -602,7 +602,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         tenantRole.getUserId() != null
         tenantRole.getUserId() == "1"
-        1 * tenantDao.updateTenantRole(_)
+        1 * tenantRoleDao.updateTenantRole(_)
 
     }
 
@@ -628,9 +628,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
             clientRole.name = "name"
         }
         if (tenantRole != null){
-            tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+            tenantRoleDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
         }else{
-            tenantDao.getAllTenantRolesForTenant(_) >> [].asList()
+            tenantRoleDao.getAllTenantRolesForTenant(_) >> [].asList()
         }
         applicationService.getClientRoleById(_) >> clientRole
         def result = service.getTenantRolesForTenant(value)

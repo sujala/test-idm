@@ -87,7 +87,7 @@ public class TokenConverterCloudV20TestOld {
     public void toTenantForAuthenticateResponse_tenantNameMatch_returnsTenantResponse() throws Exception {
         TenantRole tenantRole = new TenantRole();
         tenantRole.setName("compute:default");
-        tenantRole.setTenantIds(new String[] {"id"});
+        tenantRole.getTenantIds().add("id");
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRoleList.add(tenantRole);
         TenantForAuthenticateResponse response = tokenConverterCloudV20.toTenantForAuthenticateResponse(tenantRoleList);

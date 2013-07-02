@@ -290,7 +290,7 @@ public class Cloud10VersionResourceTest {
         baseURL.setServiceName("cloudFiles");
         baseURL.setUniqueId("someId");
         baseURL.setPublicUrl("http://someEndpoint");
-        tenant.setV1Defaults((new String[]{"123"}));
+        tenant.getV1Defaults().add("123");
         openstackEndpoint.setBaseUrls(Arrays.asList(baseURL));
         openstackEndpoint.setTenantId(tenant.getTenantId());
         List<OpenstackEndpoint> cloudEndpoint = Arrays.asList(openstackEndpoint);

@@ -58,7 +58,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         roleRepository.addTenantRoleToUser(user, tenantRole)
         List<TenantRole> roles = roleRepository.getTenantRolesForUser(user, tenantRole.clientId)
         TenantRole role = roles.get(0)
-        TenantRole role2 = roleRepository.getTenantRolesForUser(user, applicationId, tenantId)
+        TenantRole role2 = roleRepository.getTenantRolesForUser(user, applicationId, tenantId)[0]
         roleRepository.deleteTenantRole(roles.get(0))
         List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForUser(user)
 
@@ -112,7 +112,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
 
         then:
         roles.size() == 1
-        role.tenantIds == ["1", "2"]
+        role.tenantIds as Set == ["1", "2"] as Set
     }
 
     def "add tenant role already exists throws conflict exception"() {
@@ -151,7 +151,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         then:
         roles.size() == 1
         rolesAfterDelete1.size() == 1
-        rolesAfterDelete1.get(0).tenantIds == ["2"]
+        rolesAfterDelete1.get(0).tenantIds as Set == ["2"] as Set
         rolesAfterDelete2.size() == 0
     }
 

@@ -12,16 +12,17 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import org.hamcrest.Matchers;
 import org.junit.*;
 
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
+public class LdapTenantRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest{
     @Autowired
-    private LdapTenantRepository repo;
+    private LdapTenantRepository tenantRepository;
+    @Autowired
+    private LdapTenantRoleRepository tenantRoleRepository;
     @Autowired
     private LdapConnectionPools connPools;
     
@@ -40,7 +41,7 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
     public void preTestSetUp() throws Exception {
         //cleanup before test
         try{
-            repo.deleteTenant(tenantId);
+            tenantRepository.deleteTenant(tenantId);
         }catch (Exception e){
             System.out.println("failed to delete tenant");
         }
@@ -48,67 +49,57 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
 
     @Test
     public void shouldAddGetDeleteTenant() {
-        this.repo.addTenant(getTestTenant());
-        Tenant tenant = this.repo.getTenant(tenantId);
-        List<Tenant> tenants = this.repo.getTenants();
-        this.repo.deleteTenant(tenantId);
-        Tenant notThere = this.repo.getTenant(tenantId);
+        this.tenantRepository.addTenant(getTestTenant());
+        Tenant tenant = this.tenantRepository.getTenant(tenantId);
+        List<Tenant> tenants = this.tenantRepository.getTenants();
+        this.tenantRepository.deleteTenant(tenantId);
+        Tenant notThere = this.tenantRepository.getTenant(tenantId);
         Assert.assertNotNull(tenant);
         Assert.assertEquals(tenantId, tenant.getTenantId());
         Assert.assertEquals(description, tenant.getDescription());
         Assert.assertEquals(name, tenant.getName());
-        Assert.assertEquals(enabled, tenant.isEnabled());
+        Assert.assertEquals(enabled, tenant.getEnabled());
         Assert.assertTrue(tenants.size() > 0);
         Assert.assertNull(notThere);
     }
     
     @Test
     public void shouldNotAddDuplicateTenant() {
-        this.repo.addTenant(getTestTenant());
+        this.tenantRepository.addTenant(getTestTenant());
         boolean duplicate = false;
         try {
-            this.repo.addTenant(getTestTenant());
+            this.tenantRepository.addTenant(getTestTenant());
         } catch (DuplicateException ex) {
             duplicate = true;
         }
-        this.repo.deleteTenant(tenantId);
+        this.tenantRepository.deleteTenant(tenantId);
         Assert.assertTrue(duplicate);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAddNullTenant() {
-        this.repo.addTenant(null);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotDeleteNullTenantId() {
-        this.repo.deleteTenant(null);
+        this.tenantRepository.addTenant(null);
     }
     
     @Test(expected = NotFoundException.class)
     public void shouldNotDeleteNonExistentTenant() {
-        this.repo.deleteTenant(tenantId);
+        this.tenantRepository.deleteTenant(tenantId);
     }
     
     @Test
     public void shouldUdateTenant() {
         Tenant tenant = getTestTenant();
-        this.repo.addTenant(tenant);
+        this.tenantRepository.addTenant(tenant);
         tenant.setDescription("Modified Description");
         tenant.setEnabled(false);
         tenant.setName("Modified Name");
-        this.repo.updateTenant(tenant);
-        Tenant check = this.repo.getTenant(tenantId);
-        this.repo.deleteTenant(tenantId);
+        this.tenantRepository.updateTenant(tenant);
+        Tenant check = this.tenantRepository.getTenant(tenantId);
+        this.tenantRepository.deleteTenant(tenantId);
         Assert.assertEquals(tenant.getTenantId(), check.getTenantId());
         Assert.assertEquals(tenant.getDescription(), check.getDescription());
         Assert.assertEquals(tenant.getName(), check.getName());
-        Assert.assertEquals(tenant.isEnabled(), check.isEnabled());
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotDeleteNullTenantRole() {
-        this.repo.deleteTenantRole(null);
+        Assert.assertEquals(tenant.getEnabled(), check.getEnabled());
     }
     
     private Tenant getTestTenant() {
@@ -127,7 +118,7 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
         role.setClientId(clientId);
         role.setUserId(userId);
         role.setName(roleName);
-        role.setTenantIds(new String[] {tenantId});
+        role.getTenantIds().add(tenantId);
         return role;
     }
 }

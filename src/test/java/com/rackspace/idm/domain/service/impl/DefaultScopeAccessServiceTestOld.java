@@ -146,8 +146,7 @@ public class DefaultScopeAccessServiceTestOld {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         Tenant tenant = new Tenant();
@@ -164,8 +163,7 @@ public class DefaultScopeAccessServiceTestOld {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
@@ -180,8 +178,7 @@ public class DefaultScopeAccessServiceTestOld {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
-        String[] tenantIds = {};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().clear();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
@@ -220,8 +217,7 @@ public class DefaultScopeAccessServiceTestOld {
         token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 
@@ -247,8 +243,7 @@ public class DefaultScopeAccessServiceTestOld {
         token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 
@@ -273,8 +268,7 @@ public class DefaultScopeAccessServiceTestOld {
         token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 
@@ -298,8 +292,7 @@ public class DefaultScopeAccessServiceTestOld {
         token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
-        String[] tenantIds = {"123"};
-        role.setTenantIds(tenantIds);
+        role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 

@@ -239,7 +239,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (baseUrl.getGlobal()) {
                 throw new BadRequestException("Cannot add a global endpoint to this tenant.");
             }
-            tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
+            tenant.getBaseUrlIds().add(String.valueOf(endpoint.getId()));
             this.tenantService.updateTenant(tenant);
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
@@ -374,7 +374,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantRole.setClientId(role.getClientId());
             tenantRole.setRoleRsId(role.getId());
             tenantRole.setUserId(user.getId());
-            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.getTenantIds().add(tenant.getTenantId());
 
             tenantService.addTenantRoleToUser(user, tenantRole);
 
@@ -954,8 +954,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointId);
             String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
-            tenant.removeBaseUrlId(baseUrlId);
-            tenant.removeV1Default(baseUrlId);
+            tenant.getBaseUrlIds().remove(baseUrlId);
+            tenant.getV1Defaults().remove(baseUrlId);
             tenantService.updateTenant(tenant);
             return Response.noContent();
         } catch (Exception ex) {
@@ -1026,7 +1026,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantrole.setClientId(role.getClientId());
             tenantrole.setRoleRsId(role.getId());
             tenantrole.setUserId(user.getId());
-            tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantrole.getTenantIds().add(tenant.getTenantId());
 
             this.tenantService.deleteTenantRoleForUser(user, tenantrole);
             return Response.noContent();
@@ -1189,7 +1189,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            if (!tenant.containsBaseUrlId(endpointId)) {
+            if (!tenant.getBaseUrlIds().contains(endpointId)) {
                 String errMsg = String.format("Tenant %s does not have endpoint %s", tenantId, endpointId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);

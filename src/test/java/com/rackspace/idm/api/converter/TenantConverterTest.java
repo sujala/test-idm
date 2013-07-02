@@ -133,7 +133,7 @@ public class TenantConverterTest {
         com.rackspace.api.idm.v1.Tenant tenant = new com.rackspace.api.idm.v1.Tenant();
         tenant.setEnabled(true);
         Tenant returnedTenant = tenantConverter.toTenantDO(tenant);
-        assertThat("tenant enabled", returnedTenant.isEnabled(), equalTo(true));
+        assertThat("tenant enabled", returnedTenant.getEnabled(), equalTo(true));
     }
 
     @Test

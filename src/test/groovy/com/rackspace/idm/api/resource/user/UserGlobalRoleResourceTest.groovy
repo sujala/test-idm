@@ -354,7 +354,7 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         tRole.getClientId().equals(cRole.getClientId())
         tRole.getRoleRsId().equals(cRole.getId())
         tRole.getName().equals(cRole.getName())
-        tRole.getTenantIds()[0].equals(TENANT_ID)
+        tRole.getTenantIds().contains(TENANT_ID)
     }
 
     def "getIdentityRoleNames gets a list of known identityRole names"() {

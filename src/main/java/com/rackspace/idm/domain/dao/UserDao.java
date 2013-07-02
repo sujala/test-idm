@@ -24,7 +24,7 @@ public interface UserDao {
 
     void removeUsersFromClientGroup(ClientGroup group);
 
-    Users getAllUsers(FilterParam[] filters, int offset, int limit);
+    List<User> getAllUsers(FilterParam[] filters, int offset, int limit);
 
     String[] getGroupIdsForUser(String username);
 
@@ -34,11 +34,11 @@ public interface UserDao {
 
     User getUserById(String id);
 
-    //Users getUsersByMossoId(int mossoId);
+    //List<User> getUsersByMossoId(int mossoId);
 
-    //Users getUsersByNastId(String nastId);
+    //List<User> getUsersByNastId(String nastId);
 
-    Users getUsersByDomainId(String domainId);
+    List<User> getUsersByDomainId(String domainId);
 
     User getUserByRPN(String rpn);
 
@@ -46,9 +46,9 @@ public interface UserDao {
 
     User getUserByUsername(String username);
 
-    Users getUsersByEmail(String email);
+    List<User> getUsersByEmail(String email);
 
-    Users getUsers(List<Filter> filters);
+    List<User> getUsers(List<Filter> filters);
 
     PaginatorContext<User> getUsersToReEncrypt(int offset, int limit);
 
@@ -74,7 +74,7 @@ public interface UserDao {
 
     PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit);
 
-    Users getAllUsersNoLimit(FilterParam[] filters);
+    List<User> getAllUsersNoLimit(FilterParam[] filters);
 
     User getUserByDn(String userDn);
 

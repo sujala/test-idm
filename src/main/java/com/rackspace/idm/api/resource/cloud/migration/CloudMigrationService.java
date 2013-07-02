@@ -40,6 +40,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -852,13 +853,13 @@ public class CloudMigrationService {
         newTenant.setTenantId(tenantId);
         newTenant.setName(tenantId);
         newTenant.setEnabled(true);
-        newTenant.setBaseUrlIds(baseUrls);
-        
+        newTenant.getBaseUrlIds().addAll(Arrays.asList(baseUrls));
+
         if (v1Defaults != null && v1Defaults.length == 0) {
         	v1Defaults = null;
         }
         
-        newTenant.setV1Defaults(v1Defaults);
+        newTenant.getV1Defaults().addAll(Arrays.asList(v1Defaults));
         tenantService.addTenant(newTenant);
     }
 
@@ -876,7 +877,7 @@ public class CloudMigrationService {
                         TenantRole tenantRole = new TenantRole();
                         tenantRole.setClientId(application.getClientId());
                         tenantRole.setUserId(user.getId());
-                        tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
+                        tenantRole.getTenantIds().add(tenantId);
                         tenantRole.setName(role.getName());
                         tenantRole.setRoleRsId(role.getId());
                         tenantService.addTenantRoleToUser(user, tenantRole);

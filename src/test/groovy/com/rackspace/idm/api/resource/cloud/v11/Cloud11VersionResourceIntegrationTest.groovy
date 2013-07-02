@@ -141,7 +141,7 @@ class Cloud11VersionResourceIntegrationTest extends Specification{
         def userCreateResponse = createUserXML(user)
         def getUser20Response = getUserByName20XML(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
-        user.id = "userExistingMosso2"
+        user.id = "userExistingMosso2" + sharedRandom
         def userCreateNewNameResponse = createUserXML(user)
 
         def deleteUserResponse = deleteUserXML(username)

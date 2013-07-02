@@ -62,6 +62,10 @@ public class Policy implements Auditable, UniqueId {
         }
     }
 
+    public void setUniqueId(String id){
+        this.ldapEntry.setDN(id);
+    }
+
     @Override
     public String getAuditContext() {
         String format = "policyId=%s";

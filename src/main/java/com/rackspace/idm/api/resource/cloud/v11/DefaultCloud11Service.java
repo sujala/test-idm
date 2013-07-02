@@ -305,7 +305,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     throw new BadRequestException("Attempt to add existing BaseURL!");
                 }
             }
-            tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+            tenant.getBaseUrlIds().add(String.valueOf(baseUrl.getBaseUrlId()));
 
             String baseUrlRefId = String.valueOf(baseUrlRef.getId());
 
@@ -329,11 +329,11 @@ public class DefaultCloud11Service implements Cloud11Service {
                 for (String v1d : tenant.getV1Defaults()) {
                     CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1d));
                     if (newBaseUrl.getServiceName().equals(cloudBaseUrl.getServiceName())) {
-                        tenant.removeV1Default(v1d);
+                        tenant.getV1Defaults().remove(v1d);
                     }
                 }
             }
-            tenant.addV1Default(baseUrlRefId);
+            tenant.getV1Defaults().add(baseUrlRefId);
         }
     }
 
@@ -444,7 +444,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setClientId(clientRole.getClientId());
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
-            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.getTenantIds().add(tenant.getTenantId());
             tenantRole.setUserId(id);
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
@@ -476,7 +476,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setClientId(clientRole.getClientId());
             tenantRole.setName(clientRole.getName());
             tenantRole.setRoleRsId(clientRole.getId());
-            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            tenantRole.getTenantIds().add(tenant.getTenantId());
             tenantRole.setUserId(id);
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
@@ -489,7 +489,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if(doesBaseUrlBelongToRegion(baseUrl)){
                 addV1defaultToTenant(tenant, baseUrl, baseUrlType);
                 if (baseUrl.getDef()) {
-                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
                 }
             }
         }
@@ -516,7 +516,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             v1defaultList = config.getList("v1defaultNast");
         for (String v1defaultItem : v1defaultList) {
             if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
-                tenant.addV1Default(baseUrlId);
+                tenant.getV1Defaults().add(baseUrlId);
             }
         }
     }
@@ -580,9 +580,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if(tenant != null){
                     for (String currentId : tenant.getBaseUrlIds()) {
                         if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
-                            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
-                            if(tenant.containsV1Default(currentId)){
-                                tenant.removeV1Default(String.valueOf(baseUrl.getBaseUrlId()));
+                            tenant.getBaseUrlIds().remove(String.valueOf(baseUrl.getBaseUrlId()));
+                            if(tenant.getV1Defaults().contains(currentId)){
+                                tenant.getV1Defaults().remove(String.valueOf(baseUrl.getBaseUrlId()));
                             }
                             this.tenantService.updateTenant(tenant);
                             found = true;

@@ -231,7 +231,7 @@ public class TenantsResourceTest {
         spy.updateTenant(null, null, null, null, tenant1);
         assertThat("tenantDescription",tenant.getDescription(),equalTo("this is a description"));
         assertThat("tenantDisplayName",tenant.getDisplayName(),equalTo("john"));
-        assertThat("tenantEnabled",tenant.isEnabled(),equalTo(false));
+        assertThat("tenantEnabled",tenant.getEnabled(),equalTo(false));
     }
 
     @Test
