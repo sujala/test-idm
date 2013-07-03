@@ -29,7 +29,6 @@ public class RootResourceTest {
     private RootResource rootResource;
     private CloudVersionsResource cloudVersionsResource;
     private Version10Resource version10Resource;
-    private MigrationResource migrationResource;
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     private Configuration config;
 
@@ -37,13 +36,11 @@ public class RootResourceTest {
     public void setUp() throws Exception {
         cloudVersionsResource = mock(CloudVersionsResource.class);
         version10Resource = mock(Version10Resource.class);
-        migrationResource = mock(MigrationResource.class);
         config = mock(Configuration.class);
         serviceProfileDescriptionBuilder = mock(ServiceProfileDescriptionBuilder.class);
         rootResource = new RootResource();
         rootResource.setCloudVersionResource(cloudVersionsResource);
         rootResource.setVersion10Resource(version10Resource);
-        rootResource.setMigrationResource(migrationResource);
         rootResource.setConfig(config);
         rootResource.setServiceProfileDescriptionBuilder(serviceProfileDescriptionBuilder);
     }
@@ -58,12 +55,6 @@ public class RootResourceTest {
     public void getPublicServiceProfile_statusOk_returns200() throws Exception {
         Response response = rootResource.getPublicServiceProfile();
         assertThat("response code", response.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void getMigrationResource_returnsMigrationResource() throws Exception {
-        MigrationResource resource = rootResource.getMigrationResource();
-        assertThat("migration resource", resource, equalTo(migrationResource));
     }
 
     @Test

@@ -108,27 +108,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        if(path.startsWith("migration")){
-            // Validate Racker Token and has valid role
-            final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
-            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if(sa instanceof RackerScopeAccess){
-                List<String> rackerRoles = userService.getRackerRoles(((RackerScopeAccess) sa).getRackerId());
-                if (rackerRoles != null) {
-                    for (String r : rackerRoles) {
-                        if(r.equals(getMigrationAdminGroup())) {
-                            return request;
-                        }
-                    }
-                }
-                else {
-                    throw new NotAuthenticatedException("Authentication Failed.");
-                }
-            }
-            // if we get here, no role was found
-            throw new NotAuthenticatedException("Authentication Failed.");
-        }
-
         // Skip authentication for the following calls
         int index = path.indexOf('/');
         path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
@@ -193,10 +172,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     public void setConfig(Configuration config) {
         this.config = config;
-    }
-
-    protected String getMigrationAdminGroup() {
-        return config.getString("migrationAdminGroup");
     }
 
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
