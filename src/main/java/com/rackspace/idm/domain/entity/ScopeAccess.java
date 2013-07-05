@@ -36,6 +36,9 @@ public class ScopeAccess implements Auditable, HasAccessToken {
     @LDAPField(attribute = LdapRepository.ATTR_RS_TYPE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private List<String> authenticatedBy;
 
+    @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private Date createdDate;
+
     public ScopeAccess() {}
 
     public List<String> getAuthenticatedBy() {
