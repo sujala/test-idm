@@ -2826,6 +2826,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserById(userId) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.authorizeCloudUserAdmin(_) >> false
     }
 
     def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
