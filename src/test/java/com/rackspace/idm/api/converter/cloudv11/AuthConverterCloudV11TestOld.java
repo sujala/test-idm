@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.equalTo;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class AuthConverterCloudV11Test {
+public class AuthConverterCloudV11TestOld {
     @Autowired
     private AuthConverterCloudV11 authConverterCloudV11;
     @Autowired
