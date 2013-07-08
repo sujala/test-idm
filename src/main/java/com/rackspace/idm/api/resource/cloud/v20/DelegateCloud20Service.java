@@ -990,7 +990,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             if(accessTokenByAuthHeader == null) {
                 throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
             }
-            authorizationService.verifyUserAdminLevelAccess(accessTokenByAuthHeader);
+            authorizationService.verifyUserManagedLevelAccess(accessTokenByAuthHeader);
         }
 
         boolean isUserAdminInGA = false;
