@@ -3341,6 +3341,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 400
     }
 
+    def "Add user-manage role to default user with different domain return 403" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser().with {
+            it.domainId = "1"
+            return it
+        }
+        User caller = entityFactory.createUser().with {
+            it.domainId = "2"
+            return it
+        }
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 403
+    }
+
     def "Add user-manage role to default user" () {
         given:
         allowUserAccess()
