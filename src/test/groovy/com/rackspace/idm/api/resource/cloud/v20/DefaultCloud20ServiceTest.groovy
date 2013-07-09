@@ -2820,11 +2820,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         when:
-        def result = service.getUserApiKeyCredentials(headers, authToken, userId).build()
+        def result = service.getUserApiKeyCredentials(headers, authToken, "2").build()
 
         then:
         result.status == 403
-        userService.getUserById(userId) >> user
+        userService.getUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
         authorizationService.authorizeCloudUserAdmin(_) >> false
@@ -3209,6 +3209,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(userId) >> user
         userService.getUserByAuthToken(authToken) >> caller
         tenantService.getGlobalRolesForUser(_) >> userRoles
+        authorizationService.hasDefaultUserRole(_) >> true
 
         then:
         1 * tenantService.addTenantRoleToUser(_, _)

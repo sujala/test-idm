@@ -368,8 +368,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         def random = ("$randomness").replace('-', "")
-        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
-        def response = createUserXML(defaultUserManageRoleToken, user)
+        def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
 
         //Get user
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
@@ -401,21 +401,21 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         when:
         //Create user
         def random = ("$randomness").replace('-', "")
-        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", "domain$random", "Password1")
-        def response = createUserXML(identityAdminToken, user)
+        def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", "domain$random", "Password1")
+        def response = cloud20.createUser(identityAdminToken, user)
 
         //Get user
-        def getUserResponse = getUserXML(identityAdminToken, response.location)
+        def getUserResponse = cloud20.getUser(identityAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
 
-        def addUserManageRole = addApplicationRoleToUserXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def addUserManageRole = cloud20.addApplicationRoleToUser(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
 
-        def getUserRole = getUserApplicationRoleXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def getUserRole = cloud20.getUserApplicationRole(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
 
         //Hard delete user
-        deleteApplicationRoleFromUserXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
-        def actualDelete = deleteUserXML(identityAdminToken, userEntity.getId())
-        def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
+        cloud20.deleteApplicationRoleFromUser(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def actualDelete = cloud20.deleteUser(identityAdminToken, userEntity.getId())
+        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         then:
         response.status == 201
