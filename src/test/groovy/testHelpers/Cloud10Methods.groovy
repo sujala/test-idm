@@ -5,6 +5,8 @@ import com.sun.jersey.api.client.WebResource
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge|jacob
@@ -21,6 +23,9 @@ class Cloud10Methods {
     @Shared String X_AUTH_USER = "X-Auth-User"
     @Shared String X_AUTH_KEY = "X-Auth-Key"
 
+    def init(){
+        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+    }
 
     def authenticate(String username, String apiKey) {
         resource.path(path10).header(X_AUTH_USER, username).header(X_AUTH_KEY, apiKey).get(ClientResponse)

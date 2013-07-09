@@ -10,6 +10,7 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
 /**
@@ -29,6 +30,10 @@ class Cloud20Methods {
     static def RAX_AUTH = "RAX-AUTH"
     static def OS_KSCATALOG = "OS-KSCATALOG"
     static def X_AUTH_TOKEN = "X-Auth-Token"
+
+    def init(){
+        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+    }
 
     def authenticate(username, password) {
         def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)

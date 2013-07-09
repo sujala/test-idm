@@ -6,6 +6,7 @@ import com.sun.jersey.core.util.Base64
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
 /**
@@ -22,6 +23,10 @@ class Cloud11Methods {
 
     @Shared String authUser = "auth"
     @Shared String authPassword = "auth123"
+
+    def init(){
+        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+    }
 
     def adminAuthenticate(credentials) {
         resource.path(path11).path("auth-admin").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
