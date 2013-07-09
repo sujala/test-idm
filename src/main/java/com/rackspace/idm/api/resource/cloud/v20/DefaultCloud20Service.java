@@ -649,6 +649,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
+
             userService.updateUser(retrievedUser, false);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
@@ -736,6 +737,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
+            }
+
+            if(!authorizationService.hasDefaultUserRole(user) &&  cRole.getName().equalsIgnoreCase("identity:user-manage")) {
+                throw new BadRequestException("Cannot add user-manage role to non default-user");
             }
 
             assignRoleToUser(user, cRole);

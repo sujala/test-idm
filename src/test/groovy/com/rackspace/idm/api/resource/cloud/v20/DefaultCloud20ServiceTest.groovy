@@ -20,6 +20,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
+import spock.lang.Stepwise
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -3291,6 +3292,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyDomain(_, _)
     }
 
+
     def "User with user-manage role cannot update user with user-manage role"() {
         given:
         allowUserAccess()
@@ -3314,6 +3316,50 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> true
         result.build().status == 401
+    }
+
+    def "Add user-manage role to user with identity admin role gives 401" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * authorizationService.hasDefaultUserRole(_) >> false
+        result.build().status == 400
+    }
+
+    def "Add user-manage role to default user" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * authorizationService.hasDefaultUserRole(_) >> true
+        result.build().status == 200
     }
 
     def mockServices() {
