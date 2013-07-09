@@ -3209,6 +3209,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(userId) >> user
         userService.getUserByAuthToken(authToken) >> caller
         tenantService.getGlobalRolesForUser(_) >> userRoles
+        authorizationService.hasDefaultUserRole(_) >> true
 
         then:
         1 * tenantService.addTenantRoleToUser(_, _)
