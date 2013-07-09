@@ -733,7 +733,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             checkForMultipleIdentityRoles(user, cRole);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
