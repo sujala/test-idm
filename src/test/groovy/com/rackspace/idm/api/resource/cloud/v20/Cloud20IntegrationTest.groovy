@@ -342,12 +342,15 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def random = ("$randomness").replace('-', "")
         def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
         def response = cloud20.createUser(defaultUserManageRoleToken, user)
+
         //Get user
         def getUserResponse = cloud20.getUser(defaultUserManageRoleToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
+
         //Update User
         def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = cloud20.updateUser(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
         def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
@@ -378,7 +381,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Get user
         def getUserResponse = cloud20.getUserByName(defaultUserManageRoleToken, userName)
         def userEntity = getUserResponse.getEntity(User)
-        cloud20.getUser()
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
@@ -390,6 +392,75 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.status == 201
         response.location != null
         getUserResponse.status == 200
+        deleteResponses.status == 204
+        hardDeleteResponse.status == 204
+    }
+
+    def "User manage retrieve user by email"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def userName = "somename$random"
+        def userEmail = "test123@rackspace.com"
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def user = v2Factory.createUserForCreate(userName, "displayName", userEmail, true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+
+        //Get user
+        def getUserByEmailResponse = cloud20.getUsersByEmail(defaultUserManageRoleToken, userEmail)
+        def getUserResponse = cloud20.getUser(defaultUserManageRoleToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserByEmailResponse.status == 200
+        getUserResponse.status == 200
+        deleteResponses.status == 204
+        hardDeleteResponse.status == 204
+    }
+
+    def "user manage get user's api key" () {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def userName = "somename$random"
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def user = v2Factory.createUserForCreate(userName, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+
+        //Get user
+        def getUserResponse = cloud20.getUserByName(defaultUserManageRoleToken, userName)
+        def userEntity = getUserResponse.getEntity(User)
+
+        //Get apiKey
+        def createApiKey = cloud20.addApiKeyToUser(serviceAdminToken, userEntity.getId(), v2Factory.createApiKeyCredentials(userName, "bananas"))
+        def getApiKeyResponse = cloud20.getUserApiKey(defaultUserManageRoleToken, userEntity.getId())
+
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        createApiKey.status == 200
+        getApiKeyResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponse.status == 204
     }
@@ -407,9 +478,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
-        //Update User
-        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
-        def updateUserResponse = cloud20.updateUser(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
+
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
         //Hard delete user

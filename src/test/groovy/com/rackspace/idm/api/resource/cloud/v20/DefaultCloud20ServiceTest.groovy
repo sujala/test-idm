@@ -3399,6 +3399,44 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
     }
 
+    def "User with user-manage role can get user by email" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        Users users = new Users().with {
+            it.users = [user].asList()
+            return it
+        }
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUsersByEmail(headers, authToken, "test@rackspace.com")
+
+        then:
+        1 * userService.getUsersByEmail(_) >> users
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 200
+    }
+
+    def "User with user-manage can get user's api-key" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        user.apiKey = "apikeyyay"
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
+
+        then:
+        1 * userService.getUserById(_) >> user
+        1 * userService.getUser(_) >> caller
+        1 * authorizationService.authorizeCloudUser(_) >> false
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 200
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)

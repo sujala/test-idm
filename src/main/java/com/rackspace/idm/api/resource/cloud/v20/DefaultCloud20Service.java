@@ -1412,7 +1412,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Users users = userService.getUsersByEmail(email);
 
             User caller = userService.getUserByScopeAccess(requesterScopeAccess);
-            if (authorizationService.authorizeCloudUserAdmin(requesterScopeAccess) ||
+            if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
                 authorizationService.authorizeCloudUser(requesterScopeAccess)) {
                 users = filterUsersInDomain(users, caller);
             }
@@ -1480,9 +1480,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            boolean callerHasUserManage = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
 
-            if (callerIsUserAdmin) {
+            if (callerHasUserManage) {
                 authorizationService.verifyDomain(caller, user);
             } else if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
