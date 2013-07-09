@@ -3363,6 +3363,42 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
     }
 
+    def "User with user-manage role can get user by ID" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserById(headers, authToken, "abc123")
+
+        then:
+        1 * userService.getUser(_) >> caller
+        1 * authorizationService.authorizeCloudUser(_) >> true
+        1 * authorizationService.hasUserManageRole(_) >> true
+        1 * userService.getUserById(_) >> user
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.verifyDomain(_)
+        result.build().status == 200
+    }
+
+    def "User with user-manage role can get user by name" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserByName(headers, authToken, "testName")
+
+        then:
+        1 * userService.getUser(_) >> user
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.verifyDomain(_, _)
+        result.build().status == 200
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)

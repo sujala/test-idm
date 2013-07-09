@@ -343,7 +343,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
         def response = cloud20.createUser(defaultUserManageRoleToken, user)
         //Get user
-        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def getUserResponse = cloud20.getUser(defaultUserManageRoleToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
         //Update User
         def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
@@ -360,6 +360,38 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserResponse.status == 200
         updateUserResponse.status == 200
         deleteResponses.status == 204
+        hardDeleteResponse.status == 204
+    }
+
+    def "User manage retrieve user by name"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def userName = "somename$random"
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def user = v2Factory.createUserForCreate(userName, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+
+        //Get user
+        def getUserResponse = cloud20.getUserByName(defaultUserManageRoleToken, userName)
+        def userEntity = getUserResponse.getEntity(User)
+        cloud20.getUser()
+
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        deleteResponses.status == 204
+        hardDeleteResponse.status == 204
     }
 
     def "user-manage cannot update/delete another user with user-manage"() {

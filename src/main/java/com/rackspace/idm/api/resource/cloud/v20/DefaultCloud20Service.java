@@ -1337,14 +1337,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
             //if caller has default user role
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) && !authorizationService.hasUserManageRole(caller)) {
                 if (caller.getId().equals(userId)) {
                     return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)).getValue());
                 } else {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             User user = this.userService.getUserById(userId);
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
@@ -1352,7 +1352,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
             setEmptyUserValues(user);
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
                 authorizationService.verifyDomain(caller, user);
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
@@ -1390,7 +1390,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User requester = userService.getUserByScopeAccess(requesterScopeAccess);
 
-            if (authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
+            if (authorizationService.authorizeUserManageRole(requesterScopeAccess)) {
                 authorizationService.verifyDomain(requester, user);
             } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
                 authorizationService.verifySelf(requester, user);
