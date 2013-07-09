@@ -368,8 +368,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         def random = ("$randomness").replace('-', "")
-        def user = v2Factory.createUserForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
-        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = createUserXML(defaultUserManageRoleToken, user)
+
         //Get user
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
@@ -392,6 +393,36 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserResponse.status == 200
         updateUserResponse.status == 401
         deleteResponses.status == 401
+        actualDelete.status == 204
+        hardDeleteResponses.status == 204
+    }
+
+    def "user-manage cannot be added to user admin"() {
+        when:
+        //Create user
+        def random = ("$randomness").replace('-', "")
+        def user = userForCreate("somename" + random, "displayName", "test@rackspace.com", true, "ORD", "domain$random", "Password1")
+        def response = createUserXML(identityAdminToken, user)
+
+        //Get user
+        def getUserResponse = getUserXML(identityAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        def addUserManageRole = addApplicationRoleToUserXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+
+        def getUserRole = getUserApplicationRoleXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+
+        //Hard delete user
+        deleteApplicationRoleFromUserXML(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
+        def actualDelete = deleteUserXML(identityAdminToken, userEntity.getId())
+        def hardDeleteResponses = hardDeleteUserXML(serviceAdminToken, userEntity.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        addUserManageRole.status == 400
+        getUserRole.status == 404
         actualDelete.status == 204
         hardDeleteResponses.status == 204
     }
