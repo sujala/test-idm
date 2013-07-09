@@ -21,11 +21,6 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
     def setup() {
         defaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds")
         entropy = config.getDouble("token.entropy")
-        cloud10.authenticate("auth", "thisismykey")
-    }
-
-    def cleanupSpec(){
-        cloud10.authenticate("auth", "thisismykey")
     }
 
     def "authenticate using username and apiKey"() {
@@ -44,11 +39,8 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         when:
         def startTime = new DateTime()
         def expirationOne = authAndExpire("auth", "thisismykey")
-        sleep(10)
         def expirationTwo = authAndExpire("auth", "thisismykey")
-        sleep(10)
         def expirationThree = authAndExpire("auth", "thisismykey")
-        sleep(10)
         def endTime = new DateTime()
 
         def range = getRange(defaultExpirationSeconds, startTime, endTime)

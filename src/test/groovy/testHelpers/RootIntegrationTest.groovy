@@ -6,8 +6,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
-
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -27,16 +25,14 @@ class RootIntegrationTest extends Specification {
     @Shared def v2Factory = new V2Factory()
     @Shared def entityFactory = new EntityFactory()
 
-    @Shared Cloud20Methods cloud20 = new Cloud20Methods()
-    @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud10Methods cloud10 = new Cloud10Methods()
+    @Shared Cloud11Methods cloud11 = new Cloud11Methods()
+    @Shared Cloud20Methods cloud20 = new Cloud20Methods()
 
     public setupSpec(){
-        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
-
-        cloud20.setResource(resource)
-        cloud11.setResource(resource)
-        cloud10.setResource(resource)
+        cloud10.init()
+        cloud11.init()
+        cloud20.init()
     }
 
     def getRange(seconds) {

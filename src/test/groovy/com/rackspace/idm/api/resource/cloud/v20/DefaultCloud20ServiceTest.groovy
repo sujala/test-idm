@@ -20,6 +20,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
+import spock.lang.Stepwise
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response

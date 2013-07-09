@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import spock.lang.Ignore
 import spock.lang.Shared
+import spock.lang.Stepwise
 import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
 import testHelpers.V2Factory
@@ -166,28 +167,24 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         sharedRegion = getRegionResponse.getEntity(Region)
 
         //create role
-        if (sharedRole == null) {
-            Role createRole = v2Factory.createRole()
-            createRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-            createRole.name = "sharedRole1"
-            def response = cloud20.createRole(serviceAdminToken, createRole)
-            sharedRole = response.getEntity(Role).value
+        Role createRole = v2Factory.createRole()
+        createRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        createRole.name = "sharedRole1"
+        def responseRole = cloud20.createRole(serviceAdminToken, createRole)
+        sharedRole = responseRole.getEntity(Role).value
+
+        Role createRole2 = v2Factory.createRole()
+        createRole2.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        createRole2.name = "sharedRole2"
+        def responseRole2 = cloud20.createRole(serviceAdminToken, createRole2)
+        sharedRoleTwo = responseRole2.getEntity(Role).value
+
+        def role = v2Factory.createRole(true, 500).with {
+            it.name = "propagatingRole$sharedRandom"
+            return it
         }
-        if (sharedRoleTwo == null) {
-            Role createRole2 = v2Factory.createRole()
-            createRole2.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-            createRole2.name = "sharedRole2"
-            def response = cloud20.createRole(serviceAdminToken, createRole2)
-            sharedRoleTwo = response.getEntity(Role).value
-        }
-        if (propagatingRole == null) {
-            def role = v2Factory.createRole(true, 500).with {
-                it.name = "propagatingRole$sharedRandom"
-                return it
-            }
-            def response = cloud20.createRole(serviceAdminToken, role)
-            propagatingRole = response.getEntity(Role).value
-        }
+        def responsePropagateRole = cloud20.createRole(serviceAdminToken, role)
+        propagatingRole = responsePropagateRole.getEntity(Role).value
 
         if (tenant == null) {
             def random = UUID.randomUUID().toString().replace("-", "")
@@ -1043,26 +1040,18 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
-    def "add Application role to user succeeds"() {
-        expect:
-        response.status == 200
+    def "application role assignment" (){
+        when:
+        def responseAddRole1 = cloud20.addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+        def responseAddRole2 = cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        def responseDeleteRole1 = cloud20.deleteApplicationRoleFromUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+        def responseDeleteRole2 = cloud20.deleteApplicationRoleFromUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
 
-        where:
-        response << [
-                cloud20.addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
-                cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
-        ]
-    }
-
-    def "delete Application role from user succeeds"() {
-        expect:
-        response.status == 204
-
-        where:
-        response << [
-                cloud20.deleteApplicationRoleFromUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
-                cloud20.deleteApplicationRoleFromUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
-        ]
+        then:
+        responseAddRole1.status == 200
+        responseAddRole2.status == 200
+        responseDeleteRole1.status == 204
+        responseDeleteRole2.status == 204
     }
 
     def "deleting role from user without role returns not found (404)"() {
