@@ -13,6 +13,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Stepwise
+import spock.lang.Unroll
 import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
 import testHelpers.V2Factory
@@ -492,7 +493,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.status == 201
         response.location != null
         getUserResponse.status == 200
-        updateUserResponse.status == 401
         deleteResponses.status == 401
         actualDelete.status == 204
         hardDeleteResponses.status == 204
@@ -624,6 +624,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     }
 
+    @Unroll
     def 'forbidden operations for users'() {
         expect:
         response.status == 403

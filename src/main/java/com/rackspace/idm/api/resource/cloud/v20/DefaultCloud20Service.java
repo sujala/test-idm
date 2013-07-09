@@ -1337,7 +1337,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
             //if caller has default user role
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) && !authorizationService.hasUserManageRole(caller)) {
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) &&
+                    !authorizationService.hasUserManageRole(caller)) {
                 if (caller.getId().equals(userId)) {
                     return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)).getValue());
                 } else {
@@ -1352,7 +1353,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
             setEmptyUserValues(user);
-            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
+            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 authorizationService.verifyDomain(caller, user);
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
@@ -1390,7 +1392,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User requester = userService.getUserByScopeAccess(requesterScopeAccess);
 
-            if (authorizationService.authorizeUserManageRole(requesterScopeAccess)) {
+            if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
+                    authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
                 authorizationService.verifyDomain(requester, user);
             } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
                 authorizationService.verifySelf(requester, user);
@@ -1413,7 +1416,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = userService.getUserByScopeAccess(requesterScopeAccess);
             if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                authorizationService.authorizeCloudUser(requesterScopeAccess)) {
+                     authorizationService.authorizeCloudUserAdmin(requesterScopeAccess) ||
+                     authorizationService.authorizeCloudUser(requesterScopeAccess)) {
                 users = filterUsersInDomain(users, caller);
             }
 
@@ -1480,9 +1484,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
-            boolean callerHasUserManage = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
+            boolean callerHasUserManageOrUserAdmin = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
 
-            if (callerHasUserManage) {
+            if (callerHasUserManageOrUserAdmin) {
                 authorizationService.verifyDomain(caller, user);
             } else if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);

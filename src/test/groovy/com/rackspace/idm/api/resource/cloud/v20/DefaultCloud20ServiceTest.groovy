@@ -3378,7 +3378,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.hasUserManageRole(_) >> true
         1 * userService.getUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * authorizationService.verifyDomain(_)
+        1 * authorizationService.verifyDomain(_, _)
         result.build().status == 200
     }
 
