@@ -65,7 +65,7 @@ class Cloud20Methods {
     }
 
     def getUserApiKey(String token, String userId) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUser(String token, URI location) {
