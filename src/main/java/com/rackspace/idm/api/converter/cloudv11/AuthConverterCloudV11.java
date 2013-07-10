@@ -54,7 +54,7 @@ public class AuthConverterCloudV11 {
         try {
             if (usa.getAccessTokenExp() != null) {
                 token.setCreated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(new DateTime(usa.getCreatedDate()).toGregorianCalendar()));
+                    .newXMLGregorianCalendar(new DateTime(usa.getCreateTimestamp()).toGregorianCalendar()));
                 token.setExpires(DatatypeFactory.newInstance()
                     .newXMLGregorianCalendar(new DateTime(usa.getAccessTokenExp()).toGregorianCalendar()));
             }

@@ -225,6 +225,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_QUESTION_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_REGION_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_CLIENT_ROLE_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_SCOPE_ACCESS_ATTRIBUTES = {"*", ATTR_CREATED_DATE};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     @Autowired

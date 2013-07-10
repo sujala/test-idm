@@ -36,6 +36,10 @@ class Cloud11Methods {
         resource.path(path11).path("auth").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
+    def validateToken(String token) {
+        resource.path(path11).path("token").path(token).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def revokeToken(String token) {
         resource.path(path11).path("token").path(token).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).delete(ClientResponse)
     }
