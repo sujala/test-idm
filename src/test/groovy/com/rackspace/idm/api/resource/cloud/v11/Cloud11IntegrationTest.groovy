@@ -1,22 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
-import com.rackspacecloud.docs.auth.api.v1.AuthData;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
-import spock.lang.Ignore
 import spock.lang.Shared
-import testHelpers.Cloud11Methods
-import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
-
-import javax.mail.search.DateTerm
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 
 /**
  * Created with IntelliJ IDEA.
