@@ -2354,7 +2354,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUserById(null, authToken, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test
