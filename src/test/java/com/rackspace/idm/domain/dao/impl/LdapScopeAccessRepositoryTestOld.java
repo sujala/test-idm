@@ -619,53 +619,6 @@ public class LdapScopeAccessRepositoryTestOld extends InMemoryLdapIntegrationTes
     }
 
     @Test
-    public void getScopeAccessByAccessToken_setsFilterAttributeToAccessToken() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
-        SearchResultEntry searchEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
-        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
-        searchEntries.add(searchEntry);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB),argumentCaptor.capture());
-        doReturn(scopeAccess).when(spy).decodeScopeAccess(searchEntry);
-        spy.getScopeAccessByAccessToken("accessToken");
-        Filter[] filters = argumentCaptor.getValue().getComponents();
-        assertThat("returns scope access", filters[1].getAttributeName(), equalTo("accessToken"));
-    }
-
-    @Test
-    public void getScopeAccessByAccessToken_nullSearchEntries_returnsNull() throws Exception {
-        doReturn(null).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"), eq(SearchScope.SUB), any(Filter.class));
-        assertThat("returns null", spy.getScopeAccessByAccessToken("accessToken"), nullValue());
-    }
-
-    @Test
-    public void getScopeAccessByAccessToken_searchEntriesExists_returnsScopeAccess() throws Exception {
-        SearchResultEntry searchEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
-        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
-        searchEntries.add(searchEntry);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"), eq(SearchScope.SUB), any(Filter.class));
-        doReturn(scopeAccess).when(spy).decodeScopeAccess(searchEntry);
-        assertThat("returns scope access", spy.getScopeAccessByAccessToken("accessToken"), equalTo(scopeAccess));
-    }
-
-    @Test
-    public void getScopeAccessByAccessToken_searchEntriesDoNotExists_returnsNull() throws Exception {
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"), eq(SearchScope.SUB), any(Filter.class));
-        assertThat("returns scope access", spy.getScopeAccessByAccessToken("accessToken"), nullValue());
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getScopeAccessByAccessToken_throwsLdapException_throwsIllegalStateException() throws Exception {
-        SearchResultEntry searchEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
-        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
-        searchEntries.add(searchEntry);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB),any(Filter.class));
-        doThrow(new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX))).when(spy).decodeScopeAccess(searchEntry);
-        assertThat("returns scope access", spy.getScopeAccessByAccessToken("accessToken"), nullValue());
-    }
-
-    @Test
     public void getScopeAccessByUserId_setsFilterAttributeToUserRsId() throws Exception {
         ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
         ScopeAccess scopeAccess = new ScopeAccess();

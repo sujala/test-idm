@@ -39,7 +39,7 @@ class AuthConverterCloudV11Test extends RootServiceTest{
             it.accessTokenString = "token"
             it.accessTokenExp = new Date().plus(1)
             it.username = "username"
-            it.createdDate = date
+            it.createTimestamp = date
             return it
         }
 
