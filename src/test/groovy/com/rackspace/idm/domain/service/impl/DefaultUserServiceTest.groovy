@@ -91,7 +91,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         tenantService.getTenant(_) >> tenant
 
         when:
-        service.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser("1", user)
 
         then:
         1 * this.tenantService.updateTenant(_)
@@ -118,7 +118,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         tenantService.getTenant(_) >> tenant
 
         when:
-        service.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser("1", user)
 
         then:
         thrown(BadRequestException)
@@ -142,7 +142,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         tenantService.getTenant(_) >> tenant
 
         when:
-        service.addBaseUrlToUser(1, user)
+        service.addBaseUrlToUser("1", user)
 
         then:
         1 * this.tenantService.updateTenant(_)

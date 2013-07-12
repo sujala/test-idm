@@ -226,7 +226,7 @@ public class DefaultCloud20ServiceOldTest {
         userOS.setEmail("foo@bar.com");
         userOS.setEnabled(true);
         cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(101);
+        cloudBaseUrl.setBaseUrlId("101");
         cloudBaseUrl.setGlobal(false);
         application = new Application();
         application.setClientId("clientId");
@@ -257,7 +257,7 @@ public class DefaultCloud20ServiceOldTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
         when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
-        when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
+        when(endpointService.getBaseUrlById("101")).thenReturn(cloudBaseUrl);
         when(clientService.getById(role.getServiceId())).thenReturn(application);
         when(clientService.getById("clientId")).thenReturn(application);
         when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
@@ -1093,13 +1093,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteEndpointTemplate_callsEndpointService_deleteBaseUrlMethod() throws Exception {
-        when(endpointService.checkAndGetEndpointTemplate("101")).thenReturn(cloudBaseUrl);
-        spy.deleteEndpointTemplate(null, authToken, "101");
-        verify(endpointService).deleteBaseUrl(101);
-    }
-
-    @Test
     public void deleteEndpointTemplate_callsEndpointService_checkAndGetEndpointTemplate() throws Exception {
         spy.deleteEndpointTemplate(null, authToken, "101");
         verify(endpointService).checkAndGetEndpointTemplate("101");
@@ -1403,35 +1396,9 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addEndpoint_callsTenantService_updateTenant() throws Exception {
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
-        when(endpointService.checkAndGetEndpointTemplate(endpointTemplate.getId())).thenReturn(cloudBaseUrl);
-        spy.addEndpoint(null, authToken, tenantId, endpointTemplate);
-        verify(tenantService).updateTenant(tenant);
-    }
-
-    @Test
     public void addEndpoint_callsTenantService_checkAndGetTenant() throws Exception {
         spy.addEndpoint(null, authToken, tenantId, endpointTemplate);
         verify(tenantService).checkAndGetTenant(tenantId);
-    }
-
-    @Test
-    public void addEndpoint_callsCheckAndGetEndpointTemplate() throws Exception {
-        spy.addEndpoint(null, authToken, tenantId, endpointTemplate);
-        verify(endpointService).checkAndGetEndpointTemplate(endpointTemplate.getId());
-    }
-
-    @Test
-    public void addEndpoint_Global_throwBadRequestExceptionAndReturnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(endpointService.checkAndGetEndpointTemplate(endpointTemplate.getId())).thenReturn(cloudBaseUrl);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        cloudBaseUrl.setGlobal(true);
-        assertThat("response builder", spy.addEndpoint(null, authToken, tenantId, endpointTemplate), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2657,19 +2624,6 @@ public class DefaultCloud20ServiceOldTest {
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
         Response.ResponseBuilder responseBuilder = spy.listEndpoints(httpHeaders, authToken, tenantId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listEndpoints_baseUrlIdsIsNotNullCallsEndpointService_getBaseUrlById() throws Exception {
-        tenant.getBaseUrlIds().add("1");
-        ArrayList<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        cloudBaseUrlList.add(cloudBaseUrl);
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
-        when(endpointService.getGlobalBaseUrls()).thenReturn(cloudBaseUrlList);
-        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
-        spy.listEndpoints(httpHeaders, authToken, tenantId);
-        verify(endpointService).getBaseUrlById(1);
     }
 
     @Test

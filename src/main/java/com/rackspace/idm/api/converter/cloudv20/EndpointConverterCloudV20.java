@@ -53,7 +53,7 @@ public class EndpointConverterCloudV20 {
 
                 Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
-                endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set.
+                endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));     //TODO: throws null pointer of Id is not set.
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
                 endpoint.setName(baseUrl.getServiceName());
                 endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -85,7 +85,7 @@ public class EndpointConverterCloudV20 {
 
             Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
             endpoint.setAdminURL(baseUrl.getAdminUrl());
-            endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
+            endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
             endpoint.setInternalURL(baseUrl.getInternalUrl());
             endpoint.setName(baseUrl.getServiceName());
             endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -111,7 +111,7 @@ public class EndpointConverterCloudV20 {
         template.setAdminURL(baseUrl.getAdminUrl());
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
-        template.setId(baseUrl.getBaseUrlId());
+        template.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
         template.setInternalURL(baseUrl.getInternalUrl());
         template.setName(baseUrl.getServiceName());
         template.setPublicURL(baseUrl.getPublicUrl());
@@ -149,7 +149,7 @@ public class EndpointConverterCloudV20 {
 
         Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
         endpoint.setAdminURL(baseUrl.getAdminUrl());
-        endpoint.setId(baseUrl.getBaseUrlId());
+        endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
         endpoint.setInternalURL(baseUrl.getInternalUrl());
         endpoint.setName(baseUrl.getServiceName());
         endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -164,7 +164,7 @@ public class EndpointConverterCloudV20 {
     public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setAdminUrl(template.getAdminURL());
-        baseUrl.setBaseUrlId(template.getId());
+        baseUrl.setBaseUrlId(String.valueOf(template.getId()));
         baseUrl.setEnabled(template.isEnabled());
         baseUrl.setGlobal(template.isGlobal());
         baseUrl.setInternalUrl(template.getInternalURL());

@@ -34,7 +34,7 @@ class LdapCapabilityRepositoryTest extends Specification {
 
     def "CRUD capabilities"() {
         when:
-        Integer baseUrlId = 10003321
+        def baseUrlId = "10003321"
         cloudBaseUrl = getCloudBaseUrl(baseUrlId, "NAST", "test", "test", false, true, false, "cloudServers")
         endpointService.addBaseUrl(cloudBaseUrl)
         ldapCapabilityRepository.addObject(getCapability("100123321","GET", "get_server", "get_server", "description", "http://someUrl","compute","1", null))
@@ -59,7 +59,7 @@ class LdapCapabilityRepositoryTest extends Specification {
 
 
     //Helper Methods
-    def getCloudBaseUrl(Integer id, String type, String serviceName, String publicUrl, Boolean defaultValue, Boolean enabled, Boolean global, String OSType) {
+    def getCloudBaseUrl(String id, String type, String serviceName, String publicUrl, Boolean defaultValue, Boolean enabled, Boolean global, String OSType) {
         new CloudBaseUrl().with {
             it.setBaseUrlId(id);
             it.setBaseUrlType(type);

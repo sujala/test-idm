@@ -35,23 +35,6 @@ public class DefaultEndpointServiceTestOld {
     int baseUrlId = 1;
     private String service = "defaultApplicationService";
 
-    @Before
-    public void setUp() throws Exception {
-        spy = spy(defaultEndpointService);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName(service);
-        CloudBaseUrl cloudBaseUrl2 = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName(service);
-        CloudBaseUrl cloudBaseUrl3 = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName("defaultApplicationService");
-        when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
-        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        cloudBaseUrls.add(cloudBaseUrl);
-        cloudBaseUrls.add(cloudBaseUrl2);
-        cloudBaseUrls.add(cloudBaseUrl3);
-        when(endpointDao.getBaseUrlsByService(service)).thenReturn(cloudBaseUrls);
-    }
-
     @Test
     public void getBaseUrlsByServiceName_callsEndpointDao() throws Exception {
         defaultEndpointService.getBaseUrlsByServiceName("cloudFiles");
@@ -172,47 +155,6 @@ public class DefaultEndpointServiceTestOld {
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
         List<CloudBaseUrl> result = defaultEndpointService.getDefaultBaseUrls();
         assertThat("cloud base url", result.get(0), equalTo(cloudBaseUrl));
-    }
-
-    @Test
-    public void checkAndGetEndpointTemplate_intParameterAndBaseURLExists_returnsCloudBaseURl() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        doReturn(cloudBaseUrl).when(spy).getBaseUrlById(123);
-        assertThat("cloud base url", spy.checkAndGetEndpointTemplate(123), equalTo(cloudBaseUrl));
-    }
-
-    @Test
-    public void checkAndGetEndpointTemplate_intParameterAndBaseURLDoesNotExist_throwsNotFoundException() throws Exception {
-        try{
-            doReturn(null).when(spy).getBaseUrlById(123);
-            spy.checkAndGetEndpointTemplate(123);
-            assertTrue("should throw exception",false);
-        } catch (NotFoundException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("EndpointTemplate 123 not found"));
-        }
-    }
-
-    @Test
-    public void checkAndGetEndpointTemplate_stringParameterAndIntegerParsingSucceeds_returnsCloudBaseURl() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate(123);
-        assertThat("cloud base url",spy.checkAndGetEndpointTemplate("123"),equalTo(cloudBaseUrl));
-    }
-
-    @Test
-    public void checkAndGetEndpointTemplate_stringParameterAndIntegerParsingFails_throwsNotFoundException() throws Exception {
-        try{
-            spy.checkAndGetEndpointTemplate("hi");
-            assertTrue("should throw exception",false);
-        } catch (NotFoundException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("EndpointTemplate hi not found"));
-        }
-    }
-
-    @Test
-    public void setBaseUrlEnabled_callsEndpointDao_setBaseUrlEnabled() throws Exception {
-        defaultEndpointService.setBaseUrlEnabled(1, true);
-        verify(endpointDao).setBaseUrlEnabled(1, true);
     }
 
     @Test

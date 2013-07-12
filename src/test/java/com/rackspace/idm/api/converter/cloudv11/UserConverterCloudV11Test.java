@@ -44,7 +44,7 @@ public class UserConverterCloudV11Test {
     public void setUp() throws Exception {
         cloudBaseUrl = new CloudBaseUrl();
         // Fields
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setBaseUrlType("nast");
         cloudBaseUrl.setDef(true);
@@ -58,7 +58,6 @@ public class UserConverterCloudV11Test {
         cloudBaseUrl.setVersionId("versionId");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setUniqueId("uniqueId");
     }
 
     @Test
@@ -109,7 +108,7 @@ public class UserConverterCloudV11Test {
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setPublicUrl("publicUrl");
         cloudBaseUrl.setV1Default(true);
         cloudBaseUrlList.add(cloudBaseUrl);

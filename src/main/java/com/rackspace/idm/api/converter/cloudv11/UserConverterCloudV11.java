@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
-import org.openstack.docs.identity.api.v2.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

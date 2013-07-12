@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ClientConflictException;
-import com.sun.jersey.api.ConflictException;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.RDN;
 import org.springframework.stereotype.Component;

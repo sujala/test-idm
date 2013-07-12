@@ -228,7 +228,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
-            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpoint.getId());
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(Integer.toString(endpoint.getId()));
             if (baseUrl.getGlobal()) {
                 throw new BadRequestException("Cannot add a global endpoint to this tenant.");
             }
@@ -1600,7 +1600,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 for (String id : tenant.getBaseUrlIds()) {
                     Integer baseUrlId = Integer.parseInt(id);
                     //ToDo: Do not add if in global list also
-                    baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
+                    baseUrls.add(this.endpointService.getBaseUrlById(Integer.toString(baseUrlId)));
                 }
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
@@ -2152,7 +2152,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        com.rackspace.idm.domain.entity.Policies savedPolicies = policyService.getPolicies(cloudBaseUrl.getPolicyList());
+        com.rackspace.idm.domain.entity.Policies savedPolicies = policyService.getPolicies(new ArrayList<String>(cloudBaseUrl.getPolicyList()));
 
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);

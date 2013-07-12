@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;

@@ -224,50 +224,6 @@ public class Cloud10VersionResourceTest {
     }
 
     @Test
-    public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesService_withMultipleEndpoints_v1DefaultProperHeaders() throws Exception {
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        Tenant tenant = new Tenant();
-        tenant.setTenantId("1");
-        CloudBaseUrl baseURL = new CloudBaseUrl();
-        baseURL.setServiceName("cloudFiles");
-        baseURL.setUniqueId("someId");
-        baseURL.setPublicUrl("http://someEndpoint");
-        tenant.getV1Defaults().add("123");
-        openstackEndpoint.setBaseUrls(Arrays.asList(baseURL));
-        openstackEndpoint.setTenantId(tenant.getTenantId());
-        List<OpenstackEndpoint> cloudEndpoint = Arrays.asList(openstackEndpoint);
-        when(userService.getUser("username")).thenReturn(new User());
-        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(cloudEndpoint);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(baseURL);
-        when(userScopeAccess.getAccessTokenString()).thenReturn("token");
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
-        Service service = new Service();
-        Endpoint endpoint = new Endpoint();
-        endpoint.setPublicURL("publicUrl");
-        endpoint.setInternalURL("internalUrl");
-        Endpoint endpoint2 = new Endpoint();
-        endpoint2.setPublicURL("publicUrl2");
-        endpoint2.setInternalURL("internalUrl2");
-        endpoint2.setV1Default(true);
-        Endpoint endpoint3 = new Endpoint();
-        endpoint3.setPublicURL(baseURL.getPublicUrl()+ "/1");
-        endpoint3.setV1Default(true);
-        service.getEndpoint().add(endpoint3);
-        service.getEndpoint().add(endpoint2);
-        service.getEndpoint().add(endpoint);
-        service.setName("cloudFiles");
-        serviceCatalog.getService().add(service);
-        when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
-
-
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        assertThat("response header", response.getMetadata().getFirst("X-Storage-Url").toString(), equalTo("http://someEndpoint/1"));
-    }
-
-    @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);

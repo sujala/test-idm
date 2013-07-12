@@ -830,7 +830,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addBaseUrlToUser(Integer baseUrlId, User user) {
+    public void addBaseUrlToUser(String baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
         if (baseUrl.getOpenstackType().equals("NAST")) {
@@ -855,7 +855,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
+    public void removeBaseUrlFromUser(String baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
         if (baseUrl.getOpenstackType().equals("NAST")) {

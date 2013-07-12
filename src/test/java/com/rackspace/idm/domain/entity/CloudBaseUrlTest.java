@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -24,165 +25,13 @@ public class CloudBaseUrlTest {
 
     @Test
     public void hashCode_allFieldsNull_returnsHashCode() throws Exception {
-        assertThat("hash code",cloudBaseUrl.hashCode(),equalTo(-510534177));
+        assertThat("hash code",cloudBaseUrl.hashCode(), notNullValue());
     }
 
     @Test
     public void hashCode_adminUrlNotNull_returnsHashCode() throws Exception {
         cloudBaseUrl.setAdminUrl("adminUrl");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(1533237631));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-520931100));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdAndBaseURlTypeNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-1918234084));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdAndBaseURlTypeAndDefNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-1931196947));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdAndBaseURlTypeAndDefAndEnabledNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-2070162436));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdAndBaseURlTypeAndDefAndEnabledAndGlobalNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(834848781));
-    }
-
-    @Test
-    public void hashCode_adminUrlAndBaseUrlIdAndBaseURlTypeAndDefAndEnabledAndGlobalAndInternalUrlNotNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(66381695));
-    }
-
-    @Test
-    public void hashCode_publicUrlAndUniqueIdAndVersionIdAndVersionInfoAndVersionListAreNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-458787417));
-    }
-
-    @Test
-    public void hashCode_uniqueIdAndVersionIdAndVersionInfoAndVersionListAreNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(1416707949));
-    }
-
-    @Test
-    public void hashCode_versionIdAndVersionInfoAndVersionListAreNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setUniqueId("uniqueId");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-524249311));
-    }
-
-    @Test
-    public void hashCode_versionInfoAndVersionListAreNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setUniqueId("uniqueId");
-        cloudBaseUrl.setVersionId("123");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-477458221));
-    }
-
-    @Test
-    public void hashCode_versionListAreNull_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setUniqueId("uniqueId");
-        cloudBaseUrl.setVersionId("123");
-        cloudBaseUrl.setVersionInfo("versionInfo");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-600441875));
-    }
-
-    @Test
-    public void hashCode_allFieldsPopulated_returnsHashCode() throws Exception {
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openstackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setUniqueId("uniqueId");
-        cloudBaseUrl.setVersionId("123");
-        cloudBaseUrl.setVersionInfo("versionInfo");
-        cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setRegion("someRegion");
-        cloudBaseUrl.setServiceName("someService");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-1116460004));
+        assertThat("hash code", cloudBaseUrl.hashCode(), notNullValue());
     }
 
     @Test
@@ -215,29 +64,6 @@ public class CloudBaseUrlTest {
         CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
         cloudBaseUrl1.setAdminUrl("adminUrl");
         cloudBaseUrl.setAdminUrl("adminUrl");
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(true));
-    }
-
-    @Test
-    public void equals_baseUrlIdIsNullButOtherBaseUrlIdNotNull_returnsFalse() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setBaseUrlId(123);
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(false));
-    }
-
-    @Test
-    public void equals_bothBaseUrlIdsExistAndNotEqual_returnsFalse() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlId(456);
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(false));
-    }
-
-    @Test
-    public void equals_bothBaseUrlIdsExistAndEqual_returnsTrue() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setBaseUrlId(123);
-        cloudBaseUrl.setBaseUrlId(123);
         assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(true));
     }
 
@@ -449,29 +275,6 @@ public class CloudBaseUrlTest {
     }
 
     @Test
-    public void equals_uniqueIdNullButOtherUniqueIdNotNull_returnsFalse() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setUniqueId("uniqueId");
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(false));
-    }
-
-    @Test
-    public void equals_bothUniqueIdsExistAndNotEqual_returnsFalse() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setUniqueId("uniqueId");
-        cloudBaseUrl.setUniqueId("anotherUniqueId");
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(false));
-    }
-
-    @Test
-    public void equals_bothUniqueIdsExistAndEqual_returnsTrue() throws Exception {
-        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
-        cloudBaseUrl1.setUniqueId("uniqueId");
-        cloudBaseUrl.setUniqueId("uniqueId");
-        assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(true));
-    }
-
-    @Test
     public void equals_versionIdNullButOtherVersionIdNotNull_returnsFalse() throws Exception {
         CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
         cloudBaseUrl1.setVersionId("versionId");
@@ -538,12 +341,6 @@ public class CloudBaseUrlTest {
         cloudBaseUrl1.setVersionList("versionList");
         cloudBaseUrl.setVersionList("versionList");
         assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(true));
-    }
-
-    @Test
-    public void setV1Default() throws Exception {
-        cloudBaseUrl.setV1Default(true);
-        assertThat("equals", cloudBaseUrl.isV1Default(),equalTo(true));
     }
 
     @Test

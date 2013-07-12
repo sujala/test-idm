@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Component
@@ -52,7 +53,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public void deleteBaseUrl(int baseUrlId) {
+    public void deleteBaseUrl(String baseUrlId) {
         logger.debug("Deleting base url {}", baseUrlId);
         this.endpointDao.deleteBaseUrl(baseUrlId);
         logger.debug("Done deleting base url {}", baseUrlId);
@@ -91,13 +92,13 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public CloudBaseUrl getBaseUrlById(int baseUrlId) {
+    public CloudBaseUrl getBaseUrlById(String baseUrlId) {
         logger.debug("Getting baserul {}", baseUrlId);
-        return this.endpointDao.getBaseUrlById(baseUrlId);
+        return this.endpointDao.getBaseUrlById(String.valueOf(baseUrlId));
     }
 
     @Override
-    public CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
+    public CloudBaseUrl checkAndGetEndpointTemplate(String baseUrlId) {
         CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
             String errMsg = String.format("EndpointTemplate %s not found", baseUrlId);
@@ -108,22 +109,11 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public CloudBaseUrl checkAndGetEndpointTemplate(String id) {
-        Integer baseUrlId;
-        try {
-            baseUrlId = Integer.parseInt(id);
-        } catch (NumberFormatException nfe) {
-            String errMsg = String.format("EndpointTemplate %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg, nfe);
-        }
-        return checkAndGetEndpointTemplate(baseUrlId);
-    }
-
-    @Override
-    public void setBaseUrlEnabled(int baseUrlId, boolean enabled) {
+    public void setBaseUrlEnabled(String baseUrlId, boolean enabled) {
         logger.info("Setting baseurl {} enabled {}", baseUrlId, enabled);
-        this.endpointDao.setBaseUrlEnabled(baseUrlId, enabled);
+        CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(String.valueOf(baseUrlId));
+        baseUrl.setEnabled(enabled);
+        endpointDao.updateCloudBaseUrl(baseUrl);
     }
 
     @Override
@@ -174,7 +164,7 @@ public class DefaultEndpointService implements EndpointService {
     public List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenantList) {
-            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.getOpenstackEndpointsForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -182,19 +172,66 @@ public class DefaultEndpointService implements EndpointService {
         return endpoints;
     }
 
-    @Override
-    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
-        return endpointDao.getOpenstackEndpointsForTenant(tenant);
+    private OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant) {
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+
+        HashSet<String> tenantBaseUrlIds = new HashSet<String>();
+
+        if (tenant.getBaseUrlIds() != null) {
+            tenantBaseUrlIds.addAll(tenant.getBaseUrlIds());
+        }
+
+        if (tenant.getV1Defaults() != null) {
+            tenantBaseUrlIds.addAll(tenant.getV1Defaults());
+        }
+
+        for (String baseUrlId : tenantBaseUrlIds) {
+            CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
+            if (baseUrl != null) {
+                baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrlId));
+                baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName()));
+                baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName()));
+                baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName()));
+                baseUrls.add(baseUrl);
+            }
+        }
+
+        OpenstackEndpoint point = new OpenstackEndpoint();
+        point.setTenantId(tenant.getTenantId());
+        point.setTenantName(tenant.getName());
+        point.setBaseUrls(baseUrls);
+
+        return point;
+    }
+
+    String appendTenantToBaseUrl(String url, String tenantId) {
+        if (url == null) {
+            return null;
+        }
+        else if (url.endsWith("/")) {
+            return url + tenantId;
+        } else {
+            return url + "/" + tenantId;
+        }
     }
 
     @Override
-	public void addPolicyToEndpoint(int baseUrlId, String policyId) {
-        endpointDao.addPolicyToEndpoint(baseUrlId, policyId);
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
+        return this.getOpenstackEndpointsForTenant(tenant);
+    }
+
+    @Override
+	public void addPolicyToEndpoint(String baseUrlId, String policyId) {
+        CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
+        baseUrl.getPolicyList().add(policyId);
+        endpointDao.updateCloudBaseUrl(baseUrl);
 	}
 
 	@Override
-	public void deletePolicyToEndpoint(int baseUrlId, String policyId) {
-        endpointDao.deletePolicyFromEndpoint(baseUrlId, policyId);
+	public void deletePolicyToEndpoint(String baseUrlId, String policyId) {
+        CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
+        baseUrl.getPolicyList().remove(policyId);
+        endpointDao.updateCloudBaseUrl(baseUrl);
     }
 
     @Override

@@ -19,7 +19,7 @@ public interface UserDao {
     void deleteRacker(String rackerId);
 
     void deleteUser(User user);
-    
+
     void deleteUser(String username);
 
     void removeUsersFromClientGroup(ClientGroup group);

@@ -10,11 +10,9 @@ import java.util.List;
 public interface EndpointService {
     void addBaseUrl(CloudBaseUrl baseUrl);
 
-    void deleteBaseUrl(int baseUrlId);
+    void deleteBaseUrl(String baseUrlId);
 
-    CloudBaseUrl getBaseUrlById(int baseUrlId);
-
-    CloudBaseUrl checkAndGetEndpointTemplate(int id);
+    CloudBaseUrl getBaseUrlById(String baseUrlId);
 
     CloudBaseUrl checkAndGetEndpointTemplate(String id);
 
@@ -24,7 +22,7 @@ public interface EndpointService {
     
     List<CloudBaseUrl> getDefaultBaseUrls();
 
-    void setBaseUrlEnabled(int baseUrlId, boolean enabled);
+    void setBaseUrlEnabled(String baseUrlId, boolean enabled);
 
     List<CloudBaseUrl> getBaseUrlsByServiceType(String serviceType);
 
@@ -40,9 +38,9 @@ public interface EndpointService {
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
 
-	void addPolicyToEndpoint(int baseUrlId, String policyId);
+	void addPolicyToEndpoint(String baseUrlId, String policyId);
 
-	void deletePolicyToEndpoint(int baseUrlId, String policyId);
+	void deletePolicyToEndpoint(String baseUrlId, String policyId);
 
 	void setEndpointDao(EndpointDao endpointDao);
 }

@@ -10,11 +10,9 @@ import java.util.List;
 public interface EndpointDao {
     void addBaseUrl(CloudBaseUrl baseUrl);
 
-    void addBaseUrlToUser(int baseUrlId, boolean def, String username);
+    void deleteBaseUrl(String baseUrlId);
     
-    void deleteBaseUrl(int baseUrlId);
-    
-    CloudBaseUrl getBaseUrlById(int baseUrlId);
+    CloudBaseUrl getBaseUrlById(String baseUrlId);
 
     List<CloudBaseUrl> getBaseUrlsByService(String service);
 
@@ -22,17 +20,7 @@ public interface EndpointDao {
 
     List<CloudBaseUrl> getBaseUrls();
 
-    List<CloudEndpoint> getEndpointsForUser(String username);
-    
-    void removeBaseUrlFromUser(int baseUrlId, String username);
-
-    void setBaseUrlEnabled(int baseUrlId, boolean enabled);
-
-    OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant);
+    List<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds);
 
     void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl);
-
-    void addPolicyToEndpoint(int baseUrlId, String policyId);
-
-    void deletePolicyFromEndpoint(int baseUrlId, String policyId);
 }

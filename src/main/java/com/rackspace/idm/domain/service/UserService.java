@@ -92,9 +92,9 @@ public interface UserService {
     boolean userExistsByUsername(String username);
     boolean isMigratedUser(User user);
 
-    void addBaseUrlToUser(Integer baseUrlId, User user);
+    void addBaseUrlToUser(String baseUrlId, User user);
 
-    void removeBaseUrlFromUser(Integer baseUrlId, User user);
+    void removeBaseUrlFromUser(String baseUrlId, User user);
 
     List<Tenant> getUserTenants(String userId);
 
