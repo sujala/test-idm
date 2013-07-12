@@ -49,6 +49,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         input                        | expected
         ["RSA"].asList()             | ["RSA"]
         ["RSA", "Password"].asList() | ["RSA", "Password"]
+        []                           | []
         null                         | []
     }
 

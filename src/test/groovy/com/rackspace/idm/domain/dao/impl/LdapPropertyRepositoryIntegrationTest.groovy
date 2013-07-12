@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-import sun.java2d.x11.X11SurfaceData
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapPropertyRepositoryIntegrationTest extends Specification {
