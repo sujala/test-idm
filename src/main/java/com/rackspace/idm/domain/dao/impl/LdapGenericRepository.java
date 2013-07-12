@@ -134,7 +134,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         } catch (final LDAPException e) {
             getLogger().error("Error adding object", e);
             audit.fail(e.getMessage());
-
+            switch (e.getResultCode().intValue()){
+                case 68:
+                    throw new DuplicateException(e.getMessage());
+                default:
+                    throw new IllegalStateException(e);
+            }
         }
     }
 
