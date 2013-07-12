@@ -377,7 +377,7 @@ public class LdapScopeAccessRepository extends LdapRepository implements ScopeAc
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
                 .addEqualAttribute(ATTR_ACCESS_TOKEN, accessToken).build();
 
-            final List<SearchResultEntry> searchEntries = getMultipleEntries(BASE_DN, SearchScope.SUB, filter);
+            final List<SearchResultEntry> searchEntries = getMultipleEntries(BASE_DN, SearchScope.SUB, filter, ATTR_SCOPE_ACCESS_ATTRIBUTES);
             if(searchEntries != null){
                 getLogger().debug("Found {} ScopeAccess by AccessToken: {}", searchEntries.size(), accessToken);
                 for (final SearchResultEntry searchResultEntry : searchEntries) {
