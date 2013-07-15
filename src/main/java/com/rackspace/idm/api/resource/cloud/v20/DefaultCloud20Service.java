@@ -530,10 +530,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 tenantService.addCallerTenantRolesToUser(caller, userDO);
 
                 if (caller != null) {
-                    List<Group> groups = groupService.getGroupsForUser(caller.getId());
+                    List<Group> groups = userService.getGroupsForUser(caller.getId());
 
                     for (Group group :groups) {
-                        groupService.addGroupToUser(group.getGroupId(), userDO.getId());
+                        userService.addGroupToUser(group.getGroupId(), userDO.getId());
                     }
                 }
             }
@@ -2625,7 +2625,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<Group> groups = groupService.getGroupsForUser(userId);
+            List<Group> groups = userService.getGroupsForUser(userId);
             if (groups.size() == 0) {
                 Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
                 groups.add(defGroup);
@@ -2720,18 +2720,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
             boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
-            if (!groupService.isUserInGroup(userId, group.getGroupId())) {
+            if (!userService.isUserInGroup(userId, group.getGroupId())) {
                 if (isDefaultUser) {
                     throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
                 } else if (isUserAdmin) {
                     List<User> subUsers = userService.getSubUsers(user);
 
                     for (User subUser : subUsers) {
-                        groupService.addGroupToUser(groupId, subUser.getId());
+                        userService.addGroupToUser(groupId, subUser.getId());
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                     }
                 }
-                groupService.addGroupToUser(groupId, userId);
+                userService.addGroupToUser(groupId, userId);
                 atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             }
             return Response.noContent();
@@ -2760,7 +2760,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
-            if (!groupService.isUserInGroup(userId, group.getGroupId())) {
+            if (!userService.isUserInGroup(userId, group.getGroupId())) {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
 
@@ -2768,11 +2768,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
-                    groupService.deleteGroupFromUser(groupId, subUser.getId());
+                    userService.deleteGroupFromUser(groupId, subUser.getId());
                     atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
                 }
             }
-            groupService.deleteGroupFromUser(groupId, userId);
+            userService.deleteGroupFromUser(groupId, userId);
             atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
             return Response.noContent();
         } catch (Exception e) {

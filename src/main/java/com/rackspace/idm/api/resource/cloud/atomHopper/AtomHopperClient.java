@@ -6,10 +6,9 @@ import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
-import com.rackspace.idm.util.CryptHelper;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
@@ -22,10 +21,7 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.apache.http.util.EntityUtils;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +65,7 @@ public class AtomHopperClient {
     private Configuration config;
 
     @Autowired
-    private DefaultGroupService defaultGroupService;
+    private UserService userService;
 
     @Autowired
     private DefaultTenantService defaultTenantService;
@@ -219,7 +215,7 @@ public class AtomHopperClient {
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
-        List<Group> groupList = defaultGroupService.getGroupsForUser(user.getId());
+        List<Group> groupList = userService.getGroupsForUser(user.getId());
         if(groupList != null){
             for(Group group : groupList){
                 cloudIdentityType.getGroups().add(group.getGroupId());
@@ -312,10 +308,6 @@ public class AtomHopperClient {
 
     public void setConfig(Configuration config) {
         this.config = config;
-    }
-
-    public void setDefaultGroupService(DefaultGroupService defaultGroupService) {
-        this.defaultGroupService = defaultGroupService;
     }
 
     public void setDefaultTenantService(DefaultTenantService defaultTenantService){

@@ -921,6 +921,33 @@ public class DefaultUserService implements UserService {
         return userContext;
     }
 
+    @Override
+    public void addGroupToUser(String groupId, String userId) {
+        userDao.addGroupToUser(groupId, userId);
+    }
+
+    @Override
+    public void deleteGroupFromUser(String groupId, String userId) {
+        userDao.deleteGroupFromUser(groupId, userId);
+    }
+
+    @Override
+    public List<Group> getGroupsForUser(String userId) {
+        return userDao.getGroupsForUser(userId);
+    }
+
+    @Override
+	public boolean isUserInGroup(String userId, String groupId) {
+		List<Group> groups = getGroupsForUser(userId);
+
+        for (Group currentGroup : groups) {
+            if (currentGroup.getGroupId().equals(groupId)) {
+                return true;
+            }
+        }
+        return false;
+	}
+
     protected Users getAllUsersNoLimit(FilterParam[] filters) {
         logger.debug("Getting all users with {}", filters);
 

@@ -24,9 +24,5 @@ public interface GroupService {
     void insertGroup(Group group);
     void updateGroup(Group group);
     void deleteGroup(String groupId);
-    void addGroupToUser(String groupId, String userId);
-    void deleteGroupFromUser(String groupId, String userId);
-    List<Group> getGroupsForUser(String userId);
     Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit);
-	boolean isUserInGroup(String userId, String groupId);
 }

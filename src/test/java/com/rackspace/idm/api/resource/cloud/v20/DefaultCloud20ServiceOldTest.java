@@ -4262,7 +4262,7 @@ public class DefaultCloud20ServiceOldTest {
         List<Group> groups = new ArrayList<Group>();
         groups.add(group);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(cloudGroupService.getGroupsForUser("userId")).thenReturn(groups);
+        when(userService.getGroupsForUser("userId")).thenReturn(groups);
         when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(httpHeaders, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));

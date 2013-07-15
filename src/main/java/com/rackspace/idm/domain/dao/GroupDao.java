@@ -14,13 +14,10 @@ import java.util.List;
 public interface GroupDao {
 
     String getNextGroupId();
-    List<Group> getGroups(String marker, Integer limit);
+    List<Group> getGroups();
     Group getGroupById(String groupId);
     Group getGroupByName(String groupName);
     void deleteGroup(String groupId);
     void addGroup(Group group);
     void updateGroup(Group group);
-    void addGroupToUser(String groupId, String userId);
-    void deleteGroupFromUser(String groupId, String userId);
-    List<Group> getGroupsForUser(String userId);
 }

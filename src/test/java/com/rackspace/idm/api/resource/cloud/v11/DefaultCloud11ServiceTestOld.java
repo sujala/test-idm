@@ -1509,13 +1509,13 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserGroups(request, "userId", null);
-        verify(userGroupService).getGroupsForUser(anyString());
+        verify(userService).getGroupsForUser(anyString());
     }
 
     @Test
     public void getUserGroups_noUserGroups_callsCloudGroupService_getGroupById() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userGroupService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
+        when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserGroups(request, "userId", null);
         verify(cloudGroupService).getGroupById(anyString());
@@ -1526,7 +1526,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         ArrayList<Group> groups = new ArrayList<Group>();
         groups.add(new Group());
-        when(userGroupService.getGroupsForUser(anyString())).thenReturn(groups);
+        when(userService.getGroupsForUser(anyString())).thenReturn(groups);
         when(userService.getUser("userId")).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "userId", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));

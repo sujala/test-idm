@@ -15,7 +15,6 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspacecloud.docs.auth.api.v1.Group;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,7 +79,7 @@ public class DefaultGroupServiceTestOld {
 
     @Test
     public void getGroups_returnsList() throws Exception {
-        when(groupDao.getGroups(null,null)).thenReturn(new ArrayList<com.rackspace.idm.domain.entity.Group>());
+        when(groupDao.getGroups()).thenReturn(new ArrayList<com.rackspace.idm.domain.entity.Group>());
         assertThat("groups list", defaultGroupService.getGroups(null, null), instanceOf(List.class));
     }
 
@@ -274,21 +273,6 @@ public class DefaultGroupServiceTestOld {
     }
 
     @Test
-    public void deleteGroup_existsNotNullAndUserNotEnabled_callsDeleteGroupFromUser() throws Exception {
-        User user = new User();
-        user.setEnabled(false);
-        Users users = new Users();
-        users.setUsers(new ArrayList<User>());
-        users.getUsers().add(user);
-        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
-        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(spy).deleteGroupFromUser("123", null);
-        doNothing().when(groupDao).deleteGroup("123");
-        spy.deleteGroup("123");
-        verify(spy).deleteGroupFromUser("123",null);
-    }
-
-    @Test
     public void deleteGroup_existsNotNullAndNoUsers_callsGroupDaoMethod() throws Exception {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
@@ -297,35 +281,5 @@ public class DefaultGroupServiceTestOld {
         doNothing().when(groupDao).deleteGroup("123");
         defaultGroupService.deleteGroup("123");
         verify(groupDao).deleteGroup("123");
-    }
-
-    @Test
-    public void deleteGroup_existsNotNullAndNoUsers_doesNotCallDeleteGroupFromUser() throws Exception {
-        Users users = new Users();
-        users.setUsers(new ArrayList<User>());
-        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
-        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(spy).deleteGroupFromUser("123", null);
-        doNothing().when(groupDao).deleteGroup("123");
-        spy.deleteGroup("123");
-        verify(spy,never()).deleteGroupFromUser(anyString(), anyString());
-    }
-
-    @Test
-    public void addGroupToUser_callsGroupDaoMethod() throws Exception {
-        defaultGroupService.addGroupToUser("0",null);
-        verify(groupDao).addGroupToUser("0",null);
-    }
-
-    @Test
-    public void deleteGroupFromUser_callsGroupDaoMethod() throws Exception {
-        defaultGroupService.deleteGroupFromUser("0",null);
-        verify(groupDao).deleteGroupFromUser("0",null);
-    }
-
-    @Test
-    public void getGroupsForUser_callsGroupDaoMethod() throws Exception {
-        defaultGroupService.getGroupsForUser(null);
-        verify(groupDao).getGroupsForUser(null);
     }
 }

@@ -137,4 +137,12 @@ public interface UserService {
     void setCryptHelper(CryptHelper cryptHelper);
 
     void setPropertiesService(PropertiesService propertiesService);
+
+    void addGroupToUser(String groupId, String userId);
+
+    void deleteGroupFromUser(String groupId, String userId);
+
+    List<Group> getGroupsForUser(String userId);
+
+    boolean isUserInGroup(String userId, String groupId);
 }

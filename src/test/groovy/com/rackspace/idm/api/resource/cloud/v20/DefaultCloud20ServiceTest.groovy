@@ -719,7 +719,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getAllUsers(_) >> [].asList()
-        groupService.getGroupsForUser(_) >> groups
+        userService.getGroupsForUser(_) >> groups
 
         when:
         service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
@@ -727,7 +727,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * tenantService.addCallerTenantRolesToUser(caller, _)
-        2 * groupService.addGroupToUser(_, _)
+        2 * userService.addGroupToUser(_, _)
     }
 
     def "setDomainId sets users domain to callers domain"() {
@@ -3036,7 +3036,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        1 * groupService.addGroupToUser(_, _)
+        1 * userService.addGroupToUser(_, _)
         1 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
@@ -3054,7 +3054,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        2 * groupService.addGroupToUser(_, _)
+        2 * userService.addGroupToUser(_, _)
         2 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
@@ -3066,14 +3066,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
-        groupService.isUserInGroup(_, _) >> true
+        userService.isUserInGroup(_, _) >> true
         userService.getSubUsers(_) >> [].asList()
 
         when:
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
-        0 * groupService.addGroupToUser(_, _)
+        0 * userService.addGroupToUser(_, _)
         0 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
@@ -3086,13 +3086,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.getSubUsers(_) >> [].asList()
-        groupService.isUserInGroup(_, _) >> true
+        userService.isUserInGroup(_, _) >> true
 
         when:
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", "2")
 
         then:
-        1 * groupService.deleteGroupFromUser(_, _)
+        1 * userService.deleteGroupFromUser(_, _)
         1 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
@@ -3105,13 +3105,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.getSubUsers(_) >> [entityFactory.createUser()].asList()
-        groupService.isUserInGroup(_, _) >> true
+        userService.isUserInGroup(_, _) >> true
 
         when:
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", "2")
 
         then:
-        2 * groupService.deleteGroupFromUser(_, _)
+        2 * userService.deleteGroupFromUser(_, _)
         2 * atomHopperClient.asyncPost(_, _)
         response.build().status == 204
     }
@@ -3231,7 +3231,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         notThrown(BadRequestException)
         1 * defaultRegionService.validateDefaultRegion(_)
         1 * userService.addUser(_)
-        1 * groupService.getGroupsForUser(_) >> [].asList()
+        1 * userService.getGroupsForUser(_) >> [].asList()
     }
 
     def "User with user-manage role can delete user" () {
