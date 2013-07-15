@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
@@ -49,6 +50,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Autowired
     Configuration config;
+
+    @Autowired
+    GroupDao groupDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -1577,6 +1581,184 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             return new ArrayList<User>();
         }
         return getUsersInDomain(domainId, getFilter(domainId, enabled));
+    }
+
+        @Override
+    public void addGroupToUser(String groupId, String userId) {
+        getLogger().debug("Adding group {} to user {}", groupId, userId);
+        Group group = null;
+        List<String> groups = new ArrayList<String>();
+
+        try{ //TODO: should this catch exist... The getGroupById method already logs and throws accordingly
+            group = groupDao.getGroupById(groupId);
+            groups.add(group.getGroupId());
+        } catch (NotFoundException e){
+            String errMsg = String.format("Group %s not found", groupId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg, e);
+        } catch (Exception e) { }
+
+        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
+        List<Group> oldGroups;
+        try{
+            oldGroups = this.getGroupsForUser(userId);
+
+            for (Group s : oldGroups) {
+                if(!s.getGroupId().equals("0")){
+                    groups.add(s.getGroupId());
+                }
+            }
+
+        }catch(Exception e){
+            getLogger().error("Error adding user {} to group - {}", userId, e);
+            String errMsg = String.format("User %s not found", userId);
+            throw new BadRequestException(errMsg, e);
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+
+        String[] groupList = groups.toArray(new String[groups.size()]);
+
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_GROUP_ID, groupList));
+
+        LDAPResult result = null;
+        try {
+            result = getAppInterface().modify(userDN, mods);
+            getLogger().info("Added group {} to user {}", groupId, userId);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error updating user {} endpoints - {}", userId, ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error updating user {} groups - {}", groups, result.getResultCode());
+            throw new IllegalArgumentException(
+                    String.format("LDAP error encountered when updating user %s groups - %s", groups, result.getResultCode().toString()));
+        }
+
+        getLogger().debug("Adding groupId {} to user {}", groupId, userId);
+    }
+
+    @Override
+    public void deleteGroupFromUser(String groupId, String userId) {
+        getLogger().debug("Removing group {} from user {}", groupId, userId);
+        Group group = groupDao.getGroupById(groupId);
+        if (group == null) {
+            String errMsg = String.format("Group %s not found", groupId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
+        List<Group> oldGroups;
+        try{
+            oldGroups = this.getGroupsForUser(userId);
+        }catch(Exception e){
+            getLogger().error("Error deleting user {} from group - {}", userId, e);
+            String errMsg = String.format("User %s not found", userId);
+            throw new BadRequestException(errMsg, e);
+        }
+
+        List<String> groups = new ArrayList<String>();
+
+        for (Group s : oldGroups) {
+            if (!s.getGroupId().equals(groupId)) {
+                groups.add(s.getGroupId());
+            }
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (groups.size() < 1) {
+            // If a user's last group has been removed we need to delete
+            // the attribute from LDAP
+            mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_ID));
+        } else {
+            // Else we'll just replace all the values for endpoints with the
+            // reduced list.
+            String[] atts = groups.toArray(new String[groups.size()]);
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GROUP_ID, atts));
+        }
+        LDAPResult result = null;
+        try {
+            result = getAppInterface().modify(userDN, mods);
+            getLogger().info("Removed group {} from user {}", groupId, userId);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error updating user {} groups - {}", userId, ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error updating user {} groups - {}", userId, result.getResultCode());
+            throw new IllegalArgumentException(String.format(
+                    "LDAP error encountered when updating user %s endpoints - %s", userId, result.getResultCode().toString()));
+        }
+
+        getLogger().debug("Removing groupId {} from user {}", groupId, userId);
+    }
+
+    @Override
+    public List<Group> getGroupsForUser(String userId) {
+        getLogger().debug("Inside getGroupsForUser {}", userId);
+        List<Group> groups = new ArrayList<Group>();
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_ID, userId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+
+        try {
+            searchResult = getAppInterface().search(
+                    BASE_DN,
+                    SearchScope.SUB,
+                    searchFilter,
+                    new String[]{ATTR_GROUP_ID});
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for groups - {}", ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 0) {
+            String errMsg = String.format("User with id: %s was not found.", userId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        } else if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            String[] list = e.getAttributeValues(ATTR_GROUP_ID);
+            if(list != null) {
+                for(String id : list) {
+                    try{
+                        Group groupById = groupDao.getGroupById(id);
+                        groups.add(groupById);
+                    }catch (NotFoundException ex){
+                        Group missingGroup = new Group();
+                        missingGroup.setGroupId(id);
+                        groups.add(missingGroup);
+                        getLogger().error("User "+ userId+" had a reference to non-existant group "+id, ex);
+
+                    }
+                }
+            }
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format("More than one entry was found for user - %s", userId);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Exiting getGroupsForUser {}", groups);
+        return groups;
+    }
+
+    Group getGroup(SearchResultEntry resultEntry) {
+        getLogger().debug("Inside getCloudGroup");
+        Group group = new Group();
+        group.setUniqueId(resultEntry.getDN());
+        group.setGroupId(resultEntry.getAttributeValue(ATTR_ID));
+        group.setName(resultEntry.getAttributeValue(ATTR_GROUP_NAME));
+        group.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
+        getLogger().debug("Exiting getCloudGroup");
+        return group;
     }
 
     private Filter getFilter(String domainId) {

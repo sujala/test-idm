@@ -81,4 +81,10 @@ public interface UserDao {
     List<User> getUsersByDomain(String domainId);
 
     List<User> getUsersByDomain(String domainId, boolean enabled);
+
+    void addGroupToUser(String groupId, String userId);
+
+    void deleteGroupFromUser(String groupId, String userId);
+
+    List<Group> getGroupsForUser(String userId);
 }

@@ -38,12 +38,14 @@ public class DefaultGroupService implements GroupService {
     private GroupDao groupDao;
     @Autowired
     private Configuration config;
+    @Autowired
+    private UserService userService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public List<Group> getGroups(String marker, Integer limit) {
-        return groupDao.getGroups(marker, limit);
+        return groupDao.getGroups();
     }
 
     @Override
@@ -155,26 +157,12 @@ public class DefaultGroupService implements GroupService {
             }
 
             for (User user : users.getUsers()) {
-                deleteGroupFromUser(grpId,user.getId());
+                userService.deleteGroupFromUser(grpId,user.getId());
             }
         }
         groupDao.deleteGroup(groupId);
     }
 
-    @Override
-    public void addGroupToUser(String groupId, String userId) {
-        groupDao.addGroupToUser(groupId, userId);
-    }
-
-    @Override
-    public void deleteGroupFromUser(String groupId, String userId) {
-        groupDao.deleteGroupFromUser(groupId, userId);
-    }
-
-    @Override
-    public List<Group> getGroupsForUser(String userId) {
-        return groupDao.getGroupsForUser(userId);
-    }
 
     @Override
     public Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit) {
@@ -205,21 +193,9 @@ public class DefaultGroupService implements GroupService {
         if (group == null) {
             String errorMsg = String.format("Group %s not found", groupId);
             throw new NotFoundException(errorMsg);
-        } 
-        
-        return group;
-	}
-
-	@Override
-	public boolean isUserInGroup(String userId, String groupId) {
-		List<Group> groups = getGroupsForUser(userId);
-		
-        for (Group currentGroup : groups) {
-            if (currentGroup.getGroupId().equals(groupId)) {
-                return true;
-            }
         }
-        return false;
+
+        return group;
 	}
 
     public void setConfig(Configuration config) {
