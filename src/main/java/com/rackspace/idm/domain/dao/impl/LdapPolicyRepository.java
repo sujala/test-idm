@@ -77,28 +77,7 @@ public class LdapPolicyRepository extends LdapGenericRepository<Policy> implemen
 
     @Override
     public void softDeletePolicy(Policy policy) {
-          getLogger().info("SoftDeleting policy - {}", policy);
-        try {
-            String oldRdn = policy.getUniqueId();
-            // Move the Policy
-            String newRdn = ATTR_ID + "=" + policy.getPolicyId();
-            getAppInterface().modifyDN(oldRdn, newRdn, true, SOFT_DELETED_POLICIES_BASE_DN);
-        } catch (LDAPException e) {
-            getLogger().error("Error soft deleting user", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        getLogger().info("SoftDeleted policy - {}", policy);
-    }
-
-    Policy getSinglePolicy(Filter searchFilter)
-        throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(POLICY_BASE_DN, SearchScope.ONE, searchFilter, ATTR_POLICY_SEARCH_ATTRIBUTES);
-        if (entry == null) {
-            return null;
-        }
-        Policy policy = null;
-        policy = LDAPPersister.getInstance(Policy.class).decode(entry);
-        return policy;
+        softDeleteObject(policy);
     }
 
     private Filter searchFilterGetPolicyById(String policyId) {

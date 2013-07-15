@@ -26,6 +26,7 @@ public interface GenericDao<T> {
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
+    void softDeleteObject(T object);
     String getBaseDn();
     String getLdapEntityClass();
     String getNextId();

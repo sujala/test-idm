@@ -82,20 +82,4 @@ public class LdapPolicyRepositoryTest{
         Policy policy = spy.getPolicy("");
         assertThat("policy",policy,equalTo(null));
     }
-
-    @Test
-    public void updatePolicy_noDifferences_returns() throws Exception {
-        doReturn(policy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        spy.updatePolicy(policy);
-    }
-
-    @Test
-    public void updatePolicy_Differences_returns() throws Exception {
-        Policy oldPolicy = new Policy();
-        oldPolicy.setPolicyId("123");
-        doReturn(oldPolicy).when(spy).getSinglePolicy(Matchers.<Filter>any());
-        spy.updatePolicy(policy);
-        verify(spy,times(2)).getLogger();
-    }
-
 }

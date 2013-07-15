@@ -125,4 +125,19 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         thrown(NotFoundException)
     }
 
+    def "Soft delete policy" () {
+        given:
+        Policy policy = entityFactory.createPolicy("blob", "Policy$random", "default", "policy$random")
+
+        when:
+        repo.addPolicy(policy)
+        Policy getPolicy = repo.getPolicy(policy.getPolicyId())
+        repo.softDeletePolicy(getPolicy)
+        Policy getSoftDeletedPolicy = repo.getPolicy(policy.getPolicyId())
+
+        then:
+        policy == getPolicy
+        getSoftDeletedPolicy == null
+    }
+
 }

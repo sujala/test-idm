@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -245,6 +246,29 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         deleteEntryAndSubtree(dn, audit);
         audit.succeed();
         getLogger().debug("Deleted: {}", object);
+    }
+
+    @Override
+    public void softDeleteObject(T object) {
+        getLogger().info("SoftDeleting object - {}", object);
+        try {
+            String oldRdn = object.getUniqueId();
+            if(oldRdn == null) {
+                getLogger().error("Error soft deleting object");
+                throw new IllegalStateException();
+            }
+
+            List<String> tokens = Arrays.asList(oldRdn.split(","));
+
+            String newRsId = tokens.get(0);
+            String parentDn = String.format("%s,%s", tokens.get(1), SOFT_DELETED_BASE_DN);
+
+            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting object", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("SoftDeleted object - {}", object);
     }
 
     @Override
