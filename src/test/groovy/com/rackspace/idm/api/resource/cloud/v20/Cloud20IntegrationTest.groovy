@@ -528,6 +528,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         hardDeleteResponses.status == 204
     }
 
+    def "user-manage cannot update user admin" () {
+        when:
+
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        //Update user
+        def updateUserAdminResponse = cloud20.updateUser(defaultUserManageRoleToken, userAdmin.getId(), userAdmin)
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        updateUserAdminResponse.status == 401
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = v2Factory.createUserForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
