@@ -620,8 +620,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
-            if(callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) {
-                throw new NotAuthorizedException("Cannot delete user with same access level");
+            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) ||
+                    (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
+                throw new NotAuthorizedException("Cannot update user with same or higher access level");
             }
             if (!StringUtils.isBlank(user.getUsername())) {
                 validator.isUsernameValid(user.getUsername());
