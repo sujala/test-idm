@@ -177,14 +177,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
             if (sa instanceof ImpersonatedScopeAccess){
-                ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                if(isa.isAccessTokenExpired(new DateTime())){
+                UserScopeAccess usa = getUserFromImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
+                if(usa.isAccessTokenExpired(new DateTime())){
                     throw new NotFoundException("Token not found");
                 }
-                UserScopeAccess usa = new UserScopeAccess();
-                usa.setAccessTokenString(isa.getAccessTokenString());
-                usa.setAccessTokenExp(isa.getAccessTokenExp());
-                usa.setUsername(isa.getImpersonatingUsername());
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
             }
 
@@ -227,6 +223,15 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    private UserScopeAccess getUserFromImpersonatedScopeAccess(ImpersonatedScopeAccess scopeAccess) {
+        UserScopeAccess usa = new UserScopeAccess();
+        usa.setAccessTokenString(scopeAccess.getAccessTokenString());
+        usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
+        usa.setUsername(scopeAccess.getImpersonatingUsername());
+        usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
+        return usa;
     }
 
     // Authenticate Methods

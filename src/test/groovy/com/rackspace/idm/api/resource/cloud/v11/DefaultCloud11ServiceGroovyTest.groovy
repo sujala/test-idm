@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
@@ -506,6 +508,29 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
         then:
         2 * endpointService.getBaseUrlById(_) >> cloudBaseUrl
+    }
+
+    def "Verify that Impersonation scope access create date is set" () {
+        given:
+        def username = "username"
+        def token = "token"
+        def createdDate = new Date()
+        def expiredDate = new Date().plus(1)
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess().with {
+            it.accessTokenString = token
+            it.impersonatingUsername = username
+            it.createTimestamp = createdDate
+            it.accessTokenExp = expiredDate
+            it
+        }
+        when:
+        def usa = service.getUserFromImpersonatedScopeAccess(sa)
+
+        then:
+        usa.username == username
+        usa.accessTokenString == token
+        usa.accessTokenExp == expiredDate
+        usa.createTimestamp == createdDate
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {
