@@ -3308,7 +3308,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def result = service.updateUser(headers, authToken, "1", user)
+        def result = service.updateUser(headers, authToken, userId, user)
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
@@ -3462,6 +3462,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeCloudUser(_) >> false
         1 * authorizationService.authorizeUserManageRole(_) >> true
         result.build().status == 200
+    }
+
+    def "User with user-manage role cannot update User Admin" () {
+        given:
+        allowUserAccess()
+        userId = "1"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            return it
+        }
+        User updateUser = entityFactory.createUser().with {
+            it.id = userId
+            return it
+        }
+
+        when:
+        def result = service.updateUser(headers, authToken, userId, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * authorizationService.verifyDomain(_, _)
+        1 * authorizationService.hasUserManageRole(_) >> false
+        1 * authorizationService.hasUserAdminRole(_) >> true
+        result.build().status == 401
     }
 
     def mockServices() {
