@@ -1238,26 +1238,18 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
-    def "adding roles to user on tenant succeeds"() {
-        expect:
-        response.status == 200
+    def "Tenant role assignment"() {
+        when:
+        def response1 = cloud20.addRoleToUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id)
+        def response2 = cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
+        def response3 = cloud20.deleteRoleFromUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id)
+        def response4 = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
 
-        where:
-        response << [
-                cloud20.addRoleToUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
-                cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
-        ]
-    }
-
-    def "deleting roles from user on tenant succeeds"() {
-        expect:
-        response.status == 204
-
-        where:
-        response << [
-                cloud20.deleteRoleFromUserOnTenant(identityAdminToken, tenant.id, userAdmin.getId(), sharedRoleTwo.id),
-                cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, identityAdmin.getId(), sharedRoleTwo.id)
-        ]
+        then:
+        response1.status == 200
+        response2.status == 200
+        response3.status == 204
+        response4.status == 204
     }
 
     def "delete role returns 403"() {
