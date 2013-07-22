@@ -158,7 +158,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.updateScopeAccess(sa)
     }
 
-    def "updateUserScopeAccessTokenForClientIdByUser deletes oldest token and adds new token"() {
+    def "updateUserScopeAccessTokenForClientIdByUser adds new token"() {
         given:
         def newer_sa = createUserScopeAccess()
         def older_sa = createUserScopeAccess()
@@ -167,6 +167,29 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         sa.getAccessTokenExp() >> new Date()
         newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+
+        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
+        applicationService.getById(_) >> entityFactory.createApplication()
+
+        when:
+        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
+
+        then:
+        0 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+
+    }
+
+    def "updateUserScopeAccessTokenForClientIdByUser deletes oldest expired token and adds new token"() {
+        given:
+        def newer_sa = createUserScopeAccess()
+        def older_sa = createUserScopeAccess()
+        def sa = createUserScopeAccess()
+
+        sa.getAccessTokenExp() >> new Date()
+        newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
+        older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+        expireScopeAccess(older_sa)
 
         scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
         applicationService.getById(_) >> entityFactory.createApplication()

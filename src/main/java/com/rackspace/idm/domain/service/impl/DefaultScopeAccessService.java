@@ -872,7 +872,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         } else {
             if (scopeAccessList.size() > 1) {
-                scopeAccessDao.deleteScopeAccess(scopeAccessList.get(oldestIndex));
+                ScopeAccess sa = scopeAccessList.get(oldestIndex);
+                if(sa.isAccessTokenExpired(new DateTime())){
+                    scopeAccessDao.deleteScopeAccess(sa);
+                }
             }
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());
