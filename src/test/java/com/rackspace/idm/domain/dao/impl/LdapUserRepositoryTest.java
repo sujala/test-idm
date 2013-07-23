@@ -1469,7 +1469,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
         List<Attribute> attributeList = new ArrayList<Attribute>();
         Collections.addAll(attributeList, attributes);
-        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeletedTimestamp().toDate())));
         attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
         attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
         attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
@@ -1497,13 +1497,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(true));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
@@ -1541,7 +1541,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
         List<Attribute> attributeList = new ArrayList<Attribute>();
         Collections.addAll(attributeList, attributes);
-        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeletedTimestamp().toDate())));
         attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
         attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
         attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
@@ -1569,13 +1569,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(null));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(true));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
@@ -1639,13 +1639,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(true));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
@@ -1682,7 +1682,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
         List<Attribute> attributeList = new ArrayList<Attribute>();
         Collections.addAll(attributeList, attributes);
-        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeletedTimestamp().toDate())));
         attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
         attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
         doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
@@ -1709,13 +1709,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(true));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
@@ -1752,7 +1752,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
         List<Attribute> attributeList = new ArrayList<Attribute>();
         Collections.addAll(attributeList, attributes);
-        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeletedTimestamp().toDate())));
         attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
         attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
         doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
@@ -1779,13 +1779,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(true));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
@@ -1823,7 +1823,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
         List<Attribute> attributeList = new ArrayList<Attribute>();
         Collections.addAll(attributeList, attributes);
-        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeletedTimestamp().toDate())));
         attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
         attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
         doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
@@ -1850,13 +1850,13 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
         assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
         assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
-        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
-        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user soft delete time stamp",result.getSoftDeletedTimestamp(),equalTo(user.getSoftDeletedTimestamp()));
+        assertThat("user enabled",result.getEnabled(),equalTo(user.getEnabled()));
         assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
         assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
         assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
         assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
-        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(false));
+        assertThat("user max login failures exceeded",result.getMaxLoginFailuresExceded(),equalTo(false));
         assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 

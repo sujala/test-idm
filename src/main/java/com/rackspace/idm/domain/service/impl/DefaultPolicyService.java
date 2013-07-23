@@ -38,6 +38,7 @@ public class DefaultPolicyService implements PolicyService {
     private PolicyDao policyDao;
 
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
+    public static final String POLICY_ID_CANNOT_BE_NULL = "Policy Id cannot be null ";
     public static final String POLICY_BLOB_CANNOT_BE_NULL = "Policy Blob cannot be null";
     public static final String POLICY_TYPE_CANNOT_BE_NULL = "Policy type cannot be null";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -86,14 +87,15 @@ public class DefaultPolicyService implements PolicyService {
     @Override
     public Policy getPolicy(String policyId) {
         if(policyId == null) {
-            throw new NotFoundException("Policy Id cannot be null");
+            throw new BadRequestException(POLICY_ID_CANNOT_BE_NULL);
         }
+
         return policyDao.getPolicy(policyId);
     }
 
     @Override
     public Policy checkAndGetPolicy(String policyId) {
-        Policy policy = policyDao.getPolicy(policyId);
+        Policy policy = getPolicy(policyId);
         if(policy == null){
             String err = String.format("Policy with Id %s does not exist", policyId);
             throw new NotFoundException(err);

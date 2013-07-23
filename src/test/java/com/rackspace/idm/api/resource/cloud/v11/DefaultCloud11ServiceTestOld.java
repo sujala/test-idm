@@ -786,15 +786,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void validateToken_withImpersonated_returnsValid() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
-        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(impersonatedScopeAccess);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
-        assertThat("validate token response", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void validateToken_withBadType_returnsBadRequest() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));

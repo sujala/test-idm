@@ -87,13 +87,13 @@ public class UserConverterTest {
         assertThat("user display name", user.getDisplayName(), equalTo("displayName"));
         assertThat("user email", user.getEmail(), equalTo("email"));
         assertThat("user first name", user.getFirstname(), equalTo("firstName"));
-        assertThat("user enabled", user.isEnabled(), equalTo(true));
+        assertThat("user enabled", user.getEnabled(), equalTo(true));
         assertThat("user last name", user.getLastname(), equalTo("lastName"));
         assertThat("user middle name", user.getMiddlename(), equalTo("middleName"));
         assertThat("user person id", user.getPersonId(), equalTo("personId"));
         assertThat("user preferred language", user.getPreferredLang(), equalTo("en_US"));
         assertThat("user region", user.getRegion(), equalTo("region"));
-        assertThat("user max login failures exceded", user.isMaxLoginFailuresExceded(), equalTo(false));
+        assertThat("user max login failures exceded", user.getMaxLoginFailuresExceded(), equalTo(false));
         assertThat("user username", user.getUsername(), equalTo("username"));
         assertThat("user password credentials", user.getPassword(), equalTo("password"));
         assertThat("user secret question", user.getSecretQuestion(), equalTo("Is this a question?"));

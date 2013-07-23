@@ -151,7 +151,7 @@ public class DefaultGroupService implements GroupService {
         Users users = defaultUserService.getAllUsers(filters);
         if (users.getUsers().size() != 0) {
             for (User user : users.getUsers()) {
-                if (user.isEnabled()) {
+                if (user.getEnabled()) {
                     throw new BadRequestException("Cannot delete a group with users in it.");
                 }
             }
@@ -172,7 +172,7 @@ public class DefaultGroupService implements GroupService {
         logger.debug("Got All Users {}", filters);
         List<User> enabledUsers = new ArrayList<User>();
         for (User user : users.getUsers()) {
-            if (user.isEnabled()) {
+            if (user.getEnabled()) {
                 enabledUsers.add(user);
             }
         }

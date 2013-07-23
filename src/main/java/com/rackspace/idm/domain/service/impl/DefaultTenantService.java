@@ -547,7 +547,7 @@ public class DefaultTenantService implements TenantService {
 
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
-            if (user != null && user.isEnabled()) {
+            if (user != null && user.getEnabled()) {
                 users.add(user);
             }
         }
@@ -629,7 +629,7 @@ public class DefaultTenantService implements TenantService {
 
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
-            if (user != null && user.isEnabled()) {
+            if (user != null && user.getEnabled()) {
                 users.add(user);
             }
         }

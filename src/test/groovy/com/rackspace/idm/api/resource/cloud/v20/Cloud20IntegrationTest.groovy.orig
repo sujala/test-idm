@@ -1187,6 +1187,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
+<<<<<<< Updated upstream
     def "application role assignment" (){
         when:
         def responseAddRole1 = cloud20.addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
@@ -1199,6 +1200,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         responseAddRole2.status == 200
         responseDeleteRole1.status == 204
         responseDeleteRole2.status == 204
+=======
+    def "add and delete Application role to user"() {
+        when:
+        def addToIdentityAdmin = addApplicationRoleToUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+        def addToServiceAdmin = addApplicationRoleToUserXML(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        def deleteFromIdentityAdmin = deleteApplicationRoleFromUserXML(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId())
+        def deleteFromServiceAdmin = deleteApplicationRoleFromUserXML(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+
+        then:
+        addToIdentityAdmin.status == 200
+        addToServiceAdmin.status == 200
+        deleteFromIdentityAdmin.status == 204
+        deleteFromServiceAdmin.status == 204
+>>>>>>> Stashed changes
     }
 
     def "deleting role from user without role returns not found (404)"() {

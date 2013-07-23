@@ -22,8 +22,8 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '1.0.14.6'
-ldapVersion = '1.0.14.6'
+featureVersion = '1.0.14.7'
+ldapVersion = '1.0.14.7'
 buildVersion = System.currentTimeMillis()
 version = "$featureVersion-$buildVersion"
 
@@ -350,7 +350,8 @@ task wadl << {
     )
 }
 
-task compileJava(dependsOn: JavaPlugin.PROCESS_RESOURCES_TASK_NAME, overwrite: true) {
+compileJava() {
+    actions = []
     dependsOn configurations.ajc.getTaskDependencyFromProjectDependency(true, 'compileJava')
 
     inputs.dir sourceSets.main.java.srcDirs

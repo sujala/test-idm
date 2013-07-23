@@ -548,17 +548,6 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void getAndUpdateClientScopeAccessForClientId_accessTokenExpNull_setsAccessTokenExp() throws Exception {
-        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        when(scopeAccessService.getClientScopeAccessForClientId(null,null)).thenReturn(clientScopeAccess);
-        doReturn("generatedToken").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        ScopeAccess scopeAccess = spy.getAndUpdateClientScopeAccessForClientId(new Application());
-        assertThat("access token exp", ((HasAccessToken) scopeAccess).getAccessTokenExp(), lessThan(new DateTime().plusSeconds(101).toDate()));
-        assertThat("access token exp", ((HasAccessToken) scopeAccess).getAccessTokenExp(),greaterThan(new DateTime().plusSeconds(99).toDate()));
-    }
-
-    @Test
     public void getAndUpdateRackerScopeAccessForClientId_nullRackerAndNullClient_throwsIllegalArgumentException() throws Exception {
         try{
             defaultAuthenticationService.getAndUpdateRackerScopeAccessForClientId(null, null);
@@ -619,21 +608,6 @@ public class DefaultAuthenticationServiceTestOld {
         doReturn("generatedToken").when(spy).generateToken();
         ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
         assertThat("access token", ((HasAccessToken) scopeAccess).getAccessTokenString(), equalTo("generatedToken"));
-    }
-
-    @Test
-    public void getAndUpdateRackerScopeAccessForClientId_nullAccessTokenExp_setsAccessTokenExp() throws Exception {
-        Racker racker = new Racker();
-        Application client = new Application();
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessForClientId(null, null)).thenReturn(rackerScopeAccess);
-        doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("generatedToken").when(spy).generateToken();
-        ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
-        assertThat("access token exp", ((HasAccessToken) scopeAccess).getAccessTokenExp(), lessThan(new DateTime().plusSeconds(101).toDate()));
-        assertThat("accesss token exp", ((HasAccessToken) scopeAccess).getAccessTokenExp(),greaterThan(new DateTime().plusSeconds(99).toDate()));
     }
 
     @Test

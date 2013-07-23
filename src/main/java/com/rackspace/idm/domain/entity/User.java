@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
@@ -13,6 +14,7 @@ import javax.validation.constraints.Pattern;
 import java.util.List;
 import java.util.Locale;
 
+@Data
 public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
     public static final int MAX = 32;
@@ -105,50 +107,10 @@ public class User implements Auditable {
         this.personId = personId;
     }
 
-    public String getUniqueId() {
-        return uniqueId;
-    }
-
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
             this.uniqueId = uniqueId;
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getSecureId() {
-        return secureId;
-    }
-
-    public void setSecureId(String secureId) {
-        this.secureId = secureId;
-    }
-
-    public String getCountry() {
-        return country;
     }
 
     public void setCountry(String country) {
@@ -157,44 +119,16 @@ public class User implements Auditable {
         }
     }
 
-    public String getRegion() {
-        return region;
-    }
-
     public void setRegion(String region) {
         if (region != null) {
             this.region = region;
         }
     }
 
-    public String getDisplayName() {
-        return displayName;
-    }
-
     public void setDisplayName(String displayName) {
         if (displayName != null) {
             this.displayName = displayName;
         }
-    }
-
-    public Boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Boolean isMaxLoginFailuresExceded() {
-        return maxLoginFailuresExceded;
-    }
-
-    public void setMaxLoginFailuresExceded(Boolean maxLoginFailuresExceded) {
-        this.maxLoginFailuresExceded = maxLoginFailuresExceded;
-    }
-
-    public String getApiKey() {
-        return apiKey;
     }
 
     public void setApiKey(String apiKey) {
@@ -251,10 +185,6 @@ public class User implements Auditable {
         if (email != null) {
             this.email = email;
         }
-    }
-
-    public String getEmail() {
-        return email;
     }
 
     public String getMiddlename() {
@@ -342,82 +272,14 @@ public class User implements Auditable {
         }
     }
 
-    public String getPersonId() {
-        return personId;
-    }
-
     public void setPersonId(String personId) {
         if (personId != null) {
             this.personId = personId;
         }
     }
 
-    public String getNastId() {
-        return nastId;
-    }
-
-    public void setNastId(String nastId) {
-        this.nastId = nastId;
-    }
-
-    public Integer getMossoId() {
-        return mossoId;
-    }
-
-    public void setMossoId(Integer mossoId) {
-        this.mossoId = mossoId;
-    }
-
-    public DateTime getCreated() {
-        return created;
-    }
-
-    public void setCreated(DateTime created) {
-        this.created = created;
-    }
-
-    public DateTime getSoftDeleteTimestamp() {
-        return softDeletedTimestamp;
-    }
-
-    public void setSoftDeletedTimestamp(DateTime softDeletedTimestamp) {
-        this.softDeletedTimestamp = softDeletedTimestamp;
-    }
-
-    public DateTime getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(DateTime updated) {
-        this.updated = updated;
-    }
-
-    public Boolean getInMigration() {
-        return inMigration;
-    }
-
-    public void setInMigration(Boolean inMigration) {
-        this.inMigration = inMigration;
-    }
-
-    public DateTime getMigrationDate() {
-        return migrationDate;
-    }
-
-    public void setMigrationDate(DateTime migrationDate) {
-        this.migrationDate = migrationDate;
-    }
-
     public boolean isDisabled() {
     	return this.enabled == null ? true : !this.enabled;
-    }
-
-    public void setEncryptionVersion(String encryptionVersion) {
-        this.encryptionVersion = encryptionVersion;
-    }
-
-    public String getEncryptionVersion() {
-        return encryptionVersion;
     }
 
     public void setDefaults() {
@@ -438,8 +300,8 @@ public class User implements Auditable {
     		setCustomerId(modifiedUser.getCustomerId());
     	}
 
-    	if (modifiedUser.isEnabled() != null) {
-    		setEnabled(modifiedUser.isEnabled());
+    	if (modifiedUser.getEnabled() != null) {
+    		setEnabled(modifiedUser.getEnabled());
     	}
 
         if (modifiedUser.getPersonId() != null) {
@@ -554,14 +416,6 @@ public class User implements Auditable {
         return getAuditContext();
     }
 
-    public String getSalt() {
-        return salt;
-    }
-
-    public void setSalt(String salt) {
-        this.salt = salt;
-    }
-
     public static class Builder {
 
         private User user = null;
@@ -645,33 +499,5 @@ public class User implements Auditable {
     public String getAuditContext() {
         String format = "username=%s, customer=%s";
         return String.format(format, getUsername(), getCustomerId());
-    }
-
-	public List<TenantRole> getRoles() {
-		return roles;
-	}
-
-	public void setRoles(List<TenantRole> roles) {
-		this.roles = roles;
-	}
-
-    public String getDomainId() {
-        return domainId;
-    }
-
-    public void setDomainId(String domainId) {
-        this.domainId = domainId;
-    }
-
-    public void setCredential(UserCredential credential) {
-        this.credential = credential;
-    }
-
-    public void setName(UserHumanName name) {
-        this.name = name;
-    }
-
-    public void setPreference(UserLocale preference) {
-        this.preference = preference;
     }
 }

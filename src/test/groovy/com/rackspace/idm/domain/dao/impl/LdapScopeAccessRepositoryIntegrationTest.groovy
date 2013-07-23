@@ -49,7 +49,29 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         input                        | expected
         ["RSA"].asList()             | ["RSA"]
         ["RSA", "Password"].asList() | ["RSA", "Password"]
+        []                           | []
         null                         | []
+    }
+
+    def "ScopeAccess returns the create date" () {
+        when:
+        def clientId = "otherClient$random"
+        def client = createClient(clientId)
+        applicationDao.addClient(client)
+
+        def scopeAccess = createScopeAccess(clientId, ["RSA"].asList())
+        scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
+        def retrievedScopeAccess1 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
+        def retrievedScopeAccess2 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
+        def retrievedScopeAccess3 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
+        scopeAccessDao.deleteScopeAccess(retrievedScopeAccess1);
+        applicationDao.deleteClient(client)
+
+        then:
+        retrievedScopeAccess1.createTimestamp != null
+        retrievedScopeAccess1.createTimestamp == retrievedScopeAccess2.createTimestamp
+        retrievedScopeAccess2.createTimestamp == retrievedScopeAccess3.createTimestamp
+        retrievedScopeAccess2.createTimestamp == retrievedScopeAccess3.createTimestamp
     }
 
     def createClient(clientId) {
