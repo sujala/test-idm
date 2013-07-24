@@ -75,7 +75,7 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
         if (user.getPassword() != null) {
@@ -114,7 +114,7 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
         if(user.getRegion() != null){

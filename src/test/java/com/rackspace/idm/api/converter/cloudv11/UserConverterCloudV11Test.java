@@ -80,7 +80,7 @@ public class UserConverterCloudV11Test {
         assertThat("mosso id", entityUser.getMossoId(), equalTo(1));
         assertThat("nast id", entityUser.getNastId(), equalTo("nastId"));
         assertThat("api key", entityUser.getApiKey(), equalTo("key"));
-        assertThat("enabled", entityUser.isEnabled(), equalTo(true));
+        assertThat("enabled", entityUser.getEnabled(), equalTo(true));
     }
 
     @Test

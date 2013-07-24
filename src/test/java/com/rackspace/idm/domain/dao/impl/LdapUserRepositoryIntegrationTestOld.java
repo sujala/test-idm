@@ -8,8 +8,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
@@ -27,7 +25,6 @@ import java.util.Locale;
 import static junit.framework.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -228,14 +225,14 @@ public class LdapUserRepositoryIntegrationTestOld extends InMemoryLdapIntegratio
 
         User softDeletedUser = repo.getUserByUsername(newUser.getUsername());
 
-        Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
+        Assert.assertNotNull(softDeletedUser.getSoftDeletedTimestamp());
 
         repo.updateUser(softDeletedUser, false);
 
         User unSoftDeletedUser = repo.getUserByCustomerIdAndUsername(
             newUser.getCustomerId(), newUser.getUsername());
 
-        Assert.assertNull(unSoftDeletedUser.getSoftDeleteTimestamp());
+        Assert.assertNull(unSoftDeletedUser.getSoftDeletedTimestamp());
 
         repo.deleteUser(newUser.getUsername());
     }
@@ -421,7 +418,7 @@ public class LdapUserRepositoryIntegrationTestOld extends InMemoryLdapIntegratio
         newUser = repo.getUserByUsername(newUser.getUsername());
         repo.deleteUser(newUser.getUsername());
 
-        Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
+        Assert.assertTrue(newUser.getMaxLoginFailuresExceded());
     }
 
     @Test

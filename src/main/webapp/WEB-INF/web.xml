@@ -115,6 +115,11 @@
     </filter-mapping>
 
     <filter-mapping>
+        <filter-name>LoggerFilter</filter-name>
+        <url-pattern>/cloud/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
         <filter-name>ResponseHeaderFilter10</filter-name>
         <url-pattern>/cloud/auth</url-pattern>
     </filter-mapping>

@@ -319,7 +319,7 @@ public class UserTest {
         user.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
         user.setEnabled(false);
         user.setDefaults();
-        Boolean result = user.isEnabled();
+        Boolean result = user.getEnabled();
         assertThat("enabled", result, equalTo(true));
     }
     
@@ -344,7 +344,7 @@ public class UserTest {
         user.copyChanges(modifiedUser);
         
         assertThat("customer id", user.getCustomerId(), equalTo("newCustomerId"));
-        assertThat("enabled", user.isEnabled(), equalTo(true));
+        assertThat("enabled", user.getEnabled(), equalTo(true));
         assertThat("person id", user.getPersonId(), equalTo("newPersonId"));
         assertThat("first anme", user.getFirstname(), equalTo("newFirstName"));
         assertThat("middle name", user.getMiddlename(), equalTo("newMiddleName"));

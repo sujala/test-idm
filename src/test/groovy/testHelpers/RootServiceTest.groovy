@@ -222,12 +222,14 @@ class RootServiceTest extends Specification {
     @Shared def v2Factory = new V2Factory()
 
     @Shared def defaultExpirationHours = 12
+    @Shared def defaultCloudAuthExpirationHours = 24
     @Shared def defaultRefreshHours = 6
     @Shared def defaultImpersonationHours = 1
 
     @Shared def defaultExpirationSeconds = 3600 * defaultExpirationHours
     @Shared def defaultRefreshSeconds = 3600 * defaultRefreshHours
     @Shared def defaultImpersonationExpirationSeconds = 3600 * defaultImpersonationHours
+    @Shared def defaultCloudAuthExpirationSeconds = 3600 * defaultCloudAuthExpirationHours
 
     /*
         Mock Converters

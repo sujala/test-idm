@@ -142,7 +142,7 @@ public class UserConverter {
         returnedUser.setCustomerId(user.getCustomerId());
         returnedUser.setDisplayName(user.getDisplayName());
         returnedUser.setEmail(user.getEmail());
-        returnedUser.setEnabled(user.isEnabled());
+        returnedUser.setEnabled(user.getEnabled());
         returnedUser.setFirstName(user.getFirstname());
         returnedUser.setLastName(user.getLastname());
         returnedUser.setMiddleName(user.getMiddlename());
@@ -151,7 +151,7 @@ public class UserConverter {
         returnedUser.setRegion(user.getRegion());
         returnedUser.setUsername(user.getUsername());
         returnedUser.setMaxLoginFailuresExceded(user
-            .isMaxLoginFailuresExceded());
+            .getMaxLoginFailuresExceded());
 
         try {
             if (user.getCreated() != null) {

@@ -5,7 +5,11 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
+import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -44,6 +48,14 @@ class V1Factory {
         new ApiKeyCredentials().with {
             it.username = username
             it.apiKey = apiKey
+            return it
+        }
+    }
+
+    def createUserKeyCredentials(String username, String apiKey) {
+        new UserCredentials().with {
+            it.username = username
+            it.key = apiKey
             return it
         }
     }
@@ -103,6 +115,22 @@ class V1Factory {
 
     def createEndpointTemplate() {
         return createEndpointTemplate(1, NAME)
+    }
+
+    def createEndpointTemplate(String id, String type, String publicUrl) {
+        def localPublicUrl = publicUrl
+        if (type == null) {
+            type = "compute"
+        }
+        if (localPublicUrl == null) {
+            localPublicUrl = "http://public.url"
+        }
+        new EndpointTemplate().with {
+            it.id = id as int
+            it.type = type
+            it.publicURL = localPublicUrl
+            return it
+        }
     }
 
     def createEndpointTemplate(int id, String name) {
@@ -171,6 +199,22 @@ class V1Factory {
         }
     }
 
+    def createPolicy(String name, String blob, String type) {
+        if (blob == null) {
+            blob = "blob"
+        }
+        if (type == null) {
+            type = "type"
+        }
+
+        new Policy().with {
+            it.name = name
+            it.blob = blob
+            it.type = type
+            return it
+        }
+    }
+
     def createRole() {
         return createRole(NAME)
     }
@@ -207,6 +251,14 @@ class V1Factory {
         }
     }
 
+    def createSecretQA(String id, String answer) {
+        new SecretQA().with {
+            it.id = id
+            it.answer = answer
+            return it
+        }
+    }
+
     def createSecretQA_Keystone() {
         return createSecretQA_Keystone("username", "answer", "question")
     }
@@ -231,6 +283,17 @@ class V1Factory {
         }
     }
 
+    def createService(String id, String name, String type) {
+        new Service().with {
+            it.name = name
+            it.type = type
+            if (id != null) {
+                it.id = id
+            }
+            return it
+        }
+    }
+
     def createServiceList() {
         return createServiceList(null)
     }
@@ -239,6 +302,13 @@ class V1Factory {
         def list = serviceList ? serviceList : [].asList()
         new ServiceList().with {
             it.getService().addAll(list)
+            return it
+        }
+    }
+
+    def createUserWithOnlyEnabled(boolean enabled){
+        new UserWithOnlyEnabled().with {
+            it.enabled = enabled
             return it
         }
     }
@@ -271,8 +341,23 @@ class V1Factory {
         }
     }
 
+    def createUser(String id, String key, Integer mossoId, String nastId, Boolean enabled) {
+        new User().with {
+            it.id = id
+            it.key = key
+            it.mossoId = mossoId
+            it.nastId = nastId
+            it.enabled = enabled
+            return it
+        }
+    }
+
     def createRegion(){
-        return createRegion("name",true, false)
+        return createRegion("name", true, false)
+    }
+
+    def createRegion(String name) {
+        return createRegion(name, true, false)
     }
 
     def createRegion(String name, Boolean enabled, Boolean isDefault){
@@ -286,6 +371,10 @@ class V1Factory {
 
     def createGroup(){
         return createGroup("name","id", "description")
+    }
+
+    def createGroup(String name, String description) {
+        return createGroup(name, null, description)
     }
 
     def createGroup(String name, String id, String description){
@@ -343,6 +432,14 @@ class V1Factory {
             it.publicURL = publicURL
             it.adminURL = adminURL
             it.internalURL = internalURL
+            return it
+        }
+    }
+
+    def createPasswordCredentials(String username, String password) {
+        new PasswordCredentials().with {
+            it.password = password
+            it.username = username
             return it
         }
     }

@@ -50,7 +50,7 @@ public class UserConverterCloudV20Test {
         assertThat("username", userDO.getUsername(), equalTo("username"));
         assertThat("email", userDO.getEmail(), equalTo("email"));
         assertThat("display name", userDO.getDisplayName(), equalTo("displayName"));
-        assertThat("enabled", userDO.isEnabled(), equalTo(true));
+        assertThat("enabled", userDO.getEnabled(), equalTo(true));
     }
 
     @Test

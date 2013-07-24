@@ -771,7 +771,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         } else {
             String failureMessage = "User Authentication Failed: %s";
 
-            if (user.isMaxLoginFailuresExceded()) {
+            if (user.getMaxLoginFailuresExceded()) {
                 failureMessage = String.format(failureMessage, "User locked due to max login failures limit exceded");
             } else if (user.isDisabled()) {
                 failureMessage = String.format(failureMessage, "User is Disabled");
@@ -918,8 +918,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_RACKSPACE_REGION, user.getRegion()));
         }
 
-        if (user.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.isEnabled()).toUpperCase()));
+        if (user.getEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.getEnabled()).toUpperCase()));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -1275,8 +1275,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled()).toUpperCase()));
+        if (uNew.getEnabled() != null && uNew.getEnabled() != uOld.getEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.getEnabled()).toUpperCase()));
         }
     }
 

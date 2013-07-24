@@ -117,8 +117,8 @@ public class DefaultUserService implements UserService {
             user.setRegion(region.getName());
         }
 
-        if (user.isEnabled() == null) {
-            user.setEnabled(user.isEnabled());
+        if (user.getEnabled() == null) {
+            user.setEnabled(user.getEnabled());
         }
 
         if (user.getId() == null) {
@@ -660,7 +660,7 @@ public class DefaultUserService implements UserService {
             List<User> subUsers = getSubUsers(user);
 
             for (User subUser : subUsers) {
-                if (subUser.isEnabled()) {
+                if (subUser.getEnabled()) {
                     subUser.setEnabled(false);
                     userDao.updateUser(subUser, false);
                     scopeAccessService.expireAllTokensForUser(subUser.getUsername());
@@ -670,9 +670,9 @@ public class DefaultUserService implements UserService {
     }
 
     private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
-        if (currentUser != null && user != null && user.isEnabled() != null) {
-            boolean currentUserEnabled = currentUser.isEnabled();
-            boolean userEnabled = user.isEnabled();
+        if (currentUser != null && user != null && user.getEnabled() != null) {
+            boolean currentUserEnabled = currentUser.getEnabled();
+            boolean userEnabled = user.getEnabled();
 
             return !userEnabled && userEnabled != currentUserEnabled;
         }

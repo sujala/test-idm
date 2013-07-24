@@ -133,10 +133,9 @@ public class DefaultPolicyServiceTest{
         verify(policyDao).updatePolicy(policy);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test(expected = BadRequestException.class)
     public void testDeletePolicy_nullId() throws Exception {
         defaultPolicyService.deletePolicy(null);
-
     }
 
     @Test

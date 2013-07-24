@@ -20,6 +20,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
+import spock.lang.Stepwise
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -2818,13 +2819,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         when:
-        def result = service.getUserApiKeyCredentials(headers, authToken, userId).build()
+        def result = service.getUserApiKeyCredentials(headers, authToken, "2").build()
 
         then:
         result.status == 403
-        userService.getUserById(userId) >> user
+        userService.getUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.authorizeCloudUserAdmin(_) >> false
     }
 
     def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
@@ -3206,6 +3208,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(userId) >> user
         userService.getUserByAuthToken(authToken) >> caller
         tenantService.getGlobalRolesForUser(_) >> userRoles
+        authorizationService.hasDefaultUserRole(_) >> true
 
         then:
         1 * tenantService.addTenantRoleToUser(_, _)
@@ -3289,6 +3292,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyDomain(_, _)
     }
 
+
     def "User with user-manage role cannot update user with user-manage role"() {
         given:
         allowUserAccess()
@@ -3303,7 +3307,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def result = service.updateUser(headers, authToken, "1", user)
+        def result = service.updateUser(headers, authToken, userId, user)
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
@@ -3311,6 +3315,177 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> true
+        result.build().status == 401
+    }
+
+    def "Add user-manage role to user with identity admin role gives 401" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * authorizationService.hasDefaultUserRole(_) >> false
+        result.build().status == 400
+    }
+
+    def "Add user-manage role to default user with different domain return 403" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser().with {
+            it.domainId = "1"
+            return it
+        }
+        User caller = entityFactory.createUser().with {
+            it.domainId = "2"
+            return it
+        }
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 403
+    }
+
+    def "Add user-manage role to default user" () {
+        given:
+        allowUserAccess()
+        ClientRole clientRole = new ClientRole().with {
+            it.name = "identity:user-manage"
+            return it
+        }
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.addUserRole(headers, authToken, "abc", "123")
+
+        then:
+        1 * applicationService.getClientRoleById(_) >> clientRole
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * authorizationService.hasDefaultUserRole(_) >> true
+        result.build().status == 200
+    }
+
+    def "User with user-manage role can get user by ID" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserById(headers, authToken, "abc123")
+
+        then:
+        1 * userService.getUser(_) >> caller
+        1 * authorizationService.authorizeCloudUser(_) >> true
+        1 * authorizationService.hasUserManageRole(_) >> true
+        1 * userService.getUserById(_) >> user
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.verifyDomain(_, _)
+        result.build().status == 200
+    }
+
+    def "User with user-manage role can get user by name" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserByName(headers, authToken, "testName")
+
+        then:
+        1 * userService.getUser(_) >> user
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.verifyDomain(_, _)
+        result.build().status == 200
+    }
+
+    def "User with user-manage role can get user by email" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        Users users = new Users().with {
+            it.users = [user].asList()
+            return it
+        }
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUsersByEmail(headers, authToken, "test@rackspace.com")
+
+        then:
+        1 * userService.getUsersByEmail(_) >> users
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 200
+    }
+
+    def "User with user-manage can get user's api-key" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        user.apiKey = "apikeyyay"
+        User caller = entityFactory.createUser()
+
+        when:
+        def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
+
+        then:
+        1 * userService.getUserById(_) >> user
+        1 * userService.getUser(_) >> caller
+        1 * authorizationService.authorizeCloudUser(_) >> false
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        result.build().status == 200
+    }
+
+    def "User with user-manage role cannot update User Admin" () {
+        given:
+        allowUserAccess()
+        userId = "1"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            return it
+        }
+        User updateUser = entityFactory.createUser().with {
+            it.id = userId
+            return it
+        }
+
+        when:
+        def result = service.updateUser(headers, authToken, userId, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * authorizationService.verifyDomain(_, _)
+        1 * authorizationService.hasUserManageRole(_) >> false
+        1 * authorizationService.hasUserAdminRole(_) >> true
         result.build().status == 401
     }
 
