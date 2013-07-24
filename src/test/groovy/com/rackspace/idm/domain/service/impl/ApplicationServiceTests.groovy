@@ -19,8 +19,7 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -69,7 +68,7 @@ public class ApplicationServiceTests {
     public void shouldGetClientByName() {
 
         Application client = getFakeClient();
-        EasyMock.expect(applicationDao.getClientByClientname(name)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByName(name)).andReturn(
             client);
         EasyMock.replay(applicationDao);
 
@@ -83,7 +82,7 @@ public class ApplicationServiceTests {
     public void shouldGetClientById() {
 
         Application client = getFakeClient();
-        EasyMock.expect(applicationDao.getClientByClientId(clientId)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             client);
         EasyMock.replay(applicationDao);
 
@@ -99,7 +98,7 @@ public class ApplicationServiceTests {
         Application client = getFakeClient();
         EasyMock.expect(
             applicationDao
-                .getClientByCustomerIdAndClientId(customerId, clientId))
+                .getApplicationByCustomerIdAndClientId(customerId, clientId))
             .andReturn(client);
         EasyMock.replay(applicationDao);
 
@@ -111,7 +110,7 @@ public class ApplicationServiceTests {
 
     @Test
     public void shouldReturnNullForNonExistentClientByName() {
-        EasyMock.expect(applicationDao.getClientByClientname(name)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByName(name)).andReturn(
             null);
         EasyMock.replay(applicationDao);
 
@@ -123,7 +122,7 @@ public class ApplicationServiceTests {
 
     @Test
     public void shouldReturnNullForNonExistentClientById() {
-        EasyMock.expect(applicationDao.getClientByClientId(clientId)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             null);
         EasyMock.replay(applicationDao);
 
@@ -143,7 +142,7 @@ public class ApplicationServiceTests {
             .andReturn(customer);
         EasyMock.replay(customerService);
 
-        EasyMock.expect(applicationDao.getClientByClientname(client.getName()))
+        EasyMock.expect(applicationDao.getApplicationByName(client.getName()))
             .andReturn(null);
         applicationDao.addClient((Application) EasyMock.anyObject());
         EasyMock.replay(applicationDao);
@@ -163,7 +162,7 @@ public class ApplicationServiceTests {
             .andReturn(customer);
         EasyMock.replay(customerService);
 
-        EasyMock.expect(applicationDao.getClientByClientname(client.getName()))
+        EasyMock.expect(applicationDao.getApplicationByName(client.getName()))
             .andReturn(client);
         EasyMock.replay(applicationDao);
 
@@ -176,7 +175,7 @@ public class ApplicationServiceTests {
     public void shouldDeleteClient() {
         List<Permission> perms = new ArrayList<Permission>();
         applicationDao.deleteClient(EasyMock.anyObject(Application.class));
-        EasyMock.expect(applicationDao.getClientByClientId(clientId)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             getFakeClient());
 
         EasyMock.expect(
@@ -199,7 +198,7 @@ public class ApplicationServiceTests {
 
     @Test(expected = NotFoundException.class)
     public void shouldThrowNotFoundExceptionForDeleteNonExistentClient() {
-        EasyMock.expect(applicationDao.getClientByClientId(clientId)).andReturn(
+        EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             null);
 
         EasyMock.replay(applicationDao);
@@ -210,7 +209,7 @@ public class ApplicationServiceTests {
     @Test
     public void shouldSaveClient() {
         Application client = getFakeClient();
-        applicationDao.updateClient(client);
+        applicationDao.updateApplication(client);
         EasyMock.replay(applicationDao);
 
         service.save(client);
@@ -259,7 +258,7 @@ public class ApplicationServiceTests {
         Application client = getFakeClient();
         String oldSecret = client.getClientSecret();
 
-        applicationDao.updateClient(client);
+        applicationDao.updateApplication(client);
         EasyMock.replay(applicationDao);
 
         ClientSecret clientSecret = service.resetClientSecret(client);

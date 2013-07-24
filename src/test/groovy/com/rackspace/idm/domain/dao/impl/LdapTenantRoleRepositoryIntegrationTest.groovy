@@ -39,7 +39,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         user = userRepository.getUserById("$sharedRandom")
 
         applicationRepository.addClient(getApplication("app$sharedRandom"))
-        application = applicationRepository.getClientByClientId("app$sharedRandom")
+        application = applicationRepository.getApplicationByClientId("app$sharedRandom")
     }
 
     def cleanup() {

@@ -43,7 +43,7 @@ public class DefaultApplicationService implements ApplicationService {
     public void add(Application client) {
         logger.debug("Adding Client: {}", client);
 
-        Application existingApplication = applicationDao.getClientByClientname(client.getName());
+        Application existingApplication = applicationDao.getApplicationByName(client.getName());
         if (existingApplication != null) {
             logger.warn("Couldn't add client {} because clientname already taken", client);
             throw new DuplicateException(String.format("Clientname %s already exists", client.getName()));
@@ -59,7 +59,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void delete(String clientId) {
         logger.debug("Delete Client: {}", clientId);
-        Application client = applicationDao.getClientByClientId(clientId);
+        Application client = applicationDao.getApplicationByClientId(clientId);
 
         if (client == null) {
             String errMsg = String.format("Client with clientId %s not found.", clientId);
@@ -93,7 +93,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new IllegalStateException("Customer doesn't exist");
         }
 
-        Application client = applicationDao.getClientByClientId(permission.getClientId());
+        Application client = applicationDao.getApplicationByClientId(permission.getClientId());
 
         if (client == null) {
             logger.warn("Couldn't add permission {} because clientId doesn't exist", permission.getClientId());
@@ -142,7 +142,7 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Application loadApplication(String applicationId) {
-        Application client = applicationDao.getClientByClientId(applicationId);
+        Application client = applicationDao.getApplicationByClientId(applicationId);
         if (client == null) {
             String errMsg = String.format("Client %s not found", applicationId);
             logger.warn(errMsg);
@@ -164,7 +164,7 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Application getById(String clientId) {
-        return applicationDao.getClientByClientId(clientId);
+        return applicationDao.getApplicationByClientId(clientId);
     }
 
     @Override
@@ -180,17 +180,17 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Application getClient(String customerId, String clientId) {
-        return applicationDao.getClientByCustomerIdAndClientId(customerId, clientId);
+        return applicationDao.getApplicationByCustomerIdAndClientId(customerId, clientId);
     }
 
     @Override
     public Application getByName(String clientName) {
-        return applicationDao.getClientByClientname(clientName);
+        return applicationDao.getApplicationByName(clientName);
     }
 
     @Override
     public Application getClientByScope(String scope) {
-        return applicationDao.getClientByScope(scope);
+        return applicationDao.getApplicationByScope(scope);
     }
 
     @Override
@@ -241,14 +241,14 @@ public class DefaultApplicationService implements ApplicationService {
         ClientSecret clientSecret = null;
         clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
         client.setClientSecretObj(clientSecret);
-        applicationDao.updateClient(client);
+        applicationDao.updateApplication(client);
         logger.debug("Reset Client secret ClientId: {}", client.getClientId());
         return clientSecret;
     }
 
     @Override
     public void save(Application client) {
-        applicationDao.updateClient(client);
+        applicationDao.updateApplication(client);
     }
 
     @Override
@@ -265,7 +265,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     private Application getClient(String clientId) {
-        Application targetClient = this.applicationDao.getClientByClientId(clientId);
+        Application targetClient = this.applicationDao.getApplicationByClientId(clientId);
         if (targetClient == null) {
             String errorMsg = String.format("Client Not Found: %s", clientId);
             logger.warn(errorMsg);
@@ -326,7 +326,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void updateClient(Application client) {
         logger.info("Updating Client: {}", client);
-        this.applicationDao.updateClient(client);
+        this.applicationDao.updateApplication(client);
         logger.info("Updated Client: {}", client);
     }
 
@@ -338,7 +338,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void addClientRole(ClientRole role, String roleId) {
         logger.info("Adding Client Role: {}", role);
-        Application application = applicationDao.getClientByClientId(role.getClientId());
+        Application application = applicationDao.getApplicationByClientId(role.getClientId());
         if (application == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
@@ -378,7 +378,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public List<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
-        Application application = applicationDao.getClientByClientId(clientId);
+        Application application = applicationDao.getApplicationByClientId(clientId);
         if (application == null) {
             throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
         }
@@ -455,7 +455,7 @@ public class DefaultApplicationService implements ApplicationService {
         List<ClientRole> result = new ArrayList<ClientRole>();
 
         logger.debug("getting identity:* role for user: {}", user);
-        Application application = applicationDao.getClientByClientId(getCloudAuthClientId());
+        Application application = applicationDao.getApplicationByClientId(getCloudAuthClientId());
         List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames());
 
         for (ClientRole role : identityRoles) {

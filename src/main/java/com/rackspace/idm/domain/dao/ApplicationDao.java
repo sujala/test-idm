@@ -12,45 +12,27 @@ public interface ApplicationDao {
 
     void deleteClient(Application client);
 
-    List<Application> getAllClients();
+    List<Application> getAllApplications();
 
-    Application getClientByClientId(String clientId);
+    Application getApplicationByClientId(String clientId);
 
-    Application getClientByClientname(String clientName);
+    Application getApplicationByName(String clientName);
 
-    Application getClientByCustomerIdAndClientId(String customerId, String clientId);
+    Application getApplicationByCustomerIdAndClientId(String customerId, String clientId);
 
-    Application getClientById(String inum);
+    Application getApplicationById(String inum);
     
-    Application getClientByScope(String scope);
+    Application getApplicationByScope(String scope);
 
     Applications getClientsByCustomerId(String customerId, int offset, int limit);
     
     Applications getAllClients(List<FilterParam> filters, int offset, int limit);
     
-    void updateClient(Application client);
+    void updateApplication(Application client);
     
     List<Application> getAvailableScopes();
     
-    void addClientRole(String clientUniqueId, ClientRole role);
-    
-    void deleteClientRole(ClientRole role);
-    
-    ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
-    
-    List<ClientRole> getClientRolesByClientId(String clientId);
-    
-    List<ClientRole> getAllClientRoles(List<FilterParam> filters);
-    
-    void updateClientRole(ClientRole role);
-    
-    ClientRole getClientRoleById(String id);
-    
-    List<ClientRole> getAllClientRoles();
-    
     List<Application> getOpenStackServices();
-
-    String getNextRoleId();
 
     void softDeleteApplication(Application application);
 

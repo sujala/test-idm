@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
-import spock.lang.Specification
 import testHelpers.RootServiceTest
 
 /**
@@ -59,7 +58,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         }
 
         applicationDao.addClient(application)
-        def createApplication = applicationDao.getClientByClientId(clientId)
+        def createApplication = applicationDao.getApplicationByClientId(clientId)
         applicationRoleDao.addClientRole(createApplication, clientRole1)
         applicationRoleDao.addClientRole(createApplication, clientRole2)
 
@@ -96,7 +95,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         }
 
         applicationDao.addClient(application)
-        def createApplication = applicationDao.getClientByClientId(clientId)
+        def createApplication = applicationDao.getApplicationByClientId(clientId)
         applicationRoleDao.addClientRole(createApplication, clientRole)
 
         when:

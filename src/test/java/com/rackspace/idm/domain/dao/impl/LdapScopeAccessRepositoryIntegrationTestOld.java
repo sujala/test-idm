@@ -55,8 +55,8 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @Before
     public void preTestSetUp() throws Exception {
-        Application deleteme = clientRepo.getClientByClientId("XXX");
-        Application deleteme2 = clientRepo.getClientByClientId("YYY");
+        Application deleteme = clientRepo.getApplicationByClientId("XXX");
+        Application deleteme2 = clientRepo.getApplicationByClientId("YYY");
         Customer deleteCustomer = customerRepo.getCustomerByCustomerId(customerId);
         if(deleteCustomer !=null){
             customerRepo.deleteCustomer(customerId);

@@ -35,7 +35,7 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
 
         when:
         applicationDao.addClient(application)
-        def client = applicationDao.getClientByClientId(clientId)
+        def client = applicationDao.getApplicationByClientId(clientId)
         applicationDao.deleteClient(client)
 
         then:

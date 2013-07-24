@@ -8,12 +8,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Modification;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTimeZone;
@@ -41,7 +36,7 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @Before
     public void preTestCleanUp() {
-        Application deleteme = repo.getClientByClientId("DELETE_My_ClientId");
+        Application deleteme = repo.getApplicationByClientId("DELETE_My_ClientId");
         User deleteme2 = userRepo.getUserById("XXXX");
         if (deleteme != null) {
             repo.deleteClient(deleteme);
@@ -54,14 +49,14 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
     @Test
     public void shouldNotAcceptNullOrBlankClientname() {
         try {
-            repo.getClientByClientname(null);
+            repo.getApplicationByName(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.getClientByClientname("     ");
+            repo.getApplicationByName("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -75,20 +70,20 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         }
 
         try {
-            Assert.assertNull(repo.getClientByClientId("     "));
+            Assert.assertNull(repo.getApplicationByClientId("     "));
         } catch (IllegalArgumentException e) {
             Assert.fail("Should have returned null.");
         }
 
         try {
-            repo.getClientById("    ");
+            repo.getApplicationById("    ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.updateClient(null);
+            repo.updateApplication(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -97,27 +92,27 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @Test
     public void shouldFindOneClientThatExists() {
-        Application client = repo.getClientByClientId("18e7a7032733486cd32f472d7bd58f709ac0d221");
+        Application client = repo.getApplicationByClientId("18e7a7032733486cd32f472d7bd58f709ac0d221");
         Assert.assertNotNull(client);
         Assert.assertEquals("18e7a7032733486cd32f472d7bd58f709ac0d221", client.getClientId());
     }
 
     @Test
     public void shouldNotFindClientThatDoesNotExist() {
-        Application client = repo.getClientByClientname("hi. i don't exist.");
+        Application client = repo.getApplicationByName("hi. i don't exist.");
         Assert.assertNull(client);
     }
 
     @Test
     public void shouldRetrieveAllClientsThatExist() {
-        List<Application> clients = repo.getAllClients();
+        List<Application> clients = repo.getAllApplications();
         Assert.assertTrue(clients.size() >= 2);
     }
 
     @Test
     public void shouldAddNewClient() {
         Application newClient = addNewTestClient();
-        Application checkClient = repo.getClientByClientId(newClient.getClientId());
+        Application checkClient = repo.getApplicationByClientId(newClient.getClientId());
         Assert.assertNotNull(checkClient);
         Assert.assertEquals("DELETE_My_Name", checkClient.getName());
         repo.deleteClient(newClient);
@@ -127,7 +122,7 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
     public void shouldDeleteClient() {
         Application newClient = addNewTestClient();
         repo.deleteClient(newClient);
-        Application idontexist = repo.getClientByClientname(newClient.getName());
+        Application idontexist = repo.getApplicationByName(newClient.getName());
         Assert.assertNull(idontexist);
     }
 
@@ -142,13 +137,13 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         newClient.setClientSecretObj(clientSecret);
 
         try {
-            repo.updateClient(newClient);
+            repo.updateApplication(newClient);
         } catch (IllegalStateException e) {
             repo.deleteClient(newClient);
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        Application changedClient = repo.getClientByClientId(clientId);
+        Application changedClient = repo.getApplicationByClientId(clientId);
 
         repo.deleteClient(newClient);
         Assert.assertEquals(clientSecret, changedClient.getClientSecretObj());

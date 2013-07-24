@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -115,6 +116,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void addObject(T object) {
+        Audit audit = Audit.log((Auditable)object).add();
         addObject(getBaseDn(), object);
     }
 
@@ -248,6 +250,52 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public void softDeleteObject(T object) {
+        getLogger().info("SoftDeleting object - {}", object);
+        try {
+            String oldRdn = object.getUniqueId();
+            if(oldRdn == null) {
+                getLogger().error("Error soft deleting object");
+                throw new IllegalStateException();
+            }
+
+            List<String> tokens = Arrays.asList(oldRdn.split(","));
+
+            String newRsId = tokens.get(0);
+            String parentDn = String.format("%s,%s", tokens.get(1), getSoftDeletedBaseDn());
+
+            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting object", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("SoftDeleted object - {}", object);
+    }
+
+    @Override
+    public void unSoftDeleteObject(T object) {
+        getLogger().info("UnSoftDeleting object - {}", object);
+        try {
+            String oldRdn = object.getUniqueId();
+            if(oldRdn == null) {
+                getLogger().error("Error soft deleting object");
+                throw new IllegalStateException();
+            }
+
+            List<String> tokens = Arrays.asList(oldRdn.split(","));
+
+            String newRsId = tokens.get(0);
+            String parentDn = String.format("%s,%s", tokens.get(1), getBaseDn());
+
+            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting object", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("UnSoftDeleted object - {}", object);
+    }
+
+    @Override
     public void deleteObject(T object) {
         String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
         getLogger().debug(loggerMsg);
@@ -270,6 +318,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public String getBaseDn(){
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public String getSoftDeletedBaseDn() {
         throw new NotImplementedException();
     }
 
