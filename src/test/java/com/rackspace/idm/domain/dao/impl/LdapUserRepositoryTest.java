@@ -1968,7 +1968,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         newUser.setMossoId(-1);
         List<Modification> modificationList = new ArrayList<Modification>();
         ldapUserRepository.checkForMossoIdModification(oldUser, newUser, modificationList);
-        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
     @Test

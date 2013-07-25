@@ -64,6 +64,14 @@ class Cloud11Methods {
         resource.path(path11).path("users").path(username).path("enabled").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
+    def addBaseUrl(baseUrl) {
+        resource.path(path11).path("baseURLs").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
+    }
+
+    def addBaseUrlRefs(String username, baseUrlRefs) {
+        resource.path(path11).path("users").path(username).path("baseURLRefs").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrlRefs).post(ClientResponse)
+    }
+
     def baseEncoding(String username, String password) {
         return Base64.encode(username + ":" + password);
     }

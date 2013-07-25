@@ -291,7 +291,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             String tenantId;
-            if (baseUrl.getBaseUrlType().equals("NAST")) {
+            if (baseUrl.getBaseUrlType() != null && baseUrl.getBaseUrlType().equals("NAST")) {
                 tenantId = user.getNastId();
             }
             else {
