@@ -249,7 +249,7 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
     }
 
-    def deleteEndpointTemplate(String token, endpointTemplateId) {
+    def deleteEndpointTemplate(String token, String endpointTemplateId) {
         resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 

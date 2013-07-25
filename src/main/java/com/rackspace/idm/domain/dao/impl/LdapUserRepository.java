@@ -1249,10 +1249,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
-        // To delete the attribute MossoId a negative value for the mossoId
-        // is sent in.
         if (uNew.getMossoId() != null) {
-            if (uNew.getMossoId() < 0) {
+            String mossoId = Integer.toString(uNew.getMossoId());
+            if (StringUtils.isBlank(mossoId)) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MOSSO_ID));
             } else if (!uNew.getMossoId().equals(uOld.getMossoId())) {
                 mods.add(new Modification(ModificationType.REPLACE, ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
