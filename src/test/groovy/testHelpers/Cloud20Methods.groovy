@@ -305,10 +305,23 @@ class Cloud20Methods {
         resource.path(path20).path("RAX-AUTH").path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
+    def impersonate(String token, User user, Integer expireTime) {
+        def request = new ImpersonationRequest().with {
+            it.user = new User().with {
+                it.username = user.username
+                it
+            }
+            it.expireInSeconds = expireTime
+            it
+        }
+        resource.path(path20).path("RAX-AUTH/impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+    }
+
     def impersonate(String token, User user) {
         def request = new ImpersonationRequest().with {
             it.user = user
             it.expireInSeconds = 10800
+            it
         }
         resource.path(path20).path("RAX-AUTH/impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
