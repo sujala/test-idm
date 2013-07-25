@@ -48,35 +48,6 @@ public class UserValidatorFoundation {
         }
     }
 
-    public void checkCloudAuthForUsername(String username) throws IOException {
-        if (!StringUtils.isBlank(username)) {
-            HashMap<String,String> httpHeaders = new HashMap<String, String>();
-            String gaUserUsername = config.getString("ga.username");
-            String gaUserPassword = config.getString("ga.password");
-            httpHeaders.put(org.apache.http.HttpHeaders.AUTHORIZATION, getBasicAuth(gaUserUsername, gaUserPassword));
-            //search for user in US Cloud Auth
-            String uri = config.getString("cloudAuth11url") + "users/" + username;
-            Response.ResponseBuilder cloudAuthUSResponse = cloudClient.get(uri, httpHeaders);
-            int status = cloudAuthUSResponse.build().getStatus();
-            if (status == HttpServletResponse.SC_OK) {
-                throw new DuplicateUsernameException(String.format("Username %s already exists", username));
-            }
-            //search for user in UK Cloud Auth
-            String ukUri = config.getString("cloudAuthUK11url") + "users/" + username;
-            Response.ResponseBuilder cloudAuthUKResponse = cloudClient.get(ukUri, httpHeaders);
-            status = cloudAuthUKResponse.build().getStatus();
-            if (status == HttpServletResponse.SC_OK) {
-                throw new DuplicateUsernameException(String.format("Username %s already exists", username));
-            }
-        }
-    }
-
-    private String getBasicAuth(String username, String password) {
-        String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
-        byte[] base = usernamePassword.getBytes();
-        return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
-    }
-
     public void setConfig(Configuration config) {
         this.config = config;
     }

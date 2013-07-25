@@ -115,7 +115,6 @@ public class DefaultCloud20ServiceOldTest {
     private ServiceConverterCloudV20 serviceConverterCloudV20;
     private String passwordCredentials = "passwordCredentials";
     private String apiKeyCredentials = "RAX-KSKEY:apiKeyCredentials";
-    private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
     private Validator20 validator20;
     private Validator validator;
@@ -151,7 +150,6 @@ public class DefaultCloud20ServiceOldTest {
         httpHeaders = mock(HttpHeaders.class);
         authConverterCloudV20 = mock(AuthConverterCloudV20.class);
         serviceConverterCloudV20 = mock(ServiceConverterCloudV20.class);
-        delegateCloud20Service = mock(DelegateCloud20Service.class);
         exceptionHandler = mock(ExceptionHandler.class);
         defaultRegionService = mock(DefaultRegionService.class);
         validator20 = mock(Validator20.class);
@@ -179,7 +177,6 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
         defaultCloud20Service.setAuthConverterCloudV20(authConverterCloudV20);
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
-        defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
         defaultCloud20Service.setValidator20(validator20);
         defaultCloud20Service.setValidator(validator);
@@ -4005,41 +4002,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void impersonate_callsVerifyRackerOrServiceAdminAccess() throws Exception {
-        user.setEnabled(true);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("impersonateUser");
-        impersonateUser.setId("impersonateUserId");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(impersonateUser);
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
-        when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
-        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
-
-        spy.impersonate(null, authToken, impersonationRequest);
-        verify(authorizationService).verifyRackerOrIdentityAdminAccess(scopeAccess);
-    }
-
-    @Test
-    public void impersonate_callsValidateImpersonationRequest() throws Exception {
-        user.setEnabled(true);
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("impersonateUser");
-        impersonateUser.setId("impersonateUserId");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(impersonateUser);
-        when(config.getString("ga.username")).thenReturn("ga.username");
-        when(config.getString("ga.password")).thenReturn("ga.password");
-        when(delegateCloud20Service.impersonateUser("impersonateUser", "ga.username", "ga.password")).thenReturn("impersonatingToken");
-        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
-        spy.impersonate(null, authToken, impersonationRequest);
-        verify(validator20).validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test
     public void impersonate_userNotNullAndNotEnabled_returnsResponseBuilder() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExpired();
@@ -4155,66 +4117,6 @@ public class DefaultCloud20ServiceOldTest {
 
         assertThat("response builder",spy.impersonate(null, authToken, impersonationRequest),equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void impersonate_scopeAccessInstanceOfRackerScopeAccess_returns200() throws Exception {
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        user.setEnabled(true);
-        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("impersonateUser");
-        impersonateUser.setId("impersonateUserId");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(impersonateUser);
-        when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
-        when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
-        doReturn(rackerScopeAccess).when(spy).checkAndGetToken(authToken);
-        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
-        Response.ResponseBuilder responseBuilder = spy.impersonate(null, authToken, impersonationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void impersonate_scopeAccessInstanceOfUserScopeAccess_returns200() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        user.setEnabled(true);
-        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("impersonateUser");
-        impersonateUser.setId("impersonateUserId");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(impersonateUser);
-        when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
-        when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
-        doReturn(userScopeAccess).when(spy).checkAndGetToken(authToken);
-        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
-        Response.ResponseBuilder responseBuilder = spy.impersonate(null, authToken, impersonationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void impersonate_scopeAccessNotInstanceOfUserOrRackerScopeAccessThrowsNotAuthorizedException_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthorizedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthorizedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        user.setEnabled(true);
-
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("impersonateUser");
-        impersonateUser.setId("impersonateUserId");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(impersonateUser);
-
-        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
-        when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
-        when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
-        doReturn(clientScopeAccess).when(spy).checkAndGetToken(authToken);
-        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response builder",spy.impersonate(null, authToken, impersonationRequest),equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthorizedException.class));
     }
 
     @Test

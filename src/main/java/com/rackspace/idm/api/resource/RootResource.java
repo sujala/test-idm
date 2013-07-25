@@ -33,8 +33,6 @@ public class RootResource {
     @Autowired
     private Version10Resource versionResource;
     @Autowired
-    private MigrationResource migrationResource;
-    @Autowired
     private DevOpsResource devOpsResource;
     @Autowired
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
@@ -87,11 +85,6 @@ public class RootResource {
         return cloudVersionsResource;
     }
 
-    @Path("migration")
-    public MigrationResource getMigrationResource() {
-        return migrationResource;
-    }
-
     @Path("devops")
     public DevOpsResource getDevOpsResource() {
         return devOpsResource;
@@ -128,10 +121,6 @@ public class RootResource {
 
     public void setVersion10Resource(Version10Resource version10Resource) {
         this.versionResource = version10Resource;
-    }
-
-    public void setMigrationResource(MigrationResource migrationResource) {
-        this.migrationResource = migrationResource;
     }
 
     public void setServiceProfileDescriptionBuilder(ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder) {

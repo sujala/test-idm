@@ -75,43 +75,4 @@ public class UserValidatorFoundationTest{
         user.setId("test/");
         userValidator.validateUsername(user.getId());
     }
-
-    @Test
-    public void checkCloudAuthForUsername_usernameIsBlank_doesNothing() throws Exception {
-        userValidator.checkCloudAuthForUsername("");
-        verify(config, times(0)).getString("ga.username");
-    }
-
-    @Test (expected = DuplicateUsernameException.class)
-    public void checkCloudAuthForUsername_foundUserInUSCloudStatusIs200_throwsDuplicateUsernameException() throws Exception {
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(cloudClient.get(eq("https://auth.staging.us.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class))).thenReturn(Response.ok());
-        userValidator.checkCloudAuthForUsername("username");
-    }
-
-    @Test (expected = DuplicateUsernameException.class)
-    public void checkCloudAuthForUsername_foundUserInUKCloudStatusIs200_throwsDuplicateUsernameException() throws Exception {
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
-        when(config.getString("cloudAuthUK11url")).thenReturn("https://auth.staging.ord1.uk.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(cloudClient.get(eq("https://auth.staging.us.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class))).thenReturn(Response.status(405));
-        when(cloudClient.get(eq("https://auth.staging.ord1.uk.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class))).thenReturn(Response.status(200));
-        userValidator.checkCloudAuthForUsername("username");
-    }
-
-    @Test
-    public void checkCloudAuthForUsername_userNotFoundInUSOrUKCloud_doesNothing() throws Exception {
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
-        when(config.getString("cloudAuthUK11url")).thenReturn("https://auth.staging.ord1.uk.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(cloudClient.get(eq("https://auth.staging.us.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class))).thenReturn(Response.status(405));
-        when(cloudClient.get(eq("https://auth.staging.ord1.uk.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class))).thenReturn(Response.status(405));
-        userValidator.checkCloudAuthForUsername("username");
-        verify(cloudClient, times(1)).get(eq("https://auth.staging.us.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class));
-        verify(cloudClient, times(1)).get(eq("https://auth.staging.ord1.uk.ccp.rackspace.net/v1.1/users/username"), any(HashMap.class));
-    }
 }

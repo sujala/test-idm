@@ -65,7 +65,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockMisc()
 
         def weights = [ "0", "100", "500", "1000", "2000" ].asList()
-        config.getBoolean("useCloudAuth") >> false
         config.getList("cloudAuth.allowedRoleWeights") >> weights
 
         headers = Mock()
@@ -3498,7 +3497,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockGroupService(service)
         mockUserService(service)
-        mockDelegateCloud20Service(service)
         mockDefaultRegionService(service)
         mockDomainService(service)
         mockPolicyService(service)
