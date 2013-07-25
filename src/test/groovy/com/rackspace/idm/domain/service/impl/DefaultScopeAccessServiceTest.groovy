@@ -853,11 +853,12 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def returnedSA = service.setImpersonatedScopeAccess(caller, impersonationRequest, scopeAccess)
 
         then:
-        if (notNullExpireIn) {
-            2 * config.getDouble("token.entropy") >> entropy
-        } else {
+        if (notNullExpireIn){
+            0 * config.getDouble("token.entropy") >> entropy
+        } else{
             1 * config.getDouble("token.entropy") >> entropy
         }
+
         returnedSA.accessTokenExp <= range.get("max")
         returnedSA.accessTokenExp >= range.get("min")
 
@@ -888,7 +889,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.validateExpireInElement(caller, request)
 
         then:
-        1 * config.getDouble("token.entropy") >> entropy
+        0 * config.getDouble("token.entropy") >> entropy
 
         where:
         isRacker | expireIn | entropy
