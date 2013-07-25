@@ -203,7 +203,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
             }
 
-            expirationSeconds = getTokenExpirationSeconds(impersonationRequest.getExpireInSeconds());
+            expirationSeconds = impersonationRequest.getExpireInSeconds();
         }
 
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -219,14 +219,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         if (caller instanceof Racker) {
             int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
-            rackerMax = (int)Math.ceil(rackerMax * (1 + config.getDouble("token.entropy")));
 
             if (impersonationRequest.getExpireInSeconds() > rackerMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
             }
         } else {
             int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
-            serviceMax = (int)Math.ceil(serviceMax * (1 + config.getDouble("token.entropy")));
 
             if (impersonationRequest.getExpireInSeconds() > serviceMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
@@ -872,7 +870,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         } else {
             if (scopeAccessList.size() > 1) {
-                scopeAccessDao.deleteScopeAccess(scopeAccessList.get(oldestIndex));
+                ScopeAccess sa = scopeAccessList.get(oldestIndex);
+                if(sa.isAccessTokenExpired(new DateTime())){
+                    scopeAccessDao.deleteScopeAccess(sa);
+                }
             }
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());

@@ -1,6 +1,6 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.api.resource.cloud.v20
 
-
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
@@ -9,6 +9,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.apache.commons.lang.StringUtils
+import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -1978,6 +1979,48 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         expTwo <= range.get("max")
         expThree >= range.get("min")
         expThree <= range.get("max")
+    }
+
+    def "Impersonation call with a expiration time provided does not apply entropy" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "impersionationUser$random"
+
+
+        when:
+        def user = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "impersonationUserDomain$random", password)).getEntity(User)
+        DateTime date = new DateTime().plusHours(12)
+        def impersonatedToken = cloud20.impersonate(identityAdminToken, user, 43200).getEntity(ImpersonationResponse.class)
+        cloud20.destroyUser(serviceAdminToken, user.getId())
+
+        then:
+        impersonatedToken.token != null
+        def expireTime = impersonatedToken.token.expires.toGregorianCalendar().getTime()
+        def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
+        diff < 2
+
+    }
+
+    def "Impersonation call with a expiration time not provided does apply entropy" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "impersionationUser$random"
+
+
+        when:
+        def user = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "impersonationUserDomain$random", password)).getEntity(User)
+        DateTime date = new DateTime().plusHours(3)
+        def impersonatedToken = cloud20.impersonate(identityAdminToken, user, null).getEntity(ImpersonationResponse.class)
+        cloud20.destroyUser(serviceAdminToken, user.getId())
+
+        then:
+        impersonatedToken.token != null
+        def expireTime = impersonatedToken.token.expires.toGregorianCalendar().getTime()
+        def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
+        diff < 108 //1 % of 3 hours
+
     }
 
     def authAndExpire(String username, String password) {

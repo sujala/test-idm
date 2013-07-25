@@ -350,7 +350,8 @@ task wadl << {
     )
 }
 
-task compileJava(dependsOn: JavaPlugin.PROCESS_RESOURCES_TASK_NAME, overwrite: true) {
+compileJava() {
+    actions = []
     dependsOn configurations.ajc.getTaskDependencyFromProjectDependency(true, 'compileJava')
 
     inputs.dir sourceSets.main.java.srcDirs
