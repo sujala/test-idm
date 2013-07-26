@@ -46,10 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -513,14 +510,14 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {
-        List<String> v1defaultList = null;
+        List<Object> v1defaultList = null;
         String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
         if(baseUrlType == "MOSSO")
             v1defaultList = config.getList("v1defaultMosso");
         else if(baseUrlType == "NAST")
             v1defaultList = config.getList("v1defaultNast");
-        for (String v1defaultItem : v1defaultList) {
-            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.toString().equals(baseUrlId) && baseUrl.getDef()) {
                 tenant.addV1Default(baseUrlId);
             }
         }
