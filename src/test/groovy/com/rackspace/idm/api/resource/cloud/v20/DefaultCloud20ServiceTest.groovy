@@ -3316,7 +3316,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> true
-        result.build().status == 401
+        result.build().status == 403
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {
@@ -3487,7 +3487,23 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> false
         1 * authorizationService.hasUserAdminRole(_) >> true
-        result.build().status == 401
+        result.build().status == 403
+    }
+
+    def "User with user-manage role cannot get User Admin's API key" () {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+
+        when:
+        def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
+
+        then:
+        1 * authorizationService.verifyUserLevelAccess(_)
+        1 * userService.getUserById(_) >> user
+        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.hasUserAdminRole(_) >> true
+        result.build().status == 403
     }
 
     def mockServices() {

@@ -622,7 +622,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) ||
                     (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
-                throw new NotAuthorizedException("Cannot update user with same or higher access level");
+                throw new ForbiddenException("Cannot update user with same or higher access level");
             }
             if (!StringUtils.isBlank(user.getUsername())) {
                 validator.isUsernameValid(user.getUsername());
@@ -1486,10 +1486,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
-            boolean callerHasUserManageOrUserAdmin = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            boolean callerHasUserManage = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
 
-            if (callerHasUserManageOrUserAdmin) {
+            if (callerHasUserManage || callerIsUserAdmin) {
+                if (callerHasUserManage && authorizationService.hasUserAdminRole(user)) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
                 authorizationService.verifyDomain(caller, user);
             } else if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
