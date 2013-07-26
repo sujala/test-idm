@@ -1999,7 +1999,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         impersonatedToken.token != null
         def expireTime = impersonatedToken.token.expires.toGregorianCalendar().getTime()
         def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
-        diff < 2
+        diff <= 2
 
     }
 
