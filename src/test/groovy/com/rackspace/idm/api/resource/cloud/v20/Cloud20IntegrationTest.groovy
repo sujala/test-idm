@@ -532,7 +532,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "user-manage cannot update user admin" () {
         when:
-
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         //Update user
@@ -541,7 +540,19 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         then:
-        updateUserAdminResponse.status == 401
+        updateUserAdminResponse.status == 403
+    }
+
+    def "user-manage cannot get user admin's api key" () {
+        when:
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def getUserAdminApi = cloud20.getUserApiKey(defaultUserManageRoleToken, userAdmin.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        getUserAdminApi.status == 403
     }
 
     def "a user can be retrieved by email"() {
@@ -1988,7 +1999,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         impersonatedToken.token != null
         def expireTime = impersonatedToken.token.expires.toGregorianCalendar().getTime()
         def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
-        diff < 2
+        diff <= 2
 
     }
 
