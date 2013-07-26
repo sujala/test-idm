@@ -72,6 +72,7 @@ public class idmPropertiesTest {
         if (idmPropertyLocation.isDirectory() &&
                 !idmPropertyLocation.getName().contains("LOCAL-DEV") &&
                 !idmPropertyLocation.getName().contains("JENKINS") &&
+                !idmPropertyLocation.getName().contains("TEST") &&
                 !idmPropertyLocation.getName().contains("OPENLDAP")) {
 
             for (File file : idmPropertyLocation.listFiles()) {
