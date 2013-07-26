@@ -11,6 +11,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.apache.commons.lang.StringUtils
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -2008,7 +2009,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "impersionationUser$random"
 
-
         when:
         def user = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "impersonationUserDomain$random", password)).getEntity(User)
         DateTime date = new DateTime().plusHours(3)
@@ -2021,6 +2021,39 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
         diff < 108 //1 % of 3 hours
 
+    }
+
+    def "Create tenant with negative tenantId" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "negativeTenantUser$random"
+        def tenant = v2Factory.createTenant("-754612", "-754612")
+        def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com")
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "negtenDomain$random", password)).getEntity(User)
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def createEndpointTemplate = cloud20.addEndpointTemplate(identityAdminToken, endpointTemplate).getEntity(EndpointTemplate).value
+
+        def addRoleToUserOnTenant = cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id)
+        def addEndpointToTenant = cloud20.addEndpoint(identityAdminToken, addTenant.id, endpointTemplate)
+
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+
+
+        then:
+        createUser != null
+        addTenant != null
+        createRole != null
+        createEndpointTemplate != null
+        addRoleToUserOnTenant.status == 200
+        addEndpointToTenant.status == 200
     }
 
     def authAndExpire(String username, String password) {
