@@ -198,21 +198,24 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
         validateExpireInElement(caller, impersonationRequest);
+
+        int expirationSeconds;
         if (impersonationRequest.getExpireInSeconds() == null) {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(config.getInt("token.impersonatedByRackerDefaultSeconds")).toDate());
+                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByRackerDefaultSeconds"));
             } else {
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds")).toDate());
+                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds"));
             }
         } else {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
-            } else {
-                impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
             }
+
+            expirationSeconds = impersonationRequest.getExpireInSeconds();
         }
+
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         return impersonatedScopeAccess;
     }
 
@@ -225,11 +228,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         if (caller instanceof Racker) {
             int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
+
             if (impersonationRequest.getExpireInSeconds() > rackerMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
             }
         } else {
             int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
+
             if (impersonationRequest.getExpireInSeconds() > serviceMax) {
                 throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
             }
@@ -613,13 +618,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             prsa = null;
         }
         PasswordResetScopeAccess scopeAccessToAdd = new PasswordResetScopeAccess();
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
 
         if (prsa == null) {
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRCN(user.getCustomerId());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(
-                    this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setClientId(PASSWORD_RESET_CLIENT_ID);
             scopeAccessToAdd.setClientRCN(PASSWORD_RESET_CLIENT_ID);
@@ -633,7 +638,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 scopeAccessToAdd.setUserRCN(prsa.getUserRCN());
                 scopeAccessToAdd.setClientId(prsa.getClientId());
                 scopeAccessToAdd.setClientRCN(prsa.getClientRCN());
-                scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+                scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
                 scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
                 this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
@@ -814,11 +819,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessForClientId(uniqueId, clientId);
         if (scopeAccess == null){
+            int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setClientId(clientId);
             scopeAccess.setRackerId(rackerId);
             scopeAccess.setAccessTokenString(generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccess.setAuthenticatedBy(authenticatedBy);
             scopeAccessDao.addDirectScopeAccess(uniqueId, scopeAccess);
         }
@@ -873,7 +879,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         } else {
             if (scopeAccessList.size() > 1) {
-                scopeAccessDao.deleteScopeAccess(scopeAccessList.get(oldestIndex));
+                ScopeAccess sa = scopeAccessList.get(oldestIndex);
+                if(sa.isAccessTokenExpired(new DateTime())){
+                    scopeAccessDao.deleteScopeAccess(sa);
+                }
             }
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());
@@ -1122,14 +1131,25 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException("User not found");
         }
 
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setUsername(user.getUsername());
         userScopeAccess.setUserRsId(user.getId());
         userScopeAccess.setClientId(clientId);
-        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         userScopeAccess.setAccessTokenString(generateToken());
 
         return userScopeAccess;
+    }
+
+    @Override
+    public int getTokenExpirationSeconds(int value) {
+        Double entropy = getTokenEntropy();
+        Integer min = (int)Math.floor(value * (1 - entropy));
+        Integer max = (int)Math.ceil(value * (1 + entropy));
+        Random random = new Random();
+        return random.nextInt(max - min + 1) + min;
     }
 
     @Override
@@ -1141,11 +1161,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
+
+        int expirationSeconds;
         if (impersonated) {
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+            expirationSeconds = getTokenExpirationSeconds(getDefaultImpersonatedTokenExpirationSeconds());
         } else {
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
+        scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
@@ -1291,6 +1314,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return config.getInt("token.cloudAuthExpirationSeconds");
     }
 
+    Double getTokenEntropy(){
+        return config.getDouble("token.entropy");
+    }
+
     int getRefreshTokenWindow() {
         return config.getInt("token.refreshWindowHours");
     }
@@ -1331,15 +1358,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
 
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
             scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
             return scopeAccessToAdd;
         }

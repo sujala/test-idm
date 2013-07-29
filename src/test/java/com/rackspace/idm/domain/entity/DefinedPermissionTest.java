@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -102,58 +103,7 @@ public class DefinedPermissionTest {
 
     @Test
     public void hashCode_allFieldsNull_returnsHashCode() throws Exception {
-        assertThat("returns hashcode",definedPermission.hashCode(),equalTo(1668640802));
-    }
-
-    @Test
-    public void hashCode_descriptionNotNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(1675560734));
-    }
-
-    @Test
-    public void hashCode_descriptionAndEnabledNotNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        definedPermission.setEnabled(true);
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(-1736660049));
-    }
-
-    @Test
-    public void hashCode_descriptionAndEnabledAndGrantedByDefaultNotNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(-599805698));
-    }
-
-    @Test
-    public void hashCode_permissionTypeAndTitleAndValueNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        definedPermission.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(1754204338));
-    }
-
-    @Test
-    public void hashCode_titleAndValueNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        definedPermission.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
-        definedPermission.setPermissionType("permissionType");
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(-1578398693));
-    }
-
-    @Test
-    public void hashCode_valueNull_returnsHashCode() throws Exception {
-        definedPermission.setDescription("description");
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        definedPermission.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
-        definedPermission.setPermissionType("permissionType");
-        definedPermission.setTitle("title");
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(1843115203));
+        assertThat("returns hashcode", definedPermission.hashCode(), notNullValue());
     }
 
     @Test
@@ -165,7 +115,7 @@ public class DefinedPermissionTest {
         definedPermission.setPermissionType("permissionType");
         definedPermission.setTitle("title");
         definedPermission.setValue("value");
-        assertThat("returns hashcode", definedPermission.hashCode(), equalTo(1955087924));
+        assertThat("returns hashcode", definedPermission.hashCode(), notNullValue());
     }
 
     @Test

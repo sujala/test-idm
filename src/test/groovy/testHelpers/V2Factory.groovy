@@ -2,12 +2,10 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.*
 
 import javax.xml.datatype.DatatypeFactory
-import javax.xml.datatype.XMLGregorianCalendar
 import javax.xml.namespace.QName
 
 import static com.rackspace.idm.RaxAuthConstants.*
@@ -24,7 +22,7 @@ class V2Factory {
     private static ID = "id"
     private static USERNAME = "username"
     private static NAME = "name"
-    private static objFactory = new org.openstack.docs.identity.api.v2.ObjectFactory()
+    private static objFactory = new ObjectFactory()
 
     def createAuthenticationRequest() {
         return createAuthenticationRequest("tenantId", "tenantName", null)
@@ -51,7 +49,24 @@ class V2Factory {
             it.token = token
             return it
         }
+    }
 
+    def createPasswordAuthenticationRequest(String username, String password) {
+        def credentials = createPasswordCredentialsRequiredUsername(username, password)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createPasswordCredentials(credentials))
+            return it
+        }
+    }
+
+    def createApiKeyAuthenticationRequest(String username, String apiKey) {
+        def credentials = createApiKeyCredentials(username, apiKey)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createCredential(credentials))
+            return it
+        }
     }
 
     def createJAXBAuthenticateResponse() {
@@ -146,6 +161,14 @@ class V2Factory {
         return createRole(NAME, "applicationId", "tenantId")
     }
 
+    def createRole(String name) {
+        new Role().with {
+            it.name = name
+            it.description = "Test Global Role"
+            return it
+        }
+    }
+
     def createRole(String name, String serviceId, String tenantId) {
         new Role().with {
             it.name = name
@@ -155,10 +178,19 @@ class V2Factory {
         }
     }
 
+    def createRole(String name, String serviceId) {
+        new Role().with {
+            it.name = name
+            it.serviceId = serviceId
+            return it
+        }
+    }
+
     def createRole(propagate, weight) {
         def other = createOtherMap(propagate, weight)
+        def random = UUID.randomUUID().toString().replace("-", "")
         return new Role().with {
-            it.name = "name"
+            it.name = "role$random"
             it.description = "desc"
             it.otherAttributes = other
             return it
@@ -211,6 +243,15 @@ class V2Factory {
         }
     }
 
+    def createTenant(String name, String displayName, boolean enabled) {
+        new Tenant().with {
+            it.name = name
+            it.displayName = displayName
+            it.enabled = enabled
+            return it
+        }
+    }
+
     def createTenants() {
         return createTenants(null)
     }
@@ -256,6 +297,42 @@ class V2Factory {
             it.id = id
             it.username = username
             it.enabled = true
+            return it
+        }
+    }
+
+    def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
+        new User().with {
+            it.username = (username != null) ? username : null
+            it.displayName = (displayName != null) ? displayName : null
+            it.email = (email != null) ? email : null
+            it.enabled = (enabled != null) ? enabled : null
+            if (defaultRegion != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
+            }
+            if (domainId != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "domainId"), domainId)
+            }
+            if (password != null) {
+                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
+            }
+            return it
+        }
+    }
+
+    def createUserForUpdate(String id, String username, String displayName, String email, Boolean enabled, String defaultRegion, String password) {
+        new User().with {
+            it.id = id
+            it.username = username
+            it.email = email
+            it.enabled = enabled
+            it.displayName = displayName
+            if (password != null) {
+                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
+            }
+            if (defaultRegion != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
+            }
             return it
         }
     }

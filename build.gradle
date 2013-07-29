@@ -17,12 +17,13 @@ buildscript {
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+        classpath 'com.rackspace.api.clients:veracode-client:1.3'
     }
 }
 
 group = 'com.rackspace'
-featureVersion = '1.0.14.6'
-ldapVersion = '1.0.14.6'
+featureVersion = '1.0.14.7'
+ldapVersion = '1.0.14.7'
 buildVersion = System.currentTimeMillis()
 version = "$featureVersion-$buildVersion"
 
@@ -45,6 +46,8 @@ configurations {
     delombokJava
     delombokTestJava
     jaxb
+    veracode
+    wadl.extendsFrom compile
 }
 
 repositories {
@@ -61,6 +64,10 @@ repositories {
 }
 
 dependencies {
+    wadl "com.lunatech.jax-doclets:doclets:0.8.1"
+    wadl "com.sun.jersey:jersey-bundle:1.6"
+    wadl "asm:asm:3.3.1"
+
     jaxb group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.2.4-1'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-ant', version: '0.6.4'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-annotate', version: '0.6.4'
@@ -96,7 +103,8 @@ dependencies {
     compile group: 'javax.servlet', name: 'jstl', version:'1.2'
     compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'2.3.3'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.4'
-    compile group: 'commons-configuration', name: 'commons-configuration', version:'1.6'
+    compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
+    compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
     compile group: 'commons-lang', name: 'commons-lang', version:'2.4'
     compile group: 'cglib', name: 'cglib', version:'2.2'
     compile group: 'joda-time', name: 'joda-time', version:'1.6'
@@ -146,6 +154,9 @@ dependencies {
     compile group: 'org.projectlombok', name: 'lombok', version:'0.11.4'
     compile group: 'javax.servlet', name: 'servlet-api', version:'2.5'
     compile group: 'javax.servlet.jsp', name: 'jsp-api', version:'2.1'
+
+    compile group: 'org.jasypt', name: 'jasypt', version:'1.9.0'
+    compile group: 'org.jasypt', name: 'jasypt-spring3', version:'1.9.0'
 }
 
 def resourceDirs = [
@@ -275,6 +286,17 @@ task jaxb() {
     }
 }
 
+task veracode() << {
+    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out) 
+    def directory = fileTree(war.destinationDir) {
+        include '**/*.war'
+    }
+    directory.each {File file ->
+	    client.scanArtifacts([file].asList(), buildVersion as int, "GlobalAuth", "Linux")
+    }
+
+}
+
 def delombok(srcDir, targetDir) {
     FileCollection collection = files(configurations.compile)
     FileCollection sumTree = collection + fileTree(dir: 'bin')
@@ -324,7 +346,16 @@ def aspectjWeave(srcDirs, destDir) {
     }
 }
 
-task compileJava(dependsOn: JavaPlugin.PROCESS_RESOURCES_TASK_NAME, overwrite: true) {
+task wadl << {
+    ant.taskdef(name: 'wadl', classname: 'com.sun.jersey.api.wadl.WadlGeneratorTask', classpath: configurations.wadl.asPath )
+    ant.wadl(destFile: sourceSets.main.output.classesDir.toString()+'/application.wadl',
+        classpath: sourceSets.main.output.classesDir,
+        baseUri: 'http://localhost:8083'
+    )
+}
+
+compileJava() {
+    actions = []
     dependsOn configurations.ajc.getTaskDependencyFromProjectDependency(true, 'compileJava')
 
     inputs.dir sourceSets.main.java.srcDirs

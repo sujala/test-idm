@@ -55,7 +55,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockApplicationService(service)
 
-        config.getInt("token.cloudAuthExpirationSeconds") >>  defaultExpirationSeconds
+        config.getInt("token.cloudAuthExpirationSeconds") >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.expirationSeconds") >> defaultExpirationSeconds
         config.getInt("token.impersonatedExpirationSeconds") >> defaultImpersonationExpirationSeconds
         config.getInt("token.refreshWindowHours") >> defaultRefreshHours
@@ -80,7 +80,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> prsa
     }
 
-    def "when getOrCreatePasswordResetScopeAccessForUser and token is expired; old is deleted, and new is added and returned"() {
+    def "when getOrCreatePasswordResetScopeAccessForUser and token is expired old is deleted, and new is added and returned"() {
         given:
         def prsa = createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", expiredDate)
 
@@ -160,7 +160,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.updateScopeAccess(sa)
     }
 
-    def "updateUserScopeAccessTokenForClientIdByUser deletes oldest token and adds new token"() {
+    def "updateUserScopeAccessTokenForClientIdByUser adds new token"() {
         given:
         def newer_sa = createUserScopeAccess()
         def older_sa = createUserScopeAccess()
@@ -169,6 +169,29 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         sa.getAccessTokenExp() >> new Date()
         newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+
+        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
+        applicationService.getById(_) >> entityFactory.createApplication()
+
+        when:
+        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
+
+        then:
+        0 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+
+    }
+
+    def "updateUserScopeAccessTokenForClientIdByUser deletes oldest expired token and adds new token"() {
+        given:
+        def newer_sa = createUserScopeAccess()
+        def older_sa = createUserScopeAccess()
+        def sa = createUserScopeAccess()
+
+        sa.getAccessTokenExp() >> new Date()
+        newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
+        older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
+        expireScopeAccess(older_sa)
 
         scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
         applicationService.getById(_) >> entityFactory.createApplication()
@@ -232,6 +255,34 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * scopeAccessDao.deleteScopeAccess(_)
         1 * scopeAccessDao.addDirectScopeAccess(dn, _)
+    }
+
+    def "updateExpiredUserScopeAccess gets token entropy and adjusts expiration"() {
+        given:
+        def expiredScopeAccess = createUserScopeAccess().with {
+            it.accessTokenExp = new DateTime().minusSeconds(86400).toDate()
+            return it
+        }
+
+        HashMap<String, Date> range
+        if (impersonated)
+            range = getRange(defaultImpersonationExpirationSeconds, entropy)
+        else {
+            range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+        }
+
+        when:
+        def scopeAccess = service.updateExpiredUserScopeAccess(expiredScopeAccess, impersonated)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+
+        where:
+        impersonated | entropy
+        false        | 0.01
+        true         | 0.05
     }
 
     def "getParentDn returns the parentDn"() {
@@ -552,9 +603,16 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         def user = entityFactory.createUser()
         def tenant = entityFactory.createTenant("tenantId", "tenantName")
-        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = "roleRsId"; it.tenantIds = [ "tenantId" ]; return it }
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "roleRsId"
+            it.tenantIds = [ "tenantId" ].asList()
+            return it
+        }
         def tenantRoles = [ tenantRole ].asList()
-        def endpoint = entityFactory.createOpenstackEndpoint("tenantId", "tenantName").with { it.baseUrls = [ entityFactory.createCloudBaseUrl() ].asList(); return it }
+        def endpoint = entityFactory.createOpenstackEndpoint("tenantId", "tenantName").with {
+            it.baseUrls = [ entityFactory.createCloudBaseUrl() ].asList()
+            return it
+        }
 
         when:
         def endpoints = service.getOpenstackEndpointsForUser(user)
@@ -752,5 +810,189 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
         then:
             endPointList.size() == 1
+    }
+
+    def "Verify provision user scope access adds token expiration entropy"() {
+        when:
+        def range = getRange(exSeconds, entropy)
+        UserScopeAccess scopeAccess = service.provisionUserScopeAccess(entityFactory.createUser(), "clientId")
+
+        then:
+        1 * config.getInt("token.cloudAuthExpirationSeconds") >> exSeconds
+        1 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+
+        where:
+        exSeconds | entropy
+        2600      | 0.01
+
+    }
+
+    def "Set entropy"() {
+        given:
+        def seconds = 2600
+        def max = seconds * 1.01
+        def min = seconds * 0.99
+
+        when:
+        def result = service.getTokenExpirationSeconds(seconds)
+
+        then:
+        1 * config.getDouble(_) >> 0.01
+        result <= max
+        result >= min
+    }
+
+    def "setImpersonatedScopeAccess adds entropy to token expiration"() {
+        given:
+        config.getInt("token.impersonatedByRackerMaxSeconds") >> exSeconds * 2
+        config.getInt("token.impersonatedByServiceMaxSeconds") >> exSeconds * 2
+        config.getInt("token.impersonatedByRackerDefaultSeconds") >> exSeconds
+        config.getInt("token.impersonatedByServiceDefaultSeconds") >> exSeconds
+
+        def impersonationRequest = v1Factory.createImpersonationRequest(v2Factory.createUser())
+        if (notNullExpireIn) {
+            impersonationRequest.expireInSeconds = exSeconds
+        }
+
+        def caller
+        def range
+        if (isRacker) {
+            caller = entityFactory.createRacker()
+            range = getRange(exSeconds, entropy)
+        } else {
+            caller = entityFactory.createUser()
+            range = getRange(exSeconds, entropy)
+        }
+        def scopeAccess = createImpersonatedScopeAccess().with {
+            it.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+            return it
+        }
+
+        when:
+        def returnedSA = service.setImpersonatedScopeAccess(caller, impersonationRequest, scopeAccess)
+
+        then:
+        if (notNullExpireIn){
+            0 * config.getDouble("token.entropy") >> entropy
+        } else{
+            1 * config.getDouble("token.entropy") >> entropy
+        }
+
+        returnedSA.accessTokenExp <= range.get("max")
+        returnedSA.accessTokenExp >= range.get("min")
+
+        where:
+        isRacker | exSeconds | entropy | notNullExpireIn
+        true     | 3600      | 0.01    | false
+        false    | 9000      | 0.05    | false
+        true     | 3600      | 0.01    | true
+        false    | 9000      | 0.05    | true
+    }
+
+    def "validateExpireInElement accounts for expiration entropy"() {
+        given:
+        config.getInt("token.impersonatedByRackerMaxSeconds") >> expireIn * 2
+        config.getInt("token.impersonatedByServiceMaxSeconds") >> expireIn * 2
+
+        def caller
+        if (isRacker) {
+            caller = entityFactory.createRacker()
+        } else {
+            caller = entityFactory.createUser()
+        }
+
+        def request = v1Factory.createImpersonationRequest(v2Factory.createUser())
+        request.expireInSeconds = expireIn
+
+        when:
+        service.validateExpireInElement(caller, request)
+
+        then:
+        0 * config.getDouble("token.entropy") >> entropy
+
+        where:
+        isRacker | expireIn | entropy
+        true     | 3600     | 0.01
+        false    | 3600     | 0.01
+    }
+
+    def "calling getOrCreatePasswordResetScopeAccessForUser sets token expiration with entropy"() {
+        given:
+        def user = entityFactory.createUser()
+        def sa = null
+
+        if (scopeAccessExists) {
+            sa = createPasswordResetScopeAccess()
+            sa.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+        }
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
+
+        def range = getRange(exSeconds, entropy)
+
+        when:
+        def scopeAccess = service.getOrCreatePasswordResetScopeAccessForUser(user)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+
+        where:
+        scopeAccessExists | exSeconds                | entropy
+        true              | defaultExpirationSeconds | 0.01
+        false             | defaultExpirationSeconds | 0.05
+    }
+
+    def "calling getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
+        given:
+        def entropy = 0.01
+        def uniqueId = "uniqueId"
+        def rackerId = "rackerId"
+        def clientId = "clientId"
+        def authedBy = ["PASSWORD"].asList()
+        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
+
+        when:
+        def scopeAccess = service.getValidRackerScopeAccessForClientId(uniqueId, rackerId, clientId, authedBy)
+
+        then:
+        // The second call is made in updateExpiredRackerScopeAccess
+        2 * config.getDouble("token.entropy") >> entropy
+        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp >= range.get("min")
+    }
+
+    def "updateExpiredRackerScopeAccess sets token expiration with entropy"() {
+        given:
+        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+        def scopeAccess = createRackerScopeAcccss()
+        scopeAccess.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
+        if (refresh) {
+            scopeAccess.accessTokenExp = new DateTime().plusSeconds(defaultRefreshSeconds - 60).toDate()
+        }
+
+        when:
+        def sa = service.updateExpiredRackerScopeAccess(scopeAccess)
+
+        then:
+        1 * config.getDouble("token.entropy") >> entropy
+        sa.accessTokenExp <= range.get("max")
+        sa.accessTokenExp >= range.get("min")
+
+        where:
+        refresh | entropy
+        true    | 0.01
+        false   | 0.01
+    }
+
+    def getRange(seconds, entropy) {
+        HashMap<String, Date> range = new HashMap<>()
+        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
+        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate())
+        return range
     }
 }

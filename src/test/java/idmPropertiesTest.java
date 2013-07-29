@@ -33,8 +33,6 @@ public class idmPropertiesTest {
             propertyNameErrorList.remove("atom.hopper.dataCenter");
             propertyNameErrorList.remove("cloudAuthUK11url");
             propertyNameErrorList.remove("cloudAuthUK20url");
-            propertyNameErrorList.remove("gaIsSourceOfTruth");
-            propertyNameErrorList.remove("useCloudAuth");
             if (!propertyNameErrorList.isEmpty()) {
                 error += fileName + ":\n";
                 error += "\t" + propertyNameErrorList.toString() + "\n\n";
@@ -74,6 +72,7 @@ public class idmPropertiesTest {
         if (idmPropertyLocation.isDirectory() &&
                 !idmPropertyLocation.getName().contains("LOCAL-DEV") &&
                 !idmPropertyLocation.getName().contains("JENKINS") &&
+                !idmPropertyLocation.getName().contains("TEST") &&
                 !idmPropertyLocation.getName().contains("OPENLDAP")) {
 
             for (File file : idmPropertyLocation.listFiles()) {

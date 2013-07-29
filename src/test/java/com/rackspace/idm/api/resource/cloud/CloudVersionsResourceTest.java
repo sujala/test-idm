@@ -59,14 +59,6 @@ public class CloudVersionsResourceTest {
     }
 
     @Test
-    public void getPublicCloudVersionsInfo_responseOk_returns200() throws Exception {
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.ok());
-        Response result = cloudVersionsResource.getPublicCloudVersionsInfo(null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getCloud10AuthResource_returnsCloud10VersionResource() throws Exception {
         Cloud10VersionResource result = cloudVersionsResource.getCloud10AuthResource();
         assertThat("resource", result instanceof Cloud10VersionResource, equalTo(true));

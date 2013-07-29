@@ -108,17 +108,6 @@ public class Cloud10VersionResource {
 
         User user = this.userService.getUser(username);
 
-        if(useCloudAuth() && !userService.isMigratedUser(user)) {
-            Response cloudResponse = cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
-            if (cloudResponse.getStatus() == HttpServletResponse.SC_NO_CONTENT && user != null) {
-                String token = cloudResponse.getMetadata().getFirst("X-Auth-Token").toString();
-                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token,
-                        new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-                return cloudResponse;
-            }else if (user == null) {
-                return cloudResponse;
-            }
-        }
         if (user == null) {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
@@ -168,14 +157,6 @@ public class Cloud10VersionResource {
 
     }
 
-    private String getCloudAuthV10Url() {
-        return config.getString("cloudAuth10url");
-    }
-
-    private boolean useCloudAuth() {
-        return config.getBoolean("useCloudAuth", false);
-    }
-
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
@@ -189,12 +170,6 @@ public class Cloud10VersionResource {
         if (!StringUtils.isEmpty(value)) {
             builder.header(headerName, value);
         }
-
-
-    }
-
-    private int getDefaultCloudAuthTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds");
     }
 
     public void setTenantService(TenantService tenantService) {

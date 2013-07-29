@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import lombok.Getter;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
@@ -15,7 +14,8 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS)
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
+        postEncodeMethod="doPostEncode")
 public class ScopeAccess implements Auditable, HasAccessToken {
 
     @LDAPEntryField()
@@ -35,6 +35,9 @@ public class ScopeAccess implements Auditable, HasAccessToken {
 
     @LDAPField(attribute = LdapRepository.ATTR_RS_TYPE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private List<String> authenticatedBy;
+
+    @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false, inAdd = false, inModify = false)
+    private Date createTimestamp;
 
     public ScopeAccess() {}
 
@@ -90,5 +93,12 @@ public class ScopeAccess implements Auditable, HasAccessToken {
     @Override
     public String toString() {
         return getAuditContext() ;
+    }
+
+    private void doPostEncode(final Entry entry) throws LDAPPersistException {
+        String[] rsTypeList = entry.getAttributeValues(LdapRepository.ATTR_RS_TYPE);
+        if (rsTypeList != null && rsTypeList.length == 0) {
+            entry.removeAttribute(LdapRepository.ATTR_RS_TYPE);
+        }
     }
 }

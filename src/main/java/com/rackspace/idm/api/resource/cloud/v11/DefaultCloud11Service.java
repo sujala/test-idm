@@ -46,10 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -177,14 +174,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
             if (sa instanceof ImpersonatedScopeAccess){
-                ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                if(isa.isAccessTokenExpired(new DateTime())){
+                UserScopeAccess usa = getUserFromImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
+                if(usa.isAccessTokenExpired(new DateTime())){
                     throw new NotFoundException("Token not found");
                 }
-                UserScopeAccess usa = new UserScopeAccess();
-                usa.setAccessTokenString(isa.getAccessTokenString());
-                usa.setAccessTokenExp(isa.getAccessTokenExp());
-                usa.setUsername(isa.getImpersonatingUsername());
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
             }
 
@@ -227,6 +220,15 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    private UserScopeAccess getUserFromImpersonatedScopeAccess(ImpersonatedScopeAccess scopeAccess) {
+        UserScopeAccess usa = new UserScopeAccess();
+        usa.setAccessTokenString(scopeAccess.getAccessTokenString());
+        usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
+        usa.setUsername(scopeAccess.getImpersonatingUsername());
+        usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
+        return usa;
     }
 
     // Authenticate Methods
@@ -286,7 +288,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             String tenantId;
-            if (baseUrl.getBaseUrlType().equals("NAST")) {
+            if (baseUrl.getBaseUrlType() != null && baseUrl.getBaseUrlType().equals("NAST")) {
                 tenantId = user.getNastId();
             }
             else {
@@ -508,14 +510,14 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {
-        List<String> v1defaultList = null;
+        List<Object> v1defaultList = null;
         String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
         if(baseUrlType == "MOSSO")
             v1defaultList = config.getList("v1defaultMosso");
         else if(baseUrlType == "NAST")
             v1defaultList = config.getList("v1defaultNast");
-        for (String v1defaultItem : v1defaultList) {
-            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.toString().equals(baseUrlId) && baseUrl.getDef()) {
                 tenant.addV1Default(baseUrlId);
             }
         }
@@ -852,7 +854,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
             if (groups.size() == 0) {
-                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
+                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getString("defaultGroupId"));
                 groups.add(defGroup);
             }
             GroupsList groupList = new GroupsList();

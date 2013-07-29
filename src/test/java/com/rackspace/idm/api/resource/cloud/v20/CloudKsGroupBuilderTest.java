@@ -24,7 +24,7 @@ public class CloudKsGroupBuilderTest {
     public void setup(){
         groupDoMock = mock(Group.class);
         when(groupDoMock.getName()).thenReturn("Group1");
-        when(groupDoMock.getGroupId()).thenReturn(1);
+        when(groupDoMock.getGroupId()).thenReturn("1");
         when(groupDoMock.getDescription()).thenReturn("Group Description");
     }
     @Test

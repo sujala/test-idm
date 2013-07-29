@@ -50,20 +50,19 @@ public class XMLReader implements MessageBodyReader<Object> {
 
             jaxbContext = JAXBContext.newInstance(
                     "com.rackspace.api.idm.v1:" +
-                            "com.rackspacecloud.docs.auth.api.v1:" +
-                            "org.openstack.docs.common.api.v1:" +
-                            "org.openstack.docs.compute.api.v1:" +
-                            "org.openstack.docs.identity.api.v2:" +
-                            "com.rackspace.docs.identity.api.ext.rax_ksgrp.v1:" +
-                            "com.rackspace.docs.identity.api.ext.rax_kskey.v1:" +
-                            "org.openstack.docs.identity.api.ext.os_ksadm.v1:" +
-                            "org.openstack.docs.identity.api.ext.os_kscatalog.v1:" +
-                            "org.openstack.docs.identity.api.ext.os_ksec2.v1:" +
-                            "org.w3._2005.atom:" +
-                            "com.rackspace.docs.identity.api.ext.rax_ksqa.v1:" +
-                            "com.rackspace.api.common.fault.v1:" +
-                            "com.rackspace.docs.identity.api.ext.rax_auth.v1:" +
-                            "com.rackspace.idm.api.resource.cloud.migration");
+                    "com.rackspacecloud.docs.auth.api.v1:" +
+                    "org.openstack.docs.common.api.v1:" +
+                    "org.openstack.docs.compute.api.v1:" +
+                    "org.openstack.docs.identity.api.v2:" +
+                    "com.rackspace.docs.identity.api.ext.rax_ksgrp.v1:" +
+                    "com.rackspace.docs.identity.api.ext.rax_kskey.v1:" +
+                    "org.openstack.docs.identity.api.ext.os_ksadm.v1:" +
+                    "org.openstack.docs.identity.api.ext.os_kscatalog.v1:" +
+                    "org.openstack.docs.identity.api.ext.os_ksec2.v1:" +
+                    "org.w3._2005.atom:" +
+                    "com.rackspace.docs.identity.api.ext.rax_ksqa.v1:" +
+                    "com.rackspace.api.common.fault.v1:" +
+                    "com.rackspace.docs.identity.api.ext.rax_auth.v1");
 
 
             classes = PackageClassDiscoverer.findClassesIn(
@@ -80,8 +79,7 @@ public class XMLReader implements MessageBodyReader<Object> {
                     "org.w3._2005.atom",
                     "com.rackspace.docs.identity.api.ext.rax_ksqa.v1",
                     "com.rackspace.api.common.fault.v1",
-                    "com.rackspace.docs.identity.api.ext.rax_auth.v1",
-                    "com.rackspace.idm.api.resource.cloud.migration");
+                    "com.rackspace.docs.identity.api.ext.rax_auth.v1");
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
             throw new IdmException(e);
