@@ -1,19 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.dao.UniqueId;
-import com.sun.jndi.toolkit.dir.SearchFilter;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;

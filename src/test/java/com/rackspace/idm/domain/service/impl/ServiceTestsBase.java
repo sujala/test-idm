@@ -51,7 +51,6 @@ public class ServiceTestsBase {
     protected User getFakeUser() {
         User user = new User();
         user.setUsername(username);
-        user.setUniqueId(userDN);
         return user;
     }
 

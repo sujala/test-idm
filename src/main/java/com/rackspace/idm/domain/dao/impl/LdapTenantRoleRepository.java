@@ -4,9 +4,7 @@ import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
-import com.sun.jersey.api.ConflictException;
 import com.unboundid.ldap.sdk.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,6 +25,10 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     public String getLdapEntityClass(){
         return OBJECTCLASS_TENANT_ROLE;
+    }
+
+    public String getSortAttribute() {
+        return ATTR_ROLE_RS_ID;
     }
 
     @Override
@@ -110,32 +112,19 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit) {
-        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
-        searchBuilder.addEqualAttribute(ATTR_ROLE_RS_ID, roleId);
-        Filter searchFilter = searchBuilder.build();
-
-        SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, "*");
-        PaginatorContext<String> context = stringPaginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
-
-        SearchResult searchResult = this.getMultipleEntries(searchRequest);
-
-        stringPaginator.createPage(searchResult, context);
+    public List<String> getIdsForUsersWithTenantRole(String roleId) {
         List<String> userIds = new ArrayList<String>();
-        for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+        List<TenantRole> tenantRoles = getObjects(searchFilterGetTenantRolesByRoleId(roleId));
+
+        for (TenantRole tenantRole : tenantRoles) {
             try {
-                userIds.add(getUserIdFromDN(entry.getParsedDN()));
+                userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
             } catch (LDAPException e) {
-                throw new IllegalStateException(e);
-            } catch (Exception e) {
-                // noop
+                throw new IllegalStateException();
             }
         }
 
-        context.setValueList(userIds);
-
-        return context;
+        return userIds;
     }
 
     private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {

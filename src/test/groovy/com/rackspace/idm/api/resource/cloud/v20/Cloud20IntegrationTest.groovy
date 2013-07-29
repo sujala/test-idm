@@ -591,6 +591,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
+    @Unroll
     def "invalid operations on create/update user returns 'bad request'"() {
         expect:
         response.status == 400
@@ -599,19 +600,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response << [
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("!@#What", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("What!@#", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                //createUser(serviceAdminToken, v2Factory.createUserForCreate("1one", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("one name", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("a$sharedRandom", "display", "junk!@#", true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("z$sharedRandom", "display", "   ", true, "ORD", null, "Password1")),
-                //createUser(serviceAdminToken, v2Factory.createUserForCreate("b$sharedRandom", "display", null, true, "ORD", null, "Password1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("c$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Pop1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("d$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "longpassword1")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("e$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword")),
                 cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("f$sharedRandom", "displ:ay", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
                 cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate("g$sharedRandom", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
-                //updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
                 cloud20.updateUser(identityAdminToken, defaultUser.getId(), v2Factory.createUserForUpdate(null, null, null, null, true, "HAHAHAHA", "Password1"))
         ]
     }
@@ -796,6 +794,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         users2.user.findAll({it.username == tempUserAdmin}).size() == 1
     }
 
+    @Unroll
     def "invalid operations on create/update group returns 'bad request'"() {
         expect:
         response.status == 400

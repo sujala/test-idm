@@ -25,7 +25,6 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -464,14 +463,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String password = userForCreate.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
 
+            User userDO = this.userConverterCloudV20.toUserDO(userForCreate);
             if (password != null) {
                 validator.validatePasswordForCreateOrUpdate(userForCreate.getPassword());
             } else {
-                password = Password.generateRandom(false).getValue();
-                userForCreate.setPassword(password);
+                password = Password.generateRandom(false, userDO).getValue();
             }
 
-            User userDO = this.userConverterCloudV20.toUserDO(userForCreate);
             User caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
@@ -482,15 +480,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (callerIsUserAdminOrHasUserManageRole) {
                 //TODO pagination index and offset
-                Users users;
+                List<User> users;
                 String domainId = caller.getDomainId();
                 if (domainId == null) {
                     throw new BadRequestException("User-Admin does not have a Domain");
                 }
-                FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                users = userService.getAllUsers(filters);
+                users = userService.getUsersWithDomain(domainId);
                 int numSubUsers = config.getInt("numberOfSubUsers");
-                if (users != null && users.getUsers() != null && users.getUsers().size() > numSubUsers) {
+                if (users.size() > numSubUsers) {
                     String errMsg = String.format("User cannot create more than %d sub-accounts.", numSubUsers);
                     throw new BadRequestException(errMsg);
                 }
@@ -599,6 +596,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
 
+            if (user.getUsername() != null) {
+                if(!StringUtils.equalsIgnoreCase(retrievedUser.getUsername(), user.getUsername()) && !userService.isUsernameUnique(user.getUsername())){
+                    throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+                }
+            }
+
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
 
@@ -638,14 +641,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                     updateRegion = false;
                 }
             }
-            retrievedUser.copyChanges(userDO);
+            userDO.setId(retrievedUser.getId());
             ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
             if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
 
-            userService.updateUser(retrievedUser, false);
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
+            userService.updateUser(userDO, false);
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -688,6 +691,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
+                user.setUserPassword(userCredentials.getPassword());
                 user.setPassword(userCredentials.getPassword());
                 userService.updateUser(user, false);
             } else if (credentials.getValue() instanceof ApiKeyCredentials) {
@@ -1407,7 +1411,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(requesterScopeAccess);
 
-            Users users = userService.getUsersByEmail(email);
+            List<User> users = userService.getUsersByEmail(email);
 
             User caller = userService.getUserByScopeAccess(requesterScopeAccess);
             if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
@@ -1416,19 +1420,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 users = filterUsersInDomain(users, caller);
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
 
-    private Users filterUsersInDomain(Users users, User caller) {
-        Users result = new Users();
-        result.setUsers(new ArrayList<User>());
-        for (User user : users.getUsers()) {
+    private List<User> filterUsersInDomain(List<User> users, User caller) {
+        List<User> result = new ArrayList<User>();
+        for (User user : users) {
             if (authorizationService.hasSameDomain(caller, user)) {
-                result.getUsers().add(user);
+                result.add(user);
             }
         }
         return result;
@@ -2058,8 +2061,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Users users = domainService.getUsersByDomainId(domainId);
-            if (!users.getUsers().isEmpty()) {
+            List<User> users = domainService.getUsersByDomainId(domainId);
+            if (!users.isEmpty()) {
                 throw new BadRequestException("Cannot delete Domains which contain users");
             }
             Domain domain = domainService.checkAndGetDomain(domainId);
@@ -2083,17 +2086,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersByDomainId(String authToken, String domainId, String enabled) {
+    public ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         domainService.checkAndGetDomain(domainId);
-        Users users;
+        List<User> users;
         if (enabled == null) {
             users = domainService.getUsersByDomainId(domainId);
         } else {
-            users = domainService.getUsersByDomainId(domainId, Boolean.valueOf(enabled));
+            users = domainService.getUsersByDomainIdAndEnabledFlag(domainId, Boolean.valueOf(enabled));
         }
 
-        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
     }
 
     @Override
@@ -2356,20 +2359,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             FilterParam[] filters;
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
 
+            int iMarker = validateOffset(marker);
+            int iLimit = validateLimit(limit);
+            PaginatorContext<User> userContext = null;
+
             if (callerIsUserAdmin) {
                 User caller = this.userService.getUserByScopeAccess(scopeAccess);
                 if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
                     throw new BadRequestException("User-admin has no domain");
                 }
-                filters = setFilters(role.getId(), caller.getDomainId());
+                userContext = this.userService.getUsersWithDomainAndRole(caller.getDomainId(), roleId, iMarker, iLimit);
             } else {
-                filters = setFilters(role.getId(), null);
+                userContext = this.userService.getUsersWithRole(roleId, iMarker, iLimit);
             }
-
-            int iMarker = validateOffset(marker);
-            int iLimit = validateLimit(limit);
-
-            PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, iMarker, iLimit);
 
             String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
@@ -2378,14 +2380,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    protected FilterParam[] setFilters(String roleId, String domainId) {
-        if (domainId == null) {
-            return new FilterParam[]{new FilterParam(FilterParamName.ROLE_ID, roleId)};
-        }
-        return new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId),
-                                    new FilterParam(FilterParamName.ROLE_ID, roleId)};
     }
 
     protected int validateOffset(String offsetString) {
@@ -2592,7 +2586,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         List<User> admins = new ArrayList<User>();
         if (user.getDomainId() != null ) {
-            admins = domainService.getDomainAdmins(user.getDomainId(), true);
+            admins = domainService.getEnabledDomainAdmins(user.getDomainId());
         }
 
         return Response.status(200)
@@ -2797,13 +2791,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
-            FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             String iMarker = validateMarker(marker);
             int iLimit = validateLimit(limit);
             groupService.checkAndGetGroupById(groupId);
-            Users users = groupService.getAllEnabledUsers(filters, iMarker, iLimit);
+            List<User> users = userService.getUsersByGroupId(groupId);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
         }
@@ -2846,12 +2839,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                userContext = this.userService.getAllUsersPaged(null, offset, limitAsInt);
+                userContext = this.userService.getAllUsersPaged(offset, limitAsInt);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
-                    FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                    userContext = this.userService.getAllUsersPaged(filters, offset, limitAsInt);
+                    userContext = this.userService.getAllUsersPagedWithDomain(domainId, offset, limitAsInt);
                 } else {
                     throw new BadRequestException("User-admin has no domain");
                 }
@@ -3102,6 +3094,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
+            user.setUserPassword(creds.getPassword());
             user.setPassword(creds.getPassword());
             this.userService.updateUser(user, false);
 

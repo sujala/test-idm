@@ -93,16 +93,6 @@ public class Cloud10VersionResourceTest {
     }
 
     @Test
-    public void getCloud10VersionInfo_notRouting_withNotAuthenticatedUser_returns401Status() throws Exception {
-        User user = new User();
-        when(userService.getUser("username")).thenReturn(user);
-        when(userService.isMigratedUser(user)).thenReturn(true);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        assertThat("response token", response.getStatus(), equalTo(401));
-    }
-
-    @Test
     public void getCloud10VersionInfo_notRouting_withDisabledUser_returns403Status() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());

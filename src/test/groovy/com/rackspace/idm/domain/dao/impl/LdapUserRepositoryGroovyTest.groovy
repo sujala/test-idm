@@ -21,12 +21,4 @@ class LdapUserRepositoryGroovyTest extends RootServiceTest{
         ldapUserRepository = new LdapUserRepository()
         mockConfiguration(ldapUserRepository)
     }
-
-    def "verify that throwIfStalePassword calls apache config" (){
-        when:
-        ldapUserRepository.throwIfStalePassword(new LDAPException(ResultCode.ALIAS_PROBLEM),new Audit("string"))
-
-        then:
-        1 * config.getString(_)
-    }
 }

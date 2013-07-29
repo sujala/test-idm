@@ -20,7 +20,6 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
-import spock.lang.Stepwise
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -597,11 +596,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         mockUserConverter(service)
         def caller = entityFactory.createUser()
-        def users = entityFactory.createUsers([ entityFactory.createUser() ].asList())
+        def users = [ entityFactory.createUser() ].asList()
 
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getAllUsers(_) >> users
+        userService.getUsersWithDomain(_) >> users
         config.getInt("numberOfSubUsers") >> 0
 
         userService.getUserByAuthToken(_) >>> [
@@ -631,12 +630,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         mockUserConverter(service)
         def caller = Mock(User)
-        def users = entityFactory.createUsers([ entityFactory.createUser() ].asList())
+        def users = [ entityFactory.createUser() ].asList()
 
         caller.getDomainId() >>> [ "domainId", "domainId", null]
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getAllUsers(_) >> users
+        userService.getUsersWithDomain(_) >> users
         config.getInt("numberOfSubUsers") >> 5
 
         when:
@@ -697,7 +696,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getAllUsers(_) >> [].asList()
+        userService.getUsersWithDomain(_) >> [].asList()
 
         when:
         service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
@@ -719,7 +718,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         groups.add(entityFactory.createGroup("2","groupId2","group description"))
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getAllUsers(_) >> [].asList()
+        userService.getUsersWithDomain(_) >> [].asList()
         userService.getGroupsForUser(_) >> groups
 
         when:
@@ -825,7 +824,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        2 * userService.getAllUsersPaged(_, _, _) >> userContextMock
+        2 * userService.getAllUsersPaged(_, _) >> userContextMock
 
         response1.status == 200
         response2.status == 200
@@ -853,8 +852,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        userService.getAllUsersPaged(_, _, _) >> { arg1, arg2, arg3 ->
-            assert(arg1[0] instanceof FilterParam)
+        userService.getAllUsersPagedWithDomain(_, _, _) >> { arg1, arg2, arg3 ->
+            assert(arg1 == "domainId")
             return userContextMock
         }
 
@@ -927,9 +926,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
 
         then:
-        userService.getUsersWithRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
-            assert(arg1.size() == 2)
-            assert(arg1[0].value.equals(domain))
+        userService.getUsersWithDomainAndRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
+            assert(arg1.equals(domain))
             return contextMock
         }
 
@@ -957,9 +955,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
 
         then:
-        userService.getUsersWithRole(_, _, _, _) >> { arg1, arg2, arg3, arg4 ->
-            assert(arg1.size() == 1)
-            assert(arg1[0].value.equals(roleId))
+        userService.getUsersWithRole(_, _, _) >> { arg1, arg2, arg3 ->
+            assert(arg1.equals(roleId))
             return contextMock
         }
 
@@ -2701,7 +2698,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "user accesslevel is verified by getAdminsForDefaultUser"() {
         given:
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
-        domainService.getDomainAdmins(_, _) >> [].asList()
+        domainService.getEnabledDomainAdmins(_, _) >> [].asList()
 
         when:
         service.getUserAdminsForUser(authToken, "userId")
@@ -2762,7 +2759,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.getUserAdminsForUser(authToken, "userId").build()
 
         then:
-        1 * domainService.getDomainAdmins("domainId", true)
+        1 * domainService.getEnabledDomainAdmins("domainId")
         response.status == 200
     }
 
@@ -2780,7 +2777,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 200
-        0 * domainService.getDomainAdmins(_, _)
+        0 * domainService.getEnabledDomainAdmins(_, _)
     }
 
     def "identity admin should be able to retrieve users api key"() {
@@ -2907,7 +2904,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.getUsersByEmail(headers, authToken, "email@email.com").build()
 
         then:
-        userService.getUsersByEmail(_) >> entityFactory.createUsers([user].asList())
+        userService.getUsersByEmail(_) >> [user].asList()
 
         then:
         result.status == 200
@@ -2934,7 +2931,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.getUsersByEmail(_) >> entityFactory.createUsers([subUser1, subUser2].asList())
+        1 * userService.getUsersByEmail(_) >> [subUser1, subUser2].asList()
         1 * authorizationService.authorizeCloudUserAdmin(_) >> true
         1 * authorizationService.hasSameDomain(caller, subUser1) >> true
         1 * authorizationService.hasSameDomain(caller, subUser2) >> false
@@ -2962,6 +2959,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
         userService.checkAndGetUserById(_) >> updateUser
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.isUsernameUnique(_) >> true
 
         when:
         service.updateUser(headers, authToken, "2", user)
@@ -3230,7 +3228,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         2 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.getAllUsers(_) >> null
+        1 * userService.getUsersWithDomain(_) >> [].asList()
         notThrown(BadRequestException)
         1 * defaultRegionService.validateDefaultRegion(_)
         1 * userService.addUser(_)
@@ -3429,10 +3427,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         User user = entityFactory.createUser()
-        Users users = new Users().with {
-            it.users = [user].asList()
-            return it
-        }
+        def users = [user].asList()
         User caller = entityFactory.createUser()
 
         when:

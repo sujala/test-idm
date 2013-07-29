@@ -42,7 +42,7 @@ public class UserLocale {
         preferredLang = parseLocale(lang);
     }
 
-    private Locale parseLocale(String lang) {
+    public static Locale parseLocale(String lang) {
         String[] localeParams = StringUtils.split(lang, '_');
         Locale userLocale = null;
         if (localeParams != null) {

@@ -204,19 +204,9 @@ public class DefaultTokenService implements TokenService {
     }
 
     List<User> getAllUsersForCustomerId(final String customerId) {
-    	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         logger.debug("Finding Users for CustomerId: {}", customerId);
-        
-        final List<User> usersList = new ArrayList<User>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userService.getAllUsers(filters,offset, getPagingLimit());
-            usersList.addAll(usersObj.getUsers());
-            total = usersObj.getTotalRecords();
-        }
-        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(),
-            customerId);
+        List<User> usersList = userService.getUsersByRCN(customerId);
+        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(), customerId);
         return usersList;
     }
 

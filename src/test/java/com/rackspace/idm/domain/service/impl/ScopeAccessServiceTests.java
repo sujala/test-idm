@@ -262,82 +262,10 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessService.grantPermissionToClient(client.getUniqueId(), grantedPerm);
     }
 
-    @Test
-    public void shouldGetUserScopeAccessForClientIdByUsernameAndPassword() {
-
-        User user = getFakeUser();
-        Application client = getFakeClient();
-        UserScopeAccess sa = getFakeUserScopeAccess();
-        List<ScopeAccess> saList = getScopeAccessList(sa);
-        EasyMock.expect(userService.authenticate(username, "password"))
-            .andReturn(new UserAuthenticationResult(user, true));
-
-        EasyMock.expect(
-            scopeAccessDao.getScopeAccessesByParent(
-                    user.getUniqueId())).andReturn(saList);
-
-        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
-
-        EasyMock.expect(scopeAccessDao.deleteScopeAccess(sa)).andReturn(true);
-
-        EasyMock.replay(scopeAccessDao, userService);
-
-        scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
-            user.getUsername(), "password", client.getClientId());
-
-        EasyMock.verify(scopeAccessDao, userService);
-
-    }
-
     private List<ScopeAccess> getScopeAccessList(UserScopeAccess sa) {
         List<ScopeAccess> saList = new ArrayList<ScopeAccess>();
         saList.add(sa);
         return saList;
-    }
-
-    @Test
-    public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
-        User user = getFakeUser();
-        Application client = getFakeClient();
-        UserScopeAccess sa = getFakeUserScopeAccess();
-        List<ScopeAccess> saList = getScopeAccessList(sa);
-
-        String apiKey = "fakeApiKey";
-        EasyMock.expect(userService.authenticateWithApiKey(username, apiKey))
-            .andReturn(new UserAuthenticationResult(user, true));
-
-        EasyMock.expect(scopeAccessDao.getScopeAccessesByParent(user.getUniqueId())).andReturn(saList);
-
-        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
-
-        EasyMock.expect(scopeAccessDao.deleteScopeAccess(sa)).andReturn(true);
-
-        EasyMock.replay(scopeAccessDao, userService);
-
-        scopeAccessService
-            .getUserScopeAccessForClientIdByUsernameAndApiCredentials(username,
-                apiKey, clientId);
-        //TODO add a new test for updateExpiredUserScopeAccess
-        //EasyMock.verify(scopeAccessService, userService);
-    }
-
-    @Test
-    public void shouldGetUserScopeAccessForClientId() {
-        UserScopeAccess usao = getFakeUserScopeAccess();
-        List<ScopeAccess> saList = getScopeAccessList(usao);
-        User user = new User();
-        user.setUniqueId("userUniqueId");
-
-        EasyMock.expect(scopeAccessDao.getScopeAccessesByParent("userUniqueId")).andReturn(saList);
-
-        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("userUniqueId", "clientId")).andReturn(usao);
-
-        EasyMock.expect(scopeAccessDao.deleteScopeAccess(usao)).andReturn(true);
-
-        EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getValidUserScopeAccessForClientId(
-                user, "clientId", null);
-        EasyMock.verify(scopeAccessDao);
     }
 
     @Test
@@ -461,34 +389,6 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             scopeAccessService.expireAllTokensForClient(fakeClient
                 .getClientId());
         }
-    }
-
-    @Test
-    public void shouldExpireAllTokensForCustomer() throws IOException, JAXBException {
-        Configuration config = EasyMock.createMock(Configuration.class);
-        EasyMock.expect(config.getInt("ldap.paging.limit.max")).andReturn(10);
-        Application client0 = getFakeClient();
-        List<Application> clientsList = new ArrayList<Application>();
-        clientsList.add(client0);
-        Applications clients = new Applications();
-        clients.setClients(clientsList);
-        EasyMock.expect(
-            applicationService.getByCustomerId(customerId, 0, 1000))
-            .andReturn(clients);
-
-        User user0 = getFakeUser();
-        List<User> usersList = new ArrayList<User>();
-        usersList.add(user0);
-        Users users = new Users();
-        users.setUsers(usersList);
-        EasyMock.expect(userService.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(1000)))
-            .andReturn(users);
-
-        setUpClientTokenExiprationTest(false, client0);
-        setUpUserTokenExiprationTest(false, user0);
-        EasyMock.replay(applicationService, userService, scopeAccessDao);
-        scopeAccessService.expireAllTokensForCustomer(customerId);
-        EasyMock.verify(applicationService, userService, scopeAccessDao);
     }
 
     @Test

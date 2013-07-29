@@ -5,12 +5,15 @@ import junit.framework.Assert;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import java.util.Date;
+
 public class PasswordTest {
 
     @Test
     public void shouldGenerateRandomPassword() {
-        Password randomPassword = Password.generateRandom(false);
-        String passwordValue = randomPassword.getValue();
+        User user = new User();
+        Password randomPassword = Password.generateRandom(false, user);
+        String passwordValue = user.getPassword();
 
         String regexpPattern = "^.*(?=.{10,})(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^+=?:]).*$";
 
@@ -45,7 +48,7 @@ public class PasswordTest {
 
     @Test
     public void shouldReturnCorrectPassword() {
-        Password exiPwd = Password.existingInstance("existingPasswordShouldBeAHash", new DateTime(), false);
+        Password exiPwd = Password.existingInstance("existingPasswordShouldBeAHash", new Date(), false);
         Assert.assertEquals("existingPasswordShouldBeAHash", exiPwd.getValue());
 
         Password newPwd = Password.newInstance("newPassword");
@@ -63,7 +66,7 @@ public class PasswordTest {
         Password pwd = Password.newInstance("Password");
         Assert.assertEquals(1281669005, pwd.hashCode());
 
-        pwd = Password.existingInstance("Password", new DateTime(), false);
+        pwd = Password.existingInstance("Password", new Date(), false);
         Assert.assertEquals(1281669191, pwd.hashCode());
     }
 
@@ -75,8 +78,8 @@ public class PasswordTest {
         Assert.assertTrue(pwd1.equals(pwd2));
         Assert.assertTrue(pwd1.equals(pwd1));
 
-        pwd1 = Password.existingInstance("Password", new DateTime(), false);
-        pwd2 = Password.existingInstance("Password", new DateTime(), false);
+        pwd1 = Password.existingInstance("Password", new Date(), false);
+        pwd2 = Password.existingInstance("Password", new Date(), false);
 
         Assert.assertTrue(pwd1.equals(pwd2));
         Assert.assertTrue(pwd1.equals(pwd1));

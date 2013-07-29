@@ -33,9 +33,15 @@ public interface UserService {
     
     void deleteUser(String username);
 
-    Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit);
+    List<User> getUsersByRCN(String RCN);
 
-    Users getAllUsers(FilterParam[] filters);
+    List<User> getUsersByUsername(String username);
+
+    List<User> getAllUsers();
+
+    List<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled);
+
+    List<User> getUsersByGroupId(String groupId);
 
     String generateApiKey();
     
@@ -45,7 +51,7 @@ public interface UserService {
 
     User getUser(String username);
 
-    Users getUsersByEmail(String email);
+    List<User> getUsersByEmail(String email);
 
     User getUserByAuthToken(String authToken);
     
@@ -55,7 +61,7 @@ public interface UserService {
     
     User getUserByRPN(String rpn);
 
-    Users getUsersByTenantId(String tenantId);
+    List<User> getUsersByTenantId(String tenantId);
 
     User getUserByTenantId(String tenantId);
 
@@ -88,9 +94,6 @@ public interface UserService {
 //    UserAuthenticationResult authenticateRacker(String username, String password);
 
     void softDeleteUser(User user) throws IOException, JAXBException;
-    boolean userExistsById(String userId);
-    boolean userExistsByUsername(String username);
-    boolean isMigratedUser(User user);
 
     void addBaseUrlToUser(String baseUrlId, User user);
 
@@ -112,9 +115,15 @@ public interface UserService {
 
     void setCloudRegionService(CloudRegionService cloudRegionService);
     
-    PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit);
+    PaginatorContext<User> getAllUsersPaged(int offset, int limit);
 
-    PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit);
+    PaginatorContext<User> getAllUsersPagedWithDomain(String domainId, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithDomainAndRole(String domainId, String roleId, int offset, int limit);
+
+    PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
 
     int getUserWeight(User user, String applicationId);
 
@@ -126,9 +135,7 @@ public interface UserService {
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
-    List<User> getUsersInDomain(String domainId, boolean enabled);
-
-    List<User> getUsersInDomain(String domainId);
+    List<User> getUsersWithDomain(String domainId);
 
     void setTenantService(TenantService tenantService);
 

@@ -34,7 +34,7 @@ public class UserConverter {
         user.setId(jaxbUser.getId());
 
         user.setCountry(jaxbUser.getCountry());
-        user.setTimeZone(jaxbUser.getTimeZone());
+        user.setTimeZoneId(jaxbUser.getTimeZone());
         user.setCustomerId(jaxbUser.getCustomerId());
         user.setDisplayName(jaxbUser.getDisplayName());
         user.setEmail(jaxbUser.getEmail());
@@ -45,7 +45,7 @@ public class UserConverter {
         user.setPersonId(jaxbUser.getPersonId());
         user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
-        user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
+        user.setMaxLoginFailuresExceeded(jaxbUser.isMaxLoginFailuresExceded());
         user.setUsername(jaxbUser.getUsername());
 
         if (jaxbUser.getPasswordCredentials() != null
@@ -138,7 +138,7 @@ public class UserConverter {
         com.rackspace.api.idm.v1.User returnedUser = objectFactory.createUser();
         returnedUser.setId(user.getId());
         returnedUser.setCountry(user.getCountry());
-        returnedUser.setTimeZone(user.getTimeZone());
+        returnedUser.setTimeZone(user.getTimeZoneId());
         returnedUser.setCustomerId(user.getCustomerId());
         returnedUser.setDisplayName(user.getDisplayName());
         returnedUser.setEmail(user.getEmail());
@@ -150,8 +150,7 @@ public class UserConverter {
         returnedUser.setPrefLanguage(user.getPreferredLang());
         returnedUser.setRegion(user.getRegion());
         returnedUser.setUsername(user.getUsername());
-        returnedUser.setMaxLoginFailuresExceded(user
-            .getMaxLoginFailuresExceded());
+        returnedUser.setMaxLoginFailuresExceded(user.getMaxLoginFailuresExceeded());
 
         try {
             if (user.getCreated() != null) {
@@ -171,15 +170,15 @@ public class UserConverter {
             logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
-        if (includePassword && user.getPasswordObj() != null
-            && !StringUtils.isBlank(user.getPasswordObj().getValue())) {
+        if (includePassword && user.getPassword() != null
+            && !StringUtils.isBlank(user.getPassword())) {
 
             com.rackspace.api.idm.v1.UserPasswordCredentials pc = objectFactory
                 .createUserPasswordCredentials();
             com.rackspace.api.idm.v1.UserPassword password = objectFactory
                 .createUserPassword();
 
-            password.setPassword(user.getPasswordObj().getValue());
+            password.setPassword(user.getPassword());
             pc.setCurrentPassword(password);
 
             returnedUser.setPasswordCredentials(pc);

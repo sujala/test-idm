@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
@@ -46,7 +45,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             userList.add(user)
             userIdList.add(id)
         }
-        users = entityFactory.createUsers(userList)
+        users = userList
 
         roleFilter = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom)]
         domainAndRoleFilters = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom),
@@ -60,6 +59,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockApplicationService(service)
         mockConfiguration(service)
         mockUserDao(service)
+        mockRackerDao(service)
         mockTenantService(service)
         mockEndpointService(service)
         mockAuthorizationService(service)
@@ -249,9 +249,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         given:
         String[] tenantIds = ["1","2"]
         tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
-        Users users = new Users()
-        users.users = new ArrayList<User>();
-        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        def users = [].asList()
+        users.add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
         userDao.getUsers(_) >> users
 
         when:
@@ -266,10 +265,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         given:
         String[] tenantIds = ["1","2"]
         tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
-        Users users = new Users()
-        users.users = new ArrayList<User>();
-        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
-        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        def users = [].asList()
+        users.add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
         userDao.getUsers(_) >> users
         authorizationService.hasUserAdminRole(_) >>> [false] >> true
 
@@ -286,10 +284,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         given:
         String[] tenantIds = ["1","2"]
         tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
-        Users users = new Users()
-        users.users = new ArrayList<User>();
-        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
-        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        def users = [].asList()
+        users.add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
         userDao.getUsers(_) >> users
         authorizationService.hasUserAdminRole(_) >> false
 
@@ -304,20 +301,19 @@ class DefaultUserServiceTest extends RootServiceTest {
         given:
         String[] tenantIds = ["1","2"]
         tenantService.getTenantRolesForTenant(_) >> [createTenantRole("someTenant", "1", tenantIds)].asList()
-        Users users = new Users()
-        users.users = new ArrayList<User>();
-        users.getUsers().add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
-        users.getUsers().add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
+        def users = [].asList()
+        users.add(createUser("ORD", true, "1", "someEmail", 1, "nast"))
+        users.add(createUser("ORD", true, "2", "someEmail", 1, "nast"))
         userDao.getUsers(_) >> users
         authorizationService.hasUserAdminRole(_) >> true
 
         when:
-        Users results = this.service.getUsersByTenantId("1")
+        def results = this.service.getUsersByTenantId("1")
 
         then:
-        results.users != null;
-        results.users.size() == 2
-        results.users.get(0).mossoId == 1
+        results != null;
+        results.size() == 2
+        results.get(0).mossoId == 1
     }
 
 
@@ -326,9 +322,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         def stringPaginator = createStringPaginatorContext()
 
         when:
-        service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
+        service.getUsersWithRole(sharedRandom, 0, 10)
 
         then:
+        userDao.getUsers(_) >> [].asList()
         tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
     }
 
@@ -340,51 +337,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
 
         when:
-        service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
+        service.getUsersWithRole(sharedRandom, 0, 10)
 
         then:
+        userDao.getUsers(_) >> [].asList()
         tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
-        3 * userDao.getUserById(_ as String)
-    }
-
-    def "getUsersWithRole calls first setUserContext"() {
-        given:
-        def listOfUsers = [ entityFactory.createUser() ].asList()
-        def listofUserIds = [ "1" ].asList()
-        def stringPaginator = createStringPaginatorContext().with {
-            it.valueList = listofUserIds
-            return it
-        }
-
-        when:
-        def userContext = service.getUsersWithRole(roleFilter, sharedRandom, 0, 10)
-
-        then:
-        tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
-        userDao.getUserById(_ as String) >>> [ entityFactory.createUser() ]
-
-        userContext.getValueList().equals(listOfUsers)
-        userContext.getLimit() == stringPaginator.getLimit()
-        userContext.getOffset() == stringPaginator.getOffset()
-        userContext.getTotalRecords() == stringPaginator.getTotalRecords()
-    }
-
-    def "getUsersWithRole calls second setUserContext"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = sharedRandom; return it}
-        tenantService.getGlobalRolesForUser(_) >> [tenantRole].asList()
-
-        when:
-        def userContext = service.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
-
-        then:
-        userDao.getAllUsersNoLimit(domainAndRoleFilters) >> entityFactory.createUsers(userList)
-
-        userContext.getValueList().equals(userList)
-        userContext.getLimit() == 10
-        userContext.getOffset() == 0
-        userContext.getTotalRecords() == 5
-
     }
 
     def "getUsersWithRole calls getAllUsersNoLimit"() {
@@ -392,53 +349,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         tenantService.getGlobalRolesForUser(_) >> [].asList()
 
         when:
-        service.getUsersWithRole(domainAndRoleFilters, sharedRandom, 0, 10)
+        service.getUsersWithRole(sharedRandom, 0, 10)
 
         then:
-        userDao.getAllUsersNoLimit(domainAndRoleFilters) >> entityFactory.createUsers(userList)
-    }
-
-    def "getAllUsersNoLimit calls userDao getAllUsersNoLimit"() {
-        when:
-        service.getAllUsersNoLimit(domainAndRoleFilters)
-        service.getAllUsers(roleFilter)
-
-        then:
-        1 * userDao.getAllUsersNoLimit(_ as FilterParam[])
-    }
-
-    def "getSubList returns empty list"() {
-        when:
-        def list = service.getSubList(userList, 100, 50)
-
-        then:
-        list.size == 0
-    }
-
-    def "getSubList returns same list"() {
-        when:
-        def returnedListOne = service.getSubList(userList, 0, 5)
-        def returnedListTwo = service.getSubList(userList, 0, 10)
-
-        then:
-        returnedListOne.equals(userList)
-        returnedListTwo.equals(userList)
-    }
-
-    def "getSubList returns subList"() {
-        when:
-        def listOne = service.getSubList(userList, 1, 2)
-        def listTwo = service.getSubList(userList, 0, 2)
-        def listThree = service.getSubList(userList, 3, 3)
-        def listFour = service.getSubList(userList, 3, 6)
-        def listFive = service.getSubList(userList, 0, 7)
-
-        then:
-        listOne.equals(userList.subList(1, 3))
-        listTwo.equals(userList.subList(0, 2))
-        listThree.equals(userList.subList(3, userList.size()))
-        listFour.equals(userList.subList(3, userList.size()))
-        listFive.equals(userList)
+        userDao.getUsers(_) >> userList
     }
 
     def "filterUsersForRole no Users have role"() {
@@ -448,7 +362,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         tenantService.getGlobalRolesForUser(_) >> new ArrayList<TenantRole>();
 
         when:
-        service.filterUsersForRole(users, list, roleId)
+        service.filterUsersForRole(users, roleId)
 
         then:
         list.empty
@@ -456,14 +370,13 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "filterUsersForRole all Users have role"() {
         given:
-        def list = [].asList()
         tenantService.getGlobalRolesForUser(_) >> [].asList()
 
         when:
-        service.filterUsersForRole(users, list, sharedRandom)
+        def list = service.filterUsersForRole(users, sharedRandom)
 
         then:
-        list.equals(users.users)
+        list.equals(users)
     }
 
     def "filterUsersForRole some Users have role"() {
@@ -477,16 +390,12 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.username = "userWithRole"
             return it
         }
-        def users = entityFactory.createUsers().with {
-            it.users = [ user, entityFactory.createUser() ].asList()
-            return it
-        }
-        def usersWithRole = [].asList()
+        def users = [ user, entityFactory.createUser() ].asList()
 
         tenantService.getGlobalRolesForUser(_ as User) >>> [ [].asList(), [].asList() ]
 
         when:
-        service.filterUsersForRole(users, usersWithRole, sharedRandom)
+        def usersWithRole = service.filterUsersForRole(users, sharedRandom)
 
         then:
         usersWithRole.size() == 1
@@ -692,14 +601,14 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.enabled = true
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
+        def users = [subUser].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
 
         then:
         authorizationService.hasUserAdminRole(user) >> false
-        userDao.getUsersByDomainId(_) >> users
+        userDao.getUsersByDomain(_) >> users
         0 * userDao.updateUser(_, _)
     }
 
@@ -710,14 +619,14 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.id = "subUserId"
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
-        domainService.getDomainAdmins(_, _) >> [].asList()
+        def users = [subUser].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
 
         then:
-        userDao.getUsersByDomainId(_) >> users
+        userDao.getUsersByDomain(_) >> users
         authorizationService.hasUserAdminRole(user) >> true
         1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
             assert (subUser1.enabled == false)
@@ -732,15 +641,15 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.enabled = false
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
-        domainService.getDomainAdmins(_, _) >> [].asList()
+        def users = [subUser].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
 
         then:
         authorizationService.hasUserAdminRole(user) >> true
-        userDao.getUsersByDomainId(_) >> users
+        userDao.getUsersByDomain(_) >> users
         0 * userDao.updateUser(_, _)
     }
 
@@ -751,14 +660,14 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.id = "subUserId"
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
-        domainService.getDomainAdmins(_, _) >> [].asList()
+        def users = [subUser].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(user)
 
         then:
-        userDao.getUsersByDomainId(_) >> users
+        userDao.getUsersByDomain(_) >> users
         authorizationService.hasUserAdminRole(user) >> true
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
     }
@@ -775,16 +684,16 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.username = "subUserUsername"
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
-        domainService.getDomainAdmins(_, _) >> [].asList()
+        def users = [subUser].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
         service.updateUser(user, false)
 
         then:
         userDao.getUserById(_) >> currentUser
-        userDao.getUsersByDomainId(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        userDao.getUsersByDomain(_) >> users
+        1 * authorizationService.hasUserAdminRole(currentUser) >> true
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
         1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
             assert (subUser1.enabled == false)
@@ -793,17 +702,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
     }
 
-    def "uses DAO to get users in domain with domainId and enabled filter"() {
+    def "uses DAO to get users in domain with domainId"() {
         when:
-        service.getUsersInDomain("domainId", true)
-
-        then:
-        1 * userDao.getUsersByDomain("domainId", true)
-    }
-
-    def "uses DAO to get users in domain with domainId and without enabled filter"() {
-        when:
-        service.getUsersInDomain("domainId")
+        service.getUsersWithDomain("domainId")
 
         then:
         1 * userDao.getUsersByDomain("domainId")
@@ -821,7 +722,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.disableUserAdminSubUsers(userAdmin)
 
         then:
-        1 * domainService.getDomainAdmins(userAdmin.getDomainId(), true) >> [ entityFactory.createUser() ].asList()
+        1 * domainService.getEnabledDomainAdmins(userAdmin.getDomainId()) >> [ entityFactory.createUser() ].asList()
         0 * userDao.getUsersByDomain(userAdmin.getDomainId())
     }
 
@@ -837,15 +738,15 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.id = "2"
             return it
         }
-        def users = entityFactory.createUsers([subUser].asList())
+        def users = [subUser].asList()
         authorizationService.hasUserAdminRole(userAdmin) >> true
-        domainService.getDomainAdmins(_, true) >> [].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
         service.disableUserAdminSubUsers(userAdmin)
 
         then:
-        1 * userDao.getUsersByDomainId(_) >> users
+        1 * userDao.getUsersByDomain(_) >> users
         1 * userDao.updateUser(_, _)
     }
 
@@ -860,7 +761,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def result = service.getUserByScopeAccess(createRackerScopeAcccss())
 
         then:
-        userDao.getRackerByRackerId(_) >> racker
+        rackerDao.getRackerByRackerId(_) >> racker
         result == racker
 
         then:
@@ -875,11 +776,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         def result = service.getUsersByEmail("email@email.com")
 
         then:
-        1 * userDao.getUsersByEmail(_) >> entityFactory.createUsers([user].asList())
+        1 * userDao.getUsersByEmail(_) >> [user].asList()
 
         then:
-        result.users.get(0).username == user.username
-        result.users.get(0).email == user.email
+        result.get(0).username == user.username
+        result.get(0).email == user.email
     }
 
     def "reEncryptUsers re-encrypts users"() {

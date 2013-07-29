@@ -137,20 +137,7 @@ public class DefaultCustomerService implements CustomerService {
 //    }
     
     private List<User> getUserListForCustomerId(String customerId) {
-    	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
-        int offset = 0;
-        final int limit = 100;
-        List<User> userList = new ArrayList<User>();
-        Users users = null;
-
-        do {
-            users = userService.getAllUsers(filters, offset, limit);
-            offset = offset + limit;
-            userList.addAll(users.getUsers());
-
-        } while (offset <= users.getTotalRecords());
-
-        return userList;
+        return userService.getUsersByRCN(customerId);
     }
     
     private List<Application> getClientListForCustomerId(String customerId) {

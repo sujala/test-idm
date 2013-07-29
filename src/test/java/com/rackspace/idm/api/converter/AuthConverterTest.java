@@ -61,13 +61,6 @@ public class AuthConverterTest {
     }
 
     @Test
-    public void toAuthDataJaxb_withAuthData_setsUser() throws Exception {
-        authData.setUser(new User("username"));
-        JAXBElement<com.rackspace.api.idm.v1.AuthData> authDataJAXBElement = authConverter.toAuthDataJaxb(authData);
-        assertThat("user", authDataJAXBElement.getValue().getUser().getUsername(), equalTo("username"));
-    }
-
-    @Test
     public void toAuthDataJaxb_withAuthData_setsRacker() throws Exception {
         Racker racker = new Racker();
         racker.setRackerId("rackerId");

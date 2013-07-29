@@ -8,12 +8,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Modification;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTimeZone;
@@ -201,7 +196,6 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
     
     private User createTestUser() {
         User user = new User();
-        user.setUniqueId(userDN);
         return user;
     }
     
@@ -213,18 +207,25 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     private User createTestUserInstance() {
         // Password pwd = Password.newInstance("password_to_delete");
-        Password pwd = Password.generateRandom(false);
-        User newUser = new User("deleteme", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
-            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
-            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!","1235"));
+        User newUser = new User();
+        newUser.setUsername("deleteme");
+        newUser.setCustomerId("RCN-DELETE-ME_NOW");
+        newUser.setEmail("bademail@example.com");
+        newUser.setFirstname("delete_my_firstname");
+        newUser.setMiddlename("delete_my_middlename");
+        newUser.setLastname("delete_my_lastname");
+        newUser.setPreferredLang(Locale.KOREA.toString());
+        newUser.setTimeZoneId(DateTimeZone.UTC.getID());
+        Password.generateRandom(false, newUser);
+        newUser.setSecretQuestion("What is your favourite colur?");
+        newUser.setSecretAnswer("Yellow. No, Blue! Arrrrgh!");
+        newUser.setSecretQuestionId("1235");
         newUser.setApiKey("XXX");
         newUser.setCustomerId("RACKSPACE");
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
         newUser.setRegion("ORD");
-        newUser.setDefaults();
         newUser.setNastId("TESTNASTID");
         newUser.setMossoId(88888);
         newUser.setId(id);

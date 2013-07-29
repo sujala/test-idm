@@ -31,6 +31,10 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
         return OBJECTCLASS_CLOUDGROUP;
     }
 
+    public String getSortAttribute() {
+        return ATTR_GROUP_ID;
+    }
+
     @Override
     public void addGroup(Group group) {
         addObject(group);

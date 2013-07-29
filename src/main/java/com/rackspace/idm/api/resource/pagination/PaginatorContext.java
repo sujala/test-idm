@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.pagination;
 
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exception.BadRequestException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import lombok.Data;
@@ -40,4 +41,28 @@ public class PaginatorContext<T> {
         }
         return valueList;
     }
+
+    public void update(List<T> list, int offset, int limit) {
+        this.totalRecords = list.size();
+        this.limit = limit;
+        this.offset = offset;
+        valueList = getSubList(list, offset, limit);
+    }
+
+    private List<T> getSubList(List<T> list, int offset, int limit) {
+        if (offset > list.size()) {
+            return new ArrayList<T>();
+        }
+
+        if (list.size() > limit) {
+            if (list.size() > offset + limit) {
+                return list.subList(offset, offset + limit);
+            } else {
+                return list.subList(offset, list.size());
+            }
+        } else {
+            return list.subList(offset, list.size());
+        }
+    }
+
 }

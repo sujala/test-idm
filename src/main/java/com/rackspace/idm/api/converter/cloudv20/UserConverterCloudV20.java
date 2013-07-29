@@ -34,6 +34,7 @@ public class UserConverterCloudV20 {
         userDO.setDisplayName(user.getDisplayName());
         userDO.setEnabled(user.isEnabled());
         if(user instanceof UserForCreate){
+            userDO.setUserPassword(((UserForCreate) user).getPassword());
             userDO.setPassword(((UserForCreate) user).getPassword());
         }
         if(user.getOtherAttributes()!=null){

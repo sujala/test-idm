@@ -161,14 +161,12 @@ public class DefaultTenantServiceTestOld {
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIdIsBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         User user = new User();
-        user.setUniqueId("");
         defaultTenantService.addTenantRoleToUser(user,null);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIdIsBlankAndRoleExists_throwsIllegalArgumentException() throws Exception {
         User user = new User();
-        user.setUniqueId("");
         TenantRole tenantRole = new TenantRole();
         defaultTenantService.addTenantRoleToUser(user,tenantRole);
     }
@@ -176,30 +174,7 @@ public class DefaultTenantServiceTestOld {
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_nullRole_throwsIllegalArgumentException() throws Exception {
         User user = new User();
-        user.setUniqueId("123");
         defaultTenantService.addTenantRoleToUser(user,null);
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void addTenantRoleToUser_clientIsNull_throwsNotFoundException() throws Exception {
-        User user = new User();
-        user.setUniqueId("123");
-        TenantRole role = new TenantRole();
-        doReturn(null).when(spy).getGlobalRolesForUser(user);
-        when(applicationService.getById(null)).thenReturn(null);
-        defaultTenantService.addTenantRoleToUser(user,role);
-
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void addTenantRoleToUser_clientRoleIsNull_throwsNotFoundException() throws Exception {
-        User user = new User();
-        user.setUniqueId("123");
-        TenantRole role = new TenantRole();
-        when(applicationService.getById(null)).thenReturn(new Application());
-        when(applicationService.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(null);
-        defaultTenantService.addTenantRoleToUser(user,role);
-
     }
 
     @Test (expected = IllegalArgumentException.class)

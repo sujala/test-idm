@@ -665,7 +665,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (customer.getPasswordRotationEnabled()) {
             int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
-            DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
+            DateTime timeOfLastPwdChange = new DateTime(user.getPasswordLastUpdated());
             DateTime passwordExpirationDate = timeOfLastPwdChange.plusDays(passwordRotationDurationInDays);
             logger.debug("Password expiration date set: {}", passwordExpirationDate);
             return passwordExpirationDate;

@@ -24,7 +24,7 @@ public interface TenantRoleDao {
     void deleteTenantRoleForUser(User user, TenantRole tenantRole);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
-    PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
+    List<String> getIdsForUsersWithTenantRole(String roleId);
 
     TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
 }
