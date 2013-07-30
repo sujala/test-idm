@@ -117,7 +117,7 @@ class V1Factory {
         return createEndpointTemplate(1, NAME)
     }
 
-    def createEndpointTemplate(String id, String type, String publicUrl) {
+    def createEndpointTemplate(String id, String type, String publicUrl, String name) {
         def localPublicUrl = publicUrl
         if (type == null) {
             type = "compute"
@@ -129,6 +129,7 @@ class V1Factory {
             it.id = id as int
             it.type = type
             it.publicURL = localPublicUrl
+            it.name = name
             return it
         }
     }

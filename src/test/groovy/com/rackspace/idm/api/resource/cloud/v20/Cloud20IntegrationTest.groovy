@@ -14,21 +14,13 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Ignore
 import spock.lang.Shared
-import spock.lang.Stepwise
 import spock.lang.Unroll
-import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
-import testHelpers.V2Factory
-
 import org.openstack.docs.identity.api.v2.*
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
-
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
-import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.SearchResultEntry
@@ -121,7 +113,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
-        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, null, null))
+        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, null, null, "name"))
         def addPolicyResponse = cloud20.addPolicy(serviceAdminToken, v1Factory.createPolicy("name", null, null))
         def getPolicyResponse = cloud20.getPolicy(serviceAdminToken, addPolicyResponse.location)
         policyId = getPolicyResponse.getEntity(Policy).id as String
@@ -2030,7 +2022,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "negativeTenantUser$random"
         def tenant = v2Factory.createTenant("-754612", "-754612")
         def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com")
+        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "name")
 
         when:
         def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "negtenDomain$random", password)).getEntity(User)
@@ -2054,6 +2046,47 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         createEndpointTemplate != null
         addRoleToUserOnTenant.status == 200
         addEndpointToTenant.status == 200
+    }
+
+    def "Do not display a same endpoint if user has two roles on the same tenant" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "deDupeUser$random"
+        def tenant = v2Factory.createTenant("754612", "754612")
+        def role = v2Factory.createRole("dupeRole1$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role2 = v2Factory.createRole("dupeRole2$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "cloudServers")
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "deDupeDomain$random", password)).getEntity(User)
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def createRole2 = cloud20.createRole(identityAdminToken, role2).getEntity(Role).value
+        def createEndpointTemplate = cloud20.addEndpointTemplate(identityAdminToken, endpointTemplate).getEntity(EndpointTemplate).value
+
+        def addRoleToUserOnTenant = cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id)
+        def addRole2ToUserOnTenant = cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole2.id)
+        def addEndpointToTenant = cloud20.addEndpoint(identityAdminToken, addTenant.id, endpointTemplate)
+
+        def authResponse = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value
+
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+
+
+        then:
+        createUser != null
+        addTenant != null
+        createRole != null
+        createEndpointTemplate != null
+        addRoleToUserOnTenant.status == 200
+        addRole2ToUserOnTenant.status == 200
+        addEndpointToTenant.status == 200
+        authResponse.serviceCatalog.service.size() == 1
+        authResponse.getServiceCatalog().getService()[0].getEndpoint().size() == 1
     }
 
     def authAndExpire(String username, String password) {
