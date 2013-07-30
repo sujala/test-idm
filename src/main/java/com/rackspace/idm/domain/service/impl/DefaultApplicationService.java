@@ -73,13 +73,13 @@ public class DefaultApplicationService implements ApplicationService {
             this.deleteDefinedPermission(definedPerm);
         }
         
-        List<ClientRole> roles = applicationDao.getClientRolesByClientId(clientId);
+        List<ClientRole> roles = applicationRoleDao.getClientRolesForApplication(client);
         
         for (ClientRole role : roles) {
             this.deleteClientRole(role);
         }
 
-        applicationDao.deleteClient(client);
+        applicationDao.deleteApplication(client);
         logger.debug("Deleted Client: {}", clientId);
     }
 
@@ -104,7 +104,7 @@ public class DefaultApplicationService implements ApplicationService {
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getRCN());
+            sa.setClientRCN(client.getRcn());
             sa = scopeAccessService.addDirectScopeAccess(client.getUniqueId(), sa);
         }
 
@@ -154,7 +154,7 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
-        return applicationDao.getAllClients(filters, offset, limit);
+        return applicationDao.getAllApplications(filters, offset, limit);
     }
 
     @Override
@@ -202,7 +202,7 @@ public class DefaultApplicationService implements ApplicationService {
 
         Permission permission = new DefinedPermission();
         permission.setPermissionId(permissionId);
-        permission.setCustomerId(client.getRCN());
+        permission.setCustomerId(client.getRcn());
         permission.setClientId(client.getClientId());
 
         permission = scopeAccessService.getPermissionForParent(client.getUniqueId(), permission);
@@ -218,7 +218,7 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("Find Permission by ClientId: {}", client.getClientId());
         Permission filter = new Permission();
         filter.setClientId(client.getClientId());
-        filter.setCustomerId(client.getRCN());
+        filter.setCustomerId(client.getRcn());
 
         List<Permission> permissions = scopeAccessService.getPermissionsForParentByPermission(client.getUniqueId(), filter);
 

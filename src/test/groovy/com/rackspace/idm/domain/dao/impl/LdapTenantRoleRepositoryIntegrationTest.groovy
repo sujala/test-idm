@@ -44,7 +44,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
 
     def cleanup() {
         userRepository.deleteUser(user)
-        applicationRepository.deleteClient(application)
+        applicationRepository.deleteApplication(application)
     }
 
     def "tenant role crud for user"() {

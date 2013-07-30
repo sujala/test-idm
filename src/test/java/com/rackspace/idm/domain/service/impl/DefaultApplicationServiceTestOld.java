@@ -72,7 +72,7 @@ public class DefaultApplicationServiceTestOld {
     @Test
     public void getAllApplications_callsClientDao_getAllClients() throws Exception {
         defaultApplicationService.getAllApplications(null, 0, 0);
-        verify(applicationDao).getAllClients(null, 0, 0);
+        verify(applicationDao).getAllApplications(null, 0, 0);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class DefaultApplicationServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_customerIdDoesNotMatch_throwsNotFoundException() throws Exception {
         Application client = new Application();
-        client.setRCN("rcn");
+        client.setRcn("rcn");
         client.setClientId("clientId");
         DefinedPermission permission = new DefinedPermission();
         permission.setClientId("clientId");
@@ -139,7 +139,7 @@ public class DefaultApplicationServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_clientIdDoesNotMatch_throwsNotFoundException() throws Exception {
         Application client = new Application();
-        client.setRCN("rcn");
+        client.setRcn("rcn");
         client.setClientId("clientId");
         DefinedPermission permission = new DefinedPermission();
         permission.setClientId("clientId");
@@ -153,7 +153,7 @@ public class DefaultApplicationServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_permissionNotEnabled_throwsNotFoundException() throws Exception {
         Application client = new Application();
-        client.setRCN("rcn");
+        client.setRcn("rcn");
         client.setClientId("clientId");
         DefinedPermission permission = new DefinedPermission();
         permission.setClientId("clientId");
@@ -168,7 +168,7 @@ public class DefaultApplicationServiceTestOld {
     @Test
     public void checkAndGetPermission_permissionCreated_returnsCorrectly() throws Exception {
         Application client = new Application();
-        client.setRCN("rcn");
+        client.setRcn("rcn");
         client.setClientId("clientId");
         DefinedPermission permission = new DefinedPermission();
         permission.setClientId("clientId");
@@ -200,27 +200,6 @@ public class DefaultApplicationServiceTestOld {
     public void getClientRolesByClientId_throwsNotFoundException() throws Exception {
         when(applicationDao.getApplicationByClientId("blah")).thenReturn(null);
         defaultApplicationService.getClientRolesByClientId("blah");
-    }
-
-    @Test
-    public void getAllClientRoles_callsClientDao_getAllClientRoles() throws Exception {
-        List<ClientRole> roles = new ArrayList<ClientRole>();
-        when(applicationDao.getAllClientRoles(null)).thenReturn(roles);
-        defaultApplicationService.getAllClientRoles();
-    }
-
-    @Test
-    public void getClientRoleByClientIdAndRoleName_callsClientDao_getClientRoleByClientIdAndRoleName() throws Exception {
-        when(applicationDao.getClientRoleByClientIdAndRoleName("clientId", "roleName")).thenReturn(new ClientRole());
-        defaultApplicationService.getClientRoleByClientIdAndRoleName("clientId", "roleName");
-        verify(applicationRoleDao).getClientRoleByApplicationAndName("clientId", "roleName");
-    }
-
-    @Test
-    public void getClientRoleById_callsClientDao_getClientRoleById() throws Exception {
-        when(applicationDao.getClientRoleById("id")).thenReturn(new ClientRole());
-        defaultApplicationService.getClientRoleById("id");
-        verify(applicationRoleDao).getClientRole("id");
     }
 
     @Test
@@ -329,17 +308,5 @@ public class DefaultApplicationServiceTestOld {
         doReturn(definedPermissionList).when(spy).getDefinedPermissionsByClient(client);
         spy.delete("clientId");
         verify(spy).deleteDefinedPermission(definedPermission);
-    }
-
-    @Test
-    public void delete_callsDeleteClientRole() throws Exception {
-        Application client = new Application();
-        ClientRole clientRole = new ClientRole();
-        List<ClientRole> clientRoleList = new ArrayList<ClientRole>();
-        clientRoleList.add(clientRole);
-        when(applicationDao.getApplicationByClientId("clientId")).thenReturn(client);
-        when(applicationDao.getClientRolesByClientId("clientId")).thenReturn(clientRoleList);
-        spy.delete("clientId");
-        verify(spy).deleteClientRole(clientRole);
     }
 }

@@ -4,9 +4,11 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.Data;
+import lombok.*;
+import org.apache.commons.lang.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -32,7 +34,7 @@ public class Application implements Auditable, UniqueId {
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name = null;
 
     @LDAPField(attribute = LdapRepository.ATTR_OPENSTACK_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
@@ -69,7 +71,6 @@ public class Application implements Auditable, UniqueId {
 
     private List<TenantRole> roles = null;
 
-
     public Application() {
     }
 
@@ -98,14 +99,18 @@ public class Application implements Auditable, UniqueId {
         return clientSecret;
     }
 
+    @LDAPSetter(attribute = LdapRepository.ATTR_CLIENT_SECRET)
     public void setClientSecret(String secret) {
         if (secret != null) {
             this.clientSecret = ClientSecret.newInstance(secret);
         }
     }
 
-    @LDAPGetter(attribute = LdapRepository.ATTR_PASSWORD, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    @LDAPGetter(attribute = LdapRepository.ATTR_CLIENT_SECRET, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getClientSecret() {
+        if (clientSecret == null) {
+            return null;
+        }
         return this.clientSecret.getValue();
     }
 

@@ -39,7 +39,7 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         Application deleteme = repo.getApplicationByClientId("DELETE_My_ClientId");
         User deleteme2 = userRepo.getUserById("XXXX");
         if (deleteme != null) {
-            repo.deleteClient(deleteme);
+            repo.deleteApplication(deleteme);
         }
         if (deleteme2 != null) {
             userRepo.deleteUser(deleteme2.getUsername());
@@ -115,13 +115,13 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         Application checkClient = repo.getApplicationByClientId(newClient.getClientId());
         Assert.assertNotNull(checkClient);
         Assert.assertEquals("DELETE_My_Name", checkClient.getName());
-        repo.deleteClient(newClient);
+        repo.deleteApplication(newClient);
     }
 
     @Test
     public void shouldDeleteClient() {
         Application newClient = addNewTestClient();
-        repo.deleteClient(newClient);
+        repo.deleteApplication(newClient);
         Application idontexist = repo.getApplicationByName(newClient.getName());
         Assert.assertNull(idontexist);
     }
@@ -139,13 +139,13 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         try {
             repo.updateApplication(newClient);
         } catch (IllegalStateException e) {
-            repo.deleteClient(newClient);
+            repo.deleteApplication(newClient);
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
         Application changedClient = repo.getApplicationByClientId(clientId);
 
-        repo.deleteClient(newClient);
+        repo.deleteApplication(newClient);
         Assert.assertEquals(clientSecret, changedClient.getClientSecretObj());
     }
      
@@ -154,26 +154,6 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
     public void shouldAuthenticateForCorrectCredentials() {
         ClientAuthenticationResult authenticated = repo.authenticate("18e7a7032733486cd32f472d7bd58f709ac0d221", "Password1");
         Assert.assertTrue(authenticated.isAuthenticated());
-    }
-
-    @Test
-    public void shouldGenerateModifications() {
-        Application client = createTestClientInstance();
-        Application cClient = createTestClientInstance();
-        cClient.setName("changed_client_name");
-        cClient.setClientSecretObj(ClientSecret
-            .newInstance("changed_client_secret"));
-
-        List<Modification> mods = null;;
-        try {
-            mods = repo.getModifications(client, cClient);
-        } catch (InvalidCipherTextException e) {
-        } catch (GeneralSecurityException e) {
-        }
-
-        Assert.assertEquals(2, mods.size());
-        Assert.assertEquals("changed_client_secret", mods.get(0).getAttribute()
-            .getValue());
     }
 
     @Test

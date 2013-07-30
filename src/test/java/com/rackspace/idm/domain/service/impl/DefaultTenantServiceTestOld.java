@@ -293,7 +293,6 @@ public class DefaultTenantServiceTestOld {
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToClient_clientIdIsBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         Application application = new Application();
-        application.setUniqueId("");
         defaultTenantService.addTenantRoleToClient(application,null);
     }
 
@@ -301,14 +300,12 @@ public class DefaultTenantServiceTestOld {
     public void addTenantRoleToClient_clientIdIsBlankAndRoleExists_throwsIllegalArgumentException() throws Exception {
         TenantRole tenantRole = new TenantRole();
         Application application = new Application();
-        application.setUniqueId("");
         defaultTenantService.addTenantRoleToClient(application,tenantRole);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToClient_clientIdIsNotBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         Application application = new Application();
-        application.setUniqueId("123");
         defaultTenantService.addTenantRoleToClient(application,null);
     }
 
@@ -316,7 +313,6 @@ public class DefaultTenantServiceTestOld {
     public void addTenantRoleToClient_ownerIsNull_throwsNotFoundException() throws Exception {
         TenantRole tenantRole = new TenantRole();
         Application application = new Application();
-        application.setUniqueId("123");
         when(applicationService.getById(null)).thenReturn(null);
         defaultTenantService.addTenantRoleToClient(application,tenantRole);
     }
@@ -325,7 +321,6 @@ public class DefaultTenantServiceTestOld {
     public void addTenantRoleToClient_clientRoleIsNull_throwsNotFoundException() throws Exception {
         TenantRole tenantRole = new TenantRole();
         Application application = new Application();
-        application.setUniqueId("123");
         when(applicationService.getById(null)).thenReturn(new Application());
         when(applicationService.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(null);
         defaultTenantService.addTenantRoleToClient(application, tenantRole);
@@ -335,7 +330,6 @@ public class DefaultTenantServiceTestOld {
     public void addTenantRoleToClient_scopeAccessIsNotNull_doesNotCallScopeAccessServiceMethod() throws Exception {
         TenantRole tenantRole = new TenantRole();
         Application application = new Application();
-        application.setUniqueId("123");
         when(applicationService.getById(null)).thenReturn(new Application());
         when(applicationService.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(new ClientRole());
         when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());

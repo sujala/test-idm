@@ -22,7 +22,7 @@ public class ApplicationConverter {
     public Application toClientDO(com.rackspace.api.idm.v1.Application jaxbClient) {
         Application application = new Application();
         application.setClientId(jaxbClient.getClientId());
-        application.setRCN(jaxbClient.getCustomerId());
+        application.setRcn(jaxbClient.getCustomerId());
         application.setName(jaxbClient.getName());
         application.setCallBackUrl(jaxbClient.getCallBackUrl());
         application.setTitle(jaxbClient.getTitle());
@@ -98,7 +98,7 @@ public class ApplicationConverter {
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
         returnedApplication.setClientId(application.getClientId());
-        returnedApplication.setCustomerId(application.getRCN());
+        returnedApplication.setCustomerId(application.getRcn());
         returnedApplication.setName(application.getName());
         returnedApplication.setDescription(application.getDescription());
 
@@ -109,8 +109,8 @@ public class ApplicationConverter {
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
         returnedApplication.setClientId(client.getClientId());
-        returnedApplication.setCustomerId(client.getRCN());
-        returnedApplication.setEnabled(client.isEnabled());
+        returnedApplication.setCustomerId(client.getRcn());
+        returnedApplication.setEnabled(client.getEnabled());
         returnedApplication.setName(client.getName());
         returnedApplication.setCallBackUrl(client.getCallBackUrl());
         returnedApplication.setTitle(client.getTitle());
@@ -137,7 +137,7 @@ public class ApplicationConverter {
     	
         com.rackspace.api.idm.v1.Application jaxbApplication = objectFactory.createApplication();
         jaxbApplication.setClientId(client.getClientId());
-        jaxbApplication.setCustomerId(client.getRCN());
+        jaxbApplication.setCustomerId(client.getRcn());
         jaxbApplication.setName(client.getName());
         jaxbApplication.setRoles(rolesConverter.toRoleJaxbFromTenantRole(client.getRoles()).getValue());
 

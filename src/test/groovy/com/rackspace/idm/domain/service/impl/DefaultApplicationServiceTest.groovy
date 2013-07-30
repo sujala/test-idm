@@ -78,7 +78,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         scopeAccessService.getPermissionsForParentByPermission(_, _) >> [ definedPermission ].asList()
         scopeAccessService.getPermissionsByPermission(_) >> [ permission ].asList()
 
-        applicationDao.getClientRolesByClientId(CLIENT_ID) >> [ clientRole ].asList()
+        applicationRoleDao.getClientRolesForApplication(entityFactory.createApplication()) >> [ clientRole ].asList()
         tenantService.getTenantRolesForClientRole(_) >> [ entityFactory.createTenantRole() ].asList()
 
         when:
@@ -99,7 +99,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         }
 
         then:
-        1 * applicationDao.deleteClient(_)
+        1 * applicationDao.deleteApplication(_)
     }
 
     def "getting available clientRoles paged calls applicationRoleDao method"() {
@@ -265,7 +265,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationDao.getApplicationByClientId(_) >> application
         1 * scopeAccessService.getPermissionForParent(_, _) >> { arg1, Permission arg2 ->
             assert(arg2.getPermissionId().equals("permissionId"))
-            assert(arg2.getCustomerId().equals(application.getRCN()))
+            assert(arg2.getCustomerId().equals(application.getRcn()))
             assert(arg2.getClientId().equals(application.getClientId()))
         }
     }
@@ -282,7 +282,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getPermissionsForParentByPermission(_, _) >> { arg1, Permission arg2 ->
-            assert(arg2.getCustomerId().equals(application.getRCN()))
+            assert(arg2.getCustomerId().equals(application.getRcn()))
             assert(arg2.getClientId().equals(application.getClientId()))
             return [ ].asList()
         }

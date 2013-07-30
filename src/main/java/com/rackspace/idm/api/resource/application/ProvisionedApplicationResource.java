@@ -60,7 +60,7 @@ public class ProvisionedApplicationResource extends ParentResource {
         
         ClientScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(provisionedApplication.getClientId());
-        sa.setClientRCN(provisionedApplication.getRCN());
+        sa.setClientRCN(provisionedApplication.getRcn());
         sa.setAccessTokenExp(new DateTime().toDate());
         sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 

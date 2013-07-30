@@ -19,6 +19,10 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         random = ("$randomness").replace('-', "")
     }
 
+    def "add application is null throws illegal argument"() {
+
+    }
+
     def "can create application with salt and encryption versionId"() {
         given:
         def clientId = random
@@ -36,7 +40,7 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         when:
         applicationDao.addClient(application)
         def client = applicationDao.getApplicationByClientId(clientId)
-        applicationDao.deleteClient(client)
+        applicationDao.deleteApplication(client)
 
         then:
         client.salt == salt

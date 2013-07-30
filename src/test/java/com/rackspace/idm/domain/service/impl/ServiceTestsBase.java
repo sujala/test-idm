@@ -38,7 +38,6 @@ public class ServiceTestsBase {
         Application client = new Application(clientId, clientSecret, name, 
             customerId);
 
-        client.setUniqueId(uniqueId);
         return client;
     }
 

@@ -10,7 +10,7 @@ public interface ApplicationDao {
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
-    void deleteClient(Application client);
+    void deleteApplication(Application client);
 
     List<Application> getAllApplications();
 
@@ -26,7 +26,7 @@ public interface ApplicationDao {
 
     Applications getClientsByCustomerId(String customerId, int offset, int limit);
     
-    Applications getAllClients(List<FilterParam> filters, int offset, int limit);
+    Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
     
     void updateApplication(Application client);
     

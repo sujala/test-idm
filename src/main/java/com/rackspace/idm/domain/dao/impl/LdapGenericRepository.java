@@ -116,7 +116,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void addObject(T object) {
-        Audit audit = Audit.log((Auditable)object).add();
         addObject(getBaseDn(), object);
     }
 
@@ -127,6 +126,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalArgumentException(ERROR_GETTING_OBJECT);
         }
         getLogger().info("Adding object: {}", object);
+        getLogger().info("Adding object here: {}", dn);
         Audit audit = Audit.log((Auditable)object).add();
         try {
             final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);

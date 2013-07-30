@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.entity.ClientSecret
+import com.unboundid.ldap.sdk.Entry
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Specification
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -34,6 +37,12 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
 
     @Autowired
     private ApplicationRoleDao clientRoleDao
+
+    ClientSecret clientSecret = ClientSecret.newInstance("Secret")
+    String name = "name"
+    String customerId = "customerId"
+    String salt = "a1 b1"
+    String version = "0"
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace('-', "")
@@ -109,10 +118,12 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
     }
 
     def application(String id) {
-        new Application().with {
-            it.clientId = id
-            it.uniqueId = "clientId=$id,ou=applications,o=rackspace,dc=rackspace,dc=com"
-            return it
-        }
+        def dn = "clientId=$id,ou=applications,o=rackspace,dc=rackspace,dc=com"
+        Entry entry = new Entry(dn)
+        Application app = new Application(id, clientSecret, name, customerId)
+        app.ldapEntry = new ReadOnlyEntry(entry)
+        app.salt = salt
+        app.encryptionVersion = version
+        return app
     }
 }

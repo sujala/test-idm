@@ -138,7 +138,7 @@ public class ApplicationServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            customerService.getCustomer(client.getRCN()))
+            customerService.getCustomer(client.getRcn()))
             .andReturn(customer);
         EasyMock.replay(customerService);
 
@@ -158,7 +158,7 @@ public class ApplicationServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            customerService.getCustomer(client.getRCN()))
+            customerService.getCustomer(client.getRcn()))
             .andReturn(customer);
         EasyMock.replay(customerService);
 
@@ -174,7 +174,7 @@ public class ApplicationServiceTests {
     @Test
     public void shouldDeleteClient() {
         List<Permission> perms = new ArrayList<Permission>();
-        applicationDao.deleteClient(EasyMock.anyObject(Application.class));
+        applicationDao.deleteApplication(EasyMock.anyObject(Application.class));
         EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             getFakeClient());
 
@@ -187,9 +187,9 @@ public class ApplicationServiceTests {
                 EasyMock.anyObject(Permission.class))).andReturn(perms);
 
         List<ClientRole> clientRoles = new ArrayList<ClientRole>();
-        EasyMock.expect(applicationDao.getClientRolesByClientId(clientId)).andReturn(clientRoles);
+        EasyMock.expect(applicationRoleDao.getClientRolesForApplication(getFakeClient())).andReturn(clientRoles);
 
-        EasyMock.replay(applicationDao, scopeAccessService);
+        EasyMock.replay(applicationDao, scopeAccessService, applicationRoleDao);
 
         service.delete(clientId);
 
@@ -276,7 +276,6 @@ public class ApplicationServiceTests {
     private Application getFakeClient() {
         Application client = new Application(clientId, clientSecret, name,
             customerId);
-        client.setUniqueId(uniqueId);
         return client;
     }
 

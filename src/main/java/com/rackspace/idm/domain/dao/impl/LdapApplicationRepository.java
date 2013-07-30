@@ -46,11 +46,20 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void addClient(Application application) {
+        if (application == null) {
+            String errMsg = "Null instance of Client was passed in.";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         encryptPassword(application);
         addObject(application);
     }
 
     private void encryptPassword(Application application) {
+        if (application == null) {
+            return;
+        }
+
         String versionId = getEncryptionVersionId(application);
         String salt = getSalt(application);
 
@@ -66,23 +75,24 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     private void decryptPassword(Application application) {
-        if (application != null) {
+        if (application == null) {
+            return;
+        }
 
-            String versionId = getEncryptionVersionId(application);
-            String salt = getSalt(application);
+        String versionId = getEncryptionVersionId(application);
+        String salt = getSalt(application);
 
-            try {
-                String password = cryptHelper.decrypt(application.getClearPasswordBytes(), versionId, salt);
-                ClientSecret secret = ClientSecret.existingInstance(password);
-                application.setClientSecretObj(secret);
-                application.setClearPassword(password);
-            } catch (GeneralSecurityException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            } catch (InvalidCipherTextException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            }
+        try {
+            String password = cryptHelper.decrypt(application.getClearPasswordBytes(), versionId, salt);
+            ClientSecret secret = ClientSecret.existingInstance(password);
+            application.setClientSecretObj(secret);
+            application.setClearPassword(password);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
         }
     }
 
@@ -124,8 +134,10 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public void deleteClient(Application application) {
-        deleteObject(application);
+    public void deleteApplication(Application application) {
+        if (application != null) {
+            deleteObject(application);
+        }
     }
 
     @Override
@@ -135,16 +147,30 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getApplicationByClientId(String clientId) {
+        if (StringUtils.isBlank(clientId)) {
+            return null;
+        }
         return DecryptApplicationPassword(searchFilterGetApplicationByClientId(clientId));
     }
 
     @Override
     public Application getApplicationByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            getLogger().error("Null or Empty application name parameter");
+            throw new IllegalArgumentException("Null or Empty client name parameter.");
+        }
         return DecryptApplicationPassword(searchFilterGetApplicationByName(name));
     }
 
     @Override
     public Application getApplicationByCustomerIdAndClientId(String customerId, String clientId) {
+        if (StringUtils.isBlank(customerId)) {
+            getLogger().error("Null or Empty customer Id parameter");
+            throw new IllegalArgumentException("Null or Empty client name parameter.");
+        }
+        if (StringUtils.isBlank(clientId)) {
+            return null;
+        }
         return DecryptApplicationPassword(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
     }
 
@@ -162,11 +188,19 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getApplicationById(String id) {
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty application id parameter");
+            throw new IllegalArgumentException("Null or Empty client name parameter.");
+        }
         return DecryptApplicationPassword(searchFilterGetApplicationById(id));
     }
 
     @Override
     public Application getApplicationByScope(String scope) {
+        if (StringUtils.isBlank(scope)) {
+            getLogger().error("Null or Empty application scope parameter");
+            throw new IllegalArgumentException("Null or Empty client name parameter.");
+        }
         return DecryptApplicationPassword(searchFilterGetApplicationByScope(scope));
     }
 
@@ -195,7 +229,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Applications getAllClients(List<FilterParam> filters, int offset, int limit) {
+    public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
         getLogger().debug("Getting all applications");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
@@ -221,43 +255,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void updateApplication(Application application) {
-        getLogger().debug("Updating application {}", application);
-
-        if (application == null || StringUtils.isBlank(application.getClientId())) {
-            getLogger().error("Application instance is null or its clientId has no value");
-            throw new IllegalArgumentException("Bad parameter: The Application instance either null or its clientName has no value.");
-        }
-        String clientId = application.getClientId();
-        Application oldClient = getApplicationByClientId(clientId);
-
-        if (oldClient == null) {
-            getLogger().error("No record found for application {}", clientId);
-            throw new IllegalArgumentException("There is no existing record for the given application instance.");
-        }
-
-        Audit audit = Audit.log(application);
-        List<Modification> mods;
-        try {
-            mods = getModifications(oldClient, application);
-            if (mods.size() < 1) {
-                // No changes!
-                return;
-            }
-            audit.modify(mods);
-
-            updateEntry(oldClient.getUniqueId(), mods, audit);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        }
-
-        audit.succeed();
-        getLogger().debug("Updated application {}", application.getName());
+        updateObject(application);
     }
 
     @Override
@@ -281,163 +279,8 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         }
     }
 
-    Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        String versionId = getEncryptionVersionId(client);
-        String salt = getSalt(client);
-
-        if (!StringUtils.isBlank(client.getEncryptionVersion())) {
-            atts.add(new Attribute(ATTR_ENCRYPTION_VERSION_ID, client.getEncryptionVersion()));
-        }
-
-        if (!StringUtils.isBlank(client.getSalt())) {
-            atts.add(new Attribute(ATTR_ENCRYPTION_SALT, client.getSalt()));
-        }
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(client.getClientId())) {
-            atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
-        }
-
-        if (!StringUtils.isBlank(client.getOpenStackType())) {
-            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client.getOpenStackType()));
-        }
-
-        if (!StringUtils.isBlank(client.getName())) {
-            atts.add(new Attribute(ATTR_NAME, client.getName()));
-        }
-
-        if (!StringUtils.isBlank(client.getRcn())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client.getRcn()));
-        }
-
-        if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
-            atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret(), versionId, salt)));
-        }
-
-        if (client.getEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.getEnabled()).toUpperCase()));
-        }
-
-        if (!StringUtils.isBlank(client.getTitle())) {
-            atts.add(new Attribute(ATTR_TITLE, client.getTitle()));
-        }
-
-        if (!StringUtils.isBlank(client.getDescription())) {
-            atts.add(new Attribute(ATTR_DESCRIPTION, client.getDescription()));
-        }
-
-        if (!StringUtils.isBlank(client.getScope())) {
-            atts.add(new Attribute(ATTR_TOKEN_SCOPE, client.getScope()));
-        }
-
-        if (!StringUtils.isBlank(client.getCallBackUrl())) {
-            atts.add(new Attribute(ATTR_CALLBACK_URL, client.getCallBackUrl()));
-        }
-
-        if (client.getUseForDefaultRegion() != null) {
-            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion()).toUpperCase()));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        getLogger().debug("Found {} attributes for client {}.", attributes.length, client);
-        return attributes;
-    }
-
     Application getSingleSoftDeletedClient(Filter searchFilter) {
         return getObject(searchFilter, SOFT_DELETED_APPLICATIONS_BASE_DN);
-    }
-
-    List<Modification> getModifications(Application cOld, Application cNew) throws InvalidCipherTextException, GeneralSecurityException {
-        List<Modification> mods = new ArrayList<Modification>();
-
-        checkForRCNModification(cOld, cNew, mods);
-        checkForClientSecretModification(cNew, cryptHelper, mods);
-        checkForEnabledStatusModification(cOld, cNew, mods);
-        checkForTitleModification(cOld, cNew, mods);
-        checkForDescriptionModification(cOld, cNew, mods);
-        checkForScopeModification(cOld, cNew, mods);
-        checkForCallBackUrlModification(cOld, cNew, mods);
-        checkForUseForDefaultRegionModification(cOld,cNew,mods);
-
-        getLogger().debug("Found {} modifications.", mods.size());
-
-        return mods;
-    }
-
-    private void checkForCallBackUrlModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getCallBackUrl() != null) {
-            if (StringUtils.isBlank(cNew.getCallBackUrl())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_CALLBACK_URL));
-            } else if (!StringUtils.equals(cOld.getCallBackUrl(), cNew.getCallBackUrl())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_CALLBACK_URL, cNew.getCallBackUrl()));
-            }
-        }
-    }
-
-    private void checkForScopeModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getScope() != null) {
-            if (StringUtils.isBlank(cNew.getScope())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_TOKEN_SCOPE));
-            } else if (!StringUtils.equals(cOld.getScope(), cNew.getScope())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                        ATTR_TOKEN_SCOPE, cNew.getScope()));
-            }
-        }
-    }
-
-    private void checkForDescriptionModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getDescription() != null) {
-            if (StringUtils.isBlank(cNew.getDescription())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_DESCRIPTION));
-            } else if (!StringUtils.equals(cOld.getDescription(), cNew.getDescription())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_DESCRIPTION, cNew.getDescription()));
-            }
-        }
-    }
-
-    private void checkForTitleModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getTitle() != null) {
-            if (StringUtils.isBlank(cNew.getTitle())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_TITLE));
-            } else if (!StringUtils.equals(cOld.getTitle(), cNew.getTitle())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_TITLE, cNew.getTitle()));
-            }
-        }
-    }
-
-    private void checkForEnabledStatusModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getEnabled() != null && !cNew.getEnabled().equals(cOld.getEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.getEnabled()).toUpperCase()));
-        }
-    }
-
-    void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion()).toUpperCase()));
-        }
-    }
-
-    private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        //TODO null pointer?
-
-        String versionId = getEncryptionVersionId(cNew);
-        String salt = getSalt(cNew);
-
-        if (cNew.getClientSecretObj() != null && cNew.getClientSecretObj().isNew()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(
-                    cNew.getClientSecretObj().getValue(), versionId, salt)));
-        }
-    }
-
-    private void checkForRCNModification(Application cOld, Application cNew, List<Modification> mods) {
-        if (cNew.getRcn() != null && !cNew.getRcn().equals(cOld.getRcn())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, cNew.getRcn()));
-        }
     }
 
     @Override
@@ -452,6 +295,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getSoftDeletedApplicationById(String id) {
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException(
+                    "Null or Empty id parameter.");
+        }
         return getObject(searchFilterGetApplicationByClientId(id), getSoftDeletedBaseDn());
     }
 
@@ -546,5 +394,96 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
                 .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
+    }
+
+    Application getClient(SearchResultEntry resultEntry) {
+        Application client = new Application();
+        client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
+
+        client.setEncryptionVersion(resultEntry.getAttributeValue(ATTR_ENCRYPTION_VERSION_ID));
+        client.setSalt(resultEntry.getAttributeValue(ATTR_ENCRYPTION_SALT));
+
+        String versionId = getEncryptionVersionId(client);
+        String salt = getSalt(client);
+
+        try {
+            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), versionId, salt);
+            ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
+            client.setClientSecretObj(secret);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
+        client.setName(resultEntry.getAttributeValue(ATTR_NAME));
+
+        client.setRcn(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+
+        client.setOpenStackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
+
+        client.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
+
+        client.setCallBackUrl(resultEntry.getAttributeValue(ATTR_CALLBACK_URL));
+        client.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
+        client.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
+        client.setScope(resultEntry.getAttributeValue(ATTR_TOKEN_SCOPE));
+        client.setUseForDefaultRegion(resultEntry.getAttributeValueAsBoolean(ATTR_USE_FOR_DEFAULT_REGION));
+
+        getLogger().debug("Materialized Client object {}.", client);
+        return client;
+    }
+
+    Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
+
+        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
+
+        int contentCount = 0;
+
+        List<Application> clientList = new ArrayList<Application>();
+
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, null);
+
+        contentCount = entries.size();
+
+        if (offsets < contentCount) {
+
+            int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
+            int fromIndex = offsets;
+
+            List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
+
+            for (SearchResultEntry entry : subList) {
+                clientList.add(getClient(entry));
+            }
+        }
+
+        getLogger().debug("Found {} clients.", clientList.size());
+
+        Applications clients = new Applications();
+
+        clients.setLimit(limits);
+        clients.setOffset(offsets);
+        clients.setTotalRecords(contentCount);
+        clients.setClients(clientList);
+
+        return clients;
+    }
+
+    Application getSingleClient(Filter searchFilter) {
+        Application client = null;
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
+
+        if (entry != null) {
+            client = getClient(entry);
+        }
+
+        getLogger().debug(FOUND_CLIENT, client);
+
+        return client;
     }
 }

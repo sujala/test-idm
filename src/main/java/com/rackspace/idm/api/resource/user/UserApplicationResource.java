@@ -72,7 +72,7 @@ public class UserApplicationResource extends ParentResource {
         sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(application.getClientId());
-        sa.setClientRCN(application.getRCN());
+        sa.setClientRCN(application.getRcn());
         sa.setAccessTokenExp(new DateTime().toDate());
         sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
