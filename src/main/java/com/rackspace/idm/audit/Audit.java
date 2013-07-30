@@ -18,6 +18,7 @@ public class Audit {
 	public static final String PATH = "PATH";
 	public static final String WHO = "WHO";
 	public static final String GUUID = "GUUID";
+    public static final String X_FORWARDED_FOR = "X_FORWARDED_FOR";
 
 	private enum ACTION {
 		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH
@@ -144,7 +145,9 @@ public class Audit {
 			logger.info(
 					r + " {} {} [{}] {} {} {} {} {} {}",
 					new Object[] { event.action, target, event.context, StringUtils.defaultIfEmpty(MDC.get(WHO),"-"),
-							failureMsg, MDC.get(REMOTE_IP), MDC.get(HOST_IP),
+							failureMsg, MDC.get(REMOTE_IP),
+                            MDC.get(HOST_IP),
+                            MDC.get(X_FORWARDED_FOR),
 							MDC.get(PATH), MDC.get(GUUID) });
 		}
 	}

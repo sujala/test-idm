@@ -72,6 +72,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.HOST_IP, req.getLocalAddr());
             MDC.put(Audit.PATH, path);
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
+            String xForwardedFor = req.getHeader("X-Forwarded-For");
+            if(StringUtils.isNotBlank(xForwardedFor)){
+                MDC.put(Audit.X_FORWARDED_FOR, xForwardedFor);
+            }else {
+                MDC.put(Audit.X_FORWARDED_FOR, req.getRemoteAddr());
+            }
         }
 
         // skip token authentication for any url that ends with public.
