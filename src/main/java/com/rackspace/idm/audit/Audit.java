@@ -143,7 +143,7 @@ public class Audit {
 		Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
 		for (Event event : events) {
 			logger.info(
-					r + " {} {} [{}] {} {} {} {} {} {}",
+					r + " {} {} [{}] {} {} Remote: {} Host: {} X-Forwarded-For: {} {} {}",
 					new Object[] { event.action, target, event.context, StringUtils.defaultIfEmpty(MDC.get(WHO),"-"),
 							failureMsg, MDC.get(REMOTE_IP),
                             MDC.get(HOST_IP),
