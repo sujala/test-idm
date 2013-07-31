@@ -19,8 +19,6 @@ public interface ApplicationDao {
     Application getApplicationByName(String clientName);
 
     Application getApplicationByCustomerIdAndClientId(String customerId, String clientId);
-
-    Application getApplicationById(String inum);
     
     Application getApplicationByScope(String scope);
 

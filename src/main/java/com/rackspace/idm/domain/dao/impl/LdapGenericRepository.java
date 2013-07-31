@@ -126,7 +126,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalArgumentException(ERROR_GETTING_OBJECT);
         }
         getLogger().info("Adding object: {}", object);
-        getLogger().info("Adding object here: {}", dn);
         Audit audit = Audit.log((Auditable)object).add();
         try {
             final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
@@ -261,10 +260,10 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             List<String> tokens = Arrays.asList(oldRdn.split(","));
 
-            String newRsId = tokens.get(0);
-            String parentDn = String.format("%s,%s", tokens.get(1), getSoftDeletedBaseDn());
+            String newRdn = tokens.get(0);
+            //String parentDn = String.format("%s,%s", tokens.get(1), getSoftDeletedBaseDn());
 
-            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getSoftDeletedBaseDn());
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting object", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -284,10 +283,10 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             List<String> tokens = Arrays.asList(oldRdn.split(","));
 
-            String newRsId = tokens.get(0);
-            String parentDn = String.format("%s,%s", tokens.get(1), getBaseDn());
+            String newRdn = tokens.get(0);
+            //String parentDn = String.format("%s,%s", tokens.get(1), getBaseDn());
 
-            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getBaseDn());
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting object", e);
             throw new IllegalStateException(e.getMessage(), e);

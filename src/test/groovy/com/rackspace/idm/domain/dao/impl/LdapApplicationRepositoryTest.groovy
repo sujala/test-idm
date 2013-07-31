@@ -189,21 +189,8 @@ class LdapApplicationRepositoryTest {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void getClientById_idIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.getApplicationById("")
-    }
-
-    @Test (expected = IllegalArgumentException.class)
     public void getClientByScope_idIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.getApplicationByScope("")
-    }
-
-    @Test
-    public void getClientById_foundClient_returnsClient() throws Exception {
-        Application application = getFakeApp()
-        doReturn(application).when(spy).getObject(any(Filter.class))
-        Application result = spy.getApplicationById("clientId")
-        assertThat("client", result, equalTo(application))
     }
 
     @Test
@@ -270,48 +257,17 @@ class LdapApplicationRepositoryTest {
         ldapApplicationRepository.updateApplication(new Application())
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void updateClient_oldClientIsNull_throwsIllegalArgument() throws Exception {
-        Application client = getFakeApp()
-        doReturn(null).when(spy).getApplicationByClientId("clientId")
-        spy.updateApplication(client)
-    }
-
-    @Test
-    public void updateClient_callsUpdateEntry() throws Exception {
-        Application client = getFakeApp()
-        Application oldClient = client
-        ArrayList<Modification> modificationList = new ArrayList<Modification>()
-        Modification modification = new Modification(ModificationType.ADD, "ADD")
-        modificationList.add(modification)
-        doReturn(modificationList).when(spy).getModifications(oldClient, client)
-        doReturn(oldClient).when(spy).getApplicationByClientId("clientId")
-        doNothing().when(spy).updateEntry(eq("uniqueId"), eq(modificationList), any(Audit.class))
-        spy.updateApplication(client)
-        verify(spy).updateEntry(eq("uniqueId"), eq(modificationList), any(Audit.class))
-    }
-
     @Test (expected = IllegalStateException.class)
     public void updateClient_updateEntry_throwsGeneralSecurityException() throws Exception {
         Application client = getFakeApp()
-        Application oldClient = client
-        ArrayList<Modification> modificationList = new ArrayList<Modification>()
-        Modification modification = new Modification(ModificationType.ADD, "ADD")
-        modificationList.add(modification)
-        doReturn(oldClient).when(spy).getApplicationByClientId("clientId")
-        doThrow(new GeneralSecurityException()).when(spy).getModifications(oldClient, client)
+        doThrow(new GeneralSecurityException()).when(cryptHelper).encrypt(client.getClearPassword(), client.getEncryptionVersion(), client.getSalt())
         spy.updateApplication(client)
     }
 
     @Test (expected = IllegalStateException.class)
     public void updateClient_updateEntry_throwsInvalidCipherTextException() throws Exception {
         Application client = getFakeApp()
-        Application oldClient = client
-        ArrayList<Modification> modificationList = new ArrayList<Modification>()
-        Modification modification = new Modification(ModificationType.ADD, "ADD")
-        modificationList.add(modification)
-        doReturn(oldClient).when(spy).getApplicationByClientId("clientId")
-        doThrow(new InvalidCipherTextException()).when(spy).getModifications(oldClient, client)
+        doThrow(new InvalidCipherTextException()).when(cryptHelper).encrypt(client.getClearPassword(), client.getEncryptionVersion(), client.getSalt())
         spy.updateApplication(client)
     }
 
@@ -368,23 +324,6 @@ class LdapApplicationRepositoryTest {
     }
 
     @Test
-    public void getSingleClient_notFoundClient_returnsNull() throws Exception {
-        doReturn(null).when(spy).getObject(any(Filter.class))
-        Application result = spy.getSingleClient(null)
-        assertThat("client", result, equalTo(null))
-    }
-
-    @Test
-    public void getSingleClient_foundClient_returnsClient() throws Exception {
-        Application client = new Application()
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0])
-        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class))
-        doReturn(client).when(spy).getClient(searchResultEntry)
-        Application result = spy.getSingleClient(null)
-        assertThat("client", result, equalTo(client))
-    }
-
-    @Test
     public void getSingleSoftDeletedClient_notFoundClient_returnsNull() throws Exception {
         doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class))
         Application result = spy.getSingleSoftDeletedClient(null)
@@ -436,7 +375,7 @@ class LdapApplicationRepositoryTest {
     @Test
     public void getSoftDeletedClientByName_foundApplication_returnsApplication() throws Exception {
         Application application = new Application()
-        doReturn(application).when(spy).getSingleSoftDeletedClient(any(Filter.class))
+        doReturn(application).when(spy).getObject(any(Filter.class), anyString())
         Application result = spy.getSoftDeletedClientByName("clientName")
         assertThat("application", result, equalTo(application))
     }
@@ -459,15 +398,10 @@ class LdapApplicationRepositoryTest {
     private Application getFakeApp() {
         Entry entry = new Entry(dn)
         Application app = new Application(clientId, clientSecret, name, customerId)
+        app.clearPassword = "Secret"
         app.ldapEntry = new ReadOnlyEntry(entry)
         app.salt = salt
         app.encryptionVersion = version
         return app
-    }
-
-    private List<Application> getFakeAppList() {
-        List<Application> apps = new ArrayList<Application>()
-        apps.add(getFakeApp())
-        return apps
     }
 }

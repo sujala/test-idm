@@ -106,7 +106,7 @@ public class Application implements Auditable, UniqueId {
         }
     }
 
-    @LDAPGetter(attribute = LdapRepository.ATTR_CLIENT_SECRET, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    @LDAPGetter(attribute = LdapRepository.ATTR_CLIENT_SECRET, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getClientSecret() {
         if (clientSecret == null) {
             return null;

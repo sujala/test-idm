@@ -76,13 +76,6 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         }
 
         try {
-            repo.getApplicationById("    ");
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
             repo.updateApplication(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {

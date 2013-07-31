@@ -8,11 +8,8 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
@@ -53,6 +50,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         }
         encryptPassword(application);
         addObject(application);
+        application.setClientSecretObj(application.getClientSecretObj().toExisting());
     }
 
     private void encryptPassword(Application application) {
@@ -63,14 +61,16 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         String versionId = getEncryptionVersionId(application);
         String salt = getSalt(application);
 
-        try {
-            application.setClearPasswordBytes(cryptHelper.encrypt(application.getClientSecret(), versionId, salt));
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
+        if (application.getClientSecretObj() != null && application.getClientSecretObj().isNew()) {
+            try {
+                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClientSecret(), versionId, salt));
+            } catch (GeneralSecurityException e) {
+                getLogger().error(e.getMessage());
+                throw new IllegalStateException(e);
+            } catch (InvalidCipherTextException e) {
+                getLogger().error(e.getMessage());
+                throw new IllegalStateException(e);
+            }
         }
     }
 
@@ -187,15 +187,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Application getApplicationById(String id) {
-        if (StringUtils.isBlank(id)) {
-            getLogger().error("Null or Empty application id parameter");
-            throw new IllegalArgumentException("Null or Empty client name parameter.");
-        }
-        return DecryptApplicationPassword(searchFilterGetApplicationById(id));
-    }
-
-    @Override
     public Application getApplicationByScope(String scope) {
         if (StringUtils.isBlank(scope)) {
             getLogger().error("Null or Empty application scope parameter");
@@ -255,7 +246,9 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void updateApplication(Application application) {
+        encryptPassword(application);
         updateObject(application);
+        application.setClientSecretObj(application.getClientSecretObj().toExisting());
     }
 
     @Override
@@ -305,24 +298,12 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getSoftDeletedClientByName(String clientName) {
-
-        getLogger().debug("Doing search for application " + clientName);
         if (StringUtils.isBlank(clientName)) {
             getLogger().error("Null or Empty clientName parameter");
             throw new IllegalArgumentException(
                     "Null or Empty clientName parameter.");
         }
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_NAME, clientName)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-                .build();
-
-        Application application = getSingleSoftDeletedClient(searchFilter);
-
-        getLogger().debug("Found Application - {}", application);
-
-        return application;
+        return getObject(searchFilterGetApplicationByName(clientName), getSoftDeletedBaseDn());
     }
 
     @Override
@@ -396,7 +377,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
                 .build();
     }
 
-    Application getClient(SearchResultEntry resultEntry) {
+    Application getClientOld(SearchResultEntry resultEntry) {
         Application client = new Application();
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
 
@@ -458,7 +439,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
             List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
             for (SearchResultEntry entry : subList) {
-                clientList.add(getClient(entry));
+                clientList.add(getClientOld(entry));
             }
         }
 
@@ -474,16 +455,4 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return clients;
     }
 
-    Application getSingleClient(Filter searchFilter) {
-        Application client = null;
-        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
-
-        if (entry != null) {
-            client = getClient(entry);
-        }
-
-        getLogger().debug(FOUND_CLIENT, client);
-
-        return client;
-    }
 }
