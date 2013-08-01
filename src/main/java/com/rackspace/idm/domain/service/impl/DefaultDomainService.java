@@ -164,30 +164,25 @@ public class DefaultDomainService implements DomainService{
     }
 
     @Override
-    public Users getUsersByDomainId(String domainId) {
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
-        return userService.getAllUsers(filters);
+    public List<User> getUsersByDomainId(String domainId) {
+        return userService.getUsersWithDomain(domainId);
     }
 
     @Override
-    public Users getUsersByDomainId(String domainId, boolean enabled) {
+    public List<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
 
-        FilterParam[] filters = new FilterParam[]
-            {
-                new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId),
-                new FilterParam(FilterParam.FilterParamName.ENABLED, String.valueOf(enabled))
-            };
-        return userService.getAllUsers(filters);
+
+        return userService.getUsersWithDomainAndEnabledFlag(domainId, enabled);
     }
 
     @Override
     public List<User> getDomainAdmins(String domainId) {
-        return filterUserAdmins(userService.getUsersInDomain(domainId));
+        return filterUserAdmins(userService.getUsersWithDomain(domainId));
     }
 
     @Override
-    public List<User> getDomainAdmins(String domainId, boolean enabled) {
-        return filterUserAdmins(userService.getUsersInDomain(domainId, enabled));
+    public List<User> getEnabledDomainAdmins(String domainId) {
+        return filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true));
     }
 
     private List<User> filterUserAdmins(List<User> userList) {

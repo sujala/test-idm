@@ -131,7 +131,6 @@ public class UserResource extends ParentResource {
 
 		getLogger().debug("Updating User: {}", inputUser.getUsername());
 		User user = userService.loadUser(userId);
-		user.copyChanges(updatedUser);
 		validateDomainObject(user);
 
 		userService.updateUser(user, false);

@@ -464,7 +464,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userService.getUserByUsername(_) >> user
+        userService.getUsersByUsername(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)

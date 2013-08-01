@@ -76,22 +76,6 @@ public class CustomerServiceTests {
         EasyMock.verify(mockCustomerDao);
     }
 
-    @Test
-    public void shouldDeleteCustomer() {
-        mockCustomerDao.deleteCustomer(customerId);
-        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(getFakeCustomer());
-        EasyMock.replay(mockCustomerDao);   
-        EasyMock.expect(userService.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(100))).andReturn(getFakeUsers());
-        userService.deleteUser(username);
-        EasyMock.replay(userService);
-        EasyMock.expect(applicationService.getByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        applicationService.delete(EasyMock.anyObject(String.class));
-        EasyMock.replay(applicationService);
-        service.deleteCustomer(customerId);
-        EasyMock.verify(mockCustomerDao);
-        EasyMock.verify(userService);
-    }
-    
     @Test(expected = NotFoundException.class)
     public void shouldNotDeleteNonExistentCustomer() {
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(null);
@@ -143,28 +127,13 @@ public class CustomerServiceTests {
         customer.setRcn(customerId);
         return customer;
     }
-    
-    private User getFakeUser() {
-        return new User(username);
-    }
-    
-    private Users getFakeUsers() {
-        Users users = new Users();
-        List<User> userList = new ArrayList<User>();
-        userList.add(getFakeUser());
-        users.setLimit(100);
-        users.setOffset(0);
-        users.setTotalRecords(1);
-        users.setUsers(userList);
-        return users;
-    }
-    
+
     private Application getFakeClient() {
         Application client = new Application();
         client.setClientId(clientId);
         return client;
     }
-    
+
     private Applications getFakeClients() {
         Applications clients = new Applications();
         List<Application> clientList = new ArrayList<Application>();

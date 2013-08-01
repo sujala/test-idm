@@ -67,16 +67,6 @@ public class DefaultGroupServiceTestOld {
         spy = spy(defaultGroupService);
     }
 
-
-    @Test
-    public void testGetAllEnabledUsers() throws Exception {
-        FilterParam[] filterParam = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.GROUP_ID, 1)};
-        when(defaultUserService.getAllUsers(filterParam, 0, 0)).thenReturn(listUsers);
-        Users user = defaultGroupService.getAllEnabledUsers(filterParam,"0", 0);
-        assertThat("user1",user.getUsers().get(0).getUsername(),equalTo("user1"));
-        assertThat("user2",user.getUsers().size(),equalTo(1));
-    }
-
     @Test
     public void getGroups_returnsList() throws Exception {
         when(groupDao.getGroups()).thenReturn(new ArrayList<com.rackspace.idm.domain.entity.Group>());
@@ -258,28 +248,5 @@ public class DefaultGroupServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void deleteGroup_nullExists_throwsNotFoundException() throws Exception {
         defaultGroupService.deleteGroup("123");
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void deleteGroup_existsNotNullAndUserEnabled_throwsBadRequestException() throws Exception {
-        User user = new User();
-        user.setEnabled(true);
-        Users users = new Users();
-        users.setUsers(new ArrayList<User>());
-        users.getUsers().add(user);
-        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
-        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        defaultGroupService.deleteGroup("123");
-    }
-
-    @Test
-    public void deleteGroup_existsNotNullAndNoUsers_callsGroupDaoMethod() throws Exception {
-        Users users = new Users();
-        users.setUsers(new ArrayList<User>());
-        when(groupDao.getGroupById("123")).thenReturn(new com.rackspace.idm.domain.entity.Group());
-        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doNothing().when(groupDao).deleteGroup("123");
-        defaultGroupService.deleteGroup("123");
-        verify(groupDao).deleteGroup("123");
     }
 }

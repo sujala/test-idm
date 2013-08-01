@@ -207,7 +207,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("domainId") String domainId,
             @QueryParam("enabled") String enabled) {
-        return cloud20Service.getUsersByDomainId(authToken, domainId, enabled).build();
+        return cloud20Service.getUsersByDomainIdAndEnabledFlag(authToken, domainId, enabled).build();
     }
 
     @PUT

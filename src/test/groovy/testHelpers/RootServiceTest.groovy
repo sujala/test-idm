@@ -17,6 +17,7 @@ import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.impl.DefaultPropertiesService
 import com.rackspace.idm.exception.ExceptionHandler
@@ -194,6 +195,7 @@ class RootServiceTest extends Specification {
     @Shared ApplicationDao applicationDao
     @Shared ScopeAccessDao scopeAccessDao
     @Shared UserDao userDao
+    @Shared RackerDao rackerDao
     @Shared TenantDao tenantDao
     @Shared EndpointDao endpointDao
     @Shared TenantRoleDao tenantRoleDao
@@ -610,6 +612,11 @@ class RootServiceTest extends Specification {
     def mockUserDao(service) {
         userDao = Mock()
         service.userDao = userDao
+    }
+
+    def mockRackerDao(service) {
+        rackerDao = Mock()
+        service.rackerDao = rackerDao
     }
 
     def mockTenantDao(service) {

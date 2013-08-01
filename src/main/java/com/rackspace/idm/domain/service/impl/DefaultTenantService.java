@@ -687,8 +687,8 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit) {
-        return tenantRoleDao.getIdsForUsersWithTenantRole(roleId, offset, limit);
+    public List<String> getIdsForUsersWithTenantRole(String roleId) {
+        return tenantRoleDao.getIdsForUsersWithTenantRole(roleId);
     }
 
     @Override

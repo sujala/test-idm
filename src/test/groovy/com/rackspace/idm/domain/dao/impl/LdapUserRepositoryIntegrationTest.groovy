@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Users
+import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.exception.StalePasswordException
 import com.unboundid.ldap.sdk.Filter
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +22,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
     LdapUserRepository ldapUserRepository;
 
+    @Autowired
+    EncryptionService encryptionService;
+
     @Shared def random
     @Shared def username
 
@@ -30,42 +34,30 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         username = "someName"+random
     }
 
-    def "GET - user w/ a list of filters" (){
+    def "user crud"() {
         given:
-        String rsId = "99999999"
+        String rsId = random
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
-        List<Filter> filterList = new ArrayList<Filter>();
-        filterList.add(Filter.createEqualityFilter("rsId", rsId))
-
 
         when:
         ldapUserRepository.addUser(user)
-        Users users = ldapUserRepository.getUsers(filterList)
-        ldapUserRepository.deleteUser(username)
+        def retrivedUser = ldapUserRepository.getUserByUsername(username)
+        ldapUserRepository.deleteUser(retrivedUser);
+        def deletedUser = ldapUserRepository.getUserByUsername(username)
 
         then:
-        users.getUsers().size() == 1
-    }
-
-    def "GET - user w/ a list of filters - null" () {
-        when:
-        Users users = ldapUserRepository.getUsers(null)
-        then:
-        users.getUsers() == null
-    }
-
-    def "GET - user w/ a list of filters - list is zero" () {
-        when:
-        Users users = ldapUserRepository.getUsers(new ArrayList<Filter>())
-        then:
-        users.getUsers() == null
+        retrivedUser != null
+        deletedUser == null
     }
 
     def "retrieving users in a domain returns all users within the domain"() {
         given:
-        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+        def username1 = "enabledUse$random"
+        def username2 = "disabledUse$random"
+        def username3 = "use$random"
+        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
@@ -73,9 +65,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         when:
         def userList = ldapUserRepository.getUsersByDomain("1234567890")
-        ldapUserRepository.deleteUser("enabledUse")
-        ldapUserRepository.deleteUser("disabledUse")
-        ldapUserRepository.deleteUser("use")
+        ldapUserRepository.deleteUser(username1)
+        ldapUserRepository.deleteUser(username2)
+        ldapUserRepository.deleteUser(username3)
 
         then:
         userList != null
@@ -84,87 +76,53 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
     def "retrieving enabled users in a domain returns enabled users within the domain"() {
         given:
-        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+        def username1 = "enabledUse$random"
+        def username2 = "disabledUse$random"
+        def username3 = "use$random"
+        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomain("1234567890", true)
-        ldapUserRepository.deleteUser("enabledUse")
-        ldapUserRepository.deleteUser("disabledUse")
-        ldapUserRepository.deleteUser("use")
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag("1234567890", true)
+        ldapUserRepository.deleteUser(username1)
+        ldapUserRepository.deleteUser(username2)
+        ldapUserRepository.deleteUser(username3)
 
         then:
         userList != null
         userList.size() == 1
-        userList.get(0).username.equals("enabledUse")
+        userList.get(0).username == username1
     }
 
 
     def "retrieving disabled users in a domain returns disabled users within the domain"() {
         given:
-        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
+        def username1 = "enabledUse$random"
+        def username2 = "disabledUse$random"
+        def username3 = "use$random"
+        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomain("1234567890", false)
-        ldapUserRepository.deleteUser("enabledUse")
-        ldapUserRepository.deleteUser("disabledUse")
-        ldapUserRepository.deleteUser("use")
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag("1234567890", false)
+        ldapUserRepository.deleteUser(username1)
+        ldapUserRepository.deleteUser(username2)
+        ldapUserRepository.deleteUser(username3)
 
         then:
         userList != null
         userList.size() == 1
-        userList.get(0).username.equals("disabledUse")
-    }
-
-    def "retrieving users in a domain with null domainId filter returns no users"() {
-        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
-
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
-        ldapUserRepository.addUser(user3)
-
-        when:
-        def userList = ldapUserRepository.getUsersByDomain(null, false)
-        ldapUserRepository.deleteUser("enabledUse")
-        ldapUserRepository.deleteUser("disabledUse")
-        ldapUserRepository.deleteUser("use")
-
-        then:
-        userList != null
-        userList.size() == 0
-    }
-
-    def "retrieving users in a domain with null domainId filter and no domainId filter returns no users"() {
-        def user1 = createUser("1$random", "enabledUse", "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", "disabledUse", "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", "use", "0123456789", "email@email.com", true, "DFW", "Password1")
-
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
-        ldapUserRepository.addUser(user3)
-
-        when:
-        def userList = ldapUserRepository.getUsersByDomain(null)
-        ldapUserRepository.deleteUser("enabledUse")
-        ldapUserRepository.deleteUser("disabledUse")
-        ldapUserRepository.deleteUser("use")
-
-        then:
-        userList != null
-        userList.size() == 0
+        userList.get(0).username == username2
     }
 
     def "calling getUserByEmail returns the user"() {
@@ -175,11 +133,11 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         when:
         ldapUserRepository.addUser(user1)
         def user = ldapUserRepository.getUsersByEmail(email)
-        ldapUserRepository.deleteUser(user.users.get(0))
+        ldapUserRepository.deleteUser(user.get(0))
 
         then:
         user != null
-        user1.email == user.users.get(0).email
+        user1.email == user.get(0).email
     }
         
     def "create user with salt and encryption version id"() {

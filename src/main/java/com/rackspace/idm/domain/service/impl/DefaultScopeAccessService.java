@@ -1289,16 +1289,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private List<User> getAllUsersForCustomerId(final String customerId) {
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.RCN, customerId)};
         logger.debug("Getting all users for customer {}", customerId);
-        final List<User> usersList = new ArrayList<User>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userService.getAllUsers(filters, offset, getPagingLimit());
-            usersList.addAll(usersObj.getUsers());
-            total = usersObj.getTotalRecords();
-        }
+        List<User> usersList = userService.getUsersByRCN(customerId);
         logger.debug("Done getting all users for customer {}", customerId);
         return usersList;
     }

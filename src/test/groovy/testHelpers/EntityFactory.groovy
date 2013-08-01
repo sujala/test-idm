@@ -385,17 +385,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createUsers() {
-        return new Users()
-    }
-
-    def createUsers(List<User> userList) {
-        new Users().with {
-            it.users = userList
-            return it
-        }
-    }
-
     def createGroup(String groupId, String name, String description) {
         return new Group().with {
             it.groupId = groupId

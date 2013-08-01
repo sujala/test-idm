@@ -217,19 +217,6 @@ public class DefaultTokenServiceTestOld {
     }
 
     @Test
-    public void getAllUsersForCustomerId_returnsPopulatedUserList() throws Exception {
-        List<User> list = new ArrayList<User>();
-        list.add(new User());
-        Users usersObj = new Users();
-        usersObj.setUsers(list);
-        usersObj.setTotalRecords(0);
-        doReturn(5).when(spy).getPagingLimit();
-        when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(5))).thenReturn(usersObj);
-        List<User> usersList = spy.getAllUsersForCustomerId(null);
-        assertThat("size",usersList.size(),equalTo(1));
-    }
-
-    @Test
     public void getPagingLimit_returnsInt() throws Exception {
         when(config.getInt("ldap.paging.limit.max")).thenReturn(7);
         assertThat("int",defaultTokenService.getPagingLimit(),equalTo(7));

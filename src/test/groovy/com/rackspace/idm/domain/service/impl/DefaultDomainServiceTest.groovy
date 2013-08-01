@@ -93,10 +93,10 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
     def "getDomainAdmins uses userService to retrieve users in domain with domainId and enabled filter"() {
         when:
-        service.getDomainAdmins("domainId", true)
+        service.getEnabledDomainAdmins("domainId")
 
         then:
-        1 * userService.getUsersInDomain("domainId", true) >> [].asList()
+        1 * userService.getUsersWithDomainAndEnabledFlag("domainId", _) >> [].asList()
     }
 
     def "getDomainAdmins uses userService to retrieve users in domain with domainId filter and without enabled filter"() {
@@ -104,15 +104,15 @@ class DefaultDomainServiceTest extends RootServiceTest {
         service.getDomainAdmins("domainId")
 
         then:
-        1 * userService.getUsersInDomain("domainId") >> [].asList()
+        1 * userService.getUsersWithDomain("domainId") >> [].asList()
     }
 
     def "getDomainAdmins (domain and enabled filters) filters list of user by user-admin role"() {
         given:
-        userService.getUsersInDomain("domainId", true) >> [ entityFactory.createUser() ].asList()
+        userService.getUsersWithDomainAndEnabledFlag("domainId", _) >> [ entityFactory.createUser() ].asList()
 
         when:
-        service.getDomainAdmins("domainId", true)
+        service.getEnabledDomainAdmins("domainId")
 
         then:
         1 * authorizationService.hasUserAdminRole(_)
@@ -120,7 +120,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
     def "getDomainAdmins (domain filter) filters list of user by user-admin role"() {
         given:
-        userService.getUsersInDomain("domainId") >> [ entityFactory.createUser() ].asList()
+        userService.getUsersWithDomain("domainId") >> [ entityFactory.createUser() ].asList()
 
         when:
         service.getDomainAdmins("domainId")

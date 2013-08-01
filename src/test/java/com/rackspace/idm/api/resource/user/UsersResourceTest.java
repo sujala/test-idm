@@ -75,12 +75,6 @@ public class UsersResourceTest {
     }
 
     @Test
-    public void getUsers_callsUserService_getAllUsers() throws Exception {
-        usersResource.getUsers("username", null, null, "authHeader");
-        verify(userService).getAllUsers(any(FilterParam[].class), anyInt(), anyInt());
-    }
-
-    @Test
     public void addUser_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
         User user = new User();
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());

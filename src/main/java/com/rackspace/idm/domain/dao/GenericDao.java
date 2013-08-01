@@ -23,14 +23,19 @@ public interface GenericDao<T> {
     List<T> getObjects(Filter searchFilter);
     List<T> getObjects(Filter searchFilter, String dn);
     List<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
+    PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     void softDeleteObject(T object);
+    void unSoftDeleteObject(T object);
     String getBaseDn();
+    String getSoftDeletedBaseDn();
     String getLdapEntityClass();
     String getNextId();
     String addLdapContainer(String dnString, String containerName);
+    void doPreEncode(T object);
+    void doPostEncode(T object);
 
     void deleteObject(T object);
     String getSortAttribute();

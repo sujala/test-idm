@@ -239,10 +239,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def "getIdsForUsersWithTenantRole calls DAO to retrieve context object"() {
         when:
-        service.getIdsForUsersWithTenantRole("roleId", 0, 25)
+        service.getIdsForUsersWithTenantRole("roleId")
 
         then:
-        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId", 0, 25)
+        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId")
     }
 
     def "addTenantRoleToUser verifies that user is not null"() {
@@ -265,7 +265,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         given:
         def tenantRole = entityFactory.createTenantRole()
         def user = entityFactory.createUser()
-        user.uniqueId = ""
+        user.uniqueId = null;
 
         when:
         service.addTenantRoleToUser(user, tenantRole)

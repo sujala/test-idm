@@ -38,8 +38,13 @@ public class LdapPolicyRepository extends LdapGenericRepository<Policy> implemen
         return getNextId(NEXT_POLICY_ID);
     }
 
+    @Override
+    public String getSoftDeletedBaseDn() {
+        return SOFT_DELETED_POLICIES_BASE_DN;
+    }
+
     public String getSortAttribute() {
-        return ATTR_POLICY_ID;
+        return ATTR_ID;
     }
 
     @Override
