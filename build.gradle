@@ -22,8 +22,8 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '1.0.14.7'
-ldapVersion = '1.0.14.7'
+featureVersion = '2.0'
+ldapVersion = '2.0'
 buildVersion = System.currentTimeMillis()
 version = "$featureVersion-$buildVersion"
 
@@ -47,6 +47,7 @@ configurations {
     delombokTestJava
     jaxb
     veracode
+    appRevision
     wadl.extendsFrom compile
 }
 
@@ -286,15 +287,25 @@ task jaxb() {
     }
 }
 
-task veracode() << {
-    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out) 
+def getWarArtifacts(){
+    def result = []
     def directory = fileTree(war.destinationDir) {
         include '**/*.war'
     }
     directory.each {File file ->
-	    client.scanArtifacts([file].asList(), buildVersion as int, "GlobalAuth", "Linux")
+       result.add(file)
     }
+    return result
+}
 
+task veracode() << {
+    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out)
+    client.scanArtifacts(getWarArtifacts(), buildVersion as int, "GlobalAuth", "Linux")
+}
+
+task appRevision() << {
+    File location = getWarArtifacts().get(0)
+    println(location.name.replace("idm-","").replace(".war",""))
 }
 
 def delombok(srcDir, targetDir) {
