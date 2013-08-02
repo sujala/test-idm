@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.domain.service.PropertiesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,14 +22,11 @@ import java.util.List;
 @Component
 public class LdapApplicationRepository extends LdapGenericRepository<Application> implements ApplicationDao {
 
-    public static final String ENCRYPTION_ERROR = "encryption error";
-    public static final String FOUND_CLIENT = "Found client - {}";
-
     @Autowired
     CryptHelper cryptHelper;
 
     @Autowired
-    PropertiesService propertiesService;
+    EncryptionService encryptionService;
 
     public String getBaseDn(){
         return APPLICATIONS_BASE_DN;
@@ -46,14 +44,18 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return ATTR_CLIENT_ID;
     }
 
-    public void setCryptHelper(CryptHelper cryptHelper) {
-        this.cryptHelper = cryptHelper;
+    @Override
+    public void doPreEncode(Application application) {
+        encryptionService.encryptApplication(application);
     }
 
+    @Override
+    public void doPostEncode(Application application) {
+        encryptionService.decryptApplication(application);
+    }
 
     @Override
     public void addApplication(Application application) {
-        encryptPassword(application);
         addObject(application);
         application.setClientSecretObj(application.getClientSecretObj().toExisting());
     }
@@ -89,27 +91,27 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public List<Application> getAllApplications() {
-        return DecryptApplicationsPasswords(searchFilterGetApplications());
+        return getObjects(searchFilterGetApplications());
     }
 
     @Override
     public Application getApplicationByClientId(String clientId) {
-        return DecryptApplicationPassword(searchFilterGetApplicationByClientId(clientId));
+        return getObject(searchFilterGetApplicationByClientId(clientId));
     }
 
     @Override
     public Application getApplicationByName(String name) {
-        return DecryptApplicationPassword(searchFilterGetApplicationByName(name));
+        return getObject(searchFilterGetApplicationByName(name));
     }
 
     @Override
     public Application getApplicationByCustomerIdAndClientId(String customerId, String clientId) {
-        return DecryptApplicationPassword(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
+        return getObject(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
     }
 
     @Override
     public Application getApplicationByScope(String scope) {
-        return DecryptApplicationPassword(searchFilterGetApplicationByScope(scope));
+        return getObject(searchFilterGetApplicationByScope(scope));
     }
 
     @Override
@@ -136,14 +138,13 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void updateApplication(Application application) {
-        encryptPassword(application);
         updateObject(application);
         application.setClientSecretObj(application.getClientSecretObj().toExisting());
     }
 
     @Override
     public List<Application> getAvailableScopes() {
-        return DecryptApplicationsPasswords(searchFilterGetAvailableScopes());
+        return getObjects(searchFilterGetAvailableScopes());
     }
 
     @Override
@@ -169,85 +170,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     @Override
     public void unSoftDeleteApplication(Application application) {
         unSoftDeleteObject(application);
-    }
-
-    private String getEncryptionVersionId(Application application) {
-        if (application.getEncryptionVersion() == null) {
-            return "0";
-        } else {
-            return application.getEncryptionVersion();
-        }
-    }
-
-    private String getSalt(Application application) {
-        if (application.getSalt() == null) {
-            return config.getString("crypto.salt");
-        } else {
-            return application.getSalt();
-        }
-    }
-
-    private void encryptPassword(Application application) {
-        if (application == null) {
-            return;
-        }
-
-        String versionId = getEncryptionVersionId(application);
-        String salt = getSalt(application);
-
-        if (application.getClientSecretObj() != null && application.getClientSecretObj().isNew()) {
-            try {
-                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClientSecret(), versionId, salt));
-            } catch (GeneralSecurityException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            } catch (InvalidCipherTextException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            }
-        }
-    }
-
-    private void decryptPassword(Application application) {
-        if (application == null) {
-            return;
-        }
-
-        String versionId = getEncryptionVersionId(application);
-        String salt = getSalt(application);
-
-        try {
-            String password = cryptHelper.decrypt(application.getClearPasswordBytes(), versionId, salt);
-            ClientSecret secret = ClientSecret.existingInstance(password);
-            application.setClientSecretObj(secret);
-            application.setClearPassword(password);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private void decryptPasswords(List<Application> applications) {
-        if (applications != null && applications.size() > 0) {
-            for (Application application : applications) {
-                decryptPassword(application);
-            }
-        }
-    }
-
-    private Application DecryptApplicationPassword(Filter filter) {
-        Application app = getObject(filter);
-        decryptPassword(app);
-        return app;
-    }
-
-    private List<Application> DecryptApplicationsPasswords(Filter filter) {
-        List<Application> apps = getObjects(filter);
-        decryptPasswords(apps);
-        return apps;
     }
 
     private Filter searchFilterGetApplications() {
@@ -310,5 +232,13 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
                 .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
+    }
+
+    protected int getLdapPagingOffsetDefault() {
+        return config.getInt("ldap.paging.offset.default");
+    }
+
+    protected int getLdapPagingLimitDefault() {
+        return config.getInt("ldap.paging.limit.default");
     }
 }
