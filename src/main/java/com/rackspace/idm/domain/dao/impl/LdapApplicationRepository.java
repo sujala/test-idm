@@ -46,8 +46,13 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return ATTR_CLIENT_ID;
     }
 
+    public void setCryptHelper(CryptHelper cryptHelper) {
+        this.cryptHelper = cryptHelper;
+    }
+
+
     @Override
-    public void addClient(Application application) {
+    public void addApplication(Application application) {
         if (application == null) {
             String errMsg = "Null instance of Client was passed in.";
             getLogger().error(errMsg);
@@ -56,57 +61,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         encryptPassword(application);
         addObject(application);
         application.setClientSecretObj(application.getClientSecretObj().toExisting());
-    }
-
-    private void encryptPassword(Application application) {
-        if (application == null) {
-            return;
-        }
-
-        String versionId = getEncryptionVersionId(application);
-        String salt = getSalt(application);
-
-        if (application.getClientSecretObj() != null && application.getClientSecretObj().isNew()) {
-            try {
-                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClientSecret(), versionId, salt));
-            } catch (GeneralSecurityException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            } catch (InvalidCipherTextException e) {
-                getLogger().error(e.getMessage());
-                throw new IllegalStateException(e);
-            }
-        }
-    }
-
-    private void decryptPassword(Application application) {
-        if (application == null) {
-            return;
-        }
-
-        String versionId = getEncryptionVersionId(application);
-        String salt = getSalt(application);
-
-        try {
-            String password = cryptHelper.decrypt(application.getClearPasswordBytes(), versionId, salt);
-            ClientSecret secret = ClientSecret.existingInstance(password);
-            application.setClientSecretObj(secret);
-            application.setClearPassword(password);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private void decryptPasswords(List<Application> applications) {
-        if (applications != null && applications.size() > 0) {
-            for (Application application : applications) {
-                decryptPassword(application);
-            }
-        }
     }
 
     @Override
@@ -179,18 +133,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return DecryptApplicationPassword(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
     }
 
-    private Application DecryptApplicationPassword(Filter filter) {
-        Application app = getObject(filter);
-        decryptPassword(app);
-        return app;
-    }
-
-    private List<Application> DecryptApplicationsPasswords(Filter filter) {
-        List<Application> apps = getObjects(filter);
-        decryptPasswords(apps);
-        return apps;
-    }
-
     @Override
     public Application getApplicationByScope(String scope) {
         if (StringUtils.isBlank(scope)) {
@@ -234,26 +176,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return DecryptApplicationsPasswords(searchFilterGetAvailableScopes());
     }
 
-    private String getEncryptionVersionId(Application application) {
-        if (application.getEncryptionVersion() == null) {
-            return "0";
-        } else {
-            return application.getEncryptionVersion();
-        }
-    }
-
-    private String getSalt(Application application) {
-        if (application.getSalt() == null) {
-            return config.getString("crypto.salt");
-        } else {
-            return application.getSalt();
-        }
-    }
-
-    Application getSingleSoftDeletedClient(Filter searchFilter) {
-        return getObject(searchFilter, SOFT_DELETED_APPLICATIONS_BASE_DN);
-    }
-
     @Override
     public List<Application> getOpenStackServices() {
         return getObjects(searchFilterGetOpenstackServices());
@@ -289,8 +211,83 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         unSoftDeleteObject(application);
     }
 
-    public void setCryptHelper(CryptHelper cryptHelper) {
-        this.cryptHelper = cryptHelper;
+    private String getEncryptionVersionId(Application application) {
+        if (application.getEncryptionVersion() == null) {
+            return "0";
+        } else {
+            return application.getEncryptionVersion();
+        }
+    }
+
+    private String getSalt(Application application) {
+        if (application.getSalt() == null) {
+            return config.getString("crypto.salt");
+        } else {
+            return application.getSalt();
+        }
+    }
+
+    private void encryptPassword(Application application) {
+        if (application == null) {
+            return;
+        }
+
+        String versionId = getEncryptionVersionId(application);
+        String salt = getSalt(application);
+
+        if (application.getClientSecretObj() != null && application.getClientSecretObj().isNew()) {
+            try {
+                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClientSecret(), versionId, salt));
+            } catch (GeneralSecurityException e) {
+                getLogger().error(e.getMessage());
+                throw new IllegalStateException(e);
+            } catch (InvalidCipherTextException e) {
+                getLogger().error(e.getMessage());
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    private void decryptPassword(Application application) {
+        if (application == null) {
+            return;
+        }
+
+        String versionId = getEncryptionVersionId(application);
+        String salt = getSalt(application);
+
+        try {
+            String password = cryptHelper.decrypt(application.getClearPasswordBytes(), versionId, salt);
+            ClientSecret secret = ClientSecret.existingInstance(password);
+            application.setClientSecretObj(secret);
+            application.setClearPassword(password);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void decryptPasswords(List<Application> applications) {
+        if (applications != null && applications.size() > 0) {
+            for (Application application : applications) {
+                decryptPassword(application);
+            }
+        }
+    }
+
+    private Application DecryptApplicationPassword(Filter filter) {
+        Application app = getObject(filter);
+        decryptPassword(app);
+        return app;
+    }
+
+    private List<Application> DecryptApplicationsPasswords(Filter filter) {
+        List<Application> apps = getObjects(filter);
+        decryptPasswords(apps);
+        return apps;
     }
 
     private Filter searchFilterGetApplications() {

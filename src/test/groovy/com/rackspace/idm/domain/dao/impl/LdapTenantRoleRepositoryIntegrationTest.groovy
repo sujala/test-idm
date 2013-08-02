@@ -38,7 +38,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         userRepository.addUser(getUser("$sharedRandom"))
         user = userRepository.getUserById("$sharedRandom")
 
-        applicationRepository.addClient(getApplication("app$sharedRandom"))
+        applicationRepository.addApplication(getApplication("app$sharedRandom"))
         application = applicationRepository.getApplicationByClientId("app$sharedRandom")
     }
 

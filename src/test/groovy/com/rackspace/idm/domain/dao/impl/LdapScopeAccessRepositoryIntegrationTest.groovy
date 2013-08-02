@@ -33,7 +33,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         when:
         def clientId = "client$random"
         def client = createClient(clientId)
-        applicationDao.addClient(client)
+        applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, input)
         scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
@@ -56,7 +56,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         when:
         def clientId = "otherClient$random"
         def client = createClient(clientId)
-        applicationDao.addClient(client)
+        applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, ["RSA"].asList())
         scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)

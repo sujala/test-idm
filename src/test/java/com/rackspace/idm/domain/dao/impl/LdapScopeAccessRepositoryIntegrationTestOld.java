@@ -790,14 +790,14 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
     private Application addNewTestClient(String clientId) {
         final Application newClient = createTestClientInstance();
         newClient.setClientId(clientId);
-        clientRepo.addClient(newClient);
+        clientRepo.addApplication(newClient);
         return newClient;
     }
 
     private Application addNewTestClient2(String clientId) {
         final Application newClient = createTestClientInstance();
         newClient.setClientId(clientId2);
-        clientRepo.addClient(newClient);
+        clientRepo.addApplication(newClient);
         return newClient;
     }
 

@@ -61,7 +61,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             return it
         }
 
-        applicationDao.addClient(application)
+        applicationDao.addApplication(application)
         def createApplication = applicationDao.getApplicationByClientId(clientId)
         applicationRoleDao.addClientRole(createApplication, clientRole1)
         applicationRoleDao.addClientRole(createApplication, clientRole2)
@@ -100,7 +100,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             return it
         }
 
-        applicationDao.addClient(application)
+        applicationDao.addApplication(application)
         def createApplication = applicationDao.getApplicationByClientId(clientId)
         applicationRoleDao.addClientRole(createApplication, clientRole)
 

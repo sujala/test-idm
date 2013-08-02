@@ -52,7 +52,7 @@ public class DefaultApplicationService implements ApplicationService {
         client.setClientId(HashHelper.makeSHA1Hash(client.getName()));
         client.setClientSecretObj(ClientSecret.newInstance(HashHelper.getRandomSha1()));
 
-        applicationDao.addClient(client);
+        applicationDao.addApplication(client);
         logger.debug("Added Client: {}", client);
     }
 

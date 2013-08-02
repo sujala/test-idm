@@ -63,7 +63,7 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
         }
 
         try {
-            repo.addClient(null);
+            repo.addApplication(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -184,7 +184,7 @@ public class LdapApplicationRepositoryIntegrationTestOld extends InMemoryLdapInt
     
     private Application addNewTestClient() {
         Application newClient = createTestClientInstance();
-        repo.addClient(newClient);
+        repo.addApplication(newClient);
         return newClient;
     }
     

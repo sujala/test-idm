@@ -144,7 +144,7 @@ public class ApplicationServiceTests {
 
         EasyMock.expect(applicationDao.getApplicationByName(client.getName()))
             .andReturn(null);
-        applicationDao.addClient((Application) EasyMock.anyObject());
+        applicationDao.addApplication((Application) EasyMock.anyObject());
         EasyMock.replay(applicationDao);
 
         service.add(client);

@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ApplicationDao {
 
-    void addClient(Application client);
+    void addApplication(Application client);
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 

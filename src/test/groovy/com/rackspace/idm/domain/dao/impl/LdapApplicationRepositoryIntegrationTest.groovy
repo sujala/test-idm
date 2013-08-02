@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult
 import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -36,7 +35,7 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         def updateApp = getUpdateApp(random)
 
         when:
-        applicationDao.addClient(app)
+        applicationDao.addApplication(app)
         Application retrievedApp = applicationDao.getApplicationByClientId(random)
         Application updatingApp = applicationDao.getApplicationByClientId(random)
         Application namedApp = applicationDao.getApplicationByName(name)
@@ -65,7 +64,7 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         def app = getApp(random)
 
         when:
-        applicationDao.addClient(app)
+        applicationDao.addApplication(app)
         Application retrievedApp = applicationDao.getApplicationByClientId(random)
         applicationDao.softDeleteApplication(app)
 

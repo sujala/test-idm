@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.audit.Audit
 import com.rackspace.idm.domain.entity.Application
@@ -11,26 +10,17 @@ import com.rackspace.idm.domain.entity.FilterParam
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.util.CryptHelper
 import com.unboundid.ldap.sdk.Attribute
-import com.unboundid.ldap.sdk.Control
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.Filter
-import com.unboundid.ldap.sdk.LDAPConnectionPool
 import com.unboundid.ldap.sdk.LDAPException
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.LDAPResult
-import com.unboundid.ldap.sdk.LDAPSearchException
-import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.ModificationType
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.unboundid.ldap.sdk.ResultCode
-import com.unboundid.ldap.sdk.SearchResult
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import org.apache.commons.configuration.Configuration
-
-import junit.framework.Assert
 import org.bouncycastle.crypto.InvalidCipherTextException
-import org.easymock.EasyMock
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,7 +35,6 @@ import java.security.GeneralSecurityException
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
 import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anySet
 import static org.mockito.Matchers.anyString
 import static org.mockito.Matchers.eq
 import static org.mockito.Mockito.doNothing
@@ -108,14 +97,14 @@ class LdapApplicationRepositoryTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void addClient_clientIsNull_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.addClient(null)
+        ldapApplicationRepository.addApplication(null)
     }
 
     @Test
     public void addClient_callsAddEntry() throws Exception {
         Application client = getFakeApp()
         doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class))
-        spy.addClient(client)
+        spy.addApplication(client)
         verify(spy).addObject(any(Application.class))
     }
 
@@ -288,22 +277,6 @@ class LdapApplicationRepositoryTest {
         doReturn(apps).when(spy).getObjects(any(Filter.class))
         List<Application> result = spy.getAvailableScopes()
         assertThat("client", result.isEmpty(), equalTo(true))
-    }
-
-    @Test
-    public void getSingleSoftDeletedClient_notFoundClient_returnsNull() throws Exception {
-        doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class))
-        Application result = spy.getSingleSoftDeletedClient(null)
-        assertThat("client", result, equalTo(null))
-    }
-
-    @Test
-    public void getSingleSoftDeletedClient_foundClient_returnsClient() throws Exception {
-        Application application = getFakeApp()
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0])
-        doReturn(application).when(spy).getObject(any(Filter.class), anyString())
-        Application result = spy.getSingleSoftDeletedClient(null)
-        assertThat("client", result, equalTo(application))
     }
 
     @Test (expected = IllegalStateException.class)

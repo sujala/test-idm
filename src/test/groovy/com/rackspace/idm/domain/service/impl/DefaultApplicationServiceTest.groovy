@@ -55,7 +55,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationMock.setClientSecretObj(_)
 
         then:
-        1 * applicationDao.addClient(applicationMock)
+        1 * applicationDao.addApplication(applicationMock)
     }
 
     def "delete throws NotFoundException if application does not exist within the directory"() {
