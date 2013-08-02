@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.PropertiesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,10 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     public String getLdapEntityClass(){
         return OBJECTCLASS_RACKSPACEAPPLICATION;
+    }
+
+    public String getSortAttribute() {
+        return ATTR_CLIENT_ID;
     }
 
     @Override
@@ -196,52 +201,25 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Applications getClientsByCustomerId(String customerId, int offset,
-                                               int limit) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty customerId parameter.");
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        Applications clients = getMultipleClients(searchFilter, offset, limit);
-
-        getLogger().debug("Found {} clients for customer {}",
-                clients.getTotalRecords(), customerId);
-
-        return clients;
+    public Applications getClientsByCustomerId(String customerId, int offset, int limit) {
+        PaginatorContext<Application> page = getObjectsPaged(searchFilterGetApplicationsByCustomerId(customerId), offset, limit);
+        Applications apps = new Applications();
+        apps.setClients(page.getValueList());
+        apps.setLimit(page.getLimit());
+        apps.setOffset(page.getOffset());
+        apps.setTotalRecords(page.getTotalRecords());
+        return apps;
     }
 
     @Override
     public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
-        getLogger().debug("Getting all applications");
-
-        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION);
-
-        if (filters != null) {
-            for (FilterParam filter : filters) {
-                // can only filter on application name for now
-                if (filter.getParam() == FilterParamName.APPLICATION_NAME) {
-                    searchBuilder.addEqualAttribute(ATTR_NAME, filter.getStrValue());
-                }
-            }
-        }
-
-        Filter searchFilter = searchBuilder.build();
-
-        Applications applications = getMultipleClients(searchFilter, offset, limit);
-
-        getLogger().debug("Got {} applications", applications.getTotalRecords());
-
-        return applications;
+        PaginatorContext<Application> page = getObjectsPaged(searchFilterGetApplications(), offset, limit);
+        Applications apps = new Applications();
+        apps.setClients(page.getValueList());
+        apps.setLimit(page.getLimit());
+        apps.setOffset(page.getOffset());
+        apps.setTotalRecords(page.getTotalRecords());
+        return apps;
     }
 
     @Override
@@ -376,83 +354,4 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
     }
-
-    Application getClientOld(SearchResultEntry resultEntry) {
-        Application client = new Application();
-        client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-
-        client.setEncryptionVersion(resultEntry.getAttributeValue(ATTR_ENCRYPTION_VERSION_ID));
-        client.setSalt(resultEntry.getAttributeValue(ATTR_ENCRYPTION_SALT));
-
-        String versionId = getEncryptionVersionId(client);
-        String salt = getSalt(client);
-
-        try {
-            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), versionId, salt);
-            ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
-            client.setClientSecretObj(secret);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        client.setName(resultEntry.getAttributeValue(ATTR_NAME));
-
-        client.setRcn(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-
-        client.setOpenStackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
-
-        client.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
-
-        client.setCallBackUrl(resultEntry.getAttributeValue(ATTR_CALLBACK_URL));
-        client.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
-        client.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
-        client.setScope(resultEntry.getAttributeValue(ATTR_TOKEN_SCOPE));
-        client.setUseForDefaultRegion(resultEntry.getAttributeValueAsBoolean(ATTR_USE_FOR_DEFAULT_REGION));
-
-        getLogger().debug("Materialized Client object {}.", client);
-        return client;
-    }
-
-    Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
-
-        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
-        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
-
-        int contentCount = 0;
-
-        List<Application> clientList = new ArrayList<Application>();
-
-        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, null);
-
-        contentCount = entries.size();
-
-        if (offsets < contentCount) {
-
-            int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
-            int fromIndex = offsets;
-
-            List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
-
-            for (SearchResultEntry entry : subList) {
-                clientList.add(getClientOld(entry));
-            }
-        }
-
-        getLogger().debug("Found {} clients.", clientList.size());
-
-        Applications clients = new Applications();
-
-        clients.setLimit(limits);
-        clients.setOffset(offsets);
-        clients.setTotalRecords(contentCount);
-        clients.setClients(clientList);
-
-        return clients;
-    }
-
 }

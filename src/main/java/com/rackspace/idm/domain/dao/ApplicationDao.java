@@ -23,7 +23,7 @@ public interface ApplicationDao {
     Application getApplicationByScope(String scope);
 
     Applications getClientsByCustomerId(String customerId, int offset, int limit);
-    
+
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
     
     void updateApplication(Application client);

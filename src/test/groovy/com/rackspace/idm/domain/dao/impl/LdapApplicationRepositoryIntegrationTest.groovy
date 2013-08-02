@@ -54,11 +54,10 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         Application deletedApp = applicationDao.getApplicationByClientId(random)
 
         then:
-        app == retrievedApp
         deletedApp == null
-        namedApp == app
-        customerAndClientApp == app
-        scopeApp == app
+        namedApp == retrievedApp
+        customerAndClientApp == retrievedApp
+        scopeApp == retrievedApp
     }
 
     def "can soft delete and unsoftdelete app"() {
@@ -67,6 +66,7 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
 
         when:
         applicationDao.addClient(app)
+        Application retrievedApp = applicationDao.getApplicationByClientId(random)
         applicationDao.softDeleteApplication(app)
 
         Application notFoundApp = applicationDao.getApplicationByClientId(random)
@@ -81,27 +81,8 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         then:
         notFoundApp == null
         softDeletedById == softDeletedByName
-        foundApp == app
+        foundApp == retrievedApp
     }
-
-//    def "can authenticate app change password and reauthenticate"() {
-//        given:
-//        def app = getApp(random)
-//        app.setScope(tokenScope)
-//
-//        when:
-//        applicationDao.addClient(app)
-//        ClientAuthenticationResult result = applicationDao.authenticate(random, password)
-//        app.setClientSecretObj(clientSecret2)
-//        applicationDao.updateApplication(app)
-//        ClientAuthenticationResult result2 = applicationDao.authenticate(random, password2)
-//        applicationDao.deleteApplication(app)
-//
-//        then:
-//        result.isAuthenticated() == true
-//        result2.isAuthenticated() == true
-//        app.getClearPassword() == password2
-//    }
 
     def getApp(id) {
         new Application(id, clientSecret, name, customerId).with {

@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.api.resource.pagination.Paginator
+import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.audit.Audit
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.Applications
@@ -201,15 +203,11 @@ class LdapApplicationRepositoryTest {
         assertThat("client", result, equalTo(application))
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getClientsByCustomerId_customerIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.getClientsByCustomerId("  ", 1, 1)
-    }
-
     @Test
     public void getClientsByCustomerId_foundClients_returnsClients() throws Exception {
         Applications clients = new Applications()
-        doReturn(clients).when(spy).getMultipleClients(any(Filter.class), eq(1), eq(1))
+        PaginatorContext<Application> pagedApps = new PaginatorContext<Application>()
+        doReturn(pagedApps).when(spy).getObjectsPaged(any(Filter.class), eq(1), eq(1))
         Applications result = spy.getClientsByCustomerId("customerId", 1, 1)
         assertThat("clients", result, equalTo(clients))
     }
@@ -220,7 +218,8 @@ class LdapApplicationRepositoryTest {
         List<FilterParam> filters = new ArrayList<FilterParam>()
         filters.add(filterParam)
         Applications clients = new Applications()
-        doReturn(clients).when(spy).getMultipleClients(any(Filter.class), eq(1), eq(1))
+        PaginatorContext<Application> pagedApps = new PaginatorContext<Application>()
+        doReturn(pagedApps).when(spy).getObjectsPaged(any(Filter.class), eq(1), eq(1))
         Applications result = spy.getAllApplications(filters, 1, 1)
         assertThat("clients", result, equalTo(clients))
     }
@@ -233,7 +232,8 @@ class LdapApplicationRepositoryTest {
         List<FilterParam> filters = new ArrayList<FilterParam>()
         filters.add(filterParam)
         Applications clients = new Applications()
-        doReturn(clients).when(spy).getMultipleClients(argumentCapture.capture(), eq(1), eq(1))
+        PaginatorContext<Application> pagedApps = new PaginatorContext<Application>();
+        doReturn(pagedApps).when(spy).getObjectsPaged(argumentCapture.capture(), eq(1), eq(1))
         spy.getAllApplications(filters, 1, 1)
         Filter[] filtersCaptured = argumentCapture.getValue().getComponents()
         assertThat("only one filter was added, so no components",filtersCaptured.length,equalTo(0))
@@ -242,7 +242,8 @@ class LdapApplicationRepositoryTest {
     @Test
     public void getAllClients_filterIsNull_returnsApplications() throws Exception {
         Applications clients = new Applications()
-        doReturn(clients).when(spy).getMultipleClients(any(Filter.class), eq(1), eq(1))
+        PaginatorContext<Application> pagedApps = new PaginatorContext<Application>()
+        doReturn(pagedApps).when(spy).getObjectsPaged(any(Filter.class), eq(1), eq(1))
         Applications result = spy.getAllApplications(null, 1, 1)
         assertThat("clients", result, equalTo(clients))
     }
@@ -287,40 +288,6 @@ class LdapApplicationRepositoryTest {
         doReturn(apps).when(spy).getObjects(any(Filter.class))
         List<Application> result = spy.getAvailableScopes()
         assertThat("client", result.isEmpty(), equalTo(true))
-    }
-
-    @Test
-    public void getMultipleClients_contentCountLessThanOffset_setClientsToEmptyList() throws Exception {
-        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>()
-        doReturn(1).when(spy).getLdapPagingLimitMax()
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null)
-        Applications result = spy.getMultipleClients(null, 2, 2)
-        assertThat("client", result.getClients().isEmpty(), equalTo(true))
-    }
-
-    @Test
-    public void getMultipleClients_subListIsEmpty_setClientsToEmptyList() throws Exception {
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0])
-        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>()
-        searchResultEntryList.add(searchResultEntry)
-        doReturn(0).when(spy).getLdapPagingOffsetDefault()
-        doReturn(0).when(spy).getLdapPagingLimitDefault()
-        doReturn(3).when(spy).getLdapPagingLimitMax()
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null)
-        Applications result = spy.getMultipleClients(null, -1, 0)
-        assertThat("client", result.getClients().isEmpty(), equalTo(true))
-    }
-
-    @Test
-    public void getMultipleClients_callsGetClient_returnsClientsWithAddedClient() throws Exception {
-        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0])
-        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>()
-        searchResultEntryList.add(searchResultEntry)
-        searchResultEntryList.add(searchResultEntry)
-        doReturn(3).when(spy).getLdapPagingLimitMax()
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null)
-        Applications result = spy.getMultipleClients(null, 1, 2)
-        assertThat("client", result.getClients().size(), equalTo(1))
     }
 
     @Test

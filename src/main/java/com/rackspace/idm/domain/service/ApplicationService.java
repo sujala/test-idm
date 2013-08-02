@@ -19,7 +19,7 @@ public interface ApplicationService {
     void deleteDefinedPermission(DefinedPermission permission);
 
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
-    
+
     Applications getByCustomerId(String customerId, int offset, int limit);
 
     Application loadApplication(String applicationId);
