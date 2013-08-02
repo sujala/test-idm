@@ -53,11 +53,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void addApplication(Application application) {
-        if (application == null) {
-            String errMsg = "Null instance of Client was passed in.";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
         encryptPassword(application);
         addObject(application);
         application.setClientSecretObj(application.getClientSecretObj().toExisting());
@@ -67,11 +62,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
         BindResult result;
         Application client = getApplicationByClientId(clientId);
-
-        if (client == null) {
-            getLogger().debug("Client {} could not be found.", clientId);
-            return new ClientAuthenticationResult(null, false);
-        }
 
         Audit audit = Audit.authClient(client);
 
@@ -94,9 +84,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public void deleteApplication(Application application) {
-        if (application != null) {
             deleteObject(application);
-        }
     }
 
     @Override
@@ -106,39 +94,21 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getApplicationByClientId(String clientId) {
-        if (StringUtils.isBlank(clientId)) {
-            return null;
-        }
         return DecryptApplicationPassword(searchFilterGetApplicationByClientId(clientId));
     }
 
     @Override
     public Application getApplicationByName(String name) {
-        if (StringUtils.isBlank(name)) {
-            getLogger().error("Null or Empty application name parameter");
-            throw new IllegalArgumentException("Null or Empty client name parameter.");
-        }
         return DecryptApplicationPassword(searchFilterGetApplicationByName(name));
     }
 
     @Override
     public Application getApplicationByCustomerIdAndClientId(String customerId, String clientId) {
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customer Id parameter");
-            throw new IllegalArgumentException("Null or Empty client name parameter.");
-        }
-        if (StringUtils.isBlank(clientId)) {
-            return null;
-        }
         return DecryptApplicationPassword(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
     }
 
     @Override
     public Application getApplicationByScope(String scope) {
-        if (StringUtils.isBlank(scope)) {
-            getLogger().error("Null or Empty application scope parameter");
-            throw new IllegalArgumentException("Null or Empty client name parameter.");
-        }
         return DecryptApplicationPassword(searchFilterGetApplicationByScope(scope));
     }
 
@@ -188,21 +158,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     @Override
     public Application getSoftDeletedApplicationById(String id) {
-        if (StringUtils.isBlank(id)) {
-            getLogger().error("Null or Empty id parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty id parameter.");
-        }
         return getObject(searchFilterGetApplicationByClientId(id), getSoftDeletedBaseDn());
     }
 
     @Override
     public Application getSoftDeletedClientByName(String clientName) {
-        if (StringUtils.isBlank(clientName)) {
-            getLogger().error("Null or Empty clientName parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty clientName parameter.");
-        }
         return getObject(searchFilterGetApplicationByName(clientName), getSoftDeletedBaseDn());
     }
 

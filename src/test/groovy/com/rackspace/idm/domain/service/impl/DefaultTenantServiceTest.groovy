@@ -25,12 +25,8 @@ class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
 
     String clientId = "clientId"
-    ClientSecret clientSecret = ClientSecret.newInstance("Secret")
     String name = "name"
     String customerId = "customerId"
-    String salt = "a1 b1"
-    String version = "0"
-    String dn = "clientId=clientId,ou=applications,o=rackspace,dc=rackspace,dc=com"
 
     def setupSpec() {
         service = new DefaultTenantService()
@@ -51,7 +47,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
     def "add TenantRole To Client throws NotFoundException if clientRole is Null"() {
         given:
         def tenantRole = entityFactory.createTenantRole("role")
-        def application = getFakeApp()
+        def application = entityFactory.createApplication()
 
         applicationService.getById(clientId) >> application
         applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> null
@@ -65,7 +61,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def "add TenantRole To Client throws NotFoundException if owner Is Null"() {
         given:
-        def app = getFakeApp()
+        def app = entityFactory.createApplication()
         def tenantRole = entityFactory.createTenantRole("role")
 
         applicationService.getById(clientId) >> null
@@ -80,8 +76,8 @@ class DefaultTenantServiceTest extends RootServiceTest {
     def "add TenantRole To Client does Not Call ScopeAccessService Method if scopeAccess Is Not Null"() {
         given:
         def tenantRole = entityFactory.createTenantRole("role").with { it.clientId = clientId; return it }
-        def application = getFakeApp()
-        applicationService.getById(_) >> getFakeApp()
+        def application = entityFactory.createApplication()
+        applicationService.getById(_) >> application
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole()
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> new ScopeAccess()
         service.addTenantRoleToClient(application, tenantRole) >> void
@@ -715,14 +711,5 @@ class DefaultTenantServiceTest extends RootServiceTest {
         null    | null    | null   | false           | false
         "1"     | "desc"  | "name" | true            | true
 
-    }
-
-    private Application getFakeApp() {
-        Entry entry = new Entry(dn)
-        Application app = new Application(clientId, clientSecret, name, customerId)
-        app.ldapEntry = new ReadOnlyEntry(entry)
-        app.salt = salt
-        app.encryptionVersion = version
-        return app
     }
 }

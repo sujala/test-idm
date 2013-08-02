@@ -21,6 +21,8 @@ class EntityFactory extends Specification {
     private static NAME = "name"
     private static PASSWORD = "Password1"
     private static USERNAME = "username"
+    private static SALT = "a1 b1"
+    private static VERSION = "0"
 
     private static objFactories = new JAXBObjectFactories()
 
@@ -36,6 +38,8 @@ class EntityFactory extends Specification {
             it.clientId = clientId
             it.name = name
             it.enabled = true
+            it.encryptionVersion = VERSION
+            it.salt = SALT
             return it
         }
     }
