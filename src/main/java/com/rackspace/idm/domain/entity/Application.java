@@ -1,43 +1,76 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.persist.*;
+import lombok.*;
+import org.apache.commons.lang.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
 
-public class Application implements Auditable {
+@Data
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION)
+public class Application implements Auditable, UniqueId {
     private static final long serialVersionUID = -3160754818606772239L;
 
+    @LDAPEntryField()
+    private ReadOnlyEntry ldapEntry;
+
     private ClientSecret clientSecret;
-    
-    private String uniqueId = null;
-    
+
+    @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String clientId = null;
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    @LDAPField(attribute = LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String rcn = null;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name = null;
-    
+
+    @LDAPField(attribute = LdapRepository.ATTR_OPENSTACK_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String openStackType = null;
-    
+
+    @LDAPField(attribute = LdapRepository.ATTR_TOKEN_SCOPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String scope = null;
+
+    @LDAPField(attribute = LdapRepository.ATTR_CALLBACK_URL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String callBackUrl = null;
+
+    @LDAPField(attribute = LdapRepository.ATTR_TITLE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String title = null;
+
+    @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description = null;
+
+    @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Boolean enabled = null;
 
+    @LDAPField(attribute = LdapRepository.ATTR_USE_FOR_DEFAULT_REGION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Boolean useForDefaultRegion = null;
 
+    @LDAPField(attribute = LdapRepository.ATTR_ENCRYPTION_VERSION_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String encryptionVersion;
 
+    @LDAPField(attribute = LdapRepository.ATTR_ENCRYPTION_SALT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String salt;
 
+    @LDAPField(attribute = LdapRepository.ATTR_CLEAR_PASSWORD, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private byte[] clearPasswordBytes;
+
+    private String clearPassword;
+
     private List<TenantRole> roles = null;
+
     public Application() {
     }
 
@@ -48,38 +81,12 @@ public class Application implements Auditable {
         this.name = name;
     }
 
-    public void setUniqueId(String uniqueId) {
-        if (uniqueId != null) {
-            this.uniqueId = uniqueId;
-        }
-    }
-
     public String getUniqueId() {
-        return uniqueId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getRCN() {
-        return rcn;
-    }
-
-    public void setRCN(String rcn) {
-        this.rcn = rcn;
-    }
-
-    public String getOpenStackType() {
-        return openStackType;
-    }
-
-    public void setOpenStackType(String openStackType) {
-        this.openStackType = openStackType;
+        if (ldapEntry == null) {
+            return null;
+        } else {
+            return ldapEntry.getDN();
+        }
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
@@ -92,56 +99,19 @@ public class Application implements Auditable {
         return clientSecret;
     }
 
+    @LDAPSetter(attribute = LdapRepository.ATTR_CLIENT_SECRET)
     public void setClientSecret(String secret) {
         if (secret != null) {
             this.clientSecret = ClientSecret.newInstance(secret);
         }
     }
 
+    @LDAPGetter(attribute = LdapRepository.ATTR_CLIENT_SECRET, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getClientSecret() {
-        return this.clientSecret.getValue();
-    }
-
-    public void setName(String name) {
-        if (name != null) {
-            this.name = name;
+        if (clientSecret == null) {
+            return null;
         }
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    public String getCallBackUrl() {
-        return callBackUrl;
-    }
-
-    public void setCallBackUrl(String callBackUrl) {
-        this.callBackUrl = callBackUrl;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+        return this.clientSecret.getValue();
     }
 
     public void setDefaults() {
@@ -150,12 +120,12 @@ public class Application implements Auditable {
 
     public void copyChanges(Application modifiedClient) {
 
-    	if (modifiedClient.getRCN() != null) {
-    		setRCN(modifiedClient.getRCN());
+    	if (modifiedClient.getRcn() != null) {
+    		setRcn(modifiedClient.getRcn());
     	}
 
-    	if (modifiedClient.isEnabled() != null) {
-    		setEnabled(modifiedClient.isEnabled());
+    	if (modifiedClient.getEnabled() != null) {
+    		setEnabled(modifiedClient.getEnabled());
     	}
 
         if (modifiedClient.getCallBackUrl() != null) {
@@ -183,138 +153,6 @@ public class Application implements Auditable {
         }
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-            + ((callBackUrl == null) ? 0 : callBackUrl.hashCode());
-        result = prime * result
-            + ((clientId == null) ? 0 : clientId.hashCode());
-        result = prime * result
-            + ((clientSecret == null) ? 0 : clientSecret.hashCode());
-        result = prime * result
-            + ((description == null) ? 0 : description.hashCode());
-        result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result
-            + ((openStackType == null) ? 0 : openStackType.hashCode());
-        result = prime * result + ((rcn == null) ? 0 : rcn.hashCode());
-        result = prime * result + ((roles == null) ? 0 : roles.hashCode());
-        result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-        result = prime * result + ((title == null) ? 0 : title.hashCode());
-        result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Application other = (Application) obj;
-        if (callBackUrl == null) {
-            if (other.callBackUrl != null) {
-                return false;
-            }
-        } else if (!callBackUrl.equals(other.callBackUrl)) {
-            return false;
-        }
-        if (clientId == null) {
-            if (other.clientId != null) {
-                return false;
-            }
-        } else if (!clientId.equals(other.clientId)) {
-            return false;
-        }
-        if (clientSecret == null) {
-            if (other.clientSecret != null) {
-                return false;
-            }
-        } else if (!clientSecret.equals(other.clientSecret)) {
-            return false;
-        }
-        if (description == null) {
-            if (other.description != null) {
-                return false;
-            }
-        } else if (!description.equals(other.description)) {
-            return false;
-        }
-        if (enabled == null) {
-            if (other.enabled != null) {
-                return false;
-            }
-        } else if (!enabled.equals(other.enabled)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (openStackType == null) {
-            if (other.openStackType != null) {
-                return false;
-            }
-        } else if (!openStackType.equals(other.openStackType)) {
-            return false;
-        }
-        if (rcn == null) {
-            if (other.rcn != null) {
-                return false;
-            }
-        } else if (!rcn.equals(other.rcn)) {
-            return false;
-        }
-        if (roles == null) {
-            if (other.roles != null) {
-                return false;
-            }
-        } else if (!roles.equals(other.roles)) {
-            return false;
-        }
-        if (scope == null) {
-            if (other.scope != null) {
-                return false;
-            }
-        } else if (!scope.equals(other.scope)) {
-            return false;
-        }
-        if (title == null) {
-            if (other.title != null) {
-                return false;
-            }
-        } else if (!title.equals(other.title)) {
-            return false;
-        }
-        if (uniqueId == null) {
-            if (other.uniqueId != null) {
-                return false;
-            }
-        } else if (!uniqueId.equals(other.uniqueId)) {
-            return false;
-        }
-        return true;
-    }
-
-    public List<TenantRole> getRoles() {
-		return roles;
-	}
-
-	public void setRoles(List<TenantRole> roles) {
-		this.roles = roles;
-	}
-
 	@Override
     public String toString() {
         return getAuditContext();
@@ -323,38 +161,6 @@ public class Application implements Auditable {
     @Override
     public String getAuditContext() {
         String format = "clientId=%s,customerId=%s";
-        return String.format(format, getClientId(), getRCN());
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Boolean isEnabled() {
-        return enabled;
-    }
-
-    public Boolean getUseForDefaultRegion() {
-        return useForDefaultRegion;
-    }
-
-    public void setUseForDefaultRegion(Boolean useForDefaultRegion) {
-        this.useForDefaultRegion = useForDefaultRegion;
-    }
-
-    public String getEncryptionVersion() {
-        return encryptionVersion;
-    }
-
-    public void setEncryptionVersion(String encryptionVersion) {
-        this.encryptionVersion = encryptionVersion;
-    }
-
-    public String getSalt() {
-        return salt;
-    }
-
-    public void setSalt(String salt) {
-        this.salt = salt;
+        return String.format(format, getClientId(), rcn);
     }
 }

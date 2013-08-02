@@ -1,14 +1,36 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.ClientSecret
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
+import com.unboundid.ldap.sdk.Entry
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import static org.mockito.Matchers.any
+import static org.mockito.Matchers.anyString
+import static org.mockito.Mockito.doNothing
+import static org.mockito.Mockito.never
+import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
+import static org.mockito.Mockito.when
+
 class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
+
+    String clientId = "clientId"
+    ClientSecret clientSecret = ClientSecret.newInstance("Secret")
+    String name = "name"
+    String customerId = "customerId"
+    String salt = "a1 b1"
+    String version = "0"
+    String dn = "clientId=clientId,ou=applications,o=rackspace,dc=rackspace,dc=com"
 
     def setupSpec() {
         service = new DefaultTenantService()
@@ -24,6 +46,51 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockScopeAccessService(service)
         mockAtomHopperClient(service)
+    }
+
+    def "add TenantRole To Client throws NotFoundException if clientRole is Null"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole("role")
+        def application = getFakeApp()
+
+        applicationService.getById(clientId) >> application
+        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> null
+
+        when:
+        service.addTenantRoleToClient(application, tenantRole)
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "add TenantRole To Client throws NotFoundException if owner Is Null"() {
+        given:
+        def app = getFakeApp()
+        def tenantRole = entityFactory.createTenantRole("role")
+
+        applicationService.getById(clientId) >> null
+
+        when:
+        service.addTenantRoleToClient(app,tenantRole);
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "add TenantRole To Client does Not Call ScopeAccessService Method if scopeAccess Is Not Null"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole("role").with { it.clientId = clientId; return it }
+        def application = getFakeApp()
+        applicationService.getById(_) >> getFakeApp()
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole()
+        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> new ScopeAccess()
+        service.addTenantRoleToClient(application, tenantRole) >> void
+
+        when:
+        service.addTenantRoleToClient(application,tenantRole);
+
+        then:
+        0 * scopeAccessService.addDirectScopeAccess(anyString(), any(ScopeAccess.class))
     }
 
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
@@ -648,5 +715,14 @@ class DefaultTenantServiceTest extends RootServiceTest {
         null    | null    | null   | false           | false
         "1"     | "desc"  | "name" | true            | true
 
+    }
+
+    private Application getFakeApp() {
+        Entry entry = new Entry(dn)
+        Application app = new Application(clientId, clientSecret, name, customerId)
+        app.ldapEntry = new ReadOnlyEntry(entry)
+        app.salt = salt
+        app.encryptionVersion = version
+        return app
     }
 }

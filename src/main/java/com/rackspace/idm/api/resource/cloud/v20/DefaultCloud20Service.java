@@ -403,7 +403,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             client.setOpenStackType(service.getType());
             client.setDescription(service.getDescription());
             client.setName(service.getName());
-            client.setRCN(getRackspaceCustomerId());
+            client.setRcn(getRackspaceCustomerId());
 
             this.applicationService.add(client);
             service.setId(client.getClientId());

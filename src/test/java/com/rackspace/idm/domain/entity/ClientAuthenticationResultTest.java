@@ -29,20 +29,6 @@ public class ClientAuthenticationResultTest {
     }
 
     @Test
-    public void hashCode_clientIsNull_returnsHashResult() throws Exception {
-        int result = clientAuthenticationResult.hashCode();
-        assertThat("hash code", result, equalTo(39308));
-    }
-
-    @Test
-    public void hashCode_clientNotNull_returnsHashResult() throws Exception {
-        Application client = new Application();
-        clientAuthenticationResult.setClient(client);
-        int result = clientAuthenticationResult.hashCode();
-        assertThat("hash code", result, equalTo(-293363699));
-    }
-
-    @Test
     public void equals_objIsSame_returnsTrue() throws Exception {
         boolean result = clientAuthenticationResult.equals(clientAuthenticationResult);
         assertThat("boolean", result, equalTo(true));

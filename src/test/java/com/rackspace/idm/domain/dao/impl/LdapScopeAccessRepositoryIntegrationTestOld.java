@@ -55,17 +55,17 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @Before
     public void preTestSetUp() throws Exception {
-        Application deleteme = clientRepo.getClientByClientId("XXX");
-        Application deleteme2 = clientRepo.getClientByClientId("YYY");
+        Application deleteme = clientRepo.getApplicationByClientId("XXX");
+        Application deleteme2 = clientRepo.getApplicationByClientId("YYY");
         Customer deleteCustomer = customerRepo.getCustomerByCustomerId(customerId);
         if(deleteCustomer !=null){
             customerRepo.deleteCustomer(customerId);
         }
         if (deleteme != null) {
-            clientRepo.deleteClient(deleteme);
+            clientRepo.deleteApplication(deleteme);
         }
         if (deleteme2 != null) {
-            clientRepo.deleteClient(deleteme2);
+            clientRepo.deleteApplication(deleteme2);
         }
 
         try {
@@ -80,15 +80,15 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
     @After
     public void postTestTearDown() throws Exception {
         customerRepo.deleteCustomer(customer.getRcn());
-        clientRepo.deleteClient(client);
-        clientRepo.deleteClient(client2);
+        clientRepo.deleteApplication(client);
+        clientRepo.deleteApplication(client2);
     }
 
     @Test
     public void testAddDuplicateScopeAccess() {
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
-        sa.setClientRCN(client.getRCN());
+        sa.setClientRCN(client.getRcn());
         sa.setAccessTokenExp(new Date());
         sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
@@ -187,7 +187,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -218,7 +218,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -250,7 +250,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p.setResourceGroups(new String[]{"test"});
 
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -276,7 +276,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p.setResourceGroups(new String[]{"test"});
 
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -334,7 +334,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (ClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
@@ -496,7 +496,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -530,7 +530,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
@@ -588,7 +588,7 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRcn(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 

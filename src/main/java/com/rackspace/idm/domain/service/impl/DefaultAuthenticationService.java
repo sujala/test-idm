@@ -207,7 +207,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             // about client
             Application application = new Application();
             application.setClientId(scopeAccess.getClientId());
-            application.setRCN(scopeAccess.getClientRCN());
+            application.setRcn(scopeAccess.getClientRCN());
             authData.setApplication(application);
         }
 
@@ -349,7 +349,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
-            scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
+            scopeAccessToAdd.setClientRCN(caResult.getClient().getRcn());
 
             String parentUniqueId = null;
             try {
@@ -385,7 +385,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(currentTime.plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
-            scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
+            scopeAccessToAdd.setClientRCN(caResult.getClient().getRcn());
             scopeAccessToAdd.setAuthCode(null);
             scopeAccessToAdd.setAuthCodeExp(null);
 
@@ -423,12 +423,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
             scopeAccessToAdd.setUsername(scopeAccess.getUsername());
             scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
@@ -481,12 +481,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
         ClientScopeAccess scopeAccessToAdd = new ClientScopeAccess();
 
         if (scopeAccess == null) {
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setClientId(client.getClientId());
             logger.debug("Creating ScopeAccess for Client: {} and ClientId: {}", client.getClientId(), client.getClientId());
         } else {
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
         }
@@ -530,11 +530,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
             // Auto-Provision Scope Access Objects for Rackers
             scopeAccessToAdd.setRackerId(racker.getRackerId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
             scopeAccessToAdd.setRackerId(scopeAccess.getRackerId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
             scopeAccessToAdd.setRefreshTokenString(scopeAccess.getAccessTokenString());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
