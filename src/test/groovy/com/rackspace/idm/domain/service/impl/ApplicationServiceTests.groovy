@@ -242,7 +242,7 @@ public class ApplicationServiceTests {
         clients.setTotalRecords(2);
 
         EasyMock.expect(
-            applicationDao.getClientsByCustomerId(customerId, 0, 100))
+            applicationDao.getApplicationsByCustomerId(customerId, 0, 100))
             .andReturn(clients);
         EasyMock.replay(applicationDao);
 

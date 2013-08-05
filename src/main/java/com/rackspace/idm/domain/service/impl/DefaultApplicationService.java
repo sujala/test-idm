@@ -159,7 +159,17 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Applications getByCustomerId(String customerId, int offset, int limit) {
-        return applicationDao.getClientsByCustomerId(customerId, offset, limit);
+        return applicationDao.getApplicationsByCustomerId(customerId, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit) {
+        return applicationDao.getAllApplicationsPaged(filters, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit) {
+        return applicationDao.getApplicationsByCustomerIdPaged(customerId, offset, limit);
     }
 
     @Override

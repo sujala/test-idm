@@ -22,6 +22,10 @@ public interface ApplicationService {
 
     Applications getByCustomerId(String customerId, int offset, int limit);
 
+    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
+
+    PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit);
+
     Application loadApplication(String applicationId);
     
     Application getById(String clientId);

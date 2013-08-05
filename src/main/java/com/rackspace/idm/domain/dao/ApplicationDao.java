@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -22,9 +23,13 @@ public interface ApplicationDao {
     
     Application getApplicationByScope(String scope);
 
-    Applications getClientsByCustomerId(String customerId, int offset, int limit);
+    Applications getApplicationsByCustomerId(String customerId, int offset, int limit);
+
+    PaginatorContext<Application> getApplicationsByCustomerIdPaged(String customerId, int offset, int limit);
 
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
+
+    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
     
     void updateApplication(Application client);
     

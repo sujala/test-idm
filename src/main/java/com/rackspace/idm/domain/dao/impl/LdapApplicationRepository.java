@@ -115,7 +115,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Applications getClientsByCustomerId(String customerId, int offset, int limit) {
+    public Applications getApplicationsByCustomerId(String customerId, int offset, int limit) {
         PaginatorContext<Application> page = getObjectsPaged(searchFilterGetApplicationsByCustomerId(customerId), offset, limit);
         Applications apps = new Applications();
         apps.setClients(page.getValueList());
@@ -123,6 +123,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         apps.setOffset(page.getOffset());
         apps.setTotalRecords(page.getTotalRecords());
         return apps;
+    }
+
+    @Override
+    public PaginatorContext<Application> getApplicationsByCustomerIdPaged(String customerId, int offset, int limit) {
+        return getObjectsPaged(searchFilterGetApplicationsByCustomerId(customerId), offset, limit);
     }
 
     @Override
@@ -134,6 +139,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         apps.setOffset(page.getOffset());
         apps.setTotalRecords(page.getTotalRecords());
         return apps;
+    }
+
+    @Override
+    public PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit) {
+        return getObjectsPaged(searchFilterGetApplications(), offset, limit);
     }
 
     @Override
@@ -195,13 +205,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CLIENT_ID, clientId)
                 .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-                .build();
-    }
-
-    private Filter searchFilterGetApplicationById(String id) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_ID, id)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
     }
