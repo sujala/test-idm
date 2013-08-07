@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.unboundid.ldap.sdk.Filter;
@@ -41,6 +42,11 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
     @Override
     public List<Tenant> getTenants() {
         return getObjects(searchFilterGetTenants());
+    }
+
+    @Override
+    public PaginatorContext<Tenant> getTenantsPaged(int offset, int limit) {
+        return getObjectsPaged(searchFilterGetTenants(), offset, limit);
     }
 
     @Override
