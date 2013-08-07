@@ -24,7 +24,6 @@ import java.util.Locale;
 public class UserServiceTests {
 
     UserDao mockUserDao;
-    CustomerService mockCustomerService;
     UserService userService;
     UserService trustedUserService;
     DomainService mockDomainService;
@@ -72,7 +71,6 @@ public class UserServiceTests {
     public void setUp() throws Exception {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockCustomerService = EasyMock.createMock(CustomerService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ApplicationService.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
@@ -164,12 +162,6 @@ public class UserServiceTests {
     String clientRCN = "clientRCN";
     String userRCN = "userRCN";
     String userRsId = "userRsId";
-
-    private Customer getFakeCustomer() {
-        Customer customer = new Customer();
-        customer.setRcn(customerId);
-        return customer;
-    }
 
     private List<Application> getFakeClients() {
 

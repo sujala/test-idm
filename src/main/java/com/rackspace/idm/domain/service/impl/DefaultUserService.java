@@ -188,30 +188,6 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-
-    @Override
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
-        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        User user = getUserByTenantId(String.valueOf(mossoId));
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
-        return authenticated;
-    }
-
-
-    @Override
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
-        logger.debug("Authenticating User with NastId {} and API Key", nastId);
-
-        User user = getUserByTenantId(nastId);
-
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
-
-        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
-        return authenticated;
-    }
-
-
     @Override
     public User loadUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
@@ -423,33 +399,9 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByRPN(String rpn) {
-        logger.debug(GETTING_USER, rpn);
-        User user = userDao.getUserByRPN(rpn);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
-    public User getUserBySecureId(String secureId) {
-        logger.debug("Getting User by secureId: {}", secureId);
-        User user = userDao.getUserBySecureId(secureId);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
     public User getSoftDeletedUser(String id) {
         logger.debug(GETTING_USER, id);
         User user = userDao.getSoftDeletedUserById(id);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
-    public User getSoftDeletedUserByUsername(String name) {
-        logger.debug(GETTING_USER, name);
-        User user = userDao.getSoftDeletedUserByUsername(name);
         logger.debug(GOT_USER, user);
         return user;
     }
@@ -890,13 +842,6 @@ public class DefaultUserService implements UserService {
         Tenant tenant = this.tenantService.getTenant(tenantId);
         tenant.getBaseUrlIds().remove(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
-    }
-
-    @Override
-    public List<Tenant> getUserTenants(String userId) {
-        List<Tenant> tenantList = new ArrayList<Tenant>();
-
-        return tenantList;
     }
 
     @Override

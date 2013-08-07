@@ -49,8 +49,6 @@ public class DefaultAuthenticationServiceTestOld {
     @Mock
     TenantService tenantService;
     @Mock
-    CustomerService customerService;
-    @Mock
     InputValidator inputValidator;
     @Mock
     Configuration config;
@@ -768,22 +766,6 @@ public class DefaultAuthenticationServiceTestOld {
     public void authenticateRacker_withFlagSetToTrue_callsClient() throws Exception {
         spy.authenticateRacker("foo", "bar", true);
         verify(rsaClient).authenticate("foo", "bar");
-    }
-
-    @Test
-    public void getUserPasswordExpirationDate_noCustomerAssociatedWithGivenId_returnsNull() throws Exception {
-        when(userService.getUser(null)).thenReturn(new User());
-        when(customerService.getCustomer(null)).thenReturn(null);
-        assertThat("should return null value", defaultAuthenticationService.getUserPasswordExpirationDate(null), nullValue());
-    }
-
-    @Test
-    public void getUserPasswordExpirationDate_passwordRotationDisabled_returnsNull() throws Exception {
-        Customer customer = new Customer();
-        customer.setPasswordRotationEnabled(false);
-        when(userService.getUser(null)).thenReturn(new User());
-        when(customerService.getCustomer(null)).thenReturn(customer);
-        assertThat("should return null value", defaultAuthenticationService.getUserPasswordExpirationDate(null), nullValue());
     }
 
     @Test

@@ -27,44 +27,12 @@ import static org.mockito.Mockito.verify;
  */
 public class UserGlobalRolesResourceTest {
     private UserGlobalRolesResource userGlobalRolesResource;
-    private AuthorizationService authorizationService;
-    private UserService userService;
-    private TenantService tenantService;
     private UserGlobalRoleResource roleResource;
-    private RolesConverter rolesConverter;
 
     @Before
     public void setUp() throws Exception {
-        authorizationService = mock(AuthorizationService.class);
-        userService = mock(UserService.class);
-        tenantService = mock(TenantService.class);
         roleResource = mock(UserGlobalRoleResource.class);
-        rolesConverter = mock(RolesConverter.class);
-        userGlobalRolesResource = new UserGlobalRolesResource(userService, authorizationService, tenantService, roleResource, rolesConverter);
-    }
-
-    @Test
-    public void getRoles_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        userGlobalRolesResource.getRoles("authHeader", "userId", "applicationId");
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void getRoles_callsUserService_loadUser() throws Exception {
-        userGlobalRolesResource.getRoles("authHeader", "userId", "applicationId");
-        verify(userService).loadUser("userId");
-    }
-
-    @Test
-    public void getRoles_applicationIdIsBlank_createsNewFilterReturnsOk() throws Exception {
-        Response response = userGlobalRolesResource.getRoles("authHeader", "userId", "");
-        assertThat("response code", response.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void getRoles_callsTenantService_getGlobalRolesForUser() throws Exception {
-        userGlobalRolesResource.getRoles("authHeader", "userId", "applicationId");
-        verify(tenantService).getGlobalRolesForUser(any(User.class), anyString());
+        userGlobalRolesResource = new UserGlobalRolesResource(roleResource);
     }
 
     @Test

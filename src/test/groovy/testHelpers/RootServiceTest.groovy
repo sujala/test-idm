@@ -38,7 +38,6 @@ import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.AuthDao
-import com.rackspace.idm.domain.dao.CustomerDao
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -53,13 +52,11 @@ import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.service.ApiDocService
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.CapabilityService
 import com.rackspace.idm.domain.service.CloudRegionService
-import com.rackspace.idm.domain.service.CustomerService
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.GroupService
@@ -71,13 +68,10 @@ import com.rackspace.idm.domain.service.SecretQAService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.TokenService
 import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.domain.service.impl.DefaultApiDocService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultAuthenticationService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
-import com.rackspace.idm.domain.service.impl.DefaultCapabilityService
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService
-import com.rackspace.idm.domain.service.impl.DefaultCustomerService
 import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService
 import com.rackspace.idm.domain.service.impl.DefaultGroupService
@@ -148,9 +142,7 @@ class RootServiceTest extends Specification {
 
     //services
     @Shared ApplicationService applicationService
-    @Shared ApiDocService apiDocService
     @Shared DomainService domainService
-    @Shared CustomerService customerService
     @Shared CapabilityService capabilityService
     @Shared QuestionService questionService
     @Shared ScopeAccessService scopeAccessService
@@ -165,14 +157,11 @@ class RootServiceTest extends Specification {
     @Shared AuthenticationService authenticationService
     @Shared GroupService groupService
     @Shared CloudRegionService cloudRegionService
-    @Shared DefaultCapabilityService defaultCapabilityService
     @Shared DefaultAuthorizationService defaultAuthorizationService
     @Shared DefaultEndpointService defaultEndpointService
-    @Shared DefaultApiDocService defaultApiDocService
     @Shared DefaultTenantService defaultTenantService
     @Shared DefaultGroupService defaultGroupService
     @Shared DefaultUserService defaultUserService
-    @Shared DefaultCustomerService defaultCustomerService
     @Shared DefaultTokenService defaultTokenService
     @Shared DefaultSecretQAService defaultSecretQAService
     @Shared DefaultScopeAccessService defaultScopeAccessService
@@ -199,7 +188,6 @@ class RootServiceTest extends Specification {
     @Shared TenantDao tenantDao
     @Shared EndpointDao endpointDao
     @Shared TenantRoleDao tenantRoleDao
-    @Shared CustomerDao customerDao
     @Shared ApplicationRoleDao applicationRoleDao
     @Shared AuthDao authDao
     @Shared DomainDao domainDao
@@ -390,19 +378,9 @@ class RootServiceTest extends Specification {
         service.applicationService = applicationService
     }
 
-    def mockApiDocService(service) {
-        apiDocService = Mock()
-        service.apiDocService = apiDocService
-    }
-
     def mockDomainService(service) {
         domainService = Mock()
         service.domainService = domainService
-    }
-
-    def mockCustomerService(service) {
-        customerService = Mock()
-        service.customerService = customerService
     }
 
     def mockCapabilityService(service) {
@@ -475,11 +453,6 @@ class RootServiceTest extends Specification {
         service.cloudRegionService = cloudRegionService
     }
 
-    def mockDefaultCapabilityService(service) {
-        defaultCapabilityService = Mock()
-        service.defaultCapabilityService = defaultCapabilityService
-    }
-
     def mockDefaultAuthorizationService(service) {
         defaultAuthorizationService = Mock()
         service.defaultAuthorizationService = defaultAuthorizationService
@@ -488,11 +461,6 @@ class RootServiceTest extends Specification {
     def mockDefaultEndpointService(service) {
         defaultEndpointService = Mock()
         service.defaultEndpointService = defaultEndpointService
-    }
-
-    def mockDefaultApiDocService(service) {
-        defaultApiDocService = Mock()
-        service.defaultApiDocService = defaultApiDocService
     }
 
     def mockDefaultTenantService(service) {
@@ -518,11 +486,6 @@ class RootServiceTest extends Specification {
     def mockDefaultUserService(service) {
         defaultUserService = Mock()
         service.defaultUserService = defaultUserService
-    }
-
-    def mockDefaultCustomerService(service) {
-        defaultCustomerService = Mock()
-        service.defaultCustomerService = defaultCustomerService
     }
 
     def mockDefaultTokenService(service) {
@@ -637,11 +600,6 @@ class RootServiceTest extends Specification {
     def mockTenantRoleDao(service) {
         tenantRoleDao = Mock()
         service.tenantRoleDao = tenantRoleDao
-    }
-
-    def mockCustomerDao(service) {
-        customerDao = Mock()
-        service.customerDao = customerDao
     }
 
     def mockApplicationRoleDao(service) {

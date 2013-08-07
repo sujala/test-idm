@@ -7,7 +7,6 @@ import org.junit.Test;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
@@ -39,12 +38,6 @@ public class ServiceTestsBase {
             customerId);
 
         return client;
-    }
-
-    protected Customer getFakeCustomer() {
-        Customer customer = new Customer();
-        customer.setRcn(customerId);
-        return customer;
     }
 
     protected User getFakeUser() {

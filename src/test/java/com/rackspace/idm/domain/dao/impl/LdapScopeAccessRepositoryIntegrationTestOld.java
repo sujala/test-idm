@@ -19,15 +19,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest{
 
-    @Autowired
-    private LdapCustomerRepository customerRepo;
     @Autowired
     private ScopeAccessDao repo;
     @Autowired
@@ -49,18 +46,13 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     Application client = null;
     Application client2 = null;
-    Customer customer = null;
 
     String id = "XXXX";
 
     @Before
     public void preTestSetUp() throws Exception {
-        Application deleteme = clientRepo.getApplicationByClientId("XXX");
-        Application deleteme2 = clientRepo.getApplicationByClientId("YYY");
-        Customer deleteCustomer = customerRepo.getCustomerByCustomerId(customerId);
-        if(deleteCustomer !=null){
-            customerRepo.deleteCustomer(customerId);
-        }
+        Application deleteme = clientRepo.getClientByClientId("XXX");
+        Application deleteme2 = clientRepo.getClientByClientId("YYY");
         if (deleteme != null) {
             clientRepo.deleteApplication(deleteme);
         }
@@ -69,7 +61,6 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
         }
 
         try {
-            customer = addNewTestCustomer(customerId);
             client = addNewTestClient(clientId);
             client2 = addNewTestClient2(clientId2);
         } catch (Exception e) {
@@ -79,9 +70,8 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
     @After
     public void postTestTearDown() throws Exception {
-        customerRepo.deleteCustomer(customer.getRcn());
-        clientRepo.deleteApplication(client);
-        clientRepo.deleteApplication(client2);
+        clientRepo.deleteClient(client);
+        clientRepo.deleteClient(client2);
     }
 
     @Test
@@ -772,19 +762,6 @@ public class LdapScopeAccessRepositoryIntegrationTestOld extends InMemoryLdapInt
 
         ScopeAccess updatedScopeAccess = repo.getScopeAccessByAccessToken("1234abcd");
         assert(updatedScopeAccess.isAccessTokenExpired(new DateTime()));
-    }
-    private Customer addNewTestCustomer(String customerId) {
-        final Customer newCustomer = createTestCustomerInstance(customerId);
-        newCustomer.setId(id);
-        customerRepo.addCustomer(newCustomer);
-        return newCustomer;
-    }
-
-    private Customer createTestCustomerInstance(String customerId) {
-
-        final Customer newCustomer = new Customer();
-        newCustomer.setRcn(customerId);
-        return newCustomer;
     }
 
     private Application addNewTestClient(String clientId) {

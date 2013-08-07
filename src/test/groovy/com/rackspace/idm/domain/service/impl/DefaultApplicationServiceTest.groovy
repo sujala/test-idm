@@ -29,7 +29,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         mockApplicationDao(service)
         mockApplicationRoleDao(service)
         mockScopeAccessService(service)
-        mockCustomerService(service)
         mockTenantService(service)
     }
 
@@ -115,99 +114,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationRoleDao.getAvailableClientRolesPaged("applicationId", 0, 10, 1000) >> contextMock
     }
 
-    def "addDefinedPermission gets Customer from CustomerService; throws IllegalStateException if not found"() {
-        given:
-        def permission = entityFactory.createDefinedPermission()
-
-        when:
-        service.addDefinedPermission(permission)
-
-        then:
-        0 * customerDao.getCustomerByCustomerId(_)
-        1 * customerService.getCustomer(_) >> null
-
-        then:
-        thrown(IllegalStateException)
-    }
-
-    def "addDefinedPermission gets Application; throws IllegalStateException if not found"() {
-        given:
-        def permission = entityFactory.createDefinedPermission()
-        def customer = entityFactory.createCustomer()
-
-        customerService.getCustomer(_) >> customer
-
-        when:
-        service.addDefinedPermission(permission)
-
-        then:
-        1 * applicationDao.getApplicationByClientId(_) >> null
-
-        then:
-        thrown(IllegalStateException)
-    }
-    
-    def "addDefinedPermission adds new ScopeAccess if ScopeAccess for caller does not exist"() {
-        given:
-        def permission = entityFactory.createDefinedPermission()
-        def customer = entityFactory.createCustomer()
-        def application = entityFactory.createApplication()
-        def scopeAccess = createScopeAccess()
-
-        customerService.getCustomer(_) >> customer
-        applicationDao.getApplicationByClientId(_) >> application
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
-
-        when:
-        service.addDefinedPermission(permission)
-
-        then:
-        0 * scopeAccessDao.addDirectScopeAccess(_, _)
-        1 * scopeAccessService.addDirectScopeAccess(_, _) >> scopeAccess
-    }
-
-    def "addDefinedPermission gets permission from ScopeAccessService; throws DuplicateException if it already exists"() {
-        given:
-        def permission = entityFactory.createDefinedPermission()
-        def customer = entityFactory.createCustomer()
-        def application = entityFactory.createApplication()
-        def scopeAccess = createScopeAccess()
-
-        customerService.getCustomer(_) >> customer
-        applicationDao.getApplicationByClientId(_) >> application
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccess
-
-        when:
-        service.addDefinedPermission(permission)
-
-        then:
-        0 * scopeAccessDao.getPermissionsByPermission(_, _)
-        1 * scopeAccessService.getPermissionForParent(_, _) >> permission
-
-        then:
-        thrown(DuplicateException)
-    }
-
-    def "addDefinedPermission adds permission"() {
-        given:
-        def permission = entityFactory.createDefinedPermission()
-        def customer = entityFactory.createCustomer()
-        def application = entityFactory.createApplication()
-        def scopeAccess = createScopeAccess()
-
-        customerService.getCustomer(_) >> customer
-        applicationDao.getApplicationByClientId(_) >> application
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccess
-        scopeAccessService.getPermissionForParent(_, _) >> null
-
-        when:
-        service.addDefinedPermission(permission)
-
-        then:
-        0 * scopeAccessDao.definePermission(_, _)
-        1 * scopeAccessService.definePermission(_, _) >> permission
-    }
-
     def "deleteDefinedPermission gets a list of permissions using the DefinedPermission to be deleted"() {
         given:
         def permission = entityFactory.createDefinedPermission().with {
@@ -249,25 +155,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         then:
         0 * scopeAccessDao.removePermissionFromScopeAccess(_)
         2 * scopeAccessService.removePermission(_)
-    }
-
-    def "getDefinedPermissionByClientIdAndPermissionId gets permission permission by clientId and permissionId"() {
-        given:
-        def application = entityFactory.createApplication().with {
-            it.rcn = "rcn"
-            return it
-        }
-
-        when:
-        service.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId")
-
-        then:
-        1 * applicationDao.getApplicationByClientId(_) >> application
-        1 * scopeAccessService.getPermissionForParent(_, _) >> { arg1, Permission arg2 ->
-            assert(arg2.getPermissionId().equals("permissionId"))
-            assert(arg2.getCustomerId().equals(application.getRcn()))
-            assert(arg2.getClientId().equals(application.getClientId()))
-        }
     }
 
     def "getDefinedPermissionByClient gets list of permissions by clientId and permissionId"() {

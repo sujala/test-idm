@@ -38,12 +38,6 @@ public class UsersResource extends ParentResource {
     @Autowired
     private Configuration config;
 
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private ApplicationService applicationService;
-
     @Autowired(required = true)
     public UsersResource(
     	UserResource userResource,UserService userService,
