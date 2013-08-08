@@ -79,6 +79,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared Region sharedRegion
 
     static def USER_MANAGE_ROLE_ID = "7"
+    static def CUSTOMER_ADMIN_ROLE_ID = "11"
     @Shared REFRESH_WINDOW_HOURS
     @Shared CLOUD_CLIENT_ID
     @Shared BASE_DN = "o=rackspace,dc=rackspace,dc=com"
@@ -327,6 +328,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponses.status == 204
+    }
+
+    def "User-Admin should not be able to assign himself role of weight 100"() {
+        when:
+        def response = cloud20.addApplicationRoleToUser(identityAdminToken, CUSTOMER_ADMIN_ROLE_ID, serviceAdmin)
+
+        then:
+        response.status == 403
     }
 
     def 'User-manage role CRUD'() {

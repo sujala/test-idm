@@ -102,15 +102,23 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createClientRole(int weight) {
+        return createClientRole(NAME, weight)
+    }
+
     def createClientRole() {
         return createClientRole(NAME)
     }
 
     def createClientRole(String name) {
+        return createClientRole(name, 500)
+    }
+
+    def createClientRole(String name, int weight) {
         new ClientRole().with {
             it.id = ID
             it.name = name ? name : NAME
-            it.rsWeight = 500
+            it.rsWeight = weight
             return it
         }
     }
