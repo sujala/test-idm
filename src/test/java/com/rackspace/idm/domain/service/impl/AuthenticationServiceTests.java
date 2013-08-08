@@ -227,7 +227,6 @@ public class AuthenticationServiceTests {
         final Application client = new Application(clientId, ClientSecret
                 .newInstance(clientSecret), "DELETE_My_Name", customerId
         );
-        client.setUniqueId(uniqueId);
         return client;
     }
 

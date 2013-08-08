@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.domain.service.PropertiesService;
@@ -64,6 +65,24 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
+    @Override
+    public void encryptApplication(Application application) {
+        String encryptionVersionId = getEncryptionVersionId(application);
+        String encryptionSalt = getEncryptionSalt(application);
+        application.setEncryptionVersion(encryptionVersionId);
+        application.setSalt(encryptionSalt);
+
+        try {
+            if (application.getClearPassword() != null) {
+                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClearPassword(), encryptionVersionId, encryptionSalt));
+            }
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        } catch (InvalidCipherTextException e) {
+            e.printStackTrace();
+        }
+    }
+
     private String getEncryptionSalt(User user) {
         if (user.getSalt() == null) {
             return cryptHelper.generateSalt();
@@ -72,11 +91,27 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
+    private String getEncryptionSalt(Application application) {
+        if (application.getSalt() == null) {
+            return cryptHelper.generateSalt();
+        } else {
+            return application.getSalt();
+        }
+    }
+
     private String getEncryptionVersionId(User user) {
         if (user.getEncryptionVersion() == null) {
             return propertiesService.getValue(ENCRYPTION_VERSION_ID);
         } else {
             return user.getEncryptionVersion();
+        }
+    }
+
+    private String getEncryptionVersionId(Application application) {
+        if (application.getEncryptionVersion() == null) {
+            return propertiesService.getValue(ENCRYPTION_VERSION_ID);
+        } else {
+            return application.getEncryptionVersion();
         }
     }
 
@@ -118,6 +153,22 @@ public class DefaultEncryptionService implements EncryptionService {
     }
 
     @Override
+    public void decryptApplication(Application application) {
+        String encryptionVersionId = getDecryptionVersionId(application);
+        String encryptionSalt = getDecryptionSalt(application);
+
+        try {
+            if (application.getClearPasswordBytes() != null) {
+                application.setClearPassword(cryptHelper.decrypt(application.getClearPasswordBytes(), encryptionVersionId, encryptionSalt));
+            }
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        } catch (InvalidCipherTextException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public String getEncryptionVersionId() {
         return propertiesService.getValue(ENCRYPTION_VERSION_ID);
     }
@@ -135,6 +186,22 @@ public class DefaultEncryptionService implements EncryptionService {
             return config.getString("crypto.salt");
         } else {
             return user.getSalt();
+        }
+    }
+
+    private String getDecryptionVersionId(Application application) {
+        if (application.getEncryptionVersion() == null) {
+            return "0";
+        } else {
+            return application.getEncryptionVersion();
+        }
+    }
+
+    private String getDecryptionSalt(Application application) {
+        if (application.getSalt() == null) {
+            return config.getString("crypto.salt");
+        } else {
+            return application.getSalt();
         }
     }
 }

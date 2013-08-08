@@ -879,7 +879,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setUsername(user.getUsername());
 
@@ -938,7 +938,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         DefinedPermission dp = new DefinedPermission();
         dp.setClientId(dClient.getClientId());
-        dp.setCustomerId(dClient.getRCN());
+        dp.setCustomerId(dClient.getRcn());
         dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao

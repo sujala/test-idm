@@ -17,7 +17,7 @@ import spock.lang.Specification
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapCapabilityRepositoryTest extends Specification {
+class LdapCapabilityRepositoryIntegrationTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
     @Shared CloudBaseUrl cloudBaseUrl

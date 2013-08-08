@@ -38,7 +38,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.add(entityFactory.createApplication())
 
         then:
-        1 * applicationDao.getClientByClientname(_) >> entityFactory.createApplication()
+        1 * applicationDao.getApplicationByName(_) >> entityFactory.createApplication()
         thrown(DuplicateException)
     }
 
@@ -55,7 +55,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationMock.setClientSecretObj(_)
 
         then:
-        1 * applicationDao.addClient(applicationMock)
+        1 * applicationDao.addApplication(applicationMock)
     }
 
     def "delete throws NotFoundException if application does not exist within the directory"() {
@@ -63,7 +63,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.delete(CLIENT_ID)
 
         then:
-        1 * applicationDao.getClientByClientId(CLIENT_ID) >> null
+        1 * applicationDao.getApplicationByClientId(CLIENT_ID) >> null
         thrown(NotFoundException)
     }
 
@@ -73,12 +73,12 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def permission = entityFactory.createPermission()
         def clientRole = entityFactory.createClientRole()
 
-        applicationDao.getClientByClientId(CLIENT_ID) >> entityFactory.createApplication()
+        applicationDao.getApplicationByClientId(CLIENT_ID) >> entityFactory.createApplication()
 
         scopeAccessService.getPermissionsForParentByPermission(_, _) >> [ definedPermission ].asList()
         scopeAccessService.getPermissionsByPermission(_) >> [ permission ].asList()
 
-        applicationDao.getClientRolesByClientId(CLIENT_ID) >> [ clientRole ].asList()
+        applicationRoleDao.getClientRolesForApplication(entityFactory.createApplication()) >> [ clientRole ].asList()
         tenantService.getTenantRolesForClientRole(_) >> [ entityFactory.createTenantRole() ].asList()
 
         when:
@@ -99,7 +99,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         }
 
         then:
-        1 * applicationDao.deleteClient(_)
+        1 * applicationDao.deleteApplication(_)
     }
 
     def "getting available clientRoles paged calls applicationRoleDao method"() {
@@ -141,7 +141,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.addDefinedPermission(permission)
 
         then:
-        1 * applicationDao.getClientByClientId(_) >> null
+        1 * applicationDao.getApplicationByClientId(_) >> null
 
         then:
         thrown(IllegalStateException)
@@ -155,7 +155,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def scopeAccess = createScopeAccess()
 
         customerService.getCustomer(_) >> customer
-        applicationDao.getClientByClientId(_) >> application
+        applicationDao.getApplicationByClientId(_) >> application
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
 
         when:
@@ -174,7 +174,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def scopeAccess = createScopeAccess()
 
         customerService.getCustomer(_) >> customer
-        applicationDao.getClientByClientId(_) >> application
+        applicationDao.getApplicationByClientId(_) >> application
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccess
 
         when:
@@ -196,7 +196,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def scopeAccess = createScopeAccess()
 
         customerService.getCustomer(_) >> customer
-        applicationDao.getClientByClientId(_) >> application
+        applicationDao.getApplicationByClientId(_) >> application
         scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccess
         scopeAccessService.getPermissionForParent(_, _) >> null
 
@@ -262,10 +262,10 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId")
 
         then:
-        1 * applicationDao.getClientByClientId(_) >> application
+        1 * applicationDao.getApplicationByClientId(_) >> application
         1 * scopeAccessService.getPermissionForParent(_, _) >> { arg1, Permission arg2 ->
             assert(arg2.getPermissionId().equals("permissionId"))
-            assert(arg2.getCustomerId().equals(application.getRCN()))
+            assert(arg2.getCustomerId().equals(application.getRcn()))
             assert(arg2.getClientId().equals(application.getClientId()))
         }
     }
@@ -282,7 +282,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getPermissionsForParentByPermission(_, _) >> { arg1, Permission arg2 ->
-            assert(arg2.getCustomerId().equals(application.getRCN()))
+            assert(arg2.getCustomerId().equals(application.getRcn()))
             assert(arg2.getClientId().equals(application.getClientId()))
             return [ ].asList()
         }
@@ -316,7 +316,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessesForParent(_) >> [ scopeAccess ].asList()
 
         then:
-        1 * applicationDao.getClientByClientId(_) >> application
+        1 * applicationDao.getApplicationByClientId(_) >> application
         result.getClients().size() == 1
         result.getClients().get(0).name.equals(application.getName())
     }
@@ -359,7 +359,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.getUserIdentityRole(user)
 
         then:
-        1 * applicationDao.getClientByClientId(_) >> application
+        1 * applicationDao.getApplicationByClientId(_) >> application
         1 * applicationRoleDao.getIdentityRoles(application, _) >> [].asList()
     }
 
@@ -376,7 +376,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
             return it
         }
 
-        applicationDao.getClientByClientId(_) >> application
+        applicationDao.getApplicationByClientId(_) >> application
         applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
 
         when:
@@ -392,7 +392,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def clientRole = entityFactory.createClientRole()
 
-        applicationDao.getClientByClientId(_) >> application
+        applicationDao.getApplicationByClientId(_) >> application
         applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
         tenantService.getTenantRoleForUserById(_, _) >> null
 

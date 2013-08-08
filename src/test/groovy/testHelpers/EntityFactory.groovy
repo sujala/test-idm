@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import spock.lang.Specification
@@ -20,6 +21,8 @@ class EntityFactory extends Specification {
     private static NAME = "name"
     private static PASSWORD = "Password1"
     private static USERNAME = "username"
+    private static SALT = "a1 b1"
+    private static VERSION = "0"
 
     private static objFactories = new JAXBObjectFactories()
 
@@ -29,11 +32,14 @@ class EntityFactory extends Specification {
 
     def createApplication(String clientId, String name) {
         def id = clientId ? clientId : CLIENT
+        def entry = new Entry("clientId=$id,ou=applications,o=rackspace")
         new Application().with {
+            it.ldapEntry = new ReadOnlyEntry(entry);
             it.clientId = clientId
             it.name = name
             it.enabled = true
-            it.uniqueId = "clientId=$id,ou=applications,o=rackspace"
+            it.encryptionVersion = VERSION
+            it.salt = SALT
             return it
         }
     }

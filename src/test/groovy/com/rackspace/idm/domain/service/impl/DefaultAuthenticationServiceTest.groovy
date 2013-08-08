@@ -130,7 +130,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         given:
         config.getString("idm.clientId") >> "idmClientId"
         def application = entityFactory.createApplication("1", "client1").with {
-            it.RCN = "RCN"
+            it.rcn = "RCN"
             return it
         }
         def tenantRole = entityFactory.createTenantRole("Racker").with {
@@ -162,7 +162,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         given:
         config.getString("idm.clientId") >> "idmClientId"
         def application = entityFactory.createApplication("1", "client1").with {
-            it.RCN = "RCN"
+            it.rcn = "RCN"
             return it
         }
         def tenantRole = entityFactory.createTenantRole("Racker").with {

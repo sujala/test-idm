@@ -523,7 +523,7 @@ public class DefaultAuthenticationServiceTestOld {
         when(scopeAccessService.addDirectScopeAccess((String) eq(null), any(ScopeAccess.class))).thenReturn(clientScopeAccess);
         defaultAuthenticationService.getAndUpdateClientScopeAccessForClientId(client);
         verify(client,atLeastOnce()).getClientId();
-        verify(client,atLeastOnce()).getRCN();
+        verify(client,atLeastOnce()).getRcn();
     }
 
     @Test
@@ -593,7 +593,7 @@ public class DefaultAuthenticationServiceTestOld {
         spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
         verify(racker,atLeastOnce()).getRackerId();
         verify(client,atLeastOnce()).getClientId();
-        verify(client, atLeastOnce()).getRCN();
+        verify(client, atLeastOnce()).getRcn();
     }
 
     @Test

@@ -19,8 +19,12 @@ public interface ApplicationService {
     void deleteDefinedPermission(DefinedPermission permission);
 
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
-    
+
     Applications getByCustomerId(String customerId, int offset, int limit);
+
+    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
+
+    PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit);
 
     Application loadApplication(String applicationId);
     

@@ -13,5 +13,6 @@ public interface TenantDao {
     Tenant getTenant(String tenantId);
     Tenant getTenantByName(String name);
     List<Tenant> getTenants();
+    PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     void updateTenant(Tenant tenant);
 }

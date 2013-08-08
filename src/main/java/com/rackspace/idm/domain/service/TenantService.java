@@ -15,6 +15,7 @@ public interface TenantService {
     Tenant checkAndGetTenant(String tenantId);
     Tenant getTenantByName(String name);
     List<Tenant> getTenants();
+    PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     
     void addTenantRoleToUser(User user, TenantRole role);
     void addCallerTenantRolesToUser(User caller, User user);

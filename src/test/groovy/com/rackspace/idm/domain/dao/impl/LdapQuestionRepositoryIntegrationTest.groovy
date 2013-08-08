@@ -16,7 +16,7 @@ import spock.lang.Specification
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapQuestionRepositoryTest extends Specification {
+class LdapQuestionRepositoryIntegrationTest extends Specification {
 
     @Autowired
     private LdapQuestionRepository ldapQuestionRepository;

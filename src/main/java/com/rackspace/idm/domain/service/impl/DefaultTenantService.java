@@ -132,6 +132,14 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public PaginatorContext<Tenant> getTenantsPaged(int offset, int limit) {
+        logger.info("Getting Tenants Paged - offset {}, limit {}", offset, limit);
+        PaginatorContext<Tenant> tenants = this.tenantDao.getTenantsPaged(offset, limit);
+        logger.info("Got {} Tenants Paged of {} total", tenants.getValueList().size(), tenants.getTotalRecords());
+        return tenants;
+    }
+
+    @Override
     public void updateTenant(Tenant tenant) {
         logger.info("Updating Tenant {}", tenant);
         this.tenantDao.updateTenant(tenant);

@@ -38,13 +38,13 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         userRepository.addUser(getUser("$sharedRandom"))
         user = userRepository.getUserById("$sharedRandom")
 
-        applicationRepository.addClient(getApplication("app$sharedRandom"))
-        application = applicationRepository.getClientByClientId("app$sharedRandom")
+        applicationRepository.addApplication(getApplication("app$sharedRandom"))
+        application = applicationRepository.getApplicationByClientId("app$sharedRandom")
     }
 
     def cleanup() {
         userRepository.deleteUser(user)
-        applicationRepository.deleteClient(application)
+        applicationRepository.deleteApplication(application)
     }
 
     def "tenant role crud for user"() {

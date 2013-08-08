@@ -305,19 +305,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public void deleteObject(T object) {
-        String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
-        getLogger().debug(loggerMsg);
-
-        getLogger().debug("Deleting: {}", object);
-        final String dn = object.getUniqueId();
-        final Audit audit = Audit.log((Auditable)object).delete();
-        deleteEntryAndSubtree(dn, audit);
-        audit.succeed();
-        getLogger().debug("Deleted: {}", object);
-    }
-
-    @Override
     public void softDeleteObject(T object) {
         getLogger().info("SoftDeleting object - {}", object);
         try {
@@ -329,10 +316,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             List<String> tokens = Arrays.asList(oldRdn.split(","));
 
-            String newRsId = tokens.get(0);
-            String parentDn = getSoftDeletedBaseDn();
+            String newRdn = tokens.get(0);
 
-            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getSoftDeletedBaseDn());
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting object", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -352,15 +338,27 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             List<String> tokens = Arrays.asList(oldRdn.split(","));
 
-            String newRsId = tokens.get(0);
-            String parentDn = String.format("%s,%s", tokens.get(1), getBaseDn());
+            String newRdn = tokens.get(0);
 
-            getAppInterface().modifyDN(oldRdn, newRsId, true, parentDn);
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getBaseDn());
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting object", e);
             throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("UnSoftDeleted object - {}", object);
+    }
+
+    @Override
+    public void deleteObject(T object) {
+        String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
+        getLogger().debug(loggerMsg);
+
+        getLogger().debug("Deleting: {}", object);
+        final String dn = object.getUniqueId();
+        final Audit audit = Audit.log((Auditable)object).delete();
+        deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
+        getLogger().debug("Deleted: {}", object);
     }
 
     private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
