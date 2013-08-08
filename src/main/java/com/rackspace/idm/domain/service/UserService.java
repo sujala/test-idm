@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -22,10 +21,6 @@ public interface UserService {
     UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
-
-    UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey);
-
-    UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
 
     void deleteRacker(String rackerId);
     
@@ -59,20 +54,14 @@ public interface UserService {
 
     User checkAndGetUserById(String id);
     
-    User getUserByRPN(String rpn);
-
     List<User> getUsersByTenantId(String tenantId);
 
     User getUserByTenantId(String tenantId);
-
-    User getUserBySecureId(String secureId);
 
     User getUser(String customerId, String username);
 
     User getSoftDeletedUser(String id);
 
-    User getSoftDeletedUserByUsername(String id);
-    
     Applications getUserApplications(User user);
     
     User loadUser(String customerId, String username);
@@ -89,17 +78,11 @@ public interface UserService {
 
     Password resetUserPassword(User user);
 
-//    DateTime getUserPasswordExpirationDate(String userName);
-
-//    UserAuthenticationResult authenticateRacker(String username, String password);
-
     void softDeleteUser(User user) throws IOException, JAXBException;
 
     void addBaseUrlToUser(String baseUrlId, User user);
 
     void removeBaseUrlFromUser(String baseUrlId, User user);
-
-    List<Tenant> getUserTenants(String userId);
 
 	List<User> getSubUsers(User user);
 

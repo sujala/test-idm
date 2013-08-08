@@ -36,7 +36,6 @@ public class AuthenticationServiceTests {
     DefaultAuthenticationService authenticationService;
     DefaultAuthenticationService authSpy;
     AuthDao mockAuthDao;
-    CustomerService mockCustomerService;
     List<TenantRole> tenantRoles;
 
     String customerId = "RACKSPACE";
@@ -66,8 +65,6 @@ public class AuthenticationServiceTests {
         inputValidator = EasyMock.createMock(InputValidator.class);
         mockTenantService = mock(TenantService.class);
         mockAuthDao = EasyMock.createMock(AuthDao.class);
-        mockCustomerService = EasyMock.createMock(CustomerService.class);
-
 
         tenantRoles = new ArrayList<TenantRole>();
         tenantRoles.add(new TenantRole());
@@ -85,7 +82,6 @@ public class AuthenticationServiceTests {
         authenticationService.setApplicationService(mockClientService);
         authenticationService.setConfig(appConfig);
         authenticationService.setUserService(mockUserService);
-        authenticationService.setCustomerService(mockCustomerService);
         authenticationService.setInputValidator(inputValidator);
 
         authSpy = PowerMockito.spy(authenticationService);
@@ -213,14 +209,6 @@ public class AuthenticationServiceTests {
         racker.setUsername(username);
         racker.setEnabled(true);
         return racker;
-    }
-
-    private Customer getFakeCustomer() {
-        final Customer customer = new Customer();
-        customer.setRcn(customerId);
-        customer.setPasswordRotationEnabled(true);
-        customer.setPasswordRotationDuration(2);
-        return customer;
     }
 
     private Application getTestClient() {

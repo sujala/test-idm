@@ -10,8 +10,6 @@ public interface ApplicationService {
 
     void add(Application client);
 
-    void addDefinedPermission(DefinedPermission permission);
-
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
@@ -38,11 +36,6 @@ public interface ApplicationService {
 
     Applications getClientServices(Application client);
     
-    DefinedPermission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId);
-    
-    DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId);
-
     List<DefinedPermission> getDefinedPermissionsByClient(Application client);
 
     ClientSecret resetClientSecret(Application client);
@@ -54,8 +47,6 @@ public interface ApplicationService {
     void updateDefinedPermission(DefinedPermission permission);
 
     Application getClientByScope(String scope);
-    
-    List<Application> getAvailableScopes();
     
     void addClientRole(ClientRole role);
 

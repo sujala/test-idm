@@ -30,25 +30,22 @@ public class UserPasswordCredentialsResource extends ParentResource {
     private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private final PasswordConverter passwordConverter;
-    private final UserRecoveryTokenResource recoveryTokenResource;
     private final AuthorizationService authorizationService;
-    private final UserPasswordCredentialsValidator userPasswordCredentialsValidator;
 
 
     @Autowired
     public UserPasswordCredentialsResource(
-            ScopeAccessService scopeAccessService, UserService userService,
-            PasswordConverter passwordConverter, UserRecoveryTokenResource recoveryTokenResource,
+            ScopeAccessService scopeAccessService,
+            UserService userService,
+            PasswordConverter passwordConverter,
             AuthorizationService authorizationService,
-            InputValidator inputValidator, UserPasswordCredentialsValidator userPasswordCredentialsValidator) {
+            InputValidator inputValidator) {
 
         super(inputValidator);
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.passwordConverter = passwordConverter;
-        this.recoveryTokenResource = recoveryTokenResource;
         this.authorizationService = authorizationService;
-        this.userPasswordCredentialsValidator = userPasswordCredentialsValidator;
     }
 
     /**
@@ -71,66 +68,5 @@ public class UserPasswordCredentialsResource extends ParentResource {
         Password password = user.getPasswordObj();
 
         return Response.ok(passwordConverter.toJaxb(password)).build();
-    }
-
-    /**
-     * Sets a user's password.
-     *
-     * @param authHeader      HTTP Authorization header for authenticating the caller.
-     * @param userId          userId
-     * @param userCredentials The user's current password and new password.
-     */
-    @PUT
-    public Response setUserPassword(
-            @HeaderParam("X-Auth-Token") String authHeader,
-            @PathParam("userId") String userId,
-            EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> userCredentials) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        validateRequestBody(userCredentials);
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            throw new NotFoundException("User not found with id: " + userId);
-        }
-
-        com.rackspace.api.idm.v1.UserPasswordCredentials userCred = userCredentials.getEntity();
-        userPasswordCredentialsValidator.validateUserPasswordCredentials(userCred, user);
-        user.setPassword(userCred.getNewPassword().getPassword());
-        try {
-            this.userService.updateUser(user, false);
-        } catch (IllegalStateException e){
-            throw new BadRequestException(e.getMessage(), e);
-        } catch (Exception e) { }
-        return Response.noContent().build();
-
-    }
-
-    /**
-     * Resets a user's password credentials.
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId     userId
-     */
-    @POST
-    public Response resetUserPassword(
-            @HeaderParam("X-Auth-Token") String authHeader,
-            @PathParam("userId") String userId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        getLogger().debug("Reseting Password for User: {}", userId);
-
-        User user = userService.loadUser(userId);
-        Password password = userService.resetUserPassword(user);
-
-        getLogger().debug("Updated password for user: {}", user);
-        return Response.ok(passwordConverter.toJaxb(password)).build();
-    }
-
-    @Path("recoverytoken")
-    public UserRecoveryTokenResource getRecoveryTokenResource() {
-        return recoveryTokenResource;
     }
 }

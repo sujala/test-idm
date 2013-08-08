@@ -44,107 +44,6 @@ public class UserGlobalRoleResource {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	/**
-	 * Grant a global role for a user
-	 *
-	 *
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
-	 * @param roleId
-	 *            roleId
-	 */
-	@PUT
-	public Response grantGlobalRoleToUser(
-			@HeaderParam("X-Auth-Token") String authHeader,
-			@PathParam("userId") String userId,
-			@PathParam("roleId") String roleId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
-
-		// TODO: Refactor. This logic should be in the tenant role service
-		ClientRole role = this.applicationService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
-        User user = this.userService.loadUser(userId);
-
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            User caller = userService.getUserByAuthToken(authHeader);
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
-        }
-
-        if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-            ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
-            if (userIdentityRole != null) {
-                throw new BadRequestException("A user cannot have more than one identity:* role");
-            }
-        }
-
-		TenantRole tenantRole = new TenantRole();
-		tenantRole.setClientId(role.getClientId());
-		tenantRole.setRoleRsId(role.getId());
-		tenantRole.setName(role.getName());
-		tenantRole.setUserId(userId);
-
-        if (isIdentityRole(role.getName())) {
-            List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForUser(user);
-            if (tenantRoles != null && tenantRoles.size() > 0) {
-                throw new BadRequestException("User already has global role assigned");
-            }
-        }
-		this.tenantService.addTenantRoleToUser(user, tenantRole);
-
-		return Response.noContent().build();
-	}
-
-	/**
-	 * Revoke a global role from a user
-	 *
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
-	 * @param roleId
-	 *            roleId
-	 */
-	@DELETE
-	public Response deleteGlobalRoleFromUser(
-			@HeaderParam("X-Auth-Token") String authHeader,
-			@PathParam("userId") String userId,
-			@PathParam("roleId") String roleId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authHeader);
-
-        User user = this.userService.loadUser(userId);
-
-        TenantRole tenantRole = this.tenantService.getTenantRoleForUserById(user, roleId);
-        if (tenantRole == null) {
-            throw new NotFoundException(String.format("Role with id: %s not found", roleId));
-        }
-
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            User caller = userService.getUserByAuthToken(authHeader);
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, tenantRole);
-
-            if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
-                throw new BadRequestException("A user cannot delete their own identity role");
-            }
-        }
-
-        this.tenantService.deleteTenantRoleForUser(user, tenantRole);
-
-        return Response.noContent().build();
-	}
-
     /**
 	 * Grant a role to a user on a tenant.
 	 *
@@ -196,48 +95,6 @@ public class UserGlobalRoleResource {
         return Response.noContent().build();
 	}
 
-	/**
-	 * Revoke a role on a tenant from a user.
-	 *
-	 *
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
-	 * @param tenantId
-	 *            tenantId
-	 * @param roleId
-	 *            roleId
-	 */
-	@DELETE
-    @Path("tenants/{tenantId}")
-	public Response deleteTenantRoleFromUser(
-			@HeaderParam("X-Auth-Token") String authHeader,
-			@PathParam("userId") String userId,
-			@PathParam("tenantId") String tenantId,
-			@PathParam("roleId") String roleId) {
-
-        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
-
-		User user = this.userService.loadUser(userId);
-
-        TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
-        if (tenantRole == null) {
-            throw new NotFoundException("Tenant Role not found");
-        }
-
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            User caller = userService.getUserByAuthToken(authHeader);
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
-        }
-		
-		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
-
-		return Response.noContent().build();
-	}
-
 	TenantRole checkAndGetTenantRole(String tenantId, String roleId) {
 		ClientRole role = applicationService.getClientRoleById(roleId);
         if (role == null) {
@@ -264,14 +121,6 @@ public class UserGlobalRoleResource {
         return names;
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
-    public void setPrecedenceValidator(PrecedenceValidator validator) {
-        this.precedenceValidator = validator;
-    }
-
     public void setConfig(Configuration config) {
         this.config = config;
     }
@@ -294,12 +143,5 @@ public class UserGlobalRoleResource {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-    
-    private boolean isIdentityRole(String roleName) {
-        return (roleName.equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
-                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
-                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
-                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userRole")));
     }
 }

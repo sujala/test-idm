@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.Credentials;
 import com.rackspace.idm.domain.entity.Domain;
@@ -35,8 +32,6 @@ public interface AuthenticationService {
     void setConfig(Configuration appConfig);
 
     void setUserService(UserService userService);
-
-    void setCustomerService(CustomerService customerService);
 
     void setInputValidator(InputValidator inputValidator);
 }

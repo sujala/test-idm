@@ -45,9 +45,7 @@ import java.io.StringReader;
 @Component
 public class TokensResource extends ParentResource {
 
-    private final AuthHeaderHelper authHeaderHelper;
     private final AuthConverter authConverter;
-    private final TokenService tokenService;
     private final AuthorizationService authorizationService;
     private final CredentialsConverter credentialsConverter;
     private final ScopeAccessService scopeAccessService;
@@ -55,21 +53,19 @@ public class TokensResource extends ParentResource {
     private final Logger logger = LoggerFactory.getLogger(TokensResource.class);
 
     @Autowired(required = true)
-    public TokensResource(AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
+    public TokensResource(AuthConverter authConverter,
                           AuthorizationService authorizationService,
                           ScopeAccessService scopeAccessService,
                           CredentialsConverter credentialsConverter,
                           AuthenticationService authenticationService,
-                          InputValidator inputValidator, TokenService tokenService) {
+                          InputValidator inputValidator) {
 
         super(inputValidator);
-        this.authHeaderHelper = authHeaderHelper;
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
         this.scopeAccessService = scopeAccessService;
         this.credentialsConverter = credentialsConverter;
         this.authenticationService = authenticationService;
-        this.tokenService = tokenService;
     }
 
     /**
@@ -138,93 +134,4 @@ public class TokensResource extends ParentResource {
 
         return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
     }
-
-    /**
-     * Removes the token from IDM, across all DCs.
-     *
-     * @param authHeader  HTTP Authorization header for authenticating the calling client.
-     * @param tokenString Token to be revoked.
-     */
-    @DELETE
-    @Path("{tokenString}")
-    public Response revokeAccessToken(
-                                      @HeaderParam("X-Auth-Token") String authHeader,
-                                      @PathParam("tokenString") String tokenString) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        logger.debug("Revoking Token: {}", tokenString);
-
-        String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        tokenService.revokeAccessToken(authTokenString, tokenString);
-
-        logger.warn("Revoked Token: {}", tokenString);
-
-        return Response.noContent().build();
-    }
-
-    /**
-     * Check if the given access token has the specific application.
-     *
-     * @param authHeader    HTTP Authorization header for authenticating the calling client.
-     * @param tokenString   The token to check for permission
-     * @param applicationId The applicationId for the service that defines the permission
-     */
-    @GET
-    @Path("{tokenString}/applications/{applicationId}")
-    public Response doesTokenHaveApplicationAccess(
-                                                   @HeaderParam("X-Auth-Token") String authHeader,
-                                                   @PathParam("tokenString") String tokenString,
-                                                   @PathParam("applicationId") String applicationId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        logger.debug("Checking whether token {} has service {}", tokenString,  applicationId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-
-        boolean hasApplicationAccess = tokenService.doesTokenHaveAccessToApplication(tokenString, applicationId);
-
-        if (!hasApplicationAccess) {
-            String errorMsg = String.format("Token does not have access : %s", token);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        return Response.noContent().build();
-    }
-
-    /**
-     * Check if the given access token has the specified application role.
-     *
-     * @param authHeader    HTTP Authorization header for authenticating the calling client.
-     * @param tokenString   The token to check for permission
-     * @param applicationId The serviceId for the service that defines the permission
-     * @param roleId        The role to check
-     */
-    @GET
-    @Path("{tokenString}/applications/{applicationId}/roles/{roleId}")
-    public Response doesTokenHaveApplicationRole(
-                                                 @HeaderParam("X-Auth-Token") String authHeader,
-                                                 @PathParam("tokenString") String tokenString,
-                                                 @PathParam("applicationId") String applicationId,
-                                                 @PathParam("roleId") String roleId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        logger.debug("Checking whether token {} has application role {}", tokenString, roleId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-
-        boolean hasApplicationRole = tokenService.doesTokenHaveApplicationRole(tokenString, applicationId, roleId);
-
-        if (!hasApplicationRole) {
-            String errorMsg = String.format("Token does not have access : %s", token);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        return Response.noContent().build();
-    }
-
 }

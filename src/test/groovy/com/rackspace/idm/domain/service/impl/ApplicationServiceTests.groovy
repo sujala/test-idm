@@ -1,34 +1,21 @@
-package com.rackspace.idm.domain.service.impl;
+package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
-import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-
-import junit.framework.Assert;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.exception.NotFoundException
+import junit.framework.Assert
+import org.easymock.EasyMock
+import org.junit.Before
+import org.junit.Test
 
 public class ApplicationServiceTests {
 
     DefaultApplicationService service;
     ApplicationDao applicationDao;
     ApplicationRoleDao applicationRoleDao;
-    CustomerService customerService;
     ScopeAccessService scopeAccessService;
     TenantService tenantService;
 
@@ -53,12 +40,10 @@ public class ApplicationServiceTests {
         service = new DefaultApplicationService();
         applicationDao = EasyMock.createMock(ApplicationDao.class);
         applicationRoleDao = EasyMock.createMock(ApplicationRoleDao.class);
-        customerService = EasyMock.createMock(CustomerService.class);
         scopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         tenantService = EasyMock.createMock(TenantService.class);
 
         service.applicationDao = applicationDao;
-        service.customerService = customerService;
         service.tenantService = tenantService;
         service.applicationRoleDao = applicationRoleDao;
         service.scopeAccessService = scopeAccessService;
@@ -129,45 +114,6 @@ public class ApplicationServiceTests {
         Application retrievedClient = service.getById(clientId);
 
         Assert.assertNull(retrievedClient);
-        EasyMock.verify(applicationDao);
-    }
-
-    @Test
-    public void shouldAddClient() {
-        Application client = getFakeClient();
-        Customer customer = getFakeCustomer();
-
-        EasyMock.expect(
-            customerService.getCustomer(client.getRcn()))
-            .andReturn(customer);
-        EasyMock.replay(customerService);
-
-        EasyMock.expect(applicationDao.getApplicationByName(client.getName()))
-            .andReturn(null);
-        applicationDao.addApplication((Application) EasyMock.anyObject());
-        EasyMock.replay(applicationDao);
-
-        service.add(client);
-
-        EasyMock.verify(applicationDao);
-    }
-
-    @Test(expected = DuplicateException.class)
-    public void shouldNotAddClientIfClientNameAlreadyTaken() {
-        Application client = getFakeClient();
-        Customer customer = getFakeCustomer();
-
-        EasyMock.expect(
-            customerService.getCustomer(client.getRcn()))
-            .andReturn(customer);
-        EasyMock.replay(customerService);
-
-        EasyMock.expect(applicationDao.getApplicationByName(client.getName()))
-            .andReturn(client);
-        EasyMock.replay(applicationDao);
-
-        service.add(client);
-
         EasyMock.verify(applicationDao);
     }
 
@@ -277,12 +223,6 @@ public class ApplicationServiceTests {
         Application client = new Application(clientId, clientSecret, name,
             customerId);
         return client;
-    }
-
-    private Customer getFakeCustomer() {
-        Customer customer = new Customer();
-        customer.setRcn(customerId);
-        return customer;
     }
 
     private List<ClientGroup> getFakeClientGroupList() {

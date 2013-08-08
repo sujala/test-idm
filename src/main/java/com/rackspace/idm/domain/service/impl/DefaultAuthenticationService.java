@@ -42,8 +42,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     @Autowired
     private UserService userService;
     @Autowired
-    private CustomerService customerService;
-    @Autowired
     private InputValidator inputValidator;
     @Autowired
     private Configuration config;
@@ -116,11 +114,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     @Override
     public void setUserService(UserService userService) {
         this.userService = userService;
-    }
-
-    @Override
-    public void setCustomerService(CustomerService customerService) {
-        this.customerService = customerService;
     }
 
     @Override
@@ -308,15 +301,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new NotAuthenticatedException(message);
             }
 
-            DateTime rotationDate = getUserPasswordExpirationDate(uaResult.getUser().getUsername());
-            if (rotationDate != null && rotationDate.isBefore(currentTime)) {
-                PasswordResetScopeAccess prsa = this.scopeAccessService.getOrCreatePasswordResetScopeAccessForUser(uaResult.getUser());
-                prsa.setUserPasswordExpirationDate(rotationDate);
-                return prsa;
-            }
-
             UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId(uaResult.getUser(), caResult.getClient());
-            usa.setUserPasswordExpirationDate(rotationDate);
             return usa;
         }
 
@@ -648,30 +633,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private String getFoundationClientId() {
         return config.getString("idm.clientId");
-    }
-
-    DateTime getUserPasswordExpirationDate(String userName) {
-        User user = this.userService.getUser(userName);
-        if (user == null) {
-            logger.debug("No user found, returning null.");
-            return null;
-        }
-
-        Customer customer = customerService.getCustomer(user.getCustomerId());
-        if (customer == null) {
-            logger.debug("No customer found, returning null");
-            return null;
-        }
-
-        if (customer.getPasswordRotationEnabled()) {
-            int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
-            DateTime timeOfLastPwdChange = new DateTime(user.getPasswordLastUpdated());
-            DateTime passwordExpirationDate = timeOfLastPwdChange.plusDays(passwordRotationDurationInDays);
-            logger.debug("Password expiration date set: {}", passwordExpirationDate);
-            return passwordExpirationDate;
-        }
-
-        return null;
     }
 
     void validateCredentials(final Credentials trParam) {

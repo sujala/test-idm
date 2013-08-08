@@ -313,7 +313,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private void isRoleWeightValid(int weight) {
-        List<String> validWeights = config.getList("cloudAuth.allowedRoleWeights");
+        List<Object> validWeights = config.getList("cloudAuth.allowedRoleWeights");
         if (!validWeights.contains(Integer.toString(weight))) {
             String errMsg = String.format("Allowed values for Weight field: %s", StringUtils.join(validWeights, " "));
             throw new BadRequestException(errMsg);

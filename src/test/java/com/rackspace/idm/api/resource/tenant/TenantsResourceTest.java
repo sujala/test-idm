@@ -165,102 +165,6 @@ public class TenantsResourceTest {
         verify(tenantConverter).toTenant(tenant);
     }
 
-    @Test
-    public void deleteTenant_returns204() throws Exception {
-        assertThat("response status", tenantsResource.deleteTenant(null, null, null, null).getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteTenant_callsScopeAccessServiceMethod() throws Exception {
-        tenantsResource.deleteTenant(null,null,null,null);
-        verify(scopeAccessService).getAccessTokenByAuthHeader(null);
-
-    }
-
-    @Test
-    public void deleteTenant_callsAuthorizationServiceMethod() throws Exception {
-        tenantsResource.deleteTenant(null,null,null,null);
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(null);
-
-    }
-
-    @Test
-    public void deleteTenant_callsTenantServiceMethod() throws Exception {
-        tenantsResource.deleteTenant(null,null,null,null);
-        verify(tenantService).deleteTenant(null);
-
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void updateTenant_nullTenant_throwsIllegalArgumentException() throws Exception {
-        tenantsResource.updateTenant(null, null, null, null, null);
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_returns200() throws Exception {
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(new com.rackspace.idm.domain.entity.Tenant()).when(spy).checkAndGetTenant(null);
-        assertThat("response status", spy.updateTenant(null, null, null, null, new Tenant()).getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_callsScopeAccessServiceMethod() throws Exception {
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(new com.rackspace.idm.domain.entity.Tenant()).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, new Tenant());
-        verify(scopeAccessService).getAccessTokenByAuthHeader(null);
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_callsAuthorizationServiceMethod() throws Exception {
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(new com.rackspace.idm.domain.entity.Tenant()).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, new Tenant());
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(null);
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_setsTenantFields() throws Exception {
-        Tenant tenant1 = new Tenant();
-        tenant1.setDescription("this is a description");
-        tenant1.setDisplayName("john");
-        tenant1.setEnabled(false);
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(tenant).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, tenant1);
-        assertThat("tenantDescription",tenant.getDescription(),equalTo("this is a description"));
-        assertThat("tenantDisplayName",tenant.getDisplayName(),equalTo("john"));
-        assertThat("tenantEnabled",tenant.getEnabled(),equalTo(false));
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_callsTenantServiceMethodUpdate() throws Exception {
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(tenant).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, new Tenant());
-        verify(tenantService).updateTenant(tenant);
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_callsTenantServiceMethodGet() throws Exception {
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(tenant).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, new Tenant());
-        verify(tenantService).getTenant(null);
-    }
-
-    @Test
-    public void updateTenant_tenantNotNull_callsTenantConverterMethod() throws Exception {
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).updateTenantFields(null,null);
-        doReturn(tenant).when(spy).checkAndGetTenant(null);
-        spy.updateTenant(null, null, null, null, new Tenant());
-        verify(tenantConverter).toTenant(null);
-    }
-
     @Test (expected = WebApplicationException.class)
     public void validateTenantId_nullTenantId_throwsWebApplicationException() throws Exception {
         tenantsResource.validateTenantId(null);
@@ -358,25 +262,5 @@ public class TenantsResourceTest {
         assertThat("tenantName",tenant.getName(),nullValue());
         assertThat("tenantDescription",tenant.getDescription(),nullValue());
         assertThat("tenantDisplayName",tenant.getDisplayName(),equalTo("john"));
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void checkAndGetTenant_nullTenant_throwsNotFoundException() throws Exception {
-        tenantsResource.checkAndGetTenant(null);
-    }
-
-    @Test
-    public void checkAndGetTenant_callsTenantServiceMethod() throws Exception {
-        when(tenantService.getTenant(null)).thenReturn(new com.rackspace.idm.domain.entity.Tenant());
-        tenantsResource.checkAndGetTenant(null);
-        verify(tenantService).getTenant(null);
-    }
-
-    @Test
-    public void checkAndGetTenant_tenantExists_returnsTenant() throws Exception {
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        when(tenantService.getTenant(null)).thenReturn(tenant);
-        assertThat("tenant",tenantsResource.checkAndGetTenant(null),equalTo(tenant));
-
     }
 }

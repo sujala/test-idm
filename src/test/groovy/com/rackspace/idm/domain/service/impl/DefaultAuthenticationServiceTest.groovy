@@ -36,7 +36,6 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         mockAuthDao(service)
         mockConfiguration(service)
         mockUserService(service)
-        mockCustomerService(service)
         mockInputValidator(service)
         mockRSAClient(service)
 
