@@ -16,6 +16,8 @@ import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public final class PackageClassDiscoverer {
@@ -31,7 +33,15 @@ public final class PackageClassDiscoverer {
             loadResources(resourcePath, classes, metadataReaderFactory);
         }
 
-        return classes;
+        Set<Class<?>> result = new HashSet<Class<?>>();
+
+        for (Class<?> cs : classes) {
+            if (!cs.isInterface()) {
+               result.add(cs);
+            }
+        }
+
+        return result;
 
     }
 

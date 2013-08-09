@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForEndpointTemplate;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;

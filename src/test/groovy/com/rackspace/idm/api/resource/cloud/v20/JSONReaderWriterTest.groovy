@@ -3,10 +3,29 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForCapabilities
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForDomain
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForPolicies
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForPolicy
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForQuestion
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthSecretQA
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRegion
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRegions
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRole
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForUser
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForCapabilities
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestion
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestions
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForSecretQAs
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForServiceApis
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForUser
 import org.apache.commons.io.IOUtils
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
-import spock.lang.Specification
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
@@ -26,20 +45,35 @@ import static com.rackspace.idm.RaxAuthConstants.*
 class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONWriter writer = new JSONWriter();
+
     @Shared JSONReaderForRegion readerForRegion = new JSONReaderForRegion()
     @Shared JSONReaderForRegions readerForRegions = new JSONReaderForRegions()
+
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
+    @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
+
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
+    @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
+
     @Shared JSONWriterForServiceApis writerForServiceApis = new JSONWriterForServiceApis()
+
     @Shared JSONWriterForSecretQAs writerForSecretQAs = new JSONWriterForSecretQAs()
+
+    @Shared JSONWriterForUser writerForUser = new JSONWriterForUser()
+    @Shared JSONReaderForUser readerForUser = new JSONReaderForUser()
+
     @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies()
     @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy()
-    @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
-    @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
+
     @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
+
     @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
+
     @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
+
+    @Shared JSONReaderForApiKeyCredentials readerForApiKeyCredentials = new JSONReaderForApiKeyCredentials()
+    @Shared JSONWriterForApiKeyCredentials writerForApiKeyCredentials = new JSONWriterForApiKeyCredentials()
 
     def "can read/write region as json"() {
         given:
@@ -355,6 +389,56 @@ class JSONReaderWriterTest extends RootServiceTest {
         null        | 500
         false       | 100
         null        | null
+    }
+
+    def "can read/write user as json" () {
+        given:
+        def id = "abc123"
+        def username = "BANANAS"
+        def email = "no@rackspace.com"
+        def enabled = true
+        def displayName = "displayName"
+
+        User userObject = v2Factory.createUser().with {
+            it.displayName = displayName
+            it.id = id
+            it.username = username
+            it.email = email
+            it.enabled = enabled
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUser.writeTo(userObject, User.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def user = readerForUser.readFrom(User.class, null, null, null, null, arrayInputStream)
+
+
+        then:
+        user.id == id
+        user.username == username
+        user.email == email
+        user.enabled == enabled
+        user.displayName == displayName
+    }
+
+    def "can read/write apiKeyCreds as json" () {
+        given:
+        ApiKeyCredentials apiKeyCred = v1Factory.createApiKeyCredentials()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForApiKeyCredentials.writeTo(apiKeyCred, ApiKeyCredentials.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def apiKey = readerForApiKeyCredentials.readFrom(ApiKeyCredentials.class, null, null, null, null, arrayInputStream)
+
+
+        then:
+        apiKey.apiKey == apiKeyCred.apiKey
+        apiKey.username == apiKeyCred.username
     }
 
     def getSecretQA(String id, String question, String answer) {

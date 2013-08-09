@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForDefaultRegionServices;
 import com.rackspace.idm.exception.BadRequestException;
 import org.hamcrest.core.IsNull;
 import org.junit.Test;
@@ -10,12 +11,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 /**
  * Created with IntelliJ IDEA.

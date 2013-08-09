@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForCloudAuthenticationResponseToken;
 import com.rackspace.idm.exception.IdmException;
-import org.joda.time.DateTime;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.Token;
 

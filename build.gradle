@@ -159,6 +159,8 @@ dependencies {
 
     compile group: 'org.jasypt', name: 'jasypt', version:'1.9.0'
     compile group: 'org.jasypt', name: 'jasypt-spring3', version:'1.9.0'
+    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
+    compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.2.2'
 }
 
 def resourceDirs = [

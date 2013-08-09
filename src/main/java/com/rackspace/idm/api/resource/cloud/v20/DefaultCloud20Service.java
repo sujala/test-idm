@@ -14,6 +14,8 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForCredentialType;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
@@ -1121,7 +1123,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .status(HttpServletResponse.SC_NOT_IMPLEMENTED);
             }
 
-            if (!credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
+            if (!credentialType.equals(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)) {
                 throw new BadRequestException("unsupported credential type");
             }
 

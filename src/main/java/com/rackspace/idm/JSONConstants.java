@@ -9,7 +9,8 @@ public final class JSONConstants {
     public static final String ALIAS = "alias";
     public static final String ANSWER = "answer";
     public static final String API_KEY = "apiKey";
-    public static final String APIKEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
+    public static final String RAX_KSKEY_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
+    public static final String API_KEY_CREDENTIALS = "apiKeyCredentials";
     public static final String AUTH = "auth";
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";

@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForPasswordCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;

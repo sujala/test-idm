@@ -779,7 +779,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.APIKEY_CREDENTIALS, inner);
+        outer.put(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, inner);
         inner.put(JSONConstants.USERNAME, creds.getUsername());
         inner.put(JSONConstants.API_KEY, creds.getApiKey());
         return outer;

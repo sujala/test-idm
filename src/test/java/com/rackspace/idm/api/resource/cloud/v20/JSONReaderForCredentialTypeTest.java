@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForCredentialType;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
