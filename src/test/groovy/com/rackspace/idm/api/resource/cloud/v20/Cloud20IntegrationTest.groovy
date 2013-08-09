@@ -332,7 +332,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "User-Admin should not be able to assign himself role of weight 100"() {
         when:
-        def response = cloud20.addApplicationRoleToUser(identityAdminToken, CUSTOMER_ADMIN_ROLE_ID, serviceAdmin)
+        def response = cloud20.addApplicationRoleToUser(identityAdminToken, CUSTOMER_ADMIN_ROLE_ID, serviceAdmin.id)
 
         then:
         response.status == 403
