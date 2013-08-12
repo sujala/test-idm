@@ -348,6 +348,68 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(userAdmin)
     }
 
+    def "after adding a propagating role to an identity admin, existing userAdmins and subusers will not get the propagating role"() {
+        //create identity admin
+        def identityAdmin = createIdentityAdmin()
+        def identityAdminToken = authenticate(identityAdmin.username)
+
+        //create the user admin
+        def userAdmin = createUserAdmin(identityAdminToken)
+        def userAdminToken = authenticate(userAdmin.username)
+
+        //create new user
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        //create the propagating role
+        def propagatingRole = createPropagateRole()
+
+        when: "add propagating roles to identity admin"
+        //add the role to user admin
+        addRoleToUser(specificationServiceAdminToken, identityAdmin, propagatingRole)
+        assertUserHasRole(identityAdmin, propagatingRole)
+
+        then: "existing users do not get propagating role"
+        //verify userAdmin under identity admin does NOT have role
+        assertUserDoesNotHaveRole(userAdmin, propagatingRole)
+        assertUserDoesNotHaveRole(defaultUser, propagatingRole)
+
+        cleanup:
+        deleteUserQuietly(identityAdmin)
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userAdmin)
+        deleteRoleQuietly(propagatingRole)
+    }
+
+    def "when add a propagating role to an identity admin then new userAdmins and new subusers will not get the propagating role"() {
+        //create identity admin
+        def identityAdmin = createIdentityAdmin()
+        def identityAdminToken = authenticate(identityAdmin.username)
+        def propagatingRole = createPropagateRole()
+        addRoleToUser(specificationServiceAdminToken, identityAdmin, propagatingRole)
+
+        //verify identity admin has the role
+        assertUserHasRole(identityAdmin, propagatingRole)
+
+        when: "create new user admin and default user from identity admin with propagate role"
+        //create the user admin
+        def userAdmin = createUserAdmin(identityAdminToken)
+        def userAdminToken = authenticate(userAdmin.username)
+
+        //create new user
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        then: "new users do not get propagating role from identity admin"
+        //verify userAdmin under identity admin does NOT have role
+        assertUserDoesNotHaveRole(userAdmin, propagatingRole)
+        assertUserDoesNotHaveRole(defaultUser, propagatingRole)
+
+        cleanup:
+        deleteUserQuietly(identityAdmin)
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userAdmin)
+        deleteRoleQuietly(propagatingRole)
+    }
+
     @Ignore("Demonstrating defect D-13974. Once defect is fixed this test must not be ignored.")
     def "when add a non-propagating role to a user admin, all new sub users of the admin will not have that role"() {
         //create the admin
