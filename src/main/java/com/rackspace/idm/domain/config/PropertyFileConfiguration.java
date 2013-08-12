@@ -31,7 +31,7 @@ public class PropertyFileConfiguration {
      * The name of the system property that will be checked to determine whether or not property encryption/decryption is
      * disabled. By default it is enabled. Set this property to "true" to disable the decryption of property values.
      */
-    public static final String PROPERTY_ENCRYPTION_DISABLED_PROP_NAME = "property.encryption.disabled";
+    public static final String PROPERTY_ENCRYPTION_DISABLED_PROP_NAME = "property_encryption_disabled";
 
     private final Logger logger = LoggerFactory
         .getLogger(PropertyFileConfiguration.class);

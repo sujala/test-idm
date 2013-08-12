@@ -13,9 +13,9 @@ public class SystemEnvPropertyConfigurationFactory implements PropertyFileEncryp
     private final Logger logger = LoggerFactory
             .getLogger(SystemEnvPropertyConfigurationFactory.class);
 
-    public static final String PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME = "property.encryption.password";
-    public static final String PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME = "property.encryption.algorithm";
-    public static final String PROPERTY_ENCRYPTION_PROVIDER_NAME_ATTR_NAME = "property.encryption.provider.name";
+    public static final String PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME = "property_encryption_password";
+    public static final String PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME = "property_encryption_algorithm";
+    public static final String PROPERTY_ENCRYPTION_PROVIDER_NAME_ATTR_NAME = "property_encryption_provider_name";
 
     public static final String DEFAULT_PROVIDER_NAME = "BC";
     /**
