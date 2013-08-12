@@ -1798,45 +1798,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         identityAdminToken | 0
     }
 
-    def "adding a role which propagates to a user admin adds the role to the sub users"() {
-        when:
-        def defaultUserResponse1 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
-        def userAdminResponse1 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        def response = cloud20.addApplicationRoleToUser(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        def defaultUserResponse2 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
-        def userAdminResponse2 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        then:
-        response.status == 200
-        defaultUserResponse1.status == 404
-        userAdminResponse1.status == 404
-        defaultUserResponse2.status == 200
-        userAdminResponse2.status == 200
-    }
-
-    def "removing a propagating role from a user-admin removes the role from the sub users"() {
-        given:
-        cloud20.addApplicationRoleToUser(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        when:
-        def defaultUserResponse1 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
-        def userAdminResponse1 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        def response = cloud20.deleteApplicationRoleFromUser(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        def defaultUserResponse2 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), defaultUserForAdminTwo.getId())
-        def userAdminResponse2 = cloud20.getUserApplicationRole(serviceAdminToken, propagatingRole.getId(), userAdminTwo.getId())
-
-        then:
-        defaultUserResponse1.status == 200
-        userAdminResponse1.status == 200
-        response.status == 204
-        defaultUserResponse2.status == 404
-        userAdminResponse2.status == 404
-    }
-
     def "authenticate returns password authentication type in response"() {
         when:
         def response = cloud20.authenticatePassword("admin$sharedRandom", "Password1")
