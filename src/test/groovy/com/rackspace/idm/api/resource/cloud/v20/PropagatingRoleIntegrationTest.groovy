@@ -1,14 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.SearchResultEntry
-import com.unboundid.ldap.sdk.persist.LDAPPersister
-import org.apache.commons.configuration.Configuration
-import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.*
-import org.springframework.beans.factory.annotation.Autowired
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.User
+import org.springframework.http.HttpStatus
 import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
@@ -20,56 +15,75 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     private static final String SERVICE_ADMIN_USERNAME = "authQE";
     private static final String SERVICE_ADMIN_PWD = "Auth1234"
 
-    public static final String IDENTITY_ADMIN_USERNAME = "auth"
-    public static final String IDENTITY_ADMIN_PWD = "auth123"
+    public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
+    public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
+    public static final String DEFAULT_USER_USERNAME_PREFIX = "defaultUser"
+    public static final String ROLE_NAME_PREFIX = "role"
 
-    @Shared String SHARED_RANDOM
+    public static final String DEFAULT_PASSWORD = "Password1"
 
-    @Autowired LdapConnectionPools connPools
-    @Autowired Configuration config
-    @Autowired DefaultCloud20Service cloud20Service
+    public static final int STANDARD_PROPAGATING_ROLE_WEIGHT = 500
+
+    /**
+     * Random string generated for entire test class. Same for all feature methods.
+     */
+    @Shared String SPECIFICATION_RANDOM
 
     @Shared
-    def serviceAdmin
+    def specificationServiceAdmin
     @Shared
-    def serviceAdminToken
+    def specificationServiceAdminToken
 
     @Shared
-    def identityAdmin
+    def specificationIdentityAdmin
     @Shared
-    def identityAdminToken
+    def specificationIdentityAdminToken
 
+    /**
+     * Random string that is unique for each feature method
+     */
+    @Shared String FEATURE_RANDOM
+
+    /**
+     * Like most other tests, this test class depends on a pre-existing service admin (authQE)
+     *
+     * @return
+     */
     def setupSpec() {
-        SHARED_RANDOM = getNormalizedRandomString()
+        SPECIFICATION_RANDOM = getNormalizedRandomString()
 
+        //login via the already existing service admin user
         def serviceAdminAuthResponse = cloud20.authenticatePassword(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PWD).getEntity(AuthenticateResponse)
+        //verify the authentication worked before retrieving the token
         assert serviceAdminAuthResponse.value instanceof AuthenticateResponse
-        serviceAdminToken = serviceAdminAuthResponse.value.token.id
-        serviceAdmin = cloud20.getUserByName(serviceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(User)
+        specificationServiceAdminToken = serviceAdminAuthResponse.value.token.id
+        specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(User)
 
-
-        identityAdmin = cloud20.getUserByName(serviceAdminToken, IDENTITY_ADMIN_USERNAME).getEntity(User)
-        def identityAdminAuthResponse = cloud20.authenticatePassword(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PWD).getEntity(AuthenticateResponse)
+        //create a new shared identity admin for these tests
+        specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
+        def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
+        //verify the authentication worked before retrieving the token
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
-        identityAdminToken = identityAdminAuthResponse.value.token.id
+        specificationIdentityAdminToken = identityAdminAuthResponse.value.token.id
     }
 
     def setup() {
+        FEATURE_RANDOM = getNormalizedRandomString()
     }
 
     def cleanupSpec() {
+        deleteUserQuietly(specificationIdentityAdmin)
     }
 
-    def "we can create a role when specifying weight and propagate values"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
+    def "we can create a role with weight and propagate values"() {
+        String roleName = ROLE_NAME_PREFIX + FEATURE_RANDOM
 
         when:
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = roleName
             return it
         }
-        def response = cloud20.createRole(serviceAdminToken, role)
+        def response = cloud20.createRole(specificationServiceAdminToken, role)
         def createdRole = response.getEntity(Role).value
 
         def propagateValue = null
@@ -92,23 +106,118 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         where:
         weight | propagate | expectedWeight | expectedPropagate
         null   | null      | 1000           | false
+        500    | null      | 500            | false
+        500    | true      | 500            | true
+        500    | false     | 500            | false
         100    | null      | 100            | false
         null   | true      | 1000           | true
         null   | false     | 1000           | false
         2000   | true      | 2000           | true
     }
 
-    def "when add a propagating role to a user admin, all existing sub users of the admin will have that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
+    def "service admins can add a propagating role to a user admin"() {
         //create the admin and a sub-user
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
-        def userAdminToken = authenticate(userAdmin.username)
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
 
         //create the propagating role
-        def propagatingRole = createPropagateRole(roleName, true, 500)
+        def propagatingRole = createPropagateRole()
+
+        when: "Add propagating role to user admin"
+        addRoleToUser(specificationServiceAdminToken, userAdmin, propagatingRole)
+
+        then: "user admin has role"
+        assertUserHasRole(userAdmin, propagatingRole)
+
+        cleanup:
+        deleteRoleQuietly(propagatingRole)
+        deleteUserQuietly(userAdmin)
+    }
+
+    def "identity admins can add a propagating role to a user admin"() {
+        //create the admin and a sub-user
+        def userAdmin = createUserAdmin()
+
+        //create the propagating role
+        def propagatingRole = createPropagateRole()
+
+        when: "Add propagating role to user admin"
+        addRoleToUser(specificationIdentityAdminToken, userAdmin, propagatingRole)
+
+        then: "user admin has role"
+        assertUserHasRole(userAdmin, propagatingRole)
+
+        cleanup:
+        deleteRoleQuietly(propagatingRole)
+        deleteUserQuietly(userAdmin)
+    }
+
+    /**
+     * Current implementation supports adding a propagate role to an identity admin. This may not be desirable, but
+     * original specification was not clear on whether this should be allowed. Since this is as designed, add a test demonstrating
+     * the functionality.
+     *
+     * @return
+     */
+    def "can assign a propagate role to an identity admin"() {
+        //create the identity admin
+        def localIdentityAdmin = createIdentityAdmin()
+
+        //create the propagating role
+        def propagatingRole = createPropagateRole()
+
+        when:
+        //try to add the role to identity admin
+        addRoleToUser(specificationServiceAdminToken, localIdentityAdmin, propagatingRole)
+
+        then:
+        //verify role not assigned.
+        assertUserHasRole(localIdentityAdmin, propagatingRole)
+
+        cleanup:
+        deleteUserQuietly(localIdentityAdmin)
+        deleteRoleQuietly(propagatingRole)
+    }
+
+    /**
+     * Current implementation supports adding a propagate role to a default user. This may not be desirable, but
+     * original specification was not clear on whether this should be allowed. Since this is as designed, add a test demonstrating
+     * the functionality.
+     *
+     * @return
+     */
+    def "can assign a propagate role to a default user"() {
+        //create the admin
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+
+        //create new default user
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        //create the propagating role
+        def propagatingRole = createPropagateRole()
+
+        when:
+        //try to add the role to user
+        addRoleToUser(specificationServiceAdminToken, defaultUser, propagatingRole)
+
+        then:
+        //verify role not assigned.
+        assertUserHasRole(defaultUser, propagatingRole)
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(defaultUser)
+        deleteRoleQuietly(propagatingRole)
+    }
+
+    def "when add a propagating role to a user admin, all existing sub users of the admin will gain that role"() {
+        //create the admin and a sub-user
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        //create the propagating role
+        def propagatingRole = createPropagateRole()
 
         expect:
         //initially they don't have the role
@@ -116,7 +225,7 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRole(userAdmin, propagatingRole)
 
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, propagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, propagatingRole)
 
         //verify user admin AND sub user now have role
         assertUserHasRole(defaultUser, propagatingRole)
@@ -129,27 +238,24 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def "when removing a propagating role from a user admin, all existing sub users of the admin will lose that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
         //create the admin and a sub-user
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole(roleName, true, 500)
+        def propagatingRole = createPropagateRole()
 
         expect:
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, propagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, propagatingRole)
 
         //verify user admin AND sub user have role
         assertUserHasRole(defaultUser, propagatingRole)
         assertUserHasRole(userAdmin, propagatingRole)
 
         //remove the role from user admin
-        removeRoleFromUser(serviceAdminToken, userAdmin, propagatingRole)
+        removeRoleFromUser(specificationServiceAdminToken, userAdmin, propagatingRole)
 
         //verify they no longer have the role
         assertUserDoesNotHaveRole(defaultUser, propagatingRole)
@@ -162,16 +268,13 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def "when add a non-propagating role to a user admin, all existing sub users of the admin will not have that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
         //create the admin and a sub-user
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def defaultUser = createDefaultUser(userAdminToken)
 
         //create the non-propagating role
-        def nonPropagatingRole = createPropagateRole(roleName, false, 500)
+        def nonPropagatingRole = createPropagateRole(false)
 
         expect:
         //they don't have the role
@@ -179,7 +282,7 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRole(userAdmin, nonPropagatingRole)
 
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, nonPropagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, nonPropagatingRole)
 
         //verify user admin has role, but sub user does not
         assertUserHasRole(userAdmin, nonPropagatingRole)
@@ -192,19 +295,16 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def "when removing a non-propagating role from a user admin, all existing sub users of the admin will still not have that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
         //create the admin and a sub-user
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def nonPropagatingRole = createPropagateRole(roleName, false, 500)
+        def nonPropagatingRole = createPropagateRole(false)
 
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, nonPropagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, nonPropagatingRole)
 
         expect:
         //verify user admin has role, but sub user does not
@@ -212,7 +312,7 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRole(defaultUser, nonPropagatingRole)
 
         //remove the role from user admin
-        removeRoleFromUser(serviceAdminToken, userAdmin, nonPropagatingRole)
+        removeRoleFromUser(specificationServiceAdminToken, userAdmin, nonPropagatingRole)
 
         //verify neither have role
         assertUserDoesNotHaveRole(defaultUser, nonPropagatingRole)
@@ -225,21 +325,18 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def "when add a propagating role to a user admin, all new sub users of the admin will have that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
         //create the admin
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole(roleName, true, 500)
+        def propagatingRole = createPropagateRole()
 
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, propagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, propagatingRole)
 
         //create new user
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def defaultUser = createDefaultUser(userAdminToken)
 
         expect:
         //verify sub user has the role
@@ -253,24 +350,21 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
 
     @Ignore("Demonstrating defect D-13974. Once defect is fixed this test must not be ignored.")
     def "when add a non-propagating role to a user admin, all new sub users of the admin will not have that role"() {
-        String SHARED_TEST_RANDOM = getNormalizedRandomString()
-        String roleName = "role$SHARED_TEST_RANDOM"
-
         //create the admin
-        def userAdmin = createUserAdmin("userAdmin$SHARED_TEST_RANDOM")
+        def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
 
         //create the nonpropagating role
-        def nonPropagatingRole = createPropagateRole(roleName, false, 500)
+        def nonPropagatingRole = createPropagateRole(false)
 
         //add the role to user admin
-        addRoleToUser(serviceAdminToken, userAdmin, nonPropagatingRole)
+        addRoleToUser(specificationServiceAdminToken, userAdmin, nonPropagatingRole)
 
         //create new user
-        def defaultUser = createDefaultUser(userAdminToken, "defaultUser$SHARED_TEST_RANDOM")
+        def defaultUser = createDefaultUser(userAdminToken)
 
         expect: "newly created user does not have nonpropagating role"
-        //verify sub user has the role
+        //verify sub user does not have the role
         assertUserDoesNotHaveRole(defaultUser, nonPropagatingRole)
 
         cleanup:
@@ -283,7 +377,7 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     def deleteRoleQuietly(role) {
         if (role != null) {
             try {
-                cloud20.deleteRole(serviceAdminToken, role.getId())
+                cloud20.deleteRole(specificationServiceAdminToken, role.getId())
             } catch (all) {
                 //ignore
             }
@@ -293,70 +387,59 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     def deleteUserQuietly(user) {
         if (user != null) {
             try {
-                cloud20.destroyUser(serviceAdminToken, user.getId())
+                cloud20.destroyUser(specificationServiceAdminToken, user.getId())
             } catch (all) {
                 //ignore
             }
         }
     }
 
-    def setConfigValues() {
-        REFRESH_WINDOW_HOURS = config.getInt("token.refreshWindowHours")
-        CLOUD_CLIENT_ID = config.getString("cloudAuth.clientId")
-    }
-
     def void assertUserHasRole(user, role) {
-        assert cloud20.getUserApplicationRole(serviceAdminToken, role.getId(), user.getId()).status == 200
+        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.OK.value()
     }
 
     def void assertUserDoesNotHaveRole(user, role) {
-        assert cloud20.getUserApplicationRole(serviceAdminToken, role.getId(), user.getId()).status == 404
+        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.NOT_FOUND.value()
     }
 
     def void addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
-        assert cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == 200
+        assert cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.OK.value()
     }
 
     def void removeRoleFromUser(callerToken, userToAddRoleTo, roleToAdd) {
-        assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == 204
+        assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def expireTokens(String uid, int hoursOffset) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH))", "*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class) decode(entry)
-            if (!entity.isAccessTokenExpired(new DateTime())) {
-                entity.accessTokenExp = new DateTime().minusHours(hoursOffset).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
-
-    def createPropagateRole(String roleName = getNormalizedRandomString(), boolean propagate = false, int weight = null) {
+    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = roleName
             return it
         }
-        def responsePropagateRole = cloud20.createRole(serviceAdminToken, role)
+        def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
         return propagatingRole
     }
 
-    def createUserAdmin(String adminUsername = "userAdmin" + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
-        def createResponse = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, "Password1"))
-        def userAdmin = cloud20.getUserByName(identityAdminToken, adminUsername).getEntity(User)
+    def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
+        def createResponse = cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User)
         return userAdmin;
     }
 
-    def createDefaultUser(String userAdminToken, String userName = "defaultUser" + getNormalizedRandomString()) {
-        def createResponse = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, "Password1"))
-        def user = cloud20.getUserByName(userAdminToken, userName).getEntity(User)
+    def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
+        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+        def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(User)
+        return userAdmin;
+    }
+
+    def createDefaultUser(String callerToken, String userName = DEFAULT_USER_USERNAME_PREFIX + getNormalizedRandomString()) {
+        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        def user = cloud20.getUserByName(callerToken, userName).getEntity(User)
         return user
     }
 
     def authenticate(String userName) {
-        def token = cloud20.authenticatePassword(userName, "Password1").getEntity(AuthenticateResponse).value.token.id
+        def token = cloud20.authenticatePassword(userName, DEFAULT_PASSWORD).getEntity(AuthenticateResponse).value.token.id
         return token;
     }
 
