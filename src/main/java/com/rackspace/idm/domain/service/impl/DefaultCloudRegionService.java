@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA.
@@ -64,6 +65,10 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new DuplicateException(REGION_NAME_ALREADY_EXISTS);
         }
 
+        if (region.getId() == null) {
+            region.setId(UUID.randomUUID().toString().replace("-", ""));
+        }
+
         setAsOnlyDefaultRegion(region);
 
         logger.info("Adding Region: {}", region);
@@ -82,15 +87,15 @@ public class DefaultCloudRegionService implements CloudRegionService {
     }
 
     @Override
-    public void updateRegion(String regionId, Region region) {
-        if (regionId == null) {
+    public void updateRegion(String name, Region region) {
+        if (name == null) {
             throw new BadRequestException(REGIONID_CANNOT_BE_NULL);
         }
         if (region == null) {
             throw new BadRequestException(REGION_CANNOT_BE_NULL);
         }
 
-        Region oldRegion = checkAndGetRegion(regionId);
+        Region oldRegion = checkAndGetRegion(name);
 
         if (!StringUtils.isBlank(region.getName()) && !region.getName().equals(oldRegion.getName())) {
             throw new BadRequestException(REGION_NAME_CANNOT_BE_UPDATED);
@@ -120,18 +125,18 @@ public class DefaultCloudRegionService implements CloudRegionService {
     }
 
     @Override
-    public void deleteRegion(String regionId) {
-        if (regionId == null) {
+    public void deleteRegion(String name) {
+        if (name == null) {
             throw new BadRequestException(REGIONID_CANNOT_BE_NULL);
         }
 
-        Region region = checkAndGetRegion(regionId);
+        Region region = checkAndGetRegion(name);
         if (region.getIsDefault() && region.getIsEnabled()) {
             throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DELETED);
         }
 
-        logger.info("Deleting Region: {}", regionId);
-        regionDao.deleteRegion(regionId);
+        logger.info("Deleting Region: {}", name);
+        regionDao.deleteRegion(name);
     }
 
     @Override

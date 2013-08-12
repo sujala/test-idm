@@ -55,19 +55,15 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
-        SearchResult searchResult;
+        int offset = 0;
 
-        try {
-            searchResult = getAppInterface().search(dn, scope, searchFilter);
-            getLogger().info("Got" + entityType.toString());
-        } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
-            getLogger().error(loggerMsg);
-            throw new IllegalStateException(ldapEx);
-        }
+        PaginatorContext<T> context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
 
-        if (searchResult.getEntryCount() > 0) {
-            objects = processSearchResult(searchResult.getSearchEntries());
+        while(offset < context.getTotalRecords()) {
+            objects.addAll(context.getValueList());
+
+            offset += (PAGE_SIZE - context.getValueList().size());
+            context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
         }
 
         return objects;

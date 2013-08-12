@@ -23,7 +23,7 @@ public class LdapRegionRepository extends LdapGenericRepository<Region> implemen
     }
 
     public String getSortAttribute() {
-        return ATTR_NAME;
+        return ATTR_ID;
     }
 
     @Override

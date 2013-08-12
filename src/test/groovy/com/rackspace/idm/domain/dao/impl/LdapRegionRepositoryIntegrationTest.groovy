@@ -112,6 +112,7 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
 
     def region(String name, String cloud, Boolean isEnabled, Boolean isDefault) {
         new Region().with {
+            it.id = UUID.randomUUID().toString().replace('-',"")
             it.name = name
             it.cloud = cloud
             it.isEnabled = isEnabled
