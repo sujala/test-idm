@@ -86,7 +86,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addTenantRoleToClient(application,tenantRole);
 
         then:
-        0 * scopeAccessService.addDirectScopeAccess(anyString(), any(ScopeAccess.class))
+        0 * scopeAccessService.addDirectScopeAccess(_, _)
     }
 
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
