@@ -21,6 +21,10 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
         return OBJECTCLASS_BASEURL;
     }
 
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
+
     @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {
         addObject(baseUrl);

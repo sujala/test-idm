@@ -32,7 +32,7 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
     }
 
     public String getSortAttribute() {
-        return ATTR_GROUP_ID;
+        return ATTR_ID;
     }
 
     @Override

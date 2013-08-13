@@ -20,4 +20,8 @@ public class LdapServiceApiRepository extends LdapGenericRepository<ServiceApi> 
     public String getLdapEntityClass(){
         return OBJECTCLASS_BASEURL;
     }
+
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
 }
