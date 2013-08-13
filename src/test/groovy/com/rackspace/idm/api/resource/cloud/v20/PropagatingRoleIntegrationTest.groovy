@@ -410,7 +410,6 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         deleteRoleQuietly(propagatingRole)
     }
 
-    @Ignore("Demonstrating defect D-13974. Once defect is fixed this test must not be ignored.")
     def "when add a non-propagating role to a user admin, all new sub users of the admin will not have that role"() {
         //create the admin
         def userAdmin = createUserAdmin()

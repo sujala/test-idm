@@ -332,7 +332,9 @@ public class DefaultTenantService implements TenantService {
                     && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
                     && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
                     && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))
-                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"))) {
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"))
+                    && tenantRole.getPropagate()
+                    ) {
                 TenantRole role = new TenantRole();
                 role.setClientId(tenantRole.getClientId());
                 role.setDescription(tenantRole.getDescription());
@@ -495,6 +497,7 @@ public class DefaultTenantService implements TenantService {
                 ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
+                role.setPropagate(cRole.getPropagate());
             }
         }
     }

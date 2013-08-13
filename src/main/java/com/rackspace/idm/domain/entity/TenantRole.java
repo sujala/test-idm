@@ -42,6 +42,8 @@ public class TenantRole implements Auditable, UniqueId {
 
     private String name;
     private String description;
+    private Boolean propagate;
+
 
     public String getUniqueId() {
         if (ldapEntry == null) {
@@ -89,6 +91,18 @@ public class TenantRole implements Auditable, UniqueId {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getPropagate() {
+        if (propagate == null) {
+            return false;
+        }
+        return propagate;
+    }
+
+
+    public void setPropagate(Boolean propagate) {
+        this.propagate = propagate;
     }
 
     public String[] getTenantIds() {
