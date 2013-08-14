@@ -187,7 +187,8 @@ def resourceDirs = [
     'LOCAL-DEV',
     'OPENLDAP',
     'TEST',
-    'TEST2'
+    'TEST2',
+    'VAGRANT'
 ]
 
 task copyConfig(type: Copy) {
