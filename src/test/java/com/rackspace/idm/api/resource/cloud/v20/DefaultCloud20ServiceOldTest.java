@@ -32,7 +32,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -694,7 +693,6 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void revokeToken_userAdminReturnsAccepted() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
-        ScopeAccess scopeAccessAdmin = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken("tokenXXX")).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "tokenXXX");
@@ -3376,7 +3374,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudIdentityAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         when(userService.getUserByAuthToken(anyString())).thenReturn(svcuser);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getUserScopeAccessByClientId(any(User.class), anyString())).thenReturn(userScopeAccess);
         when(authorizationService.hasServiceAdminRole(user)).thenReturn(true);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.resetUserApiKeyCredentials(null, authToken, null, null);
@@ -3855,7 +3853,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(any(User.class), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
         verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, true);
@@ -3895,7 +3893,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(any(User.class), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
         verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, false);
@@ -3922,7 +3920,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(any(User.class), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         when(scopeAccessService.updateExpiredUserScopeAccess(any(UserScopeAccess.class), anyBoolean())).thenReturn(userScopeAccess1);
@@ -3951,7 +3949,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(any(User.class), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 

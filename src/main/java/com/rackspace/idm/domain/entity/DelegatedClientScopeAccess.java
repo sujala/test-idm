@@ -3,11 +3,13 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
+import lombok.Data;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
+@Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS,requestAllAttributes=true)
 public class DelegatedClientScopeAccess extends ScopeAccess implements HasRefreshToken  {
 
@@ -50,42 +52,6 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasRefres
             return ldapEntry.getDN();
         }
     }
-    
-    @Override
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    @Override
-    public void setRefreshTokenString(String refreshTokenString) {
-        this.refreshTokenString = refreshTokenString;
-    }
-
-    @Override
-    public Date getRefreshTokenExp() {
-        return refreshTokenExp;
-    }
-
-    @Override
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
-    
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getUserRCN() {
-        return userRCN;
-    }
-
-    public void setUserRCN(String userRCN) {
-        this.userRCN = userRCN;
-    }
 
     @Override
     public void setRefreshTokenExpired() {
@@ -96,16 +62,8 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasRefres
         return authCode;
     }
 
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
-    }
-
     public Date getAuthCodeExp() {
         return authCodeExp;
-    }
-
-    public void setAuthCodeExp(Date authCodeExp) {
-        this.authCodeExp = authCodeExp;
     }
 
     @Override
@@ -129,17 +87,5 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasRefres
     public String getAuditContext() {
         final String format = "User(username=%s,customerId=%s)DelegatedToClient(clientId=%s,customerId=%s)";
         return String.format(format, this.getUsername(), this.getUserRCN(), this.getClientId(), this.getClientRCN());
-    }
-
-    public void setUserRsId(String userRsId) {
-        this.userRsId = userRsId;
-    }
-
-    public String getUserRsId() {
-        return userRsId;
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
     }
 }

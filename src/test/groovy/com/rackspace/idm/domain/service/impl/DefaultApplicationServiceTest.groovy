@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.Permission
+
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.exception.DuplicateException
@@ -68,14 +68,9 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
     def "delete deletes attached defined permissions and clientRoles before deleting application"() {
         given:
-        def definedPermission = entityFactory.createDefinedPermission()
-        def permission = entityFactory.createPermission()
         def clientRole = entityFactory.createClientRole()
 
         applicationDao.getApplicationByClientId(CLIENT_ID) >> entityFactory.createApplication()
-
-        scopeAccessService.getPermissionsForParentByPermission(_, _) >> [ definedPermission ].asList()
-        scopeAccessService.getPermissionsByPermission(_) >> [ permission ].asList()
 
         applicationRoleDao.getClientRolesForApplication(entityFactory.createApplication()) >> [ clientRole ].asList()
         tenantService.getTenantRolesForClientRole(_) >> [ entityFactory.createTenantRole() ].asList()
@@ -84,11 +79,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.delete(CLIENT_ID)
 
         then:
-        scopeAccessService.removePermissionFromScopeAccess(_) >> { arg1 ->
-            assert(arg1.get(0) instanceof Permission)
-            return true
-        }
-
         tenantService.deleteTenantRole(_) >> { arg1 ->
             assert(arg1.get(0) instanceof TenantRole)
         }
@@ -114,79 +104,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationRoleDao.getAvailableClientRolesPaged("applicationId", 0, 10, 1000) >> contextMock
     }
 
-    def "deleteDefinedPermission gets a list of permissions using the DefinedPermission to be deleted"() {
-        given:
-        def permission = entityFactory.createDefinedPermission().with {
-            it.clientId = "clientId"
-            it.customerId = "customerId"
-            it.permissionId = "permissionId"
-            return it
-        }
-
-        when:
-        service.deleteDefinedPermission(permission)
-
-        then:
-        0 * scopeAccessDao.getPermissionsByPermission(_)
-        1 * scopeAccessService.getPermissionsByPermission(_) >> { Permission arg ->
-            assert(arg.getClientId().equals(permission.getClientId()))
-            assert(arg.getCustomerId().equals(permission.getCustomerId()))
-            assert(arg.getPermissionId().equals(permission.getPermissionId()))
-            def newPermission = entityFactory.createPermission()
-            return [ newPermission ].asList()
-        }
-    }
-
-    def "deleteDefinedPermission deletes all permissions connected to Permission to be deleted"() {
-        given:
-        def definedPermission = entityFactory.createDefinedPermission().with {
-            it.clientId = "clientId"
-            it.customerId = "customerId"
-            it.permissionId = "permissionId"
-            return it
-        }
-        def permission = entityFactory.createPermission()
-
-        scopeAccessService.getPermissionsByPermission(_) >> [ permission, permission ].asList()
-
-        when:
-        service.deleteDefinedPermission(definedPermission)
-
-        then:
-        0 * scopeAccessDao.removePermissionFromScopeAccess(_)
-        2 * scopeAccessService.removePermission(_)
-    }
-
-    def "getDefinedPermissionByClient gets list of permissions by clientId and permissionId"() {
-        given:
-        def application = entityFactory.createApplication().with {
-            it.rcn = "rcn"
-            return it
-        }
-
-        when:
-        service.getDefinedPermissionsByClient(application)
-
-        then:
-        1 * scopeAccessService.getPermissionsForParentByPermission(_, _) >> { arg1, Permission arg2 ->
-            assert(arg2.getCustomerId().equals(application.getRcn()))
-            assert(arg2.getClientId().equals(application.getClientId()))
-            return [ ].asList()
-        }
-    }
-
-    def "updateDefinedPermission uses scopeAccessService to update permission"() {
-        given:
-        def definedPermission = entityFactory.createDefinedPermission()
-
-        when:
-        service.updateDefinedPermission(definedPermission)
-
-        then:
-        0 * scopeAccessDao.updatePermissionForScopeAccess(definedPermission)
-        1 * scopeAccessService.updatePermission(definedPermission)
-    }
-
     def "getClientService gets list of ScopeAccess for application from ScopeAccessService"() {
         given:
         def application = entityFactory.createApplication()
@@ -199,8 +116,8 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def result = service.getClientServices(application)
 
         then:
-        0 * scopeAccessDao.getScopeAccessesByParent(_)
-        1 * scopeAccessService.getScopeAccessesForParent(_) >> [ scopeAccess ].asList()
+        0 * scopeAccessDao.getScopeAccesses(_)
+        1 * scopeAccessService.getScopeAccessesForApplication(_) >> [ scopeAccess ].asList()
 
         then:
         1 * applicationDao.getApplicationByClientId(_) >> application
@@ -216,7 +133,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.deleteClientRole(role)
 
         then:
-        0 * tenantDao.getAllTenantRolesForClientRole(_)
         1 * tenantService.getTenantRolesForClientRole(_) >> [ ].asList()
     }
 

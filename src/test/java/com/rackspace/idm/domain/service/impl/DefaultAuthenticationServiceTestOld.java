@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.service.*;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
@@ -513,32 +512,9 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void getAndUpdateClientScopeAccessForClientId_scopeAccessIsNull_getsDataFromClient() throws Exception {
-        Application client = mock(Application.class);
-        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        clientScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getClientScopeAccessForClientId(null,null)).thenReturn(null);
-        when(scopeAccessService.addDirectScopeAccess((String) eq(null), any(ScopeAccess.class))).thenReturn(clientScopeAccess);
-        defaultAuthenticationService.getAndUpdateClientScopeAccessForClientId(client);
-        verify(client,atLeastOnce()).getClientId();
-        verify(client,atLeastOnce()).getRcn();
-    }
-
-    @Test
-    public void getAndUpdateClientScopeAccessForClientId_scopeAccessIsNull_addsDirectScopeAccess() throws Exception {
-        Application client = mock(Application.class);
-        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        clientScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getClientScopeAccessForClientId(null,null)).thenReturn(null);
-        when(scopeAccessService.addDirectScopeAccess((String) eq(null), any(ScopeAccess.class))).thenReturn(clientScopeAccess);
-        defaultAuthenticationService.getAndUpdateClientScopeAccessForClientId(client);
-        verify(scopeAccessService).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-    }
-
-    @Test
     public void getAndUpdateClientScopeAccessForClientId_accessTokenExpNull_setsAccessTokenString() throws Exception {
         ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        when(scopeAccessService.getClientScopeAccessForClientId(null,null)).thenReturn(clientScopeAccess);
+        when(scopeAccessService.getApplicationScopeAccess(null)).thenReturn(clientScopeAccess);
         doReturn("generatedToken").when(spy).generateToken();
         doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
         ScopeAccess scopeAccess = spy.getAndUpdateClientScopeAccessForClientId(new Application());
@@ -579,28 +555,12 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void getAndUpdateRackerScopeAccessForClientId_nullScopeAccess_getsDataFromRackerAndClient() throws Exception {
-        Racker racker = mock(Racker.class);
-        Application client = mock(Application.class);
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        rackerScopeAccess.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessForClientId(null, null)).thenReturn(null);
-        when(scopeAccessService.addDirectScopeAccess((String) eq(null), any(ScopeAccess.class))).thenReturn(rackerScopeAccess);
-        doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
-        spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
-        verify(racker,atLeastOnce()).getRackerId();
-        verify(client,atLeastOnce()).getClientId();
-        verify(client, atLeastOnce()).getRcn();
-    }
-
-    @Test
     public void getAndUpdateRackerScopeAccessForClientId_nullAccessTokenExp_setsAccessToken() throws Exception {
         Racker racker = new Racker();
         Application client = new Application();
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessForClientId(null, null)).thenReturn(rackerScopeAccess);
+        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
         doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
         doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
         doReturn("generatedToken").when(spy).generateToken();
@@ -614,7 +574,7 @@ public class DefaultAuthenticationServiceTestOld {
         Application client = new Application();
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessForClientId(null, null)).thenReturn(rackerScopeAccess);
+        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
         doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
         doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
         doReturn("generatedToken").when(spy).generateToken();
@@ -629,7 +589,7 @@ public class DefaultAuthenticationServiceTestOld {
         Application client = new Application();
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessForClientId(null, null)).thenReturn(rackerScopeAccess);
+        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
         doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
         doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
         doReturn("generatedToken").when(spy).generateToken();

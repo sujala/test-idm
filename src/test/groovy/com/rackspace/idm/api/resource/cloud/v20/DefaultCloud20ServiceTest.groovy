@@ -1755,7 +1755,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
                 entityFactory.createTenantRole("identity:default")
         ].asList()
 
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> userScopeAccess
+        scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(_, _) >> userScopeAccess
 
         when:
         def responseBuilder = service.impersonate(headers, authToken, impRequest)
@@ -1809,7 +1809,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * validator20.validatePasswordCredentials(_)
         1 * domainConverter.toDomainDO(domain)
         1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
-        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _, _) >> createRackerScopeAcccss()
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getTenantRolesForUser(racker)
     }
 
@@ -1830,7 +1830,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * validator20.validateUsername(_)
         1 * domainConverter.toDomainDO(domain)
         1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
-        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _, _) >> createRackerScopeAcccss()
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getTenantRolesForUser(racker)
     }
 
@@ -2858,8 +2858,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
-        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _, _) >> { arg1, arg2, arg3, List<String> arg4 ->
-            assert (arg4.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> { arg1, arg2, List<String> arg3 ->
+            assert (arg3.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
             createRackerScopeAcccss()
         }
         1 * authConverter.toAuthenticationResponse(_, _, _, _) >> { arg1, ScopeAccess arg2, arg3, arg4 ->
@@ -2885,7 +2885,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
-        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _, _) >> { arg1, arg2, arg3, List<String> arg4 ->
+        1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> { arg1, arg2, List<String> arg4 ->
             assert (arg4.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
             createRackerScopeAcccss()
         }

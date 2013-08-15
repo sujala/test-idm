@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Token;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ public class TokenConverter {
     }
 
     public com.rackspace.api.idm.v1.DelegatedToken toDelegatedTokenJaxb(
-        DelegatedClientScopeAccess token, List<Permission> perms) {
+        DelegatedClientScopeAccess token) {
         com.rackspace.api.idm.v1.DelegatedToken jaxbToken = of
             .createDelegatedToken();
 
@@ -87,7 +86,7 @@ public class TokenConverter {
             .createDelegatedTokenList();
 
         for (DelegatedClientScopeAccess u : scopeAccessList) {
-            com.rackspace.api.idm.v1.DelegatedToken token = toDelegatedTokenJaxb(u, null);
+            com.rackspace.api.idm.v1.DelegatedToken token = toDelegatedTokenJaxb(u);
             jaxbTokens.getDelegatedToken().add(token);
         }
         return of.createDelegatedTokens(jaxbTokens);

@@ -64,12 +64,6 @@ public class DefaultApplicationService implements ApplicationService {
             throw new NotFoundException(errMsg);
         }
 
-        List<DefinedPermission> definedPermissions = this.getDefinedPermissionsByClient(client);
-
-        for (DefinedPermission definedPerm : definedPermissions) {
-            this.deleteDefinedPermission(definedPerm);
-        }
-        
         List<ClientRole> roles = applicationRoleDao.getClientRolesForApplication(client);
         
         for (ClientRole role : roles) {
@@ -83,23 +77,6 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
         return applicationDao.authenticate(clientId, clientSecret);
-    }
-
-    @Override
-    public void deleteDefinedPermission(DefinedPermission definedPermission) {
-        logger.debug("Delete Permission: {}", definedPermission);
-        Permission permission = new Permission();
-        permission.setClientId(definedPermission.getClientId());
-        permission.setCustomerId(definedPermission.getCustomerId());
-        permission.setPermissionId(definedPermission.getPermissionId());
-
-        List<Permission> permissions = scopeAccessService.getPermissionsByPermission(definedPermission);
-
-        for (Permission perm : permissions) {
-            logger.debug("Deleting Permission: {}", perm);
-            scopeAccessService.removePermission(perm);
-        }
-        logger.debug("Deleted Permission: {}", definedPermission);
     }
 
     @Override
@@ -166,24 +143,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public List<DefinedPermission> getDefinedPermissionsByClient(Application client) {
-        logger.debug("Find Permission by ClientId: {}", client.getClientId());
-        Permission filter = new Permission();
-        filter.setClientId(client.getClientId());
-        filter.setCustomerId(client.getRcn());
-
-        List<Permission> permissions = scopeAccessService.getPermissionsForParentByPermission(client.getUniqueId(), filter);
-
-        List<DefinedPermission> perms = new ArrayList<DefinedPermission>();
-        for (Permission p : permissions) {
-            perms.add((DefinedPermission) p);
-        }
-
-        logger.debug("Found {} Permission(s) by ClientId: {}", permissions.size(), client.getClientId());
-        return perms;
-    }
-
-    @Override
     public ClientSecret resetClientSecret(Application client) {
         if (client == null) {
             throw new IllegalArgumentException();
@@ -204,17 +163,12 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public void updateDefinedPermission(DefinedPermission permission) {
-        scopeAccessService.updatePermission(permission);
-    }
-
-    @Override
     public Applications getClientServices(Application client) {
         logger.debug("Finding Client Services for Client: {}", client.getClientId());
         if (client == null || client.getUniqueId() == null) {
             throw new IllegalArgumentException("Client cannot be null and must have uniqueID");
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForParent(client.getUniqueId());
+        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForApplication(client);
 
         List<Application> clientList = new ArrayList<Application>();
 
@@ -232,6 +186,11 @@ public class DefaultApplicationService implements ApplicationService {
 
         logger.debug("Found {} Client Service(s) for Client: {}", clientList.size(), client.getClientId());
         return clients;
+    }
+
+    @Override
+    public Application getApplicationByScopeAccess(ScopeAccess scopeAccess) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

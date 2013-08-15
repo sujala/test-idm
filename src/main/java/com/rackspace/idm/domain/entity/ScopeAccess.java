@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
@@ -16,7 +17,7 @@ import java.util.List;
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
         postEncodeMethod="doPostEncode")
-public class ScopeAccess implements Auditable, HasAccessToken {
+public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

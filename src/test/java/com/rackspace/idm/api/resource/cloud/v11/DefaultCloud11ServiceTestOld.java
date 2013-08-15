@@ -22,14 +22,12 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -1059,15 +1057,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void getBaseUrlRef_withValidUser_callsEndpointService_getEndpointForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        spy.getBaseURLRef(null, null, "0", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
     public void getBaseUrlRef_withNullEndpointForUser_returnsNotFoundStatus() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
@@ -1079,16 +1068,6 @@ public class DefaultCloud11ServiceTestOld {
     public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLRefs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
-    }
-
-
-    @Test
-    public void getBaseUrlRefs_isAdminCall_callsEndpointServce_getEndpointsForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        spy.getBaseURLRefs(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -1160,15 +1139,6 @@ public class DefaultCloud11ServiceTestOld {
     public void getUser_validUser_callsScopeAccessService_getUserScopeAccessForClientId() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser("userId")).thenReturn(userDO);
-        spy.getUser(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void getUser_validUser_callsScopeAccessService_getOpenstackEndpointsForScopeAccess() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         spy.getUser(null, "userId", null);
         verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }

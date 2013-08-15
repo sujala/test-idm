@@ -42,8 +42,6 @@ public class AuthorizationServiceTests {
 
     String permissionId = "Permission";
 
-    Permission perm;
-    List<Permission> permissions;
     ClientGroup admin;
 
     String adminGroupName = "Idm Admin";
@@ -149,14 +147,6 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        perm = new Permission();
-        perm.setClientId(idmClientId);
-        perm.setCustomerId(customerId);
-        perm.setPermissionId(permissionId);
-
-        permissions = new ArrayList<Permission>();
-        permissions.add(perm);
-
         admin = new ClientGroup();
         admin.setUniqueId(uniqueId);
         admin.setName(adminGroupName);

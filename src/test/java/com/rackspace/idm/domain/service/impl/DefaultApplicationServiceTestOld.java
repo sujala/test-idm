@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -90,7 +89,6 @@ public class DefaultApplicationServiceTestOld {
 
     @Test
     public void getClientRolesByClientId_callsClientRoleDao_getClientRoles() throws Exception {
-        List<ClientRole> roles = new ArrayList<ClientRole>();
         Application application = new Application();
         when(applicationDao.getApplicationByClientId("clientId")).thenReturn(application);
         defaultApplicationService.getClientRolesByClientId("clientId");
@@ -197,17 +195,5 @@ public class DefaultApplicationServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void delete_clientIdIsNull_throwsNotFoundException() throws Exception {
         defaultApplicationService.delete(null);
-    }
-
-    @Test
-    public void delete_callsDeleteDefinedPermission() throws Exception {
-        Application client = new Application();
-        DefinedPermission definedPermission = new DefinedPermission();
-        List<DefinedPermission> definedPermissionList = new ArrayList<DefinedPermission>();
-        definedPermissionList.add(definedPermission);
-        when(applicationDao.getApplicationByClientId("clientId")).thenReturn(client);
-        doReturn(definedPermissionList).when(spy).getDefinedPermissionsByClient(client);
-        spy.delete("clientId");
-        verify(spy).deleteDefinedPermission(definedPermission);
     }
 }

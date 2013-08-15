@@ -20,9 +20,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -304,78 +302,11 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void addDelegateScopeAccess_scopeAccessNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.addDelegateScopeAccess(null,null);
-            assertTrue("should throw exception",false);
-        } catch (IllegalArgumentException ex)
-        {
-            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void addDelegateScopeAccess_scopeAccessNotNull_callsScopeAccessDaoMethod() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        defaultScopeAccessService.addDelegateScopeAccess(null, scopeAccess);
-        verify(scopeAccessDao).addDelegateScopeAccess(null,scopeAccess);
-    }
-
-    @Test
-    public void addDelegateScopeAccess_scopeAccessNotNull_returnsNewScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.addDelegateScopeAccess(null,scopeAccess)).thenReturn(scopeAccess);
-        assertThat("returned scope access", defaultScopeAccessService.addDelegateScopeAccess(null, scopeAccess), equalTo(scopeAccess));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_TokenDoesNotExists_callsScopeAccessDao_addImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
-        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
-        verify(scopeAccessDao).addImpersonatedScopeAccess(anyString(), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_whenScopeAccessDoesNotExist_callsSetImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
-        User user = new User();
-        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_existingAccessIsNullAndExpireInIsNullAndCallerIsServiceUser_setsExpirationToDefault() throws Exception {
-        ArgumentCaptor<ImpersonatedScopeAccess> argument = ArgumentCaptor.forClass(ImpersonatedScopeAccess.class);
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
-        when(scopeAccessDao.addImpersonatedScopeAccess(anyString(), argument.capture())).thenReturn(null);
-        when(configuration.getInt("token.impersonatedByServiceDefaultSeconds")).thenReturn(3600);
-        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
-        DateTime dateTime = new DateTime().plusSeconds(3600);
-        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), greaterThan(dateTime.getMillis() - 60000L));
-        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), lessThan(dateTime.getMillis() + 60000L));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualsParameter_returnsSameAccessToken() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
-        String token = "abc";
-        String impToken = "imp";
-        impersonatedScopeAccess.setAccessTokenString(token);
-        impersonatedScopeAccess.setImpersonatingToken(impToken);
-        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusHours(12).toDate());
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
-        when(scopeAccessDao.getMostRecentImpersonatedScopeAccessByParentForUser(anyString(), anyString())).thenReturn(impersonatedScopeAccess);
-        ImpersonatedScopeAccess returnedImpersonatedScopeAccess = defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "imp", impersonationRequest);
-        assertThat("impersonated token", returnedImpersonatedScopeAccess.getAccessTokenString(), equalTo("abc"));
-    }
-
-    @Test
     public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("token");
         User user = new User();
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(null)).thenReturn(new ArrayList<ScopeAccess>());
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForUser(null)).thenReturn(new ArrayList<ScopeAccess>());
         spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
@@ -481,7 +412,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void addDirectScopeAccess_scopeAccessIsNull_throwsIllegalArgumentException() throws Exception {
         try{
-            defaultScopeAccessService.addDirectScopeAccess(null,null);
+            defaultScopeAccessService.addUserScopeAccess(null, null);
             assertTrue("illegalArgumentException expected",false);
         }catch (IllegalArgumentException ex)
         {
@@ -506,13 +437,6 @@ public class DefaultScopeAccessServiceTestOld {
         when(scopeAccess.getAuditContext()).thenReturn("foo");
         defaultScopeAccessService.authenticateAccessToken(null);
         verify(scopeAccess).getAuditContext();
-    }
-
-    @Test
-    public void delegatePermission_returnsDelegatedPermission() throws Exception {
-        DelegatedPermission delegatedPermission = new DelegatedPermission();
-        when(scopeAccessDao.delegatePermission(null,null)).thenReturn(delegatedPermission);
-        assertThat("delegated permission",defaultScopeAccessService.delegatePermission(null,null),equalTo(delegatedPermission));
     }
 
     @Test
@@ -583,17 +507,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void doesAccessTokenHavePermission_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesAccessTokenHavePermission(null,null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
     public void doesAccessTokenHaveService_tokenInstanceOfDelegatedClientScopeAccess_getsUniqueId() throws Exception {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry("dn=string",new Attribute("name"));
         ScopeAccess token = new DelegatedClientScopeAccess();
@@ -613,197 +526,8 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void doesUserHavePermissionForClient_nullParameters_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(null,null,null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type", ex.getClass().getName(), equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_nullUserAndNullPermission_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(null,null,new Application());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_nullUserAndNullClient_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(null,new Permission(),null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_nullUser_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(null,new Permission(),new Application());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-
-    @Test
-    public void doesUserHavePermissionForClient_nullPermissionAndNullClient_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(new User(),null,null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_nullPermission_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(new User(),null,new Application());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_nullClient_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.doesUserHavePermissionForClient(new User(),new Permission(),null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument(s) passed in."));
-        }
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_setsClientId() throws Exception {
-        Application client = mock(Application.class);
-        doReturn(null).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        spy.doesUserHavePermissionForClient(new User(), new Permission(), client);
-        verify(client).getClientId();
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_setsPermissionId() throws Exception {
-        Permission permission = mock(Permission.class);
-        doReturn(null).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        spy.doesUserHavePermissionForClient(new User(), permission, new Application());
-        verify(permission).getPermissionId();
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_callsGetPermissionForParent() throws Exception {
-        doReturn(null).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application());
-        verify(spy).getPermissionForParent((String) eq(null), any(Permission.class));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionIsNull_returnsFalse() throws Exception {
-        doReturn(null).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        assertThat("boolean", spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()), equalTo(false));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionNotEnabled_returnsFalse() throws Exception {
-        DefinedPermission definedPermission = new DefinedPermission();
-        definedPermission.setEnabled(false);
-        doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(false));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionGrantedByDefaultAndProvisioned_returnsTrue() throws Exception {
-        DefinedPermission definedPermission = new DefinedPermission();
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
-        scopeAccessList.add(new ScopeAccess());
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(null, null)).thenReturn(scopeAccessList);
-        doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null), any(Permission.class));
-        assertThat("boolean", spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()), equalTo(true));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionGrantedByDefaultAndNotProvisioned_returnsFalse() throws Exception {
-        DefinedPermission definedPermission = new DefinedPermission();
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(true);
-        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(null, null)).thenReturn(null);
-        doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(false));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionNotGrantedByDefaultAndGrantedPermission_returnsTrue() throws Exception {
-        DefinedPermission definedPermission = new DefinedPermission();
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(false);
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null),any(GrantedPermission.class))).thenReturn(new Permission());
-        doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(true));
-    }
-
-    @Test
-    public void doesUserHavePermissionForClient_definedPermissionNotGrantedByDefaultAndNotGrantedPermission_returnsFalse() throws Exception {
-        DefinedPermission definedPermission = new DefinedPermission();
-        definedPermission.setEnabled(true);
-        definedPermission.setGrantedByDefault(false);
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null),any(GrantedPermission.class))).thenReturn(null);
-        doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
-        assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(false));
-    }
-
-    @Test
     public void expireAccessToken_scopeAccessIsNull_doesNothingWithNoExceptions() throws Exception {
         defaultScopeAccessService.expireAccessToken(null);
-    }
-
-    @Test
-    public void expireAllTokensForClient_clientIsNull_doesNothingWithNoException() throws Exception {
-        defaultScopeAccessService.expireAllTokensForClient(null);
-        verify(scopeAccessDao,never()).getScopeAccessesByParent(anyString());
-    }
-
-    @Test
-    public void expireAllTokensForUser_userIsNull_doesNothingWithNoException() throws Exception {
-        defaultScopeAccessService.expireAllTokensForUser(null);
-        verify(scopeAccessDao,never()).getScopeAccessesByParent(anyString());
-    }
-
-    @Test
-    public void getDelegateScopeAccessesForParent_callsScopeAccessDaoMethod() throws Exception {
-        defaultScopeAccessService.getDelegateScopeAccessesForParent(null);
-        verify(scopeAccessDao).getDelegateScopeAccessesByParent(null);
-    }
-
-    @Test
-    public void getDelegateScopeAccessesForParent_returnsList() throws Exception {
-        List<ScopeAccess> sa = new ArrayList<ScopeAccess>();
-        when(scopeAccessDao.getDelegateScopeAccessesByParent(null)).thenReturn(sa);
-        assertThat("list",defaultScopeAccessService.getDelegateScopeAccessesForParent(null),equalTo(sa));
-    }
-
-    @Test
-    public void getDelegateScopeAccessForParentByClientId_returnsScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getDelegateScopeAccessForParentByClientId(null,null)).thenReturn(scopeAccess);
-        assertThat("scope access",defaultScopeAccessService.getDelegateScopeAccessForParentByClientId(null,null), equalTo(scopeAccess));
     }
 
     @Test
@@ -847,20 +571,10 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessIsNull_addsDirectScopeAccess() throws Exception {
-        User user = new User();
-        user.setUniqueId("123");
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("token").when(spy).generateToken();
-        spy.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(scopeAccessDao).addDirectScopeAccess(eq("123"),any(PasswordResetScopeAccess.class));
-    }
-
-    @Test
     public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotSetAccessTokenExp() throws Exception {
         User user = new User();
         PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
-        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(null, "PASSWORDRESET")).thenReturn(prsa);
+        when(scopeAccessDao.getMostRecentScopeAccessByClientId(null, "PASSWORDRESET")).thenReturn(prsa);
         when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
         verify(prsa,never()).setAccessTokenExp(any(Date.class));
@@ -882,30 +596,6 @@ public class DefaultScopeAccessServiceTestOld {
         when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
         verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void getPermissionForParent_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.getPermissionForParent(null,null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type", ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null scope access object instance."));
-        }
-    }
-
-    @Test
-    public void getPermissionsForParent_callsScopeAccessMethod() throws Exception {
-        defaultScopeAccessService.getPermissionsForParent(null);
-        verify(scopeAccessDao).getPermissionsByParent(null);
-    }
-
-    @Test
-    public void getPermissionsForParent_returnsList() throws Exception {
-        List<Permission> list = new ArrayList<Permission>();
-        when(scopeAccessDao.getPermissionsByParent(null)).thenReturn(list);
-        assertThat("list", defaultScopeAccessService.getPermissionsForParent(null), equalTo(list));
     }
 
     @Test
@@ -979,7 +669,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void getScopeAccessByAuthCode_returnsDelegatedClientScopeAccess() throws Exception {
         DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        when(scopeAccessDao.getScopeAccessByAuthorizationCode(null)).thenReturn(delegatedClientScopeAccess);
+        when(scopeAccessDao.getDelegatedScopeAccessByAuthorizationCode(null)).thenReturn(delegatedClientScopeAccess);
         assertThat("delegated client scope access", defaultScopeAccessService.getScopeAccessByAuthCode(null), equalTo(delegatedClientScopeAccess));
     }
 
@@ -989,7 +679,7 @@ public class DefaultScopeAccessServiceTestOld {
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByParentAndClientId(null, null)).thenReturn(list);
-        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForParentByClientId(null, null),equalTo(list));
+        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null),equalTo(list));
     }
 
     @Test
@@ -1004,214 +694,22 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void grantPermissionToClient_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.grantPermissionToClient(null, null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void grantPermissionToClient_permissionNotAssociatedWithClient_throwsNotFoundException() throws Exception {
-        try{
-            when(applicationService.getById(null)).thenReturn(new Application());
-            defaultScopeAccessService.grantPermissionToClient(null,new GrantedPermission());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Permission null not found for client null"));
-        }
-    }
-
-    @Test
-    public void grantPermissionToClient_noScopeAccessForParent_getsDataFromPermission() throws Exception {
-        Permission perm = mock(Permission.class);
-        when(applicationService.getById(null)).thenReturn(new Application());
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
-        doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-        spy.grantPermissionToClient(null, new GrantedPermission());
-        verify(perm,atLeastOnce()).getClientId();
-        verify(perm,atLeastOnce()).getCustomerId();
-    }
-
-    @Test
-    public void grantPermissionToClient_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
-        Permission perm = mock(Permission.class);
-        when(applicationService.getById(null)).thenReturn(new Application());
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
-        doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-        spy.grantPermissionToClient(null, new GrantedPermission());
-        verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void grantPermissionToUser_nullPermissionAndNullUser_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.grantPermissionToUser(null, null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void grantPermissionToUser_nullPermissionAndUserExists_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.grantPermissionToUser(new User(), null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void grantPermissionToUser_PermissionExistsAndNullUser_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.grantPermissionToUser(null, new GrantedPermission());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void grantPermissionToUser_nullClient_throwsNotFoundException() throws Exception {
-        try{
-            when(applicationService.getClient(null, null)).thenReturn(null);
-            defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Client null not found"));
-        }
-    }
-
-    @Test
-    public void grantPermissionToUser_permissionNotAssociatedWithClient_throwsNotFoundException() throws Exception {
-        try{
-            when(applicationService.getClient(null,null)).thenReturn(new Application());
-            defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Permission null not found for client null"));
-        }
-    }
-
-    @Test
-    public void grantPermissionToUser_noScopeAccessForParent_getsDataFromPermission() throws Exception {
-        Permission perm = mock(Permission.class);
-        when(applicationService.getClient(null,null)).thenReturn(new Application());
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
-        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-        spy.grantPermissionToUser(new User(), new GrantedPermission());
-        verify(perm,atLeastOnce()).getClientId();
-        verify(perm,atLeastOnce()).getCustomerId();
-    }
-
-    @Test
-    public void grantPermissionToUser_noScopeAccessForParent_getsDataFromUser() throws Exception {
-        Permission perm = mock(Permission.class);
-        User user = mock(User.class);
-        when(applicationService.getClient(null,null)).thenReturn(new Application());
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
-        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-        spy.grantPermissionToUser(user, new GrantedPermission());
-        verify(user, atLeastOnce()).getUsername();
-        verify(user,atLeastOnce()).getCustomerId();
-        verify(user,atLeastOnce()).getId();
-        verify(user,atLeastOnce()).getUniqueId();
-    }
-
-    @Test
-    public void grantPermissionToUser_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
-        Permission perm = mock(Permission.class);
-        when(applicationService.getClient(null, null)).thenReturn(new Application());
-        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
-        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-        spy.grantPermissionToUser(new User(), new GrantedPermission());
-        verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void removePermission_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.removePermission(null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null scope access object instance."));
-        }
-    }
-
-    @Test
-    public void updatePermission_permissionIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.updatePermission(null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null scope access object instance."));
-        }
-    }
-
-    @Test
     public void deleteScopeAccessesForParentByApplicationId_listPopulated_callsDeleteScopeAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
-        doReturn(list).when(spy).getScopeAccessesForParentByClientId(null, null);
+        doReturn(list).when(spy).getScopeAccessesForUserByClientId(null, null);
         doNothing().when(spy).deleteScopeAccess(scopeAccess);
-        spy.deleteScopeAccessesForParentByApplicationId(null,null);
+        spy.deleteScopeAccessesForApplication(null, null);
         verify(spy).deleteScopeAccess(scopeAccess);
     }
 
     @Test
     public void deleteScopeAccessesForParentByApplicationId_listEmpty_doesNotCallDeleteScopeAccess() throws Exception {
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        doReturn(list).when(spy).getScopeAccessesForParentByClientId(null, null);
-        spy.deleteScopeAccessesForParentByApplicationId(null,null);
+        doReturn(list).when(spy).getScopeAccessesForUserByClientId(null, null);
+        spy.deleteScopeAccessesForApplication(null, null);
         verify(spy,never()).deleteScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void getUserScopeAccessForClientId_withNonExistentUser_throwsNotFoundException(){
-        defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
-        verify(scopeAccessDao).getMostRecentDirectScopeAccessForParentByClientId("12345", "12345");
-    }
-
-    @Test
-    public void getUserScopeAccessForClientId_withNonExpiredScopeAccess_returnsSameToken(){
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        userScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
-        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
-        assertThat("newUserScopeAccessNoneExpired", uas.getAccessTokenString(), equalTo("1234567890"));
-    }
-
-    @Test
-    public void getRackerScopeAccessForClientId_withNullScopeAccess_returnsNewToken(){
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
-        rackerScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
-        when(scopeAccessDao.updateScopeAccess(rackerScopeAccess)).thenReturn(true);
-        RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345", null);
-        verify(scopeAccessDao).addDirectScopeAccess(anyString(), Matchers.<ScopeAccess>anyObject());
-        rsa.isAccessTokenExpired(new DateTime());
-        assertThat("newRackerScopeAccess", rsa.getAccessTokenString(), not("1234567890"));
     }
 
     @Test (expected = NotAuthenticatedException.class)

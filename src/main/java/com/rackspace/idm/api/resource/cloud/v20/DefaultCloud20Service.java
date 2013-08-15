@@ -792,7 +792,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setId(((Racker) result.getUser()).getRackerId());
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_RSAKEY);
         }
-        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId(), authenticatedBy);
+        rsa = scopeAccessService.getValidRackerScopeAccessForClientId(user, getCloudAuthClientId(), authenticatedBy);
 
         usa = new UserScopeAccess();
         usa.setUsername(rsa.getRackerId());
@@ -1895,7 +1895,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
             }
 
-            UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+            UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(user, getCloudAuthClientId());
 
             if (impAccess.isAccessTokenExpired(new DateTime())) {
                 UserScopeAccess scopeAccess;

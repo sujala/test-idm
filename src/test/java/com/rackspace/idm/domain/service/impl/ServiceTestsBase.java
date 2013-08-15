@@ -4,11 +4,9 @@ import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -33,30 +31,10 @@ public class ServiceTestsBase {
     @Test
     public void BlankTest() {}
 
-    protected Application getFakeClient() {
-        Application client = new Application(clientId, clientSecret, name, 
-            customerId);
-
-        return client;
-    }
-
     protected User getFakeUser() {
         User user = new User();
         user.setUsername(username);
         return user;
-    }
-
-    protected Permission getFakePermission(String permissionId) {
-        Permission res = EasyMock.createNiceMock(Permission.class);
-
-        EasyMock.expect(res.getUniqueId()).andReturn(permissionId).anyTimes();
-        EasyMock.expect(res.getClientId()).andReturn(clientId).anyTimes();
-        EasyMock.expect(res.getCustomerId()).andReturn(customerId).anyTimes();
-        EasyMock.expect(res.getPermissionId()).andReturn(permissionId)
-            .anyTimes();
-
-        EasyMock.replay(res);
-        return res;
     }
 
     protected ScopeAccess getFakeScopeAccess() {

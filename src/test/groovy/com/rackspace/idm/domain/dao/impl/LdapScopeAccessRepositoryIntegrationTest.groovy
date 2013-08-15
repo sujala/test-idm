@@ -36,7 +36,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, input)
-        scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
+        scopeAccessDao.addScopeAccess(client, scopeAccess)
         def retrievedScopeAccess = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         scopeAccessDao.deleteScopeAccess(retrievedScopeAccess);
         applicationDao.deleteApplication(client)
@@ -59,7 +59,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, ["RSA"].asList())
-        scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
+        scopeAccessDao.addScopeAccess(client, scopeAccess)
         def retrievedScopeAccess1 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         def retrievedScopeAccess2 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         def retrievedScopeAccess3 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)

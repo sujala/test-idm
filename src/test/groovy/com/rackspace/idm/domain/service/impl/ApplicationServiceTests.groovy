@@ -1,15 +1,24 @@
-package com.rackspace.idm.domain.service.impl
+package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.exception.NotFoundException
-import junit.framework.Assert
-import org.easymock.EasyMock
-import org.junit.Before
-import org.junit.Test
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.ApplicationRoleDao;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+
+import junit.framework.Assert;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Applications;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ClientSecret;
+
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.exception.NotFoundException;
 
 public class ApplicationServiceTests {
 
@@ -119,18 +128,12 @@ public class ApplicationServiceTests {
 
     @Test
     public void shouldDeleteClient() {
-        List<Permission> perms = new ArrayList<Permission>();
         applicationDao.deleteApplication(EasyMock.anyObject(Application.class));
         EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             getFakeClient());
 
         EasyMock.expect(
-            scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(uniqueId,
-                clientId)).andReturn(getFakeScopeAccess());
-        EasyMock.expect(
-            scopeAccessService.getPermissionsForParentByPermission(
-                EasyMock.anyObject(String.class),
-                EasyMock.anyObject(Permission.class))).andReturn(perms);
+            scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(EasyMock.anyObject(User.class), EasyMock.anyObject(String.class))).andReturn(getFakeScopeAccess());
 
         List<ClientRole> clientRoles = new ArrayList<ClientRole>();
         EasyMock.expect(applicationRoleDao.getClientRolesForApplication(getFakeClient())).andReturn(clientRoles);

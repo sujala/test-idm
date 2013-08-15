@@ -1,32 +1,23 @@
-package com.rackspace.idm.api.resource.application
+package com.rackspace.idm.api.resource.application;
 
-import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.ClientSecret
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.service.ApplicationService
-import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.unboundid.ldap.sdk.Entry
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-import org.junit.Before
-import org.junit.Test
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientSecret;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.Entry;
+import org.junit.Before;
+import org.junit.Test;
 
-import javax.ws.rs.core.Response
+import javax.ws.rs.core.Response;
 
-import static org.hamcrest.CoreMatchers.equalTo
-import static org.hamcrest.CoreMatchers.equalTo
-import static org.junit.Assert.assertThat
-import static org.junit.Assert.assertThat
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anyString
-import static org.mockito.Matchers.anyString
-import static org.mockito.Matchers.eq
-import static org.mockito.Mockito.doNothing
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.when
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -87,7 +78,7 @@ class ProvisionedApplicationResourceTest {
         Application application = getFakeApp();
         when(applicationService.loadApplication(anyString())).thenReturn(application);
         provisionedApplicationResource.provisionApplicationForApplication(null, null, null);
-        verify(scopeAccessService).addDirectScopeAccess(eq(dn), any(ScopeAccess.class));
+        verify(scopeAccessService).addApplicationScopeAccess(any(Application.class), any(ScopeAccess.class));
     }
 
     @Test
@@ -111,7 +102,7 @@ class ProvisionedApplicationResourceTest {
         Application application = getFakeApp();
         when(applicationService.loadApplication(anyString())).thenReturn(application);
         provisionedApplicationResource.removeApplicationFromUser(null, null, null);
-        verify(scopeAccessService).deleteScopeAccessesForParentByApplicationId(dn, id);
+        verify(scopeAccessService).deleteScopeAccessesForApplication(application, "applicationId");
     }
 
     @Test

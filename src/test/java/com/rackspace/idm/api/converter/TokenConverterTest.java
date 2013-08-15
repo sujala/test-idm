@@ -5,7 +5,6 @@ import com.rackspace.api.idm.v1.DelegatedTokenList;
 import com.rackspace.api.idm.v1.Token;
 import com.rackspace.api.idm.v1.TokenList;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,7 +62,7 @@ public class TokenConverterTest {
     public void toDelegatedTokenJaxb_withDelegatedClientScopeAccess_setsId() throws Exception {
         DelegatedClientScopeAccess tokenDO = new DelegatedClientScopeAccess();
         tokenDO.setRefreshTokenString("refreshTokenString");
-        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO, new ArrayList<Permission>());
+        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO);
         assertThat("token Id", token.getId(), equalTo("refreshTokenString"));
     }
 
@@ -71,7 +70,7 @@ public class TokenConverterTest {
     public void toDelegatedTokenJaxb_withDelegatedClientScopeAccess_setsClientId() throws Exception {
         DelegatedClientScopeAccess tokenDO = new DelegatedClientScopeAccess();
         tokenDO.setClientId("clientId");
-        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO, new ArrayList<Permission>());
+        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO);
         assertThat("token client Id", token.getClientId(), equalTo("clientId"));
     }
 
@@ -79,7 +78,7 @@ public class TokenConverterTest {
     public void toDelegatedTokenJaxb_withDelegatedClientScopeAccess_setsExpires() throws Exception {
         DelegatedClientScopeAccess tokenDO = new DelegatedClientScopeAccess();
         tokenDO.setRefreshTokenExp(new Date(1));
-        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO, new ArrayList<Permission>());
+        DelegatedToken token = tokenConverter.toDelegatedTokenJaxb(tokenDO);
         assertThat("token expires", token.getExpires().toGregorianCalendar().getTimeInMillis(), equalTo(1L));
     }
 

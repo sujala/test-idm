@@ -345,6 +345,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public String[] getSearchAttributes() {
+        return ATTR_DEFAULT_SEARCH_ATTRIBUTES;
+    }
+
+    @Override
     public void deleteObject(T object) {
         String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
         getLogger().debug(loggerMsg);
@@ -358,7 +363,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter, getSearchAttributes());
         if (entry == null) {
             return null;
         }

@@ -142,7 +142,7 @@ public class DefaultUserService implements UserService {
         usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         usa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), usa);
+        this.scopeAccessService.addUserScopeAccess(user, usa);
 
         //Every user by default has the cloud auth application provisioned for them
         UserScopeAccess cloudUsa = new UserScopeAccess();
@@ -154,7 +154,7 @@ public class DefaultUserService implements UserService {
         cloudUsa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         cloudUsa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
+        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
 
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
@@ -456,7 +456,7 @@ public class DefaultUserService implements UserService {
             logger.debug(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForParent(user.getUniqueId());
+        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForUser(user);
 
         List<Application> clientList = new ArrayList<Application>();
 

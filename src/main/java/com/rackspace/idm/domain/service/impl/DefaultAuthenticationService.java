@@ -10,8 +10,6 @@ import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -336,16 +334,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
             scopeAccessToAdd.setClientRCN(caResult.getClient().getRcn());
 
-            String parentUniqueId = null;
-            try {
-                parentUniqueId = new DN(scopeAccess.getUniqueId()).getParentString();
-            } catch (LDAPException e) {
-                throw new IllegalStateException("ScopeAccess has an invalid dn");
-            }
+            updateScopeAccess(scopeAccess, scopeAccessToAdd);
 
-            this.scopeAccessService.addDirectScopeAccess(parentUniqueId, scopeAccessToAdd);
-
-            this.scopeAccessService.deleteScopeAccess(scopeAccess);
             return scopeAccessToAdd;
         }
 
@@ -374,16 +364,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setAuthCode(null);
             scopeAccessToAdd.setAuthCodeExp(null);
 
-            String parentUniqueId = null;
-            try {
-                parentUniqueId = new DN(scopeAccess.getUniqueId()).getParentString();
-            } catch (LDAPException e) {
-                throw new IllegalStateException("ScopeAccess has an invalid dn");
-            }
+            updateScopeAccess(scopeAccess, scopeAccessToAdd);
 
-            this.scopeAccessService.addDirectScopeAccess(parentUniqueId, scopeAccessToAdd);
-
-            this.scopeAccessService.deleteScopeAccess(scopeAccess);
             return scopeAccessToAdd;
         }
 
@@ -393,6 +375,22 @@ public class DefaultAuthenticationService implements AuthenticationService {
         throw new NotAuthenticatedException(message);
     }
 
+    private void updateScopeAccess(ScopeAccess scopeAccess, ScopeAccess scopeAccessToAdd) {
+        User user = userService.getUserByScopeAccess(scopeAccess);
+
+        if(user != null) {
+            this.scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
+        } else {
+            Application application = applicationService.getApplicationByScopeAccess(scopeAccess);
+
+            if(application != null) {
+                this.scopeAccessService.addApplicationScopeAccess(application, scopeAccessToAdd);
+            }
+        }
+
+        this.scopeAccessService.deleteScopeAccess(scopeAccess);
+    }
+
     UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
         if(user == null || client == null){
             throw new IllegalArgumentException("Argument(s) cannot be null.");
@@ -400,7 +398,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
 
-        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
+        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessByClientId(user, client.getClientId());
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
 
         if (scopeAccess == null) {
@@ -445,10 +443,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -462,7 +460,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}", client.getClientId());
 
-        ClientScopeAccess scopeAccess = this.scopeAccessService.getClientScopeAccessForClientId(client.getUniqueId(), client.getClientId());
+        ClientScopeAccess scopeAccess = this.scopeAccessService.getApplicationScopeAccess(client);
         ClientScopeAccess scopeAccessToAdd = new ClientScopeAccess();
 
         if (scopeAccess == null) {
@@ -491,10 +489,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addApplicationScopeAccess(client, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addApplicationScopeAccess(client, scopeAccessToAdd);
         }
 
         logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -508,7 +506,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
-        RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
+        RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessByClientId(racker, client.getClientId());
+
         RackerScopeAccess scopeAccessToAdd = new RackerScopeAccess();
 
         if (scopeAccess == null) {
@@ -552,10 +551,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addUserScopeAccess(racker, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addUserScopeAccess(racker, scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());

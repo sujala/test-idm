@@ -513,13 +513,16 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {
-        List<String> v1defaultList = null;
+        List<Object> v1defaultList = new ArrayList<Object>();
         String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
-        if(baseUrlType == "MOSSO")
+
+        if(baseUrlType.equals("MOSSO")) {
             v1defaultList = config.getList("v1defaultMosso");
-        else if(baseUrlType == "NAST")
+        } else if(baseUrlType.equals("NAST")) {
             v1defaultList = config.getList("v1defaultNast");
-        for (String v1defaultItem : v1defaultList) {
+        }
+
+        for (Object v1defaultItem : v1defaultList) {
             if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
                 tenant.getV1Defaults().add(baseUrlId);
             }

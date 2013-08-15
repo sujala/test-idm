@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
-import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,7 +63,7 @@ public class ProvisionedApplicationResource extends ParentResource {
         sa.setAccessTokenExp(new DateTime().toDate());
         sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
-        this.scopeAccessService.addDirectScopeAccess(application.getUniqueId(), sa);
+        this.scopeAccessService.addApplicationScopeAccess(application, sa);
 
         getLogger().info("Provisioned application {} to application {}", provisionedApplicationId, applicationId);
 
@@ -92,7 +91,7 @@ public class ProvisionedApplicationResource extends ParentResource {
         
         Application provisionedApplication = this.applicationService.loadApplication(provisionedApplicationId);
 
-        this.scopeAccessService.deleteScopeAccessesForParentByApplicationId(application.getUniqueId(), provisionedApplication.getClientId());
+        this.scopeAccessService.deleteScopeAccessesForApplication(application, provisionedApplication.getClientId());
         
         getLogger().info("Removed application {} from application {}", applicationId, provisionedApplicationId);
 

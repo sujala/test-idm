@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import com.unboundid.ldap.sdk.Attribute;
@@ -85,20 +83,6 @@ public class AuthenticationServiceTests {
         authenticationService.setInputValidator(inputValidator);
 
         authSpy = PowerMockito.spy(authenticationService);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotGetTokenWithInvalidGrantType() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("none");
-
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getUserScopeAccessForClientId(uniqueId, clientId)).andReturn(getFakeUserScopeAccess());
-
-        EasyMock.replay(mockClientService, mockScopeAccessService);
-
-        authenticationService.authenticate(authCredentials);
     }
 
     @Test

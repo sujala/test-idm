@@ -186,33 +186,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createDefinedPermission() {
-        return createDefinedPermission("title", "type", "value")
-    }
-
-    def createDefinedPermission(String title, String type, String value) {
-        new DefinedPermission().with {
-            it.title = title
-            it.permissionType = type
-            it.value = value
-            it.enabled = true
-            return it
-        }
-    }
-
-    def createPermission() {
-        return createPermission("clientId", "customerId", "permissionId")
-    }
-
-    def createPermission(String clientId, String customerId, String permissionId) {
-        new Permission().with {
-            it.clientId = clientId
-            it.permissionId = permissionId
-            it.customerId = customerId
-            return it
-        }
-    }
-
     def createPattern(String name, String regex) {
         new Pattern().with {
             it.name = name

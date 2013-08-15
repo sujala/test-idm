@@ -14,8 +14,6 @@ public interface ApplicationService {
 
     void delete(String clientId);
 
-    void deleteDefinedPermission(DefinedPermission permission);
-
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
 
     Applications getByCustomerId(String customerId, int offset, int limit);
@@ -35,16 +33,14 @@ public interface ApplicationService {
     Application getClient(String customerId, String clientId);
 
     Applications getClientServices(Application client);
-    
-    List<DefinedPermission> getDefinedPermissionsByClient(Application client);
 
+    Application getApplicationByScopeAccess(ScopeAccess scopeAccess);
+    
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);
     
     void updateClient(Application client);
-
-    void updateDefinedPermission(DefinedPermission permission);
 
     Application getClientByScope(String scope);
     
