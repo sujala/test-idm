@@ -601,6 +601,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
+        users.totalRecords = 1
         userService.getAllUsers(_) >> users
         config.getInt("numberOfSubUsers") >> 0
 

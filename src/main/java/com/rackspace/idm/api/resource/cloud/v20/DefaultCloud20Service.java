@@ -490,7 +490,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
                 users = userService.getAllUsers(filters);
                 int numSubUsers = config.getInt("numberOfSubUsers");
-                if (users != null && users.getUsers() != null && users.getUsers().size() > numSubUsers) {
+                if (users != null && users.getTotalRecords() > numSubUsers) {
                     String errMsg = String.format("User cannot create more than %d sub-accounts.", numSubUsers);
                     throw new BadRequestException(errMsg);
                 }
