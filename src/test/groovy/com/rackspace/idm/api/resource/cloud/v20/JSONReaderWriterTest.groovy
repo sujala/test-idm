@@ -23,6 +23,7 @@ import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForCapabil
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestion
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestions
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForRaxAuthRegion
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForRole
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForSecretQAs
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForServiceApis
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForUser
@@ -79,6 +80,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
 
     @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
+    @Shared JSONWriterForRole writerForRole = new JSONWriterForRole()
 
     @Shared JSONReaderForRaxKsKeyApiKeyCredentials readerForApiKeyCredentials = new JSONReaderForRaxKsKeyApiKeyCredentials()
     @Shared JSONWriterForApiKeyCredentials writerForApiKeyCredentials = new JSONWriterForApiKeyCredentials()
@@ -376,24 +378,16 @@ class JSONReaderWriterTest extends RootServiceTest {
         def role = v2Factory.createRole(propagate, weight)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(role, Role, null, null, null, null, arrayOutputStream)
+        writerForRole.writeTo(role, Role, null, null, null, null, arrayOutputStream)
         String JSONString = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(JSONString)
 
         def readJSONObject = readerForRole.readFrom(Role, null, null, null, null, inputStream)
-        def otherAttributes = readJSONObject.getOtherAttributes()
-        def readPropagate = null
-        def readWeight = null
-        if (otherAttributes.containsKey(QNAME_PROPAGATE)) {
-            readPropagate = otherAttributes.get(QNAME_PROPAGATE).toBoolean()
-        }
-        if (otherAttributes.containsKey(QNAME_WEIGHT)) {
-            readWeight = readJSONObject.otherAttributes.get(QNAME_WEIGHT).toInteger()
-        }
-
         then:
-        readPropagate == propagate
-        readWeight == weight
+        if(readJSONObject.propagate != null){
+            readJSONObject.propagate as boolean == propagate
+        }
+        readJSONObject.weight == weight
 
         where:
         propagate   | weight
@@ -484,7 +478,10 @@ class JSONReaderWriterTest extends RootServiceTest {
         def apiKey = "1234567890"
         def domain = "name"
         def authRequest = v2Factory.createApiKeyAuthenticationRequest(username, apiKey)
-        authRequest.domain = v1Factory.createDomain("id", domain)
+        authRequest.domain = new Domain().with{
+            it.name = domain
+            it
+        }
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
@@ -496,7 +493,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         authObject.credential.getValue().username == username
         authObject.credential.getValue().apiKey == apiKey
-        authObject.domain ==  domain
+        authObject.domain.name ==  domain
     }
 
     def getSecretQA(String id, String question, String answer) {

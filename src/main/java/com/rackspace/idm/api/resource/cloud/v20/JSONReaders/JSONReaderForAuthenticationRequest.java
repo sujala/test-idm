@@ -95,19 +95,22 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
 
             for(Object object : jsonObject.values()){
                 if(((JSONObject)object).containsKey(API_KEY_CREDENTIALS)){
-                    JSONObject innerObject = (JSONObject) object;
+                    JSONObject innerObject = new JSONObject();
+                    innerObject.put(API_KEY_CREDENTIALS, ((JSONObject) object).get(API_KEY_CREDENTIALS));
                     String string = innerObject.toString();
                     credentialType = om.readValue(string.getBytes(), ApiKeyCredentials.class);
                     ((JSONObject)jsonObject.get(AUTH)).remove(API_KEY_CREDENTIALS);
                 }
                 if(((JSONObject)object).containsKey(PASSWORD_CREDENTIALS)){
                     JSONObject innerObject = (JSONObject) object;
+                    innerObject.put(PASSWORD_CREDENTIALS, ((JSONObject) object).get(PASSWORD_CREDENTIALS));
                     String string = innerObject.toString();
                     credentialType = om.readValue(string.getBytes(), PasswordCredentialsBase.class);
                     ((JSONObject)jsonObject.get(AUTH)).remove(PASSWORD_CREDENTIALS);
                 }
                 if(((JSONObject)object).containsKey(RSA_CREDENTIALS)){
-                    JSONObject innerObject = (JSONObject) object;
+                    JSONObject innerObject = new JSONObject();
+                    innerObject.put(RSA_CREDENTIALS, ((JSONObject) object).get(RSA_CREDENTIALS));
                     String string = innerObject.toString();
                     credentialType = om.readValue(string.getBytes(), RsaCredentials.class);
                     ((JSONObject)jsonObject.get(AUTH)).remove(RSA_CREDENTIALS);

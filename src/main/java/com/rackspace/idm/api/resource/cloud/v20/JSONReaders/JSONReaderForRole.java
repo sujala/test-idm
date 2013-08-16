@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
 import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
@@ -40,7 +42,11 @@ public class JSONReaderForRole extends JSONReaderForEntity<Role> implements Mess
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read(inputStream, JSONConstants.ROLE);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put("role.RAX-AUTH:weight", JSONConstants.WEIGHT);
+        prefixValues.put("role.RAX-AUTH:propagate", JSONConstants.PROPAGATE);
+
+        return read(inputStream, JSONConstants.ROLE, prefixValues);
     }
     
 }

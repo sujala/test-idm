@@ -137,7 +137,9 @@ public final class JSONConstants {
     public static final Object BLOB = "blob";
     public static final String RAX_AUTH_RSA_CREDENTIALS = "RAX-AUTH:rsaCredentials";
     public static final Object TOKEN_KEY = "tokenKey";
-    public static final Object RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
-    public static final Object RAX_AUTH_WEIGHT = "RAX-AUTH:Weight";
-    public static final Object RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
+    public static final String RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
+    public static final String PROPAGATE = "propagate";
+    public static final String RAX_AUTH_WEIGHT = "RAX-AUTH:weight";
+    public static final String WEIGHT = "weight";
+    public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
 }
