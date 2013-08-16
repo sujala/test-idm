@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONReaders;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONReaderForArrayEntity;
+import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,14 +26,16 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRegions extends JSONReaderForArrayEntity<Regions> implements MessageBodyReader<Regions> {
+public class JSONReaderForRaxAuthRegion extends JSONReaderForEntity<Region> implements MessageBodyReader<Region> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Regions.class;
+        return type == Region.class;
     }
 
     @Override
-    public Regions readFrom(Class<Regions> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(JSONConstants.RAX_AUTH_REGIONS, JSONConstants.REGION , entityStream);
+    public Region readFrom(Class<Region> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_AUTH_REGION,JSONConstants.REGION);
+        return read(entityStream, JSONConstants.RAX_AUTH_REGION, prefixValues);
     }
 }

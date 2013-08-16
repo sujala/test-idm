@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
@@ -25,9 +26,7 @@ import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRole implements MessageBodyReader<Role> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForRole.class);
+public class JSONReaderForRole extends JSONReaderForEntity<Role> implements MessageBodyReader<Role> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
@@ -41,61 +40,7 @@ public class JSONReaderForRole implements MessageBodyReader<Role> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
-
-        Role object = getRoleFromJSONString(jsonBody);
-
-        return object;
+        return read(inputStream, JSONConstants.ROLE);
     }
     
-    public static Role getRoleFromJSONString(String jsonBody) {
-        Role role = new Role();
-        
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.ROLE)) {
-                JSONObject obj3;
-
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.ROLE).toString());
-                
-                Object id = obj3.get(JSONConstants.ID);
-                Object name = obj3.get(JSONConstants.NAME);
-                Object description = obj3.get(JSONConstants.DESCRIPTION);
-                Object tenantId = obj3.get(JSONConstants.TENANT_ID);
-                Object serviceId = obj3.get(JSONConstants.SERVICE_ID);
-                Object propagate = obj3.get(JSONConstants.RAX_AUTH_PROPAGATE);
-                Object weight = obj3.get(JSONConstants.RAX_AUTH_WEIGHT);
-
-                if (id != null) {
-                    role.setId(id.toString());
-                }
-                if (name != null) {
-                    role.setName(name.toString());
-                }
-                if (description != null) {
-                    role.setDescription(description.toString());
-                }
-                if (tenantId != null) {
-                    role.setTenantId(tenantId.toString());
-                }
-                if (serviceId != null) {
-                    role.setServiceId(serviceId.toString());
-                }
-                if (propagate != null) {
-                    role.getOtherAttributes().put(QNAME_PROPAGATE, propagate.toString());
-                }
-                if (weight != null) {
-                    role.getOtherAttributes().put(QNAME_WEIGHT, weight.toString());
-                }
-            }
-        } catch (ParseException e) {
-            LOGGER.info(e.toString());
-            throw new BadRequestException("Bad JSON request", e);
-        }
-        
-        return role;
-    }
 }

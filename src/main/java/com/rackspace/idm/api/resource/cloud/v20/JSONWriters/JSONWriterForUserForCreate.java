@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONWriters;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JSONWriterForEntity;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -26,22 +25,24 @@ import java.util.LinkedHashMap;
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForApiKeyCredentials extends JSONWriterForEntity<ApiKeyCredentials> implements MessageBodyWriter<ApiKeyCredentials> {
+public class JSONWriterForUserForCreate extends JSONWriterForEntity<UserForCreate> implements MessageBodyWriter<UserForCreate> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == ApiKeyCredentials.class;
+        return type == UserForCreate.class;
     }
 
     @Override
-    public long getSize(ApiKeyCredentials apiKeyCredentials, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public long getSize(UserForCreate user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return 0;
     }
 
     @Override
-    public void writeTo(ApiKeyCredentials apiKeyCredentials, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(UserForCreate user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put(JSONConstants.API_KEY_CREDENTIALS, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS);
+        prefixValues.put("user.password","OS-KSADM:password");
+        prefixValues.put("user.defaultRegion", "RAX-AUTH:defaultRegion");
+        prefixValues.put("user.domainId", "RAX-AUTH:domainId");
 
-        write(apiKeyCredentials, entityStream, prefixValues);
+        write(user, entityStream, prefixValues);
     }
 }

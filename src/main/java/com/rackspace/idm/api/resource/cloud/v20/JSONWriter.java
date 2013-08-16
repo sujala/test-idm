@@ -177,7 +177,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(EndpointTemplateList.class)) {
             JSONObject endpointTemplate = new JSONObject();
             JSONArray endpoints = new JSONArray();
-            endpointTemplate.put(JSONConstants.ENDPOINT_TEMPLATES, endpoints);
+            endpointTemplate.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES, endpoints);
             EndpointTemplateList templateList = (EndpointTemplateList) object;
             for (EndpointTemplate template : templateList.getEndpointTemplate()) {
                 JSONObject templateItem = new JSONObject();
@@ -316,7 +316,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         }
 
                         subAccess.put(JSONConstants.ROLES, subRoles);
-                        access.put(JSONConstants.IMPERSONATOR, subAccess);
+                        access.put(JSONConstants.RAX_AUTH_IMPERSONATOR, subAccess);
                         break;
                     }
                 }
@@ -384,23 +384,23 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Domain.class)) {
             Domain domain = (Domain) object;
             JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.DOMAIN, getDomainWithoutWrapper(domain));
+            outer.put(JSONConstants.RAX_AUTH_DOMAIN, getDomainWithoutWrapper(domain));
             jsonText = JSONValue.toJSONString(outer);
         } else if(object.getClass().equals(Domains.class)){
             Domains domains = (Domains) object;
             JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.DOMAINS, getDomainsWithoutWrapper(domains));
+            outer.put(JSONConstants.RAX_AUTH_DOMAINS, getDomainsWithoutWrapper(domains));
             jsonText = JSONValue.toJSONString(outer);
 
         } else if (object.getClass().equals(Policy.class)) {
             Policy policy = (Policy) object;
             JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.POLICY, getPolicyWithoutWrapper(policy));
+            outer.put(JSONConstants.RAX_AUTH_POLICY, getPolicyWithoutWrapper(policy));
             jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(Policies.class)) {
             Policies policies = (Policies) object;
             JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.POLICIES, getPoliciesWithoutWrapper(policies));
+            outer.put(JSONConstants.RAX_AUTH_POLICIES, getPoliciesWithoutWrapper(policies));
             jsonText = JSONValue.toJSONString(outer);
         }else if (object.getClass().equals(AuthData.class)) {
             JSONObject outer = new JSONObject();
@@ -623,7 +623,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 policyInner.add(policySave);
             }
         }
-        policyOuter.put(JSONConstants.POLICY, policyInner);
+        policyOuter.put(JSONConstants.RAX_AUTH_POLICY, policyInner);
         if (policies.getAlgorithm() != null) {
             policyOuter.put(JSONConstants.POLICIES_ALGORITHM, policies.getAlgorithm().value());
         }
@@ -800,7 +800,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getSecretQA(SecretQA secrets) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.SECRET_QA, inner);
+        outer.put(JSONConstants.RAX_KSQA_SECRET_QA, inner);
         inner.put(JSONConstants.ANSWER, secrets.getAnswer());
         inner.put(JSONConstants.QUESTION, secrets.getQuestion());
         return outer;
@@ -839,7 +839,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
             String domainId = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"));
             if (!StringUtils.isEmpty(domainId)) {
-                outer.put(JSONConstants.DOMAIN_ID, domainId);
+                outer.put(JSONConstants.RAX_AUTH_DOMAIN_ID, domainId);
             }
         }
         return outer;
@@ -955,7 +955,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplate(EndpointTemplate template) {
         JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
+        outer.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
         return outer;
     }
 
@@ -997,8 +997,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.ENDPOINT_TEMPLATES, inner);
-        inner.put(JSONConstants.ENDPOINT_TEMPLATE, list);
+        outer.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES, inner);
+        inner.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE, list);
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplateWithoutWrapper(template));
         }

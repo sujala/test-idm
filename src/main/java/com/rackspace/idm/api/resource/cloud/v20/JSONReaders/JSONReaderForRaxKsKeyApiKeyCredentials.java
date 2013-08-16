@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForApiKeyCredentials extends JSONReaderForEntity<ApiKeyCredentials> implements MessageBodyReader<ApiKeyCredentials> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForApiKeyCredentials.class);
+public class JSONReaderForRaxKsKeyApiKeyCredentials extends JSONReaderForEntity<ApiKeyCredentials> implements MessageBodyReader<ApiKeyCredentials> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -33,6 +33,9 @@ public class JSONReaderForApiKeyCredentials extends JSONReaderForEntity<ApiKeyCr
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, inputStream);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, JSONConstants.API_KEY_CREDENTIALS);
+
+        return read(inputStream, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, prefixValues);
     }
 }

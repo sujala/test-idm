@@ -47,8 +47,8 @@ public class JSONReaderForPolicy implements MessageBodyReader<Policy> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.POLICY)) {
-                JSONObject jsonPolicy = (JSONObject) parser.parse(outer.get(JSONConstants.POLICY).toString());
+            if (outer.containsKey(JSONConstants.RAX_AUTH_POLICY)) {
+                JSONObject jsonPolicy = (JSONObject) parser.parse(outer.get(JSONConstants.RAX_AUTH_POLICY).toString());
                 Object id = jsonPolicy.get(JSONConstants.ID);
                 Object enabled = jsonPolicy.get(JSONConstants.ENABLED);
                 Object description = jsonPolicy.get(JSONConstants.DESCRIPTION);

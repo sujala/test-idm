@@ -11,13 +11,21 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.xml.bind.JAXBException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 
 public class JSONWriterForEntity <T> {
 
-    protected void write(T entity, String oldName, String newName, OutputStream entityStream) {
+    private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
+
+    protected void write(T entity, OutputStream entityStream) {
+        write(entity, entityStream, null);
+    }
+
+    protected void write(T entity, OutputStream entityStream, HashMap prefixValues) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -25,12 +33,16 @@ public class JSONWriterForEntity <T> {
 
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonString);
-            JSONObject inner = (JSONObject) outer.get(oldName);
 
-            JSONObject newOuter = new JSONObject();
-            newOuter.put(newName, inner);
+            JSONObject jsonObject;
 
-            String newJsonString = newOuter.toString();
+            if(prefixValues != null){
+                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+            }else{
+                jsonObject = outer;
+            }
+
+            String newJsonString = jsonObject.toString();
             entityStream.write(newJsonString.getBytes(JSONConstants.UTF_8));
 
         } catch (JAXBException e) {

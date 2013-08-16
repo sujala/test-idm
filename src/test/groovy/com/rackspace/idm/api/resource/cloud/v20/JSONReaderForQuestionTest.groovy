@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForQuestion
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthQuestion
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -14,10 +14,10 @@ import testHelpers.RootServiceTest
  */
 class JSONReaderForQuestionTest extends RootServiceTest{
     @Shared
-    JSONReaderForQuestion jsonReader
+    JSONReaderForRaxAuthQuestion jsonReader
 
     def setupSpec() {
-        jsonReader = new JSONReaderForQuestion()
+        jsonReader = new JSONReaderForRaxAuthQuestion()
     }
 
     def "Read from Json String" () {

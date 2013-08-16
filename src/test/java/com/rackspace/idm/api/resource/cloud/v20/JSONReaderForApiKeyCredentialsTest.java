@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxKsKeyApiKeyCredentials;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
  */
 public class JSONReaderForApiKeyCredentialsTest {
 
-    JSONReaderForApiKeyCredentials jsonReaderForApiKey;
+    JSONReaderForRaxKsKeyApiKeyCredentials jsonReaderForApiKey;
     String jsonBody = "{\n" +
             "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
             "        \"username\":\"jsmith\",\n" +
@@ -33,7 +33,7 @@ public class JSONReaderForApiKeyCredentialsTest {
 
     @Before
     public void setUp() throws Exception {
-        jsonReaderForApiKey = new JSONReaderForApiKeyCredentials();
+        jsonReaderForApiKey = new JSONReaderForRaxKsKeyApiKeyCredentials();
     }
 
     @Test

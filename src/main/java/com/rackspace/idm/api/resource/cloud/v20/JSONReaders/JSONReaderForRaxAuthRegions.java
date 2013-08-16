@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONReaders;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
+import com.rackspace.idm.api.resource.cloud.JSONReaderForArrayEntity;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -24,14 +24,14 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRegion extends JSONReaderForEntity<Region> implements MessageBodyReader<Region> {
+public class JSONReaderForRaxAuthRegions extends JSONReaderForArrayEntity<Regions> implements MessageBodyReader<Regions> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Region.class;
+        return type == Regions.class;
     }
 
     @Override
-    public Region readFrom(Class<Region> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(JSONConstants.RAX_AUTH_REGION, entityStream);
+    public Regions readFrom(Class<Regions> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+        return read(JSONConstants.RAX_AUTH_REGIONS, JSONConstants.REGION , entityStream);
     }
 }

@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForQuestion extends JSONReaderForEntity<Question> implements MessageBodyReader<Question> {
+public class JSONReaderForRaxAuthQuestion extends JSONReaderForEntity<Question> implements MessageBodyReader<Question> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Question.class;
@@ -25,6 +27,9 @@ public class JSONReaderForQuestion extends JSONReaderForEntity<Question> impleme
 
     @Override
     public Question readFrom(Class<Question> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(JSONConstants.RAX_AUTH_QUESTION, entityStream);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_AUTH_QUESTION, JSONConstants.QUESTION);
+
+        return read(entityStream, JSONConstants.RAX_AUTH_QUESTION, prefixValues);
     }
 }

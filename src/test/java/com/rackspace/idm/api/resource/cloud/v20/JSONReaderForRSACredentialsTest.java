@@ -59,36 +59,4 @@ public class JSONReaderForRSACredentialsTest {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream("invalid JSON string".getBytes()));
         jsonReaderForRSA.readFrom(RsaCredentials.class, null, null, null, null, inputStream);
     }
-
-    @Test
-    public void getRSARequestFromJSONString_withNoRSARequestKey_returnsEmptyRSARequest() throws Exception {
-        RsaCredentials rsaRequestFromJSONString = JSONReaderForRSACredentials.getRSACredentialsFromJSONString("{ }");
-        assertThat("authentication request", rsaRequestFromJSONString.getUsername(), nullValue());
-    }
-
-    @Test
-    public void getRSARequestFromJSONString_withValidRSARequest_returnsRSACredentials() throws Exception {
-        RsaCredentials rsaRequestFromJSONString = JSONReaderForRSACredentials.getRSACredentialsFromJSONString(jsonBody);
-        assertThat("authentication credentials", rsaRequestFromJSONString, instanceOf(RsaCredentials.class));
-    }
-
-    @Test
-    public void getRSARequestFromJSONString_withValidTokenRequest_returnsRSARequestWithToken() throws Exception {
-        RsaCredentials rsaRequestFromJSONString = JSONReaderForRSACredentials.getRSACredentialsFromJSONString(jsonBody);
-        assertThat("authentication credentials token Id", rsaRequestFromJSONString.getTokenKey(), equalTo("12345678"));
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withNoTokenIdRequest_returnNullTokenId() throws Exception {
-        RsaCredentials rsaRequestFromJSONString = JSONReaderForRSACredentials.getRSACredentialsFromJSONString("{\n" +
-            "        \"RAX-AUTH:rsaCredentials\": {}\n" +
-            "}");
-        assertThat("authenticationRquest tokenId", rsaRequestFromJSONString.getTokenKey(), nullValue());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void getRSARequestFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
-        JSONReaderForRSACredentials.getRSACredentialsFromJSONString("invalid JSON string");
-    }
-
 }

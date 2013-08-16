@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONWriters;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JSONWriterForEntity;
 import org.openstack.docs.identity.api.v2.User;
 
@@ -13,6 +15,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,19 +27,22 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForUser extends JSONWriterForEntity<User> implements MessageBodyWriter<User> {
+public class JSONWriterForRaxAuthRegion extends JSONWriterForEntity<Region> implements MessageBodyWriter<Region> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == User.class;
+        return type == Region.class;
     }
 
     @Override
-    public long getSize(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public long getSize(Region region, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return 0;
     }
 
     @Override
-    public void writeTo(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(user, entityStream);
+    public void writeTo(Region region, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.REGION, JSONConstants.RAX_AUTH_REGION);
+
+        write(region, entityStream, prefixValues);
     }
 }

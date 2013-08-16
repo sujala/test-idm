@@ -53,11 +53,11 @@ MessageBodyReader<EndpointTemplate> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.ENDPOINT_TEMPLATE)) {
+            if (outer.containsKey(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.ENDPOINT_TEMPLATE).toString());
+                    JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE).toString());
                 
                 Object id = obj3.get(JSONConstants.ID);
                 Object adminURL = obj3.get(JSONConstants.ADMIN_URL);

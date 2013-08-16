@@ -47,8 +47,8 @@ public class JSONReaderForDomain implements MessageBodyReader<Domain> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.DOMAIN)) {
-                JSONObject jsonDomain = (JSONObject) parser.parse(outer.get(JSONConstants.DOMAIN).toString());
+            if (outer.containsKey(JSONConstants.RAX_AUTH_DOMAIN)) {
+                JSONObject jsonDomain = (JSONObject) parser.parse(outer.get(JSONConstants.RAX_AUTH_DOMAIN).toString());
                 domain = getDomainFromInnerJSONString(jsonDomain);
             }
         } catch (Exception e) {

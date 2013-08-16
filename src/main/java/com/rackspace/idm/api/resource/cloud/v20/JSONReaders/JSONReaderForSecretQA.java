@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -30,6 +32,9 @@ public class JSONReaderForSecretQA extends JSONReaderForEntity<SecretQA> impleme
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read(JSONConstants.SECRET_QA, inputStream);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_KSQA_SECRET_QA ,JSONConstants.SECRET_QA);
+
+        return read(inputStream, JSONConstants.RAX_KSQA_SECRET_QA, prefixValues);
     }
 }

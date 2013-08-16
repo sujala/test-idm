@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -25,6 +27,9 @@ public class JSONReaderForRaxAuthSecretQA extends JSONReaderForEntity<SecretQA> 
 
     @Override
     public SecretQA readFrom(Class<SecretQA> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(JSONConstants.RAX_AUTH_SECRETQA, entityStream);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_AUTH_SECRETQA, JSONConstants.SECRETQA);
+
+        return read(entityStream, JSONConstants.RAX_AUTH_SECRETQA, prefixValues);
     }
 }

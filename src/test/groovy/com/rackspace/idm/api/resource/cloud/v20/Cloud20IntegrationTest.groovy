@@ -228,7 +228,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cloud20.destroyUser(serviceAdminToken, testUser.getId())
 
-        //TODO: DELETE DOMAINS
+        //TODO: DELETE RAX_AUTH_DOMAINS
         cloud20.deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
         cloud20.deletePolicy(serviceAdminToken, policyId)
     }

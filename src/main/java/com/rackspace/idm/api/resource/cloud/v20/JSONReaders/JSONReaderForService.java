@@ -1,14 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
@@ -19,11 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForService implements MessageBodyReader<Service> {
-    private static Logger logger = LoggerFactory.getLogger(JSONReaderForService.class);
+public class JSONReaderForService extends JSONReaderForEntity<Service> implements MessageBodyReader<Service> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -37,49 +32,10 @@ public class JSONReaderForService implements MessageBodyReader<Service> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.OS_KSADM_SERVICE ,JSONConstants.SERVICE);
 
-        Service service = getServiceFromJSONString(jsonBody);
-
-        return service;
+        return read(inputStream, JSONConstants.OS_KSADM_SERVICE, prefixValues);
     }
     
-    public static Service getServiceFromJSONString(String jsonBody) {
-        Service service = new Service();
-
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.SERVICE)) {
-                JSONObject obj3;
-
-                obj3 = (JSONObject) parser.parse(outer.get(JSONConstants.SERVICE)
-                    .toString());
-
-                Object desc = obj3.get(JSONConstants.DESCRIPTION);
-                Object id = obj3.get(JSONConstants.ID);
-                Object name = obj3.get(JSONConstants.NAME);
-                Object serviceType = obj3.get(JSONConstants.TYPE);
-
-                if (name != null) {
-                    service.setName(name.toString());
-                }
-                if (desc != null) {
-                    service.setDescription(desc.toString());
-                }
-                if (id != null) {
-                    service.setId(id.toString());
-                }
-                if (serviceType != null) {
-                    service.setType(serviceType.toString());
-                }
-            }
-        } catch (ParseException e) {
-            logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON", e);
-        }
-
-        return service;
-    }
 }

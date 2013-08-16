@@ -30,6 +30,6 @@ public class JSONReaderForTenant extends JSONReaderForEntity<Tenant> implements 
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read((String) JSONConstants.TENANT, inputStream);
+        return read(inputStream, JSONConstants.TENANT);
     }
 }

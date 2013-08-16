@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
 
 import javax.xml.datatype.DatatypeFactory
@@ -314,6 +315,19 @@ class V2Factory {
             if (password != null) {
                 it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
             }
+            return it
+        }
+    }
+
+    def userForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
+        new UserForCreate().with {
+            it.username = (username != null) ? username : null
+            it.displayName = (displayName != null) ? displayName : null
+            it.email = (email != null) ? email : null
+            it.enabled = (enabled != null) ? enabled : null
+            it.password = (password != null) ? password : null
+            it.defaultRegion = (defaultRegion != null) ? defaultRegion : null
+            it.domainId = (domainId != null) ? domainId : null
             return it
         }
     }

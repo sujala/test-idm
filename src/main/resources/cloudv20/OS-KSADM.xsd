@@ -124,6 +124,9 @@
         <complexContent>
             <extension base="identity:User">
                 <attribute ref="OS-KSADM:password" use="optional"/>
+                <!-- Added for development-->
+                <attribute ref="RAX-AUTH:domainId" use="optional"/>
+                <attribute ref="RAX-AUTH:defaultRegion" use="optional"/>
             </extension>
         </complexContent>
     </complexType>

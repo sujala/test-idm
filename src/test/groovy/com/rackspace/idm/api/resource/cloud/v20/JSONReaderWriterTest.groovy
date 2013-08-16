@@ -4,25 +4,32 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForAuthenticationRequest
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForCapabilities
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForDomain
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForPolicies
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForPolicy
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForQuestion
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthQuestion
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthSecretQA
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRegion
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRegions
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthRegion
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxKsKeyApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRaxAuthRegions
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRole
 import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForUser
+import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForUserForCreate
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForAuthenticationRequest
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForCapabilities
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestion
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForQuestions
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForRaxAuthRegion
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForSecretQAs
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForServiceApis
 import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForUser
+import com.rackspace.idm.api.resource.cloud.v20.JSONWriters.JSONWriterForUserForCreate
 import org.apache.commons.io.IOUtils
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
@@ -46,12 +53,13 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONWriter writer = new JSONWriter();
 
-    @Shared JSONReaderForRegion readerForRegion = new JSONReaderForRegion()
-    @Shared JSONReaderForRegions readerForRegions = new JSONReaderForRegions()
+    @Shared JSONReaderForRaxAuthRegion readerForRaxAuthRegion = new JSONReaderForRaxAuthRegion()
+    @Shared JSONWriterForRaxAuthRegion writerForRaxAuthRegion = new JSONWriterForRaxAuthRegion()
+    @Shared JSONReaderForRaxAuthRegions readerForRegions = new JSONReaderForRaxAuthRegions()
 
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
-    @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
+    @Shared JSONReaderForRaxAuthQuestion readerForQuestion = new JSONReaderForRaxAuthQuestion()
 
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
@@ -72,8 +80,15 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
 
-    @Shared JSONReaderForApiKeyCredentials readerForApiKeyCredentials = new JSONReaderForApiKeyCredentials()
+    @Shared JSONReaderForRaxKsKeyApiKeyCredentials readerForApiKeyCredentials = new JSONReaderForRaxKsKeyApiKeyCredentials()
     @Shared JSONWriterForApiKeyCredentials writerForApiKeyCredentials = new JSONWriterForApiKeyCredentials()
+
+    @Shared JSONReaderForUserForCreate readerForUserForCreate = new JSONReaderForUserForCreate()
+    @Shared JSONWriterForUserForCreate writerForUserForCreate = new JSONWriterForUserForCreate()
+
+    @Shared JSONReaderForAuthenticationRequest readerForAuthenticationRequest = new JSONReaderForAuthenticationRequest()
+    @Shared JSONWriterForAuthenticationRequest writerForAuthenticationRequest = new JSONWriterForAuthenticationRequest()
+
 
     def "can read/write region as json"() {
         given:
@@ -81,10 +96,10 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(regionEntity, Region.class, null, null, null, null, arrayOutputStream)
+        writerForRaxAuthRegion.writeTo(regionEntity, Region.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        def readRegion = readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
+        def readRegion = readerForRaxAuthRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
 
         then:
         regionEntity.name == readRegion.name
@@ -93,14 +108,11 @@ class JSONReaderWriterTest extends RootServiceTest {
     }
 
     def "region reader throws bad request if root is not found"() {
-        given:
-        def regionEntity = region("name", true, false)
-
         when:
         def json = '{ "region": { "enabled": true, "isDefault": true, "name": "DFW" } }'
 
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
+        readerForRaxAuthRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
 
         then:
         thrown(BadRequestException)
@@ -439,6 +451,52 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         apiKey.apiKey == apiKeyCred.apiKey
         apiKey.username == apiKeyCred.username
+    }
+
+    def "create read/write userForCreate as json" () {
+        given:
+        def username = "username"
+        def displayName = "displayName"
+        def email = "someEmail@rackspace.com"
+        def enabled = true
+        def defaultRegion = "ORD"
+        def domainId = "domainId"
+        def password = "Password1"
+        def user = v2Factory.userForCreate(username, displayName, email, enabled, defaultRegion, domainId, password)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUserForCreate.writeTo(user, UserForCreate.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def userObject = readerForUserForCreate.readFrom(UserForCreate.class, null, null, null, null, arrayInputStream)
+
+        then:
+        userObject.username == username
+        userObject.domainId == domainId
+        userObject.email == email
+        userObject.enabled == enabled
+    }
+
+    def "create read/write for authenticationRequest" (){
+        given:
+        def username = "username"
+        def apiKey = "1234567890"
+        def domain = "name"
+        def authRequest = v2Factory.createApiKeyAuthenticationRequest(username, apiKey)
+        authRequest.domain = v1Factory.createDomain("id", domain)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticationRequest.writeTo(authRequest, AuthenticationRequest.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def authObject = readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        authObject.credential.getValue().username == username
+        authObject.credential.getValue().apiKey == apiKey
+        authObject.domain ==  domain
     }
 
     def getSecretQA(String id, String question, String answer) {

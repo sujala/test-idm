@@ -30,6 +30,6 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> implements Mess
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read(JSONConstants.USER, inputStream);
+        return read(inputStream, JSONConstants.USER);
     }
 }

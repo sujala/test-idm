@@ -51,8 +51,8 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.IMPERSONATION)) {
-                JSONObject jsonImpersonation = (JSONObject) parser.parse(outer.get(JSONConstants.IMPERSONATION).toString());
+            if (outer.containsKey(JSONConstants.RAX_AUTH_IMPERSONATION)) {
+                JSONObject jsonImpersonation = (JSONObject) parser.parse(outer.get(JSONConstants.RAX_AUTH_IMPERSONATION).toString());
                 JSONObject jsonUser = (JSONObject) parser.parse(jsonImpersonation.get(JSONConstants.USER).toString());
                 Object username = jsonUser.get(JSONConstants.USERNAME);
 
