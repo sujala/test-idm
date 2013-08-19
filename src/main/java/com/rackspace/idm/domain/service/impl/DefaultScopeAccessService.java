@@ -1106,7 +1106,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
                 if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    logger.debug("Deleting scope access '" + scopeAccess.getUniqueId() + "'");
                     scopeAccessDao.deleteScopeAccess(scopeAccess);
                 }
             }

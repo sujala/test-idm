@@ -23,7 +23,7 @@
 		<level value="info" />
 	</logger>
 
-    <logger name="org.springframework.beans">
+    <logger name="com.rackspace.idm.domain.config">
         <level value="info" />
     </logger>
 	
