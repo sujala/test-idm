@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
-
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.exception.DuplicateException
@@ -242,5 +242,17 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         then:
         result == null
+    }
+
+    def "getApplicationByScopeAccess throws error when clientId is null" () {
+        given:
+        ScopeAccess scopeAccess = entityFactory.createScopeAccess()
+
+        when:
+        service.getApplicationByScopeAccess(scopeAccess)
+
+        then:
+        scopeAccessService.getClientIdForParent(_) >> null
+        thrown(NotFoundException)
     }
 }

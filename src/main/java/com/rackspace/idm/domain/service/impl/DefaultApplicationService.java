@@ -149,7 +149,7 @@ public class DefaultApplicationService implements ApplicationService {
         }
         logger.debug("Reseting Client secret ClientId: {}", client.getClientId());
 
-        ClientSecret clientSecret = null;
+        ClientSecret clientSecret;
         clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
         client.setClientSecretObj(clientSecret);
         applicationDao.updateApplication(client);
@@ -173,7 +173,7 @@ public class DefaultApplicationService implements ApplicationService {
         List<Application> clientList = new ArrayList<Application>();
 
         for (ScopeAccess service : services) {
-            if (service instanceof ScopeAccess) {
+            if (service != null) {
                 clientList.add(this.getById(service.getClientId()));
             }
         }
@@ -190,7 +190,16 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Application getApplicationByScopeAccess(ScopeAccess scopeAccess) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if(scopeAccess == null) {
+            throw new IllegalArgumentException("ScopeAccess cannot be null");
+        }
+        String clientId = scopeAccessService.getClientIdForParent(scopeAccess);
+        if(clientId == null) {
+            String err = String.format("Application with clientId %s not found", clientId);
+            logger.error(err);
+            throw new NotFoundException(err);
+        }
+        return applicationDao.getApplicationByClientId(clientId);
     }
 
     @Override

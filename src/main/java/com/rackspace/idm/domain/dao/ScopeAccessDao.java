@@ -29,4 +29,6 @@ public interface ScopeAccessDao {
     List<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user);
 
     List<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
+
+    String getClientIdForParent(ScopeAccess scopeAccess);
 }

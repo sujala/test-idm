@@ -610,6 +610,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public String getClientIdForParent(ScopeAccess scopeAccess) {
+        return scopeAccessDao.getClientIdForParent(scopeAccess);
+    }
+
+    @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());

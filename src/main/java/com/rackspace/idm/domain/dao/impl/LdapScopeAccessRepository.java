@@ -91,6 +91,33 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         return getObjects(searchFilterGetScopeAccessesByClientId(clientId));
     }
 
+    @Override
+    public String getClientIdForParent(ScopeAccess scopeAccess) {
+        String parentDn = null;
+        try {
+            parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
+        } catch (LDAPException e) {
+            //noop
+        }
+        return parseDNForClientId(parentDn);
+    }
+
+    private String parseDNForClientId(String parentDn) {
+        String clientId = null;
+        try {
+            if(parentDn != null) {
+                String[] DN = parentDn.split(",");
+                if(DN.length > 0) {
+                    clientId = DN[0].split("=")[1];
+                }
+            }
+        } catch (Exception e) {
+            //noop
+        }
+
+        return clientId;
+    }
+
     private ScopeAccess getMostRecentScopeAccess(UniqueId object, Filter filter) throws NotFoundException {
         List<ScopeAccess> scopeAccessList = getObjects(filter, object.getUniqueId());
 

@@ -91,4 +91,6 @@ public interface ScopeAccessService {
     void setUserService(UserService userService);
 
     int getTokenExpirationSeconds(int value);
+
+    String getClientIdForParent(ScopeAccess scopeAccess);
 }
