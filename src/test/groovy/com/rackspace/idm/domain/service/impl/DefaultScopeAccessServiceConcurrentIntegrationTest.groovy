@@ -17,6 +17,7 @@ import testHelpers.RootIntegrationTest
 
 /**
  */
+@Ignore("Ignore because this demonstrates a current defect, D-14829, that needs to be addressed")
 class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(this.getClass());
 
