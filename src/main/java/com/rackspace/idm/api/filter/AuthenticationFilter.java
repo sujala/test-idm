@@ -1,9 +1,7 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -96,7 +93,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
                 if(sa instanceof ImpersonatedScopeAccess){
                     // Check Expiration of impersonated token
-                    if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
+                    if (sa.isAccessTokenExpired(new DateTime())) {
                         throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
                     }
                     // Swap token out and Log

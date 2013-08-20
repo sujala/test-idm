@@ -376,4 +376,11 @@ class EntityFactory extends Specification {
     def createClientSecret(secret) {
         return ClientSecret.newInstance(secret)
     }
+
+    def createScopeAccess() {
+        new ScopeAccess().with {
+            it.accessTokenString = "ats"
+            return it
+        }
+    }
 }

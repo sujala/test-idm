@@ -1,24 +1,20 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.service.*;
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -65,14 +61,6 @@ public class DefaultTokenServiceTestOld {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
         assertThat("scope access",defaultTokenService.getAccessTokenByToken(null),equalTo(scopeAccess));
-    }
-
-    @Test
-    public void doesTokenHaveAccessToApplication_returnsBoolean() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(scopeAccessService.doesAccessTokenHaveService(scopeAccess,null)).thenReturn(true);
-        assertThat("boolean",defaultTokenService.doesTokenHaveAccessToApplication(null,null),equalTo(true));
     }
 
     @Test

@@ -2,10 +2,6 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.Attribute
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-import com.rackspace.idm.domain.entity.Credentials
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
 import org.joda.time.DateTime
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -16,10 +12,8 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
     @Shared def dn = "accessToken=123456,cn=TOKENS,ou=users,o=rackspace"
-    @Shared def parentDn = "cn=TOKENS,ou=users,o=rackspace"
 
     @Shared def refreshWindowHours = 6
-    @Shared def tokenExpirationHours = 12
     @Shared def expiredDate
     @Shared def refreshDate
     @Shared def futureDate
@@ -217,56 +211,15 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         1 * scopeAccessService.deleteScopeAccess(_)
     }
 
-    def "Calls getTokens with Authorization Code credentials adds new and deletes old scopeaccess"() {
-        given:
-        def scopeAccessOne = new DelegatedClientScopeAccess();
-        scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = refreshDate
-        scopeAccessOne.authCode = "authCode12345"
-        scopeAccessOne.authCodeExp = refreshDate
-        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
-        scopeAccessOne.clientId = "clientId"
-
-        def credentials = Mock(Credentials)
-        credentials.getOAuthGrantType() >> "AUTHORIZATION_CODE"
-        credentials.getGrantType() >> "AUTHORIZATION_CODE"
-        credentials.getClientId() >> "12345"
-
-        def authResult = Mock(ClientAuthenticationResult)
-        authResult.isAuthenticated() >> true
-        authResult.getClient() >> new Application().with() {
-            it.clientId = "clientId"
-            return it
-        }
-
-        applicationService.authenticate(_, _) >> authResult
-
-        scopeAccessService.getScopeAccessByAuthCode(_) >> scopeAccessOne
-
-        when:
-        service.getTokens(credentials, new DateTime())
-
-        then:
-        1 * userService.getUserByScopeAccess(_) >> entityFactory.createUser()
-        1 * scopeAccessService.addUserScopeAccess(_, _)
-        1 * scopeAccessService.deleteScopeAccess(_)
-    }
-
     def "Calls getTokens sets token expiration with entropy"() {
         given:
         def credentials = Mock(Credentials)
-        credentials.getGrantType() >> grantType
-        credentials.getOAuthGrantType() >> oAuthGrantType
+        credentials.getGrantType() >> "REFRESH_TOKEN"
+        credentials.getOAuthGrantType() >> OAuthGrantType.REFRESH_TOKEN
         credentials.getClientId() >> "clientId"
 
-        def scopeAccess
-        if (grantType == "REFRESH_TOKEN") {
-            scopeAccess = Mock(UserScopeAccess)
-            scopeAccess.isRefreshTokenExpired(_) >> false
-        } else {
-            scopeAccess = Mock(DelegatedClientScopeAccess)
-            scopeAccess.isAuthorizationCodeExpired(_) >> false
-        }
+        def scopeAccess = Mock(UserScopeAccess)
+        scopeAccess.isRefreshTokenExpired(_) >> false
         scopeAccess.getClientId() >> "clientId"
         scopeAccess.getUniqueId() >> "accessToken=accessToken,cn=TOKENS,rsId=1234"
 
@@ -279,19 +232,13 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
 
         applicationService.authenticate(_, _) >> caResult
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
-        scopeAccessService.getScopeAccessByAuthCode(_) >> scopeAccess
         userService.getUserById(_) >> entityFactory.createUser()
 
         when:
-        service.getTokens(credentials , time)
+        service.getTokens(credentials , new DateTime())
 
         then:
         1 * scopeAccessService.getTokenExpirationSeconds(_)
-
-        where:
-        grantType            | time           | oAuthGrantType
-        "REFRESH_TOKEN"      | new DateTime() | OAuthGrantType.REFRESH_TOKEN
-        "AUTHORIZATION_CODE" | new DateTime() | OAuthGrantType.AUTHORIZATION_CODE
     }
 
     def "Calls getAndUpdateUserScopeAccessForClientId sets expiration with entropy"() {

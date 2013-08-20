@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -16,6 +16,7 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -76,23 +76,6 @@ public class DefaultScopeAccessServiceTestOld {
 
         spy = spy(defaultScopeAccessService);
 
-    }
-
-    @Test
-    public void getScopeAccessByUserId_callsScopeAccessDao_getScopeAccessByUserId() throws Exception {
-        defaultScopeAccessService.getScopeAccessByUserId("userId");
-        verify(scopeAccessDao).getScopeAccessByUserId("userId");
-    }
-
-    @Test
-    public void getOpenStackEndpointsForScopeAccess_tokenInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
-        Attribute attribute = new Attribute("name");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry("test",attribute);
-        DelegatedClientScopeAccess token = new DelegatedClientScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
-        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -423,16 +406,16 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void authenticateAccessToken_scopeAccessInstanceOfHasAccessTokenAndTokenNotExpired_authenticatedIsTrue() throws Exception {
         ScopeAccess scopeAccess = new ImpersonatedScopeAccess();
-        ((HasAccessToken) scopeAccess).setAccessTokenString("foo");
-        ((HasAccessToken) scopeAccess).setAccessTokenExp(new DateTime().plusMinutes(5).toDate());
-        when(scopeAccessDao.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
+        (scopeAccess).setAccessTokenString("foo");
+        (scopeAccess).setAccessTokenExp(new DateTime().plusMinutes(5).toDate());
+        when(scopeAccessDao.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         assertThat("boolean", defaultScopeAccessService.authenticateAccessToken(null), equalTo(true));
     }
 
     @Test
     public void authenticateAccessToken_scopeAccessInstanceOfHasAccessTokenAndTokenNotExpired_getsAuditContext() throws Exception {
         ScopeAccess scopeAccess = mock(ImpersonatedScopeAccess.class);
-        when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        when((scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessDao.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
         when(scopeAccess.getAuditContext()).thenReturn("foo");
         defaultScopeAccessService.authenticateAccessToken(null);
@@ -451,154 +434,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void deleteDelegatedToken_userNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.deleteDelegatedToken(null,null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-            assertThat("exception type", ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in"));
-        }
-    }
-
-    @Test
-    public void deleteDelegatedToken_scopeAccessListNotNullAndEmpty_throwsNotFoundException() throws Exception {
-        try{
-            doReturn(new ArrayList<DelegatedClientScopeAccess>()).when(spy).getDelegatedUserScopeAccessForUsername(null);
-            spy.deleteDelegatedToken(new User(), null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-            assertThat("exception type", ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("No delegated access tokens available for the user null"));
-        }
-    }
-
-    @Test
-    public void deleteDelegatedToken_scopeAccessListHasDelegatedClientScopeAccessAndGetRefreshTokenStringDoesNotEqualTokenString_throwsNotFoundException() throws Exception {
-        try{
-            DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-            delegatedClientScopeAccess.setRefreshTokenString("foo");
-            List<DelegatedClientScopeAccess> scopeAccessList = new ArrayList<DelegatedClientScopeAccess>();
-            scopeAccessList.add(delegatedClientScopeAccess);
-            doReturn(scopeAccessList).when(spy).getDelegatedUserScopeAccessForUsername(null);
-            spy.deleteDelegatedToken(new User(), null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-
-            assertThat("exception type", ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Token not found : null"));
-        }
-    }
-
-    @Test
-    public void deleteDelegatedToken_scopeAccessListHasDelegatedClientScopeAccessAndGetRefreshTokenStringNull_throwsNotFoundException() throws Exception {
-        try{
-            DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-            List<DelegatedClientScopeAccess> scopeAccessList = new ArrayList<DelegatedClientScopeAccess>();
-            scopeAccessList.add(delegatedClientScopeAccess);
-            doReturn(scopeAccessList).when(spy).getDelegatedUserScopeAccessForUsername(null);
-            spy.deleteDelegatedToken(new User(),null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-
-            assertThat("exception type", ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Token not found : null"));
-        }
-    }
-
-    @Test
-    public void doesAccessTokenHaveService_tokenInstanceOfDelegatedClientScopeAccess_getsUniqueId() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry("dn=string",new Attribute("name"));
-        ScopeAccess token = new DelegatedClientScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        defaultScopeAccessService.doesAccessTokenHaveService(token,null);
-        verify(scopeAccessDao).doesParentHaveScopeAccess(eq("dn=string"), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void doesAccessTokenHaveService_returnsBoolean() throws Exception {
-        Entry entry = new Entry("junk");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
-        ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        when(scopeAccessDao.doesParentHaveScopeAccess((String) eq(null),any(ScopeAccess.class))).thenReturn(true);
-        assertTrue("should return boolean from scopeAccessService", defaultScopeAccessService.doesAccessTokenHaveService(token, null));
-    }
-
-    @Test
-    public void expireAccessToken_scopeAccessIsNull_doesNothingWithNoExceptions() throws Exception {
-        defaultScopeAccessService.expireAccessToken(null);
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_userNull_throwsIllegalArgument() throws Exception {
-        try{
-            defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessIsNull_getsDataFromUsers() throws Exception {
-        User user = mock(User.class);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("token").when(spy).generateToken();
-        spy.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(user).getId();
-        verify(user, atLeastOnce()).getUsername();
-        verify(user).getCustomerId();
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessIsNull_getsDefaultExpirationSeconds() throws Exception {
-        User user = mock(User.class);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("token").when(spy).generateToken();
-        spy.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(spy).getDefaultTokenExpirationSeconds();
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessIsNull_generatesToken() throws Exception {
-        User user = mock(User.class);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("token").when(spy).generateToken();
-        spy.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(spy).generateToken();
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotSetAccessTokenExp() throws Exception {
-        User user = new User();
-        PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
-        when(scopeAccessDao.getMostRecentScopeAccessByClientId(null, "PASSWORDRESET")).thenReturn(prsa);
-        when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(prsa,never()).setAccessTokenExp(any(Date.class));
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotSetAccessTokenString() throws Exception {
-        User user = new User();
-        PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
-        when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(prsa,never()).setAccessTokenString(anyString());
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotUpdateScopeAccess() throws Exception {
-        User user = new User();
-        PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
-        when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
-        verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void getScopeAccessByAccessToken_accessTokenNull_throwsNotFoundException() throws Exception {
         try{
             defaultScopeAccessService.getScopeAccessByAccessToken(null);
@@ -613,7 +448,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void getScopeAccessByUserId_nullUserId_throwsNotFoundException() throws Exception {
         try{
-            defaultScopeAccessService.getScopeAccessByUserId(null);
+            defaultScopeAccessService.getScopeAccessForUser(null);
             assertTrue("should throw exception",false);
         } catch (Exception ex){
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
@@ -657,48 +492,20 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void getDelegatedScopeAccessByRefreshToken_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesNotEqual_returnsNull() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("user");
-        User user = new User();
-        user.setUsername("jsmith");
-        when(scopeAccessDao.getScopeAccessByRefreshToken(null)).thenReturn(delegatedClientScopeAccess);
-        assertThat("returns null", defaultScopeAccessService.getDelegatedScopeAccessByRefreshToken(user, null), nullValue());
-    }
-
-    @Test
-    public void getScopeAccessByAuthCode_returnsDelegatedClientScopeAccess() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        when(scopeAccessDao.getDelegatedScopeAccessByAuthorizationCode(null)).thenReturn(delegatedClientScopeAccess);
-        assertThat("delegated client scope access", defaultScopeAccessService.getScopeAccessByAuthCode(null), equalTo(delegatedClientScopeAccess));
-    }
-
-    @Test
     public void getScopeAccessesForParentByClientId_returnsScopeAccessList() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessesByParentAndClientId(null, null)).thenReturn(list);
+        when(scopeAccessDao.getScopeAccessesByClientId(null, null)).thenReturn(list);
         assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null),equalTo(list));
     }
 
     @Test
-    public void updateUserScopeAccessTokenForClientIdByUser_userIsNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.updateUserScopeAccessTokenForClientIdByUser(null,null,null,null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(), equalTo("Null user object instance."));
-        }
-    }
-
-    @Test
-    public void deleteScopeAccessesForParentByApplicationId_listPopulated_callsDeleteScopeAccess() throws Exception {
+    public void deleteScopeAccessesForApplication_listPopulated_callsDeleteScopeAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
-        doReturn(list).when(spy).getScopeAccessesForUserByClientId(null, null);
+        doReturn(list).when(spy).getScopeAccessesForApplicationByClientId(null, null);
         doNothing().when(spy).deleteScopeAccess(scopeAccess);
         spy.deleteScopeAccessesForApplication(null, null);
         verify(spy).deleteScopeAccess(scopeAccess);
@@ -756,7 +563,7 @@ public class DefaultScopeAccessServiceTestOld {
     @Test
     public void getScopeAccessListByUserId_callsScopeAccessDao_getScopeAccessListByUserId() throws Exception {
         defaultScopeAccessService.getScopeAccessListByUserId("userId");
-        verify(scopeAccessDao).getScopeAccessListByUserId("userId");
+        verify(scopeAccessDao).getScopeAccessesByUserId("userId");
     }
 
     @Test
@@ -764,7 +571,7 @@ public class DefaultScopeAccessServiceTestOld {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
         scopeAccessList.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessListByUserId("userId")).thenReturn(scopeAccessList);
+        when(scopeAccessDao.getScopeAccessesByUserId("userId")).thenReturn(scopeAccessList);
         List<ScopeAccess> result = defaultScopeAccessService.getScopeAccessListByUserId("userId");
         assertThat("scope access", result.get(0), equalTo(scopeAccess));
         assertThat("list", result.size(), equalTo(1));

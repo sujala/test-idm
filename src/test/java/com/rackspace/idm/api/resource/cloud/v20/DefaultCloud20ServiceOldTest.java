@@ -495,7 +495,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById("userId")).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
-        when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
+        when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(scopeAccess);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         when(userService.hasSubUsers("userId")).thenReturn(true);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -507,7 +507,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void deleteUser_callsAuthService_hasUserAdminRole() throws Exception {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
+        when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(authorizationService).hasUserAdminRole(user);
     }
@@ -3052,7 +3052,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
-        verify(scopeAccessService).getScopeAccessByUserId(userId);
+        verify(scopeAccessService).getScopeAccessForUser(user);
     }
 
     @Test
@@ -3064,7 +3064,7 @@ public class DefaultCloud20ServiceOldTest {
         UserScopeAccess scopeAccessForUserAdmin = new UserScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
+        when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(scopeAccessForUserAdmin);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
@@ -3167,7 +3167,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
+        when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);

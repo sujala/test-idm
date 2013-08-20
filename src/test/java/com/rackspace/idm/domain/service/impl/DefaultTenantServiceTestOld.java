@@ -1,32 +1,33 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.TenantRoleDao;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
-import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.RDN;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -133,17 +134,6 @@ public class DefaultTenantServiceTestOld {
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
         verify(tenantRoleDao).getTenantRolesForScopeAccess(scopeAccess);
 
-    }
-
-    @Test
-    public void getTenantRolesForScopeAccess_rolesListEmpty_returnsEmptyList() throws Exception {
-        List<TenantRole> list = new ArrayList<TenantRole>();
-        DelegatedClientScopeAccess delegatedClientScopeAccess = mock(DelegatedClientScopeAccess.class);
-        when(delegatedClientScopeAccess.getUniqueId()).thenReturn("123");
-        when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(list);
-
-        List <TenantRole> roles = defaultTenantService.getTenantRolesForScopeAccess(delegatedClientScopeAccess);
-        assertThat("list size", roles.size(), equalTo(0));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -280,17 +270,6 @@ public class DefaultTenantServiceTestOld {
         tenantRoleList.add(null);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoleList);
         defaultTenantService.getTenantRolesForUser(getUser());
-        verify(applicationService, times(0)).getClientRoleById(anyString());
-    }
-
-    @Test
-    public void getTenantRolesForScopeAccess_roleIsNull_doesNotCallClientDao() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
-        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
-        tenantRoleList.add(null);
-        when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoleList);
-        defaultTenantService.getTenantRolesForScopeAccess(delegatedClientScopeAccess);
         verify(applicationService, times(0)).getClientRoleById(anyString());
     }
 

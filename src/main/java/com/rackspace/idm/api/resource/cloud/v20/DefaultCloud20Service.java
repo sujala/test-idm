@@ -642,7 +642,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             userDO.setId(retrievedUser.getId());
-            ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
+            ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessForUser(retrievedUser);
             if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
@@ -3117,7 +3117,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthenticateResponse access = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
+            if (sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
             }
 

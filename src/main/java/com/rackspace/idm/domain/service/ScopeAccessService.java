@@ -28,10 +28,6 @@ public interface ScopeAccessService {
 
     void deleteScopeAccessesForUser(User user, String clientId);
 
-    void deleteDelegatedToken(User user, String tokenString);
-
-    boolean doesAccessTokenHaveService(ScopeAccess token, String clientId);
-
     void expireAccessToken(String tokenString) throws IOException, JAXBException;
 
     void expireAllTokensForClient(String clientId);
@@ -44,13 +40,11 @@ public interface ScopeAccessService {
 
     ClientScopeAccess getApplicationScopeAccess(Application application);
 
-    PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(User user);
-
     RackerScopeAccess getRackerScopeAccessByClientId(User user, String clientId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
-    ScopeAccess getScopeAccessByUserId(String userId);
+    ScopeAccess getScopeAccessForUser(User user);
 
     List<ScopeAccess> getScopeAccessListByUserId(String userId);
 
@@ -60,25 +54,17 @@ public interface ScopeAccessService {
 
     ScopeAccess getMostRecentDirectScopeAccessForUserByClientId(User user, String clientId);
 
-    void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
-
     UserScopeAccess getUserScopeAccessByClientId(User user, String clientId);
 
     UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
 
     RackerScopeAccess getValidRackerScopeAccessForClientId(User user, String clientId, List<String> authenticatedBy);
 
-    DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
-
-    List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String userUniqueId);
-
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
 
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
 
     void updateScopeAccess(ScopeAccess scopeAccess);
-
-    DelegatedClientScopeAccess getScopeAccessByAuthCode(String authorizationCode);
 
     List<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId);
 
@@ -102,17 +88,7 @@ public interface ScopeAccessService {
 
     void setTenantService(TenantService tenantService);
 
-    void setEndpointService(EndpointService endpointService);
-
-    void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
-
-    void setAppConfig(Configuration appConfig);
-
-    void setAtomHopperClient(AtomHopperClient atomHopperClient);
-
     void setUserService(UserService userService);
-
-    void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
     int getTokenExpirationSeconds(int value);
 }

@@ -1,20 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
-import com.unboundid.util.LDAPSDKUsageException;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.util.LDAPSDKUsageException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import javax.annotation.PostConstruct;
-import javax.naming.ldap.SortControl;
 import java.util.ArrayList;
 import java.util.List;
 

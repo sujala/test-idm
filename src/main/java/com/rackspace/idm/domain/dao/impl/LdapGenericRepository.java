@@ -4,6 +4,7 @@ import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
@@ -109,7 +110,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             T entity = null;
             try {
-                entity = LDAPPersister.getInstance(entityType).decode(entry);
+                entity = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
                 doPostEncode(entity);
             } catch (LDAPPersistException e) {
                 String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
@@ -135,7 +136,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Adding object: {}", object);
         Audit audit = Audit.log((Auditable)object).add();
         try {
-            final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
+            final LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
             doPreEncode(object);
             persister.add(object, getAppInterface(), dn);
             audit.succeed();
@@ -194,6 +195,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public T getObject(Filter searchFilter, SearchScope scope) {
+        return getObject(searchFilter, getBaseDn(), scope);
+    }
+
+    @Override
     public T getObject(Filter searchFilter, String dn) {
         return getObject(searchFilter, dn, SearchScope.ONE);
     }
@@ -242,7 +248,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
         Audit audit = Audit.log((Auditable)object).modify();
-        LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
+        LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
 
         String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
         List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
@@ -367,9 +373,18 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         if (entry == null) {
             return null;
         }
-        T object = LDAPPersister.getInstance(entityType).decode(entry);
+
+        T object = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
         doPostEncode(object);
         return object;
+    }
+
+    private Class getEntityTypeFromEntry(SearchResultEntry entry) {
+        Class type = entityType;
+        if(this instanceof DaoGetEntityType) {
+            type = ((DaoGetEntityType) this).getEntityType(entry);
+        }
+        return type;
     }
 
     @Override

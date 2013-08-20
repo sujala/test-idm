@@ -2295,7 +2295,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUser(_) >> true
         1 * userService.checkAndGetUserById(_) >> user
         1 * domainService.checkAndGetDomain(_) >> domain
-        0 * scopeAccessService.getScopeAccessByUserId(_)
+        0 * scopeAccessService.getScopeAccessForUser(_)
         1 * scopeAccessService.getOpenstackEndpointsForUser(_) >> endpoints
         1 * tenantService.getTenantsByDomainId(_) >> tenants
         1 * userService.getUserByScopeAccess(_) >> user

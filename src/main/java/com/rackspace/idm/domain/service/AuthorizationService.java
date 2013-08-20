@@ -13,8 +13,7 @@ public interface AuthorizationService {
 
     boolean authorizeRacker(ScopeAccess scopeAccess);
     boolean authorizeRackspaceClient(ScopeAccess scopeAccess);
-    boolean authorizeCustomerUser(ScopeAccess scopeAccess, String customerId);
-    boolean authorizeUser(ScopeAccess scopeAccess, String customerId, String username);
+
     boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess, ScopeAccess requestingScopeAccess);
     boolean authorizeCustomerIdm(ScopeAccess scopeAccess);
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);

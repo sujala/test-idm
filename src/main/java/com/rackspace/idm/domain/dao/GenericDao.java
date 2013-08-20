@@ -19,6 +19,7 @@ public interface GenericDao<T> {
     void addObject(T object);
     void addObject(String dn, T object);
     T getObject(Filter searchFilter);
+    T getObject(Filter searchFilter, SearchScope scope);
     T getObject(Filter searchFilter, String dn);
     T getObject(Filter searchFilter, String dn, SearchScope scope);
     List<T> getObjects(Filter searchFilter);

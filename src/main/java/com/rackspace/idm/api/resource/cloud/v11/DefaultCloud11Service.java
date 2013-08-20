@@ -612,26 +612,26 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
 
-            User gaUser = userService.getUser(userId);
+            User retrievedUser = userService.getUser(userId);
 
-            if (gaUser == null) {
+            if (retrievedUser == null) {
                 String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
-            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessForUser(retrievedUser);
             boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
-            if (userService.hasSubUsers(gaUser.getId())) {
+            if (userService.hasSubUsers(retrievedUser.getId())) {
                 throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
-            this.userService.softDeleteUser(gaUser);
+            this.userService.softDeleteUser(retrievedUser);
 
             //AtomHopper
-            atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DELETED);
+            atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DELETED);
 
             return Response.noContent();
         } catch (Exception ex) {

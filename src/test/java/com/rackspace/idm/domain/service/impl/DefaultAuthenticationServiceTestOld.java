@@ -120,18 +120,6 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void setClient_scopeAccessInstanceOfDelegatedClientScopeAccess_getsDataFromScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new DelegatedClientScopeAccess();
-        ((DelegatedClientScopeAccess) scopeAccess).setUsername("jsmith");
-        ((DelegatedClientScopeAccess) scopeAccess).setUserRCN("123");
-        AuthData authData = new AuthData();
-        defaultAuthenticationService.setClient(scopeAccess,authData);
-        assertThat("auth data user",authData.getUser(), notNullValue());
-        assertThat("auth data user username", authData.getUser().getUsername(),equalTo("jsmith"));
-        assertThat("auth data user customer id", authData.getUser().getCustomerId(),equalTo("123"));
-    }
-
-    @Test
     public void getTokens_blankGrantType_throwsBadRequestException() throws Exception {
         try{
             defaultAuthenticationService.getTokens(new Credentials(),new DateTime());
@@ -347,103 +335,6 @@ public class DefaultAuthenticationServiceTestOld {
         } catch (Exception ex){
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.UserDisabledException"));
             assertThat("exception message",ex.getMessage(),equalTo("User NULL is disabled"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndNullScopeAccess_throwsNotAuthenticatedException() throws Exception {
-        try{
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("authorization_code");
-            trParam.setClientId("123");
-
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(null);
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Authorization Code: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndAuthorizedCodeExpiredAndClientIdsNotEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-            delegatedClientScopeAccess.setAccessTokenExpired();
-            delegatedClientScopeAccess.setClientId("456");
-
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("authorization_code");
-            trParam.setClientId("123");
-
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Authorization Code: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndAuthorizedCodeExpiredAndClientIdsEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-            delegatedClientScopeAccess.setAccessTokenExpired();
-            delegatedClientScopeAccess.setClientId("123");
-
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("authorization_code");
-            trParam.setClientId("123");
-
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Authorization Code: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndAuthorizedCodeNotExpiredAndClientIdsNotEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-            delegatedClientScopeAccess.setAuthCodeExp(new DateTime().plusMinutes(5).toDate());
-            delegatedClientScopeAccess.setAuthCode("token");
-            delegatedClientScopeAccess.setClientId("456");
-
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("authorization_code");
-            trParam.setClientId("123");
-
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Authorization Code: null"));
         }
     }
 

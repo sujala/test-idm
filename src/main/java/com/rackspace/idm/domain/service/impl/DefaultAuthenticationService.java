@@ -156,12 +156,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
     AuthData getAuthData(ScopeAccess scopeAccess) {
         AuthData authData = new AuthData();
 
-        if (scopeAccess instanceof HasAccessToken) {
-            HasAccessToken tokenScopeAccessObject = (HasAccessToken) scopeAccess;
-            authData.setAccessToken(tokenScopeAccessObject
-                    .getAccessTokenString());
-            authData.setAccessTokenExpiration(tokenScopeAccessObject
-                    .getAccessTokenExp());
+        if (scopeAccess != null) {
+            authData.setAccessToken(scopeAccess.getAccessTokenString());
+            authData.setAccessTokenExpiration(scopeAccess.getAccessTokenExp());
         }
 
         if (scopeAccess instanceof HasRefreshToken) {
@@ -214,16 +211,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
             authData.setUser(user);
             authData.setPasswordExpirationDate(passwordExpirationDate);
-        }
-
-        if (scopeAccess instanceof DelegatedClientScopeAccess) {
-            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
-
-            // TODO: consider getting from user dao
-            User user = new User();
-            user.setUsername(dcsa.getUsername());
-            user.setCustomerId(dcsa.getUserRCN());
-            authData.setUser(user);
         }
 
         if (scopeAccess instanceof RackerScopeAccess) {
@@ -341,32 +328,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (CLIENT_CREDENTIALS == grantType) {
             return this.getAndUpdateClientScopeAccessForClientId(caResult.getClient());
-        }
-
-        if (AUTHORIZATION_CODE == grantType) {
-            DelegatedClientScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAuthCode(trParam.getAuthorizationCode());
-            DelegatedClientScopeAccess scopeAccessToAdd = new DelegatedClientScopeAccess();
-            if (scopeAccess == null
-                    || scopeAccess.isAuthorizationCodeExpired(currentTime)
-                    || !scopeAccess.getClientId().equalsIgnoreCase(
-                    caResult.getClient().getClientId())) {
-                final String msg = String.format("Unauthorized Authorization Code: %s", trParam.getAuthorizationCode());
-                logger.warn(msg);
-                throw new NotAuthenticatedException(msg);
-            }
-
-            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
-            scopeAccessToAdd.setRefreshTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(currentTime.plusSeconds(expirationSeconds).toDate());
-            scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
-            scopeAccessToAdd.setClientRCN(caResult.getClient().getRcn());
-            scopeAccessToAdd.setAuthCode(null);
-            scopeAccessToAdd.setAuthCodeExp(null);
-
-            updateScopeAccess(scopeAccess, scopeAccessToAdd);
-
-            return scopeAccessToAdd;
         }
 
         final String message = String.format("Unsupported GrantType: %s",

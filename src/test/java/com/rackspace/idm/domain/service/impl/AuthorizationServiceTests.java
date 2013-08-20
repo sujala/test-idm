@@ -95,42 +95,6 @@ public class AuthorizationServiceTests {
     }
 
     @Test
-    public void ShouldReturnTrueForUser() {
-
-        boolean authorized = service.authorizeUser(authorizedUserToken,
-            customerId, username);
-
-        Assert.assertTrue(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForUser() {
-
-        boolean authorized = service.authorizeUser(otherCompanyUserToken,
-            customerId, username);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
-    public void ShouldReturnTrueForCompanyUser() {
-
-        boolean authorized = service.authorizeCustomerUser(authorizedUserToken,
-            customerId);
-
-        Assert.assertTrue(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForCompanyUser() {
-
-        boolean authorized = service.authorizeCustomerUser(
-            otherCompanyUserToken, customerId);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
     public void ShouldReturnTrueForCustomerIdm() {
         boolean authorized = service.authorizeCustomerIdm(customerIdmToken);
 
