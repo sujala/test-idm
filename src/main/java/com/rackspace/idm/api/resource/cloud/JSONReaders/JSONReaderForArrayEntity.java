@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 
 import com.rackspace.idm.JSONConstants;
@@ -21,13 +21,13 @@ public class JSONReaderForArrayEntity<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
-    protected T read(String oldName, String newName, InputStream entityStream) {
+    protected T read(String outerObject, String innerObject, InputStream entityStream) {
         try {
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
 
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
-            JSONArray inner = (JSONArray) outer.get(oldName);
+            JSONArray inner = (JSONArray) outer.get(outerObject);
 
             JSONObject newOuter = new JSONObject();
             JSONArray middle = new JSONArray();
@@ -43,7 +43,7 @@ public class JSONReaderForArrayEntity<T> {
                 }
             }
 
-            newOuter.put(newName,middle);
+            newOuter.put(innerObject,middle);
 
             String jsonString = newOuter.toString();
             InputStream inputStream = IOUtils.toInputStream(jsonString);

@@ -20,12 +20,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForOsKsCatalogEndpointTemplate implements
+public class JSONReaderForOsKsCatalogEndpointTemplate extends JSONReaderForEntity<EndpointTemplate> implements
 MessageBodyReader<EndpointTemplate> {
-    private static Logger logger = LoggerFactory.getLogger(JSONReaderForOsKsCatalogEndpointTemplate.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -39,84 +42,9 @@ MessageBodyReader<EndpointTemplate> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(OS_KSCATALOG_ENDPOINT_TEMPLATE, ENDPOINT_TEMPLATE);
 
-        EndpointTemplate template = getEndpointTemplateFromJSONString(jsonBody);
-
-        return template;
-    }
-    
-    public static EndpointTemplate getEndpointTemplateFromJSONString(String jsonBody) {
-        EndpointTemplate template = new EndpointTemplate();
-
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE)) {
-                JSONObject obj3;
-
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE).toString());
-                
-                Object id = obj3.get(JSONConstants.ID);
-                Object adminURL = obj3.get(JSONConstants.ADMIN_URL);
-                Object internalURL = obj3.get(JSONConstants.INTERNAL_URL);
-                Object name = obj3.get(JSONConstants.NAME);
-                Object publicURL = obj3.get(JSONConstants.PUBLIC_URL);
-                Object serviceType = obj3.get(JSONConstants.TYPE);
-                Object region = obj3.get(JSONConstants.REGION);
-                Object global = obj3.get(JSONConstants.GLOBAL);
-                Object enabled = obj3.get(JSONConstants.ENABLED);
-                Object versionId = obj3.get(JSONConstants.VERSION_ID);
-                Object versionInfo = obj3.get(JSONConstants.VERSION_INFO);
-                Object versionList = obj3.get(JSONConstants.VERSION_LIST);
-
-                if (id != null) {
-                    template.setId(Integer.parseInt(id.toString()));
-                }
-                if (adminURL != null) {
-                    template.setAdminURL(adminURL.toString());
-                }
-                if (internalURL != null) {
-                    template.setInternalURL(internalURL.toString());
-                }
-                if (name != null) {
-                    template.setName(name.toString());
-                }
-                if (publicURL != null) {
-                    template.setPublicURL(publicURL.toString());
-                }
-                if (serviceType != null) {
-                    template.setType(serviceType.toString());
-                }
-                if (region != null) {
-                    template.setRegion(region.toString());
-                }
-                if (global != null) {
-                    template.setGlobal(Boolean.parseBoolean(global.toString()));
-                }
-                if (enabled != null) {
-                    template.setEnabled(Boolean.parseBoolean(enabled.toString()));
-                }
-                if (versionId != null) {
-                    VersionForService version = new VersionForService();
-                    version.setId(versionId.toString());
-                    
-                    if (versionList != null) {
-                        version.setList(versionList.toString());
-                    }
-                    if (versionInfo != null) {
-                        version.setInfo(versionInfo.toString());
-                    }
-                    template.setVersion(version);
-                }
-            }
-        } catch (ParseException e) {
-            logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON", e);
-        }
-
-        return template;
+        return read(inputStream, OS_KSCATALOG_ENDPOINT_TEMPLATE, prefixValues);
     }
 }

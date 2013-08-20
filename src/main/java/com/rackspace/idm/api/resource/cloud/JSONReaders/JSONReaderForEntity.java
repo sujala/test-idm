@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;

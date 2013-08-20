@@ -25,6 +25,7 @@ public final class JSONConstants {
     public static final String ENDPOINT = "endpoint";
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
+    public static final String ENDPOINT_TEMPLATE = "endpointTemplate";
     public static final String ENDPOINTS = "endpoints";
     public static final String EXPIRES = "expires";
     public static final String EXTENSION = "extension";
@@ -46,6 +47,7 @@ public final class JSONConstants {
     public static final String NAST_CREDENTIALS = "nastCredentials";
     public static final String NAST_ID = "nastId";
     public static final String OS_KSADM_SERVICE = "OS-KSADM:service";
+    public static final String OS_KSADM_SERVICES = "OS-KSADM:services";
     public static final String PASSWORD = "password";
     public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
     public static final String PUBLIC_URL = "publicURL";
@@ -62,7 +64,7 @@ public final class JSONConstants {
     public static final String RAX_KSQA_SECRET_QA = "RAX-KSQA:secretQA";
     public static final String SECRET = "secret";
     public static final String SERVICECATALOG = "serviceCatalog";
-    public static final String SERVICES = "OS-KSADM:services";
+    public static final String SERVICES = "services";
     public static final String TENANT = "tenant";
     public static final String TENANTS = "tenants";
     public static final String TENANT_ID = "tenantId";

@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 
 import javax.ws.rs.Consumes;

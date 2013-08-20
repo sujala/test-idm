@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.config.JAXBContextResolver;

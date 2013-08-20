@@ -1,6 +1,7 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.api.json.JSONJAXBContext;

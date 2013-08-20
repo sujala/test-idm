@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriter
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject

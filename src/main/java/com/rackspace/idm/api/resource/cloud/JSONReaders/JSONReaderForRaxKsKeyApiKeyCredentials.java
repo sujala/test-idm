@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;

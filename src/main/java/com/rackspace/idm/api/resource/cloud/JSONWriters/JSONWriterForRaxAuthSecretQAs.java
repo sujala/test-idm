@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONWriterForArrayEntity;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;

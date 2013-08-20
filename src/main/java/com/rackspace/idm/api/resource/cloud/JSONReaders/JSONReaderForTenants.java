@@ -1,7 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
-import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.Tenants;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
@@ -12,30 +13,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRole extends JSONReaderForEntity<Role> implements MessageBodyReader<Role> {
+public class JSONReaderForTenants extends JSONReaderForArrayEntity<Tenants> implements MessageBodyReader<Tenants> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
         MediaType mediaType) {
-        return type == Role.class;
+        return type == Tenants.class;
     }
 
     @Override
-    public Role readFrom(Class<Role> type,
+    public Tenants readFrom(Class<Tenants> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("role.RAX-AUTH:weight", JSONConstants.WEIGHT);
-        prefixValues.put("role.RAX-AUTH:propagate", JSONConstants.PROPAGATE);
-
-        return read(inputStream, JSONConstants.ROLE, prefixValues);
+        return read(JSONConstants.TENANTS, JSONConstants.TENANT, inputStream);
     }
-    
 }

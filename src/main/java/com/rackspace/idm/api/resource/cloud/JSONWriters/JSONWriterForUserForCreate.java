@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
-import com.rackspace.idm.api.resource.cloud.JSONWriterForEntity;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 
 import javax.ws.rs.Produces;

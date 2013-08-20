@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONWriterForEntity;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;

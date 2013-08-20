@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JSONReaderForEntity;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
 import javax.ws.rs.Consumes;
@@ -18,7 +17,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForService extends JSONReaderForEntity<Service> implements MessageBodyReader<Service> {
+public class JSONReaderForOsKsAdmService extends JSONReaderForEntity<Service> implements MessageBodyReader<Service> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,

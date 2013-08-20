@@ -17,6 +17,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Token
+import org.openstack.docs.identity.api.v2.VersionForService
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,6 +37,7 @@ class V1Factory {
     private static PASSWORD = "Password1"
     private static KEY = "key";
     private static MOSSOID = 10000123
+    private static TYPE="type"
 
     private static objFactory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory()
     private static V2Factory v2Factory = new V2Factory()
@@ -130,6 +132,12 @@ class V1Factory {
             it.type = type
             it.publicURL = localPublicUrl
             it.name = name
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.info = "info"
+                it.list = "list"
+                it
+            }
             return it
         }
     }
@@ -280,6 +288,8 @@ class V1Factory {
         new Service().with {
             it.id = id
             it.name = name ? name : NAME
+            it.description = DESCRIPTION
+            it.type = TYPE
             return it
         }
     }

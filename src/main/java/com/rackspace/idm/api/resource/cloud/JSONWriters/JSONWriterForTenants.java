@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
+import com.rackspace.idm.JSONConstants;
 import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.Tenants;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -22,19 +24,19 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForTenant extends JSONWriterForEntity<Tenant> implements MessageBodyWriter<Tenant> {
+public class JSONWriterForTenants extends JSONWriterForArrayEntity<Tenants> implements MessageBodyWriter<Tenants> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Tenant.class;
+        return type == Tenants.class;
     }
 
     @Override
-    public long getSize(Tenant tenant, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public long getSize(Tenants tenants, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return 0;
     }
 
     @Override
-    public void writeTo(Tenant tenant, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(tenant, entityStream);
+    public void writeTo(Tenants tenants, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+        write(tenants, JSONConstants.TENANTS, JSONConstants.TENANTS, entityStream);
     }
 }

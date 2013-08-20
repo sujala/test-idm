@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForService;
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmService;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
@@ -37,21 +37,21 @@ public class JSONReaderForServiceTest {
 
     @Test
     public void isReadable_withValidClass_returnsTrue() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         boolean readable = jsonReaderForService.isReadable(Service.class, null, null, null);
         assertThat("Readable", readable, equalTo(true));
     }
 
     @Test
     public void isReadable_withInvalidClass_returnsFalse() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         boolean readable = jsonReaderForService.isReadable(Object.class, null, null, null);
         assertThat("Readable", readable, equalTo(false));
     }
 
     @Test
     public void readFrom_withValidJSON_returnsService() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(serviceJSON.getBytes()));
         Service service = jsonReaderForService.readFrom(Service.class, null, null, null, null, inputStream);
         assertThat("service returned", service, is(Service.class));

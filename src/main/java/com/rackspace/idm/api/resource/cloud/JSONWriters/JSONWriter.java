@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
@@ -130,33 +130,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        } else if (object.getClass().equals(Tenants.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            Tenants tenants = (Tenants) object;
-            for (Tenant tenant : tenants.getTenant()) {
-                list.add(getTenantWithoutWrapper(tenant));
-            }
-            outer.put(JSONConstants.TENANTS, list);
-            jsonText = JSONValue.toJSONString(outer);
-
-        } else if (object.getClass().equals(Service.class)) {
-            Service service = (Service) object;
-            jsonText = JSONValue.toJSONString(getService(service));
-
-        } else if (object.getClass().equals(ServiceList.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            ServiceList serviceList = (ServiceList) object;
-            for (Service service : serviceList.getService()) {
-                list.add(getServiceWithoutWrapper(service));
-            }
-            outer.put(JSONConstants.SERVICES, list);
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(SecretQA.class)) {
-
-            SecretQA secrets = (SecretQA) object;
-            jsonText = JSONValue.toJSONString(getSecretQA(secrets));
         } else if (object.getClass().equals(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object;
@@ -919,13 +892,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         if (group.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, group.getDescription());
         }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    private JSONObject getService(Service service) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.SERVICE, getServiceWithoutWrapper(service));
         return outer;
     }
 

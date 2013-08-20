@@ -1,7 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
 import com.rackspace.idm.JSONConstants;
-import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
+import org.openstack.docs.identity.api.v2.Tenants;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
@@ -12,30 +13,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+
+import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRole extends JSONReaderForEntity<Role> implements MessageBodyReader<Role> {
+public class JSONReaderForOsKsAdmServices extends JSONReaderForArrayEntity<ServiceList> implements MessageBodyReader<ServiceList> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
         MediaType mediaType) {
-        return type == Role.class;
+        return type == ServiceList.class;
     }
 
     @Override
-    public Role readFrom(Class<Role> type,
+    public ServiceList readFrom(Class<ServiceList> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("role.RAX-AUTH:weight", JSONConstants.WEIGHT);
-        prefixValues.put("role.RAX-AUTH:propagate", JSONConstants.PROPAGATE);
-
-        return read(inputStream, JSONConstants.ROLE, prefixValues);
+        return read(OS_KSADM_SERVICES, SERVICE, inputStream);
     }
-    
 }

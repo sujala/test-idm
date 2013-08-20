@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.api.resource.cloud.JSONWriters;
 
 import com.rackspace.api.idm.v1.Application;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriter;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONMarshaller;
