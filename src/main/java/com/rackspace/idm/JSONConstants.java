@@ -54,6 +54,7 @@ public final class JSONConstants {
     public static final String SERVICE_APIS = "serviceApis";
     public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
+    public static final String REGIONS = "regions";
     public static final String RSA_CREDENTIALS = "RsaCredentials";
     public static final String RAX_AUTH_REGION = "RAX-AUTH:region";
     public static final String RAX_AUTH_REGIONS = "RAX-AUTH:regions";
@@ -74,6 +75,7 @@ public final class JSONConstants {
     public static final String USERNAME = "username";
     public static final String USER_PASSWORD = "userPassword";
     public static final String UTF_8 = "UTF-8";
+    public static final String VERSION = "version";
     public static final String VERSION_ID = "versionId";
     public static final String VERSION_INFO = "versionInfo";
     public static final String VERSION_LIST = "versionList";

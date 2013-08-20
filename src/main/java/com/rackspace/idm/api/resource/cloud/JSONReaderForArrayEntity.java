@@ -34,6 +34,9 @@ public class JSONReaderForArrayEntity<T> {
 
             if (inner == null) {
                 throw new BadRequestException("Invalid json request body");
+            } else if (inner.size() <= 0) {
+                return entityType.newInstance();
+
             } else {
                 for (Object object : inner) {
                     middle.add(object);
@@ -51,6 +54,10 @@ public class JSONReaderForArrayEntity<T> {
         } catch (JAXBException e) {
             throw new BadRequestException("Invalid json request body");
         } catch (IOException e) {
+            throw new BadRequestException("Invalid json request body");
+        } catch (InstantiationException e) {
+            throw new BadRequestException("Invalid json request body");
+        } catch (IllegalAccessException e) {
             throw new BadRequestException("Invalid json request body");
         }
     }

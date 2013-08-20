@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForSecretQA
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxKsQaSecretQA
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -14,10 +14,10 @@ import testHelpers.RootServiceTest
  */
 class JSONReaderForSecretQATest extends RootServiceTest{
     @Shared
-    JSONReaderForSecretQA jsonReader
+    JSONReaderForRaxKsQaSecretQA jsonReader
 
     def setupSpec() {
-        jsonReader = new JSONReaderForSecretQA()
+        jsonReader = new JSONReaderForRaxKsQaSecretQA()
     }
 
     def "Read from Json String" () {

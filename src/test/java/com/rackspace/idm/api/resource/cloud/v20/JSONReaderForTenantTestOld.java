@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForTenant;
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForTenant;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.Role;

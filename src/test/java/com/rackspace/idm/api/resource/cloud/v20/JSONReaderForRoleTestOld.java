@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForRole;
-import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRole;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;

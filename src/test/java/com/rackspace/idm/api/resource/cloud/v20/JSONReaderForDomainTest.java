@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.idm.api.resource.cloud.v20.JSONReaders.JSONReaderForDomain;
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForDomain;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,8 +24,8 @@ import static org.mockito.Mockito.spy;
  * To change this template use File | Settings | File Templates.
  */
 public class JSONReaderForDomainTest {
-    JSONReaderForDomain jsonReaderForDomain;
-    JSONReaderForDomain spy;
+    JSONReaderRaxAuthForDomain jsonReaderForDomain;
+    JSONReaderRaxAuthForDomain spy;
 
     String jsonBody = "{\n" +
                 "  \"domain\": {\n" +
@@ -38,7 +38,7 @@ public class JSONReaderForDomainTest {
 
     @Before
     public void setUp() throws Exception {
-        jsonReaderForDomain = new JSONReaderForDomain();
+        jsonReaderForDomain = new JSONReaderRaxAuthForDomain();
         spy = spy(jsonReaderForDomain);
     }
 
@@ -73,13 +73,13 @@ public class JSONReaderForDomainTest {
 
     @Test
     public void getRSARequestFromJSONString_withNoRSARequestKey_returnsEmptyRSARequest() throws Exception {
-        Domain domainJSON = JSONReaderForDomain.getDomainFromJSONString("{ }");
+        Domain domainJSON = JSONReaderRaxAuthForDomain.getDomainFromJSONString("{ }");
         assertThat("authentication request", domainJSON.getName(), nullValue());
     }
 
     @Test
     public void getRSARequestFromJSONString_withValidRSARequest_returnsRSACredentials() throws Exception {
-        Domain domainJSON = JSONReaderForDomain.getDomainFromJSONString(jsonBody);
+        Domain domainJSON = JSONReaderRaxAuthForDomain.getDomainFromJSONString(jsonBody);
         assertThat("domain", domainJSON, instanceOf(Domain.class));
     }
 }
