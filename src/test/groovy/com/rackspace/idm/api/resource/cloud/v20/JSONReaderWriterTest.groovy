@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForAuthenticationRequest
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForEndpoint
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmServices
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsCatalogEndpointTemplate
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthCapabilities
@@ -24,6 +25,7 @@ import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForDoma
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForPolicies
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriter
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForAuthenticationRequest
+import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForEndpoint
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmService
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmServices
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsCatalogEndpointTemplate
@@ -46,9 +48,12 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
+import org.openstack.docs.identity.api.v2.Endpoint
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.VersionForService
+import org.w3._2005.atom.Link
 import spock.lang.Shared
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
@@ -118,6 +123,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForOsKsCatalogEndpointTemplate readerForEndpointTemplate = new JSONReaderForOsKsCatalogEndpointTemplate()
     @Shared JSONWriterForOsKsCatalogEndpointTemplate writerForEndpointTemplate = new JSONWriterForOsKsCatalogEndpointTemplate()
+
+    @Shared JSONReaderForEndpoint readerForEndpoint = new JSONReaderForEndpoint()
+    @Shared JSONWriterForEndpoint writerForEndpoint = new JSONWriterForEndpoint()
 
     def "can read/write region as json"() {
         given:
@@ -604,6 +612,93 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointTemplateObject.id == endpointTemplate.id
         endpointTemplateObject.enabled == endpointTemplate.enabled
         endpointTemplateObject.versionId == endpointTemplate.versionId
+    }
+
+    def "create read/writer for endpoint" () {
+        given:
+        def link = new Link().with {
+            it.type = type
+            it.href = "href"
+            it
+        }
+        def endpoint = v2Factory.createEndpoint().with {
+            it.versionId = "id"
+            it.versionInfo = "info"
+            it.versionList = "list"
+            it.link = [link, link].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.versionId == endpoint.versionId
+        endpointObject.link != null
+        endpointObject.link.size() == 2
+    }
+
+    def "create read/writer for endpoint - empty link" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.versionId = "id"
+            it.versionInfo = "info"
+            it.versionList = "list"
+            it.link = new ArrayList<>()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.versionId == endpoint.versionId
+        endpointObject.link != null
+        endpointObject.link.size() == 0
+    }
+
+    def "create read/writer for endpoint - null link" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.versionId = "id"
+            it.versionInfo = "info"
+            it.versionList = "list"
+            it.link = null
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.versionId == endpoint.versionId
+        endpointObject.link != null
+        endpointObject.link.size() == 0
     }
 
     def getSecretQA(String id, String question, String answer) {

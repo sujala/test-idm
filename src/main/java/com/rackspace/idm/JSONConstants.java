@@ -23,6 +23,8 @@ public final class JSONConstants {
     public static final String DOMAIN = "domain";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
+    public static final String ENDPOINT_LINKS="endpoint_links";
+    public static final String ENDPOINTS_LINKS="endpoints_links";
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
     public static final String ENDPOINT_TEMPLATE = "endpointTemplate";
@@ -39,6 +41,7 @@ public final class JSONConstants {
     public static final String INTERNAL_URL = "internalURL";
     public static final String IS_DEFAULT = "isDefault";
     public static final String KEY = "key";
+    public static final String LINK = "link";
     public static final String LINKS = "links";
     public static final String MOSSO_CREDENTIALS = "mossoCredentials";
     public static final String MOSSO_ID = "mossoId";

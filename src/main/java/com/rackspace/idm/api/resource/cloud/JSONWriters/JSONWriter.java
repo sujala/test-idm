@@ -130,15 +130,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        } else if (object.getClass().equals(EndpointTemplate.class)) {
-
-            EndpointTemplate template = (EndpointTemplate) object;
-            jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
-        } else if (object.getClass().equals(Endpoint.class)) {
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.ENDPOINT, getEndpoint((Endpoint) object));
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(EndpointList.class)) {
+        }   else if (object.getClass().equals(EndpointList.class)) {
             JSONObject outerList = new JSONObject();
             JSONArray endpoints = new JSONArray();
             EndpointList endpointList = (EndpointList) object;
@@ -915,13 +907,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             list.add(getServiceWithoutWrapper(service));
         }
         outer.put(JSONConstants.SERVICES, list);
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    private JSONObject getEndpointTemplate(EndpointTemplate template) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
         return outer;
     }
 
