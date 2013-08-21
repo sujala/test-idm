@@ -34,8 +34,7 @@ public final class JSONConstants {
     public static final String EXTENSION = "extension";
     public static final String EXTENSIONS = "extensions";
     public static final String GLOBAL = "global";
-    public static final String GROUP = "RAX-KSGRP:group";
-    public static final String GROUPS = "RAX-KSGRP:groups";
+    public static final String GROUP = "group";
     public static final String GROUPSLIST = "groups";
     public static final String HREF = "href";
     public static final String ID = "id";
@@ -66,6 +65,8 @@ public final class JSONConstants {
     public static final String RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final String REL = "rel";
     public static final String RAX_KSQA_SECRET_QA = "RAX-KSQA:secretQA";
+    public static final String RAX_KSGRP_GROUP = "RAX-KSGRP:group";
+    public static final String RAX_KSGRP_GROUPS = "RAX-KSGRP:groups";
     public static final String SECRET = "secret";
     public static final String SERVICECATALOG = "serviceCatalog";
     public static final String SERVICES = "services";

@@ -130,22 +130,10 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        }  else if (object instanceof CredentialType) {
-            CredentialType cred = (CredentialType) object;
-             if (cred instanceof PasswordCredentialsBase) {
-                PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
-                jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
-            } else {
-                throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
-            }
-
         } else if (object.getClass().equals(Groups.class)) {
             Groups groups = (Groups) object;
             jsonText = JSONValue.toJSONString(getGroups(groups));
-        } else if (object.getClass().equals(Group.class)) {
-            Group group = (Group) object;
-            jsonText = JSONValue.toJSONString(getGroup(group));
-        } else if (object.getClass().equals(GroupsList.class)) {
+        }  else if (object.getClass().equals(GroupsList.class)) {
             GroupsList groupsList = (GroupsList) object;
             jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
         } else if (object.getClass().equals(CredentialListType.class)) {
@@ -791,7 +779,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.GROUPS, list);
+        outer.put(JSONConstants.RAX_KSGRP_GROUPS, list);
         for (Group group : groups.getGroup()) {
             list.add(getGroupWithoutWrapper(group));
         }
@@ -813,7 +801,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @SuppressWarnings("unchecked")
     JSONObject getGroup(Group group) {
         JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.GROUP, getGroupWithoutWrapper(group));
+        outer.put(JSONConstants.RAX_KSGRP_GROUP, getGroupWithoutWrapper(group));
         return outer;
     }
 

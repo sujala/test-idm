@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.JSONReaders.*
 import com.rackspace.idm.api.resource.cloud.JSONWriters.*
@@ -82,6 +83,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForPasswordCredentials readerForPasswordCredentials = new JSONReaderForPasswordCredentials()
     @Shared JSONWriterForPasswordCredentials writerForPasswordCredentials = new JSONWriterForPasswordCredentials()
+
+    @Shared JSONReaderForRaxKsGroup readerForGroup = new JSONReaderForRaxKsGroup()
+    @Shared JSONWriterForRaxKsGroup writerForGroup = new JSONWriterForRaxKsGroup()
 
     def "can read/write region as json"() {
         given:
@@ -724,6 +728,22 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         passwordCredentialsObject != null
+    }
+
+    def "create read/writer for groups" () {
+        given:
+        def group = v1Factory.createGroup()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroup.writeTo(group, Group.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Group groupObject = readerForGroup.readFrom(Group.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupObject != null
+        groupObject.name == "name"
     }
 
     def getSecretQA(String id, String question, String answer) {
