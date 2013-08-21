@@ -28,6 +28,7 @@ public final class JSONConstants {
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String OS_KSCATALOG_ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
     public static final String ENDPOINT_TEMPLATE = "endpointTemplate";
+    public static final String ENDPOINT_TEMPLATES = "endpointTemplates";
     public static final String ENDPOINTS = "endpoints";
     public static final String EXPIRES = "expires";
     public static final String EXTENSION = "extension";

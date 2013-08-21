@@ -130,16 +130,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        }   else if (object.getClass().equals(EndpointList.class)) {
-            JSONObject outerList = new JSONObject();
-            JSONArray endpoints = new JSONArray();
-            EndpointList endpointList = (EndpointList) object;
-            outerList.put(JSONConstants.ENDPOINTS, endpoints);
-            for (Endpoint endpoint : endpointList.getEndpoint()) {
-                endpoints.add(getEndpoint(endpoint));
-            }
-            jsonText = JSONValue.toJSONString(outerList);
-        } else if (object.getClass().equals(EndpointTemplateList.class)) {
+        }  else if (object.getClass().equals(EndpointTemplateList.class)) {
             JSONObject endpointTemplate = new JSONObject();
             JSONArray endpoints = new JSONArray();
             endpointTemplate.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES, endpoints);

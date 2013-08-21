@@ -6,8 +6,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForAuthenticationRequest
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForEndpoint
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForEndpoints
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmServices
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsCatalogEndpointTemplate
+import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsCatalogEndpointTemplates
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthCapabilities
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthPolicy
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthQuestion
@@ -26,9 +28,11 @@ import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForPoli
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriter
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForAuthenticationRequest
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForEndpoint
+import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForEndpoints
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmService
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmServices
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsCatalogEndpointTemplate
+import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsCatalogEndpointTemplates
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthCapabilities
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthQuestion
 import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthQuestions
@@ -47,8 +51,10 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Endpoint
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -126,6 +132,12 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForEndpoint readerForEndpoint = new JSONReaderForEndpoint()
     @Shared JSONWriterForEndpoint writerForEndpoint = new JSONWriterForEndpoint()
+
+    @Shared JSONReaderForEndpoints readerForEndpoints = new JSONReaderForEndpoints()
+    @Shared JSONWriterForEndpoints writerForEndpoints = new JSONWriterForEndpoints()
+
+    @Shared JSONReaderForOsKsCatalogEndpointTemplates readerForEndpointTemplates = new JSONReaderForOsKsCatalogEndpointTemplates()
+    @Shared JSONWriterForOsKsCatalogEndpointTemplates writerForEndpointTemplates = new JSONWriterForOsKsCatalogEndpointTemplates()
 
     def "can read/write region as json"() {
         given:
@@ -699,6 +711,56 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.versionId == endpoint.versionId
         endpointObject.link != null
         endpointObject.link.size() == 0
+    }
+
+
+    def "create read/writer for endpoints" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.versionId = "id"
+            it.versionInfo = "info"
+            it.versionList = "list"
+            it.link = null
+            it
+        }
+        def endpoints = new EndpointList().with {
+            it.endpoint = [endpoint, endpoint].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoints.writeTo(endpoints, EndpointList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        EndpointList endpointsObject = readerForEndpoints.readFrom(EndpointList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointsObject != null
+        endpointsObject.endpoint.size() == 2
+    }
+
+    def "create read/writer for endpointTemplates" () {
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.versionId = "id"
+            it
+        }
+
+        def endpointTemplates = new EndpointTemplateList().with {
+            it.endpointTemplate = [endpointTemplate, endpointTemplate].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpointTemplates.writeTo(endpointTemplates, EndpointTemplateList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        EndpointTemplateList endpointTemplatesObject = readerForEndpointTemplates.readFrom(EndpointTemplateList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointTemplatesObject != null
+        endpointTemplatesObject.endpointTemplate.size() == 2
+        endpointTemplatesObject.endpointTemplate[0].versionId == "id"
     }
 
     def getSecretQA(String id, String question, String answer) {
