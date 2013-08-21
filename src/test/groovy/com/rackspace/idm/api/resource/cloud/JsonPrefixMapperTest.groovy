@@ -43,7 +43,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get("access");
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("RAX-AUTH:authenticatedBy", "token.authenticatedBy")
+        hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
         JSONObject object = prefixMapper.addPrefix(inner, hashMap)
@@ -74,7 +74,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get("access");
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("RAX-AUTH:authenticatedBy", "token.authenticatedBy")
+        hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
         JSONObject object = prefixMapper.addPrefix(inner, hashMap)
@@ -94,7 +94,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get("access");
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("RAX-AUTH:authenticatedBy", "token.authenticatedBy")
+        hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
         JSONObject object = prefixMapper.addPrefix(inner, hashMap)

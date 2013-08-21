@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForCredentialT
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.CredentialType;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -45,7 +46,7 @@ public class JSONReaderForCredentialTypeTest {
     @Test
     public void checkAndGetCredentialsFromJSONString_withValidJSONAndPasswordCredentials_returnsPasswordCredentials() throws Exception {
         CredentialType credentialType = JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(passwordCredentialsJSON);
-        assertThat("credential type", credentialType, instanceOf(PasswordCredentialsRequiredUsername.class));
+        assertThat("credential type", credentialType, instanceOf(PasswordCredentialsBase.class));
     }
 
     @Test

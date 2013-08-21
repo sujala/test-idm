@@ -1,78 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForAuthenticationRequest
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForEndpoint
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForEndpoints
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmServices
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsCatalogEndpointTemplate
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsCatalogEndpointTemplates
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthCapabilities
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthPolicy
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthQuestion
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthSecretQA
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthRegion
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxKsKeyApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthRegions
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRole
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmService
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForTenants
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForUser
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForUserForCreate
-
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForDomain
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForPolicies
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriter
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForAuthenticationRequest
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForEndpoint
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForEndpoints
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmService
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsAdmServices
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsCatalogEndpointTemplate
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForOsKsCatalogEndpointTemplates
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthCapabilities
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthQuestion
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthQuestions
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthRegion
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthRegions
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxKsKeyApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRole
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthSecretQAs
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForRaxAuthServiceApis
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForTenants
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForUser
-import com.rackspace.idm.api.resource.cloud.JSONWriters.JSONWriterForUserForCreate
-
+import com.rackspace.idm.api.resource.cloud.JSONReaders.*
+import com.rackspace.idm.api.resource.cloud.JSONWriters.*
+import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.io.IOUtils
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
-import org.openstack.docs.identity.api.v2.AuthenticationRequest
-import org.openstack.docs.identity.api.v2.Endpoint
-import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.User
-import org.openstack.docs.identity.api.v2.VersionForService
+import org.openstack.docs.identity.api.v2.*
 import org.w3._2005.atom.Link
 import spock.lang.Shared
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
-import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 import testHelpers.RootServiceTest
 
 class JSONReaderWriterTest extends RootServiceTest {
@@ -138,6 +79,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForOsKsCatalogEndpointTemplates readerForEndpointTemplates = new JSONReaderForOsKsCatalogEndpointTemplates()
     @Shared JSONWriterForOsKsCatalogEndpointTemplates writerForEndpointTemplates = new JSONWriterForOsKsCatalogEndpointTemplates()
+
+    @Shared JSONReaderForPasswordCredentials readerForPasswordCredentials = new JSONReaderForPasswordCredentials()
+    @Shared JSONWriterForPasswordCredentials writerForPasswordCredentials = new JSONWriterForPasswordCredentials()
 
     def "can read/write region as json"() {
         given:
@@ -761,6 +705,25 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointTemplatesObject != null
         endpointTemplatesObject.endpointTemplate.size() == 2
         endpointTemplatesObject.endpointTemplate[0].versionId == "id"
+    }
+
+    def "create read/writer for passwordCredentials" () {
+        given:
+        def cred = new PasswordCredentialsBase().with {
+            it.password = "password"
+            it.username = "username"
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForPasswordCredentials.writeTo(cred, PasswordCredentialsBase.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        PasswordCredentialsBase passwordCredentialsObject = readerForPasswordCredentials.readFrom(PasswordCredentialsBase.class, null, null, null, null, arrayInputStream)
+
+        then:
+        passwordCredentialsObject != null
     }
 
     def getSecretQA(String id, String question, String answer) {

@@ -130,50 +130,9 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        }  else if (object.getClass().equals(EndpointTemplateList.class)) {
-            JSONObject endpointTemplate = new JSONObject();
-            JSONArray endpoints = new JSONArray();
-            endpointTemplate.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES, endpoints);
-            EndpointTemplateList templateList = (EndpointTemplateList) object;
-            for (EndpointTemplate template : templateList.getEndpointTemplate()) {
-                JSONObject templateItem = new JSONObject();
-                templateItem.put(JSONConstants.ID, template.getId());
-                templateItem.put(JSONConstants.ENABLED, template.isEnabled());
-                if (template.getRegion() != null) {
-                    templateItem.put(JSONConstants.REGION, template.getRegion());
-                }
-                if (template.getPublicURL() != null) {
-                    templateItem.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
-                }
-                if (template.getRegion() != null) {
-                    templateItem.put(JSONConstants.GLOBAL, template.isGlobal());
-                }
-                if (template.getName() != null) {
-                    templateItem.put(JSONConstants.NAME, template.getName());
-                }
-                if (template.getAdminURL() != null) {
-                    templateItem.put(JSONConstants.ADMIN_URL, template.getAdminURL());
-                }
-                if (template.getType() != null) {
-                    templateItem.put(JSONConstants.TYPE, template.getType());
-                }
-                if (template.getInternalURL() != null) {
-                    templateItem.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
-                }
-                if (template.getVersion() != null) {
-                    templateItem.put(JSONConstants.VERSION_ID, template.getVersion().getId());
-                    templateItem.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
-                    templateItem.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
-                }
-                endpoints.add(templateItem);
-            }
-            jsonText = JSONValue.toJSONString(endpointTemplate);
-        } else if (object instanceof CredentialType) {
+        }  else if (object instanceof CredentialType) {
             CredentialType cred = (CredentialType) object;
-            if (cred instanceof ApiKeyCredentials) {
-                ApiKeyCredentials creds = (ApiKeyCredentials) cred;
-                jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
-            } else if (cred instanceof PasswordCredentialsBase) {
+             if (cred instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
             } else {

@@ -5,7 +5,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +27,7 @@ public class AuthWithPasswordCredentials {
     AuthResponseTuple authenticate(AuthenticationRequest authenticationRequest) {
         AuthResponseTuple authResponseTuple = new AuthResponseTuple();
 
-        PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+        PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
         //TODO username validation breaks validate call
         validator20.validatePasswordCredentials(creds);
         String username = creds.getUsername();

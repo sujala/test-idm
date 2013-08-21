@@ -34,6 +34,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -861,6 +862,46 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         assertThat("response code", spy.updateUser(httpHeaders, authToken, userId, userForCreate), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+    }
+
+    @Test
+    public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
+        UserForCreate userNoRegion = new UserForCreate();
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        User retrievedUser = new User();
+        retrievedUser.setUsername("testUser");
+        retrievedUser.setId("id");
+        retrievedUser.setRegion("US of A");
+        when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        doNothing().when(userService).updateUser(argumentCaptor.capture(), anyBoolean());
+        spy.updateUser(httpHeaders, authToken, userId, userNoRegion);
+        verify(userService).updateUser(argumentCaptor.capture(), anyBoolean());
+        assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
+    }
+
+    @Test
+    public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        UserForCreate userNullPassword = new UserForCreate();
+        userNullPassword.setUsername("testUser");
+        User user = new User();
+        ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
+
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+
+        doNothing().when(spy).assignProperRole(any(ScopeAccess.class), any(User.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new ObjectFactory());
+        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
+
+        spy.addUser(httpHeaders, uriInfo, authToken, userNullPassword);
+        verify(userConverterCloudV20).fromUser(argumentCaptor.capture());
+        assertThat("user password", argumentCaptor.getValue().getPassword(), notNullValue());
     }
 
     @Test

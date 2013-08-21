@@ -62,7 +62,6 @@ public class TokenConverterCloudV20 {
                     authenticatedByEntity.getCredential().add(authenticatedBy);
                 }
 
-//                token.getAny().add(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy(authenticatedByEntity));
                 token.setAuthenticatedBy(authenticatedByEntity);
             }
         }

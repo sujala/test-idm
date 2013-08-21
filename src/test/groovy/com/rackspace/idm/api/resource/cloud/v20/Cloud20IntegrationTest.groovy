@@ -1744,7 +1744,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
             return it
         }
         def response = cloud20.createRole(serviceAdminToken, role)
-        def createdRole = response.getEntity(Role).value
+        Role createdRole = response.getEntity(Role).value
         cloud20.deleteRole(serviceAdminToken, createdRole.getId())
 
         def propagateValue = null

@@ -13,14 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 10/31/12
- * Time: 2:47 PM
- * To change this template use File | Settings | File Templates.
- */
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -33,6 +27,8 @@ public class JSONReaderForRSACredentials extends JSONReaderForEntity<RsaCredenti
 
     @Override
     public RsaCredentials readFrom(Class<RsaCredentials> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(entityStream, JSONConstants.RAX_AUTH_RSA_CREDENTIALS);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(JSONConstants.RAX_AUTH_RSA_CREDENTIALS ,JSONConstants.RSA_CREDENTIALS);
+        return read(entityStream, JSONConstants.RAX_AUTH_RSA_CREDENTIALS, prefixValues);
     }
 }

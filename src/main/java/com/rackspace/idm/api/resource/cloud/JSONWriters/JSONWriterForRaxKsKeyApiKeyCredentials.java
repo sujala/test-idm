@@ -16,13 +16,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+import static com.rackspace.idm.JSONConstants.*;
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxKsKeyApiKeyCredentials extends JSONWriterForEntity<ApiKeyCredentials> implements MessageBodyWriter<ApiKeyCredentials> {
@@ -33,13 +28,13 @@ public class JSONWriterForRaxKsKeyApiKeyCredentials extends JSONWriterForEntity<
 
     @Override
     public long getSize(ApiKeyCredentials apiKeyCredentials, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override
     public void writeTo(ApiKeyCredentials apiKeyCredentials, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put(JSONConstants.API_KEY_CREDENTIALS, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS);
+        prefixValues.put(API_KEY_CREDENTIALS, RAX_KSKEY_API_KEY_CREDENTIALS);
 
         write(apiKeyCredentials, entityStream, prefixValues);
     }

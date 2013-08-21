@@ -84,7 +84,6 @@ public class RoleConverterCloudV20 {
             jaxbRole.setDescription(role.getDescription());
             jaxbRole.setId(role.getRoleRsId());
             jaxbRole.setPropagate(role.getPropagate());
-
         return jaxbRole;
     }
 

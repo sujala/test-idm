@@ -685,8 +685,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user;
 
-            if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
-                PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
+            if (credentials.getValue() instanceof PasswordCredentialsBase) {
+                PasswordCredentialsBase userCredentials = (PasswordCredentialsBase) credentials.getValue();
                 validator20.validatePasswordCredentialsForCreateOrUpdate(userCredentials);
                 user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
@@ -839,7 +839,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (authenticationRequest.getToken() != null) {
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
-            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
+            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
                 authResponseTuple = authWithPasswordCredentials.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                 authResponseTuple = authWithApiKeyCredentials.authenticate(authenticationRequest);
@@ -3304,8 +3304,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (creds instanceof ApiKeyCredentials) {
             jaxbCreds = objFactories.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials((ApiKeyCredentials) creds);
         }
-        if (creds instanceof PasswordCredentialsRequiredUsername) {
-            jaxbCreds = objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
+        if ((PasswordCredentialsBase.class).isAssignableFrom(creds.getClass())) {
+            jaxbCreds = objFactories.getOpenStackIdentityV2Factory().createCredential(creds);
         }
 
         return jaxbCreds;
