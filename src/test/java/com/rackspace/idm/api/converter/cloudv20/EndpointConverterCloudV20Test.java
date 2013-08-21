@@ -72,21 +72,6 @@ public class EndpointConverterCloudV20Test {
     }
 
     @Test
-    public void toEndpointList_withList_returnsEndpointList_withCorrectSize() throws Exception {
-        ArrayList<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(123456);
-        baseUrls.add(cloudBaseUrl);
-        openstackEndpoint.setBaseUrls(baseUrls);
-        endpoints.add(openstackEndpoint);
-        endpoints.add(openstackEndpoint);
-        EndpointList endpointList = endpointConverterCloudV20.toEndpointList(endpoints);
-        assertThat("endpoint list", endpointList.getEndpoint().size(), equalTo(2));
-    }
-
-    @Test
     public void toEndpointList_withListOfEndpoints_withNoBaseUrls_returnsEmptyList() throws Exception {
         ArrayList<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
@@ -107,7 +92,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
         cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         cloudBaseUrl.setInternalUrl("internalUrl");
         cloudBaseUrl.setServiceName("serviceName");
         cloudBaseUrl.setPublicUrl("publicUrl");
@@ -142,7 +127,7 @@ public class EndpointConverterCloudV20Test {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         baseUrls.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(baseUrls);
         endpoints.add(openstackEndpoint);
@@ -163,7 +148,7 @@ public class EndpointConverterCloudV20Test {
     public void toEndpointListFromBaseUrls_withBaseUrls_returnsEndpointList_withCorrectSize() throws Exception {
         ArrayList<CloudBaseUrl> endpoints = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         endpoints.add(cloudBaseUrl);
         endpoints.add(cloudBaseUrl);
         EndpointList endpointList = endpointConverterCloudV20.toEndpointListFromBaseUrls(endpoints);
@@ -178,7 +163,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
         cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         cloudBaseUrl.setInternalUrl("internalUrl");
         cloudBaseUrl.setServiceName("serviceName");
         cloudBaseUrl.setPublicUrl("publicUrl");
@@ -208,7 +193,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionId("");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         baseUrls.add(cloudBaseUrl);
 
         EndpointList endpointList = endpointConverterCloudV20.toEndpointListFromBaseUrls(baseUrls);
@@ -224,7 +209,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
         cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         cloudBaseUrl.setInternalUrl("internalUrl");
         cloudBaseUrl.setServiceName("serviceName");
         cloudBaseUrl.setPublicUrl("publicUrl");
@@ -251,7 +236,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionId("");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
 
         EndpointTemplate endpoint = endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl);
 
@@ -275,7 +260,7 @@ public class EndpointConverterCloudV20Test {
     public void toEndpointTemplateList_withList_returnsEndpointTemplateList_withCorrectSize() throws Exception {
         ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         baseUrls.add(cloudBaseUrl);
         baseUrls.add(cloudBaseUrl);
         EndpointTemplateList endpointTemplateList = endpointConverterCloudV20.toEndpointTemplateList(baseUrls);
@@ -289,7 +274,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
         cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
         cloudBaseUrl.setInternalUrl("internalUrl");
         cloudBaseUrl.setServiceName("serviceName");
         cloudBaseUrl.setPublicUrl("publicUrl");
@@ -316,7 +301,7 @@ public class EndpointConverterCloudV20Test {
         cloudBaseUrl.setVersionId("");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setBaseUrlId(123456);
+        cloudBaseUrl.setBaseUrlId("123456");
 
         Endpoint endpoint = endpointConverterCloudV20.toEndpoint(cloudBaseUrl);
 
@@ -345,7 +330,7 @@ public class EndpointConverterCloudV20Test {
         assertThat("cloudBaseUrl version info", cloudBaseUrl.getVersionInfo(), equalTo("versionInfo"));
         assertThat("cloudBaseUrl version list", cloudBaseUrl.getVersionList(), equalTo("versionList"));
         assertThat("cloudBaseUrl admin url", cloudBaseUrl.getAdminUrl(), equalTo("adminUrl"));
-        assertThat("cloudBaseUrl admin url", cloudBaseUrl.getBaseUrlId(), equalTo(123456));
+        assertThat("cloudBaseUrl admin url", cloudBaseUrl.getBaseUrlId(), equalTo("123456"));
         assertThat("cloudBaseUrl admin url", cloudBaseUrl.getInternalUrl(), equalTo("internalUrl"));
         assertThat("cloudBaseUrl admin url", cloudBaseUrl.getServiceName(), equalTo("serviceName"));
         assertThat("cloudBaseUrl admin url", cloudBaseUrl.getPublicUrl(), equalTo("publicUrl"));

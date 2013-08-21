@@ -1,15 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.RDN;
-import com.unboundid.ldap.sdk.SearchScope;
-import org.apache.commons.lang.ArrayUtils;
+import com.unboundid.ldap.sdk.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,14 +17,29 @@ import java.util.List;
 @Component
 public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> implements TenantRoleDao {
 
+    @Autowired
+    DefaultPaginator<String> stringPaginator;
+
+    public String getBaseDn() {
+        return BASE_DN;
+    }
+
+    public String getLdapEntityClass(){
+        return OBJECTCLASS_TENANT_ROLE;
+    }
+
+    public String getSortAttribute() {
+        return ATTR_ROLE_RS_ID;
+    }
+
     @Override
     public void addTenantRoleToApplication(Application application, TenantRole tenantRole) {
-        addTenantRole(application.getUniqueId(), tenantRole);
+        addOrUpdateTenantRole(application.getUniqueId(), tenantRole);
     }
 
     @Override
     public void addTenantRoleToUser(User user, TenantRole tenantRole) {
-        addTenantRole(user.getUniqueId(), tenantRole);
+        addOrUpdateTenantRole(user.getUniqueId(), tenantRole);
     }
 
     @Override
@@ -61,8 +74,22 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        String parentDn = getSearchDnForScopeAccess(scopeAccess);
-        return getObjects(searchFilterGetTenantRoles(), parentDn);
+        return getObjects(searchFilterGetTenantRoles(), getSearchDnForScopeAccess(scopeAccess));
+    }
+
+    @Override
+    public List<TenantRole> getAllTenantRolesForTenant(String tenantId) {
+        return getObjects(searchFilterGetTenantRolesByTenantId(tenantId));
+    }
+
+    @Override
+    public List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
+        return getObjects(searchFilterGetTenantRolesByTenantIdAndRoleId(tenantId, roleId));
+    }
+
+    @Override
+    public List<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
+        return getObjects(searchFilterGetTenantRolesByRoleId(role.getId()));
     }
 
     @Override
@@ -72,12 +99,12 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public void deleteTenantRoleForUser(User user, TenantRole tenantRole) {
-        deleteTenantRole(user.getUniqueId(), tenantRole);
+        deleteOrUpdateTenantRole(tenantRole, user.getUniqueId());
     }
 
     @Override
     public void deleteTenantRoleForApplication(Application application, TenantRole tenantRole) {
-        deleteTenantRole(application.getUniqueId(), tenantRole);
+        deleteOrUpdateTenantRole(tenantRole, application.getUniqueId());
     }
 
     @Override
@@ -86,34 +113,66 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public TenantRole getTenantRoleForApplication(Application application, String roleId) {
-        return getObject(searchFilterGetTenantRoleByRoleId(roleId), application.getUniqueId(), SearchScope.SUB);
+    public List<String> getIdsForUsersWithTenantRole(String roleId) {
+        List<String> userIds = new ArrayList<String>();
+        List<TenantRole> tenantRoles = getObjects(searchFilterGetTenantRolesByRoleId(roleId));
+
+        for (TenantRole tenantRole : tenantRoles) {
+            try {
+                userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
+            } catch (LDAPException e) {
+                throw new IllegalStateException();
+            }
+        }
+
+        return userIds;
     }
 
-    @Override
-    public TenantRole getTenantRoleForUser(User user, String roleId) {
-        return getTenantRole(user.getUniqueId(), roleId);
+    private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {
+        TenantRole currentTenantRole = getObject(searchFilterGetTenantRolesByRoleId(tenantRole.getRoleRsId()), uniqueId, SearchScope.SUB);
+        if (currentTenantRole != null) {
+            for (String tenantId : tenantRole.getTenantIds()) {
+                if (currentTenantRole.getTenantIds().contains(tenantId)) {
+                    throw new ClientConflictException();
+                }
+            }
+            currentTenantRole.getTenantIds().addAll(tenantRole.getTenantIds());
+            updateObject(currentTenantRole);
+        } else {
+            addObject(getTenantRoleDn(uniqueId), tenantRole);
+        }
     }
 
-    @Override
-    public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
-        return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
+    private void deleteOrUpdateTenantRole(TenantRole tenantRole, String uniqueId) {
+        TenantRole currentTenantRole = getObject(searchFilterGetTenantRolesByRoleId(tenantRole.getRoleRsId()), uniqueId, SearchScope.SUB);
+        if (currentTenantRole != null) {
+            currentTenantRole.getTenantIds().removeAll(tenantRole.getTenantIds());
+            if (currentTenantRole.getTenantIds().size() == 0) {
+                deleteObject(currentTenantRole);
+            } else {
+                updateObject(currentTenantRole);
+            }
+        }
     }
 
-    @Override
-    public TenantRole getTenantRoleForScopeAccess(ScopeAccess scopeAccess, String roleId) {
-        String parentDn = getSearchDnForScopeAccess(scopeAccess);
-        return getTenantRole(parentDn, roleId);
+    protected String getUserIdFromDN(DN dn) {
+        DN userDN = getBaseDnForSearch(dn);
+        if (userDN != null) {
+            List<RDN> userRDNs= new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
+            for (RDN rdn : userRDNs) {
+                if (rdn.hasAttribute("rsId")) {
+                    String rdnString = rdn.toString();
+                    return rdnString.substring(rdnString.indexOf('=') + 1);
+                }
+            }
+        }
+        return "";
     }
 
     private String getSearchDnForScopeAccess(ScopeAccess scopeAccess) {
-        String userDn = null;
+        String userDn;
         try {
-            if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                userDn = getBaseDnForScopeAccess(new DN(scopeAccess.getUniqueId())).toString();
-            } else {
-                userDn = getBaseDnForScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
-            }
+            userDn = getBaseDnForScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
@@ -141,62 +200,35 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         }
     }
 
-    private void addTenantRole(String parentUniqueId, TenantRole role) {
-        // Adding a tenantRole has multiple paths depending on whether
-        // the user already has that role on not.
-
-        if(role == null){
-            throw new IllegalArgumentException("Role cannot be null");
-        }
-
-        TenantRole existingRole = getTenantRole(parentUniqueId, role.getRoleRsId());
-        if (existingRole == null) {
-            // if the user does not have the role then just add the
-            // tenant role normally.
-            String dn = getTenantRoleDn(parentUniqueId, role);
-            addObject(dn, role);
-        } else if (!ArrayUtils.isEmpty(existingRole.getTenantIds())) {
-            // If the new role is not global then add the new tenant
-            // to the role and update the role, otherwise just update
-            // the role and it will delete the existing tenants and
-            // make it a global role.
-            if (!ArrayUtils.isEmpty(role.getTenantIds())) {
-                for (String tenantId : role.getTenantIds()) {
-                    for(String existingId : existingRole.getTenantIds()){
-                        if(existingId.equals(tenantId)) { //If role is existing then throw error
-                            throw new  ClientConflictException("Tenant Role already exists");
-                        }
-                    }
-                    existingRole.addTenantId(tenantId);
-                }
-            } else {
-                existingRole.setTenantIds(null);
-            }
-            updateTenantRole(existingRole);
+    protected DN getBaseDnForSearch(DN dn) {
+        DN parentDN = dn.getParent();
+        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
+        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
+        List<RDN> remainder = new ArrayList<RDN>(rdns);
+        remainder.removeAll(parentRDNs);
+        RDN rdn = remainder.get(0);
+        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId")) {
+            return dn;
+        } else if (parentDN.getParent() == null) {
+            return null;
+        } else {
+            return getBaseDnForSearch(parentDN);
         }
     }
 
-    private void deleteTenantRole(String parentUniqueId, TenantRole role) {
-        if(role == null){
-            throw new IllegalArgumentException("Role cannot be null");
-        }
+    @Override
+    public TenantRole getTenantRoleForApplication(Application application, String roleId) {
+        return getObject(searchFilterGetTenantRoleByRoleId(roleId), application.getUniqueId(), SearchScope.SUB);
+    }
 
-        TenantRole existingRole = getTenantRole(parentUniqueId, role.getRoleRsId());
+    @Override
+    public TenantRole getTenantRoleForUser(User user, String roleId) {
+        return getTenantRole(user.getUniqueId(), roleId);
+    }
 
-        if (existingRole == null) {
-            throw new NotFoundException("Tenant Role not found");
-        }
-
-        if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
-            deleteObject(existingRole);
-        } else if (existingRole.containsTenantId(role.getTenantIds()[0])) {
-            if (existingRole.getTenantIds().length == 1) {
-                deleteObject(existingRole);
-            } else {
-                existingRole.removeTenantId(role.getTenantIds()[0]);
-                updateObject(existingRole);
-            }
-        }
+    @Override
+    public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
+        return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
     }
 
     private TenantRole getTenantRole(String dn, Filter filter) {
@@ -207,7 +239,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }
 
-    private String getTenantRoleDn(String dn, TenantRole tenantRole) {
+    private String getTenantRoleDn(String dn) {
         return addLdapContainer(dn, LdapRepository.CONTAINER_ROLES);
     }
 
@@ -225,11 +257,30 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     private Filter searchFilterGetTenantRolesByApplicationAndTenantId(String applicationId, String tenantId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
-                .addEqualAttribute(ATTR_TENANT_ID, tenantId)
+                .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId).build();
     }
 
     private Filter searchFilterGetTenantRoleByRoleId(String roleId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();
+    }
+
+    private Filter searchFilterGetTenantRolesByTenantId(String tenantId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId).build();
+    }
+
+    private Filter searchFilterGetTenantRolesByTenantIdAndRoleId(String tenantId, String roleId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId)
+                .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();
+    }
+
+    private Filter searchFilterGetTenantRolesByRoleId(String roleId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
                 .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();

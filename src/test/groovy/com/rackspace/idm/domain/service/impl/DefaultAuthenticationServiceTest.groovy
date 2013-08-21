@@ -2,10 +2,6 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.Attribute
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-import com.rackspace.idm.domain.entity.Credentials
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
 import org.joda.time.DateTime
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -16,10 +12,8 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
     @Shared def dn = "accessToken=123456,cn=TOKENS,ou=users,o=rackspace"
-    @Shared def parentDn = "cn=TOKENS,ou=users,o=rackspace"
 
     @Shared def refreshWindowHours = 6
-    @Shared def tokenExpirationHours = 12
     @Shared def expiredDate
     @Shared def refreshDate
     @Shared def futureDate
@@ -36,7 +30,6 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         mockAuthDao(service)
         mockConfiguration(service)
         mockUserService(service)
-        mockCustomerService(service)
         mockInputValidator(service)
         mockRSAClient(service)
 
@@ -58,20 +51,20 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         }
         scopeAccess = expireScopeAccess(scopeAccess)
 
-        scopeAccessService.getUserScopeAccessForClientId(_, _) >>> [null, scopeAccess]
+        scopeAccessService.getUserScopeAccessByClientId(_, _) >>> [null, scopeAccess]
 
         when:
         service.getAndUpdateUserScopeAccessForClientId(userOne, application)
         service.getAndUpdateUserScopeAccessForClientId(userTwo, application)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(userOne.getUniqueId(), _)
+        1 * scopeAccessService.addUserScopeAccess(userOne, _)
 
         then:
-        1 * scopeAccessService.deleteScopeAccessByDn(_)
+        1 * scopeAccessService.deleteScopeAccess(_)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(userTwo.getUniqueId(), _)
+        1 * scopeAccessService.addUserScopeAccess(userTwo, _)
     }
 
     def "Calls getAndUpdateUserScopeAccessForClientId returns existing scopeAccess if not exipired"() {
@@ -80,7 +73,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def scopeAccess = createUserScopeAccess()
         def application = entityFactory.createApplication()
 
-        scopeAccessService.getUserScopeAccessForClientId(_, _) >> scopeAccess
+        scopeAccessService.getUserScopeAccessByClientId(_, _) >> scopeAccess
 
         when:
         def result = service.getAndUpdateUserScopeAccessForClientId(user, application)
@@ -96,20 +89,20 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def applicationTwo = entityFactory.createApplication("2", "client2")
         def scopeAccess = expireScopeAccess(createClientScopeAccess())
 
-        scopeAccessService.getClientScopeAccessForClientId(_, _) >>> [ null, scopeAccess ]
+        scopeAccessService.getApplicationScopeAccess(_) >>> [ null, scopeAccess ]
 
         when:
         service.getAndUpdateClientScopeAccessForClientId(applicationOne)
         service.getAndUpdateClientScopeAccessForClientId(applicationTwo)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(applicationOne.getUniqueId(), _)
+        1 * scopeAccessService.addApplicationScopeAccess(applicationOne, _)
 
         then:
-        1 * scopeAccessService.deleteScopeAccessByDn(_)
+        1 * scopeAccessService.deleteScopeAccess(_)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(applicationTwo.getUniqueId(), _)
+        1 * scopeAccessService.addApplicationScopeAccess(applicationTwo, _)
     }
 
     def "Calls getAndUpdateClientScopeAccessForClientId returns scopeAccess if not expired"() {
@@ -117,7 +110,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def scopeAccess = createClientScopeAccess()
         def application = entityFactory.createApplication()
 
-        scopeAccessService.getClientScopeAccessForClientId(_, _) >> scopeAccess
+        scopeAccessService.getApplicationScopeAccess(_) >> scopeAccess
 
         when:
         def result = service.getAndUpdateClientScopeAccessForClientId(application)
@@ -130,7 +123,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         given:
         config.getString("idm.clientId") >> "idmClientId"
         def application = entityFactory.createApplication("1", "client1").with {
-            it.RCN = "RCN"
+            it.rcn = "RCN"
             return it
         }
         def tenantRole = entityFactory.createTenantRole("Racker").with {
@@ -141,7 +134,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def rackerTwo = entityFactory.createRacker("racker2")
         def scopeAccess = expireScopeAccess(createRackerScopeAcccss())
 
-        scopeAccessService.getRackerScopeAccessForClientId(_, _) >>> [ null, scopeAccess ]
+        scopeAccessService.getRackerScopeAccessByClientId(_, _) >>> [ null, scopeAccess ]
         tenantService.getTenantRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
@@ -149,20 +142,20 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         service.getAndUpdateRackerScopeAccessForClientId(rackerTwo, application)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(rackerOne.getUniqueId(), _)
+        1 * scopeAccessService.addUserScopeAccess(rackerOne, _)
 
         then:
-        1 * scopeAccessService.deleteScopeAccessByDn(_)
+        1 * scopeAccessService.deleteScopeAccess(_)
 
         then:
-        1 * scopeAccessService.addDirectScopeAccess(rackerTwo.getUniqueId(), _)
+        1 * scopeAccessService.addUserScopeAccess(rackerTwo, _)
     }
 
-    def "Calls getAndUpdateRackerScopeAccessForClientId returns existing scopeAccess if not expired"() {        given:
+    def "Calls getAndUpdateRackerScopeAccessForClientId returns existing scopeAccess if not expired"() {
         given:
         config.getString("idm.clientId") >> "idmClientId"
         def application = entityFactory.createApplication("1", "client1").with {
-            it.RCN = "RCN"
+            it.rcn = "RCN"
             return it
         }
         def tenantRole = entityFactory.createTenantRole("Racker").with {
@@ -172,7 +165,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def racker = entityFactory.createRacker("racker")
         def scopeAccess = createRackerScopeAcccss()
 
-        scopeAccessService.getRackerScopeAccessForClientId(_, _) >> scopeAccess
+        scopeAccessService.getRackerScopeAccessByClientId(_, _) >> scopeAccess
         tenantService.getTenantRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
@@ -205,6 +198,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         applicationService.authenticate(_, _) >> authResult
+        userService.getUserByScopeAccess(_) >> user
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
         userService.getUserById(_) >> user
 
@@ -213,59 +207,19 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
 
         then:
         returned.clientId == "clientId"
-        1 * scopeAccessService.addDirectScopeAccess(_, _)
-        1 * scopeAccessService.deleteScopeAccess(_)
-    }
-
-    def "Calls getTokens with Authorization Code credentials adds new and deletes old scopeaccess"() {
-        given:
-        def scopeAccessOne = new DelegatedClientScopeAccess();
-        scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = refreshDate
-        scopeAccessOne.authCode = "authCode12345"
-        scopeAccessOne.authCodeExp = refreshDate
-        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
-        scopeAccessOne.clientId = "clientId"
-
-        def credentials = Mock(Credentials)
-        credentials.getOAuthGrantType() >> "AUTHORIZATION_CODE"
-        credentials.getGrantType() >> "AUTHORIZATION_CODE"
-        credentials.getClientId() >> "12345"
-
-        def authResult = Mock(ClientAuthenticationResult)
-        authResult.isAuthenticated() >> true
-        authResult.getClient() >> new Application().with() {
-            it.clientId = "clientId"
-            return it
-        }
-
-        applicationService.authenticate(_, _) >> authResult
-
-        scopeAccessService.getScopeAccessByAuthCode(_) >> scopeAccessOne
-
-        when:
-        service.getTokens(credentials, new DateTime())
-
-        then:
-        1 * scopeAccessService.addDirectScopeAccess(_, _)
+        1 * scopeAccessService.addUserScopeAccess(_, _)
         1 * scopeAccessService.deleteScopeAccess(_)
     }
 
     def "Calls getTokens sets token expiration with entropy"() {
         given:
         def credentials = Mock(Credentials)
-        credentials.getGrantType() >> grantType
-        credentials.getOAuthGrantType() >> oAuthGrantType
+        credentials.getGrantType() >> "REFRESH_TOKEN"
+        credentials.getOAuthGrantType() >> OAuthGrantType.REFRESH_TOKEN
         credentials.getClientId() >> "clientId"
 
-        def scopeAccess
-        if (grantType == "REFRESH_TOKEN") {
-            scopeAccess = Mock(UserScopeAccess)
-            scopeAccess.isRefreshTokenExpired(_) >> false
-        } else {
-            scopeAccess = Mock(DelegatedClientScopeAccess)
-            scopeAccess.isAuthorizationCodeExpired(_) >> false
-        }
+        def scopeAccess = Mock(UserScopeAccess)
+        scopeAccess.isRefreshTokenExpired(_) >> false
         scopeAccess.getClientId() >> "clientId"
         scopeAccess.getUniqueId() >> "accessToken=accessToken,cn=TOKENS,rsId=1234"
 
@@ -278,19 +232,13 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
 
         applicationService.authenticate(_, _) >> caResult
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
-        scopeAccessService.getScopeAccessByAuthCode(_) >> scopeAccess
         userService.getUserById(_) >> entityFactory.createUser()
 
         when:
-        service.getTokens(credentials , time)
+        service.getTokens(credentials , new DateTime())
 
         then:
         1 * scopeAccessService.getTokenExpirationSeconds(_)
-
-        where:
-        grantType            | time           | oAuthGrantType
-        "REFRESH_TOKEN"      | new DateTime() | OAuthGrantType.REFRESH_TOKEN
-        "AUTHORIZATION_CODE" | new DateTime() | OAuthGrantType.AUTHORIZATION_CODE
     }
 
     def "Calls getAndUpdateUserScopeAccessForClientId sets expiration with entropy"() {
@@ -299,7 +247,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def expired = expireScopeAccess(createUserScopeAccess())
 
-        scopeAccessService.getUserScopeAccessForClientId(_, _) >> expired
+        scopeAccessService.getUserScopeAccessByClientId(_) >> expired
 
         when:
         service.getAndUpdateUserScopeAccessForClientId(user, application)
@@ -313,7 +261,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         def application = entityFactory.createApplication()
         def scopeAccess = expireScopeAccess(createClientScopeAccess())
 
-        scopeAccessService.getClientScopeAccessForClientId(_, _) >> scopeAccess
+        scopeAccessService.getApplicationScopeAccess(_) >> scopeAccess
 
         when:
         service.getAndUpdateClientScopeAccessForClientId(application)

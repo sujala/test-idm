@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -23,19 +22,21 @@ public interface UserService {
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
 
-    UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey);
-
-    UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
-
     void deleteRacker(String rackerId);
     
     void deleteUser(User user);
     
     void deleteUser(String username);
 
-    Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit);
+    List<User> getUsersByRCN(String RCN);
 
-    Users getAllUsers(FilterParam[] filters);
+    List<User> getUsersByUsername(String username);
+
+    List<User> getAllUsers();
+
+    List<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled);
+
+    List<User> getUsersByGroupId(String groupId);
 
     String generateApiKey();
     
@@ -45,7 +46,7 @@ public interface UserService {
 
     User getUser(String username);
 
-    Users getUsersByEmail(String email);
+    List<User> getUsersByEmail(String email);
 
     User getUserByAuthToken(String authToken);
     
@@ -53,20 +54,14 @@ public interface UserService {
 
     User checkAndGetUserById(String id);
     
-    User getUserByRPN(String rpn);
-
-    Users getUsersByTenantId(String tenantId);
+    List<User> getUsersByTenantId(String tenantId);
 
     User getUserByTenantId(String tenantId);
-
-    User getUserBySecureId(String secureId);
 
     User getUser(String customerId, String username);
 
     User getSoftDeletedUser(String id);
 
-    User getSoftDeletedUserByUsername(String id);
-    
     Applications getUserApplications(User user);
     
     User loadUser(String customerId, String username);
@@ -83,20 +78,11 @@ public interface UserService {
 
     Password resetUserPassword(User user);
 
-//    DateTime getUserPasswordExpirationDate(String userName);
-
-//    UserAuthenticationResult authenticateRacker(String username, String password);
-
     void softDeleteUser(User user) throws IOException, JAXBException;
-    boolean userExistsById(String userId);
-    boolean userExistsByUsername(String username);
-    boolean isMigratedUser(User user);
 
-    void addBaseUrlToUser(Integer baseUrlId, User user);
+    void addBaseUrlToUser(String baseUrlId, User user);
 
-    void removeBaseUrlFromUser(Integer baseUrlId, User user);
-
-    List<Tenant> getUserTenants(String userId);
+    void removeBaseUrlFromUser(String baseUrlId, User user);
 
 	List<User> getSubUsers(User user);
 
@@ -112,9 +98,15 @@ public interface UserService {
 
     void setCloudRegionService(CloudRegionService cloudRegionService);
     
-    PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit);
+    PaginatorContext<User> getAllUsersPaged(int offset, int limit);
 
-    PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit);
+    PaginatorContext<User> getAllUsersPagedWithDomain(String domainId, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithDomainAndRole(String domainId, String roleId, int offset, int limit);
+
+    PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
 
     int getUserWeight(User user, String applicationId);
 
@@ -126,9 +118,7 @@ public interface UserService {
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
-    List<User> getUsersInDomain(String domainId, boolean enabled);
-
-    List<User> getUsersInDomain(String domainId);
+    List<User> getUsersWithDomain(String domainId);
 
     void setTenantService(TenantService tenantService);
 
@@ -137,4 +127,12 @@ public interface UserService {
     void setCryptHelper(CryptHelper cryptHelper);
 
     void setPropertiesService(PropertiesService propertiesService);
+
+    void addGroupToUser(String groupId, String userId);
+
+    void deleteGroupFromUser(String groupId, String userId);
+
+    List<Group> getGroupsForUser(String userId);
+
+    boolean isUserInGroup(String userId, String groupId);
 }

@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
@@ -51,7 +50,7 @@ public class UserConverterCloudV20Test {
         assertThat("username", userDO.getUsername(), equalTo("username"));
         assertThat("email", userDO.getEmail(), equalTo("email"));
         assertThat("display name", userDO.getDisplayName(), equalTo("displayName"));
-        assertThat("enabled", userDO.isEnabled(), equalTo(true));
+        assertThat("enabled", userDO.getEnabled(), equalTo(true));
     }
 
     @Test

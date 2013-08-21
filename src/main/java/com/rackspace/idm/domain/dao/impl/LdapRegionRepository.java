@@ -22,6 +22,10 @@ public class LdapRegionRepository extends LdapGenericRepository<Region> implemen
         return ATTR_REGION_SEARCH_ATTRIBUTES;
     }
 
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
+
     @Override
     public void addRegion(Region region) {
         addObject(region);

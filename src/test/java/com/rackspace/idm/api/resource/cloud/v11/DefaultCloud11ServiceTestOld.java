@@ -22,14 +22,12 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -78,7 +76,7 @@ public class DefaultCloud11ServiceTestOld {
     ApplicationService clientService;
     AuthHeaderHelper authHeaderHelper;
     User user = new User();
-    com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User("userId");
+    com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User();
     HttpServletRequest request;
     private ScopeAccessService scopeAccessService;
     UserScopeAccess userScopeAccess;
@@ -127,8 +125,7 @@ public class DefaultCloud11ServiceTestOld {
         tenant.setName("tenant");
         tenant.setEnabled(true);
         tenant.setTenantId("1");
-        String baseUrls[] = {};
-        tenant.setBaseUrlIds(baseUrls);
+        tenant.getBaseUrlIds().clear();
 
         userDO.setId("1");
         userDO.setMossoId(1);
@@ -459,34 +456,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addNastTenant_callsNastFacade() throws Exception {
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.addNastTenant(user, userDO.getId());
-        Mockito.verify(nastFacade).addNastUser(user);
-    }
-
-    @Test
-    public void addMossoTenant_withMossoId_callsTenantService() throws Exception {
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.addMossoTenant(user, userDO.getId());
-        verify(tenantService).addTenant(any(Tenant.class));
-    }
-
-    @Test
     public void addNastTenant_withNastId_callsTenantService() throws Exception {
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         when(nastFacade.addNastUser(user)).thenReturn("nastId");
@@ -494,82 +463,6 @@ public class DefaultCloud11ServiceTestOld {
         user.setNastId("nastId");
         defaultCloud11Service.addNastTenant(user, userDO.getId());
         verify(tenantService).addTenant(any(Tenant.class));
-    }
-
-    @Test
-    public void addNastTenant_withNastId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
-        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        when(nastFacade.addNastUser(user)).thenReturn("nastId");
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setNastId("nastId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.addNastTenant(user, userDO.getId());
-        verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
-    }
-
-    @Test
-    public void addMossoTenant_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setNastId("nastId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        defaultCloud11Service.addMossoTenant(user1, userDO.getId());
-        verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
-    }
-
-    @Test
-    public void addMossoTenant_callsTenantService() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setNastId("nastId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        defaultCloud11Service.addMossoTenant(user1, userDO.getId());
-        verify(tenantService).addTenant(any(Tenant.class));
-    }
-
-    @Test
-    public void addNastTenant_callsTenantService() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        users.setUsers(listUser);
-        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
-        defaultCloud11Service.addNastTenant(user1, userDO.getId());
-        verify(tenantService).addTenant(any(Tenant.class));
-    }
-
-    @Test
-    public void addNastTenant_tenantServiceThrowsDuplicateException_exceptionGetsCaught() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        users.setUsers(listUser);
-        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
-        doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
-        defaultCloud11Service.addNastTenant(user1, userDO.getId());
     }
 
     @Test
@@ -621,27 +514,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addNastTenant_withNastId_addsBaseUrlsToTenant() throws Exception {
-        User user1 = new User();
-        user1.setNastId("nastId");
-        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(false);
-        ArrayList<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl = new CloudBaseUrl();
-        baseUrl.setDef(true);
-        baseUrl.setBaseUrlId(1);
-        cloudBaseUrls.add(baseUrl);
-        CloudBaseUrl baseUrl2 = new CloudBaseUrl();
-        baseUrl2.setDef(true);
-        baseUrl2.setBaseUrlId(2);
-        cloudBaseUrls.add(baseUrl2);
-        when(endpointService.getBaseUrlsByBaseUrlType("NAST")).thenReturn(cloudBaseUrls);
-        ArgumentCaptor<Tenant> argumentCaptor = ArgumentCaptor.forClass(Tenant.class);
-        defaultCloud11Service.addNastTenant(user1, userDO.getId());
-        verify(tenantService).addTenant(argumentCaptor.capture());
-        assertThat("Tenant Base Urls", argumentCaptor.getValue().getBaseUrlIds(), equalTo(new String[]{"1", "2"}));
-    }
-
-    @Test
     public void addNastTenant_callsClientService_getClientRoleByClientIdAndRoleName() throws Exception {
         User user1 = new User();
         user1.setNastId("nastId");
@@ -654,22 +526,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addMossoTenant_callsClientService_getClientRoleByClientIdAndRoleName() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
-        when(clientService.getByName("cloudServers")).thenReturn(application);
-        defaultCloud11Service.addMossoTenant(user1, userDO.getId());
-        verify(clientService).getClientRoleByClientIdAndRoleName("id", "foo:default");
-    }
-
-
-    @Test
     public void addNastTenant_callsClientService_getClient() throws Exception {
         User user1 = new User();
         user1.setNastId("nastId");
@@ -677,21 +533,6 @@ public class DefaultCloud11ServiceTestOld {
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         defaultCloud11Service.addNastTenant(user1, userDO.getId());
         verify(clientService).getByName("cloudFiles");
-    }
-
-    @Test
-    public void addMossoTenant_callsClientService_getClient() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        when(userService.getUsersByTenantId("123")).thenReturn(users);
-        when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
-        when(clientService.getByName("cloudServers")).thenReturn(application);
-        defaultCloud11Service.addMossoTenant(user1, userDO.getId());
-        verify(clientService).getByName("cloudServers");
     }
 
     @Test
@@ -711,35 +552,6 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.addMossoTenant(user1, userDO.getId());
         verify(clientService, never()).getClientRoleByClientIdAndRoleName(anyString(), anyString());
         verify(userService, never()).getUserByTenantId(anyString());
-    }
-
-
-    @Test
-    public void addMossoTenant_calls_tenantService_addTenantRoleToUser() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        when(userService.getUsersByTenantId(String.valueOf(123))).thenReturn(users);
-        defaultCloud11Service.addMossoTenant(user1, userDO.getId());
-        verify(tenantService).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
-    }
-
-    @Test
-    public void addMossoTenant_withMossoId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        user.setId("userId");
-        user.setNastId("nastId");
-        user.setMossoId(123);
-        when(userService.getUsersByTenantId(String.valueOf(123))).thenReturn(users);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.addMossoTenant(user, userDO.getId());
-        Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
     }
 
     @Test
@@ -1093,76 +905,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addBaseUrlRef_withValidUser_callsEndpointService_getBaseUrlById() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        spy.addBaseURLRef(request, "userId", null, null, new BaseURLRef());
-        verify(endpointService).getBaseUrlById(anyInt());
-    }
-
-    @Test
-    public void addBaseUrlRef_withNullBaseUrl_returnsNotFoundResponse() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", null, null, new BaseURLRef());
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void addBaseUrlRef_withDisabledBaseUrl_returnsBadRequestResponse() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(cloudBaseUrl.getEnabled()).thenReturn(false);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", null, null, new BaseURLRef());
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void addBaseUrlRef_validCloudBaseUrl_callsEndpointService_addBaseUrlToUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(cloudBaseUrl.getEnabled()).thenReturn(true);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        spy.addBaseURLRef(request, "userId", null, null, new BaseURLRef());
-        verify(tenantService).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void addBaseUrlRef_validCloudBaseUrl_v1DefaultSetTrue_addBaseUrlToUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(cloudBaseUrl.getEnabled()).thenReturn(true);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        BaseURLRef baseURLRef = new BaseURLRef();
-        baseURLRef.setV1Default(true);
-        spy.addBaseURLRef(request, "userId", null, null, baseURLRef);
-        verify(tenantService).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void addBaseUrlRef_validCloudBaseUrl_returns201Status() throws Exception {
-        BaseURLRef baseUrlRef = mock(BaseURLRef.class);
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(cloudBaseUrl.getEnabled()).thenReturn(true);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", null, uriInfo, baseUrlRef);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
-    }
-
-    @Test
     public void createUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.createUser(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
@@ -1179,141 +921,6 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, null, null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void deleteBaseUrlRef_withValidUserId_callsEndpointService_getBaseUrlRefById() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(endpointService).getBaseUrlById(anyInt());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_withNullBaseUrl_returnsNotFoundResponse() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        when(endpointService.getBaseUrlById(12345)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, "12345", null);
-        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
-
-    }
-
-    @Test
-    public void deleteBaseUrlRef_withValidData_callsEndpointService_removeBaseUrlFromUser() throws Exception {
-        Tenant tenant2 = new Tenant();
-        tenant2.setBaseUrlIds(new String[] {"1"});
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        tenant.setBaseUrlIds(new String[] {"1"});
-        when(tenantService.getTenant(anyString())).thenReturn(tenant).thenReturn(tenant2);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService,times(2)).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_nullTenantByMossoId_updatesTenantOnce() throws Exception {
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setNastId("nast");
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(user1);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        tenant.setBaseUrlIds(new String[] {"1"});
-        when(tenantService.getTenant("nast")).thenReturn(tenant);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService,times(1)).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_nullTenantByNastId_updatesTenantOnce() throws Exception {
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setMossoId(123);
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(user1);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        tenant.setBaseUrlIds(new String[] {"1"});
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService,times(1)).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_nullBaseUrlRefs_doesNotUpdateTenant() throws Exception {
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setMossoId(123);
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(user1);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService,never()).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_idsDoNotMatch_doesNotUpdateTenant() throws Exception {
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setMossoId(123);
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(user1);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        tenant.setBaseUrlIds(new String[] {"2"});
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService,never()).updateTenant(Matchers.<Tenant>anyObject());
-    }
-
-    @Test
-    public void deleteBaseUrlRef_withValidData_returnsStatus204() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
-        tenant.setBaseUrlIds(new String[] {"1"});
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, "12345", null);
-        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteBaseUrlRef_deleteV1Default() throws Exception {
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setMossoId(123);
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(user1);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
-        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
-        when(cloudBaseUrl.getBaseUrlId()).thenReturn(12345);
-        tenant.setBaseUrlIds(new String[] {"12345"});
-        tenant.setV1Defaults(new String[]{"12345"});
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        spy.deleteBaseURLRef(null, null, "12345", null);
-        assertThat("Deleted v1Default",tenant.getV1Defaults().length,equalTo(0));
     }
 
     @Test
@@ -1450,15 +1057,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void getBaseUrlRef_withValidUser_callsEndpointService_getEndpointForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        spy.getBaseURLRef(null, null, "0", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
     public void getBaseUrlRef_withNullEndpointForUser_returnsNotFoundStatus() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
@@ -1467,59 +1065,9 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void getBaseUrlRef_withValidData_returns200Status() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        List<OpenstackEndpoint> endpointsForUser = new ArrayList<OpenstackEndpoint>();
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        openstackEndpoint.setTenantName("foo");
-        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrlList.add(cloudBaseUrl);
-        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
-        endpointsForUser.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(endpointsForUser);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLRef(null, null, "1", null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLRefs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
-    }
-
-
-    @Test
-    public void getBaseUrlRefs_isAdminCall_callsEndpointServce_getEndpointsForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        spy.getBaseURLRefs(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void getBaseUrlRefs_callsEndpointConverterCloudV11_toBaseUrlRefs_withCloudEndpoints() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(new UserScopeAccess());
-        List<OpenstackEndpoint> endpointsForUser = new ArrayList<OpenstackEndpoint>();
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        openstackEndpoint.setTenantName("foo");
-        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrlList.add(cloudBaseUrl);
-        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
-        endpointsForUser.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(endpointsForUser);
-        spy.getBaseURLRefs(null, "userId", null);
-        verify(endpointConverterCloudV11).openstackToBaseUrlRefs(endpointsForUser);
     }
 
     @Test
@@ -1549,25 +1097,6 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUser(null)).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getServiceCatalog(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void getServiceCatalog_withValidUser_callsEndpointService_getEndpointsForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        List<OpenstackEndpoint> endpointsForUser = new ArrayList<OpenstackEndpoint>();
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        openstackEndpoint.setTenantName("foo");
-        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrlList.add(cloudBaseUrl);
-        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
-        endpointsForUser.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(endpointsForUser);
-        spy.getServiceCatalog(null, null, null);
-        verify(endpointConverterCloudV11).toServiceCatalog(Matchers.anyList());
     }
 
     @Test
@@ -1610,15 +1139,6 @@ public class DefaultCloud11ServiceTestOld {
     public void getUser_validUser_callsScopeAccessService_getUserScopeAccessForClientId() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser("userId")).thenReturn(userDO);
-        spy.getUser(null, "userId", null);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void getUser_validUser_callsScopeAccessService_getOpenstackEndpointsForScopeAccess() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         spy.getUser(null, "userId", null);
         verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
@@ -1786,13 +1306,13 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserGroups(request, "userId", null);
-        verify(userGroupService).getGroupsForUser(anyString());
+        verify(userService).getGroupsForUser(anyString());
     }
 
     @Test
     public void getUserGroups_noUserGroups_callsCloudGroupService_getGroupById() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userGroupService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
+        when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserGroups(request, "userId", null);
         verify(cloudGroupService).getGroupById(anyString());
@@ -1803,7 +1323,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         ArrayList<Group> groups = new ArrayList<Group>();
         groups.add(new Group());
-        when(userGroupService.getGroupsForUser(anyString())).thenReturn(groups);
+        when(userService.getGroupsForUser(anyString())).thenReturn(groups);
         when(userService.getUser("userId")).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "userId", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
@@ -2039,17 +1559,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void updateUser_userHasNoBaseURLRefs_doesNotEditUserBaseURLRefs() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        when(userService.getUser("userId")).thenReturn(userDO);
-        spy.updateUser(request, "userId", null, user);
-        verify(userService, never()).addBaseUrlToUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-        verify(userService, never()).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
     public void updateUser_userHasBaseURLRefs_callsEndpointService_getEndpointsForUser() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         doNothing().when(userValidator).validate(user);
@@ -2058,34 +1567,6 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.updateUser(request, "userId", null, user);
         verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void updateUser_endpointServiceHasEndpointsForUser_oldEndpointsAreDeleted() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        BaseURLRefList baseURLRefList = new BaseURLRefList();
-        baseURLRefList.getBaseURLRef().add(new BaseURLRef());
-        user.setBaseURLRefs(baseURLRefList);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        ArrayList<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
-        CloudEndpoint cloudEndpoint = new CloudEndpoint();
-        CloudBaseUrl baseUrl = new CloudBaseUrl();
-        baseUrl.setBaseUrlId(12345);
-        cloudEndpoint.setBaseUrl(baseUrl);
-        cloudEndpoints.add(cloudEndpoint);
-        List<OpenstackEndpoint> currentEndpoints = new ArrayList<OpenstackEndpoint>();
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        openstackEndpoint.setTenantId(tenant.getTenantId());
-        openstackEndpoint.setTenantName(tenant.getName());
-        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        cloudBaseUrlList.add(baseUrl);
-        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
-        currentEndpoints.add(openstackEndpoint);
-        when(scopeAccessService.getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject())).thenReturn(currentEndpoints);
-        spy.updateUser(request, "userId", null, user);
-        verify(userService).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -2105,57 +1586,6 @@ public class DefaultCloud11ServiceTestOld {
         user.setId("userId");
         when(userService.getUser("userId")).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, "userId", null, user);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
-        spy.getBaseURLById(request, 0, null, null);
-        verify(spy).authenticateCloudAdminUserForGetRequests(request);
-    }
-
-    @Test
-    public void getBaseURLId_isAdminCall_callEndpointService_getBaseUrlById() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        spy.getBaseURLById(request, 12345, null, null);
-        verify(endpointService).getBaseUrlById(12345);
-    }
-
-    @Test
-    public void getBaseURLId_withNullBaseURL_returnsNotFoundResponse() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(endpointService.getBaseUrlById(12345)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, null, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void getBaseURLId_withServiceNameNotNullAndNotMatching_returnsNotFoundResponse() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName("serviceName2");
-        when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void getBaseURLId_withValidServiceAndBaseURL_callsEndpointConverterCloudV11_toBaseUrl() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName("serviceName");
-        when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        spy.getBaseURLById(request, 12345, "serviceName", null);
-        verify(endpointConverterCloudV11).toBaseUrl(any(CloudBaseUrl.class));
-    }
-
-    @Test
-    public void getBaseURLId_withValidServiceAndBaseURL_returns200Status() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName("serviceName");
-        when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -2361,29 +1791,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void createUser_VerifyUserAdminRoleIsAdded() throws Exception{
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        users.setUsers(listUser);
-        user.setId("1");
-        user.setMossoId(123456);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("7");
-        clientRole.setName("identity:user-admin");
-        userDO.setId("1");
-        userDO.setMossoId(123456);
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        when(userService.getUsersByTenantId("123456")).thenReturn(users);
-        when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
-        when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
-        doNothing().when(spy).addMossoTenant(any(User.class), anyString());
-        doReturn("nastId").when(spy).addNastTenant(any(User.class), anyString());
-        spy.createUser(request,httpHeaders,uriInfo,user);
-        verify(tenantService).addTenantRoleToUser(Matchers.<com.rackspace.idm.domain.entity.User>any(), Matchers.<TenantRole>any());
-    }
-
-    @Test
     public void createUser_withBlankId_returnsBadRequest() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         User user = new User();
@@ -2409,17 +1816,6 @@ public class DefaultCloud11ServiceTestOld {
         user.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         userDO.setId("someId");
         userDO.setMossoId(123456);
-
-        when(userService.getUser(anyString())).thenReturn(null);
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        doNothing().when(spy).validateMossoId(anyInt());
-        doNothing().when(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
-        doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());
-        when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(new CloudBaseUrl());
-        spy.createUser(null, null, null, user);
-        verify(userService).addBaseUrlToUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
     @Test
@@ -2568,50 +1964,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addBaseURLRef_baseUrlTypeIsMosso_responseCreated_returns201() throws Exception {
-        Tenant tenant = new Tenant();
-        tenant.setBaseUrlIds(new String[0]);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setBaseUrlType("MOSSO");
-        cloudBaseUrl.setBaseUrlId(1);
-        com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
-        userTest.setMossoId(1);
-        BaseURLRef baseUrlRef = new BaseURLRef();
-        baseUrlRef.setId(1);
-        baseUrlRef.setHref("href");
-        baseUrlRef.setV1Default(false);
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userTest);
-        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
-        when(tenantService.getTenant("1")).thenReturn(tenant);
-        doNothing().when(tenantService).updateTenant(tenant);
-        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", httpHeaders, uriInfo, baseUrlRef);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void addBaseURLRef_tenantBaseUrlIdMatchesCloudBaseUrlId_returns400() throws Exception {
-        Tenant tenant = new Tenant();
-        String[] baseUrlIds = {"2", "1"};
-        tenant.setBaseUrlIds(baseUrlIds);
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setBaseUrlType("MOSSO");
-        cloudBaseUrl.setBaseUrlId(1);
-        com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
-        userTest.setMossoId(1);
-        BaseURLRef baseUrlRef = new BaseURLRef();
-        baseUrlRef.setId(1);
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        when(userService.getUser("userId")).thenReturn(userTest);
-        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
-        when(tenantService.getTenant("1")).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", httpHeaders, uriInfo, baseUrlRef);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
     public void addMossoTenant_callsAddBaseUrlToTenant() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
@@ -2625,72 +1977,11 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void addBaseUrlToTenant_isUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setRegion("notLon");
-        cloudBaseUrl.setBaseUrlId(1);
-        Tenant tenant = new Tenant();
-        when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, "MOSSO");
-        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
-    }
-
-    @Test
-    public void addBaseUrlToTenant_notUkCloudRegionAndRegionIsLon_doesNotAddBaseUrlIdToTenant() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setRegion("Lon");
-        cloudBaseUrl.setBaseUrlId(1);
-        Tenant tenant = new Tenant();
-        when(config.getString("cloud.region")).thenReturn("notUK");
-        spy.addbaseUrlToTenant(tenant, "MOSSO");
-        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
-    }
-
-    @Test
-    public void addBaseUrlToTenant_notUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
-        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setRegion("notLon");
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrls.add(cloudBaseUrl);
-        Tenant tenant = new Tenant();
-        when(config.getString("cloud.region")).thenReturn("notUK");
-        when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrls);
-        spy.addbaseUrlToTenant(tenant, "MOSSO");
-        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
-    }
-
-    @Test
     public void addBaseUrlToTenant_cloudBaseUrlGetDefIsFalse_doesNothing() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(false);
         spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertTrue("does nothing", true);
-    }
-
-    @Test
-    public void getBaseURLRef_baseUrlIdDoesNotMatchCloudBaseUrlId_responseNotFound_returns404() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(2);
-        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
-        cloudBaseUrlList.add(cloudBaseUrl);
-        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
-        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
-        List<OpenstackEndpoint> openstackEndpointList = new ArrayList<OpenstackEndpoint>();
-        openstackEndpointList.add(openstackEndpoint);
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
-        user.setUniqueId("uniqueId");
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        when(userService.getUser("userId")).thenReturn(user);
-        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(scopeAccessService.getUserScopeAccessForClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpointList);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLRef(request, "userId", "1", httpHeaders);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test

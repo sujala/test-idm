@@ -6,10 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.GroupDao;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.GroupService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -18,7 +16,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,12 +35,14 @@ public class DefaultGroupService implements GroupService {
     private GroupDao groupDao;
     @Autowired
     private Configuration config;
+    @Autowired
+    private UserService userService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public List<Group> getGroups(String marker, Integer limit) {
-        return groupDao.getGroups(marker, limit);
+        return groupDao.getGroups();
     }
 
     @Override
@@ -144,54 +143,19 @@ public class DefaultGroupService implements GroupService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.GROUP_ID, groupId)};
-        //index and offset and will need to change when pagination is done.
-        Users users = defaultUserService.getAllUsers(filters);
-        if (users.getUsers().size() != 0) {
-            for (User user : users.getUsers()) {
-                if (user.isEnabled()) {
+        List<User> users = defaultUserService.getUsersByGroupId(groupId);
+        if (users.size() != 0) {
+            for (User user : users) {
+                if (user.getEnabled()) {
                     throw new BadRequestException("Cannot delete a group with users in it.");
                 }
             }
 
-            for (User user : users.getUsers()) {
-                deleteGroupFromUser(grpId,user.getId());
+            for (User user : users) {
+                userService.deleteGroupFromUser(grpId, user.getId());
             }
         }
         groupDao.deleteGroup(groupId);
-    }
-
-    @Override
-    public void addGroupToUser(String groupId, String userId) {
-        groupDao.addGroupToUser(groupId, userId);
-    }
-
-    @Override
-    public void deleteGroupFromUser(String groupId, String userId) {
-        groupDao.deleteGroupFromUser(groupId, userId);
-    }
-
-    @Override
-    public List<Group> getGroupsForUser(String userId) {
-        return groupDao.getGroupsForUser(userId);
-    }
-
-    @Override
-    public Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit) {
-        logger.debug("Getting Enabled All Users");
-
-        Users users = defaultUserService.getAllUsers(filters, Integer.parseInt(offset), limit);
-        logger.debug("Got All Users {}", filters);
-        List<User> enabledUsers = new ArrayList<User>();
-        for (User user : users.getUsers()) {
-            if (user.isEnabled()) {
-                enabledUsers.add(user);
-            }
-        }
-
-        Users enabled = new Users();
-        enabled.setUsers(enabledUsers);
-        return enabled;
     }
 
     public void setDefaultUserService(DefaultUserService defaultUserService) {
@@ -205,21 +169,9 @@ public class DefaultGroupService implements GroupService {
         if (group == null) {
             String errorMsg = String.format("Group %s not found", groupId);
             throw new NotFoundException(errorMsg);
-        } 
-        
-        return group;
-	}
-
-	@Override
-	public boolean isUserInGroup(String userId, String groupId) {
-		List<Group> groups = getGroupsForUser(userId);
-		
-        for (Group currentGroup : groups) {
-            if (currentGroup.getGroupId().equals(groupId)) {
-                return true;
-            }
         }
-        return false;
+
+        return group;
 	}
 
     public void setConfig(Configuration config) {

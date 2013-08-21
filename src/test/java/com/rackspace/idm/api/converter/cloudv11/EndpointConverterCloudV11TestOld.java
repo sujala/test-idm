@@ -38,7 +38,7 @@ public class EndpointConverterCloudV11TestOld {
     @Before
     public void setUp() throws Exception {
         cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setBaseUrlType("nast");
         cloudBaseUrl.setDef(true);
@@ -52,7 +52,6 @@ public class EndpointConverterCloudV11TestOld {
         cloudBaseUrl.setVersionId("versionId");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setUniqueId("uniqueId");
 
         baseURL = new BaseURL();
         baseURL.setAdminURL("adminUrl");
@@ -104,35 +103,6 @@ public class EndpointConverterCloudV11TestOld {
     public void toBaseUrlDO_baseUrlIsNull_returnsNull() throws Exception {
         CloudBaseUrl url = endpointConverterCloudV11.toBaseUrlDO(null);
         assertThat("url", url, equalTo(null));
-    }
-
-    @Test
-    public void toBaseUrlDO_returnsCloudBaseUrl_succeeds() throws Exception {
-        baseURL.setUserType(Enum.valueOf(UserType.class, "NAST"));
-        CloudBaseUrl url = endpointConverterCloudV11.toBaseUrlDO(baseURL);
-        assertThat("id", url.getBaseUrlId(), equalTo(1));
-        assertThat("default", url.getDef(), equalTo(true));
-        assertThat("enabled", url.getEnabled(), equalTo(true));
-        assertThat("admin url", url.getAdminUrl(), equalTo("adminUrl"));
-        assertThat("internal url", url.getInternalUrl(), equalTo("internalUrl"));
-        assertThat("public url", url.getPublicUrl(), equalTo("publicUrl"));
-        assertThat("region", url.getRegion(),equalTo("region"));
-        assertThat("service name", url.getServiceName(), equalTo("serviceName"));
-        assertThat("url type", url.getBaseUrlType(), equalTo("NAST"));
-    }
-
-    @Test
-    public void toBaseUrlDO_urlUserTypeIsNull_returnsUrl() throws Exception {
-        CloudBaseUrl url = endpointConverterCloudV11.toBaseUrlDO(baseURL);
-        assertThat("id", url.getBaseUrlId(), equalTo(1));
-        assertThat("default", url.getDef(), equalTo(true));
-        assertThat("enabled", url.getEnabled(), equalTo(true));
-        assertThat("admin url", url.getAdminUrl(), equalTo("adminUrl"));
-        assertThat("internal url", url.getInternalUrl(), equalTo("internalUrl"));
-        assertThat("public url", url.getPublicUrl(), equalTo("publicUrl"));
-        assertThat("region", url.getRegion(),equalTo("region"));
-        assertThat("service name", url.getServiceName(), equalTo("serviceName"));
-        assertThat("url type", url.getBaseUrlType(), equalTo(null));
     }
 
     @Test

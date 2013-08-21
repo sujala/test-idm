@@ -4,15 +4,13 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
-import org.apache.http.util.EntityUtils
-import org.mockito.Spy
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
@@ -29,7 +27,7 @@ import javax.ws.rs.core.MediaType
  */
 class AtomHopperClientGroovyTest extends Specification {
     @Shared AtomHopperClient client
-    @Shared DefaultGroupService defaultGroupService
+    @Shared DefaultUserService defaultUserService
     @Shared DefaultTenantService defaultTenantService
     @Shared Configuration config
     @Shared HttpClient httpClient
@@ -50,7 +48,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -73,7 +71,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         def groupName = "MyGroup"
         def groupId = 1
-        defaultGroupService.getGroupsForUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -95,7 +93,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         config.getString(_) >> "DFW" >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
 
@@ -114,7 +112,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -133,7 +131,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -175,7 +173,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -201,7 +199,7 @@ class AtomHopperClientGroovyTest extends Specification {
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultGroupService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
@@ -233,8 +231,8 @@ class AtomHopperClientGroovyTest extends Specification {
     }
 
     def setupMock() {
-        defaultGroupService = Mock()
-        client.defaultGroupService = defaultGroupService
+        defaultUserService = Mock()
+        client.userService = defaultUserService
         defaultTenantService = Mock()
         client.defaultTenantService = defaultTenantService
         config = Mock()

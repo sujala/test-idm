@@ -1,119 +1,78 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.service.PropertiesService;
+import com.rackspace.idm.domain.service.EncryptionService;
+import com.rackspace.idm.domain.service.impl.DefaultEncryptionService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
-import com.unboundid.util.StaticUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Component
-public class LdapUserRepository extends LdapRepository implements UserDao {
+public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
-    // NOTE: This is pretty fragile way of handling the specific error, so we
-    // need to look into more reliable way of detecting this error.
-    public static final String ENCRYPTION_ERROR = "encryption error";
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
-    public static final String NULL_OR_EMPTY_EMAIL_PARAMETER = "Null or Empty email parameter";
-    public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
-    public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
-
-    @Autowired
-    Paginator<User> paginator;
 
     @Autowired
     CryptHelper cryptHelper;
 
     @Autowired
-    PropertiesService propertiesService;
+    EncryptionService encryptionService;
 
     @Autowired
     Configuration config;
 
+    @Autowired
+    GroupDao groupDao;
+
     @Override
-    public void addRacker(Racker racker) {
-        getLogger().info("Adding racker - {}", racker);
-        if (racker == null) {
-            String errmsg = "Null instance of Racer was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
+    public String getBaseDn(){
+        return USERS_BASE_DN;
+    }
 
-        String userDN = new LdapDnBuilder(RACKERS_BASE_DN).addAttribute(ATTR_RACKER_ID, racker.getRackerId()).build();
+    @Override
+    public String getLdapEntityClass() {
+        return OBJECTCLASS_RACKSPACEPERSON;
+    }
 
-        racker.setUniqueId(userDN);
+    @Override
+    public String getSoftDeletedBaseDn() {
+        return SOFT_DELETED_USERS_BASE_DN;
+    }
 
-        Audit audit = Audit.log(racker).add();
+    public String[] getSearchAttributes(){
+        return ATTR_USER_SEARCH_ATTRIBUTES;
+    }
 
-        Attribute[] attributes = getRackerAddAttributes(racker);
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
 
-        addEntry(userDN, attributes, audit);
+    @Override
+    public void doPreEncode(User user) {
+        encryptionService.encryptUser(user);
+    }
 
-        audit.succeed();
-
-        getLogger().info("Added racker {}", racker);
+    @Override
+    public void doPostEncode(User user) {
+        encryptionService.decryptUser(user);
     }
 
     @Override
     public void addUser(User user) {
-        getLogger().info("Adding user - {}", user);
-        if (user == null) {
-            String errmsg = "Null instance of User was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, user.getId()).build();
-
-        user.setUniqueId(userDN);
-
-        Audit audit = Audit.log(user).add();
-
-        Attribute[] attributes = null;
-
-        try {
-            attributes = getAddAttributes(user);
-            if (isUsernameUnique(user.getUsername())) { // one more check
-                addEntry(userDN, attributes, audit);
-            }else{
-                throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
-            }
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        }
-
-        // Now that it's in LDAP we'll set the password to the "existing" type
-        user.setPasswordObj(user.getPasswordObj().toExisting());
-
-        audit.succeed();
-
-        getLogger().info("Added user {}", user);
+        addObject(user);
     }
 
     @Override
@@ -145,618 +104,134 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public void deleteRacker(String rackerId) {
-        getLogger().info("Deleting racker - {}", rackerId);
-        if (StringUtils.isBlank(rackerId)) {
-            getLogger().error("Null or Empty rackerId parameter");
-            throw new IllegalArgumentException("Null or Empty rackerId parameter.");
-        }
-
-        Audit audit = Audit.log(rackerId).delete();
-
-        Racker racker = this.getRackerByRackerId(rackerId);
-        if (racker == null) {
-            String errorMsg = String.format("Racker %s not found", rackerId);
-            audit.fail(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        getLogger().debug("Found Racker {}, deleting...", racker);
-
-        this.deleteEntryAndSubtree(racker.getUniqueId(), audit);
-        audit.succeed();
-        getLogger().info("Deleted racker - {}", rackerId);
-    }
-
-    @Override
     public void deleteUser(User user) {
-        getLogger().info("Deleting user - {}", user.getUsername());
-
-        Audit audit = Audit.log(user.getUsername()).delete();
-
-        deleteEntryAndSubtree(user.getUniqueId(), audit);
-
-        audit.succeed();
-
-        getLogger().info("Deleted username - {}", user.getUsername());
+        deleteObject(user);
     }
 
     @Override
     public void deleteUser(String username) {
-        getLogger().info("Deleting username - {}", username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            throw new IllegalArgumentException("Null or Empty username parameter.");
-        }
-
-        Audit audit = Audit.log(username).delete();
-
-        User user = this.getUserByUsername(username);
-        if (user == null) {
-            String errorMsg = String.format("User %s not found", username);
-            audit.fail(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        getLogger().debug("Found user {}, deleting... {}", user);
-
-        this.deleteEntryAndSubtree(user.getUniqueId(), audit);
-
-        audit.succeed();
-        getLogger().info("Deleted username - {}", username);
+        deleteObject(searchFilterGetUserByUsername(username));
     }
 
     @Override
     public String[] getGroupIdsForUser(String username) {
-        getLogger().debug("Getting GroupIds for User {}", username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter");
-            return null;
-        }
-
-        String[] groupIds = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_MEMBER_OF);
-
-        if (entry != null) {
-            groupIds = entry.getAttributeValues(ATTR_MEMBER_OF);
-        }
-
-        getLogger().debug("Got GroupIds for User {} - {}", username, groupIds);
-
-        return groupIds;
-    }
-
-    @Override
-    public Racker getRackerByRackerId(String rackerId) {
-        getLogger().debug("Getting Racker {}", rackerId);
-        if (StringUtils.isBlank(rackerId)) {
-            getLogger().error("Null or Empty rackerId parameter");
-            getLogger().info("Invalid rackerId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKER_ID, rackerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKER).build();
-
-        Racker racker = null;
-
-        SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN,
-                SearchScope.ONE, searchFilter);
-        if (entry != null) {
-            racker = new Racker();
-            racker.setUniqueId(entry.getDN());
-            racker.setRackerId(entry.getAttributeValue(ATTR_RACKER_ID));
-        }
-
-        getLogger().debug("Got Racker {}", racker);
-        return racker;
+        User user = getObject(searchFilterGetUserByUsername(username));
+        return user.getRsGroupId().toArray(new String[0]);
     }
 
     @Override
     public User getUserByCustomerIdAndUsername(String customerId, String username) {
-
-        getLogger().debug("LdapUserRepository.findUser() - customerId: {}, username: {} ", customerId, username);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            getLogger().info("Invalid customerId parameter.");
-            return null;
-        }
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug("Found User for customer - {}, {}", customerId, user);
-
-        return user;
+        return getObject(searchFilterGetUserByCustomerIdAndUsername(customerId, username));
     }
 
     @Override
     public User getUserById(String id) {
-        // NOTE: This method returns a user regardless of whether the
-        // softDeleted flag is set or not because this method is only
-        // used internally.
-        getLogger().debug("Doing search for id " + id);
-        if (StringUtils.isBlank(id)) {
-            getLogger().error("Null or Empty id parameter");
-            getLogger().info("Invalid id parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserById(id));
     }
 
     @Override
-    public Users getUsersByDomainId(String domainId) {
-        getLogger().debug("Doing search for domainId " + domainId);
-        if (StringUtils.isBlank(domainId)) {
-            getLogger().error("Null or Empty domainId parameter");
-            getLogger().info("Invalid domainId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+    public List<User> getUsersByDomain(String domainId) {
+        return getObjects(searchFilterGetUserByDomainId(domainId));
     }
 
     @Override
     public User getUserByRPN(String rpn) {
-        getLogger().debug("Doing User search by rpn " + rpn);
-        if (StringUtils.isBlank(rpn)) {
-            getLogger().error("Null or Empty rpn parameter");
-            getLogger().info("Invalid rpn parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserByRPN(rpn));
     }
 
     @Override
     public User getUserBySecureId(String secureId) {
-        getLogger().debug("Doing User search by secureId " + secureId);
-        if (StringUtils.isBlank(secureId)) {
-            getLogger().error("Null or Empty secureId parameter");
-            getLogger().info("Invalid secureId parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_SECURE_ID, secureId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserBySecureId(secureId));
     }
 
     @Override
     public User getUserByUsername(String username) {
-        // This method returns a user whether or not the user has been
-        // soft-deleted
-        getLogger().debug("Doing search for username " + username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserByUsername(username));
     }
 
     @Override
-    public Users getUsersByEmail(String email) {
-        // This method returns a user whether or not the user has been
-        // soft-deleted
-        getLogger().debug("Doing search for username by email " + email);
-        if (StringUtils.isBlank(email)) {
-            getLogger().error(NULL_OR_EMPTY_EMAIL_PARAMETER);
-            getLogger().info("Invalid email parameter.");
-            return new Users();
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MAIL, email)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+    public List<User> getUsersByEmail(String email) {
+        return getObjects(searchFilterGetUserByEmail(email));
     }
 
     @Override
-    public Users getUsers(List<Filter> filters) {
-        getLogger().debug("Doing search for users");
-
-        if(filters == null || filters.size() == 0){
-           return new Users();
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .addOrAttributes(filters)
-                .build();
-
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+    public List<User> getUsers(List<String> idList) {
+        return getObjects(searchFilterGetUserById(idList));
     }
 
     @Override
     public PaginatorContext<User> getUsersToReEncrypt(int offset, int limit) {
-        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
-        Filter filter = Filter.createANDFilter(
-                Filter.createORFilter(
-                        Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENCRYPTION_VERSION_ID)),
-                        Filter.createNOTFilter(Filter.createEqualityFilter(ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId))
-                ),
-                Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-        );
-
-        return getMultipleUsersPaged(filter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        String encryptionVersionId = encryptionService.getEncryptionVersionId();
+        return getObjectsPaged(searchFilterGetUsersToReEncrypt(encryptionVersionId), offset, limit);
     }
 
     @Override
-    public PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit) {
-        getLogger().debug("Getting paged users");
-
-        Filter searchFilter = createSearchFilter(filterParams);
-        PaginatorContext<User> context = getMultipleUsersPaged(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
-
-        getLogger().debug(FOUND_USERS, context.getValueList());
-
-        return context;
+    public PaginatorContext<User> getUsers(int offset, int limit) {
+        return getObjectsPaged(searchFilterGetUser(), offset, limit);
     }
 
     @Override
-    public Users getAllUsers(FilterParam[] filterParams, int offset, int limit) {
-        getLogger().debug("Getting all users");
-
-        Filter searchFilter = createSearchFilter(filterParams);
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+    public PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit) {
+        return getObjectsPaged(searchFiltergetUserByGroupId(groupId), offset, limit);
     }
 
     @Override
-    public Users getAllUsersNoLimit(FilterParam[] filters) {
-        getLogger().debug("Getting all users");
-
-        Filter searchFilter = createSearchFilter(filters);
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+    public PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit) {
+        return getObjectsPaged(searchFilterGetUserByDomainId(domainId), offset, limit);
     }
 
+    @Override
+    public List<User> getUsersByRCN(String RCN) {
+        return getObjects(searchFilterGetUserByRCN(RCN));
+    }
 
-    protected Filter createSearchFilter(FilterParam[] filterParams) {
-        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
-
-        if (filterParams != null) {
-            for (FilterParam filter : filterParams) {
-                if (filter.getParam() == FilterParamName.RCN) {
-                    searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
-                } else if (filter.getParam() == FilterParamName.USERNAME) {
-                    searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
-                } else if (filter.getParam() == FilterParamName.DOMAIN_ID) {
-                    searchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, filter.getStrValue());
-                } else if (filter.getParam() == FilterParamName.GROUP_ID) {
-                    searchBuilder.addEqualAttribute(ATTR_GROUP_ID, filter.getStrValue());
-                } else if (filter.getParam() == FilterParamName.IN_MIGRATION) {
-                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "TRUE");
-                } else if (filter.getParam() == FilterParamName.MIGRATED) {
-                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "FALSE");
-                } else if (filter.getParam() == FilterParamName.ENABLED) {
-                    searchBuilder.addEqualAttribute(ATTR_ENABLED, filter.getStrValue().toUpperCase());
-                }
-            }
-        }
-
-        return searchBuilder.build();
+    @Override
+    public List<User> getUsersByUsername(String username) {
+        return getObjects(searchFilterGetUserByUsername(username));
     }
 
     @Override
     public boolean isUsernameUnique(String username) {
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = null;
-        try {
-            SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB, searchFilter);
-
-            if (entry != null) {
-                user = getUser(entry);
-            }
-
-        } catch (GeneralSecurityException e) {
-            getLogger().error("Encryption error", e);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        getLogger().debug("Unique user search attempt yielded: {}", user);
-        return user == null;
+        return getObjects(searchFilterGetUserByUsername(username)).size() == 0;
     }
 
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword){
-        getLogger().info("Updating user to {}", user);
-        throwIfEmptyUsername(user);
-        User oldUser = getUserById(user.getId());
-        if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
-            throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
-        }
-        updateUser(user, oldUser, hasSelfUpdatedPassword);
+        updateObject(user);
     }
 
     @Override
     public void updateUserEncryption(String userId) {
         User user = getUserById(userId);
 
-        String encryptionVersionId = propertiesService.getValue(ENCRYPTION_VERSION_ID);
-        String userSalt = cryptHelper.generateSalt();
-
         getLogger().info("Updating user encryption to {}", user.getUsername());
 
+        String encryptionVersionId = encryptionService.getEncryptionVersionId();
         user.setEncryptionVersion(encryptionVersionId);
+
+        String userSalt = cryptHelper.generateSalt();
         user.setSalt(userSalt);
 
-        try {
-            List<Modification> modifications = getEncryptedModifications(user);
-            getAppInterface().modify(user.getUniqueId(), modifications);
-        } catch (GeneralSecurityException e) {
-        } catch (InvalidCipherTextException e) {
-        } catch (LDAPException e) {
-        }
+        encryptionService.encryptUser(user);
+        updateObject(user);
 
         getLogger().info("Updated user encryption to {}", user.getUsername());
     }
 
-    private String getEncryptionVersionId(User user) {
-        if (user.getEncryptionVersion() == null) {
-            return "0";
-        } else {
-            return user.getEncryptionVersion();
-        }
-    }
-
-    private String getSalt(User user) {
-        if (user.getSalt() == null) {
-            return config.getString("crypto.salt");
-        } else {
-            return user.getSalt();
-        }
-    }
-
-    List<Modification> getEncryptedModifications(User user)
-        throws GeneralSecurityException, InvalidCipherTextException {
-        List<Modification> mods = new ArrayList<Modification>();
-
-        String encryptionVersionId = user.getEncryptionVersion();
-        String userSalt = user.getSalt();
-
-        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId));
-        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENCRYPTION_SALT, userSalt));
-
-        if (!StringUtils.isBlank(user.getDisplayName())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getFirstname())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getApiKey())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretAnswer())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretQuestion())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretQuestionId())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getLastname())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(user.getLastname(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword(), encryptionVersionId, userSalt)));
-        }
-
-        return mods;
-    }
-
-    void updateUser(User newUser, User oldUser, boolean hasSelfUpdatedPassword) {
-        getLogger().debug("Found existing user {}", oldUser);
-        throwIfEmptyOldUser(oldUser, newUser);
-
-        Audit audit = Audit.log(newUser);
-
-        try {
-            List<Modification> mods = getModifications(oldUser, newUser, hasSelfUpdatedPassword);
-            audit.modify(mods);
-
-            if (mods.size() < 1) {
-                // No changes!
-                return;
-            }
-            getAppInterface().modify(oldUser.getUniqueId(), mods);
-        } catch (LDAPException ldapEx) {
-            throwIfStalePassword(ldapEx, audit);
-            getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
-            audit.fail("Error updating user");
-            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            audit.fail(ENCRYPTION_ERROR);
-            throw new IllegalStateException(e);
-        }
-
-        // Now that its in LDAP we'll set the password to existing type
-        newUser.setPasswordObj(newUser.getPasswordObj().toExisting());
-        audit.succeed();
-        getLogger().info("Updated user - {}", newUser);
-    }
-
     @Override
     public void removeUsersFromClientGroup(ClientGroup group) {
+        getLogger().debug("Doing search for users that belong to group {}", group);
 
-        getLogger().debug("Doing search for users that belong to group {}",
-            group);
-
-        if (group == null) {
-            String errMsg = "Null group passed in";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        List<User> userList = new ArrayList<User>();
-        SearchResult searchResult = null;
-        try {
-            SearchRequest request = new SearchRequest(USERS_BASE_DN,
-                SearchScope.SUB, searchFilter);
-            searchResult = getAppInterface().search(request);
-
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                userList.add(getUser(entry));
-            }
-        } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
+        List<User> userList = getObjects(searchFilterGetUserByGroupDn(group));
 
         getLogger().debug("Found {} Users", userList.size());
 
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF, group.getUniqueId()));
-
-        Audit audit = null;
         for (User user : userList) {
-            audit = Audit.log(user).modify(mods);
-            try {
-                getAppInterface().modify(user.getUniqueId(), mods);
-            } catch (LDAPException ldapEx) {
-                audit.fail(ldapEx.getMessage());
-                throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-            }
-            audit.succeed();
+            user.setRsGroupDN(null);
+            updateObject(user);
         }
 
         getLogger().info("Removed users from clientGroup {}", group);
-    }
-    
-    void throwIfEmptyOldUser(User oldUser, User user) {
-        if (oldUser == null) {
-            getLogger().error("No record found for user {}", user.getUsername());
-            throw new IllegalArgumentException("There is no exisiting record for the given User instance. Has the userName been changed?");
-        }
-    }
-
-    void throwIfEmptyUsername(User user) {
-        if (user == null || StringUtils.isBlank(user.getUsername())) {
-            getLogger().error("User instance is null or its userName has no value");
-            throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
-        }
-    }
-
-    void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
-        String stalePasswordMsg = config.getString("stalePasswordMsg");
-        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
-            && stalePasswordMsg.equals(ldapEx.getMessage())) {
-            audit.fail(stalePasswordMsg);
-            throw new StalePasswordException("Past 10 passwords for the user cannot be re-used.");
-        }
     }
 
     void addAuditLogForAuthentication(User user, boolean authenticated) {
@@ -767,7 +242,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         } else {
             String failureMessage = "User Authentication Failed: %s";
 
-            if (user.isMaxLoginFailuresExceded()) {
+            if (getMaxLoginFailuresExceeded(user)) {
                 failureMessage = String.format(failureMessage, "User locked due to max login failures limit exceded");
             } else if (user.isDisabled()) {
                 failureMessage = String.format(failureMessage, "User is Disabled");
@@ -777,6 +252,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             audit.fail(failureMessage);
         }
+    }
+
+    private boolean getMaxLoginFailuresExceeded(User user) {
+        boolean passwordFailureLocked = false;
+        if (user.getPasswordFailureDate() != null) {
+            DateTime passwordFailureDateTime = new DateTime(user.getPasswordFailureDate())
+                    .plusMinutes(this.getLdapPasswordFailureLockoutMin());
+            passwordFailureLocked = passwordFailureDateTime.isAfterNow();
+        }
+        return passwordFailureLocked;
     }
 
     UserAuthenticationResult authenticateByPassword(User user, String password) {
@@ -832,363 +317,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
-    Attribute[] getAddAttributes(User user)
-        throws GeneralSecurityException, InvalidCipherTextException {
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
-
-        String encryptionVersionId = getEncryptionVersionId(user);
-        String userSalt = getSalt(user);
-
-        if (!StringUtils.isBlank(user.getId())) {
-            atts.add(new Attribute(ATTR_ID, user.getId()));
-        }
-
-        if (!StringUtils.isBlank(user.getCountry())) {
-            atts.add(new Attribute(ATTR_C, user.getCountry()));
-        }
-
-        if (!StringUtils.isBlank(user.getDisplayName())) {
-            atts.add(new Attribute(ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getFirstname())) {
-            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getEmail())) {
-            atts.add(new Attribute(ATTR_MAIL, user.getEmail()));
-        }
-
-        if (!StringUtils.isBlank(user.getMiddlename())) {
-            atts.add(new Attribute(ATTR_MIDDLE_NAME, user.getMiddlename()));
-        }
-
-        if (user.getLocale() != null) {
-            atts.add(new Attribute(ATTR_LANG, user.getPreferredLang().toString()));
-        }
-
-        if (!StringUtils.isBlank(user.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, user.getCustomerId()));
-        }
-
-        if (!StringUtils.isBlank(user.getPersonId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_PERSON_NUMBER, user.getPersonId()));
-        }
-
-        if (!StringUtils.isBlank(user.getApiKey())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretAnswer())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretQuestion())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getSecretQuestionId())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId(), encryptionVersionId, userSalt)));
-        }
-
-        if (!StringUtils.isBlank(user.getLastname())) {
-            atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user.getLastname(), encryptionVersionId, userSalt)));
-        }
-
-        if (user.getTimeZoneObj() != null) {
-            atts.add(new Attribute(ATTR_TIME_ZONE, user.getTimeZone()));
-        }
-
-        atts.add(new Attribute(ATTR_UID, user.getUsername()));
-
-        if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
-            atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword(), encryptionVersionId, userSalt)));
-            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString().toUpperCase()));
-            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
-        }
-
-        if (!StringUtils.isBlank(user.getRegion())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_REGION, user.getRegion()));
-        }
-
-        if (user.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.isEnabled()).toUpperCase()));
-        }
-
-        if (!StringUtils.isBlank(user.getNastId())) {
-            atts.add(new Attribute(ATTR_NAST_ID, user.getNastId()));
-        }
-
-        if (user.getMossoId() != null && user.getMossoId().intValue() > 0) {
-            atts.add(new Attribute(ATTR_MOSSO_ID, user.getMossoId().toString()));
-        }
-
-        if(!StringUtils.isBlank(user.getDomainId())){
-            atts.add(new Attribute(ATTR_DOMAIN_ID, user.getDomainId()));
-        }
-
-        if(user.getInMigration() != null) {
-            atts.add(new Attribute(ATTR_IN_MIGRATION, String.valueOf(user.getInMigration()).toUpperCase()));
-            atts.add(new Attribute(ATTR_MIGRATION_DATE, StaticUtils.encodeGeneralizedTime(user.getMigrationDate().toDate())));
-        }
-
-        if (user.getSalt() != null) {
-            atts.add(new Attribute(ATTR_ENCRYPTION_SALT, user.getSalt()));
-        }
-
-        if (user.getEncryptionVersion() != null) {
-            atts.add(new Attribute(ATTR_ENCRYPTION_VERSION_ID, user.getEncryptionVersion()));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        getLogger().debug("Found {} attributes to add", attributes.length);
-        return attributes;
-    }
-
-    protected PaginatorContext<User> getMultipleUsersPaged(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
-        SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter);
-        PaginatorContext<User> paginatorContext = paginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
-
-        SearchResult searchResult = this.getMultipleEntries(searchRequest);
-
-        paginator.createPage(searchResult, paginatorContext);
-        List<User> userList = new ArrayList<User>();
-        for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
-            try {
-                userList.add(getUser(entry));
-            } catch (InvalidCipherTextException e) {
-                getLogger().error(e.getMessage());
-            } catch (GeneralSecurityException e) {
-                getLogger().error(e.getMessage());
-            } catch (Exception e) {
-                getLogger().error(e.getMessage());
-            }
-        }
-
-        paginatorContext.setValueList(userList);
-
-        return paginatorContext;
-    }
-
-    Users getMultipleUsers(Filter searchFilter,
-        String[] searchAttributes, int offset, int limit) {
-
-        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
-        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
-
-        int contentCount = 0;
-
-        List<User> userList = new ArrayList<User>();
-
-        try {
-
-            List<SearchResultEntry> entries = this.getMultipleEntries(
-                USERS_BASE_DN, SearchScope.SUB, ATTR_ID, searchFilter, searchAttributes);
-
-            contentCount = entries.size();
-
-            if (offsets < contentCount) {
-
-                int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
-                int fromIndex = offsets;
-
-                List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
-
-                for (SearchResultEntry entry : subList) {
-                    userList.add(getUser(entry));
-                }
-            }
-
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        getLogger().debug("Found users {}", userList);
-
-        Users users = new Users();
-
-        users.setLimit(limits);
-        users.setOffset(offsets);
-        users.setTotalRecords(contentCount);
-        users.setUsers(userList);
-        getLogger().debug("Returning {} Users.", users.getTotalRecords());
-        return users;
-    }
-
-    Users getMultipleUsers(Filter searchFilter, String[] searchAttributes) {
-        List<User> userList = new ArrayList<User>();
-
-        try {
-            List<SearchResultEntry> entries = this.getMultipleEntries(
-                    USERS_BASE_DN, SearchScope.SUB, ATTR_ID, searchFilter, searchAttributes);
-            for (SearchResultEntry entry : entries) {
-                userList.add(getUser(entry));
-            }
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        Users users = new Users();
-        users.setUsers(userList);
-
-        getLogger().debug("returning {} users", userList.size());
-        return users;
-    }
-
-    Attribute[] getRackerAddAttributes(Racker racker) {
-
-        List<Attribute> atts = new ArrayList<Attribute>();
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));
-        atts.add(new Attribute(ATTR_RACKER_ID, racker.getRackerId()));
-        getLogger().debug("Adding Racker attribute {}", racker.getRackerId());
-        return atts.toArray(new Attribute[0]);
-    }
-
-    User getSingleUser(Filter searchFilter, String[] searchAttributes) {
-        User user = null;
-        try {
-
-            SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
-
-            if (entry != null) {
-                user = getUser(entry);
-            }
-
-        } catch (GeneralSecurityException e) {
-            getLogger().error("Encryption error", e);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
-    }
-
-    User getSingleSoftDeletedUser(Filter searchFilter,
-        String[] searchAttributes) {
-        User user = null;
-        try {
-
-            SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
-
-            if (entry != null) {
-                user = getUser(entry);
-            }
-
-        } catch (GeneralSecurityException e) {
-            getLogger().error("Encryption error", e);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
-    }
-
-    User getUser(SearchResultEntry resultEntry)
-        throws GeneralSecurityException, InvalidCipherTextException {
-
-
-        User user = new User();
-        user.setEncryptionVersion(resultEntry.getAttributeValue(ATTR_ENCRYPTION_VERSION_ID));
-        user.setSalt(resultEntry.getAttributeValue(ATTR_ENCRYPTION_SALT));
-
-        String encryptionVersionId = getEncryptionVersionId(user);
-        String userSalt = getSalt(user);
-
-        user.setId(resultEntry.getAttributeValue(ATTR_ID));
-        user.setUniqueId(resultEntry.getDN());
-        user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
-        user.setCountry(resultEntry.getAttributeValue(ATTR_C));
-        user.setDisplayName(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_DISPLAY_NAME), encryptionVersionId, userSalt));
-        user.setFirstname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_GIVEN_NAME), encryptionVersionId, userSalt));
-        user.setEmail(resultEntry.getAttributeValue(ATTR_MAIL));
-        user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
-        user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
-        user.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        user.setPersonId(resultEntry.getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
-        user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY), encryptionVersionId, userSalt));
-        user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q), encryptionVersionId, userSalt));
-        user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A), encryptionVersionId, userSalt));
-        user.setSecretQuestionId(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q_ID), encryptionVersionId, userSalt));
-        user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN), encryptionVersionId, userSalt));
-        user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
-        user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
-
-        user.setInMigration(resultEntry.getAttributeValueAsBoolean(ATTR_IN_MIGRATION));
-        if(user.getInMigration() != null) {
-            user.setMigrationDate(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_MIGRATION_DATE)));
-        }
-
-        String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD), encryptionVersionId, userSalt);
-        Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
-        boolean wasSelfUpdated = false;
-        if(resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED) != null){
-            wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
-        }
-        DateTime lasteUpdated = new DateTime(lastUpdates);
-        Password pwd = Password.existingInstance(ecryptedPwd, lasteUpdated, wasSelfUpdated);
-        user.setPasswordObj(pwd);
-
-        user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
-
-        String softDeletedTimestamp = resultEntry.getAttributeValue(ATTR_SOFT_DELETED_DATE);
-        if (softDeletedTimestamp != null) {
-            user.setSoftDeletedTimestamp(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
-        }
-
-        user.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
-
-        user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
-        user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
-
-        Date created = resultEntry.getAttributeValueAsDate(ATTR_CREATED_DATE);
-        if (created != null) {
-            DateTime createdDate = new DateTime(created);
-            user.setCreated(createdDate);
-        }
-
-        Date updated = resultEntry.getAttributeValueAsDate(ATTR_UPDATED_DATE);
-        if (updated != null) {
-            DateTime updatedDate = new DateTime(updated);
-            user.setUpdated(updatedDate);
-        }
-
-        Date passwordFailureDate = resultEntry
-            .getAttributeValueAsDate(ATTR_PWD_ACCOUNT_LOCKOUT_TIME);
-
-        boolean passwordFailureLocked = false;
-        if (passwordFailureDate != null) {
-            DateTime passwordFailureDateTime = new DateTime(passwordFailureDate)
-                .plusMinutes(this.getLdapPasswordFailureLockoutMin());
-            passwordFailureLocked = passwordFailureDateTime.isAfterNow();
-        }
-        user.setMaxLoginFailuresExceded(passwordFailureLocked);
-
-        user.setSecureId(resultEntry.getAttributeValue(ATTR_SECURE_ID));
-
-        getLogger().debug("Built user object {}.", user);
-        return user;
-    }
-
     UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
         if (isAuthenticated && user.isDisabled()) {
             getLogger().error(user.getUsername());
@@ -1198,262 +326,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 
-    List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate) throws GeneralSecurityException, InvalidCipherTextException {
-        List<Modification> mods = new ArrayList<Modification>();
-
-        checkForPasswordModification(uOld, uNew, isSelfUpdate, cryptHelper, mods);
-        checkForCustomerIdModfication(uOld, uNew, mods);
-        checkForCountryModification(uOld, uNew, mods);
-        checkForDisplayNameModification(uOld, uNew, cryptHelper, mods);
-        checkForSecureIdModification(uOld, uNew, mods);
-        checkForFirstNameModification(uOld, uNew, cryptHelper, mods);
-        checkForEmailModification(uOld, uNew, cryptHelper, mods);
-        checkForMiddleNameModification(uOld, uNew, mods);
-        checkForApiKeyModification(uOld, uNew, cryptHelper, mods);
-        checkForSecretAnswerModification(uOld, uNew, cryptHelper, mods);
-        checkForSecretQuestionModification(uOld, uNew, cryptHelper, mods);
-        checkForSecretQuestionIdModification(uOld, uNew, cryptHelper, mods);
-        checkForLastNameModification(uOld, uNew, cryptHelper, mods);
-        checkForRegionModification(uOld, uNew, mods);
-        checkForPersonIdModification(uOld, uNew, mods);
-        checkForLocaleModification(uOld, uNew, mods);
-        checkForTimeZoneModification(uOld, uNew, mods);
-        checkForEnabledStatusModification(uOld, uNew, mods);
-        checkForNastIdModification(uOld, uNew, mods);
-        checkForMossoIdModification(uOld, uNew, mods);
-        checkForMigrationStatusModification(uOld, uNew, mods);
-        checkForUserNameModification(uOld, uNew, mods);
-        checkForDomainModification(uOld, uNew, mods);
-
-        getLogger().debug("Found {} mods.", mods.size());
-
-        return mods;
-    }
-
-    void checkForUserNameModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getUsername() != null) {
-            if (StringUtils.isBlank(uNew.getUsername())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
-            } else if (!StringUtils.equals(uOld.getUsername(), uNew.getUsername())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_UID, uNew.getUsername()));
-            }
-        }
-    }
-
-    void checkForDomainModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getDomainId() != null) {
-            if (!StringUtils.equals(uOld.getDomainId(), uNew.getDomainId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_DOMAIN_ID, uNew.getDomainId()));
-            }
-        }
-    }
-
-    void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getMossoId() != null) {
-            String mossoId = Integer.toString(uNew.getMossoId());
-            if (StringUtils.isBlank(mossoId)) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_MOSSO_ID));
-            } else if (!uNew.getMossoId().equals(uOld.getMossoId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
-            }
-        }
-    }
-
-    void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getNastId() != null) {
-            if (StringUtils.isBlank(uNew.getNastId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
-            } else if (!uNew.getNastId().equals(uOld.getNastId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_NAST_ID, uNew.getNastId()));
-            }
-        }
-    }
-
-    void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled()).toUpperCase()));
-        }
-    }
-
-    void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getTimeZoneObj() != null && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE, uNew.getTimeZone()));
-        }
-    }
-
-    void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getLocale() != null && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_LANG, uNew.getPreferredLang().toString()));
-        }
-    }
-
-    void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getPersonId() != null) {
-            if (StringUtils.isBlank(uNew.getPersonId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_PERSON_NUMBER));
-            } else if (!uNew.getPersonId().equals(uOld.getPersonId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_PERSON_NUMBER, uNew.getPersonId()));
-            }
-        }
-    }
-
-    void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getRegion() != null) {
-            if (StringUtils.isBlank(uNew.getRegion())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_REGION));
-            } else if (!uNew.getRegion().equals(uOld.getRegion())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_REGION, uNew.getRegion()));
-            }
-        }
-    }
-
-    void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getLastname() != null) {
-            if (StringUtils.isBlank(uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
-            } else if (!StringUtils.equals(uOld.getLastname(), uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(uNew.getLastname(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getSecretQuestion() != null) {
-            if (StringUtils.isBlank(uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
-            } else if (!StringUtils.equals(uOld.getSecretQuestion(), uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForSecretQuestionIdModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getSecretQuestionId() != null) {
-            if (StringUtils.isBlank(uNew.getSecretQuestionId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q_ID));
-            } else if (!StringUtils.equals(uOld.getSecretQuestionId(), uNew.getSecretQuestionId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(uNew.getSecretQuestionId(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getSecretAnswer() != null) {
-            if (StringUtils.isBlank(uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
-            } else if (!StringUtils.equals(uOld.getSecretAnswer(), uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew.getSecretAnswer(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getApiKey() != null) {
-            if (StringUtils.isBlank(uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
-            } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew.getApiKey(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getMiddlename() != null) {
-            if (StringUtils.isBlank(uNew.getMiddlename())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_MIDDLE_NAME));
-            } else if (!StringUtils.equals(uOld.getMiddlename(),
-                uNew.getMiddlename())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MIDDLE_NAME, uNew.getMiddlename()));
-            }
-        }
-    }
-
-    void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getEmail() != null) {
-            if (StringUtils.isBlank(uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
-            } else if (!StringUtils.equals(uOld.getEmail(), uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, uNew.getEmail()));
-            }
-        }
-    }
-
-    void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getFirstname() != null) {
-            if (StringUtils.isBlank(uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
-            } else if (!StringUtils.equals(uOld.getFirstname(), uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getSecureId() != null) {
-            if (StringUtils.isBlank(uNew.getSecureId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_SECURE_ID));
-            } else if (!StringUtils.equals(uOld.getSecureId(), uNew.getSecureId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_SECURE_ID, uNew.getSecureId()));
-            }
-        }
-    }
-
-    void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getDisplayName() != null) {
-            if (StringUtils.isBlank(uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
-            } else if (!StringUtils.equals(uOld.getDisplayName(),
-                uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew.getDisplayName(), getEncryptionVersionId(uNew), getSalt(uNew))));
-            }
-        }
-    }
-
-    void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getCountry() != null) {
-            if (StringUtils.isBlank(uNew.getCountry())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_C));
-            } else if (!StringUtils.equals(uOld.getCountry(), uNew.getCountry())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_C, uNew.getCountry()));
-            }
-        }
-    }
-
-    void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
-        if (uNew.getCustomerId() != null) {
-            if (StringUtils.isBlank(uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
-            } else if (!StringUtils.equals(uOld.getCustomerId(),
-                uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, uNew.getCustomerId()));
-            }
-        }
-    }
-
-    void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        DateTime currentTime = new DateTime();
-        if (uNew.getPasswordObj().isNew()) {
-            if (isSelfUpdate) {
-                Password oldPwd = uOld.getPasswordObj();
-                int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), currentTime).getSeconds();
-                if (oldPwd.wasSelfUpdated()  && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
-                    throw new PasswordSelfUpdateTooSoonException();
-                }
-            }
-
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate).toUpperCase()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(currentTime.toDate())));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue(), getEncryptionVersionId(uNew), getSalt(uNew))));
-        }
-    }
-
-    void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
-        if(uNew.getInMigration() != null) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_IN_MIGRATION, String.valueOf(uNew.getInMigration())));
-        }
-    }
-
     @Override
     public String getNextUserId() {
         return getNextId(NEXT_USER_ID);
@@ -1461,169 +333,180 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public void softDeleteUser(User user) {
-        getLogger().info("SoftDeleting user - {}", user.getUsername());
-        try {
-            String oldDn = user.getUniqueId();
-            String newRdn = ATTR_ID + "=" + user.getId();
-            String newDn = new LdapDnBuilder(SOFT_DELETED_USERS_BASE_DN)
-                .addAttribute(ATTR_ID, user.getId()).build();
-            // Move the User
-            getAppInterface().modifyDN(oldDn, newRdn, true, SOFT_DELETED_USERS_BASE_DN);
-            user.setUniqueId(newDn);
-            // Disabled the User
-            getAppInterface().modify(user.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false).toUpperCase()));
-        } catch (LDAPException e) {
-            getLogger().error("Error soft deleting user", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        getLogger().info("SoftDeleted user - {}", user.getUsername());
+        softDeleteObject(user);
     }
 
     @Override
     public User getSoftDeletedUserById(String id) {
-
-        getLogger().debug("Doing search for id " + id);
-        if (StringUtils.isBlank(id)) {
-            getLogger().error("Null or Empty id parameter");
-            getLogger().info("Invalid id parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleSoftDeletedUser(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserById(id), getSoftDeletedBaseDn());
     }
 
     @Override
     public User getSoftDeletedUserByUsername(String username) {
-
-        getLogger().debug("Doing search for user " + username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
-            getLogger().info("Invalid username parameter.");
-            return null;
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleSoftDeletedUser(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug(FOUND_USER, user);
-
-        return user;
+        return getObject(searchFilterGetUserByUsername(username), getSoftDeletedBaseDn());
     }
 
     @Override
     public void unSoftDeleteUser(User user) {
-        getLogger().info("unSoftDeleting user - {}", user.getUsername());
-        try {
-            String oldDn = user.getUniqueId();
-            String newRdn = ATTR_ID + "=" + user.getId();
-            String newDn = new LdapDnBuilder(USERS_BASE_DN)
-            .addAttribute(ATTR_ID, user.getId()).build();
-            // Modify the User
-            getAppInterface().modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
-            user.setUniqueId(newDn);
-            // Enabled the User
-            getAppInterface().modify(user.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true).toUpperCase()));
-        } catch (LDAPException e) {
-            getLogger().error("Error unsoft deleting user", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        getLogger().info("unSoftDeleted user - {}", user.getUsername());
+        unSoftDeleteObject(user);
     }
 
     @Override
-    public User getUserByDn(String userDn) {
-        getLogger().info("getting user - {}", userDn);
-        try {
-            SearchResultEntry entry = getEntryByDn(userDn);
-            return getUser(entry);
-        } catch (GeneralSecurityException e) {
-            getLogger().error("Encryption error", e);
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        }
+    public List<User> getUsers() {
+        return getObjects(searchFilterGetUser());
     }
 
     @Override
-    public List<User> getUsersByDomain(String domainId) {
-        if (!isValidDomainId(domainId)) {
-            return new ArrayList<User>();
-        }
-        return getUsersInDomain(domainId, getFilter(domainId));
+    public List<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled) {
+        return getObjects(searchFilterGetUserByDomainIdAndEnabled(domainId, enabled));
     }
 
     @Override
-    public List<User> getUsersByDomain(String domainId, boolean enabled) {
-        if (!isValidDomainId(domainId)) {
-            return new ArrayList<User>();
-        }
-        return getUsersInDomain(domainId, getFilter(domainId, enabled));
+    public List<User> getUsersByGroupId(String groupId) {
+        return getObjects(searchFiltergetUserByGroupId(groupId));
     }
 
-    private Filter getFilter(String domainId) {
+    @Override
+    public void addGroupToUser(String userId, String groupId) {
+        getLogger().debug("Adding group {} to user {}", groupId, userId);
+
+        User user = getObject(searchFilterGetUserById(userId));
+        user.getRsGroupId().add(groupId);
+        updateObject(user);
+
+        getLogger().debug("Adding groupId {} to user {}", groupId, userId);
+    }
+
+    @Override
+    public void deleteGroupFromUser(String groupId, String userId) {
+        getLogger().debug("Removing group {} from user {}", groupId, userId);
+
+        User user = getObject(searchFilterGetUserById(userId));
+        user.getRsGroupId().remove(groupId);
+        updateObject(user);
+
+        getLogger().debug("Removing groupId {} from user {}", groupId, userId);
+    }
+
+    @Override
+    public List<Group> getGroupsForUser(String userId) {
+        getLogger().debug("Inside getGroupsForUser {}", userId);
+
+        List<Group> groups = new ArrayList<Group>();
+
+        User user = getObject(searchFilterGetUserById(userId));
+        for (String groupId : user.getRsGroupId()) {
+            groups.add(groupDao.getGroupById(groupId));
+        }
+
+        return groups;
+    }
+
+    private Filter searchFilterGetUser() {
         return new LdapSearchBuilder()
-                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
-                    .build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
     }
 
-    private Filter getFilter(String domainId, boolean enabled) {
+    private Filter searchFilterGetUserByUsername(String username) {
         return new LdapSearchBuilder()
-                    .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
-                    .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
-                    .build();
+                .addEqualAttribute(ATTR_UID, username)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
     }
 
-    private List<User> getUsersInDomain(String domainId, Filter filter) {
-        getLogger().info("getting users in domain {}", domainId);
-        List<User> userList = new ArrayList<User>();
-
-        getListOfUser(userList, filter);
-
-        getLogger().info(String.format("Got %s users in domain %s", userList.size(), domainId));
-        return userList;
+    private Filter searchFilterGetUserByCustomerIdAndUsername(String customerId, String username) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_UID, username)
+                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
     }
 
-    private boolean isValidDomainId(String domainId) {
-        if (StringUtils.isBlank(domainId)) {
-            getLogger().error("domainId filter is null or empty");
-            getLogger().info("invalid domainId");
-            return false;
+    private Filter searchFilterGetUserById(String id) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByDomainId(String domainId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByRPN(String rpn) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserBySecureId(String secureId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_SECURE_ID, secureId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByEmail(String email) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_MAIL, email)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndEnabled(String domainId, boolean enabled) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserByGroupDn(ClientGroup group) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUserById(List<String> idList) {
+        List<Filter> idFilter = new ArrayList<Filter>();
+        for(String id : idList){
+            idFilter.add(Filter.createEqualityFilter("rsId", id));
         }
-        return true;
+
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .addOrAttributes(idFilter)
+                .build();
     }
 
-    private void getListOfUser(List<User> userList, Filter filter) {
-        List<SearchResultEntry> results = getMultipleEntries(USERS_BASE_DN, SearchScope.SUB, filter);
+    private Filter searchFilterGetUserByRCN(String rcn) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, rcn)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
 
-        try {
-            for (SearchResultEntry entry : results) {
-                userList.add(getUser(entry));
-            }
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            throw new IllegalStateException(e);
-        } catch (GeneralSecurityException e) {
-            getLogger().error("Encryption error", e);
-            throw new IllegalStateException(e);
-        }
+    private Filter searchFiltergetUserByGroupId(String groupId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_GROUP_ID, groupId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetUsersToReEncrypt(String encryptionVersionId) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(
+                        Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENCRYPTION_VERSION_ID)),
+                        Filter.createNOTFilter(Filter.createEqualityFilter(ATTR_ENCRYPTION_VERSION_ID, encryptionVersionId))
+                ),
+                Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        );
     }
 
     protected int getLdapPagingOffsetDefault() {
@@ -1632,9 +515,5 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     protected int getLdapPagingLimitDefault() {
         return config.getInt("ldap.paging.limit.default");
-    }
-
-    public void setCryptHelper(CryptHelper cryptHelper) {
-        this.cryptHelper = cryptHelper;
     }
 }

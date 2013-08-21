@@ -75,8 +75,12 @@ public class RolesConverterTest {
     @Test
     public void toRoleJaxbFromTenantRole_withTenantRolesList_returnsRoleList_withCorrectSize() throws Exception {
         ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        tenantRoles.add(new TenantRole());
-        tenantRoles.add(new TenantRole());
+        TenantRole role1 = new TenantRole();
+        role1.getTenantIds().add("1");
+        TenantRole role2 = new TenantRole();
+        role1.getTenantIds().add("2");
+        tenantRoles.add(role1);
+        tenantRoles.add(role2);
         JAXBElement<RoleList> roleListJAXBElement = rolesConverter.toRoleJaxbFromTenantRole(tenantRoles);
         assertThat("role list total records", roleListJAXBElement.getValue().getTotalRecords(), equalTo(2));
         assertThat("role list size", roleListJAXBElement.getValue().getRole().size(), equalTo(2));
@@ -162,7 +166,7 @@ public class RolesConverterTest {
 
     @Test
     public void toRoleJaxbFromTenantRole_withTenantIds_AddsJaxbRoleWithTenantId() throws Exception {
-        tenantRole.addTenantId("tenantId");
+        tenantRole.getTenantIds().add("tenantId");
         List<Role> roles = rolesConverter.toRoleJaxbFromTenantRole(tenantRole);
         assertThat("roles size", roles.size(), equalTo(1));
         assertThat("roles tenant id", roles.get(0).getTenantId(), equalTo("tenantId"));
@@ -170,7 +174,7 @@ public class RolesConverterTest {
 
     @Test
     public void toRoleJaxbFromTenantRole_withZeroTenantIds_returnsEmptyRoleList() throws Exception { //Is this the correct behavior?
-        tenantRole.setTenantIds(new String[0]);
+        tenantRole.getTenantIds().clear();
         List<Role> roles = rolesConverter.toRoleJaxbFromTenantRole(tenantRole);
         assertThat("roles size", roles.size(), equalTo(0));
     }
@@ -178,6 +182,7 @@ public class RolesConverterTest {
     @Test
     public void toRoleJaxbFromTenantRole_withNoTenantIds_AddsJaxbRoleWithOutTenantId() throws Exception {
         tenantRole.setClientId("clientId");
+        tenantRole.getTenantIds().add("1");
         List<Role> roles = rolesConverter.toRoleJaxbFromTenantRole(tenantRole);
         assertThat("roles size", roles.size(), equalTo(1));
         assertThat("roles application id", roles.get(0).getApplicationId(), equalTo("clientId"));

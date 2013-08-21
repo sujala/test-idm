@@ -47,23 +47,13 @@ public class DefaultTokenService implements TokenService {
     public ScopeAccess getAccessTokenByToken(String token) {
         return this.scopeAccessService.getScopeAccessByAccessToken(token);
     }
-    
-	@Override
-	public boolean doesTokenHaveAccessToApplication(String token,
-			String applicationId) {
-		ScopeAccess scopeAccessToken = this.scopeAccessService
-				.loadScopeAccessByAccessToken(token);
-		return this.scopeAccessService.doesAccessTokenHaveService(
-				scopeAccessToken, applicationId);
-	}
 
 	@Override
 	public boolean doesTokenHaveApplicationRole(String token,String applicationId, String roleId) {
 		ScopeAccess scopeAccess = this.scopeAccessService
 				.loadScopeAccessByAccessToken(token);
 
-		List<TenantRole> roles = tenantService
-				.getTenantRolesForScopeAccess(scopeAccess);
+		List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(scopeAccess);
 		for (TenantRole role : roles) {
 			if (role.getRoleRsId().equals(roleId)
 					&& role.getClientId().equals(applicationId)) {
@@ -78,8 +68,7 @@ public class DefaultTokenService implements TokenService {
     public void revokeAccessToken(String tokenStringRequestingDelete,
         String tokenToDelete) {
         logger.debug("Deleting Token {}", tokenToDelete);
-        ScopeAccess scopeAccessToDelete = this.scopeAccessService
-            .getScopeAccessByAccessToken(tokenToDelete);
+        ScopeAccess scopeAccessToDelete = this.scopeAccessService.getScopeAccessByAccessToken(tokenToDelete);
 
         if (scopeAccessToDelete == null) {
             final String error = "No entry found for token " + tokenToDelete;
@@ -114,10 +103,8 @@ public class DefaultTokenService implements TokenService {
             throw new ForbiddenException(errMsg);
         }
 
-        if (scopeAccessToDelete instanceof HasAccessToken) {
-            ((HasAccessToken) scopeAccessToDelete).setAccessTokenExpired();
-            this.scopeAccessService.updateScopeAccess(scopeAccessToDelete);
-        }
+        scopeAccessToDelete.setAccessTokenExpired();
+        this.scopeAccessService.updateScopeAccess(scopeAccessToDelete);
 
         logger.debug("Deleted Token {}", tokenToDelete);
     }
@@ -204,19 +191,9 @@ public class DefaultTokenService implements TokenService {
     }
 
     List<User> getAllUsersForCustomerId(final String customerId) {
-    	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         logger.debug("Finding Users for CustomerId: {}", customerId);
-        
-        final List<User> usersList = new ArrayList<User>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userService.getAllUsers(filters,offset, getPagingLimit());
-            usersList.addAll(usersObj.getUsers());
-            total = usersObj.getTotalRecords();
-        }
-        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(),
-            customerId);
+        List<User> usersList = userService.getUsersByRCN(customerId);
+        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(), customerId);
         return usersList;
     }
 

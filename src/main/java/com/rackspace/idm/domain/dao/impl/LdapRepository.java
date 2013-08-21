@@ -1,20 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
-import com.unboundid.util.LDAPSDKUsageException;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.util.LDAPSDKUsageException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import javax.annotation.PostConstruct;
-import javax.naming.ldap.SortControl;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -203,6 +199,7 @@ public abstract class LdapRepository {
     protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
+    protected static final String SOFT_DELETED_BASE_DN = "ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_USERS_BASE_DN = "ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
@@ -216,8 +213,9 @@ public abstract class LdapRepository {
     protected static final String CONTAINER_APPLICATION_ROLES = "CLIENT ROLES";
 
     // Search Attributes
+    protected static final String[] ATTR_DEFAULT_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
-    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
+    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
     protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_POLICY_SEARCH_ATTRIBUTES = {"*"};

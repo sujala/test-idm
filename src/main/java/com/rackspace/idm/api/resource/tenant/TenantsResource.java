@@ -99,51 +99,6 @@ public class TenantsResource extends ParentResource {
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenant))).build();
     }
 
-    @DELETE
-    @Path("{tenantId}")
-    public Response deleteTenant(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("userId") String userId,
-        @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId) {
-
-        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
-
-        tenantService.deleteTenant(tenantId);
-
-        return Response.noContent().build();
-    }
-
-    @PUT
-    @Path("{tenantId}")
-    public Response updateTenant(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("userId") String userId,
-        @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId,
-        Tenant tenant) {
-
-        if(tenant == null){
-            throw new IllegalArgumentException("Tenant cannot be null");
-        }
-
-        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
-
-        updateTenantFields(tenant, tenantId);
-        com.rackspace.idm.domain.entity.Tenant tenantObject = checkAndGetTenant(tenantId);
-
-        tenantObject.setDescription(tenant.getDescription());
-        tenantObject.setDisplayName(tenant.getDisplayName());
-        tenantObject.setEnabled(tenant.isEnabled());
-
-        tenantService.updateTenant(tenantObject);
-        tenantObject = tenantService.getTenant(tenant.getName());
-
-        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
-    }
-
     void validateTenantId(String tenantId) {
         if(tenantId != null) {
             int index = tenantId.indexOf(':');
@@ -179,16 +134,5 @@ public class TenantsResource extends ParentResource {
         if (tenant.getDisplayName() != null && tenant.getDisplayName().length() == 0) {
             tenant.setDisplayName(null);
         }
-    }
-
-    com.rackspace.idm.domain.entity.Tenant checkAndGetTenant(String tenantId) {
-        com.rackspace.idm.domain.entity.Tenant tenant = this.tenantService.getTenant(tenantId);
-
-        if (tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return tenant;
     }
 }

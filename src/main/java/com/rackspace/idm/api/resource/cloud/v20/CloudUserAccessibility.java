@@ -146,7 +146,7 @@ public class CloudUserAccessibility {
                     endpoint.setAdminURL(baseUrl.getAdminUrl());
                 }
                 if (baseUrl.getBaseUrlId() != null) {
-                    endpoint.setId(baseUrl.getBaseUrlId());
+                    endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
                 }
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
                 endpoint.setName(baseUrl.getServiceName());

@@ -38,6 +38,7 @@ public class DefaultPolicyService implements PolicyService {
     private PolicyDao policyDao;
 
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
+    public static final String POLICY_ID_CANNOT_BE_NULL = "Policy Id cannot be null ";
     public static final String POLICY_BLOB_CANNOT_BE_NULL = "Policy Blob cannot be null";
     public static final String POLICY_TYPE_CANNOT_BE_NULL = "Policy type cannot be null";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -85,13 +86,16 @@ public class DefaultPolicyService implements PolicyService {
 
     @Override
     public Policy getPolicy(String policyId) {
-        Policy policy = checkAndGetPolicy(policyId);
-        return policy;
+        if(policyId == null) {
+            throw new BadRequestException(POLICY_ID_CANNOT_BE_NULL);
+        }
+
+        return policyDao.getPolicy(policyId);
     }
 
     @Override
     public Policy checkAndGetPolicy(String policyId) {
-        Policy policy = policyDao.getPolicy(policyId);
+        Policy policy = getPolicy(policyId);
         if(policy == null){
             String err = String.format("Policy with Id %s does not exist", policyId);
             throw new NotFoundException(err);
@@ -100,9 +104,12 @@ public class DefaultPolicyService implements PolicyService {
     }
 
     @Override
-    public void updatePolicy(Policy policy, String policyId) {
+    public void updatePolicy(String policyId, Policy policy) {
         if(policy == null){
             throw new BadRequestException(POLICY_CANNOT_BE_NULL);
+        }
+        if(policyId == null) {
+            throw new BadRequestException("Policy ID must not be null");
         }
         if(StringUtils.isBlank(policy.getBlob())){
             policy.setBlob(null);
@@ -113,8 +120,9 @@ public class DefaultPolicyService implements PolicyService {
         if(StringUtils.isBlank(policy.getPolicyType())) {
             policy.setPolicyType(null);
         }
+        policy.setLdapEntry(policyDao.getPolicy(policyId).getLdapEntry());
         logger.info("Updating Policy: {}", policy);
-        policyDao.updatePolicy(policy, policyId);
+        policyDao.updatePolicy(policy);
     }
 
     @Override

@@ -58,7 +58,7 @@ public class ApplicationConverterTest {
     public void toClientDo_withClient_setsRCN() throws Exception {
         client.setCustomerId("customerId");
         com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
-        assertThat("RCN", application.getRCN(), equalTo("customerId"));
+        assertThat("RCN", application.getRcn(), equalTo("customerId"));
     }
 
     @Test
@@ -100,13 +100,13 @@ public class ApplicationConverterTest {
     public void toClientDo_withClient_setsEnabled() throws Exception {
         client.setEnabled(true);
         com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
-        assertThat("enabled", application.isEnabled(), equalTo(true));
+        assertThat("enabled", application.getEnabled(), equalTo(true));
     }
 
     @Test
     public void toClientDo_withClient_withNullEnabled_DoesNotSetEnabled() throws Exception {
         com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
-        assertThat("enabled", application.isEnabled(), nullValue());
+        assertThat("enabled", application.getEnabled(), nullValue());
     }
 
     @Test
@@ -260,7 +260,7 @@ public class ApplicationConverterTest {
 
     @Test
     public void toCLientJaxbMin_setsCustomerId() throws Exception {
-        clientDO.setRCN("customerId");
+        clientDO.setRcn("customerId");
         JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(clientDO);
         assertThat("application customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
     }
@@ -288,7 +288,7 @@ public class ApplicationConverterTest {
 
     @Test
     public void toClientJaxb_withClient_setsCustomerId() throws Exception {
-        clientDO.setRCN("customerId");
+        clientDO.setRcn("customerId");
         JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
         assertThat("customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
     }
@@ -392,7 +392,7 @@ public class ApplicationConverterTest {
 
     @Test
     public void toApplicationJaxbFromApplication_withValidClient_setsCustomerId() throws Exception {
-        clientDO.setRCN("customerId");
+        clientDO.setRcn("customerId");
         when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
         JAXBElement<Application> applicationJAXBElement = applicationConverter.toApplicationJaxbFromApplication(clientDO);
         assertThat("customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));

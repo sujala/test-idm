@@ -32,7 +32,7 @@ public class TenantConverter {
         Tenant jaxbTenant = objectFactory.createTenant();
         jaxbTenant.setDescription(tenant.getDescription());
         jaxbTenant.setDisplayName(tenant.getDisplayName());
-        jaxbTenant.setEnabled(tenant.isEnabled());
+        jaxbTenant.setEnabled(tenant.getEnabled());
         jaxbTenant.setId(tenant.getTenantId());
         jaxbTenant.setName(tenant.getName());
 

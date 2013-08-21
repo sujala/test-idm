@@ -551,7 +551,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
                 "    \"id\":\"" + testUserAdmin.getId() + "\",\n" +
-                "    \"username\": \"" + identityUserName + "\",\n" +
+                "    \"username\": \"" + testUserAdmin.getUsername() + "\",\n" +
                 "    \"email\": \"testuser@example.org\",\n" +
                 "    \"RAX-AUTH:defaultRegion\": \"BLAH\"\n" +
                 "  }\n" +

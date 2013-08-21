@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.Date;
 import java.util.Stack;
 
 /**
@@ -27,14 +28,14 @@ public final class Password {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String value;
     private boolean isNew;
-    private DateTime lastUpdated = new DateTime();
+    private Date lastUpdated = new Date();
     private boolean wasSelfUpdated;
 
     public Password() {
         // Needed by JAX-RS
     }
 
-    private Password(String value, boolean isNew, DateTime lastUpdated, boolean wasSelfUpdated) {
+    public Password(String value, boolean isNew, Date lastUpdated, boolean wasSelfUpdated) {
         this.value = value;
         this.isNew = isNew;
         this.lastUpdated = lastUpdated;
@@ -59,7 +60,7 @@ public final class Password {
 //            "Do not use this method. It's there to comply with the JavaBean spec.");
     }
 
-    public DateTime getLastUpdated() {
+    public Date getLastUpdated() {
         return lastUpdated;
     }
 
@@ -74,7 +75,7 @@ public final class Password {
         return new Password(value, false, lastUpdated, wasSelfUpdated);
     }
 
-    public static Password existingInstance(String existingPassword, DateTime lasteUpdated,
+    public static Password existingInstance(String existingPassword, Date lasteUpdated,
         boolean wasSelfUpdated) {
         if (StringUtils.isBlank(existingPassword)) {
             throw new IllegalArgumentException("Null or blank password was passed in");
@@ -91,10 +92,10 @@ public final class Password {
         if (StringUtils.isBlank(newPassword)) {
             throw new IllegalArgumentException("Null or blank password was passed in.");
         }
-        return new Password(newPassword, true, new DateTime(), false);
+        return new Password(newPassword, true, new Date(), false);
     }
 
-    public static Password generateRandom(boolean isSelfUpdate) {
+    public static Password generateRandom(boolean isSelfUpdate, User user) {
         String randomPassword = HashHelper.getRandomSha1();
         randomPassword = randomPassword.substring(0, BASE);
         char[] pw = randomPassword.toCharArray();
@@ -133,7 +134,13 @@ public final class Password {
 
         randomPassword = new String(pw);
 
-        return new Password(randomPassword, true, new DateTime(), isSelfUpdate);
+        user.setUserPassword(randomPassword);
+        user.setPassword(randomPassword);
+        user.setPasswordIsNew(true);
+        user.setPasswordLastUpdated(new Date());
+        user.setPasswordWasSelfUpdated(isSelfUpdate);
+
+        return new Password(randomPassword, true, new Date(), isSelfUpdate);
     }
 
     @Override

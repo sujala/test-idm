@@ -7,11 +7,9 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import java.util.List;
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -234,72 +231,6 @@ public class DefaultAuthorizationServiceTestOld {
     @Test
     public void authorizeRackspaceClient_scopeAccessNotInstanceOfClientScopeAccess() throws Exception {
         assertThat("boolean",defaultAuthorizationService.authorizeRackspaceClient(null),equalTo(false));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeUser(null, null, null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfUserScopeAccessUsernamesEqualUserRcnEquals_returnsTrue() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername("jsmith");
-        userScopeAccess.setUserRCN("id");
-        assertThat("boolean", defaultAuthorizationService.authorizeUser(userScopeAccess, "ID", "jsmith"), equalTo(true));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfUserScopeAccessUsernamesNotEqualUserRcnEquals_returnsFalse() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername("jsmith");
-        userScopeAccess.setUserRCN("id");
-        assertThat("boolean",defaultAuthorizationService.authorizeUser(userScopeAccess,"ID","psmith"),equalTo(false));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfDelegateClientAccessUsernamesEqualUserRcnsEqual_returnsTrue() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("jsmith");
-        delegatedClientScopeAccess.setUserRCN("id");
-        assertThat("boolean",defaultAuthorizationService.authorizeUser(delegatedClientScopeAccess,"ID","jsmith"),equalTo(true));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfDelegateClientAccessUsernamesEqualUserRcnsNotEqual_returnsFalse() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("jsmith");
-        delegatedClientScopeAccess.setUserRCN("id");
-        assertThat("boolean",defaultAuthorizationService.authorizeUser(delegatedClientScopeAccess,"foo","jsmith"),equalTo(false));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfDelegateClientAccessUsernamesNotEqualUserRcnsEqual_returnsFalse() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("jsmith");
-        delegatedClientScopeAccess.setUserRCN("id");
-        assertThat("boolean",defaultAuthorizationService.authorizeUser(delegatedClientScopeAccess,"ID","psmith"),equalTo(false));
-    }
-
-    @Test
-    public void authorizeUser_scopeAccessInstanceOfDelegateClientAccessUsernamesNotEqualUserRcnsNotEqual_returnsFalse() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("jsmith");
-        delegatedClientScopeAccess.setUserRCN("id");
-        assertThat("boolean",defaultAuthorizationService.authorizeUser(delegatedClientScopeAccess,"foo","psmith"),equalTo(false));
-    }
-
-    @Test
-    public void authorizeCustomerUser_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeCustomerUser(null, null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsTrue() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUserRCN("rcn");
-        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(delegatedClientScopeAccess, "rcn"),equalTo(true));
-
     }
 
     @Test
@@ -909,13 +840,13 @@ public class DefaultAuthorizationServiceTestOld {
     @Test
     public void verifySelf_sameUsernameAndUniqueId_succeeds() throws Exception {
             User user1 = new User();
+            user1.setUniqueId("foo");
             user1.setId("foo");
             user1.setUsername("foo");
-            user1.setUniqueId("foo");
             User user2 = new User();
+            user2.setUniqueId("foo");
             user2.setId("foo");
             user2.setUsername("foo");
-            user2.setUniqueId("foo");
             defaultAuthorizationService.verifySelf(user1, user2);
     }
 
@@ -925,11 +856,9 @@ public class DefaultAuthorizationServiceTestOld {
            User user1 = new User();
            user1.setId("foo");
            user1.setUsername("foo");
-           user1.setUniqueId("foo");
            User user2 = new User();
            user2.setId("foo");
            user2.setUsername("!foo");
-           user2.setUniqueId("foo");
            defaultAuthorizationService.verifySelf(user1, user2);
            assertTrue("should throw exception", false);
        }catch (ForbiddenException ex){
@@ -941,13 +870,13 @@ public class DefaultAuthorizationServiceTestOld {
     public void verifySelf_differentUniqueId_throwsForbiddenException() throws Exception {
         try{
             User user1 = new User();
+            user1.setUniqueId("foo1");
             user1.setId("foo");
             user1.setUsername("foo");
-            user1.setUniqueId("foo");
             User user2 = new User();
+            user1.setUniqueId("foo2");
             user2.setId("foo");
             user2.setUsername("foo");
-            user2.setUniqueId("!foo");
             defaultAuthorizationService.verifySelf(user1, user2);
             assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){
@@ -962,11 +891,9 @@ public class DefaultAuthorizationServiceTestOld {
             User user1 = new User();
             user1.setId("foo");
             user1.setUsername("foo");
-            user1.setUniqueId("foo");
             User user2 = new User();
             user2.setId("foo");
             user2.setUsername("!foo");
-            user2.setUniqueId("!foo");
             defaultAuthorizationService.verifySelf(user1, user2);
             assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){

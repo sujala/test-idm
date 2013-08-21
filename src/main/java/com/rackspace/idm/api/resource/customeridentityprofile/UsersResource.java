@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -52,10 +54,9 @@ public class UsersResource extends ParentResource {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.RCN, customerId)};
-
         //TODO: Implement Authorization rules
-        Users users = userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
+        Users users = new Users();
+        users.getUsers().addAll(userService.getUsersByRCN(customerId));
 
         return Response.ok(userConverter.toUserListJaxb(users)).build();
     }

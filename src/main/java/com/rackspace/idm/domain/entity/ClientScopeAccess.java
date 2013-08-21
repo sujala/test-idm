@@ -2,11 +2,10 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.*;
-import org.joda.time.DateTime;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import java.util.Date;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPGetter;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS,requestAllAttributes=true)
 public class ClientScopeAccess extends ScopeAccess {

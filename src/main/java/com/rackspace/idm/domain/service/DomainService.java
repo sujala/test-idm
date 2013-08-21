@@ -4,7 +4,6 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
 
 import java.util.List;
 
@@ -24,10 +23,10 @@ public interface DomainService {
     void deleteDomain(String domainId);
     void addTenantToDomain(String tenantId, String domainId);
     void removeTenantFromDomain(String tenantId, String domainId);
-    Users getUsersByDomainId(String domainId);
-    Users getUsersByDomainId(String domainId, boolean enabled);
+    List<User> getUsersByDomainId(String domainId);
+    List<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
     List<User> getDomainAdmins(String domainId);
-    List<User> getDomainAdmins(String domainId, boolean enabled);
+    List<User> getEnabledDomainAdmins(String domainId);
     Domain checkAndGetDomain(String domainId);
     String createNewDomain(String domainId);
     List<Domain> getDomainsForTenants(List<Tenant> tenants);

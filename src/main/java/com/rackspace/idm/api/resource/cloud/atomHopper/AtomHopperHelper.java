@@ -40,7 +40,7 @@ public class AtomHopperHelper {
     public String getAuthToken() throws IOException, JAXBException {
         logger.warn("Getting admin token ...");
         User user = userService.getUser(config.getString("ga.username"));
-        ScopeAccess access = scopeAccessService.getScopeAccessByUserId(user.getId());
+        ScopeAccess access = scopeAccessService.getScopeAccessForUser(user);
         String clientId = access.getClientId();
         if(access.getAccessTokenExp().before(new Date())){
             access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId, null);

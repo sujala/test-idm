@@ -92,7 +92,7 @@ public class Cloud11VersionResource {
     @GET
     @Path("extensions/{alias}")
     public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
-        return cloud11Service.getExtension(httpHeaders,alias).build();
+        return cloud11Service.getExtension(httpHeaders, alias).build();
     }
 
     @GET
@@ -136,7 +136,7 @@ public class Cloud11VersionResource {
                                    @QueryParam("serviceName") String serviceName,
                                    @Context HttpHeaders httpHeaders
     ) throws IOException {
-        return cloud11Service.getBaseURLById(request, baseURLId, Encoder.encode(serviceName), httpHeaders).build();
+        return cloud11Service.getBaseURLById(request, String.valueOf(baseURLId), Encoder.encode(serviceName), httpHeaders).build();
     }
 
     @GET

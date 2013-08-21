@@ -19,6 +19,35 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         random = ("$randomness").replace('-', "")
     }
 
+    def "group crud"() {
+        given:
+        def groupId = "$random"
+        def groupName = "group$random"
+        def groupToCreate = getGroup(groupId, groupName, "description")
+        def groupToUpdate = getGroup(groupId, "name2", "description2")
+
+        when:
+        groupRepository.addGroup(groupToCreate)
+        def createdGroup = groupRepository.getGroupByName(groupName)
+
+
+        groupRepository.updateGroup(groupToUpdate)
+        def updatedGroup = groupRepository.getGroupById(groupId)
+
+        def groupsWithGroup = groupRepository.getGroups()
+
+        groupRepository.deleteGroup(groupId)
+
+        def groupsWithoutGroup = groupRepository.getGroups()
+
+        then:
+        groupToCreate == createdGroup
+        groupToUpdate == updatedGroup
+
+        groupsWithGroup.contains(updatedGroup)
+        !groupsWithoutGroup.contains(updatedGroup)
+    }
+
     def "can get group with duplicate name"() {
         given:
         def groupName = "group$random"

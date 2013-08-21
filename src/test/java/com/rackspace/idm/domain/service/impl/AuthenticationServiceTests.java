@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import com.unboundid.ldap.sdk.Attribute;
@@ -36,7 +34,6 @@ public class AuthenticationServiceTests {
     DefaultAuthenticationService authenticationService;
     DefaultAuthenticationService authSpy;
     AuthDao mockAuthDao;
-    CustomerService mockCustomerService;
     List<TenantRole> tenantRoles;
 
     String customerId = "RACKSPACE";
@@ -66,8 +63,6 @@ public class AuthenticationServiceTests {
         inputValidator = EasyMock.createMock(InputValidator.class);
         mockTenantService = mock(TenantService.class);
         mockAuthDao = EasyMock.createMock(AuthDao.class);
-        mockCustomerService = EasyMock.createMock(CustomerService.class);
-
 
         tenantRoles = new ArrayList<TenantRole>();
         tenantRoles.add(new TenantRole());
@@ -85,140 +80,9 @@ public class AuthenticationServiceTests {
         authenticationService.setApplicationService(mockClientService);
         authenticationService.setConfig(appConfig);
         authenticationService.setUserService(mockUserService);
-        authenticationService.setCustomerService(mockCustomerService);
         authenticationService.setInputValidator(inputValidator);
 
         authSpy = PowerMockito.spy(authenticationService);
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfFailUserAuthentication()
-            throws Exception {
-
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("password");
-
-        final User testuser = getFakeUser();
-        final Application testClient = getTestClient();
-        final UserAuthenticationResult uaResult = new UserAuthenticationResult(testuser, false);
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockUserService.getUser(authCredentials.getUsername())).andReturn(testuser);
-        EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
-
-        EasyMock.replay(mockClientService, mockUserService);
-
-        authenticationService.authenticate(authCredentials);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotGetTokenWithInvalidGrantType() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("none");
-
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getUserScopeAccessForClientId(uniqueId, clientId)).andReturn(getFakeUserScopeAccess());
-
-        EasyMock.replay(mockClientService, mockScopeAccessService);
-
-        authenticationService.authenticate(authCredentials);
-    }
-
-    @Test
-    public void shouldGetPasswordResetTokenWhenPasswordRotationDurationHasExpired() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("password");
-
-        final User user = getFakeUser();
-        user.setPasswordObj(Password.existingInstance(userpass.getValue(), new DateTime().minusDays(5), false));
-
-        final Customer customer = getFakeCustomer();
-        final Application testClient = getTestClient();
-        final UserAuthenticationResult uaResult = new UserAuthenticationResult(user, true);
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(uaResult);
-        EasyMock.expect(mockUserService.getUser(authCredentials.getUsername())).andReturn(user);
-        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
-        EasyMock.expect(mockScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user)).andReturn(getFakePasswordResetScopeAccess());
-
-        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService, mockCustomerService);
-
-        final AuthData authData = authenticationService.authenticate(authCredentials);
-
-        Assert.assertNotNull(authData);
-        Assert.assertNull(authData.getRefreshToken());
-        Assert.assertNull(authData.getUser());
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertTrue(authData.isPasswordResetOnlyToken());
-        Assert.assertNotNull(authData.getPasswordExpirationDate());
-        Assert.assertEquals(0, authData.getDaysUntilPasswordExpiration());
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfInvalidRefreshToken() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("refresh-token");
-
-        final Application testClient = getTestClient();
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-        final User user = getFakeUser();
-
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(null);
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
-
-        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
-
-        authenticationService.authenticate(authCredentials);
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfRefreshTokenIsExpired() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("refresh-token");
-
-        final UserScopeAccess usa = getFakeUserScopeAccess();
-        usa.setRefreshTokenExp(new DateTime().minusDays(1).toDate());
-
-        final Application testClient = getTestClient();
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-        final User user = getFakeUser();
-
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
-
-        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
-
-        authenticationService.authenticate(authCredentials);
-    }
-
-    @Test(expected = UserDisabledException.class)
-    public void shouldNotGetAccessTokenIfUserDisabled() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("refresh-token");
-
-        final User user = getFakeUser();
-        user.setEnabled(false);
-
-        final UserScopeAccess usa = getFakeUserScopeAccess();
-        final Application testClient = getTestClient();
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
-        EasyMock.expect(mockUserService.getUserById(username)).andReturn(user);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
-
-        EasyMock.replay(mockClientService, mockUserService, mockScopeAccessService);
-
-        authenticationService.authenticate(authCredentials);
     }
 
     @Test
@@ -323,16 +187,6 @@ public class AuthenticationServiceTests {
         return csa;
     }
 
-    private User getFakeUser() {
-        final User user = new User(username, customerId, useremail,
-                new UserHumanName(firstname, "", lastname), new UserLocale(),
-                new UserCredential(userpass, "", "",""));
-        user.setApiKey("1234567890");
-        user.setUniqueId(uniqueId);
-        user.setEnabled(true);
-        return user;
-    }
-
     private Racker getFakeRacker() {
         Racker racker = new Racker();
         racker.setUniqueId(uniqueId);
@@ -341,19 +195,10 @@ public class AuthenticationServiceTests {
         return racker;
     }
 
-    private Customer getFakeCustomer() {
-        final Customer customer = new Customer();
-        customer.setRcn(customerId);
-        customer.setPasswordRotationEnabled(true);
-        customer.setPasswordRotationDuration(2);
-        return customer;
-    }
-
     private Application getTestClient() {
         final Application client = new Application(clientId, ClientSecret
                 .newInstance(clientSecret), "DELETE_My_Name", customerId
         );
-        client.setUniqueId(uniqueId);
         return client;
     }
 

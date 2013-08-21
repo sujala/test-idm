@@ -9,6 +9,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
+@Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
 public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken {
 
@@ -41,34 +42,6 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken {
     }
 
     @Override
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    @Override
-    public void setRefreshTokenString(String refreshTokenString) {
-        this.refreshTokenString = refreshTokenString;
-    }
-
-    @Override
-    public Date getRefreshTokenExp() {
-        return refreshTokenExp;
-    }
-
-    @Override
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
-
-    public String getRackerId() {
-        return rackerId;
-    }
-
-    public void setRackerId(String rackerId) {
-        this.rackerId = rackerId;
-    }
-
-    @Override
     public void setRefreshTokenExpired() {
         this.refreshTokenExp = new DateTime().minusDays(1).toDate();
     }
@@ -84,9 +57,5 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken {
     public String getAuditContext() {
         final String format = "Racker(rackerId=%s)";
         return String.format(format, getRackerId());
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
     }
 }
