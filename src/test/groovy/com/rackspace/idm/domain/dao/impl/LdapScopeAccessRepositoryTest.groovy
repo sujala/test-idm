@@ -14,8 +14,6 @@ import testHelpers.RootServiceTest
  * To change this template use File | Settings | File Templates.
  */
 class LdapScopeAccessRepositoryTest extends RootServiceTest {
-    @Shared
-    ScopeAccessDao scopeAccessDao;
 
     def setup () {
         scopeAccessDao = new LdapScopeAccessRepository();
