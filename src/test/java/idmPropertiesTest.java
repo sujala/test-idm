@@ -16,7 +16,11 @@ import static junit.framework.Assert.assertTrue;
  * To change this template use File | Settings | File Templates.
  */
 
-
+//TODO: Rewrite this based on verification needs.
+// This test is pretty fragile and I'm not certain it actually verifies what it's trying to verify. It does a union of all the properties in a set of idm.properties (some excluded) and then verifies that all the
+//the idm.properties contain all the properties. However, the configs excluded are all the development ones; where new properties would be initially added. So it will only
+//catch an error if someone remembered to add it to one of the included set after development, at which point the person would probably remember
+//to add to all. Also, I'm not sure if the included set of config files are used during deploy anyway, so this may be verifying files that are not even used.
 public class idmPropertiesTest {
 
     private ArrayList<String> idmPropertyLocationList = new ArrayList<String>();
@@ -73,7 +77,9 @@ public class idmPropertiesTest {
                 !idmPropertyLocation.getName().contains("LOCAL-DEV") &&
                 !idmPropertyLocation.getName().contains("JENKINS") &&
                 !idmPropertyLocation.getName().contains("TEST") &&
-                !idmPropertyLocation.getName().contains("OPENLDAP")) {
+                !idmPropertyLocation.getName().contains("OPENLDAP") &&
+                !idmPropertyLocation.getName().contains("VAGRANT")
+                ) {
 
             for (File file : idmPropertyLocation.listFiles()) {
                 setIdmPropertyLocations(file);
