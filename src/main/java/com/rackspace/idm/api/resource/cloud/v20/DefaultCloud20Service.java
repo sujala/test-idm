@@ -776,8 +776,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         UserScopeAccess usa;
         RackerScopeAccess rsa;
         List<String> authenticatedBy = new ArrayList<String>();
-        if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
-            PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+        if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
+            PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
@@ -1456,7 +1456,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(user.getPassword())) {
                 throw new NotFoundException("User doesn't have password credentials");
             }
-            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+            PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
             userCreds.setPassword(user.getPassword());
             userCreds.setUsername(user.getUsername());
             JAXBElement<? extends CredentialType> creds = objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds);
@@ -1563,10 +1563,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (authorizationService.authorizeCloudServiceAdmin(callerScopeAccess)) {
                 if (!StringUtils.isBlank(user.getPassword())) {
-                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                    PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
                     userCreds.setPassword(user.getPassword());
                     userCreds.setUsername(user.getUsername());
-                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds));
                 }
             }
 
@@ -3013,7 +3013,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-                                                         String credentialType, PasswordCredentialsRequiredUsername creds) {
+                                                         String credentialType, PasswordCredentialsBase creds) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -3031,7 +3031,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setPassword(creds.getPassword());
             this.userService.updateUser(user, false);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(creds).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createCredential(creds).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

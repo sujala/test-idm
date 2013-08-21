@@ -9,7 +9,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

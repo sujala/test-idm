@@ -10,7 +10,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.User;
 
 import java.util.ArrayList;
@@ -266,7 +266,7 @@ public class Validator20Test {
     @Test
     public void validatePasswordCredentials_passwordIsBlank_throwsBadRequest() throws Exception {
         try{
-            PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+            PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
             passwordCredentialsRequiredUsername.setUsername("username");
             passwordCredentialsRequiredUsername.setPassword(" ");
             doNothing().when(spy).validateUsername("username");
@@ -279,7 +279,7 @@ public class Validator20Test {
 
     @Test
     public void validatePasswordCredentials_passwordIsNotBlank_throwsBadRequest() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setUsername("username");
         passwordCredentialsRequiredUsername.setPassword("password");
         doNothing().when(spy).validateUsername("username");
@@ -337,7 +337,7 @@ public class Validator20Test {
 
     @Test
     public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordCredentials() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setPassword("password");
         doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doNothing().when(spy).validatePasswordForCreateOrUpdate("password");
@@ -346,7 +346,7 @@ public class Validator20Test {
     }
     @Test
     public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordForCreateOrUpdate() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setPassword("password");
         doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doNothing().when(spy).validatePasswordForCreateOrUpdate("password");

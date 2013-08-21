@@ -47,7 +47,7 @@ public class ObjectConverter {
         mapping.put(com.rackspacecloud.docs.auth.api.v1.User.class, UserForValidation.class);
         mapping.put(BaseURLRef.class, BaseUrlRefForValidation.class);
         mapping.put(BaseURL.class, BaseUrlForValidation.class);
-        mapping.put(PasswordCredentialsRequiredUsername.class, CredentialTypeForValidation.class);
+        mapping.put(PasswordCredentialsBase.class, CredentialTypeForValidation.class);
         mapping.put(ApiKeyCredentials.class, CredentialTypeForValidation.class);
     }
 

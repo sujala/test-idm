@@ -114,6 +114,23 @@ class V2Factory {
         }
     }
 
+    def createPasswordCredentialsBase() {
+        return createPasswordCredentialsBase("username", "Password1")
+    }
+
+    def createPasswordCredentialsBase(String username, String password) {
+        new PasswordCredentialsBase().with {
+            it.username = username
+            it.password = password
+            return it
+        }
+    }
+
+    def createJAXBPasswordCredentialsBase(String username, String password) {
+        def credential = createPasswordCredentialsBase(username, password)
+        return objFactory.createCredential(credential)
+    }
+
     def createPasswordCredentialsRequiredUsername() {
         return createPasswordCredentialsRequiredUsername("username", "Password1")
     }

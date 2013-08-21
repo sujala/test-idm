@@ -2262,7 +2262,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockTokenConverter(service)
         mockAuthConverterCloudV20(service)
 
-        def passwordCred = v2Factory.createJAXBPasswordCredentialsRequiredUsername("username", "Password1")
+        def passwordCred = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
 
         def passwordAuthRequest = v2Factory.createAuthenticationRequest("", "", passwordCred)
@@ -2759,7 +2759,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def racker = entityFactory.createRacker()
         def authResult = entityFactory.createUserAuthenticationResult(racker, true)
         def authenticationRequest = new AuthenticationRequest().with {
-            it.credential = v2Factory.createJAXBPasswordCredentialsRequiredUsername("username", "password")
+            it.credential = v2Factory.createJAXBPasswordCredentialsBase("username", "password")
             it
         }
         def domain = v1Factory.createDomain("id", "RACKSPACE")
@@ -3469,7 +3469,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         if (useRsaCreds) {
             mockedElement.getValue() >> v1Factory.createRsaCredentials()
         } else {
-            mockedElement.getValue() >> v2Factory.createPasswordCredentialsRequiredUsername()
+            mockedElement.getValue() >> v2Factory.createPasswordCredentialsBase()
         }
         new AuthenticationRequest().with {
             it.credential = mockedElement

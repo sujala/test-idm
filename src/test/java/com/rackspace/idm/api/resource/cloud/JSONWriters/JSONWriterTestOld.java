@@ -82,7 +82,7 @@ public class JSONWriterTestOld {
 
     @Test
     public void isWritable_typeIsNotJAXBElement_returnsTrue() throws Exception {
-        assertThat("bool", writer.isWriteable(null, PasswordCredentialsRequiredUsername.class, null, null), equalTo(true));
+        assertThat("bool", writer.isWriteable(null, PasswordCredentialsBase.class, null, null), equalTo(true));
     }
 
     @Test
@@ -121,22 +121,11 @@ public class JSONWriterTestOld {
 
     @Test
     public void writeTo_typeCredentialTypePasswordCredentialsRequiredUsername_callsGetPasswordCredentials() throws Exception {
-        CredentialType passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        CredentialType passwordCredentialsbase = new PasswordCredentialsBase();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getPasswordCredentials((PasswordCredentialsRequiredUsername) passwordCredentialsRequiredUsername);
-        spy.writeTo(passwordCredentialsRequiredUsername, CredentialType.class, null, null, null, null, myOut);
-        verify(spy).getPasswordCredentials((PasswordCredentialsRequiredUsername) passwordCredentialsRequiredUsername);
-    }
-
-    @Test
-    public void writeTo_typeCredentialTypePasswordCredentialsRequiredUsername_writesToOutputStream() throws Exception {
-        CredentialType passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getPasswordCredentials((PasswordCredentialsRequiredUsername) passwordCredentialsRequiredUsername);
-        spy.writeTo(passwordCredentialsRequiredUsername, CredentialType.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
+        doReturn(new JSONObject()).when(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsbase);
+        spy.writeTo(passwordCredentialsbase, CredentialType.class, null, null, null, null, myOut);
+        verify(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsbase);
     }
 
     @Test

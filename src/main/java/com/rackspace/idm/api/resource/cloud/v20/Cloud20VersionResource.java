@@ -485,7 +485,7 @@ public class Cloud20VersionResource {
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
-        PasswordCredentialsRequiredUsername creds) {
+        PasswordCredentialsBase creds) {
         return cloud20Service.updateUserPasswordCredentials(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS, creds).build();
     }
 

@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentialsWithOnlyApiKey;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -10,22 +9,18 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.TokenForAuthenticationRequest;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-
-import java.io.IOException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -74,10 +69,10 @@ public class CloudUserExtractorTest {
     @Test
     public void getUserByV20CredentialType_withPasswordCredentialsRequiredUsername_callsUserService_getUser() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentials = new PasswordCredentialsBase();
         passwordCredentials.setUsername("username");
         passwordCredentials.setPassword("password");
-        authenticationRequest.setCredential(new JAXBObjectFactories().getOpenStackIdentityV2Factory().createPasswordCredentials(passwordCredentials));
+        authenticationRequest.setCredential(new JAXBObjectFactories().getOpenStackIdentityV2Factory().createCredential(passwordCredentials));
         cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
         verify(userService).getUser("username");
     }

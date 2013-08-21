@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForPasswordCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
 import javax.ws.rs.core.MediaType;
@@ -38,7 +39,7 @@ public class JSONReaderForPasswordCredentialsTest {
     @Test
     public void isReadable_withPasswordCredentials_returnsTrue() throws Exception {
         JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = new JSONReaderForPasswordCredentials();
-        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsRequiredUsername.class, PasswordCredentialsRequiredUsername.class, null, null);
+        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsBase.class, PasswordCredentialsBase.class, null, null);
         assertThat("readable", readable, equalTo(true));
 
     }
@@ -46,7 +47,7 @@ public class JSONReaderForPasswordCredentialsTest {
     @Test
     public void isReadable_withOtherCredentials_returnsTrue() throws Exception {
         JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = new JSONReaderForPasswordCredentials();
-        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsRequiredUsername.class, ApiKeyCredentials.class, null, null);
+        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsBase.class, ApiKeyCredentials.class, null, null);
         assertThat("readable", readable, equalTo(false));
 
     }

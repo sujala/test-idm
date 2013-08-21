@@ -6,7 +6,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;

@@ -757,11 +757,11 @@ public class DefaultCloud20ServiceOldTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
 
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setUsername("test_user");
         passwordCredentialsRequiredUsername.setPassword("123");
 
-        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        JAXBElement<? extends PasswordCredentialsBase> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername);
 
         authenticationRequest.setToken(null);
         authenticationRequest.setCredential(credentialType);
@@ -792,11 +792,11 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void authenticate_withDomain_callsAuthenticateFederatedDomain() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("Rackspace");
         authenticationRequest.getAny().add(domain);
-        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
+        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         spy.authenticate(null, authenticationRequest);
         verify(spy).authenticateFederatedDomain(authenticationRequest, domain);
     }
@@ -804,11 +804,11 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void authenticate_withInvalidDomain_callsAuthenticateFederatedDomain() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("NotRackspace");
         authenticationRequest.getAny().add(domain);
-        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
+        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -1541,11 +1541,11 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void addUserCredential_passwordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
         MediaType mediaType = mock(MediaType.class);
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
+        doReturn(new JAXBElement<PasswordCredentialsBase>(QName.valueOf("foo"),PasswordCredentialsBase.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
@@ -1554,11 +1554,11 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void addUserCredential_passwordCredentials_callsCheckAndGetUserById() throws Exception {
         MediaType mediaType = mock(MediaType.class);
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
+        doReturn(new JAXBElement<PasswordCredentialsBase>(QName.valueOf("foo"),PasswordCredentialsBase.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
         spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
@@ -1577,12 +1577,12 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void addUserCredential_passwordCredentialsUserCredentialNotMatchUserName_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setUsername("username");
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("wrong_user");
-        JAXBElement<PasswordCredentialsRequiredUsername> jaxbElement = new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("credentials"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername);
+        JAXBElement<PasswordCredentialsBase> jaxbElement = new JAXBElement<PasswordCredentialsBase>(QName.valueOf("credentials"),PasswordCredentialsBase.class,passwordCredentialsRequiredUsername);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(jaxbElement).when(spy).getJSONCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
@@ -3397,7 +3397,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateUserPasswordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setUsername("someName");
         passwordCredentialsRequiredUsername.setPassword("Password1");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
@@ -3407,7 +3407,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateUserPasswordCredentials_callsCheckAndGetUserById() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserPasswordCredentials(null, authToken, userId, null, passwordCredentialsRequiredUsername);
         verify(userService).checkAndGetUserById(userId);
@@ -3423,7 +3423,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateUserPasswordCredentials_credsUsernameNotMatchUserGetUsername_returnsResponseBuilder() throws Exception {
-        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase creds = new PasswordCredentialsBase();
         creds.setUsername("username");
         creds.setPassword("ABCdef123");
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
@@ -3437,7 +3437,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateUserPasswordCredentials_withValidCredentials_callsUserService_updateUserMethod() throws Exception {
-        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase creds = new PasswordCredentialsBase();
         creds.setUsername(userId);
         creds.setPassword("ABCdef123");
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
