@@ -18,7 +18,7 @@ import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
@@ -655,7 +655,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
-        String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
         return userService.getUser(uid);
     }
 

@@ -1,8 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 

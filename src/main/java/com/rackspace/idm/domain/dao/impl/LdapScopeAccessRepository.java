@@ -102,6 +102,11 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         return parseDNForClientId(parentDn);
     }
 
+    @Override
+    public String getUserIdForParent(ScopeAccess scopeAccess) {
+        return scopeAccess.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+    }
+
     private String parseDNForClientId(String parentDn) {
         String clientId = null;
         try {

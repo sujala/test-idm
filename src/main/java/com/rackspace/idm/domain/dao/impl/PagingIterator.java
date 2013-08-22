@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;

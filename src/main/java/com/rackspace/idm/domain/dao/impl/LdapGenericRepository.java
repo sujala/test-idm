@@ -1,8 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
@@ -39,7 +38,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
     @Autowired
-    private DefaultPaginator<T> paginator;
+    private LdapPaginatorRepository<T> paginator;
 
     @Override
     public List<T> getObjects(Filter searchFilter) {

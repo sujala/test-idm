@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.pagination
 
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.User
 import com.unboundid.asn1.ASN1OctetString
 import com.unboundid.ldap.sdk.SearchRequest
@@ -7,8 +8,6 @@ import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
-import javax.ws.rs.core.UriInfo
 
 /**
  * Created with IntelliJ IDEA.
@@ -99,42 +98,6 @@ class DefaultPaginatorTest extends RootServiceTest {
         93       | 53     | 10    | 100
         99       | 8      | 13    | 100
         13       | 7      | 6     | 14
-    }
-
-    def "createSearchRequest sets the contextId to null if not provided"() {
-        given:
-        def searchRequest = createSearchRequest()
-
-        when:
-        paginator.createSearchRequest("rsId", searchRequest, 0, 25)
-        def contextId = searchRequest.getControl(VirtualListViewRequestControl.VIRTUAL_LIST_VIEW_REQUEST_OID).contextID
-
-        then:
-        contextId == null
-    }
-
-    def "createSearchRequest sets the contextId and contentCount"() {
-        when:
-        paginator.createSearchRequest("rsId", searchRequest, contextId, 100, 0, 25)
-
-        then:
-        def control = searchRequest.getControl(VirtualListViewRequestControl.VIRTUAL_LIST_VIEW_REQUEST_OID)
-        control.contextID.equals(expected)
-        control.contentCount == 100
-
-        where:
-        searchRequest           | contextId               | expected
-        createSearchRequest()   | null                    | null
-        createSearchRequest()   | createContextId("1234") | createContextId("1234")
-
-    }
-
-    def createSearchRequest() {
-        return new SearchRequest("cn=base", SearchScope.BASE, "(objectClass=*)", "rsId")
-    }
-
-    def createContextId(String value) {
-        return new ASN1OctetString(value)
     }
 
     def createContext(int offset, int limit, int totalRecords) {

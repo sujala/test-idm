@@ -1,12 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.unboundid.ldap.sdk.*;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -229,6 +229,22 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
         return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
+    }
+
+    @Override
+    public String getUserIdForParent(TenantRole tenantRole) {
+        try{
+            DN dn = new DN(tenantRole.getUniqueId());
+            RDN rdn = dn.getParent().getParent().getRDN();
+            if(rdn.hasAttribute("rsId")){
+                String id = rdn.getAttributeValues()[0];
+                if(!StringUtils.isBlank(id)){
+                    return id;
+                }
+            }
+        }catch (Exception ignored){
+        }
+        return null;
     }
 
     private TenantRole getTenantRole(String dn, Filter filter) {

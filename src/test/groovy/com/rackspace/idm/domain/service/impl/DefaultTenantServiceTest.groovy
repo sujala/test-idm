@@ -657,15 +657,17 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def "Add userId To TenantRole if it does not have it set"() {
         given:
+        def userId = "1"
         def tenantRole = entityFactory.createTenantRole()
 
         when:
         service.addUserIdToTenantRole(tenantRole)
 
         then:
-        tenantRole.getUserId() != null
-        tenantRole.getUserId() == "1"
+        1 * tenantRoleDao.getUserIdForParent(_) >> userId
         1 * tenantRoleDao.updateTenantRole(_)
+        tenantRole.getUserId() != null
+        tenantRole.getUserId() == userId
 
     }
 

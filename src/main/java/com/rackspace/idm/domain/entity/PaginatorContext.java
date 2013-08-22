@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.pagination;
+package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exception.BadRequestException;

@@ -31,4 +31,6 @@ public interface ScopeAccessDao {
     List<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
 
     String getClientIdForParent(ScopeAccess scopeAccess);
+
+    String getUserIdForParent(ScopeAccess scopeAccess);
 }
