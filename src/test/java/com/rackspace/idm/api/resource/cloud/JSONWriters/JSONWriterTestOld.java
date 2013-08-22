@@ -120,82 +120,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_typeCredentialTypePasswordCredentialsRequiredUsername_callsGetPasswordCredentials() throws Exception {
-        CredentialType passwordCredentialsbase = new PasswordCredentialsBase();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsbase);
-        spy.writeTo(passwordCredentialsbase, CredentialType.class, null, null, null, null, myOut);
-        verify(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsbase);
-    }
-
-    @Test
-    public void writeTo_typeCredentialTypePasswordCredentialsBase_callsGetPasswordCredentials() throws Exception {
-        CredentialType passwordCredentialsBase = new PasswordCredentialsBase();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsBase);
-        spy.writeTo(passwordCredentialsBase, CredentialType.class, null, null, null, null, myOut);
-        verify(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsBase);
-    }
-
-    @Test
-    public void writeTo_typeCredentialTypePasswordCredentialsBase_writesToOutputStream() throws Exception {
-        CredentialType passwordCredentialsBase = new PasswordCredentialsBase();
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getPasswordCredentials((PasswordCredentialsBase) passwordCredentialsBase);
-        spy.writeTo(passwordCredentialsBase, CredentialType.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void writeTo_typeEC2CredentialsType_throwException() throws Exception {
-        Ec2CredentialsType ec2CredentialsType = new Ec2CredentialsType();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        spy.writeTo(ec2CredentialsType, CredentialType.class, null, null, null, null, myOut);
-    }
-
-    @Test
-    public void writeTo_typeGroup_callsGetGroup() throws Exception {
-        Group group = new Group();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getGroup(group);
-        spy.writeTo(group, Group.class, null, null, null, null, myOut);
-        verify(spy).getGroup(group);
-    }
-
-    @Test
-    public void writeTo_typeGroup_writesToOutputStream() throws Exception {
-        Group group = new Group();
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getGroup(group);
-        spy.writeTo(group, Group.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
-    }
-
-    @Test
-    public void writeTo_typeGroupsList_callsGetGroupsList() throws Exception {
-        GroupsList groupsList = new GroupsList();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getGroupsList(groupsList);
-        spy.writeTo(groupsList, GroupsList.class, null, null, null, null, myOut);
-        verify(spy).getGroupsList(groupsList);
-    }
-
-    @Test
-    public void writeTo_typeGroupsList_writesToOutputStream() throws Exception {
-        GroupsList groupsList = new GroupsList();
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getGroupsList(groupsList);
-        spy.writeTo(groupsList, GroupsList.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
-    }
-
-    @Test
     public void writeTo_typeCredentialListTypeNullValue_runsSuccessfully() throws Exception {
         JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, null);
         CredentialListType credentialListType = new CredentialListType();
@@ -2296,15 +2220,6 @@ public class JSONWriterTestOld {
         JSONObject jsonObject1 = (JSONObject) jsonObject.get("passwordCredentials");
         assertThat("string", jsonObject1.get("username").toString(), equalTo("jqsmith"));
         assertThat("string", jsonObject1.get("password").toString(), equalTo("bananas"));
-    }
-
-    @Test
-    public void getGroups() throws Exception {
-        Groups groups = new Groups();
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(groups, Groups.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"RAX-KSGRP:groups\":[]}", myOut.toString());
     }
 
     @Test

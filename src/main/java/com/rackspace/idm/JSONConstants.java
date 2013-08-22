@@ -82,6 +82,7 @@ public final class JSONConstants {
     public static final String USERNAME = "username";
     public static final String USER_PASSWORD = "userPassword";
     public static final String UTF_8 = "UTF-8";
+    public static final String VALUES = "values";
     public static final String VERSION = "version";
     public static final String VERSION_ID = "versionId";
     public static final String VERSION_INFO = "versionInfo";

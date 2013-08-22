@@ -130,9 +130,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        } else if (object.getClass().equals(GroupsList.class)) {
-            GroupsList groupsList = (GroupsList) object;
-            jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
         } else if (object.getClass().equals(CredentialListType.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();

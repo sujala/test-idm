@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.JSONReaders.*
 import com.rackspace.idm.api.resource.cloud.JSONWriters.*
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.apache.commons.io.IOUtils
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
@@ -90,6 +91,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForRaxKsGroups readerForGroups = new JSONReaderForRaxKsGroups()
     @Shared JSONWriterForRaxKsGroups writerForGroups = new JSONWriterForRaxKsGroups()
+
+    @Shared JSONReaderForGroups readerForGroupsList = new JSONReaderForGroups()
+    @Shared JSONWriterForGroups writerForGroupsList = new JSONWriterForGroups()
 
     def "can read/write region as json"() {
         given:
@@ -771,6 +775,30 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         groupsObject != null
         groupsObject.group.size() == 2
+    }
+
+    def "create read/writer for groupsList" () {
+        given:
+        com.rackspacecloud.docs.auth.api.v1.Group group = new com.rackspacecloud.docs.auth.api.v1.Group().with {
+            it.id = "id"
+            it.description = "description"
+            it
+        }
+        def groupsList = new GroupsList().with {
+            it.group = [group, group].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroupsList.writeTo(groupsList, GroupsList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        GroupsList groupsListObject = readerForGroupsList.readFrom(GroupsList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupsListObject != null
+        groupsListObject.group.size() == 2
     }
 
     def getSecretQA(String id, String question, String answer) {
