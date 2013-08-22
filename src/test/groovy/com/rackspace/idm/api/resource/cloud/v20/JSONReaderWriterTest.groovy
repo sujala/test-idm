@@ -579,7 +579,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointTemplateObject.name == endpointTemplate.name
         endpointTemplateObject.id == endpointTemplate.id
         endpointTemplateObject.enabled == endpointTemplate.enabled
-        endpointTemplateObject.versionId == endpointTemplate.versionId
+        endpointTemplateObject.version.id == "id"
     }
 
     def "create read/writer for endpoint" () {
@@ -589,11 +589,16 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.href = "href"
             it
         }
+        def version = new VersionForService().with {
+            it.id = "id"
+            it.info = "info"
+            it.list = "someList"
+            it
+        }
         def endpoint = v2Factory.createEndpoint().with {
-            it.versionId = "id"
-            it.versionInfo = "info"
-            it.versionList = "list"
             it.link = [link, link].asList()
+            it.version = version
+            it.publicURL = "publicUrl"
             it
         }
 
@@ -610,16 +615,20 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.publicURL == endpoint.publicURL
         endpointObject.name == endpoint.name
         endpointObject.id == endpoint.id
-        endpointObject.versionId == endpoint.versionId
+        endpointObject.version.id == "id"
+        endpointObject.version.list == "someList"
         endpointObject.link != null
         endpointObject.link.size() == 2
     }
 
     def "create read/writer for endpoint - empty link" () {
         def endpoint = v2Factory.createEndpoint().with {
-            it.versionId = "id"
-            it.versionInfo = "info"
-            it.versionList = "list"
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
             it.link = new ArrayList<>()
             it
         }
@@ -637,17 +646,21 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.publicURL == endpoint.publicURL
         endpointObject.name == endpoint.name
         endpointObject.id == endpoint.id
-        endpointObject.versionId == endpoint.versionId
+        endpointObject.version.id == "id"
         endpointObject.link != null
         endpointObject.link.size() == 0
     }
 
     def "create read/writer for endpoint - null link" () {
         def endpoint = v2Factory.createEndpoint().with {
-            it.versionId = "id"
-            it.versionInfo = "info"
-            it.versionList = "list"
-            it.link = null
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
+            it.publicURL = "publicUrl"
+            it.link = new ArrayList<>()
             it
         }
 
@@ -664,7 +677,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.publicURL == endpoint.publicURL
         endpointObject.name == endpoint.name
         endpointObject.id == endpoint.id
-        endpointObject.versionId == endpoint.versionId
+        endpointObject.version.id == "id"
+        endpointObject.version.list == "someList"
         endpointObject.link != null
         endpointObject.link.size() == 0
     }
@@ -672,10 +686,14 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     def "create read/writer for endpoints" () {
         def endpoint = v2Factory.createEndpoint().with {
-            it.versionId = "id"
-            it.versionInfo = "info"
-            it.versionList = "list"
-            it.link = null
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
+            it.publicURL = "publicUrl"
+            it.link = new ArrayList<>()
             it
         }
         def endpoints = new EndpointList().with {
@@ -696,8 +714,14 @@ class JSONReaderWriterTest extends RootServiceTest {
     }
 
     def "create read/writer for endpointTemplates" () {
+        def version = new VersionForService().with {
+            it.id = "id"
+            it.list = "someList"
+            it.info = "info"
+            it
+        }
         def endpointTemplate = v1Factory.createEndpointTemplate().with {
-            it.versionId = "id"
+            it.version = version
             it
         }
 
@@ -716,7 +740,6 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         endpointTemplatesObject != null
         endpointTemplatesObject.endpointTemplate.size() == 2
-        endpointTemplatesObject.endpointTemplate[0].versionId == "id"
     }
 
     def "create read/writer for passwordCredentials" () {

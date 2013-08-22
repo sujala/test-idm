@@ -15,7 +15,10 @@ import java.lang.reflect.Type;
 import static com.rackspace.idm.JSONConstants.ENDPOINT_TEMPLATE;
 import static com.rackspace.idm.JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES;
 
-@Provider
+/*
+    Test use only
+ */
+//@Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForOsKsCatalogEndpointTemplates extends JSONReaderForArrayEntity<EndpointTemplateList> implements MessageBodyReader<EndpointTemplateList> {
 

@@ -652,7 +652,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * config.getInt("token.cloudAuthExpirationSeconds") >> exSeconds
         1 * config.getDouble("token.entropy") >> entropy
-        scopeAccess.accessTokenExp <= range.get("max")
+        scopeAccess.accessTokenExp <= ((Date)range.get("max"))
         scopeAccess.accessTokenExp >= range.get("min")
 
         where:

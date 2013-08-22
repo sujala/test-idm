@@ -38,11 +38,13 @@ public final class JSONConstants {
     public static final String GROUPS = "groups";
     public static final String HREF = "href";
     public static final String ID = "id";
+    public static final String INFO = "info";
     public static final String INTERNAL_URL = "internalURL";
     public static final String IS_DEFAULT = "isDefault";
     public static final String KEY = "key";
     public static final String LINK = "link";
     public static final String LINKS = "links";
+    public static final String LIST = "list";
     public static final String MOSSO_CREDENTIALS = "mossoCredentials";
     public static final String MOSSO_ID = "mossoId";
     public static final String NAME = "name";

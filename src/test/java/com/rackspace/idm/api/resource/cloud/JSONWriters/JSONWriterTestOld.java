@@ -1784,37 +1784,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void getEndpointTemplateList_fullyPopulated_returnsJSONObject() throws Exception {
-        EndpointTemplate endpointTemplate1 = new EndpointTemplate();
-        EndpointTemplate endpointTemplate2 = new EndpointTemplate();
-        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
-        endpointTemplateList.getEndpointTemplate().add(endpointTemplate1);
-        endpointTemplateList.getEndpointTemplate().add(endpointTemplate2);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success","This test worked!");
-        doReturn(jsonObject).when(spy).getEndpointTemplateWithoutWrapper(endpointTemplate1);
-        doReturn(jsonObject).when(spy).getEndpointTemplateWithoutWrapper(endpointTemplate2);
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JSONObject result = spy.getEndpointTemplateList(endpointTemplateList);
-        String jsonText = JSONValue.toJSONString(result);
-        myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"OS-KSCATALOG:endpointTemplates\":{\"OS-KSCATALOG:endpointTemplate\":[" +
-                "{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}}"));
-    }
-
-    @Test
-    public void getEndpointTemplateList_emptyList_returnsJSONObject() throws Exception {
-        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JSONObject result = writer.getEndpointTemplateList(endpointTemplateList);
-        String jsonText = JSONValue.toJSONString(result);
-        myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"OS-KSCATALOG:endpointTemplates\":{\"OS-KSCATALOG:endpointTemplate\":[]}}"));
-    }
-
-    @Test
     public void getBaseURL_fullyPopulated_returnsJSONObject() throws Exception {
         BaseURL baseURL = new BaseURL();
         baseURL.setInternalURL("www.internalURL.com");

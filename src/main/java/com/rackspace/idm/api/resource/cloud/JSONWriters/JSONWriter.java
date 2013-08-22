@@ -876,19 +876,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    JSONObject getEndpointTemplateList(EndpointTemplateList templateList) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        JSONArray list = new JSONArray();
-        outer.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES, inner);
-        inner.put(JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATE, list);
-        for (EndpointTemplate template : templateList.getEndpointTemplate()) {
-            list.add(getEndpointTemplateWithoutWrapper(template));
-        }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
     JSONObject getBaseUrl(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());

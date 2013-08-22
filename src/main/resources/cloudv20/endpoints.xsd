@@ -60,11 +60,6 @@
             <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
 
-        <!--For Development user only -->
-        <attribute name="versionId" type="xsd:string" use="optional"/>
-        <attribute name="versionInfo" type="xsd:string" use="optional"/>
-        <attribute name="versionList" type="xsd:string" use="optional"/>
-
         <attribute name="id" type="xsd:int" use="required">
             <annotation>
                 <xsd:documentation

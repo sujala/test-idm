@@ -1,6 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.JSONReaders;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
@@ -27,8 +32,9 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForOsKsCatalogEndpointTemplate extends JSONReaderForEntity<EndpointTemplate> implements
-MessageBodyReader<EndpointTemplate> {
+public class JSONReaderForOsKsCatalogEndpointTemplate implements MessageBodyReader<EndpointTemplate> {
+
+    private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -46,5 +52,64 @@ MessageBodyReader<EndpointTemplate> {
         prefixValues.put(OS_KSCATALOG_ENDPOINT_TEMPLATE, ENDPOINT_TEMPLATE);
 
         return read(inputStream, OS_KSCATALOG_ENDPOINT_TEMPLATE, prefixValues);
+    }
+
+    protected EndpointTemplate read(InputStream entityStream, String rootValue, HashMap prefixValues) {
+        try {
+
+            String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
+
+            JSONParser parser = new JSONParser();
+            JSONObject outer = (JSONObject) parser.parse(jsonBody);
+
+
+            if (outer == null || outer.keySet().size() < 1) {
+                throw new BadRequestException("Invalid json request body");
+            }
+
+            String rootElement = outer.keySet().iterator().next().toString();
+            if(!rootElement.equals(rootValue)){
+                throw new BadRequestException("Invalid json request body");
+            }
+
+            JSONObject jsonObject;
+
+            if(prefixValues != null){
+                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+            }else {
+                jsonObject = outer;
+            }
+
+            VersionForService versionForService = new VersionForService();
+            String id = (String)((JSONObject)outer.get(ENDPOINT_TEMPLATE)).get(VERSION_ID);
+            if(id != null){
+                versionForService.setId(id);
+            }
+            String info = (String)((JSONObject)outer.get(ENDPOINT_TEMPLATE)).get(VERSION_INFO);
+            if(info != null){
+                versionForService.setInfo(info);
+            }
+            String list = (String)((JSONObject)outer.get(ENDPOINT_TEMPLATE)).get(VERSION_LIST);
+            if(list != null){
+                versionForService.setList(list);
+            }
+
+            ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_ID);
+            ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_INFO);
+            ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_LIST);
+
+            String jsonString = jsonObject.toString();
+            ObjectMapper om = new ObjectMapper();
+            om.setAnnotationIntrospector(new JaxbAnnotationIntrospector(TypeFactory.defaultInstance()));
+            om.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+            EndpointTemplate endpointTemplate = om.readValue(jsonString.getBytes(), EndpointTemplate.class);
+            endpointTemplate.setVersion(versionForService);
+            return endpointTemplate;
+
+        } catch (ParseException e) {
+            throw new BadRequestException("Invalid json request body");
+        } catch (IOException e) {
+            throw new BadRequestException("Invalid json request body");
+        }
     }
 }
