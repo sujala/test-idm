@@ -17,14 +17,10 @@ import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.JSONConstants.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: wmendiza
- * Date: 10/25/12
- * Time: 4:01 PM
- * To change this template use File | Settings | File Templates.
+/*
+    Used only for testing - Not verified
  */
-@Provider
+//@Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxKsGroup extends JSONReaderForEntity<Group> implements MessageBodyReader<Group> {
     @Override

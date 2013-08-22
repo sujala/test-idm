@@ -130,10 +130,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        } else if (object.getClass().equals(Groups.class)) {
-            Groups groups = (Groups) object;
-            jsonText = JSONValue.toJSONString(getGroups(groups));
-        }  else if (object.getClass().equals(GroupsList.class)) {
+        } else if (object.getClass().equals(GroupsList.class)) {
             GroupsList groupsList = (GroupsList) object;
             jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
         } else if (object.getClass().equals(CredentialListType.class)) {
@@ -790,7 +787,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         JSONObject outer = new JSONObject();
         JSONObject values = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.GROUPSLIST, values);
+        outer.put(JSONConstants.GROUPS, values);
         for (com.rackspacecloud.docs.auth.api.v1.Group group : groupsList.getGroup()) {
             list.add(get11Group(group));
         }

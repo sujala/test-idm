@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.JSONReaders.*
 import com.rackspace.idm.api.resource.cloud.JSONWriters.*
@@ -86,6 +87,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForRaxKsGroup readerForGroup = new JSONReaderForRaxKsGroup()
     @Shared JSONWriterForRaxKsGroup writerForGroup = new JSONWriterForRaxKsGroup()
+
+    @Shared JSONReaderForRaxKsGroups readerForGroups = new JSONReaderForRaxKsGroups()
+    @Shared JSONWriterForRaxKsGroups writerForGroups = new JSONWriterForRaxKsGroups()
 
     def "can read/write region as json"() {
         given:
@@ -730,7 +734,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         passwordCredentialsObject != null
     }
 
-    def "create read/writer for groups" () {
+    def "create read/writer for group" () {
         given:
         def group = v1Factory.createGroup()
 
@@ -744,6 +748,29 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         groupObject != null
         groupObject.name == "name"
+    }
+
+    def "create read/writer for groups" () {
+        given:
+        Group group = new Group().with {
+            it.name = "name"
+            it
+        }
+        def groups = new Groups().with {
+            it.group = [group, group].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroups.writeTo(groups, Groups.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Groups groupsObject = readerForGroups.readFrom(Groups.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupsObject != null
+        groupsObject.group.size() == 2
     }
 
     def getSecretQA(String id, String question, String answer) {

@@ -35,7 +35,7 @@ public final class JSONConstants {
     public static final String EXTENSIONS = "extensions";
     public static final String GLOBAL = "global";
     public static final String GROUP = "group";
-    public static final String GROUPSLIST = "groups";
+    public static final String GROUPS = "groups";
     public static final String HREF = "href";
     public static final String ID = "id";
     public static final String INTERNAL_URL = "internalURL";
