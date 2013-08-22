@@ -19,7 +19,8 @@ public class SystemEnvPropertyConfigurationFactory implements PropertyFileEncryp
 
     public static final String DEFAULT_PROVIDER_NAME = "BC";
     /**
-     * The default algorithm for encryption is PBEWITHMD5ANDDES since it does not require unlimited strength policy jars
+     * The default algorithm for encryption is PBEWITHMD5ANDDES since it does not require unlimited strength policy
+     * jars
      * to be installed on the host system. However, it is strongly recommended to override this default with a more
      * secure algorithm such as PBEWITHSHA256AND128BITAES-CBC-BC
      */
@@ -30,12 +31,11 @@ public class SystemEnvPropertyConfigurationFactory implements PropertyFileEncryp
         Security.addProvider(new BouncyCastleProvider());
 
         EnvironmentStringPBEConfig config = new EnvironmentStringPBEConfig();
-        config.setProviderName(DEFAULT_PROVIDER_NAME);
 
         //set the algorithm via first non-null/empty value found: Environment Variable -> System Property -> Default value
-        config.setAlgorithmSysPropertyName(PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME);
+        config.setAlgorithmEnvName(PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME);
         if (StringUtils.isBlank(config.getAlgorithm())) {
-            config.setAlgorithmEnvName(PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME);
+            config.setAlgorithmSysPropertyName(PROPERTY_ENCRYPTION_ALGORITHM_ATTR_NAME);
         }
         if (StringUtils.isBlank(config.getAlgorithm())) {
             config.setAlgorithm(DEFAULT_ALGORITHM);
@@ -50,10 +50,18 @@ public class SystemEnvPropertyConfigurationFactory implements PropertyFileEncryp
             config.setProviderName(DEFAULT_PROVIDER_NAME);
         }
 
-        //load the password from the environment variable, and if not found, then from System prop
-        config.setPasswordSysPropertyName(PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME);
-        if (StringUtils.isBlank(config.getAlgorithm())) {
-            config.setPasswordEnvName(PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME);
+        /*
+        need to deal with password differently than provider and algorithm due to bug in the EnvironmentStringPBEConfig
+        cleans passwords. After you set the password to a non-null value (even empty string), you can never set it again
+        because the old password will have been cleaned. All subsequent attempts to get the newly set password will result
+        in a PasswordAlreadyCleanedException.
+         */
+        String pwd = System.getenv(PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME);
+        if (StringUtils.isBlank(pwd)) {
+            pwd = System.getProperty(PROPERTY_ENCRYPTION_PASSWORD_ATTR_NAME);
+        }
+        if (StringUtils.isNotBlank(pwd)) {
+            config.setPassword(pwd);
         }
 
         return config;
