@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
-import org.openstack.docs.identity.api.v2.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +61,7 @@ public class UserConverterCloudV11 {
         jaxbUser.setKey(user.getApiKey());
         jaxbUser.setMossoId(user.getMossoId());
         jaxbUser.setNastId(user.getNastId());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         
         try {
             if (user.getCreated() != null) {
@@ -88,7 +87,7 @@ public class UserConverterCloudV11 {
         
         com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled jaxbUser = OBJ_FACTORY.createUserWithOnlyEnabled();
         jaxbUser.setId(user.getUsername());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         if (user.getMossoId() != null) {
             jaxbUser.setMossoId(user.getMossoId());
         }
@@ -120,7 +119,7 @@ public class UserConverterCloudV11 {
         com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey jaxbUser = OBJ_FACTORY.createUserWithOnlyKey();
         jaxbUser.setKey(user.getApiKey());
         jaxbUser.setId(user.getUsername());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
 
         if (user.getMossoId() != null) {
             jaxbUser.setMossoId(user.getMossoId());

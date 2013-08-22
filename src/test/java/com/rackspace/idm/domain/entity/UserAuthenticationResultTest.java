@@ -6,6 +6,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,17 +23,6 @@ public class UserAuthenticationResultTest {
     @Before
     public void setUp() throws Exception {
         userAuthenticationResult = new UserAuthenticationResult(user,true);
-    }
-
-    @Test
-    public void hashCode_userNotNull_returnsHashCode() throws Exception {
-        assertThat("hash code",userAuthenticationResult.hashCode(),equalTo(1090966021));
-    }
-
-    @Test
-    public void hashCode_userNull_returnsHashCode() throws Exception {
-        UserAuthenticationResult userAuthenticationResult1 = new UserAuthenticationResult(null,true);
-        assertThat("hash code",userAuthenticationResult1.hashCode(),equalTo(39122));
     }
 
     @Test

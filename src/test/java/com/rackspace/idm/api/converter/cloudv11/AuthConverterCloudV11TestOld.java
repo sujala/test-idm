@@ -44,7 +44,7 @@ public class AuthConverterCloudV11TestOld {
     @Before
     public void setUp() throws Exception {
         cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setBaseUrlType("cloud");
         cloudBaseUrl.setDef(true);
@@ -58,7 +58,6 @@ public class AuthConverterCloudV11TestOld {
         cloudBaseUrl.setVersionId("versionId");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setUniqueId("uniqueId");
     }
 
     @Test

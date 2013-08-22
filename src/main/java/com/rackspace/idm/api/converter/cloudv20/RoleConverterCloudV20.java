@@ -30,7 +30,7 @@ public class RoleConverterCloudV20 {
         }
         for (TenantRole role : roles) {
 
-            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+            if (role.getTenantIds() != null && role.getTenantIds().size() > 0) {
                 for (String tenantId : role.getTenantIds()) {
                     Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
                     jaxbRole.setDescription(role.getDescription());

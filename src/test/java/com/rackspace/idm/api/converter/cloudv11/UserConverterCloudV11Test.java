@@ -44,7 +44,7 @@ public class UserConverterCloudV11Test {
     public void setUp() throws Exception {
         cloudBaseUrl = new CloudBaseUrl();
         // Fields
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setBaseUrlType("nast");
         cloudBaseUrl.setDef(true);
@@ -58,7 +58,6 @@ public class UserConverterCloudV11Test {
         cloudBaseUrl.setVersionId("versionId");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setUniqueId("uniqueId");
     }
 
     @Test
@@ -81,7 +80,7 @@ public class UserConverterCloudV11Test {
         assertThat("mosso id", entityUser.getMossoId(), equalTo(1));
         assertThat("nast id", entityUser.getNastId(), equalTo("nastId"));
         assertThat("api key", entityUser.getApiKey(), equalTo("key"));
-        assertThat("enabled", entityUser.isEnabled(), equalTo(true));
+        assertThat("enabled", entityUser.getEnabled(), equalTo(true));
     }
 
     @Test
@@ -109,7 +108,7 @@ public class UserConverterCloudV11Test {
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setBaseUrlId("1");
         cloudBaseUrl.setPublicUrl("publicUrl");
         cloudBaseUrl.setV1Default(true);
         cloudBaseUrlList.add(cloudBaseUrl);

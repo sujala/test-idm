@@ -24,14 +24,6 @@ public class ApplicationTest {
     }
 
     @Test
-    public void setUniqueId_uniqueIdIsNull_doesNotSet() throws Exception {
-        application.setUniqueId("notNull");
-        application.setUniqueId(null);
-        String result = application.getUniqueId();
-        assertThat("unique id", result, equalTo("notNull"));
-    }
-
-    @Test
     public void setClientSecret_secretIsNull_doesNotSet() throws Exception {
         application.setClientSecret("secret");
         application.setClientSecret(null);
@@ -42,22 +34,22 @@ public class ApplicationTest {
     @Test
     public void setDefaults_setsEnabledToTrue() throws Exception {
         application.setDefaults();
-        Boolean result = application.isEnabled();
+        Boolean result = application.getEnabled();
         assertThat("enabled", result, equalTo(true));
     }
 
     @Test
     public void copyChanges_copiesAllAttributesThatIsNotNull() throws Exception {
         Application modifiedClient = new Application();
-        modifiedClient.setRCN("newRCN");
+        modifiedClient.setRcn("newRCN");
         modifiedClient.setEnabled(true);
         modifiedClient.setCallBackUrl("newCallBackUrl");
         modifiedClient.setDescription("newDescription");
         modifiedClient.setScope("newScope");
         modifiedClient.setTitle("newTitle");
         application.copyChanges(modifiedClient);
-        assertThat("rcn", application.getRCN(), equalTo("newRCN"));
-        assertThat("enabled", application.isEnabled(), equalTo(true));
+        assertThat("rcn", application.getRcn(), equalTo("newRCN"));
+        assertThat("enabled", application.getEnabled(), equalTo(true));
         assertThat("call back url", application.getCallBackUrl(), equalTo("newCallBackUrl"));
         assertThat("description", application.getDescription(), equalTo("newDescription"));
         assertThat("scope", application.getScope(), equalTo("newScope"));
@@ -67,55 +59,19 @@ public class ApplicationTest {
     @Test
     public void copyChanges_allAttributesIsNull_doesNotCopy() throws Exception {
         Application modifiedClient =  new Application();
-        application.setRCN("RCN");
+        application.setRcn("RCN");
         application.setEnabled(true);
         application.setCallBackUrl("CallBackUrl");
         application.setDescription("Description");
         application.setScope("Scope");
         application.setTitle("Title"); 
         application.copyChanges(modifiedClient);
-        assertThat("rcn", application.getRCN(), equalTo("RCN"));
-        assertThat("enabled", application.isEnabled(), equalTo(true));
+        assertThat("rcn", application.getRcn(), equalTo("RCN"));
+        assertThat("enabled", application.getEnabled(), equalTo(true));
         assertThat("call back url", application.getCallBackUrl(), equalTo("CallBackUrl"));
         assertThat("description", application.getDescription(), equalTo("Description"));
         assertThat("scope", application.getScope(), equalTo("Scope"));
         assertThat("title", application.getTitle(), equalTo("Title"));
-    }
-
-    @Test
-    public void hashCode_attributesNotNull_returnsHashCode() throws Exception {
-        application.setRCN("RCN");
-        application.setEnabled(true);
-        application.setCallBackUrl("callBackUrl");
-        application.setDescription("Description");
-        application.setScope("Scope");
-        application.setTitle("Title");
-        application.setClientId("clientId");
-        application.setClientSecret("clientSecret");
-        application.setName("name");
-        application.setOpenStackType("openStackType");
-        application.setRoles(new ArrayList<TenantRole>());
-        application.setUniqueId("uniqueId");
-        int result = application.hashCode();
-        assertThat("hash code", result, equalTo(-570848428));
-    }
-
-    @Test
-    public void hashCode_attributesIsNull_returnsHashCode() throws Exception {
-        application.setRCN(null);
-        application.setEnabled(null);
-        application.setCallBackUrl(null);
-        application.setDescription(null);
-        application.setScope(null);
-        application.setTitle(null);
-        application.setClientId(null);
-        application.setClientSecret(null);
-        application.setName(null);
-        application.setOpenStackType(null);
-        application.setRoles(null);
-        application.setUniqueId(null);
-        int result = application.hashCode();
-        assertThat("hash code", result, equalTo(-293403007));
     }
 
     @Test
@@ -257,24 +213,6 @@ public class ApplicationTest {
     }
 
     @Test
-    public void equals_uniqueIdIsNullAndObjectUniqueIdNotNull_returnsFalse() throws Exception {
-        Application object = new Application();
-        object.setUniqueId("notNull");
-        application.setUniqueId(null);
-        boolean result = application.equals(object);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
-    public void equals_uniqueIdNotNullAndNotEqualsObjectUniqueId_returnsFalse() throws Exception {
-        Application object = new Application();
-        object.setUniqueId("notNull");
-        application.setUniqueId("notSame");
-        boolean result = application.equals(object);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void equals_nameIsNullAndObjectNameNotNull_returnsFalse() throws Exception {
         Application object = new Application();
         object.setName("notNull");
@@ -294,11 +232,10 @@ public class ApplicationTest {
         object.setEnabled(true);
         object.setName("name");
         object.setOpenStackType("openStackType");
-        object.setRCN("rcn");
+        object.setRcn("rcn");
         object.setTitle("title");
         object.setRoles(roles);
         object.setScope("scope");
-        object.setUniqueId("uniqueId");
 
         application.setCallBackUrl("callBackUrl");
         application.setClientSecret("clientSecret");
@@ -307,11 +244,10 @@ public class ApplicationTest {
         application.setEnabled(true);
         application.setName("name");
         application.setOpenStackType("openStackType");
-        application.setRCN("rcn");
+        application.setRcn("rcn");
         application.setTitle("title");
         application.setRoles(roles);
         application.setScope("scope");
-        application.setUniqueId("uniqueId");
 
         boolean result = application.equals(object);
         assertThat("boolean", result, equalTo(true));

@@ -1,22 +1,28 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,6 +34,7 @@ import java.util.List;
  */
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
+    public static final int PAGE_SIZE = 1000;
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -49,29 +56,25 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
-        SearchResult searchResult;
+        int offset = 0;
 
-        try {
-            searchResult = getAppInterface().search(dn, scope, searchFilter);
-            getLogger().info("Got" + entityType.toString());
-        } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
-            getLogger().error(loggerMsg);
-            throw new IllegalStateException(ldapEx);
-        }
+        PaginatorContext<T> context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
 
-        if (searchResult.getEntryCount() > 0) {
-            objects = processSearchResult(searchResult.getSearchEntries());
+        while(offset < context.getTotalRecords()) {
+            objects.addAll(context.getValueList());
+
+            offset += (PAGE_SIZE - context.getValueList().size());
+            context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
         }
 
         return objects;
     }
 
     @Override
-    public PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit) {
+    public PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit) {
         getLogger().debug("Getting " + entityType.toString() + " paged");
 
-        SearchRequest searchRequest = new SearchRequest(getBaseDn(), SearchScope.SUB, searchFilter);
+        SearchRequest searchRequest = new SearchRequest(dn, scope, searchFilter);
         PaginatorContext<T> context = paginator.createSearchRequest(getSortAttribute(), searchRequest, offset, limit);
 
         List<T> objects = new ArrayList<T>();
@@ -82,7 +85,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         } catch (LDAPSearchException ldapEx) {
             String loggerMsg = String.format("Error searching for %s - %s", entityType.toString(), searchFilter);
             getLogger().error(loggerMsg);
-            throw new IllegalStateException(ldapEx);
+            return context;
         }
 
         paginator.createPage(searchResult, context);
@@ -95,6 +98,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return context;
     }
 
+    @Override
+    public PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit) {
+        return getObjectsPaged(searchFilter, getBaseDn(), SearchScope.SUB, offset, limit);
+    }
+
     private List<T> processSearchResult(List<SearchResultEntry> searchResultList) {
         List<T> objects = new ArrayList<T>();
         for (SearchResultEntry entry : searchResultList) {
@@ -102,7 +110,8 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
             T entity = null;
             try {
-                entity = LDAPPersister.getInstance(entityType).decode(entry);
+                entity = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
+                doPostEncode(entity);
             } catch (LDAPPersistException e) {
                 String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
                 getLogger().error(loggerMsg);
@@ -127,7 +136,8 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Adding object: {}", object);
         Audit audit = Audit.log((Auditable)object).add();
         try {
-            final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
+            final LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
+            doPreEncode(object);
             persister.add(object, getAppInterface(), dn);
             audit.succeed();
             getLogger().info("Added: {}", object);
@@ -164,6 +174,14 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return entry.getDN();
     }
 
+    @Override
+    public void doPreEncode(T object) {
+    }
+
+    @Override
+    public void doPostEncode(T object) {
+    }
+
     private SearchResultEntry getLdapContainer(String dn, String containerName) {
         Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER)
@@ -174,6 +192,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     @Override
     public T getObject(Filter searchFilter) {
         return getObject(searchFilter, getBaseDn());
+    }
+
+    @Override
+    public T getObject(Filter searchFilter, SearchScope scope) {
+        return getObject(searchFilter, getBaseDn(), scope);
     }
 
     @Override
@@ -210,13 +233,10 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).modify();
 
         try {
-            LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
-            List<Modification> mods = persister.getModifications(object, true);
-            audit.modify(mods);
+            doPreEncode(object);
+            applyModifications(object, false);
+            applyModifications(object, true);
 
-            if (mods.size() > 0) {
-                persister.modify(object, getAppInterface(), null, true);
-            }
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
             audit.fail("Error updating");
@@ -224,6 +244,45 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         }
         audit.succeed();
         getLogger().info("Updated - {}", object);
+    }
+
+    private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
+        Audit audit = Audit.log((Auditable)object).modify();
+        LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
+
+        String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
+        List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
+        audit.modify(mods);
+        if (mods.size() > 0) {
+            persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+        }
+    }
+
+    private String[] getLDAPFieldAttributes(T object, boolean deleteNullAttributes) {
+        List<String> attributes = new ArrayList<String>();
+        for (Field field : object.getClass().getDeclaredFields()) {
+            boolean hasDeleteNullValueAnnotation = false;
+            String attribute = null;
+            for (Annotation annotation : field.getAnnotations()) {
+                if (annotation.annotationType() == DeleteNullValues.class) {
+                    hasDeleteNullValueAnnotation = true;
+                }
+                if (annotation.annotationType() == LDAPField.class) {
+                    LDAPField ldapField = (LDAPField) annotation;
+                    attribute = ldapField.attribute();
+                }
+            }
+            if (deleteNullAttributes) {
+                if (hasDeleteNullValueAnnotation) {
+                    attributes.add(attribute);
+                }
+            } else {
+                if (!hasDeleteNullValueAnnotation) {
+                    attributes.add(attribute);
+                }
+            }
+        }
+        return attributes.toArray(new String[attributes.size()]);
     }
 
     @Override
@@ -248,6 +307,55 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public void softDeleteObject(T object) {
+        getLogger().info("SoftDeleting object - {}", object);
+        try {
+            String oldRdn = object.getUniqueId();
+            if(oldRdn == null) {
+                getLogger().error("Error soft deleting object");
+                throw new IllegalStateException();
+            }
+
+            List<String> tokens = Arrays.asList(oldRdn.split(","));
+
+            String newRdn = tokens.get(0);
+
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getSoftDeletedBaseDn());
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting object", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("SoftDeleted object - {}", object);
+    }
+
+    @Override
+    public void unSoftDeleteObject(T object) {
+        getLogger().info("UnSoftDeleting object - {}", object);
+        try {
+            String oldRdn = object.getUniqueId();
+            if(oldRdn == null) {
+                getLogger().error("Error soft deleting object");
+                throw new IllegalStateException();
+            }
+
+            List<String> tokens = Arrays.asList(oldRdn.split(","));
+
+            String newRdn = tokens.get(0);
+
+            getAppInterface().modifyDN(oldRdn, newRdn, true, getBaseDn());
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting object", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("UnSoftDeleted object - {}", object);
+    }
+
+    @Override
+    public String[] getSearchAttributes() {
+        return ATTR_DEFAULT_SEARCH_ATTRIBUTES;
+    }
+
+    @Override
     public void deleteObject(T object) {
         String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
         getLogger().debug(loggerMsg);
@@ -261,15 +369,31 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter, getSearchAttributes());
         if (entry == null) {
             return null;
         }
-        return LDAPPersister.getInstance(entityType).decode(entry);
+
+        T object = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
+        doPostEncode(object);
+        return object;
+    }
+
+    private Class getEntityTypeFromEntry(SearchResultEntry entry) {
+        Class type = entityType;
+        if(this instanceof DaoGetEntityType) {
+            type = ((DaoGetEntityType) this).getEntityType(entry);
+        }
+        return type;
     }
 
     @Override
     public String getBaseDn(){
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public String getSoftDeletedBaseDn() {
         throw new NotImplementedException();
     }
 

@@ -112,13 +112,13 @@ public class DefaultPolicyServiceTest{
     @Test(expected = NotFoundException.class)
     public void testGetPolicy_invalidPolicyId() throws Exception {
         when(policyDao.getPolicy(anyString())).thenReturn(null);
-        Policy getPolicy = defaultPolicyService.getPolicy("1");
+        Policy getPolicy = defaultPolicyService.checkAndGetPolicy("1");
         assertThat("Check return policy", getPolicy.getName(), equalTo("name"));
     }
 
     @Test(expected = BadRequestException.class)
     public void testUpdatePolicy_nullPolicy() throws Exception {
-        defaultPolicyService.updatePolicy(null,"1");
+        defaultPolicyService.updatePolicy(null, null);
     }
 
     @Test
@@ -128,14 +128,14 @@ public class DefaultPolicyServiceTest{
         policy.setBlob("someBlob");
         policy.setPolicyType("someType");
         policy.setName("name");
-        defaultPolicyService.updatePolicy(policy,"1");
-        verify(policyDao).updatePolicy(policy,"1");
+        when(policyDao.getPolicy(anyString())).thenReturn(policy);
+        defaultPolicyService.updatePolicy("123", policy);
+        verify(policyDao).updatePolicy(policy);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test(expected = BadRequestException.class)
     public void testDeletePolicy_nullId() throws Exception {
         defaultPolicyService.deletePolicy(null);
-
     }
 
     @Test

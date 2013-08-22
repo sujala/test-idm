@@ -59,8 +59,8 @@ public class TokensResourceTest {
         authenticationService = mock(AuthenticationService.class);
         httpHeaders = mock(HttpHeaders.class);
 
-        tokensResource = new TokensResource(authHeaderHelper, authConverter, authorizationService, scopeAccessService, credentialsConverter,
-                authenticationService, inputValidator, tokenService);
+        tokensResource = new TokensResource(authConverter, authorizationService, scopeAccessService, credentialsConverter,
+                authenticationService, inputValidator);
     }
 
     @Test
@@ -128,95 +128,4 @@ public class TokensResourceTest {
         Response response = tokensResource.validateAccessToken("authHeader", "tokenString");
         assertThat("response code", response.getStatus(), equalTo(200));
     }
-
-    @Test
-    public void revokeAccessToken_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        tokensResource.revokeAccessToken("authHeader", "tokenString");
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void revokeAccessToken_callsAuthHeaderHelper_getTokenFromAuthHeader() throws Exception {
-        tokensResource.revokeAccessToken("authHeader", "tokenString");
-        verify(authHeaderHelper).getTokenFromAuthHeader("authHeader");
-    }
-
-    @Test
-    public void revokeAccessToken_callsTokenService_revokeAccessToken() throws Exception {
-        tokensResource.revokeAccessToken("authHeader", "tokenString");
-        verify(tokenService).revokeAccessToken(anyString(), anyString());
-    }
-
-    @Test
-    public void revokeAccessToken_noContent_returns204() throws Exception {
-        Response response = tokensResource.revokeAccessToken("authHeader", "tokenString");
-        assertThat("response code", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationAccess_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenStrin", "applicationId");
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationAccess_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationAccess_callsTokenService_doesTokenHaveAccessToApplication() throws Exception {
-        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
-        verify(tokenService).doesTokenHaveAccessToApplication(anyString(), anyString());
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void doesTokenHaveApplicationAccess_noApplicationAccess_throwsNotFound() throws Exception {
-        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationAccess_responseNoContent_returns204() throws Exception {
-        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
-        Response response = tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
-        assertThat("response code", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_callsTokenService_doesTokenHaveAplicationRole() throws Exception {
-        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
-        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-        verify(tokenService).doesTokenHaveApplicationRole(anyString(), anyString(), anyString());
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void doesTokenHaveApplicationRole_noApplicationAccess_throwsNotFound() throws Exception {
-        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_responseNoContent_returns204() throws Exception {
-        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
-        Response response = tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-        assertThat("response code", response.getStatus(), equalTo(204));
-    }
-
 }

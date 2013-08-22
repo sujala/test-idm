@@ -61,150 +61,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         config.getInt("token.refreshWindowHours") >> defaultRefreshHours
     }
 
-    def "if user is null getOrCreatePasswordResetScopeAccessForUser throws exception"() {
-        when:
-        service.getOrCreatePasswordResetScopeAccessForUser(null)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
-    def "a passwordResetScopeAccess is retrieved by getOrCreatePasswordResetScopeAccessForUser"() {
-        given:
-        def prsa = createPasswordResetScopeAccess()
-
-        when:
-        service.getOrCreatePasswordResetScopeAccessForUser(entityFactory.createUser())
-
-        then:
-        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> prsa
-    }
-
-    def "when getOrCreatePasswordResetScopeAccessForUser and token is expired old is deleted, and new is added and returned"() {
-        given:
-        def prsa = createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", expiredDate)
-
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> prsa
-
-        when:
-        def result = service.getOrCreatePasswordResetScopeAccessForUser(entityFactory.createUser())
-
-        then:
-        result instanceof PasswordResetScopeAccess
-        !result.equals(prsa)
-
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-    }
-
-    def "when getOrCreatePasswordScopeAccessForUser and token is valid, scopeAccess is returned"() {
-        given:
-        def prsa = createPasswordResetScopeAccess()
-
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> prsa
-
-        when:
-        def result = service.getOrCreatePasswordResetScopeAccessForUser(entityFactory.createUser())
-
-        then:
-        result instanceof PasswordResetScopeAccess
-        result.equals(prsa)
-    }
-
-    def "when getOrCreatePasswordScopeAccessForUser and token DNE, new token is created, added and returned"() {
-        given:
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
-
-        when:
-        def result = service.getOrCreatePasswordResetScopeAccessForUser(entityFactory.createUser())
-
-        then:
-        result instanceof PasswordResetScopeAccess
-
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-    }
-
-    def "updateUserScopeAccessTokenForClientIdByUser throws exception"() {
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(null, "clientId", "token", new Date())
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
-    def "updateUserScopeAccessTokenForClientIdByUser gets all scopeAccess for clientId and User"() {
-        given:
-        applicationService.getById(_) >> entityFactory.createApplication()
-        def sa = createUserScopeAccess()
-        sa.getAccessTokenExp() >> new DateTime().toDate()
-
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
-
-        then:
-        1 * scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa ].asList()
-    }
-
-    def "updateUserScopeAccessTokenForClientIdByUser updates existing scopeAccess"() {
-        given:
-        def sa = createUserScopeAccess()
-        sa.getAccessTokenExp() >> new DateTime().toDate()
-
-        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >>  [ sa ].asList()
-        applicationService.getById(_) >> entityFactory.createApplication()
-
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", sa.getAccessTokenString(), new Date())
-
-        then:
-        1 * scopeAccessDao.updateScopeAccess(sa)
-    }
-
-    def "updateUserScopeAccessTokenForClientIdByUser adds new token"() {
-        given:
-        def newer_sa = createUserScopeAccess()
-        def older_sa = createUserScopeAccess()
-        def sa = createUserScopeAccess()
-
-        sa.getAccessTokenExp() >> new Date()
-        newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-        older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-
-        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
-        applicationService.getById(_) >> entityFactory.createApplication()
-
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
-
-        then:
-        0 * scopeAccessDao.deleteScopeAccess(_)
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-
-    }
-
-    def "updateUserScopeAccessTokenForClientIdByUser deletes oldest expired token and adds new token"() {
-        given:
-        def newer_sa = createUserScopeAccess()
-        def older_sa = createUserScopeAccess()
-        def sa = createUserScopeAccess()
-
-        sa.getAccessTokenExp() >> new Date()
-        newer_sa.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-        older_sa.getAccessTokenExp() >> new DateTime().minusHours(6).toDate()
-        expireScopeAccess(older_sa)
-
-        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >> [ sa, newer_sa, older_sa ].asList()
-        applicationService.getById(_) >> entityFactory.createApplication()
-
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(entityFactory.createUser(), "clientId", "headerToken", new Date())
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_)
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-
-    }
-
     def "update expired user scope access gets all scope access for parent"() {
         given:
         def sa = createUserScopeAccess()
@@ -215,8 +71,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(user, "clientId", null)
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(user.getUniqueId()) >> [sa].asList()
-        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa_2
+        1 * scopeAccessDao.getScopeAccesses(user) >> [sa].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa_2
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -231,8 +87,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(refresh_sa, false)
 
         then:
-        2 * scopeAccessDao.addDirectScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+        2 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     def "update (different parameters) deletes expired"() {
@@ -242,11 +98,11 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def user =  entityFactory.createUser()
         user.setUniqueId(dn)
 
-        scopeAccessDao.getScopeAccessesByParent(_) >>> [
+        scopeAccessDao.getScopeAccesses(_) >>> [
                 [ expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
 
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
@@ -254,7 +110,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(_)
-        1 * scopeAccessDao.addDirectScopeAccess(dn, _)
+        1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
     def "updateExpiredUserScopeAccess gets token entropy and adjusts expiration"() {
@@ -285,50 +141,66 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         true         | 0.05
     }
 
-    def "getParentDn returns the parentDn"() {
-
-        when:
-        def one = service.getBaseDnAsString(dn)
-        def two = service.getBaseDnAsString("blah")
-
-        then:
-        one.equals(searchDn)
-        thrown(IllegalStateException)
-    }
-
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
         given:
         def user = entityFactory.createUser()
-        def scopeAccessOne = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
-        def scopeAccessTwo = createUserScopeAccess("refreshOne", "userRsId", "clientId", refreshDate)
-        def scopeAccessThree = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
-        def scopeAccessFour = createUserScopeAccess("goodOne", "userRsId", "clientId", futureDate)
+        def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
+        def mostRecentScopeAccess = createUserScopeAccess("refreshOne", "userRsId", "clientId", refreshDate)
 
-        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne].asList()
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
-        service.getValidUserScopeAccessForClientId(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.addScopeAccess(_, _)
+    }
+
+    def "getValidUserScopeAccessForClientId deletes expired tokens and add new ones"() {
+        given:
+        def user = entityFactory.createUser()
+        def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
+        def mostRecentScopeAccess = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
+
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+
+        when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
 
         then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
-        2 * scopeAccessDao.addDirectScopeAccess(_, _)
-        3 * scopeAccessDao.deleteScopeAccess(_)
+        2 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.addScopeAccess(_, _)
+    }
 
+    def "getValidUserScopeAccessForClientId deletes expired token and keeps future token"() {
+        given:
+        def user = entityFactory.createUser()
+        def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
+        def mostRecentScopeAccess = createUserScopeAccess("goodOne", "userRsId", "clientId", futureDate)
+
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+
+        when:
+        service.getValidUserScopeAccessForClientId(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     @Ignore
     def "getValidRackerScopeAccessForClientId provisions scopeAccess and adds it"() {
         given:
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
 
         when:
-        service.getValidRackerScopeAccessForClientId("1", "12345", "12345", null)
+        service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), "12345", null)
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess("1", _)
+        1 * scopeAccessDao.addScopeAccess(_, _)
 
         then:
         thrown(LDAPSDKUsageException)
@@ -339,29 +211,18 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def rackerScopeAccessOne = createRackerScopeAccess("expired", "rackerId", expiredDate)
         def rackerScopeAccessTwo = createRackerScopeAccess("refresh", "rackerId", refreshDate)
         def rackerScopeAccessThree = createRackerScopeAccess("good", "rackerId", futureDate)
+        User user = entityFactory.createUser()
 
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 
         when:
-        service.getValidRackerScopeAccessForClientId("1", "12345", "12345", null)
-        service.getValidRackerScopeAccessForClientId("2", "12345", "12345", null)
-        service.getValidRackerScopeAccessForClientId("3", "12345", "12345", null)
+        service.getValidRackerScopeAccessForClientId(user, "12345", null)
+        service.getValidRackerScopeAccessForClientId(user, "12345", null)
+        service.getValidRackerScopeAccessForClientId(user, "12345", null)
 
         then:
-        2 * scopeAccessDao.addDirectScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
-    }
-
-    def "test parameters for deleteScopeAccessByDn"() {
-        when:
-        service.deleteScopeAccessByDn(dn)
-        service.deleteScopeAccessByDn(null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
-
-        then:
-        thrown(IllegalArgumentException)
+        2 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     def "updateScopeAccess updates scopeAccess (no methods using modify accessToken)"() {
@@ -385,7 +246,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         when:
         UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(user, sharedRandom)
-        UserScopeAccess scopeAccessTwo = service.provisionUserScopeAccess(null, sharedRandom)
 
         then:
         scopeAccessOne.getUsername().equals("username")
@@ -393,9 +253,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessOne.getClientId().equals(sharedRandom)
         scopeAccessOne.getAccessTokenString() != null
         scopeAccessOne.getAccessTokenExp() != null
-
-        then:
-        thrown(NotFoundException)
     }
 
     def "addImpersonatedScopeAccess deletes expired scopeAccess and creates new scopeAccess"() {
@@ -416,13 +273,13 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def listWithValid = [ scopeAccessThree, scopeAccessFour ].asList()
         def listWithTwoImpForOneUser = [ scopeAccessFour, scopeAccessFive, scopeAccessSix ].asList()
 
-        scopeAccessDao.getAllImpersonatedScopeAccessForParent(_) >>> [
+        scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >>> [
                 expiredList,
                 listWithValid,
                 listWithTwoImpForOneUser
         ]
 
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessByParentForUser(_, _) >>> [
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >>> [
                 null,
                 scopeAccessThree,
                 scopeAccessSix
@@ -435,7 +292,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         6 * scopeAccessDao.deleteScopeAccess(_)
-        3 * scopeAccessDao.addImpersonatedScopeAccess(_, _)
+        3 * scopeAccessDao.addScopeAccess(_, _)
 
         returned.accessTokenString.equals("tokenString6")
     }
@@ -452,7 +309,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
 
-        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
         service.expireAllTokensForUser("someName")
@@ -466,12 +323,12 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userService.getUserByUsername(_) >> user
+        userService.getUsersByUsername(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
-        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
         service.expireAllTokensForUser("someName")
@@ -493,7 +350,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
         scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
 
-        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
         service.expireAllTokensForUserById("1")
@@ -512,7 +369,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
 
-        scopeAccessDao.getScopeAccessesByParent(_) >> [scopeAccessOne, scopeAccessTwo].asList()
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
         service.expireAllTokensForUserById("1")
@@ -580,8 +437,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         newScopeAccess instanceof RackerScopeAccess
         ! newScopeAccess.isAccessTokenExpired(new DateTime())
 
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+        1 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     def "updateExpiredRackerScopeAccess adds new scopeAccess, keeps existing, and returns new when within refresh window"() {
@@ -596,7 +453,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         newScopeAccess instanceof RackerScopeAccess
         ! newScopeAccess.isAccessTokenExpired(new DateTime())
 
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
     def "can get endpoints from getOpenstackEndpointsForUser"() {
@@ -659,34 +516,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "the Dao is used to retrieve a list of ScopeAccess for the user"() {
         when:
-        service.getScopeAccessesForParent("uniqueId")
+        service.getScopeAccessesForUser(entityFactory.createUser())
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(_)
-    }
-
-    def "the Dao is used to retrieve a list of permissions by parent and permission"() {
-        when:
-        service.getPermissionsForParentByPermission("parentDn", entityFactory.createPermission())
-
-        then:
-        1 * scopeAccessDao.getPermissionsByParentAndPermission(_, _)
-    }
-
-    def "the Dao is used to return a list of permssions by permission"() {
-        when:
-        service.getPermissionsByPermission(entityFactory.createPermission())
-
-        then:
-        1 * scopeAccessDao.getPermissionsByPermission(_)
-    }
-
-    def "the Dao is used to define a permission"() {
-        when:
-        service.definePermission("parentDn", entityFactory.createDefinedPermission())
-
-        then:
-        1 * scopeAccessDao.definePermission(_, _)
+        1 * scopeAccessDao.getScopeAccesses(_)
     }
 
     def "calling getValidRackerScopeAccessForClientId sets authenticatedBy"() {
@@ -694,10 +527,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def authenticatedBy = ["RSA"].asList()
 
         when:
-        service.getValidRackerScopeAccessForClientId("uniqueId", "rackerId", "clientId", authenticatedBy)
+        service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
         }
     }
@@ -711,10 +544,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+        1 * scopeAccessDao.getScopeAccesses(_) >> [].asList()
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
         }
     }
@@ -728,11 +561,11 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
         }
     }
@@ -746,11 +579,11 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.getValidUserScopeAccessForClientId(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
         }
     }
@@ -766,10 +599,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * userService.authenticateWithApiKey(_, _) >> new UserAuthenticationResult(user, true)
 
-        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+        1 * scopeAccessDao.getScopeAccesses(_) >> [].asList()
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_APIKEY] as Set)
         }
     }
@@ -777,7 +610,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     def "calling getUserScopeAccessForClientIdByUsernameAndPassword sets authenticatedBy"() {
         given:
         def user = entityFactory.createUser()
-        def authenticatedBy = ["RSA"].asList()
 
         when:
         service.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")
@@ -785,10 +617,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * userService.authenticate(_, _) >> new UserAuthenticationResult(user, true)
 
-        1 * scopeAccessDao.getScopeAccessesByParent(_) >> [].asList()
+        1 * scopeAccessDao.getScopeAccesses(_) >> [].asList()
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
+        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_PASSWORD] as Set)
         }
     }
@@ -918,49 +750,19 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         false    | 3600     | 0.01
     }
 
-    def "calling getOrCreatePasswordResetScopeAccessForUser sets token expiration with entropy"() {
-        given:
-        def user = entityFactory.createUser()
-        def sa = null
-
-        if (scopeAccessExists) {
-            sa = createPasswordResetScopeAccess()
-            sa.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
-        }
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> sa
-
-        def range = getRange(exSeconds, entropy)
-
-        when:
-        def scopeAccess = service.getOrCreatePasswordResetScopeAccessForUser(user)
-
-        then:
-        1 * config.getDouble("token.entropy") >> entropy
-        scopeAccess.accessTokenExp <= range.get("max")
-        scopeAccess.accessTokenExp >= range.get("min")
-
-        where:
-        scopeAccessExists | exSeconds                | entropy
-        true              | defaultExpirationSeconds | 0.01
-        false             | defaultExpirationSeconds | 0.05
-    }
-
     def "calling getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
         given:
         def entropy = 0.01
-        def uniqueId = "uniqueId"
-        def rackerId = "rackerId"
         def clientId = "clientId"
         def authedBy = ["PASSWORD"].asList()
         def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
 
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
 
         when:
-        def scopeAccess = service.getValidRackerScopeAccessForClientId(uniqueId, rackerId, clientId, authedBy)
+        def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), clientId, authedBy)
 
         then:
-        // The second call is made in updateExpiredRackerScopeAccess
         2 * config.getDouble("token.entropy") >> entropy
         scopeAccess.accessTokenExp <= range.get("max")
         scopeAccess.accessTokenExp >= range.get("min")
@@ -987,6 +789,29 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         refresh | entropy
         true    | 0.01
         false   | 0.01
+    }
+
+    def "authenticateAccessToken returns true when token is valid" () {
+        given:
+        def sa = entityFactory.createScopeAccess()
+        sa.accessTokenExp = new Date()
+        sa.accessTokenExp.hours += 24
+
+        when:
+        def result = service.authenticateAccessToken("abc123")
+
+        then:
+        1 * scopeAccessDao.getScopeAccessByAccessToken(_) >> sa
+        result == true
+    }
+
+    def "authenticateAccessToken with null token returns false" () {
+        when:
+        def result = service.authenticateAccessToken("abc123")
+
+        then:
+        1 * scopeAccessDao.getScopeAccessByAccessToken(_) >> null
+        result == false
     }
 
     def getRange(seconds, entropy) {

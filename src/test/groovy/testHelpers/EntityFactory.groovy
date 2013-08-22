@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import spock.lang.Specification
@@ -20,6 +21,8 @@ class EntityFactory extends Specification {
     private static NAME = "name"
     private static PASSWORD = "Password1"
     private static USERNAME = "username"
+    private static SALT = "a1 b1"
+    private static VERSION = "0"
 
     private static objFactories = new JAXBObjectFactories()
 
@@ -29,11 +32,14 @@ class EntityFactory extends Specification {
 
     def createApplication(String clientId, String name) {
         def id = clientId ? clientId : CLIENT
+        def entry = new Entry("clientId=$id,ou=applications,o=rackspace")
         new Application().with {
+            it.ldapEntry = new ReadOnlyEntry(entry);
             it.clientId = clientId
             it.name = name
             it.enabled = true
-            it.uniqueId = "clientId=$id,ou=applications,o=rackspace"
+            it.encryptionVersion = VERSION
+            it.salt = SALT
             return it
         }
     }
@@ -151,19 +157,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createCustomer() {
-        return createCustomer("id", "rcn")
-    }
-
-    def createCustomer(String id, String rcn) {
-        new Customer().with {
-            it.id = id
-            it.rcn = rcn
-            it.enabled = true
-            return it
-        }
-    }
-
     def createDomain() {
         return createDomain("domainId")
     }
@@ -201,33 +194,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createDefinedPermission() {
-        return createDefinedPermission("title", "type", "value")
-    }
-
-    def createDefinedPermission(String title, String type, String value) {
-        new DefinedPermission().with {
-            it.title = title
-            it.permissionType = type
-            it.value = value
-            it.enabled = true
-            return it
-        }
-    }
-
-    def createPermission() {
-        return createPermission("clientId", "customerId", "permissionId")
-    }
-
-    def createPermission(String clientId, String customerId, String permissionId) {
-        new Permission().with {
-            it.clientId = clientId
-            it.permissionId = permissionId
-            it.customerId = customerId
-            return it
-        }
-    }
-
     def createPattern(String name, String regex) {
         new Pattern().with {
             it.name = name
@@ -255,6 +221,18 @@ class EntityFactory extends Specification {
     def createPolicy(String blob) {
         new Policy().with {
             it.blob = blob
+            it.enabled = true
+            it.global = true
+            return it
+        }
+    }
+
+    def createPolicy(String blob, String name, String policyType, String policyId) {
+        new Policy().with {
+            it.blob = blob
+            it.name = name
+            it.policyType = policyType
+            it.policyId = policyId
             it.enabled = true
             it.global = true
             return it
@@ -381,17 +359,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createUsers() {
-        return new Users()
-    }
-
-    def createUsers(List<User> userList) {
-        new Users().with {
-            it.users = userList
-            return it
-        }
-    }
-
     def createGroup(String groupId, String name, String description) {
         return new Group().with {
             it.groupId = groupId
@@ -416,5 +383,12 @@ class EntityFactory extends Specification {
 
     def createClientSecret(secret) {
         return ClientSecret.newInstance(secret)
+    }
+
+    def createScopeAccess() {
+        new ScopeAccess().with {
+            it.accessTokenString = "ats"
+            return it
+        }
     }
 }

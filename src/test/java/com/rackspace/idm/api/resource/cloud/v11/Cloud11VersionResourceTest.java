@@ -190,20 +190,6 @@ public class Cloud11VersionResourceTest {
     }
 
     @Test
-    public void getBaseURLId_callsGetCloud11Service_callsGetBaseURLId() throws Exception {
-        when(cloud11Service.getBaseURLById(null, 0, null, null)).thenReturn(Response.ok());
-        spy.getBaseURLById(null, 0, null, null);
-        verify(cloud11Service).getBaseURLById(null, 0, null, null);
-    }
-
-    @Test
-    public void getBaseURLId_responseOk_returns200() throws Exception {
-        when(cloud11Service.getBaseURLById(null, 0, null, null)).thenReturn(Response.ok());
-        Response result = spy.getBaseURLById(null, 0, null, null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getEnabledBaseURLs_callsGetCloud11Service_callsGetEnabledBaseURLs() throws Exception {
         when(cloud11Service.getEnabledBaseURL(null, null, null)).thenReturn(Response.ok());
         spy.getEnabledBaseURLs(null, null, null);

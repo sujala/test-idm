@@ -28,53 +28,15 @@ import java.util.List;
 @Component
 public class UserGlobalRolesResource {
 
-    private final UserService userService;
-    private final TenantService tenantService;
-    private final AuthorizationService authorizationService;
-    private final RolesConverter rolesConverter;
     private final UserGlobalRoleResource roleResource;
     
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserGlobalRolesResource(UserService userService,
-        AuthorizationService authorizationService, TenantService tenantService,
-        UserGlobalRoleResource roleResource,
-        RolesConverter rolesConverter) {
-        this.tenantService = tenantService;
-        this.userService = userService;
-        this.authorizationService = authorizationService;
+    public UserGlobalRolesResource(UserGlobalRoleResource roleResource) {
         this.roleResource = roleResource;
-        this.rolesConverter = rolesConverter;
     }
 
-    /**
-     * Gets a list of the global roles this user has.
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId userId
-     */
-    @GET
-    public Response getRoles(
-        @HeaderParam("X-Auth-Token") String authHeader, 
-        @PathParam("userId") String userId, 
-        @QueryParam("applicationId") String applicationId) {
-
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        logger.debug("Getting global roles for User: {}", userId);
-
-        User user = userService.loadUser(userId);
-        List<TenantRole> tenantRoles;
-    	if (!StringUtils.isBlank(applicationId)) {
-            tenantRoles = this.tenantService.getGlobalRolesForUser(user, applicationId);
-    	} else {
-            tenantRoles = this.tenantService.getGlobalRolesForUser(user);
-        }
-
-        return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
-    }
-    
     @Path("{roleId}")
     public UserGlobalRoleResource getRoleResource() {
         return roleResource;

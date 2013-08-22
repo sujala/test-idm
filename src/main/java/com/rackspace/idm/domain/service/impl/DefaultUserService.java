@@ -4,7 +4,6 @@ import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.*;
-import com.unboundid.ldap.sdk.Filter;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -55,6 +54,9 @@ public class DefaultUserService implements UserService {
     private UserDao userDao;
 
     @Autowired
+    private RackerDao rackerDao;
+
+    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -88,11 +90,11 @@ public class DefaultUserService implements UserService {
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
-        Racker exists = this.userDao.getRackerByRackerId(racker.getRackerId());
+        Racker exists = this.rackerDao.getRackerByRackerId(racker.getRackerId());
         if (exists != null) {
             throw new DuplicateException("Racker Already Exists");
         }
-        this.userDao.addRacker(racker);
+        this.rackerDao.addRacker(racker);
         logger.info("Added Racker {}", racker);
     }
 
@@ -117,8 +119,8 @@ public class DefaultUserService implements UserService {
             user.setRegion(region.getName());
         }
 
-        if (user.isEnabled() == null) {
-            user.setEnabled(user.isEnabled());
+        if (user.getEnabled() == null) {
+            user.setEnabled(user.getEnabled());
         }
 
         if (user.getId() == null) {
@@ -140,7 +142,7 @@ public class DefaultUserService implements UserService {
         usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         usa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), usa);
+        this.scopeAccessService.addUserScopeAccess(user, usa);
 
         //Every user by default has the cloud auth application provisioned for them
         UserScopeAccess cloudUsa = new UserScopeAccess();
@@ -152,7 +154,7 @@ public class DefaultUserService implements UserService {
         cloudUsa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         cloudUsa.setAccessTokenExp(accessTokenExp);
 
-        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
+        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
 
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
@@ -186,30 +188,6 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-
-    @Override
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
-        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        User user = getUserByTenantId(String.valueOf(mossoId));
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
-        return authenticated;
-    }
-
-
-    @Override
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
-        logger.debug("Authenticating User with NastId {} and API Key", nastId);
-
-        User user = getUserByTenantId(nastId);
-
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
-
-        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
-        return authenticated;
-    }
-
-
     @Override
     public User loadUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
@@ -238,7 +216,7 @@ public class DefaultUserService implements UserService {
     public void deleteRacker(String rackerId) {
         logger.info("Deleting Racker: {}", rackerId);
 
-        this.userDao.deleteRacker(rackerId);
+        this.rackerDao.deleteRacker(rackerId);
 
         logger.info("Deleted Racker: {}", rackerId);
     }
@@ -267,24 +245,57 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit) {
+    public List<User> getUsersByRCN(String RCN) {
         logger.debug("Getting All Users");
 
-        Users users = this.userDao.getAllUsers(filters, offset, limit);
+        List<User> users = this.userDao.getUsersByRCN(RCN);
 
-        logger.debug("Got All Users {}", filters);
+        logger.debug("Got All Users {}");
 
         return users;
     }
 
     @Override
-    public Users getAllUsers(FilterParam[] filters) {
+    public List<User> getUsersByUsername(String username) {
+        logger.debug("Getting All Users");
+
+        List<User> users = this.userDao.getUsersByUsername(username);
+
+        logger.debug("Got All Users {}");
+
+        return users;
+    }
+
+    @Override
+    public List<User> getAllUsers() {
         //TODO Paginiation
         logger.debug("Getting All Users");
 
-        Users users = this.userDao.getAllUsers(filters, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
+        PaginatorContext<User> users = this.userDao.getUsers(getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
 
-        logger.debug("Got All Users {}", filters);
+        logger.debug("Got All Users {}");
+
+        return users.getValueList();
+    }
+
+    @Override
+    public List<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled) {
+        logger.debug("Getting All Users: {} - {}", domainId, enabled);
+
+        List<User> users = this.userDao.getUsersByDomainAndEnabledFlag(domainId, enabled);
+
+        logger.debug("Got All Users {}");
+
+        return users;
+    }
+
+    @Override
+    public List<User> getUsersByGroupId(String groupId) {
+        logger.debug("Getting All Users: {} - {}", groupId);
+
+        List<User> users = this.userDao.getUsersByGroupId(groupId);
+
+        logger.debug("Got All Users {}");
 
         return users;
     }
@@ -293,7 +304,7 @@ public class DefaultUserService implements UserService {
     @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
-        Racker racker = userDao.getRackerByRackerId(rackerId);
+        Racker racker = rackerDao.getRackerByRackerId(rackerId);
         logger.debug("Got Racker: {}", racker);
         return racker;
     }
@@ -321,9 +332,9 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Users getUsersByEmail(String email) {
+    public List<User> getUsersByEmail(String email) {
         logger.debug(GETTING_USER, email);
-        Users users = userDao.getUsersByEmail(email);
+        List<User> users = userDao.getUsersByEmail(email);
         logger.debug(GOT_USER, users);
         return users;
     }
@@ -351,17 +362,17 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Users getUsersByTenantId(String tenantId) {
+    public List<User> getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
-        List<Filter> filterList = new ArrayList<Filter>();
+        List<String> idList = new ArrayList<String>();
         for(TenantRole t : tenantRoles){
             if(t.getUserId() == null){
                 tenantService.addUserIdToTenantRole(t);
             }
-            filterList.add(Filter.createEqualityFilter("rsId", t.getUserId()));
+            idList.add(t.getUserId());
         }
-        Users users = userDao.getUsers(filterList);
+        List<User> users = userDao.getUsers(idList);
         logger.debug("Got list of users with tenant", tenantId);
         return users;
     }
@@ -369,16 +380,16 @@ public class DefaultUserService implements UserService {
     @Override
     public User getUserByTenantId(String tenantId) {
         logger.debug("Getting user by tenantId: {}", tenantId);
-        Users users = getUsersByTenantId(tenantId);
+        List<User> users = getUsersByTenantId(tenantId);
 
-        if(users.getUsers() == null || users.getUsers().size() < 1){
+        if(users.size() < 1){
             return null;
         }
 
-        if (users.getUsers().size() == 1) {
-            return users.getUsers().get(0);
-        }else if(users.getUsers().size() > 1){
-            for (User user : users.getUsers()) {
+        if (users.size() == 1) {
+            return users.get(0);
+        }else if(users.size() > 1){
+            for (User user : users) {
                 if (authorizationService.hasUserAdminRole(user)) {
                     return user;
                 }
@@ -388,76 +399,12 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByRPN(String rpn) {
-        logger.debug(GETTING_USER, rpn);
-        User user = userDao.getUserByRPN(rpn);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
-    public User getUserBySecureId(String secureId) {
-        logger.debug("Getting User by secureId: {}", secureId);
-        User user = userDao.getUserBySecureId(secureId);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
     public User getSoftDeletedUser(String id) {
         logger.debug(GETTING_USER, id);
         User user = userDao.getSoftDeletedUserById(id);
         logger.debug(GOT_USER, user);
         return user;
     }
-
-    @Override
-    public User getSoftDeletedUserByUsername(String name) {
-        logger.debug(GETTING_USER, name);
-        User user = userDao.getSoftDeletedUserByUsername(name);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-//
-//    @Override
-//    public DateTime getUserPasswordExpirationDate(String userName) {
-//
-//        DateTime passwordExpirationDate = null;
-//
-//        User user = getUser(userName);
-//
-//        if (user == null) {
-//            logger.debug("No user found, returning null.");
-//            return null;
-//        }
-//
-//        Customer customer = customerDao.getCustomerByCustomerId(user
-//            .getCustomerId());
-//
-//        if (customer == null) {
-//            logger.debug("No customer found, returning null");
-//            return null;
-//        }
-//
-//        Boolean passwordRotationPolicyEnabled = customer
-//            .getPasswordRotationEnabled();
-//
-//        if (passwordRotationPolicyEnabled != null
-//            && passwordRotationPolicyEnabled) {
-//            int passwordRotationDurationInDays = customer
-//                .getPasswordRotationDuration();
-//
-//            DateTime timeOfLastPwdChange = user.getPasswordObj()
-//                .getLastUpdated();
-//
-//            passwordExpirationDate = timeOfLastPwdChange
-//                .plusDays(passwordRotationDurationInDays);
-//        }
-//        logger
-//            .debug("Password expiration date set: {}", passwordExpirationDate);
-//
-//        return passwordExpirationDate;
-//    }
 
     @Override
     public int getUserWeight(User user, String applicationId) {
@@ -509,7 +456,7 @@ public class DefaultUserService implements UserService {
             logger.debug(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForParent(user.getUniqueId());
+        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForUser(user);
 
         List<Application> clientList = new ArrayList<Application>();
 
@@ -541,14 +488,12 @@ public class DefaultUserService implements UserService {
     	List<User> result = new ArrayList<User>();
     	
         if (user != null) {
-            Users users = userDao.getUsersByDomainId(user.getDomainId());
+            List<User> users = userDao.getUsersByDomain(user.getDomainId());
 
-            if(users != null) {
-            	for (User subUser : users.getUsers()) {
-            		if (!subUser.getId().equalsIgnoreCase(user.getId())){
-            			result.add(subUser);
-            		}
-            	}
+            for (User subUser : users) {
+                if (!subUser.getId().equalsIgnoreCase(user.getId())){
+                    result.add(subUser);
+                }
             }
         }
 
@@ -586,16 +531,81 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public PaginatorContext<User> getAllUsersPaged(int offset, int limit) {
+        logger.debug("Getting All Users paged");
+
+        PaginatorContext<User> users = this.userDao.getUsers(offset, limit);
+
+        logger.debug("Got All Users paged");
+
+        return users;
+    }
+
+    @Override
+    public PaginatorContext<User> getAllUsersPagedWithDomain(String domainId, int offset, int limit) {
+        logger.debug("Getting Users in Domain {}", domainId);
+
+        PaginatorContext<User> users = this.userDao.getUsersByDomain(domainId, offset, limit);
+
+        logger.debug("Got Users in Domain");
+
+        return users;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit) {
+        logger.debug("Getting All Users with role {}", roleId);
+
+        List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId);
+
+        List<User> users = this.userDao.getUsers(userIds);
+
+        PaginatorContext<User> context = new PaginatorContext<User>();
+        context.update(users, offset, limit);
+
+        logger.debug("Got Users with role");
+
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersWithDomainAndRole(String domainId, String roleId, int offset, int limit) {
+        logger.debug("Getting Users in Domain {}", domainId);
+
+        List<User> users = this.userDao.getUsersByDomain(domainId);
+        List<User> usersWithRole = filterUsersForRole(users, roleId);
+
+        PaginatorContext<User> context = new PaginatorContext<User>();
+        context.update(usersWithRole, offset, limit);
+
+        logger.debug("Got Users in Domain");
+
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit) {
+
+        logger.debug("Getting Users in Group {}", groupId);
+
+        PaginatorContext<User> context = userDao.getUsersByGroupId(groupId, offset, limit);
+
+        logger.debug("Got All Users paged");
+
+        return context;
+    }
+
+    @Override
     public boolean hasSubUsers(String userId) {
         User user = userDao.getUserById(userId);
         if (user == null) {
             return false;
         }
-        Users users = userDao.getUsersByDomainId(user.getDomainId());
-        if (users == null || users.getUsers() == null || users.getUsers().size() == 0) {
+        List<User> users = userDao.getUsersByDomain(user.getDomainId());
+        if (users.size() == 0) {
             return false;
         }
-        for (User userInList : users.getUsers()) {
+        for (User userInList : users) {
             if(authorizationService.hasDefaultUserRole(userInList)) {
                 return true;
             }
@@ -606,10 +616,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public Password resetUserPassword(User user) {
-        Password newPassword = Password.generateRandom(false); // Would the user
+        Password newPassword = Password.generateRandom(false, user); // Would the user
         // ever reset his
         // own password?
-        user.setPasswordObj(newPassword);
         userDao.updateUser(user, false);
         logger.debug("Updated password for user: {}", user);
 
@@ -638,9 +647,12 @@ public class DefaultUserService implements UserService {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
 
+        user.setLdapEntry(currentUser.getLdapEntry());
+        user.setEncryptionVersion(currentUser.getEncryptionVersion());
+        user.setSalt(currentUser.getSalt());
         userDao.updateUser(user, hasSelfUpdatedPassword);
         if (userIsBeingDisabled) {
-            disableUserAdminSubUsers(user);
+            disableUserAdminSubUsers(currentUser);
         }
 
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
@@ -653,14 +665,14 @@ public class DefaultUserService implements UserService {
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
         if (authorizationService.hasUserAdminRole(user)) {
-            List<User> enabledUserAdmins = domainService.getDomainAdmins(user.getDomainId(), true);
+            List<User> enabledUserAdmins = domainService.getEnabledDomainAdmins(user.getDomainId());
             if (enabledUserAdmins.size() != 0) {
                 return;
             }
             List<User> subUsers = getSubUsers(user);
 
             for (User subUser : subUsers) {
-                if (subUser.isEnabled()) {
+                if (subUser.getEnabled()) {
                     subUser.setEnabled(false);
                     userDao.updateUser(subUser, false);
                     scopeAccessService.expireAllTokensForUser(subUser.getUsername());
@@ -670,9 +682,9 @@ public class DefaultUserService implements UserService {
     }
 
     private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
-        if (currentUser != null && user != null && user.isEnabled() != null) {
-            boolean currentUserEnabled = currentUser.isEnabled();
-            boolean userEnabled = user.isEnabled();
+        if (currentUser != null && user != null && user.getEnabled() != null) {
+            boolean currentUserEnabled = currentUser.getEnabled();
+            boolean userEnabled = user.getEnabled();
 
             return !userEnabled && userEnabled != currentUserEnabled;
         }
@@ -732,63 +744,26 @@ public class DefaultUserService implements UserService {
         logger.debug("SoftDeleted User: {}", user);
     }
 
-    @Override
-    public boolean userExistsById(String userId) {
-        com.rackspace.idm.domain.entity.User userById = userDao.getUserById(userId);
-        if (userById == null) {
-            return false;
-        }
-        if (userById.getInMigration() == null) {
-            return true;
-        }
-        return !userById.getInMigration();
-
-    }
-
-    @Override
-    public boolean userExistsByUsername(String username) {
-        com.rackspace.idm.domain.entity.User userByUsername = userDao.getUserByUsername(username);
-        if (userByUsername == null) {
-            return false;
-        }
-        if (userByUsername.getInMigration() == null) {
-            return true;
-        }
-       return !userByUsername.getInMigration();
-    }
-
-    @Override
-    public boolean isMigratedUser(User user) {
-        if (user == null) {
-            return false;
-        } else if (user.getInMigration() == null) {
-            return false;
-        } else {
-            return !user.getInMigration();
-        }
-    }
-
     private void setPasswordIfNecessary(User user) {
-        Password password = user.getPasswordObj();
+        String password = user.getPassword();
 
-        if (!user.hasEmptyPassword()) {
+        if (!StringUtils.isEmpty(user.getPassword())) {
             checkPasswordComplexity(password);
         } else {
             // False, since a user wouldn't add himself
-            Password newpassword = Password.generateRandom(false);
-            user.setPasswordObj(newpassword);
+            Password newpassword = Password.generateRandom(false, user);
         }
 
-        if (!user.getPasswordObj().isNew()) {
+        if (!user.isPasswordIsNew()) {
             logger.error("Password of User is an existing instance");
             throw new IllegalArgumentException(
                     "The password appears to be an existing instance. It must be a new instance!");
         }
     }
 
-    private void checkPasswordComplexity(Password password) {
+    private void checkPasswordComplexity(String password) {
         if (isPasswordRulesEnforced()) {
-            PasswordComplexityResult result = passwordComplexityService.checkPassword(password.getValue());
+            PasswordComplexityResult result = passwordComplexityService.checkPassword(password);
             if (!result.isValidPassword()) {
                 String errorMsg = String.format("Invalid password %s", password);
                 logger.warn(errorMsg);
@@ -830,7 +805,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addBaseUrlToUser(Integer baseUrlId, User user) {
+    public void addBaseUrlToUser(String baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
         if (baseUrl.getOpenstackType().equals("NAST")) {
@@ -842,7 +817,7 @@ public class DefaultUserService implements UserService {
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
-        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().length != 0) {
+        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().size() != 0) {
             for (String bId : tenant.getBaseUrlIds()) {
                 if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
                     throw new BadRequestException("BaseUrl already exists.");
@@ -850,12 +825,12 @@ public class DefaultUserService implements UserService {
             }
         }
 
-        tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        tenant.getBaseUrlIds().add(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
     }
 
     @Override
-    public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
+    public void removeBaseUrlFromUser(String baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
         if (baseUrl.getOpenstackType().equals("NAST")) {
@@ -865,111 +840,53 @@ public class DefaultUserService implements UserService {
         }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
-        tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        tenant.getBaseUrlIds().remove(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
     }
 
     @Override
-    public List<Tenant> getUserTenants(String userId) {
-        List<Tenant> tenantList = new ArrayList<Tenant>();
-
-        return tenantList;
+    public void addGroupToUser(String groupId, String userId) {
+        userDao.addGroupToUser(userId, groupId);
     }
 
     @Override
-    public PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit) {
-        logger.debug("Getting Users Paged");
-
-        PaginatorContext<User> context = this.userDao.getAllUsersPaged(filters, offset, limit);
-
-        logger.debug("Got Users {}", filters);
-
-        return context;
+    public void deleteGroupFromUser(String groupId, String userId) {
+        userDao.deleteGroupFromUser(groupId, userId);
     }
 
     @Override
-    public PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit) {
-        logger.debug("Getting Users with Role {}", roleId);
+    public List<Group> getGroupsForUser(String userId) {
+        return userDao.getGroupsForUser(userId);
+    }
 
-        PaginatorContext<User> userContext = new PaginatorContext<User>();
+    @Override
+	public boolean isUserInGroup(String userId, String groupId) {
+		List<Group> groups = getGroupsForUser(userId);
 
-        if (filters.length == 1) {
-            PaginatorContext<String> context = this.tenantService.getIdsForUsersWithTenantRole(roleId, offset, limit);
+        for (Group currentGroup : groups) {
+            if (currentGroup.getGroupId().equals(groupId)) {
+                return true;
+            }
+        }
+        return false;
+	}
 
-            ArrayList<User> userList = new ArrayList<User>();
-            for (String userId : context.getValueList()) {
-                User user = getUserById(userId);
-                if (user != null) {
-                    userList.add(user);
-                }
+    protected List<User> filterUsersForRole(List<User> users, String roleId) {
+        List<User> result = new ArrayList<User>();
+        for (User user : users) {
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
+            if (user.getRoles() != null) {
+                roles.addAll(user.getRoles());
             }
 
-            setUserContext(userContext, context.getLimit(), context.getOffset(),
-                            context.getTotalRecords(), userList);
-        } else {
-            Users users = this.getAllUsersNoLimit(filters);
-            List<User> usersWithRoleList = new ArrayList<User>();
-            filterUsersForRole(users, usersWithRoleList, roleId);
-
-            List<User> subList = getSubList(usersWithRoleList, offset, limit);
-
-            setUserContext(userContext, limit, offset, usersWithRoleList.size(), subList);
-        }
-
-        logger.debug("Got Users {}", filters);
-
-        return userContext;
-    }
-
-    protected Users getAllUsersNoLimit(FilterParam[] filters) {
-        logger.debug("Getting all users with {}", filters);
-
-        Users users = this.userDao.getAllUsersNoLimit(filters);
-
-        logger.debug("Got users {}", users);
-
-        return users;
-    }
-
-    protected void filterUsersForRole(Users users, List<User> usersWithRole, String roleId) {
-        if (users != null) {
-            for (User user : users.getUsers()) {
-                List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-                if (user.getRoles() != null) {
-                    roles.addAll(user.getRoles());
-                }
-
-                for (TenantRole tenantRole : roles) {
-                    if (tenantRole.getRoleRsId().equals(roleId)) {
-                        usersWithRole.add(user);
-                        break;
-                    }
+            for (TenantRole tenantRole : roles) {
+                if (tenantRole.getRoleRsId().equals(roleId)) {
+                    result.add(user);
+                    break;
                 }
             }
         }
-    }
-
-    protected List<User> getSubList(List<User> userList, int offset, int limit) {
-        if (offset > userList.size()) {
-            return new ArrayList<User>();
-        }
-
-        if (userList.size() > limit) {
-            if (userList.size() > offset + limit) {
-                return userList.subList(offset, offset + limit);
-            } else {
-                return userList.subList(offset, userList.size());
-            }
-        } else {
-            return userList.subList(offset, userList.size());
-        }
-    }
-
-    protected void setUserContext(PaginatorContext<User> userContext, int limit, int offset, int totalRecords, List<User> userList) {
-        userContext.setLimit(limit);
-        userContext.setOffset(offset);
-        userContext.setTotalRecords(totalRecords);
-        userContext.setValueList(userList);
+        return result;
     }
 
     private boolean isPasswordRulesEnforced() {
@@ -989,13 +906,8 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersInDomain(String domainId, boolean enabled) {
-        return userDao.getUsersByDomain(domainId, enabled);
-    }
-
-    @Override
-    public List<User> getUsersInDomain(String domainId) {
-        return userDao.getUsersByDomain(domainId);
+    public List<User> getUsersWithDomain(String domainId) {
+        return this.userDao.getUsersByDomain(domainId);
     }
 
     @Override

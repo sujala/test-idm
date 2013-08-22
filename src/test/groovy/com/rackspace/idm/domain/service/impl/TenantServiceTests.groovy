@@ -61,30 +61,6 @@ public class TenantServiceTests {
     }
 
     @Test
-    public void shouldDeleteTenant() {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(getTestSingleTenantRole());
-        EasyMock.expect(tenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
-        tenantDao.deleteTenantRole(getTestSingleTenantRole());
-        tenantDao.deleteTenant(tenantId1);
-        EasyMock.replay(tenantDao);
-        tenantService.deleteTenant(tenantId1);
-        EasyMock.verify(tenantDao);
-    }
-    
-    @Test
-    public void shouldDeleteTenanWithMulitpleTenantRole() {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(getTestMultipleTenantRole());
-        EasyMock.expect(tenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
-        tenantDao.updateTenantRole(EasyMock.anyObject(TenantRole.class));
-        tenantDao.deleteTenant(tenantId1);
-        EasyMock.replay(tenantDao);
-        tenantService.deleteTenant(tenantId1);
-        EasyMock.verify(tenantDao);
-    }
-
-    @Test
     public void shouldGetTenant() {
         Tenant tenant = getTestTenant();
         EasyMock.expect(tenantDao.getTenant(tenantId1)).andReturn(tenant);
@@ -114,23 +90,6 @@ public class TenantServiceTests {
         EasyMock.replay(tenantDao);
         tenantService.updateTenant(tenant);
         EasyMock.verify(tenantDao);
-    }
-
-    @Test
-    public void shouldGetTenantRolesByParent() {
-        TenantRole role = getTestSingleTenantRole();
-        ClientRole cRole = getTestClientRole();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        User user = getUser();
-        EasyMock.expect(tenantDao.getTenantRolesForUser(user)).andReturn(roles);
-        EasyMock.replay(tenantDao);
-        EasyMock.expect(applicationService.getClientRoleById(id)).andReturn(cRole);
-        EasyMock.replay(applicationService);
-        List<TenantRole> returned = tenantService.getTenantRolesForUser(user);
-        Assert.assertTrue(returned.size() == 1);
-        EasyMock.verify(tenantDao);
-        EasyMock.verify(applicationService);
     }
 
     private Tenant getTestTenant() {

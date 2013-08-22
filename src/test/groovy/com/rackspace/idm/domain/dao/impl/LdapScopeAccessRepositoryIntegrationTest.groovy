@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.ClientSecret
-import com.rackspace.idm.domain.entity.ScopeAccess
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -34,13 +33,13 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         when:
         def clientId = "client$random"
         def client = createClient(clientId)
-        applicationDao.addClient(client)
+        applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, input)
-        scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
+        scopeAccessDao.addScopeAccess(client, scopeAccess)
         def retrievedScopeAccess = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         scopeAccessDao.deleteScopeAccess(retrievedScopeAccess);
-        applicationDao.deleteClient(client)
+        applicationDao.deleteApplication(client)
 
         then:
         expected as Set == retrievedScopeAccess.authenticatedBy as Set
@@ -57,15 +56,15 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
         when:
         def clientId = "otherClient$random"
         def client = createClient(clientId)
-        applicationDao.addClient(client)
+        applicationDao.addApplication(client)
 
         def scopeAccess = createScopeAccess(clientId, ["RSA"].asList())
-        scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), scopeAccess)
+        scopeAccessDao.addScopeAccess(client, scopeAccess)
         def retrievedScopeAccess1 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         def retrievedScopeAccess2 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         def retrievedScopeAccess3 = scopeAccessDao.getScopeAccessByAccessToken(accessToken)
         scopeAccessDao.deleteScopeAccess(retrievedScopeAccess1);
-        applicationDao.deleteClient(client)
+        applicationDao.deleteApplication(client)
 
         then:
         retrievedScopeAccess1.createTimestamp != null

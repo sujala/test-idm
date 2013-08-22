@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -36,12 +37,6 @@ public class UsersResource extends ParentResource {
 
     @Autowired
     private Configuration config;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private ApplicationService applicationService;
 
     @Autowired(required = true)
     public UsersResource(
@@ -75,12 +70,15 @@ public class UsersResource extends ParentResource {
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
-        FilterParam[] filters = null;
+        List<User> userList = null;
     	if (!StringUtils.isBlank(username)) {
-    		filters = new FilterParam[] { new FilterParam(FilterParamName.USERNAME, username)};
-    	}
+            userList = this.userService.getUsersByUsername(username);
+    	} else {
+            userList = this.userService.getAllUsers();
+        }
 
-    	Users users = this.userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
+        Users users = new Users();
+        users.getUsers().addAll(userList);
 
     	return Response.ok(userConverter.toUserListJaxb(users)).build();
     }
@@ -103,7 +101,6 @@ public class UsersResource extends ParentResource {
         com.rackspace.api.idm.v1.User jaxbUser = user;
 
         User userDO = userConverter.toUserDO(jaxbUser);
-        userDO.setDefaults();
         validateDomainObject(userDO);
 
         if (userDO.getId() == null && config.getBoolean("user.uuid.enabled.foundation")) {

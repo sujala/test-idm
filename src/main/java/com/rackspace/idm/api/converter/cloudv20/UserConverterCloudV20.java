@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -35,6 +34,7 @@ public class UserConverterCloudV20 {
         userDO.setDisplayName(user.getDisplayName());
         userDO.setEnabled(user.isEnabled());
         if(user instanceof UserForCreate){
+            userDO.setUserPassword(((UserForCreate) user).getPassword());
             userDO.setPassword(((UserForCreate) user).getPassword());
         }
         if(user.getOtherAttributes()!=null){
@@ -76,7 +76,7 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
         if (user.getPassword() != null) {
@@ -115,7 +115,7 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
         if(user.getRegion() != null){

@@ -50,21 +50,6 @@ public class AuthConverterCloudV20Test {
     }
 
     @Test
-    public void toAuthenticationResponse_setsAuthFields() throws Exception {
-        Token token = new Token();
-        token.setId("tokenId");
-        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class), anyList())).thenReturn(token);
-        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
-        userForAuthenticateResponse.setId("userForAuthenticateResponseId");
-        when(userConverterCloudV20.toUserForAuthenticateResponse(any(User.class), anyList())).thenReturn(userForAuthenticateResponse);
-        when(endpointConverterCloudV20.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
-        AuthenticateResponse authenticateResponse = authConverter.toAuthenticationResponse(new User("username"), new ScopeAccess(), new ArrayList<TenantRole>(), new ArrayList<OpenstackEndpoint>());
-        assertThat("token id", authenticateResponse.getToken().getId(), equalTo("tokenId"));
-        assertThat("authenticate response", authenticateResponse.getUser().getId(), equalTo("userForAuthenticateResponseId"));
-        assertThat("services catalog", authenticateResponse.getServiceCatalog(), not(nullValue()));
-    }
-
-    @Test
     public void toImpersonationResponse_setsToken() throws Exception {
         Token token = new Token();
         token.setId("tokenId");

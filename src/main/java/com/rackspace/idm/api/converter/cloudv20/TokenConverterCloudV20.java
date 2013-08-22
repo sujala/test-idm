@@ -1,9 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
-import com.rackspace.idm.RaxAuthConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
@@ -34,14 +32,14 @@ public class TokenConverterCloudV20 {
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {
         Token token = objFactories.getOpenStackIdentityV2Factory().createToken();
 
-        if (scopeAccess instanceof HasAccessToken) {
+        if (scopeAccess != null) {
 
-            token.setId(((HasAccessToken) scopeAccess).getAccessTokenString());
+            token.setId(scopeAccess.getAccessTokenString());
 
             if (roles != null) {
                 token.setTenant(toTenantForAuthenticateResponse(roles));
             }
-            Date expires = ((HasAccessToken) scopeAccess).getAccessTokenExp();
+            Date expires = scopeAccess.getAccessTokenExp();
             GregorianCalendar gc = new GregorianCalendar();
             gc.setTime(expires);
 
@@ -73,8 +71,8 @@ public class TokenConverterCloudV20 {
             // TODO: Check for other names? This is to match the Mosso Type
             if (tenant.getName().equals("compute:default")) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
-                tenantForAuthenticateResponse.setId(tenant.getTenantIds()[0]);
-                tenantForAuthenticateResponse.setName(tenant.getTenantIds()[0]);
+                tenantForAuthenticateResponse.setId(tenant.getTenantIds().iterator().next());
+                tenantForAuthenticateResponse.setName(tenant.getTenantIds().iterator().next());
                 return tenantForAuthenticateResponse;
             }
         }

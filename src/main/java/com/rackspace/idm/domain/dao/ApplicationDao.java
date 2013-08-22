@@ -1,56 +1,41 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
 
 public interface ApplicationDao {
 
-    void addClient(Application client);
+    void addApplication(Application client);
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
-    void deleteClient(Application client);
+    void deleteApplication(Application client);
 
-    List<Application> getAllClients();
+    List<Application> getAllApplications();
 
-    Application getClientByClientId(String clientId);
+    Application getApplicationByClientId(String clientId);
 
-    Application getClientByClientname(String clientName);
+    Application getApplicationByName(String clientName);
 
-    Application getClientByCustomerIdAndClientId(String customerId, String clientId);
-
-    Application getClientById(String inum);
+    Application getApplicationByCustomerIdAndClientId(String customerId, String clientId);
     
-    Application getClientByScope(String scope);
+    Application getApplicationByScope(String scope);
 
-    Applications getClientsByCustomerId(String customerId, int offset, int limit);
+    Applications getApplicationsByCustomerId(String customerId, int offset, int limit);
+
+    PaginatorContext<Application> getApplicationsByCustomerIdPaged(String customerId, int offset, int limit);
+
+    Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
+
+    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
     
-    Applications getAllClients(List<FilterParam> filters, int offset, int limit);
-    
-    void updateClient(Application client);
+    void updateApplication(Application client);
     
     List<Application> getAvailableScopes();
     
-    void addClientRole(String clientUniqueId, ClientRole role);
-    
-    void deleteClientRole(ClientRole role);
-    
-    ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
-    
-    List<ClientRole> getClientRolesByClientId(String clientId);
-    
-    List<ClientRole> getAllClientRoles(List<FilterParam> filters);
-    
-    void updateClientRole(ClientRole role);
-    
-    ClientRole getClientRoleById(String id);
-    
-    List<ClientRole> getAllClientRoles();
-    
     List<Application> getOpenStackServices();
-
-    String getNextRoleId();
 
     void softDeleteApplication(Application application);
 

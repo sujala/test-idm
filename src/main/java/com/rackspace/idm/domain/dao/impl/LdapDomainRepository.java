@@ -1,19 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.dao.UniqueId;
-import com.sun.jndi.toolkit.dir.SearchFilter;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -31,8 +25,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
 
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
-    public static final String ERROR_GETTING_DOMAIN_OBJECT = "Error getting domain object";
-    public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
 
     @Override
     public void addDomain(Domain domain) {
@@ -77,8 +69,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
         }
         Filter orFilter = Filter.createORFilter(filterList);
         Filter andFilter = Filter.createANDFilter(Filter.createEqualityFilter(ATTR_OBJECT_CLASS,OBJECTCLASS_DOMAIN),orFilter);
-
-        List<Domain> domains = new ArrayList<Domain>();
 
         return getObjects(andFilter);
     }

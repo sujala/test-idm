@@ -42,8 +42,6 @@ public class AuthorizationServiceTests {
 
     String permissionId = "Permission";
 
-    Permission perm;
-    List<Permission> permissions;
     ClientGroup admin;
 
     String adminGroupName = "Idm Admin";
@@ -97,42 +95,6 @@ public class AuthorizationServiceTests {
     }
 
     @Test
-    public void ShouldReturnTrueForUser() {
-
-        boolean authorized = service.authorizeUser(authorizedUserToken,
-            customerId, username);
-
-        Assert.assertTrue(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForUser() {
-
-        boolean authorized = service.authorizeUser(otherCompanyUserToken,
-            customerId, username);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
-    public void ShouldReturnTrueForCompanyUser() {
-
-        boolean authorized = service.authorizeCustomerUser(authorizedUserToken,
-            customerId);
-
-        Assert.assertTrue(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForCompanyUser() {
-
-        boolean authorized = service.authorizeCustomerUser(
-            otherCompanyUserToken, customerId);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
     public void ShouldReturnTrueForCustomerIdm() {
         boolean authorized = service.authorizeCustomerIdm(customerIdmToken);
 
@@ -149,14 +111,6 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        perm = new Permission();
-        perm.setClientId(idmClientId);
-        perm.setCustomerId(customerId);
-        perm.setPermissionId(permissionId);
-
-        permissions = new ArrayList<Permission>();
-        permissions.add(perm);
-
         admin = new ClientGroup();
         admin.setUniqueId(uniqueId);
         admin.setName(adminGroupName);

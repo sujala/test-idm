@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 
 import java.util.List;
@@ -24,9 +25,4 @@ public interface GroupService {
     void insertGroup(Group group);
     void updateGroup(Group group);
     void deleteGroup(String groupId);
-    void addGroupToUser(String groupId, String userId);
-    void deleteGroupFromUser(String groupId, String userId);
-    List<Group> getGroupsForUser(String userId);
-    Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit);
-	boolean isUserInGroup(String userId, String groupId);
 }

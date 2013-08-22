@@ -31,12 +31,8 @@ import static org.mockito.Mockito.when;
  */
 public class UserResourceTest {
     private UserResource userResource;
-    private UserApplicationsResource userApplicationsResource;
     private ScopeAccessService scopeAccessService;
     private UserPasswordCredentialsResource userPasswordCredentialsResource;
-    private UserTenantsResource userTenantsResource;
-    private UserSecretResource userSecretResource;
-    private UserDelegatedRefreshTokensResource userDelegatedRefreshTokensResource;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
@@ -46,20 +42,16 @@ public class UserResourceTest {
 
     @Before
     public void setUp() throws Exception {
-        userApplicationsResource = mock(UserApplicationsResource.class);
         scopeAccessService = mock(ScopeAccessService.class);
         userPasswordCredentialsResource = mock(UserPasswordCredentialsResource.class);
-        userTenantsResource = mock(UserTenantsResource.class);
-        userSecretResource = mock(UserSecretResource.class);
-        userDelegatedRefreshTokensResource = mock(UserDelegatedRefreshTokensResource.class);
         userService = mock(UserService.class);
         userConverter = mock(UserConverter.class);
         authorizationService = mock(AuthorizationService.class);
         userGlobalRolesResource = mock(UserGlobalRolesResource.class);
         inputValidator = mock(InputValidator.class);
         userValidator = mock(UserValidatorFoundation.class);
-        userResource = new UserResource(userApplicationsResource, scopeAccessService, userPasswordCredentialsResource, userTenantsResource,
-                userSecretResource, userDelegatedRefreshTokensResource, userService, userConverter, inputValidator, authorizationService, userGlobalRolesResource);
+        userResource = new UserResource(scopeAccessService, userPasswordCredentialsResource,
+                userService, userConverter, inputValidator, authorizationService, userGlobalRolesResource);
         userResource.setUserValidator(userValidator);
     }
 
@@ -101,153 +93,9 @@ public class UserResourceTest {
     }
 
     @Test
-    public void updateUser_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
-    public void updateUser_callsAuthService_authorizeRackspaceClient() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(authorizationService).authorizeRackspaceClient(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void updateUser_callsAuthService_verifyIdmSuperAdminAccess() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void updateUser_callsScopeAccessService_expireAllTokensForUser() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(scopeAccessService).expireAllTokensForUser(anyString());
-    }
-
-    @Test
-    public void updateUser_callsUserService_updateUserById() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("username");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        User testUser = new User();
-        testUser.setEnabled(true);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(testUser);
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(userService).updateUser(any(User.class), eq(false));
-    }
-
-    @Test
-    public void updateUser_callsUserConverter_toUserWithoutAnyAdditionalElements() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
-        when(userService.loadUser("userId")).thenReturn(new User());
-        userResource.updateUser("authHeader", "userId", holder);
-        verify(userConverter).toUserJaxbWithoutAnyAdditionalElements(any(User.class));
-    }
-
-    @Test
-    public void updateUser_responseOk_returns200() throws Exception {
-        com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
-        User updatedUser = new User();
-        updatedUser.setEnabled(false);
-        EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(authorizationService.authorizeRackspaceClient(any(ScopeAccess.class))).thenReturn(true);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(updatedUser);
-        when(userService.loadUser("userId")).thenReturn(new User());
-        Response response = userResource.updateUser("authHeader", "userId", holder);
-        assertThat("response code", response.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void deleteUser_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        userResource.deleteUser("authHeader", "userId");
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
-    public void deleteUser_callsAuthService_authorizeRackspaceClient() throws Exception {
-        userResource.deleteUser("authHeader", "userId");
-        verify(authorizationService).authorizeRackspaceClient(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void deleteUser_callsAuthService_verifyIdmSuperAdminAccess() throws Exception {
-        userResource.deleteUser("authHeader", "userId");
-        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
-    }
-
-    @Test
-    public void deleteUser_callsUserService_loadUser() throws Exception {
-        when(authorizationService.authorizeRackspaceClient(any(ScopeAccess.class))).thenReturn(true);
-        userResource.deleteUser("authHeader", "userId");
-        verify(userService).loadUser("userId");
-    }
-
-    @Test
-    public void deleteUser_callsUserService_softDeleteUser() throws Exception {
-        when(authorizationService.authorizeRackspaceClient(any(ScopeAccess.class))).thenReturn(true);
-        userResource.deleteUser("authHeader", "userId");
-        verify(userService).softDeleteUser(any(User.class));
-    }
-
-    @Test
-    public void deleteUser_responseNoContent_returns204() throws Exception {
-        Response response = userResource.deleteUser("authHeader", "userId");
-        assertThat("response code", response.getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void getUserSecretResource_returnUserSecretResource() throws Exception {
-        UserSecretResource resource = userResource.getUserSecretResource();
-        assertThat("user secret resrouce", resource, equalTo(userSecretResource));
-    }
-
-    @Test
     public void getPasswordCredentialResource_returnUserPasswordCredentialResource() throws Exception {
         UserPasswordCredentialsResource resource = userResource.getPasswordCredentialsResource();
         assertThat("user password credential resource", resource, equalTo(userPasswordCredentialsResource));
-    }
-
-    @Test
-    public void getUserTokenResource_returnUserDelegatedRefreshTokenResource() throws Exception {
-        UserDelegatedRefreshTokensResource resource = userResource.getUserTokenResource();
-        assertThat("user delegated refresh tokens resource", resource, equalTo(userDelegatedRefreshTokensResource));
-    }
-
-    @Test
-    public void getApplications_returnUserApplicationsResource() throws Exception {
-        UserApplicationsResource resource = userResource.getApplications();
-        assertThat("user applications resource", resource, equalTo(userApplicationsResource));
-    }
-
-    @Test
-    public void getTenantsResource_returnUserTenantResource() throws Exception {
-        UserTenantsResource resource = userResource.getTenantsResource();
-        assertThat("user tenants resource", resource, equalTo(userTenantsResource));
     }
 
     @Test

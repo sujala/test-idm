@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 
@@ -29,8 +28,6 @@ public class DefaultApplicationService implements ApplicationService {
     @Autowired
     private ApplicationRoleDao applicationRoleDao;
     @Autowired
-    private CustomerService customerService;
-    @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
     private TenantService tenantService;
@@ -43,7 +40,7 @@ public class DefaultApplicationService implements ApplicationService {
     public void add(Application client) {
         logger.debug("Adding Client: {}", client);
 
-        Application existingApplication = applicationDao.getClientByClientname(client.getName());
+        Application existingApplication = applicationDao.getApplicationByName(client.getName());
         if (existingApplication != null) {
             logger.warn("Couldn't add client {} because clientname already taken", client);
             throw new DuplicateException(String.format("Clientname %s already exists", client.getName()));
@@ -52,14 +49,14 @@ public class DefaultApplicationService implements ApplicationService {
         client.setClientId(HashHelper.makeSHA1Hash(client.getName()));
         client.setClientSecretObj(ClientSecret.newInstance(HashHelper.getRandomSha1()));
 
-        applicationDao.addClient(client);
+        applicationDao.addApplication(client);
         logger.debug("Added Client: {}", client);
     }
 
     @Override
     public void delete(String clientId) {
         logger.debug("Delete Client: {}", clientId);
-        Application client = applicationDao.getClientByClientId(clientId);
+        Application client = applicationDao.getApplicationByClientId(clientId);
 
         if (client == null) {
             String errMsg = String.format("Client with clientId %s not found.", clientId);
@@ -67,55 +64,14 @@ public class DefaultApplicationService implements ApplicationService {
             throw new NotFoundException(errMsg);
         }
 
-        List<DefinedPermission> definedPermissions = this.getDefinedPermissionsByClient(client);
-
-        for (DefinedPermission definedPerm : definedPermissions) {
-            this.deleteDefinedPermission(definedPerm);
-        }
-        
-        List<ClientRole> roles = applicationDao.getClientRolesByClientId(clientId);
+        List<ClientRole> roles = applicationRoleDao.getClientRolesForApplication(client);
         
         for (ClientRole role : roles) {
             this.deleteClientRole(role);
         }
 
-        applicationDao.deleteClient(client);
+        applicationDao.deleteApplication(client);
         logger.debug("Deleted Client: {}", clientId);
-    }
-
-    @Override
-    public void addDefinedPermission(DefinedPermission permission) {
-        logger.debug("Define Permission: {}", permission);
-        Customer customer = customerService.getCustomer(permission.getCustomerId());
-
-        if (customer == null) {
-            logger.warn("Couldn't add permission {} because customerId doesn't exist", permission.getCustomerId());
-            throw new IllegalStateException("Customer doesn't exist");
-        }
-
-        Application client = applicationDao.getClientByClientId(permission.getClientId());
-
-        if (client == null) {
-            logger.warn("Couldn't add permission {} because clientId doesn't exist", permission.getClientId());
-            throw new IllegalStateException("Client doesn't exist");
-        }
-
-        ScopeAccess sa = scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
-        if (sa == null) {
-            sa = new ClientScopeAccess();
-            sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getRCN());
-            sa = scopeAccessService.addDirectScopeAccess(client.getUniqueId(), sa);
-        }
-
-        DefinedPermission exists = (DefinedPermission) scopeAccessService.getPermissionForParent(sa.getUniqueId(), permission);
-
-        if (exists != null) {
-            logger.warn("Couldn't add permission {} because permissionId already taken", client);
-            throw new DuplicateException(String.format("PermissionId %s already exists", client.getName()));
-        }
-
-        logger.debug("Defined Permission: {}", scopeAccessService.definePermission(sa.getUniqueId(), permission));
     }
 
     @Override
@@ -124,25 +80,8 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public void deleteDefinedPermission(DefinedPermission definedPermission) {
-        logger.debug("Delete Permission: {}", definedPermission);
-        Permission permission = new Permission();
-        permission.setClientId(definedPermission.getClientId());
-        permission.setCustomerId(definedPermission.getCustomerId());
-        permission.setPermissionId(definedPermission.getPermissionId());
-
-        List<Permission> permissions = scopeAccessService.getPermissionsByPermission(definedPermission);
-
-        for (Permission perm : permissions) {
-            logger.debug("Deleting Permission: {}", perm);
-            scopeAccessService.removePermission(perm);
-        }
-        logger.debug("Deleted Permission: {}", definedPermission);
-    }
-
-    @Override
     public Application loadApplication(String applicationId) {
-        Application client = applicationDao.getClientByClientId(applicationId);
+        Application client = applicationDao.getApplicationByClientId(applicationId);
         if (client == null) {
             String errMsg = String.format("Client %s not found", applicationId);
             logger.warn(errMsg);
@@ -154,17 +93,27 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
-        return applicationDao.getAllClients(filters, offset, limit);
+        return applicationDao.getAllApplications(filters, offset, limit);
     }
 
     @Override
     public Applications getByCustomerId(String customerId, int offset, int limit) {
-        return applicationDao.getClientsByCustomerId(customerId, offset, limit);
+        return applicationDao.getApplicationsByCustomerId(customerId, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit) {
+        return applicationDao.getAllApplicationsPaged(filters, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit) {
+        return applicationDao.getApplicationsByCustomerIdPaged(customerId, offset, limit);
     }
 
     @Override
     public Application getById(String clientId) {
-        return applicationDao.getClientByClientId(clientId);
+        return applicationDao.getApplicationByClientId(clientId);
     }
 
     @Override
@@ -180,55 +129,17 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public Application getClient(String customerId, String clientId) {
-        return applicationDao.getClientByCustomerIdAndClientId(customerId, clientId);
+        return applicationDao.getApplicationByCustomerIdAndClientId(customerId, clientId);
     }
 
     @Override
     public Application getByName(String clientName) {
-        return applicationDao.getClientByClientname(clientName);
+        return applicationDao.getApplicationByName(clientName);
     }
 
     @Override
     public Application getClientByScope(String scope) {
-        return applicationDao.getClientByScope(scope);
-    }
-
-    @Override
-    public DefinedPermission getDefinedPermissionByClientIdAndPermissionId(
-        String clientId, String permissionId) {
-        logger.debug("Find Permission: {} by ClientId: {}", permissionId, clientId);
-
-        Application client = this.getClient(clientId);
-
-        Permission permission = new DefinedPermission();
-        permission.setPermissionId(permissionId);
-        permission.setCustomerId(client.getRCN());
-        permission.setClientId(client.getClientId());
-
-        permission = scopeAccessService.getPermissionForParent(client.getUniqueId(), permission);
-
-        DefinedPermission perm = (DefinedPermission) permission;
-
-        logger.debug("Found Permission: {}", perm);
-        return perm;
-    }
-
-    @Override
-    public List<DefinedPermission> getDefinedPermissionsByClient(Application client) {
-        logger.debug("Find Permission by ClientId: {}", client.getClientId());
-        Permission filter = new Permission();
-        filter.setClientId(client.getClientId());
-        filter.setCustomerId(client.getRCN());
-
-        List<Permission> permissions = scopeAccessService.getPermissionsForParentByPermission(client.getUniqueId(), filter);
-
-        List<DefinedPermission> perms = new ArrayList<DefinedPermission>();
-        for (Permission p : permissions) {
-            perms.add((DefinedPermission) p);
-        }
-
-        logger.debug("Found {} Permission(s) by ClientId: {}", permissions.size(), client.getClientId());
-        return perms;
+        return applicationDao.getApplicationByScope(scope);
     }
 
     @Override
@@ -238,63 +149,17 @@ public class DefaultApplicationService implements ApplicationService {
         }
         logger.debug("Reseting Client secret ClientId: {}", client.getClientId());
 
-        ClientSecret clientSecret = null;
+        ClientSecret clientSecret;
         clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
         client.setClientSecretObj(clientSecret);
-        applicationDao.updateClient(client);
+        applicationDao.updateApplication(client);
         logger.debug("Reset Client secret ClientId: {}", client.getClientId());
         return clientSecret;
     }
 
     @Override
     public void save(Application client) {
-        applicationDao.updateClient(client);
-    }
-
-    @Override
-    public List<Application> getAvailableScopes() {
-        List<Application> clientList = applicationDao.getAvailableScopes();
-
-        if (clientList == null) {
-            String errorMsg = String.format("No defined scope accesses found for this application.");
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        return clientList;
-    }
-
-    private Application getClient(String clientId) {
-        Application targetClient = this.applicationDao.getClientByClientId(clientId);
-        if (targetClient == null) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        return targetClient;
-    }
-
-    @Override
-    public void updateDefinedPermission(DefinedPermission permission) {
-        scopeAccessService.updatePermission(permission);
-    }
-
-    @Override
-    public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) {
-        logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
-        DefinedPermission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
-
-        if (permission == null
-            || !customerId.equalsIgnoreCase(permission.getCustomerId())
-            || !clientId.equalsIgnoreCase(permission.getClientId())
-            || !permission.getEnabled()) {
-            String errorMsg = String.format("Permission Not Found: %s", permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        logger.debug("Found Permission: {} for ClientId: {}", permission, clientId);
-        return permission;
+        applicationDao.updateApplication(client);
     }
 
     @Override
@@ -303,12 +168,12 @@ public class DefaultApplicationService implements ApplicationService {
         if (client == null || client.getUniqueId() == null) {
             throw new IllegalArgumentException("Client cannot be null and must have uniqueID");
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForParent(client.getUniqueId());
+        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForApplication(client);
 
         List<Application> clientList = new ArrayList<Application>();
 
         for (ScopeAccess service : services) {
-            if (service instanceof ScopeAccess) {
+            if (service != null) {
                 clientList.add(this.getById(service.getClientId()));
             }
         }
@@ -324,9 +189,23 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public Application getApplicationByScopeAccess(ScopeAccess scopeAccess) {
+        if(scopeAccess == null) {
+            throw new IllegalArgumentException("ScopeAccess cannot be null");
+        }
+        String clientId = scopeAccessService.getClientIdForParent(scopeAccess);
+        if(clientId == null) {
+            String err = String.format("Application with clientId %s not found", clientId);
+            logger.error(err);
+            throw new NotFoundException(err);
+        }
+        return applicationDao.getApplicationByClientId(clientId);
+    }
+
+    @Override
     public void updateClient(Application client) {
         logger.info("Updating Client: {}", client);
-        this.applicationDao.updateClient(client);
+        this.applicationDao.updateApplication(client);
         logger.info("Updated Client: {}", client);
     }
 
@@ -338,7 +217,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void addClientRole(ClientRole role, String roleId) {
         logger.info("Adding Client Role: {}", role);
-        Application application = applicationDao.getClientByClientId(role.getClientId());
+        Application application = applicationDao.getApplicationByClientId(role.getClientId());
         if (application == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
@@ -378,7 +257,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public List<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
-        Application application = applicationDao.getClientByClientId(clientId);
+        Application application = applicationDao.getApplicationByClientId(clientId);
         if (application == null) {
             throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
         }
@@ -455,7 +334,7 @@ public class DefaultApplicationService implements ApplicationService {
         List<ClientRole> result = new ArrayList<ClientRole>();
 
         logger.debug("getting identity:* role for user: {}", user);
-        Application application = applicationDao.getClientByClientId(getCloudAuthClientId());
+        Application application = applicationDao.getApplicationByClientId(getCloudAuthClientId());
         List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames());
 
         for (ClientRole role : identityRoles) {

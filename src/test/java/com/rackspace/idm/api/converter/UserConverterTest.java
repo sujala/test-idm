@@ -19,9 +19,9 @@ import org.junit.Test;
 import javax.xml.bind.JAXBElement;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -82,18 +82,18 @@ public class UserConverterTest {
 
         assertThat("user id", user.getId(), equalTo("userId"));
         assertThat("user country", user.getCountry(), equalTo("country"));
-        assertThat("user time zome", user.getTimeZone(), equalTo("CET"));
+        assertThat("user time zome", user.getTimeZoneId(), equalTo("CET"));
         assertThat("user customer id", user.getCustomerId(), equalTo("customerId"));
         assertThat("user display name", user.getDisplayName(), equalTo("displayName"));
         assertThat("user email", user.getEmail(), equalTo("email"));
         assertThat("user first name", user.getFirstname(), equalTo("firstName"));
-        assertThat("user enabled", user.isEnabled(), equalTo(true));
+        assertThat("user enabled", user.getEnabled(), equalTo(true));
         assertThat("user last name", user.getLastname(), equalTo("lastName"));
         assertThat("user middle name", user.getMiddlename(), equalTo("middleName"));
         assertThat("user person id", user.getPersonId(), equalTo("personId"));
         assertThat("user preferred language", user.getPreferredLang(), equalTo("en_US"));
         assertThat("user region", user.getRegion(), equalTo("region"));
-        assertThat("user max login failures exceded", user.isMaxLoginFailuresExceded(), equalTo(false));
+        assertThat("user max login failures exceded", user.getMaxLoginFailuresExceeded(), equalTo(false));
         assertThat("user username", user.getUsername(), equalTo("username"));
         assertThat("user password credentials", user.getPassword(), equalTo("password"));
         assertThat("user secret question", user.getSecretQuestion(), equalTo("Is this a question?"));
@@ -155,12 +155,6 @@ public class UserConverterTest {
     @Test
     public void toUserListJaxb_withNullUsers_returnsNull() throws Exception {
         JAXBElement<UserList> userListJAXBElement = userConverter.toUserListJaxb(null);
-        assertThat("user list jaxb", userListJAXBElement, nullValue());
-    }
-
-    @Test
-    public void toUserListJaxb_withNullUserList_returnsNull() throws Exception {
-        JAXBElement<UserList> userListJAXBElement = userConverter.toUserListJaxb(new Users());
         assertThat("user list jaxb", userListJAXBElement, nullValue());
     }
 
@@ -256,10 +250,10 @@ public class UserConverterTest {
         userDo.setMiddlename("middleName");
         userDo.setLastname("lastName");
         userDo.setPersonId("personId");
-        userDo.setLocale(new Locale("en_us"));
+        userDo.setPreferredLang("en_us");
         userDo.setRegion("region");
         userDo.setUsername("username");
-        userDo.setMaxLoginFailuresExceded(false);
+        userDo.setMaxLoginFailuresExceeded(false);
         userDo.setPassword("password");
         userDo.setSecretAnswer("secretAnswer");
         userDo.setSecretQuestion("secretQuestion");

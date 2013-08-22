@@ -1,14 +1,32 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.ClientSecret
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
+import com.unboundid.ldap.sdk.Entry
+import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import static org.mockito.Matchers.any
+import static org.mockito.Matchers.anyString
+import static org.mockito.Mockito.doNothing
+import static org.mockito.Mockito.never
+import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
+import static org.mockito.Mockito.when
+
 class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
+
+    String clientId = "clientId"
+    String name = "name"
+    String customerId = "customerId"
 
     def setupSpec() {
         service = new DefaultTenantService()
@@ -24,6 +42,51 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockScopeAccessService(service)
         mockAtomHopperClient(service)
+    }
+
+    def "add TenantRole To Client throws NotFoundException if clientRole is Null"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole("role")
+        def application = entityFactory.createApplication()
+
+        applicationService.getById(clientId) >> application
+        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> null
+
+        when:
+        service.addTenantRoleToClient(application, tenantRole)
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "add TenantRole To Client throws NotFoundException if owner Is Null"() {
+        given:
+        def app = entityFactory.createApplication()
+        def tenantRole = entityFactory.createTenantRole("role")
+
+        applicationService.getById(clientId) >> null
+
+        when:
+        service.addTenantRoleToClient(app,tenantRole);
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "add TenantRole To Client does Not Call ScopeAccessService Method if scopeAccess Is Not Null"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole("role").with { it.clientId = clientId; return it }
+        def application = entityFactory.createApplication()
+        applicationService.getById(_) >> application
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole()
+        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> new ScopeAccess()
+        service.addTenantRoleToClient(application, tenantRole) >> void
+
+        when:
+        service.addTenantRoleToClient(application,tenantRole);
+
+        then:
+        0 * scopeAccessService.addDirectScopeAccess(_, _)
     }
 
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
@@ -85,7 +148,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
-        1 * tenantDao.getTenantRolesForUser(caller) >> [].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(caller) >> [].asList()
     }
 
     def "addCallerTenantRolesToUser verifies that role to be added is not an identity:* role"() {
@@ -186,7 +249,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getTenantRolesForClientRole(role)
 
         then:
-        1 * tenantDao.getAllTenantRolesForClientRole(role)
+        1 * tenantRoleDao.getAllTenantRolesForClientRole(role)
     }
 
     def "deleteTenantRoleForUser deletes tenantRole from subUsers if user is user-admin"() {
@@ -222,7 +285,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.deleteTenantRole(role)
 
         then:
-        1 * tenantDao.deleteTenantRole(role)
+        1 * tenantRoleDao.deleteTenantRole(role)
     }
 
     def "getTenantRoleForUser uses DAO to get tenantRole for user"() {
@@ -239,10 +302,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def "getIdsForUsersWithTenantRole calls DAO to retrieve context object"() {
         when:
-        service.getIdsForUsersWithTenantRole("roleId", 0, 25)
+        service.getIdsForUsersWithTenantRole("roleId")
 
         then:
-        1 * tenantDao.getIdsForUsersWithTenantRole("roleId", 0, 25)
+        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId")
     }
 
     def "addTenantRoleToUser verifies that user is not null"() {
@@ -265,7 +328,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         given:
         def tenantRole = entityFactory.createTenantRole()
         def user = entityFactory.createUser()
-        user.uniqueId = ""
+        user.uniqueId = null;
 
         when:
         service.addTenantRoleToUser(user, tenantRole)
@@ -602,7 +665,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         tenantRole.getUserId() != null
         tenantRole.getUserId() == "1"
-        1 * tenantDao.updateTenantRole(_)
+        1 * tenantRoleDao.updateTenantRole(_)
 
     }
 
@@ -628,9 +691,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
             clientRole.name = "name"
         }
         if (tenantRole != null){
-            tenantDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
+            tenantRoleDao.getAllTenantRolesForTenant(_) >> [tenantRole].asList()
         }else{
-            tenantDao.getAllTenantRolesForTenant(_) >> [].asList()
+            tenantRoleDao.getAllTenantRolesForTenant(_) >> [].asList()
         }
         applicationService.getClientRoleById(_) >> clientRole
         def result = service.getTenantRolesForTenant(value)

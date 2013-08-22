@@ -15,6 +15,7 @@ public interface TenantService {
     Tenant checkAndGetTenant(String tenantId);
     Tenant getTenantByName(String name);
     List<Tenant> getTenants();
+    PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     
     void addTenantRoleToUser(User user, TenantRole role);
     void addCallerTenantRolesToUser(User caller, User user);
@@ -51,7 +52,7 @@ public interface TenantService {
     List<Tenant> getTenantsFromNameList(String[] tenants);
 
     TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRolesForFilter);
-    PaginatorContext<String> getIdsForUsersWithTenantRole(String roleId, int offset, int limit);
+    List<String> getIdsForUsersWithTenantRole(String roleId);
 	void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 

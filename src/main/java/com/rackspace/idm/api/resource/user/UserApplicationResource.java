@@ -72,11 +72,11 @@ public class UserApplicationResource extends ParentResource {
         sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(application.getClientId());
-        sa.setClientRCN(application.getRCN());
+        sa.setClientRCN(application.getRcn());
         sa.setAccessTokenExp(new DateTime().toDate());
         sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
-        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), sa);
+        this.scopeAccessService.addUserScopeAccess(user, sa);
 
         getLogger().info("Provisioned application {} to user {}", applicationId, userId);
 
@@ -108,7 +108,7 @@ public class UserApplicationResource extends ParentResource {
         User user = this.userService.loadUser(userId);
 
         //TODO: refactor. Probably should be in the applciation service.
-        this.scopeAccessService.deleteScopeAccessesForParentByApplicationId(user.getUniqueId(), application.getClientId());
+        this.scopeAccessService.deleteScopeAccessesForUser(user, application.getClientId());
         
         getLogger().info("Removed application {} from user {}", applicationId, userId);
 

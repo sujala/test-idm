@@ -48,20 +48,6 @@ public class UsersResourceTest {
     }
 
     @Test
-    public void getUsers_withNullLimitAndOffset_callsUserService_withNegOneLimitAndOffset() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        usersResource.getUsers(null, null, null, null);
-        verify(userService).getAllUsers(any(FilterParam[].class), eq(-1), eq(-1));
-    }
-
-    @Test
-    public void getUsers_callsUserService() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        usersResource.getUsers(null, null, 2, 2);
-        verify(userService).getAllUsers(any(FilterParam[].class), eq(2), eq(2));
-    }
-
-    @Test
     public void getUsers_returns200Status() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         Response response = usersResource.getUsers(null, null, 2, 2);

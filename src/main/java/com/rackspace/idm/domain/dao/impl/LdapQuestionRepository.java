@@ -29,6 +29,10 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question> impl
         return getNextId(NEXT_QUESTION_ID);
     }
 
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
+
     @Override
     public void addQuestion(Question question) {
         addObject(question);

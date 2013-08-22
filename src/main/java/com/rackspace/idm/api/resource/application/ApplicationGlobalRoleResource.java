@@ -180,8 +180,8 @@ public class ApplicationGlobalRoleResource {
         tenantRole.setClientId(role.getClientId());
         tenantRole.setRoleRsId(role.getId());
         tenantRole.setName(role.getName());
-        tenantRole.setTenantIds(new String[]{tenantId});
-        
+        tenantRole.getTenantIds().add(tenantId);
+
         return tenantRole;
 	}
 }

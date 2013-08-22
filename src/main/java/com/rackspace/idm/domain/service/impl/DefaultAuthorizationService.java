@@ -185,45 +185,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeUser(ScopeAccess scopeAccess, String customerId,
-        String username) {
-        logger.debug("Authorizing {} as user", scopeAccess);
-
-        boolean authorized = false;
-
-        if (scopeAccess instanceof UserScopeAccess) {
-            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
-            authorized = usa.getUsername().equals(username)
-                && usa.getUserRCN().equalsIgnoreCase(customerId);
-        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
-            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
-            authorized = dcsa.getUsername().equals(username)
-                && dcsa.getUserRCN().equalsIgnoreCase(customerId);
-        }
-
-        logger.debug("Authorized {} as user - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeCustomerUser(ScopeAccess scopeAccess, String customerId) {
-        logger.debug("Authorizing {} as customer user", scopeAccess);
-
-        boolean authorized = false;
-
-        if (scopeAccess instanceof UserScopeAccess) {
-            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
-            authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
-        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
-            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
-            authorized = dcsa.getUserRCN().equalsIgnoreCase(customerId);
-        }
-
-        logger.debug("Authorized {} as customer user - {}", scopeAccess,  authorized);
-        return authorized;
-    }
-
-    @Override
     public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {

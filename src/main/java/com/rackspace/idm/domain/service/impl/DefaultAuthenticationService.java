@@ -10,8 +10,6 @@ import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -41,8 +39,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private AuthDao authDao;
     @Autowired
     private UserService userService;
-    @Autowired
-    private CustomerService customerService;
     @Autowired
     private InputValidator inputValidator;
     @Autowired
@@ -119,11 +115,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public void setCustomerService(CustomerService customerService) {
-        this.customerService = customerService;
-    }
-
-    @Override
     public void setInputValidator(InputValidator inputValidator) {
         this.inputValidator = inputValidator;
     }
@@ -165,12 +156,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
     AuthData getAuthData(ScopeAccess scopeAccess) {
         AuthData authData = new AuthData();
 
-        if (scopeAccess instanceof HasAccessToken) {
-            HasAccessToken tokenScopeAccessObject = (HasAccessToken) scopeAccess;
-            authData.setAccessToken(tokenScopeAccessObject
-                    .getAccessTokenString());
-            authData.setAccessTokenExpiration(tokenScopeAccessObject
-                    .getAccessTokenExp());
+        if (scopeAccess != null) {
+            authData.setAccessToken(scopeAccess.getAccessTokenString());
+            authData.setAccessTokenExpiration(scopeAccess.getAccessTokenExp());
         }
 
         if (scopeAccess instanceof HasRefreshToken) {
@@ -207,7 +195,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             // about client
             Application application = new Application();
             application.setClientId(scopeAccess.getClientId());
-            application.setRCN(scopeAccess.getClientRCN());
+            application.setRcn(scopeAccess.getClientRCN());
             authData.setApplication(application);
         }
 
@@ -223,16 +211,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
             authData.setUser(user);
             authData.setPasswordExpirationDate(passwordExpirationDate);
-        }
-
-        if (scopeAccess instanceof DelegatedClientScopeAccess) {
-            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
-
-            // TODO: consider getting from user dao
-            User user = new User();
-            user.setUsername(dcsa.getUsername());
-            user.setCustomerId(dcsa.getUserRCN());
-            authData.setUser(user);
         }
 
         if (scopeAccess instanceof RackerScopeAccess) {
@@ -308,15 +286,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new NotAuthenticatedException(message);
             }
 
-            DateTime rotationDate = getUserPasswordExpirationDate(uaResult.getUser().getUsername());
-            if (rotationDate != null && rotationDate.isBefore(currentTime)) {
-                PasswordResetScopeAccess prsa = this.scopeAccessService.getOrCreatePasswordResetScopeAccessForUser(uaResult.getUser());
-                prsa.setUserPasswordExpirationDate(rotationDate);
-                return prsa;
-            }
-
             UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId(uaResult.getUser(), caResult.getClient());
-            usa.setUserPasswordExpirationDate(rotationDate);
             return usa;
         }
 
@@ -349,18 +319,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
-            scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
+            scopeAccessToAdd.setClientRCN(caResult.getClient().getRcn());
 
-            String parentUniqueId = null;
-            try {
-                parentUniqueId = new DN(scopeAccess.getUniqueId()).getParentString();
-            } catch (LDAPException e) {
-                throw new IllegalStateException("ScopeAccess has an invalid dn");
-            }
+            updateScopeAccess(scopeAccess, scopeAccessToAdd);
 
-            this.scopeAccessService.addDirectScopeAccess(parentUniqueId, scopeAccessToAdd);
-
-            this.scopeAccessService.deleteScopeAccess(scopeAccess);
             return scopeAccessToAdd;
         }
 
@@ -368,44 +330,26 @@ public class DefaultAuthenticationService implements AuthenticationService {
             return this.getAndUpdateClientScopeAccessForClientId(caResult.getClient());
         }
 
-        if (AUTHORIZATION_CODE == grantType) {
-            DelegatedClientScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAuthCode(trParam.getAuthorizationCode());
-            DelegatedClientScopeAccess scopeAccessToAdd = new DelegatedClientScopeAccess();
-            if (scopeAccess == null
-                    || scopeAccess.isAuthorizationCodeExpired(currentTime)
-                    || !scopeAccess.getClientId().equalsIgnoreCase(
-                    caResult.getClient().getClientId())) {
-                final String msg = String.format("Unauthorized Authorization Code: %s", trParam.getAuthorizationCode());
-                logger.warn(msg);
-                throw new NotAuthenticatedException(msg);
-            }
-
-            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
-            scopeAccessToAdd.setRefreshTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessToAdd.setAccessTokenExp(currentTime.plusSeconds(expirationSeconds).toDate());
-            scopeAccessToAdd.setClientId(caResult.getClient().getClientId());
-            scopeAccessToAdd.setClientRCN(caResult.getClient().getRCN());
-            scopeAccessToAdd.setAuthCode(null);
-            scopeAccessToAdd.setAuthCodeExp(null);
-
-            String parentUniqueId = null;
-            try {
-                parentUniqueId = new DN(scopeAccess.getUniqueId()).getParentString();
-            } catch (LDAPException e) {
-                throw new IllegalStateException("ScopeAccess has an invalid dn");
-            }
-
-            this.scopeAccessService.addDirectScopeAccess(parentUniqueId, scopeAccessToAdd);
-
-            this.scopeAccessService.deleteScopeAccess(scopeAccess);
-            return scopeAccessToAdd;
-        }
-
         final String message = String.format("Unsupported GrantType: %s",
                 grantType);
         logger.warn(message);
         throw new NotAuthenticatedException(message);
+    }
+
+    private void updateScopeAccess(ScopeAccess scopeAccess, ScopeAccess scopeAccessToAdd) {
+        User user = userService.getUserByScopeAccess(scopeAccess);
+
+        if(user != null) {
+            this.scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
+        } else {
+            Application application = applicationService.getApplicationByScopeAccess(scopeAccess);
+
+            if(application != null) {
+                this.scopeAccessService.addApplicationScopeAccess(application, scopeAccessToAdd);
+            }
+        }
+
+        this.scopeAccessService.deleteScopeAccess(scopeAccess);
     }
 
     UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
@@ -415,7 +359,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
 
-        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
+        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessByClientId(user, client.getClientId());
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
 
         if (scopeAccess == null) {
@@ -423,12 +367,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
             scopeAccessToAdd.setUsername(scopeAccess.getUsername());
             scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
@@ -460,10 +404,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -477,16 +421,16 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}", client.getClientId());
 
-        ClientScopeAccess scopeAccess = this.scopeAccessService.getClientScopeAccessForClientId(client.getUniqueId(), client.getClientId());
+        ClientScopeAccess scopeAccess = this.scopeAccessService.getApplicationScopeAccess(client);
         ClientScopeAccess scopeAccessToAdd = new ClientScopeAccess();
 
         if (scopeAccess == null) {
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setClientId(client.getClientId());
             logger.debug("Creating ScopeAccess for Client: {} and ClientId: {}", client.getClientId(), client.getClientId());
         } else {
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
         }
@@ -506,10 +450,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addApplicationScopeAccess(client, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addApplicationScopeAccess(client, scopeAccessToAdd);
         }
 
         logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -523,18 +467,19 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
-        RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
+        RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessByClientId(racker, client.getClientId());
+
         RackerScopeAccess scopeAccessToAdd = new RackerScopeAccess();
 
         if (scopeAccess == null) {
             // Auto-Provision Scope Access Objects for Rackers
             scopeAccessToAdd.setRackerId(racker.getRackerId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
             scopeAccessToAdd.setRackerId(scopeAccess.getRackerId());
             scopeAccessToAdd.setClientId(client.getClientId());
-            scopeAccessToAdd.setClientRCN(client.getRCN());
+            scopeAccessToAdd.setClientRCN(client.getRcn());
             scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
             scopeAccessToAdd.setRefreshTokenString(scopeAccess.getAccessTokenString());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
@@ -567,10 +512,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
             return scopeAccess;
         } else if (scopeAccess == null) {
-            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.addUserScopeAccess(racker, scopeAccessToAdd);
         } else {
-            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccess(scopeAccess);
+            scopeAccessService.addUserScopeAccess(racker, scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -648,30 +593,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private String getFoundationClientId() {
         return config.getString("idm.clientId");
-    }
-
-    DateTime getUserPasswordExpirationDate(String userName) {
-        User user = this.userService.getUser(userName);
-        if (user == null) {
-            logger.debug("No user found, returning null.");
-            return null;
-        }
-
-        Customer customer = customerService.getCustomer(user.getCustomerId());
-        if (customer == null) {
-            logger.debug("No customer found, returning null");
-            return null;
-        }
-
-        if (customer.getPasswordRotationEnabled()) {
-            int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
-            DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
-            DateTime passwordExpirationDate = timeOfLastPwdChange.plusDays(passwordRotationDurationInDays);
-            logger.debug("Password expiration date set: {}", passwordExpirationDate);
-            return passwordExpirationDate;
-        }
-
-        return null;
     }
 
     void validateCredentials(final Credentials trParam) {

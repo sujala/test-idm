@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -7,6 +8,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,8 +18,9 @@ import lombok.Data;
  * To change this template use File | Settings | File Templates.
  */
 @Data
+@EqualsAndHashCode(exclude = "ldapEntry")
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_POLICY)
-public class Policy implements Auditable{
+public class Policy implements Auditable, UniqueId {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

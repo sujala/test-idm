@@ -19,7 +19,7 @@ public class EndpointServiceTests {
     EndpointDao mockEndpointDao;
     
     String adminUrl = "http://admin.com";
-    int baseUrlId = 1;
+    String baseUrlId = "1";
     String baseUrlType = "US_CLOUD";
     boolean def = false;
     String internalUrl = "http://internal.com";

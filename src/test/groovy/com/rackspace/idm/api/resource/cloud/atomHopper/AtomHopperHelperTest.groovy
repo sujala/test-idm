@@ -1,19 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.configuration.Configuration
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.ObjectFactory
-import org.openstack.docs.identity.api.v2.Token
 import spock.lang.Shared
 import spock.lang.Specification
-
-import javax.ws.rs.core.Response
 
 /**
  * Created with IntelliJ IDEA.
@@ -45,7 +39,7 @@ class AtomHopperHelperTest extends Specification{
         scopeAccess.setAccessTokenExp(expiredDate)
         scopeAccess.setClientId("1")
         scopeAccess.setAccessTokenString("token")
-        scopeAccessService.getScopeAccessByUserId(_) >> scopeAccess
+        scopeAccessService.getScopeAccessForUser(_) >> scopeAccess
         UserScopeAccess scopeAccess2 = new UserScopeAccess()
         Date date = new Date()
         scopeAccess2.setAccessTokenExp(date.plus(1))
@@ -72,7 +66,7 @@ class AtomHopperHelperTest extends Specification{
         scopeAccess.setAccessTokenExp(date.plus(1))
         scopeAccess.setClientId("1")
         scopeAccess.setAccessTokenString("token")
-        scopeAccessService.getScopeAccessByUserId(_) >> scopeAccess
+        scopeAccessService.getScopeAccessForUser(_) >> scopeAccess
 
         when:
         String token = atomHopperHelper.getAuthToken()

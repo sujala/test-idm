@@ -1,53 +1,59 @@
 package com.rackspace.idm.domain.entity;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 1/31/12
- * Time: 12:55 PM
- * To change this template use File | Settings | File Templates.
- */
-public class Group implements Auditable {
+import com.rackspace.idm.domain.dao.UniqueId;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.persist.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    private String uniqueId = null;
-    private String groupId = null;
-    private String name = null;
-    private String description = null;
+@Data
+@EqualsAndHashCode(exclude={"ldapEntry"})
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_CLOUDGROUP,
+        postEncodeMethod="doPostEncode")
+public class Group implements Auditable, UniqueId {
+    @LDAPEntryField()
+    private ReadOnlyEntry ldapEntry;
 
-    public String getUniqueId() {
-        return uniqueId;
-    }
+    private String uniqueId;
 
-    public void setUniqueId(String uniqueId) {
-        this.uniqueId = uniqueId;
-    }
+    @LDAPField(attribute=LdapRepository.ATTR_ID,
+            objectClass=LdapRepository.OBJECTCLASS_CLOUDGROUP,
+            inRDN=true,
+            filterUsage= FilterUsage.ALWAYS_ALLOWED,
+            requiredForEncode=true)
+    private String groupId;
 
-    public String getGroupId() {
-        return groupId;
-    }
+    @LDAPField(attribute=LdapRepository.ATTR_GROUP_NAME,
+            objectClass=LdapRepository.OBJECTCLASS_CLOUDGROUP,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
+            requiredForEncode=true)
+    private String name;
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION,
+            objectClass=LdapRepository.OBJECTCLASS_CLOUDGROUP,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private String description;
 
     @Override
     public String getAuditContext() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return String.format("groupId=%s", groupId);
+    }
+
+    @Override
+    public String getUniqueId() {
+        if (ldapEntry == null) {
+            return null;
+        } else {
+            return ldapEntry.getDN();
+        }
+    }
+
+    private void doPostEncode(final Entry entry) throws LDAPPersistException {
+        String tenantIds = entry.getAttributeValue(LdapRepository.ATTR_DESCRIPTION);
+        if (tenantIds.length() == 0) {
+            entry.removeAttribute(LdapRepository.ATTR_DESCRIPTION);
+        }
     }
 }

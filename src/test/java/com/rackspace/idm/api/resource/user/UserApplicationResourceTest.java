@@ -62,13 +62,6 @@ public class UserApplicationResourceTest {
     }
 
     @Test
-    public void provisionApplicationForUser_callsScopeAccessService_addDirectScopeAccess() throws Exception {
-        when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
-        userApplicationResource.provisionApplicationForUser("authHeader", "userId", "applicationId");
-        verify(scopeAccessService).addDirectScopeAccess(anyString(), any(UserScopeAccess.class));
-    }
-
-    @Test
     public void provisionApplicationForUser_responseNoContent_returns204() throws Exception {
         when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
         Response response = userApplicationResource.provisionApplicationForUser("authHeader", "userId", "applicationId");
@@ -87,13 +80,6 @@ public class UserApplicationResourceTest {
         when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
         userApplicationResource.removeApplicationFromUser("authHeader", "userId", "applicationId");
         verify(applicationService).loadApplication("applicationId");
-    }
-
-    @Test
-    public void removeApplicationFromUser_callsScopeAccessService_deleteScopeAccessesForParentByApplicationId() throws Exception {
-        when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
-        userApplicationResource.removeApplicationFromUser("authHeader", "userId", "applicationId");
-        verify(scopeAccessService).deleteScopeAccessesForParentByApplicationId(anyString(), anyString());
     }
 
     @Test

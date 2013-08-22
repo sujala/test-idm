@@ -33,7 +33,7 @@ public class EndpointConverterCloudV11 {
             baseUrl.setAdminURL(url.getAdminUrl().trim());
         }
         baseUrl.setDefault(url.getDef());
-        baseUrl.setId(url.getBaseUrlId());
+        baseUrl.setId(Integer.parseInt(url.getBaseUrlId()));
         if (url.getInternalUrl() != null) {
             baseUrl.setInternalURL(url.getInternalUrl().trim());
         }
@@ -56,7 +56,7 @@ public class EndpointConverterCloudV11 {
         }
         CloudBaseUrl url = new CloudBaseUrl();
         url.setAdminUrl(baseURL.getAdminURL());
-        url.setBaseUrlId(baseURL.getId());
+        url.setBaseUrlId(String.valueOf(baseURL.getId()));
         if (baseURL.getUserType() != null) {
             url.setBaseUrlType(baseURL.getUserType().toString());
         }
@@ -79,7 +79,7 @@ public class EndpointConverterCloudV11 {
             return null;
         }
         BaseURLRef baseUrlRef = of.createBaseURLRef();
-        baseUrlRef.setId(endpoint.getBaseUrl().getBaseUrlId());
+        baseUrlRef.setId(Integer.parseInt(endpoint.getBaseUrl().getBaseUrlId()));
         baseUrlRef.setV1Default(endpoint.isV1preferred());
         baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
                 endpoint.getBaseUrl().getBaseUrlId()));
@@ -136,8 +136,8 @@ public class EndpointConverterCloudV11 {
 
     	for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
             BaseURLRef baseUrlRef = of.createBaseURLRef();
-            baseUrlRef.setId(baseUrl.getBaseUrlId());
-            baseUrlRef.setV1Default(baseUrl.isV1Default());
+            baseUrlRef.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
+            baseUrlRef.setV1Default(baseUrl.getV1Default());
             baseUrlRef.setHref(String.format(getBaseUrlReferenceString(), baseUrl.getBaseUrlId()));
             result.add(baseUrlRef);
     	}

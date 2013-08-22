@@ -10,17 +10,17 @@ public interface ApplicationService {
 
     void add(Application client);
 
-    void addDefinedPermission(DefinedPermission permission);
-
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
 
-    void deleteDefinedPermission(DefinedPermission permission);
-
     Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
-    
+
     Applications getByCustomerId(String customerId, int offset, int limit);
+
+    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
+
+    PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit);
 
     Application loadApplication(String applicationId);
     
@@ -33,25 +33,16 @@ public interface ApplicationService {
     Application getClient(String customerId, String clientId);
 
     Applications getClientServices(Application client);
-    
-    DefinedPermission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId);
-    
-    DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId);
 
-    List<DefinedPermission> getDefinedPermissionsByClient(Application client);
-
+    Application getApplicationByScopeAccess(ScopeAccess scopeAccess);
+    
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);
     
     void updateClient(Application client);
 
-    void updateDefinedPermission(DefinedPermission permission);
-
     Application getClientByScope(String scope);
-    
-    List<Application> getAvailableScopes();
     
     void addClientRole(ClientRole role);
 
