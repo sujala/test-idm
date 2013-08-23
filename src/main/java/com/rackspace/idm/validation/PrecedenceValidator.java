@@ -33,7 +33,7 @@ public class PrecedenceValidator {
     @Autowired
     private Configuration config;
 
-    private final String NOT_AUTHORIZED = "Not Authorized";
+    private static final String NOT_AUTHORIZED = "Not Authorized";
 
     public void verifyCallerRolePrecedence(User user, ClientRole role) {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);

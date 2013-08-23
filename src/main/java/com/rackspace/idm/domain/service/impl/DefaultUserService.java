@@ -774,7 +774,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public User getUserByScopeAccess(ScopeAccess scopeAccess) {
-        User user = null;
+        User user;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));

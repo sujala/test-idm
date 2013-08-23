@@ -3730,19 +3730,19 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void assignProperRole_callsAuthorizeCloudUserAdmin() throws Exception {
-        defaultCloud20Service.assignProperRole(null, authToken, null, null);
+        defaultCloud20Service.assignProperRole(null, null);
         verify(authorizationService).authorizeCloudUserAdmin(null);
     }
 
     @Test
     public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
-        defaultCloud20Service.assignProperRole(null, authToken, null, null);
+        defaultCloud20Service.assignProperRole(null, null);
         verify(authorizationService).authorizeCloudIdentityAdmin(null);
     }
 
     @Test
     public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
-        defaultCloud20Service.assignProperRole(null, authToken, null, null);
+        defaultCloud20Service.assignProperRole(null, null);
         verify(authorizationService).authorizeCloudServiceAdmin(null);
     }
 

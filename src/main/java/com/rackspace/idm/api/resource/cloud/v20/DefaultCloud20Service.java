@@ -520,7 +520,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             userService.addUser(userDO);
-            assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
+            assignProperRole(scopeAccessByAccessToken, userDO);
 
             //after user is created and caller is a user admin, add tenant roles to default user
             if (callerIsUserAdminOrHasUserManageRole) {
@@ -562,7 +562,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
+    void assignProperRole(ScopeAccess scopeAccessByAccessToken, User userDO) {
         ClientRole role = null;
         //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
@@ -764,14 +764,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     AuthenticateResponse authenticateFederatedDomain(AuthenticationRequest authenticationRequest,
                                                 com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         // ToDo: Validate Domain
-        if(!domain.getName().toUpperCase().equals(GlobalConstants.RACKSPACE_DOMAIN)){
+        if(!domain.getName().equalsIgnoreCase(GlobalConstants.RACKSPACE_DOMAIN)){
             throw new BadRequestException("Invalid domain specified");
         }// The below is only for Racker Auth for now....
 
         AuthenticateResponse auth;
         User user = null;
-        UserScopeAccess usa = null;
-        RackerScopeAccess rsa = null;
+        UserScopeAccess usa;
+        RackerScopeAccess rsa;
         List<String> authenticatedBy = new ArrayList<String>();
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
             PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
@@ -931,7 +931,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.getUserByAuthToken(tokenId);
 
             if (!StringUtils.isBlank(tenantId)) {
-                UserScopeAccess usa = (UserScopeAccess) sa;
                 List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
                 if (!tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
                     throw new NotFoundException();
@@ -1659,7 +1658,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            List<CloudBaseUrl> baseUrls = null;
+            List<CloudBaseUrl> baseUrls;
 
             if (StringUtils.isBlank(serviceId)) {
                 baseUrls = this.endpointService.getBaseUrls();
@@ -1882,7 +1881,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyRackerOrIdentityAdminAccess(getScopeAccessForValidToken(authToken));
             validator20.validateImpersonationRequest(impersonationRequest);
 
-            String impersonatingToken = "";
+            String impersonatingToken;
             String impersonatingUsername = impersonationRequest.getUser().getUsername();
 
             if (StringUtils.isBlank(impersonatingUsername)) {
@@ -2359,12 +2358,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(String.format("Role with id: %s not found", roleId));
             }
 
-            FilterParam[] filters;
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
 
             int iMarker = validateOffset(marker);
             int iLimit = validateLimit(limit);
-            PaginatorContext<User> userContext = null;
+            PaginatorContext<User> userContext;
 
             if (callerIsUserAdmin) {
                 User caller = this.userService.getUserByScopeAccess(scopeAccess);
@@ -2794,8 +2792,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
-            String iMarker = validateMarker(marker);
-            int iLimit = validateLimit(limit);
             groupService.checkAndGetGroupById(groupId);
             List<User> users = userService.getUsersByGroupId(groupId);
 
@@ -3383,7 +3379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @SuppressWarnings("unchecked")
     JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
-        JAXBElement<? extends CredentialType> cred = null;
+        JAXBElement<? extends CredentialType> cred;
         try {
             body = fixApiKeyCredentialEmptyNamespace(body); // ToDo: remove if not needed!
             JAXBContext context = JAXBContextResolver.get();
@@ -3437,15 +3433,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return auth;
-    }
-
-    private List<String> getIdentityRoleNames() {
-        List<String> names = new ArrayList<String>();
-        names.add(config.getString("cloudAuth.userRole"));
-        names.add(config.getString("cloudAuth.userAdminRole"));
-        names.add(config.getString("cloudAuth.adminRole"));
-        names.add(config.getString("cloudAuth.serviceAdminRole"));
-        return names;
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {

@@ -42,7 +42,8 @@ public interface AuthorizationService {
     void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
     void verifyDomain(User retrievedUser, User caller);
-	public void setConfig(Configuration config);
+
+    void setConfig(Configuration config);
 
     boolean hasIdentityAdminRole(User user);
 }

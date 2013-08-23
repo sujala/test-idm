@@ -76,7 +76,6 @@ public class DefaultTenantService implements TenantService {
     public void deleteTenant(String tenantId) {
         logger.info("Deleting Tenant {}", tenantId);
         
-        // Delete all tenant roles for this tenant
         List<TenantRole> roles = this.tenantRoleDao.getAllTenantRolesForTenant(tenantId);
         for (TenantRole role : roles) {
             if (role.getTenantIds().size() == 1) {
@@ -87,7 +86,6 @@ public class DefaultTenantService implements TenantService {
             }
         }
         
-        // Then delete the tenant
         this.tenantDao.deleteTenant(tenantId);
         
         logger.info("Added Tenant {}", tenantId);
@@ -152,11 +150,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public boolean doesUserContainTenantRole(User user, String roleId) {
         TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
-        if (tenantRole == null) {
-            return  false;
-        } else {
-            return true;
-        }
+        return tenantRole != null;
     }
 
     @Override
@@ -298,23 +292,8 @@ public class DefaultTenantService implements TenantService {
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
 
-    private boolean isDefaultUser(User user) {
-        String roleName = config.getString("cloudAuth.userRole");
-        return hasRole(user, roleName);
-    }
-
     private boolean isUserAdmin(User user) {
         String roleName = config.getString("cloudAuth.userAdminRole");
-        return hasRole(user, roleName);
-    }
-
-    private boolean isIdentityAdmin(User user) {
-        String roleName = config.getString("cloudAuth.adminRole");
-        return hasRole(user, roleName);
-    }
-
-    private boolean isServiceAdmin(User user) {
-        String roleName = config.getString("cloudAuth.serviceAdminRole");
         return hasRole(user, roleName);
     }
 
@@ -580,10 +559,6 @@ public class DefaultTenantService implements TenantService {
         return tenantList;
     }
 
-    /**
-     * get roles in this list that are non-tenant specific
-     * @param roles
-     */
     List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -599,10 +574,6 @@ public class DefaultTenantService implements TenantService {
         return globalRoles;
     }
 
-    /**
-     * get roles in this list that are tenant specific
-     * @param roles
-     */
     List<TenantRole> getTenantOnlyRoles(List<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -713,10 +684,6 @@ public class DefaultTenantService implements TenantService {
         this.config = config;
     }
 
-    public void setDomainService(DomainService domainService) {
-        this.domainService = domainService;
-    }
-
 	@Override
 	public void setTenantDao(TenantDao tenantDao) {
 		this.tenantDao = tenantDao;
@@ -725,9 +692,5 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
         this.tenantRoleDao = tenantRoleDao;
-    }
-
-    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-        this.atomHopperClient = atomHopperClient;
     }
 }
