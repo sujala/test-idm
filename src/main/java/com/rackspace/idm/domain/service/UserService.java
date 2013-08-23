@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;

@@ -1,22 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.service.EncryptionService;
-import com.rackspace.idm.domain.service.PropertiesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component

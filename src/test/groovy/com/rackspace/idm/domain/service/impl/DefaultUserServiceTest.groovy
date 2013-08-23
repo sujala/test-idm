@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.FilterParam
 import com.rackspace.idm.domain.entity.Region

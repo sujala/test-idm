@@ -1,10 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.api.resource.pagination.Paginator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.FilterParam;
 
 import java.util.List;
 

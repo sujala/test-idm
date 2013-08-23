@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.DomainDao;

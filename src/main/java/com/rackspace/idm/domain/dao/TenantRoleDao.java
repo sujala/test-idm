@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -27,4 +26,5 @@ public interface TenantRoleDao {
     List<String> getIdsForUsersWithTenantRole(String roleId);
 
     TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
+    String getUserIdForParent(TenantRole tenantRole);
 }

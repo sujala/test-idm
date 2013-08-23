@@ -1,13 +1,8 @@
 package com.rackspace.idm.api.resource.pagination;
 
-import com.unboundid.asn1.ASN1OctetString;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,12 +13,5 @@ import java.util.List;
  */
 
 public interface Paginator<T> {
-
-    PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
-
-    PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, ASN1OctetString contextId, int contentCount, int offset, int limit);
-
-    void createPage(SearchResult searchResult, PaginatorContext<T> context);
-
     String createLinkHeader(UriInfo uriInfo, PaginatorContext<T> context);
 }

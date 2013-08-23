@@ -93,4 +93,6 @@ public interface ScopeAccessService {
     int getTokenExpirationSeconds(int value);
 
     String getClientIdForParent(ScopeAccess scopeAccess);
+
+    String getUserIdForParent(ScopeAccess scopeAccessByAccessToken);
 }

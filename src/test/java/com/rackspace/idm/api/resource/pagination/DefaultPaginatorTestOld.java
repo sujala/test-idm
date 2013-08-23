@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.pagination;
 
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.exception.BadRequestException;
 import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
@@ -18,9 +18,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.test.context.ContextConfiguration;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,7 +26,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -64,66 +60,6 @@ public class DefaultPaginatorTestOld {
         when(uriInfo.getAbsolutePath()).thenReturn(makeURI());
         when(config.getInt("ldap.paging.limit.default")).thenReturn(25);
         when(config.getInt("ldap.paging.limit.max")).thenReturn(100);
-    }
-
-    @Test
-    public void createSearchRequest_returnsContext() throws Exception {
-        SearchRequest searchRequest = makeSearchRequest();
-
-        PaginatorContext<User> context = userPaginator.createSearchRequest(sortAttribute, searchRequest, offset, limit);
-
-        assertThat("context offset", context.getOffset(), equalTo(0));
-        assertThat("context limit", context.getLimit(), equalTo(10));
-    }
-
-    @Test
-    public void createPage_createsPageLinks() throws Exception {
-        List<SearchResultEntry> resultList = new ArrayList<SearchResultEntry>();
-        List<SearchResultReference> resultReferenceList = new ArrayList<SearchResultReference>();
-        VirtualListViewRequestControl vlvControl = makeVLVRequestControl();
-        ServerSideSortRequestControl sortRequest = makeSortRequestControl();
-
-        SearchResultEntry resultEntry = makeResultEntry();
-        SearchResultReference resultReference = new SearchResultReference(new String[]{}, new Control[]{vlvControl, sortRequest});
-        for (int i = 0; i < 5; i++) {
-            resultList.add(resultEntry);
-            resultReferenceList.add(resultReference);
-        }
-
-        VirtualListViewResponseControl responseControl = makeVLVResponseControl();
-
-        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, null, "baseDN", null,
-                resultList, resultReferenceList, 5, 5, new Control[]{sortRequest, vlvControl});
-
-        mockStatic(VirtualListViewResponseControl.class);
-        when(VirtualListViewResponseControl.get(searchResult)).thenReturn(responseControl);
-
-        PaginatorContext<User> context = setupContext(0, 10, 0);
-        context.setOffset(0);
-        context.setLimit(10);
-
-        userPaginator.createPage(searchResult, context);
-
-        assertThat("resultSet", context.getTotalRecords(), equalTo(10));
-    }
-
-    @Test
-    public void createPage_returnsContext_withEmptyResultSet() throws Exception {
-        List<SearchResultEntry> resultList = new ArrayList<SearchResultEntry>();
-        List<SearchResultReference> resultReferenceList = new ArrayList<SearchResultReference>();
-        VirtualListViewRequestControl vlvControl = makeVLVRequestControl();
-        ServerSideSortRequestControl sortRequest = makeSortRequestControl();
-
-        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, null, "baseDN", null,
-                resultList, resultReferenceList, 0, 0, new Control[]{sortRequest, vlvControl});
-        mockStatic(VirtualListViewResponseControl.class);
-        when(VirtualListViewResponseControl.get(searchResult)).thenThrow(new LDAPException(ResultCode.FILTER_ERROR));
-
-        PaginatorContext<User> context = setupContext(0, 10, 5);
-        userPaginator.createPage(searchResult, context);
-
-        assertThat("context result set", context.getSearchResultEntryList().size(), equalTo(0));
-        assertThat("context pageLinks", context.getTotalRecords(), equalTo(0));
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -609,6 +610,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public String getClientIdForParent(ScopeAccess scopeAccess) {
         return scopeAccessDao.getClientIdForParent(scopeAccess);
+    }
+
+    @Override
+    public String getUserIdForParent(ScopeAccess scopeAccess) {
+        return scopeAccessDao.getUserIdForParent(scopeAccess);
     }
 
     @Override

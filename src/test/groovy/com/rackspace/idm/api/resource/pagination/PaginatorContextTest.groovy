@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.pagination
 
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.User
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared

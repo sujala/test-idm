@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.*;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
@@ -348,7 +348,7 @@ public class DefaultUserService implements UserService {
             return null;
         }
 
-        String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
         return getUser(uid);
     }
 
