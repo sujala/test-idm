@@ -109,7 +109,7 @@ public class DefaultDomainService implements DomainService{
         Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
-        if(!domain.isEnabled())
+        if(!domain.getEnabled())
             throw new ForbiddenException("Cannot add tenant to disabled domain");
 
         tenantService.checkAndGetTenant(tenantId);

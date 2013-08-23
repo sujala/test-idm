@@ -55,7 +55,7 @@ public class DomainConverterCloudV20Test {
         assertThat("name", domainDO.getName(), equalTo("name"));
         assertThat("id", domainDO.getDomainId(), equalTo("domainId"));
         assertThat("description", domainDO.getDescription(), equalTo("description"));
-        assertThat("enabled", domainDO.isEnabled(), equalTo(true));
+        assertThat("enabled", domainDO.getEnabled(), equalTo(true));
     }
 
     @Test

@@ -60,9 +60,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Hector
@@ -2106,7 +2103,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Domain domain = domainService.checkAndGetDomain(domainId);
-        if (!domain.isEnabled()) {
+        if (!domain.getEnabled()) {
             throw new ForbiddenException("Cannot add users to a disabled domain.");
         }
 
