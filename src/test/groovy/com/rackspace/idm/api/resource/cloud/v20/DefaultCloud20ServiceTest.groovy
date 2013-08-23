@@ -2266,17 +2266,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     }
 
-    def "getting identity role names retrieves identity role names from config"() {
-        when:
-        service.getIdentityRoleNames()
-
-        then:
-        1 * config.getString("cloudAuth.userRole")
-        1 * config.getString("cloudAuth.userAdminRole")
-        1 * config.getString("cloudAuth.adminRole")
-        1 * config.getString("cloudAuth.serviceAdminRole")
-    }
-
     def "method getAccessibleDomainsEndpointsForUser gets endpoints by user"() {
         given:
         allowUserAccess()
