@@ -6,12 +6,13 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.rackspace.idm.RaxAuthConstants.*;
+import java.util.List;
+
+import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
+import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 @Component
 public class RoleConverterCloudV20 {

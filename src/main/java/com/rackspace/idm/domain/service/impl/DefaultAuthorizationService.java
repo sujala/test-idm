@@ -1,14 +1,13 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.service.*;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;

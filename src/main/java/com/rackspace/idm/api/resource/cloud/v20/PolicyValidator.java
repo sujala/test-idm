@@ -1,9 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;

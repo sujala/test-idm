@@ -1,7 +1,5 @@
 	package com.rackspace.idm.util;
 
-import org.springframework.stereotype.Component;
-
     import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
     import com.unboundid.ldap.sdk.LDAPConnection;
     import com.unboundid.ldap.sdk.LDAPException;
@@ -10,6 +8,7 @@ import org.springframework.stereotype.Component;
     import org.springframework.jmx.export.annotation.ManagedAttribute;
     import org.springframework.jmx.export.annotation.ManagedOperation;
     import org.springframework.jmx.export.annotation.ManagedResource;
+    import org.springframework.stereotype.Component;
 
     import java.util.HashMap;
     import java.util.Map;

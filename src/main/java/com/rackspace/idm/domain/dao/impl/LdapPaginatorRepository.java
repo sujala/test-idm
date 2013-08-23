@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.PaginatorDao;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.SearchRequest;

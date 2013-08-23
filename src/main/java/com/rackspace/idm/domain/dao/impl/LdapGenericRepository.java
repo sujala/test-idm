@@ -1,12 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;

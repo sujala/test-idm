@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 
 import java.util.List;
 

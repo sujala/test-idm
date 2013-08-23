@@ -1,13 +1,8 @@
 package com.rackspace.idm.domain.service;
 
-import org.apache.commons.configuration.Configuration;
-
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import org.apache.commons.configuration.Configuration;
 
 public interface AuthorizationService {
 

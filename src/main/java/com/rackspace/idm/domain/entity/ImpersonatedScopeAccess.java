@@ -4,9 +4,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import org.joda.time.DateTime;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.

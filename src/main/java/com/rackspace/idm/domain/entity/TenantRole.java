@@ -7,9 +7,8 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang.ArrayUtils;
 
-import java.util.*;
+import java.util.HashSet;
 
 @Data
 @EqualsAndHashCode(exclude={"ldapEntry"})

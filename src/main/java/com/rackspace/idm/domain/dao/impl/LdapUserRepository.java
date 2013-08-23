@@ -1,14 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.ResultCode;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;

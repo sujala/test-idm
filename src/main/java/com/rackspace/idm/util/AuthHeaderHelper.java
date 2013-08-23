@@ -1,11 +1,10 @@
 package com.rackspace.idm.util;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;

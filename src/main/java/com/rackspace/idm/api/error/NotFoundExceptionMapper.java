@@ -1,13 +1,12 @@
 package com.rackspace.idm.api.error;
 
+import com.rackspace.api.common.fault.v1.ItemNotFoundFault;
 import com.rackspace.idm.exception.NotFoundException;
+import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-
-import com.rackspace.api.common.fault.v1.*;
-import org.springframework.stereotype.Component;
 
 @Component
 @Provider

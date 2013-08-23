@@ -13,7 +13,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
-import javax.xml.ws.Response;
 import java.io.IOException;
 
 /**

@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;

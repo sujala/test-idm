@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.ServiceUnavailableFault;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
@@ -54,7 +53,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.rackspace.idm.RaxAuthConstants.*;
+import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
+import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)

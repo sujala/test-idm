@@ -1,9 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
@@ -12,6 +8,8 @@ import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;

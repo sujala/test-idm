@@ -1,16 +1,21 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper;
 
-import com.rackspace.docs.core.event.*;
+import com.rackspace.docs.core.event.DC;
+import com.rackspace.docs.core.event.EventType;
+import com.rackspace.docs.core.event.Region;
+import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.scheme.PlainSocketFactory;

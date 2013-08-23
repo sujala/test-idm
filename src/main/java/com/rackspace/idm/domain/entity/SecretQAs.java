@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
 

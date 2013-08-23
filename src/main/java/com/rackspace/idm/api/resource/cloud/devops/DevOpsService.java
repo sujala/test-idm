@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
-import javax.ws.rs.core.Response;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge

@@ -5,7 +5,8 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
 
-import static com.rackspace.idm.validation.entity.Constants.*;
+import static com.rackspace.idm.validation.entity.Constants.LONG_MAX;
+import static com.rackspace.idm.validation.entity.Constants.MAX;
 
 /**
  * Created with IntelliJ IDEA.

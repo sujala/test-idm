@@ -1,10 +1,9 @@
 package com.rackspace.idm.api.converter;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBElement;
 import java.util.ArrayList;

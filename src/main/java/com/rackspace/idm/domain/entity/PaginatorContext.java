@@ -1,14 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.exception.BadRequestException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import lombok.Data;
 
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

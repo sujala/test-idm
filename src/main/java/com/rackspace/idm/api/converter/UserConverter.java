@@ -1,9 +1,5 @@
 package com.rackspace.idm.api.converter;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.domain.entity.Racker;
@@ -12,6 +8,8 @@ import com.rackspace.idm.domain.entity.Users;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;

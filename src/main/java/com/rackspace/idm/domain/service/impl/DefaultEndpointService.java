@@ -1,12 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.entity.Capabilities;
-import com.rackspace.idm.domain.service.CapabilityService;
-import com.rackspace.idm.exception.BadRequestException;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -16,6 +9,8 @@ import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;

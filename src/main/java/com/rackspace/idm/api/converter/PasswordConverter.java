@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.converter;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.UserPasswordCredentials;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordCredentials;
+import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBElement;
 

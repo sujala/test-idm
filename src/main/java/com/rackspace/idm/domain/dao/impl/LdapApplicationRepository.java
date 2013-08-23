@@ -1,15 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.service.EncryptionService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.ResultCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 

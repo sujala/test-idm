@@ -2,8 +2,6 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.Pattern;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: jorge

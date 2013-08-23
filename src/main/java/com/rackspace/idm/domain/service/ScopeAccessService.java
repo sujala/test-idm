@@ -1,15 +1,10 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import org.apache.commons.configuration.Configuration;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 
 public interface ScopeAccessService {

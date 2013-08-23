@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.configuration.Configuration;

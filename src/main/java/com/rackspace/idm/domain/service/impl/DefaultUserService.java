@@ -1,23 +1,21 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.util.CryptHelper;
-import com.rackspace.idm.validation.Validator;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.dao.*;
-import org.joda.time.DateTime;
-import org.springframework.stereotype.Component;
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
+import com.rackspace.idm.validation.Validator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;

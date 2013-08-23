@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.entity.Capabilities;
 import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.ServiceApi;
 
