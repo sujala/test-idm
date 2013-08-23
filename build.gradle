@@ -5,7 +5,7 @@ apply plugin: 'jetty'
 apply plugin: 'war'
 apply plugin: 'idea'
 apply plugin: 'nexus'
-apply plugin: 'sonar'
+apply plugin: 'sonar-runner'
 
 buildscript {
     apply from: 'jacoco.gradle'
@@ -22,11 +22,12 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '2.0'
-ldapVersion = '2.0'
-buildVersion = System.currentTimeMillis()
-version = "$featureVersion-$buildVersion"
-
+ext {
+    featureVersion = '2.0'
+    ldapVersion = '2.0'
+    buildVersion = System.currentTimeMillis()
+    version = "$featureVersion-$buildVersion"
+}
 
 description = """idm"""
 
@@ -407,22 +408,12 @@ sourceSets {
     }
 }
 
-sonar {
-    database {
-        url = "jdbc:h2:tcp://localhost:9092/sonar"
-        driverClassName = "org.h2.Driver"
-        username = "sonar"
-        password = "sonar"
-    }
-
-    project {
-        dynamicAnalysis = "reuseReports"
-        withProjectProperties { props ->
-            props["sonar.core.codeCoveragePlugin"] = "jacoco"
-            props["sonar.jacoco.reportPath"] = "build/tmp/jacoco/jacoco.exec"
-        }
-
-        name = "idm"
-        description = "Global Auth"
+sonarRunner {
+    sonarProperties {
+        property "sonar.host.url", "http://identity-ci.corp.rackspace.com:9000"
+        property "sonar.jdbc.url", "jdbc:mysql://identity-ci.corp.rackspace.com/sonarqube"
+        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+        property "sonar.jdbc.username", "sonarqube"
+        property "sonar.jdbc.password", "sonarqube"
     }
 }
