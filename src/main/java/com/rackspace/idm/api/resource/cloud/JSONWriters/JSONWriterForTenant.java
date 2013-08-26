@@ -30,7 +30,7 @@ public class JSONWriterForTenant extends JSONWriterForEntity<Tenant> implements 
 
     @Override
     public long getSize(Tenant tenant, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

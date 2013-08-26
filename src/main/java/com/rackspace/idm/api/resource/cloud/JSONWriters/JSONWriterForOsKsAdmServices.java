@@ -32,7 +32,7 @@ public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<Servi
 
     @Override
     public long getSize(ServiceList serviceList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

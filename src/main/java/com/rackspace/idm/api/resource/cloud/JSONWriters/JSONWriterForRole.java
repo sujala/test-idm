@@ -33,7 +33,7 @@ public class JSONWriterForRole extends JSONWriterForEntity<Role> implements Mess
 
     @Override
     public long getSize(Role role, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

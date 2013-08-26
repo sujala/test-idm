@@ -47,7 +47,7 @@ public class JSONWriterForEndpoints implements MessageBodyWriter<EndpointList> {
 
     @Override
     public long getSize(EndpointList endpointList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

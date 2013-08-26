@@ -49,7 +49,7 @@ public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
 
     @Override
     public long getSize(Endpoint endpoint, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

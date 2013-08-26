@@ -32,7 +32,7 @@ public class JSONWriterForTenants extends JSONWriterForArrayEntity<Tenants> impl
 
     @Override
     public long getSize(Tenants tenants, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

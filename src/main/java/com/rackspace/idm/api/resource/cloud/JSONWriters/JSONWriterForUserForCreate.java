@@ -32,7 +32,7 @@ public class JSONWriterForUserForCreate extends JSONWriterForEntity<UserForCreat
 
     @Override
     public long getSize(UserForCreate user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

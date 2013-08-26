@@ -35,7 +35,7 @@ public class JSONWriterForPasswordCredentials extends JSONWriterForEntity<Passwo
 
     @Override
     public long getSize(PasswordCredentialsBase passwordCredentialsBase, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

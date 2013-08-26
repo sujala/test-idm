@@ -32,7 +32,7 @@ public class JSONWriterForRaxAuthRegions extends JSONWriterForArrayEntity<Region
 
     @Override
     public long getSize(Regions regions, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

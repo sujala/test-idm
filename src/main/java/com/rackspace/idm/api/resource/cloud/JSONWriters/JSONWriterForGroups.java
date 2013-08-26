@@ -33,7 +33,7 @@ public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> impleme
 
     @Override
     public long getSize(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

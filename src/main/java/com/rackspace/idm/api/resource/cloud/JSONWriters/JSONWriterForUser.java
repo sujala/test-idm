@@ -32,7 +32,7 @@ public class JSONWriterForUser extends JSONWriterForEntity<User> implements Mess
 
     @Override
     public long getSize(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

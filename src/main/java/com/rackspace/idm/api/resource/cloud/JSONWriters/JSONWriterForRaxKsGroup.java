@@ -35,7 +35,7 @@ public class JSONWriterForRaxKsGroup extends JSONWriterForEntity<Group> implemen
 
     @Override
     public long getSize(Group group, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

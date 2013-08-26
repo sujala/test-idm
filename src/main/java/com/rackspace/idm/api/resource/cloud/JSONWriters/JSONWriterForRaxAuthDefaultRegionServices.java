@@ -34,7 +34,7 @@ public class JSONWriterForRaxAuthDefaultRegionServices extends JSONWriterForArra
 
     @Override
     public long getSize(DefaultRegionServices defaultRegionServices, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override

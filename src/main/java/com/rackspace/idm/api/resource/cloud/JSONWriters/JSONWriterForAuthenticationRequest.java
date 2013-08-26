@@ -49,7 +49,7 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
 
     @Override
     public long getSize(AuthenticationRequest authenticationRequest, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return 0;
+        return -1;
     }
 
     @Override
