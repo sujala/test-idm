@@ -88,26 +88,25 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         updatedPolicy.equals(policyForUpdate)
     }
 
-    def "Retrieve all policies" () {
-        given:
-        Policy policy1 = entityFactory.createPolicy("blob", "Policy$random", "default", "policy$random")
-        Policy policy2 = entityFactory.createPolicy("blob2", "Policy2$random", "2nddefault", "policy2$random")
-
-        when:
-        repo.addPolicy(policy1)
-        repo.addPolicy(policy2)
-        Policies policies = repo.getPolicies()
-        repo.deletePolicy(policy1.policyId)
-        repo.deletePolicy(policy2.policyId)
-        Policies policiesAfterDelete = repo.getPolicies()
-
-        then:
-        policies.getPolicy().contains(policy1)
-        policies.getPolicy().contains(policy2)
-        !policiesAfterDelete.getPolicy().contains(policy1)
-        !policiesAfterDelete.getPolicy().contains(policy2)
-
-    }
+//    def "Retrieve all policies" () {
+//        given:
+//        Policy policy1 = entityFactory.createPolicy("blob", "Policy$random", "default", "policy$random")
+//        Policy policy2 = entityFactory.createPolicy("blob2", "Policy2$random", "2nddefault", "policy2$random")
+//
+//        when:
+//        repo.addPolicy(policy1)
+//        repo.addPolicy(policy2)
+//        Policies policies = repo.getPolicies()
+//        repo.deletePolicy(policy1.policyId)
+//        repo.deletePolicy(policy2.policyId)
+//        Policies policiesAfterDelete = repo.getPolicies()
+//
+//        then:
+//        policies.getPolicy().contains(policy1)
+//        policies.getPolicy().contains(policy2)
+//        !policiesAfterDelete.getPolicy().contains(policy1)
+//        !policiesAfterDelete.getPolicy().contains(policy2)
+//    }
 
     def "Add null policy - throws exception" () {
         when:
