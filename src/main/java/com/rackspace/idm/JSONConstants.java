@@ -112,12 +112,13 @@ public final class JSONConstants {
     public static final String RAX_AUTH_SECRETQA = "RAX-AUTH:secretqa";
     public static final String RAX_AUTH_SECRETQAS = "RAX-AUTH:secretqas";
     public static final Object DISPLAY_NAME_CLOUD = "display-name";
+    public static final String DEFAULT_REGION_SERVICES = "defaultRegionServices";
     public static final String ROLE = "role";
-    public static final Object ROLES = "roles";
+    public static final String ROLES = "roles";
     public static final Object SERVICE_ID = "serviceId";
     public static final Object V1_DEFAULT = "v1Default";
     public static final Object USER_TYPE = "userType";
-    public static final Object SERVICE_NAME = "serviceName";
+    public static final String SERVICE_NAME = "serviceName";
     public static final Object DEFAULT = "default";
     public static final Object APPLICATION = "application";
     public static final Object CLIENT_ID = "clientId";
@@ -136,7 +137,7 @@ public final class JSONConstants {
     public static final Object VERIFY_CURRENT_PASSWORD = "verifyCurrentPassword";
     public static final Object OS_KSADM_PASSWORD = "OS-KSADM:password";
     public static final Object RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion";
-    public static final Object RAX_AUTH_DEFAULT_REGION_SERVICES = "RAX-AUTH:defaultRegionServices";
+    public static final String RAX_AUTH_DEFAULT_REGION_SERVICES = "RAX-AUTH:defaultRegionServices";
     public static final Object RAX_AUTH_IMPERSONATION = "RAX-AUTH:impersonation";
     public static final Object RAX_AUTH_IMPERSONATOR = "RAX-AUTH:impersonator";
     public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";

@@ -31,20 +31,6 @@ public class JSONReaderForDefaultRegionServicesTest {
             "}";
 
     @Test
-    public void getDefaultRegionServicesFromJSONString() throws Exception {
-        DefaultRegionServices defaultRegionServicesFromJSONString = JSONReaderForRaxAuthDefaultRegionServices.getDefaultRegionServicesFromJSONString(jsonBody);
-        assertThat("list", defaultRegionServicesFromJSONString.getServiceName(), IsNull.notNullValue());
-        assertThat("list size", defaultRegionServicesFromJSONString.getServiceName().size(), equalTo(2));
-        assertThat("service", defaultRegionServicesFromJSONString.getServiceName().get(0), notNullValue());
-        assertThat("service", defaultRegionServicesFromJSONString.getServiceName().get(1), notNullValue());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void getDefaultRegionServicesFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
-        JSONReaderForRaxAuthDefaultRegionServices.getDefaultRegionServicesFromJSONString("invalid JSON");
-    }
-
-    @Test
     public void isReadable_typeNotDefaultRegionServicesClass_returnsFalse() throws Exception {
         JSONReaderForRaxAuthDefaultRegionServices jsonReaderForDefaultRegionServices = new JSONReaderForRaxAuthDefaultRegionServices();
         boolean result = jsonReaderForDefaultRegionServices.isReadable(DefaultCloud20Service.class, null, null, null);

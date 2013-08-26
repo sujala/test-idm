@@ -23,9 +23,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthDefaultRegionServices implements MessageBodyReader<DefaultRegionServices> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForRole.class);
+public class JSONReaderForRaxAuthDefaultRegionServices extends JSONReaderForArrayEntity<DefaultRegionServices> implements MessageBodyReader<DefaultRegionServices> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -36,34 +34,6 @@ public class JSONReaderForRaxAuthDefaultRegionServices implements MessageBodyRea
     public DefaultRegionServices readFrom(Class<DefaultRegionServices> type, Type genericType, Annotation[] annotations,
                                           MediaType mediaType, MultivaluedMap<String, String> httpHeaders,
                                           InputStream inputStream) throws IOException {
-
-        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
-
-        DefaultRegionServices object = getDefaultRegionServicesFromJSONString(jsonBody);
-
-        return object;
-    }
-
-    public static DefaultRegionServices getDefaultRegionServicesFromJSONString(String jsonBody) {
-        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.RAX_AUTH_DEFAULT_REGION_SERVICES)) {
-                JSONArray serviceArray;
-
-                serviceArray = (JSONArray) parser.parse(outer.get(JSONConstants.RAX_AUTH_DEFAULT_REGION_SERVICES).toString());
-                for(Object service : serviceArray){
-                    defaultRegionServices.getServiceName().add(service.toString());
-                }
-
-            }
-        } catch (ParseException e) {
-            LOGGER.info(e.toString());
-            throw new BadRequestException("Bad JSON request", e);
-        }
-
-        return defaultRegionServices;
+        return read(JSONConstants.RAX_AUTH_DEFAULT_REGION_SERVICES, JSONConstants.SERVICE_NAME, inputStream);
     }
 }

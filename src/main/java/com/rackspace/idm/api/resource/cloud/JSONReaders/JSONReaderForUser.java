@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -29,6 +31,11 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> implements Mess
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
-        return read(inputStream, JSONConstants.USER);
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put("user.OS-KSADM:password","password");
+        prefixValues.put("user.RAX-AUTH:defaultRegion", "defaultRegion");
+        prefixValues.put("user.RAX-AUTH:domainId", "domainId");
+
+        return read(inputStream, JSONConstants.USER, prefixValues);
     }
 }

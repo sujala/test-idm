@@ -75,9 +75,12 @@ public class UserConverterCloudV20 {
         jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
+        jaxbUser.setDomainId(user.getDomainId());
+        jaxbUser.setDefaultRegion(user.getRegion());
         if (user.getPassword() != null) {
             jaxbUser.setPassword(user.getPassword());
         }
+
         if(user.getRegion() != null){
             jaxbUser.setDefaultRegion(user.getRegion());
         }

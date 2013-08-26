@@ -456,26 +456,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_v20user_callsGetUser() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        doReturn(new JSONObject()).when(spy).getUser(user);
-        spy.writeTo(user, null, null, null, null, null, myOut);
-        verify(spy).getUser(user);
-    }
-
-    @Test
-    public void writeTo_v20user_writerToOutputStream() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success","This test worked!");
-        doReturn(jsonObject).when(spy).getUser(user);
-        spy.writeTo(user, null, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"user\":{\"success\":\"This test worked!\"}}"));
-    }
-
-    @Test
     public void writeTo_BaseURLRefList_returnList() throws Exception {
         BaseURLRefList baseURLRefList = new BaseURLRefList();
         BaseURLRef baseURLRef = new BaseURLRef();
@@ -2207,24 +2187,6 @@ public class JSONWriterTestOld {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(roles, RoleList.class, null, null, null, null, myOut);
         Assert.assertEquals("{\"roles\":[]}", myOut.toString());
-    }
-
-    @Test
-    public void getDefaultRegionServices() throws Exception {
-        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
-        defaultRegionServices.getServiceName().add("cloudFiles");
-        defaultRegionServices.getServiceName().add("openstackNova");
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
-        assertThat("services", myOut.toString(), equalTo("{\"RAX-AUTH:defaultRegionServices\":[\"cloudFiles\","+"\"openstackNova\"]}"));
-    }
-
-    @Test
-    public void getDefaultRegionServices_emptyList() throws Exception {
-        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
-        assertThat("services", myOut.toString(), equalTo("{\"RAX-AUTH:defaultRegionServices\":[]}"));
     }
 
     @Test

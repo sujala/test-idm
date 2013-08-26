@@ -95,6 +95,9 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForGroups readerForGroupsList = new JSONReaderForGroups()
     @Shared JSONWriterForGroups writerForGroupsList = new JSONWriterForGroups()
 
+    @Shared JSONReaderForRaxAuthDefaultRegionServices readerForDefaultRegionServices = new JSONReaderForRaxAuthDefaultRegionServices()
+    @Shared JSONWriterForRaxAuthDefaultRegionServices writerForDefaultRegionServices = new JSONWriterForRaxAuthDefaultRegionServices()
+
     def "can read/write region as json"() {
         given:
         def regionEntity = region("name", true, false)
@@ -822,6 +825,26 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         groupsListObject != null
         groupsListObject.group.size() == 2
+    }
+
+    def "create read/writer for defaultRegionServices" () {
+        given:
+        def serviceName = ["cloudFile", "cloudServers"].asList()
+        def defaultRegionServices = new DefaultRegionServices().with {
+            it.serviceName = serviceName
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDefaultRegionServices.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        DefaultRegionServices defaultRegionServicesObject = readerForDefaultRegionServices.readFrom(DefaultRegionServices.class, null, null, null, null, arrayInputStream)
+
+        then:
+        defaultRegionServicesObject != null
+        defaultRegionServices.serviceName[0] == "cloudFile"
     }
 
     def getSecretQA(String id, String question, String answer) {

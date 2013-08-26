@@ -145,20 +145,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 }
             }
             jsonText = JSONValue.toJSONString(outer);
-        } else if(object instanceof DefaultRegionServices){
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            DefaultRegionServices defaultRegionServices = (DefaultRegionServices) object;
-            for (String serviceName : defaultRegionServices.getServiceName()) {
-                list.add(serviceName);
-            }
-            outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION_SERVICES, list);
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(Role.class)) {
-            JSONObject outer = new JSONObject();
-            JSONObject role = getRole((Role) object);
-            outer.put(JSONConstants.ROLE, role);
-            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -272,12 +258,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.BASE_URL_REFS, baseUrls);
             jsonText = JSONValue.toJSONString(outer);
             
-        } else if (object.getClass().equals(User.class)) {
-            User user = (User) object;
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.USER, getUser(user));
-
-            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(Domain.class)) {
             Domain domain = (Domain) object;
             JSONObject outer = new JSONObject();
