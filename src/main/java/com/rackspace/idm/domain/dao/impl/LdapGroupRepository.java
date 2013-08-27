@@ -1,16 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.*;
-import org.apache.commons.lang.StringUtils;
+import com.unboundid.ldap.sdk.Filter;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

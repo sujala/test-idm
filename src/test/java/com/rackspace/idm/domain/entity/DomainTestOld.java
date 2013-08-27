@@ -35,14 +35,14 @@ public class DomainTestOld {
         assertThat("id", domain.getDomainId(), equalTo("1"));
         assertThat("name", domain.getName(), equalTo("name"));
         assertThat("description", domain.getDescription(), equalTo("description"));
-        assertThat("enabled", domain.isEnabled(), equalTo(true));
+        assertThat("enabled", domain.getEnabled(), equalTo(true));
     }
 
     @Test
     public void getLdapEntry_returnsLdapEntry() throws Exception {
         ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry("uniqueId", new Attribute[0]);
         domain.setLdapEntry(readOnlyEntry);
-        ReadOnlyEntry result = domain.getLDAPEntry();
+        ReadOnlyEntry result = domain.getLdapEntry();
         assertThat("ldap entry", result, equalTo(readOnlyEntry));
     }
 

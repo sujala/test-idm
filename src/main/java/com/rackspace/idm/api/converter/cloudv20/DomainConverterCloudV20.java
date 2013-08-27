@@ -25,7 +25,7 @@ public class DomainConverterCloudV20 {
         jaxbDomain.setId(domain.getDomainId());
         jaxbDomain.setName(domain.getName());
         jaxbDomain.setDescription(domain.getDescription());
-        jaxbDomain.setEnabled(domain.isEnabled());
+        jaxbDomain.setEnabled(domain.getEnabled());
         return jaxbDomain;
     }
 

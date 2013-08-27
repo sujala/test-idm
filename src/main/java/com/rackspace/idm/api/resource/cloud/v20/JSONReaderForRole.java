@@ -20,7 +20,8 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.rackspace.idm.RaxAuthConstants.*;
+import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
+import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)

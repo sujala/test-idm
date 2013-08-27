@@ -1,13 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.PatternDao;
-import com.rackspace.idm.domain.dao.QuestionDao;
 import com.rackspace.idm.domain.entity.Pattern;
-import com.rackspace.idm.domain.entity.Question;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.

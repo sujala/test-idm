@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.error;
 
+import com.rackspace.api.common.fault.v1.BadRequestFault;
 import com.rackspace.idm.exception.BadRequestException;
-
-import com.rackspace.api.common.fault.v1.*;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;

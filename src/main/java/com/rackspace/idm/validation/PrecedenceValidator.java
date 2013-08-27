@@ -10,9 +10,6 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -33,7 +30,7 @@ public class PrecedenceValidator {
     @Autowired
     private Configuration config;
 
-    private final String NOT_AUTHORIZED = "Not Authorized";
+    private static final String NOT_AUTHORIZED = "Not Authorized";
 
     public void verifyCallerRolePrecedence(User user, ClientRole role) {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);

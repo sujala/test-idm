@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -22,9 +21,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
-import java.net.URL;
 
 /**
  * Created by IntelliJ IDEA.

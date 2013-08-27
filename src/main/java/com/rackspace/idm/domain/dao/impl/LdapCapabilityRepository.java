@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.entity.Capability;
-import com.rackspace.idm.domain.entity.Question;
 import org.springframework.stereotype.Component;
 
 

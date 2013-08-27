@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 
 import java.util.List;

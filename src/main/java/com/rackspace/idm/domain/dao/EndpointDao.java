@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.Tenant;
 
 import java.util.List;
 

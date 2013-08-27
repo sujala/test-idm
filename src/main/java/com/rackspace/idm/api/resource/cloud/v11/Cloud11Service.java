@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspacecloud.docs.auth.api.v1.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;

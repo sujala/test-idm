@@ -2,10 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;

@@ -8,11 +8,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
-import com.rackspace.idm.validation.UserPasswordCredentialsValidator;
-import com.sun.jersey.core.provider.EntityHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

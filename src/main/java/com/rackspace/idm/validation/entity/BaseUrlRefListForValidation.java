@@ -3,7 +3,6 @@ package com.rackspace.idm.validation.entity;
 import lombok.Data;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 /**

@@ -2,7 +2,6 @@ package com.rackspace.idm.api.filter;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;

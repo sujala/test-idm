@@ -1,20 +1,24 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.DomainDao;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +109,7 @@ public class DefaultDomainService implements DomainService{
         Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
-        if(!domain.isEnabled())
+        if(!domain.getEnabled())
             throw new ForbiddenException("Cannot add tenant to disabled domain");
 
         tenantService.checkAndGetTenant(tenantId);

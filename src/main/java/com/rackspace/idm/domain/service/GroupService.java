@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
 
 import java.util.List;
 

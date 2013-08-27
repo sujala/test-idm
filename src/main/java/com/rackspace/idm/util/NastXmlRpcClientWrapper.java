@@ -1,7 +1,5 @@
 package com.rackspace.idm.util;
 
-import java.net.URL;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -10,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 
 @Component
 public class NastXmlRpcClientWrapper {

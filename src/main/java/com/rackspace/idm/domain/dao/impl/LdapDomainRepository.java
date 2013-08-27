@@ -1,14 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.DuplicateException;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.Filter;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;

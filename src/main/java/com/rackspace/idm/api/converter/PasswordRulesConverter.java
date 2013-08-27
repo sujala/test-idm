@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.converter;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.domain.entity.PasswordRuleResult;
+import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBElement;
 import java.util.List;

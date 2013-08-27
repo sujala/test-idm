@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.error;
 
-import com.rackspace.api.common.fault.v1.*;
+import com.rackspace.api.common.fault.v1.ServiceFault;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

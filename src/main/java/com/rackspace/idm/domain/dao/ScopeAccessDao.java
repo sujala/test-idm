@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 
 import java.util.List;
 

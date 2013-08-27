@@ -7,7 +7,9 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
+
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +18,8 @@ import lombok.EqualsAndHashCode;
  * Time: 3:51 PM
  * To change this template use File | Settings | File Templates.
  */
-@EqualsAndHashCode
+
+@Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
 public class Domain implements Auditable, UniqueId {
 
@@ -38,53 +41,12 @@ public class Domain implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] tenantIds;
 
-    public String getDomainId() {
-        return domainId;
-    }
-
-    public void setDomainId(String domainId) {
-        this.domainId = domainId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String[] getTenantIds() {
-        return tenantIds;
-    }
-
-    public void setTenantIds(String[] tenantIds) {
-        if(tenantIds != null){
-            this.tenantIds = new String[tenantIds.length];
-            System.arraycopy(tenantIds, 0, this.tenantIds, 0, tenantIds.length);
-        }else{
+    public void setTenantIds(String[] tenantIDs) {
+        if (tenantIDs == null) {
             this.tenantIds = null;
+        } else {
+            this.tenantIds = Arrays.copyOf(tenantIDs, tenantIDs.length);
         }
-    }
-
-    public ReadOnlyEntry getLDAPEntry() {
-        return ldapEntry;
     }
 
     public String getUniqueId() {
@@ -104,9 +66,5 @@ public class Domain implements Auditable, UniqueId {
     @Override
     public String toString() {
         return getAuditContext();
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
     }
 }

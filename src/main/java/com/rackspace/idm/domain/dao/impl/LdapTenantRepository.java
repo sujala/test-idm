@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;

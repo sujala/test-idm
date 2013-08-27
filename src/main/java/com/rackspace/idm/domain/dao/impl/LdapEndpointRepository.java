@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.entity.*;
-import com.unboundid.ldap.sdk.*;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Component

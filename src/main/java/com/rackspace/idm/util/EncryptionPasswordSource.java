@@ -1,7 +1,5 @@
 package com.rackspace.idm.util;
 
-import java.io.IOException;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge

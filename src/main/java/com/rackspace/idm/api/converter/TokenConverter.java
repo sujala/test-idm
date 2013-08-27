@@ -1,18 +1,15 @@
 package com.rackspace.idm.api.converter;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.api.idm.v1.Token;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.Date;
-import java.util.List;
 
 @Component
 public class TokenConverter {

@@ -1,11 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.PropertyDao;
-import com.rackspace.idm.domain.dao.impl.LdapPropertyRepository;
 import com.rackspace.idm.domain.entity.Property;
 import com.rackspace.idm.domain.service.PropertiesService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.support.PropertiesBeanDefinitionReader;
 import org.springframework.stereotype.Component;
 
 @Component

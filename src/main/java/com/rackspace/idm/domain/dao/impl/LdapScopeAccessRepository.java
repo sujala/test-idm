@@ -1,13 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
-import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.exception.NotFoundException;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
-import com.unboundid.ldap.sdk.*;
+import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;

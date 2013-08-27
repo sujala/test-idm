@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
 
 import java.util.List;
 

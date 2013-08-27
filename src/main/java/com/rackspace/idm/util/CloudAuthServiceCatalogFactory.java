@@ -6,8 +6,6 @@ import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CloudAuthServiceCatalogFactory {

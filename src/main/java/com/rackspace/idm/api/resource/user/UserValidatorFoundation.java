@@ -2,18 +2,11 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.CharUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.ws.commons.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.regex.Pattern;
 
 /**
