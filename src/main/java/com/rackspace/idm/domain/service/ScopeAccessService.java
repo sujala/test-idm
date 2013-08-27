@@ -46,7 +46,7 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessForUser(User user);
 
-    List<ScopeAccess> getScopeAccessListByUserId(String userId);
+    Iterable<ScopeAccess> getScopeAccessListByUserId(String userId);
 
     ScopeAccess loadScopeAccessByAccessToken(String accessToken);
 
@@ -66,13 +66,13 @@ public interface ScopeAccessService {
 
     void updateScopeAccess(ScopeAccess scopeAccess);
 
-    List<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId);
+    Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId);
 
-    List<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId);
+    Iterable<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId);
 
-    List<ScopeAccess> getScopeAccessesForUser(User user);
+    Iterable<ScopeAccess> getScopeAccessesForUser(User user);
 
-    List<ScopeAccess> getScopeAccessesForApplication(Application application);
+    Iterable<ScopeAccess> getScopeAccessesForApplication(Application application);
 
     List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user);
 

@@ -159,19 +159,17 @@ public class DefaultDomainService implements DomainService{
     }
 
     @Override
-    public List<Domain> getDomainsForTenants(List<Tenant> tenantIds) {
+    public Iterable<Domain> getDomainsForTenants(List<Tenant> tenantIds) {
         return domainDao.getDomainsForTenant(tenantIds);
     }
 
     @Override
-    public List<User> getUsersByDomainId(String domainId) {
+    public Iterable<User> getUsersByDomainId(String domainId) {
         return userService.getUsersWithDomain(domainId);
     }
 
     @Override
-    public List<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
-
-
+    public Iterable<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
         return userService.getUsersWithDomainAndEnabledFlag(domainId, enabled);
     }
 
@@ -185,7 +183,7 @@ public class DefaultDomainService implements DomainService{
         return filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true));
     }
 
-    private List<User> filterUserAdmins(List<User> userList) {
+    private List<User> filterUserAdmins(Iterable<User> userList) {
         List<User> userAdmins = new ArrayList<User>();
         for (User user : userList) {
             if (authorizationService.hasUserAdminRole(user)) {

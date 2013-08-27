@@ -5,11 +5,9 @@ import com.rackspace.idm.domain.dao.GenericDao;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
-public class PagingIterator<T> extends ArrayList<T> implements Iterable<T>,List<T> {
+public class LdapPagingIterator<T> implements Iterable<T> {
 
     private static final int PAGE_SIZE = 1000;
     private int offset;
@@ -21,7 +19,7 @@ public class PagingIterator<T> extends ArrayList<T> implements Iterable<T>,List<
     private String dn;
     private SearchScope scope;
 
-    public PagingIterator(GenericDao<T> repo, Filter searchFilter, String dn, SearchScope scope) {
+    public LdapPagingIterator(GenericDao<T> repo, Filter searchFilter, String dn, SearchScope scope) {
         this.repo = repo;
         this.searchFilter = searchFilter;
         this.dn = dn;

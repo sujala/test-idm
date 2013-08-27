@@ -61,8 +61,7 @@ public class CloudUserAccessibility {
         if (tenants == null || tenants.size() == 0) {
             return domains;
         }
-        List<Domain> listDomains = domainService.getDomainsForTenants(tenants);
-        for (Domain domain : listDomains) {
+        for (Domain domain : domainService.getDomainsForTenants(tenants)) {
             domains.getDomain().add(domain);
         }
         return domains;

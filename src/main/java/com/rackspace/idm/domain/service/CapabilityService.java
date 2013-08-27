@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface CapabilityService {
     void updateCapabilities(List<Capability> capabilities, String type, String version);
-    List<Capability> getCapabilities(String type, String version);
+    Iterable<Capability> getCapabilities(String type, String version);
     void removeCapabilities(String type, String version);
     List<ServiceApi> getServiceApis();
 }

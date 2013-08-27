@@ -69,12 +69,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     @Override
-    public List<ClientRole> getClientRolesForApplication(Application application) {
+    public Iterable<ClientRole> getClientRolesForApplication(Application application) {
         return getObjects(searchFilter_byApplicationId(application.getClientId()));
     }
 
     @Override
-    public List<ClientRole> getAllClientRoles() {
+    public Iterable<ClientRole> getAllClientRoles() {
         return getObjects(searchFilter_getAllClientRoles());
     }
 
@@ -94,7 +94,7 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     @Override
-    public List<ClientRole> getIdentityRoles(Application application, List<String> roleNames) {
+    public Iterable<ClientRole> getIdentityRoles(Application application, List<String> roleNames) {
         return getObjects(orFilter(roleNames), application.getUniqueId());
     }
 

@@ -57,7 +57,7 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     }
 
     @Override
-    public List<Domain> getDomainsForTenant(List<Tenant> tenants) {
+    public Iterable<Domain> getDomainsForTenant(List<Tenant> tenants) {
         if (tenants == null || tenants.size() < 1) {
             getLogger().error(NULL_OR_EMPTY_TENANT_ID_PARAMETER);
             getLogger().info("Invalid tenantIds parameter.");

@@ -2,15 +2,10 @@ package com.rackspace.idm.domain.dao.impl;
 
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,16 +54,16 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
 
     @Override
     public Group getGroupByName(String name){
-        List<Group> groups = getObjects(searchFilterGetGroupByName(name));
-        if (groups.size() > 0) {
-            return groups.get(0);
+        Iterable<Group> groups = getObjects(searchFilterGetGroupByName(name));
+        if (groups.iterator().hasNext()) {
+            return groups.iterator().next();
         } else {
             return null;
         }
     }
 
     @Override
-    public List<Group> getGroups() {
+    public Iterable<Group> getGroups() {
         return getObjects(searchFilterGetGroups());
     }
 

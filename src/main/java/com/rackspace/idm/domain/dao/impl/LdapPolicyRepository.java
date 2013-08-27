@@ -76,7 +76,9 @@ public class LdapPolicyRepository extends LdapGenericRepository<Policy> implemen
     @Override
     public Policies getPolicies() {
         Policies policies = new Policies();
-        policies.setPolicy(getObjects(searchFilterGetPolicies()));
+        for (Policy policy : getObjects(searchFilterGetPolicies())) {
+            policies.getPolicy().add(policy);
+        }
         return policies;
     }
 

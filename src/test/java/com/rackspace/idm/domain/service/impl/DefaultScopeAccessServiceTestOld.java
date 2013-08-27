@@ -497,7 +497,7 @@ public class DefaultScopeAccessServiceTestOld {
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByClientId(null, null)).thenReturn(list);
-        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null),equalTo(list));
+        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null), notNullValue());
     }
 
     @Test
@@ -572,8 +572,8 @@ public class DefaultScopeAccessServiceTestOld {
         List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
         scopeAccessList.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByUserId("userId")).thenReturn(scopeAccessList);
-        List<ScopeAccess> result = defaultScopeAccessService.getScopeAccessListByUserId("userId");
-        assertThat("scope access", result.get(0), equalTo(scopeAccess));
-        assertThat("list", result.size(), equalTo(1));
+        Iterable<ScopeAccess> result = defaultScopeAccessService.getScopeAccessListByUserId("userId");
+        assertThat("list", result.iterator().hasNext(), equalTo(true));
+        assertThat("scope access", result.iterator().next(), equalTo(scopeAccess));
     }
 }

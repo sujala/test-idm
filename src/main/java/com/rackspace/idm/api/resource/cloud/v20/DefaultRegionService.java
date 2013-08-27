@@ -85,7 +85,7 @@ public class DefaultRegionService {
         return defaultRegions;
     }
 
-    private Set<String> getCloudServersOpenStackRegions(List<CloudBaseUrl> baseUrls) {
+    private Set<String> getCloudServersOpenStackRegions(Iterable<CloudBaseUrl> baseUrls) {
         Set<String> defaultRegions = new HashSet<String>();
         for (CloudBaseUrl baseUrl : baseUrls) {
             if (baseUrl.getServiceName().equalsIgnoreCase(CLOUD_SERVERS_OPENSTACK)) {
@@ -108,7 +108,7 @@ public class DefaultRegionService {
     }
 
     public Set<String> getDefaultRegionsForCloudServersOpenStack() {
-        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK);
+        Iterable<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK);
 
         return getRegionsWithinCloud(getCloudServersOpenStackRegions(baseUrls));
     }

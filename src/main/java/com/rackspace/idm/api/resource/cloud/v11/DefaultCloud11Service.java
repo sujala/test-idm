@@ -851,17 +851,14 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<com.rackspace.idm.domain.entity.Group> groups = userService.getGroupsForUser(user.getId());
-            if (groups.size() == 0) {
-                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getString("defaultGroupId"));
-                groups.add(defGroup);
-            }
+            Iterable<com.rackspace.idm.domain.entity.Group> groups = userService.getGroupsForUser(user.getId());
             GroupsList groupList = new GroupsList();
+            if (!groups.iterator().hasNext()) {
+                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getString("defaultGroupId"));
+                groupList.getGroup().add(getGroup(defGroup));
+            }
             for (com.rackspace.idm.domain.entity.Group group : groups) {
-                Group g = new Group();
-                g.setId(group.getName()); // Name for v1.1
-                g.setDescription(group.getDescription());
-                groupList.getGroup().add(g);
+                groupList.getGroup().add(getGroup(group));
             }
             return Response.ok(OBJ_FACTORY.createGroups(groupList).getValue());
 
@@ -872,6 +869,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception e) {
             return cloudExceptionResponse.exceptionResponse(e);
         }
+    }
+
+    private Group getGroup(com.rackspace.idm.domain.entity.Group group) {
+        Group g = new Group();
+        g.setId(group.getName()); // Name for v1.1
+        g.setDescription(group.getDescription());
+        return g;
     }
 
     @Override
@@ -1044,7 +1048,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUserForGetRequests(request);
 
-            List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
+            Iterable<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
             if (StringUtils.isEmpty(serviceName)) {
                 return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)).getValue());
@@ -1075,10 +1079,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUserForGetRequests(request);
 
-            List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
-
             List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
-            for (CloudBaseUrl url : baseUrls) {
+            for (CloudBaseUrl url : this.endpointService.getBaseUrls()) {
                 if (url.getEnabled()) {
                     filteredBaseUrls.add(url);
                 }

@@ -23,11 +23,11 @@ public interface DomainService {
     void deleteDomain(String domainId);
     void addTenantToDomain(String tenantId, String domainId);
     void removeTenantFromDomain(String tenantId, String domainId);
-    List<User> getUsersByDomainId(String domainId);
-    List<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
+    Iterable<User> getUsersByDomainId(String domainId);
+    Iterable<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
     List<User> getDomainAdmins(String domainId);
     List<User> getEnabledDomainAdmins(String domainId);
     Domain checkAndGetDomain(String domainId);
     String createNewDomain(String domainId);
-    List<Domain> getDomainsForTenants(List<Tenant> tenants);
+    Iterable<Domain> getDomainsForTenants(List<Tenant> tenants);
 }

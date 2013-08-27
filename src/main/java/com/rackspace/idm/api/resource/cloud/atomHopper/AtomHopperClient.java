@@ -215,11 +215,8 @@ public class AtomHopperClient {
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
-        List<Group> groupList = userService.getGroupsForUser(user.getId());
-        if(groupList != null){
-            for(Group group : groupList){
-                cloudIdentityType.getGroups().add(group.getGroupId());
-            }
+        for(Group group : userService.getGroupsForUser(user.getId())){
+            cloudIdentityType.getGroups().add(group.getGroupId());
         }
         List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
         if(tenantRoles != null){

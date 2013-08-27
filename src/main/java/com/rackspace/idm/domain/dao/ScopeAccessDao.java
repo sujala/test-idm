@@ -22,13 +22,13 @@ public interface ScopeAccessDao {
 
     ScopeAccess getMostRecentImpersonatedScopeAccessForUser(User user, String impersonatingUsername);
 
-    List<ScopeAccess> getScopeAccessesByUserId(String userId);
+    Iterable<ScopeAccess> getScopeAccessesByUserId(String userId);
 
-    List<ScopeAccess> getScopeAccesses(UniqueId object);
+    Iterable<ScopeAccess> getScopeAccesses(UniqueId object);
 
-    List<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user);
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user);
 
-    List<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
+    Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
 
     String getClientIdForParent(ScopeAccess scopeAccess);
 

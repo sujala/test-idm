@@ -105,9 +105,9 @@ public class EndpointServiceTests {
         EasyMock.expect(mockEndpointDao.getBaseUrls()).andReturn(baseUrls);
         EasyMock.replay(mockEndpointDao);
         
-        List<CloudBaseUrl> urls = endpointService.getBaseUrls();
+        Iterable<CloudBaseUrl> urls = endpointService.getBaseUrls();
         
-        Assert.assertTrue(urls.size() == 1);
+        Assert.assertTrue(urls.iterator().hasNext());
         EasyMock.verify(mockEndpointDao);
     }
     

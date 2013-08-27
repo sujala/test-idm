@@ -6,8 +6,6 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class LdapTenantRepository extends LdapGenericRepository<Tenant> implements TenantDao {
 
@@ -40,7 +38,7 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
     }
 
     @Override
-    public List<Tenant> getTenants() {
+    public Iterable<Tenant> getTenants() {
         return getObjects(searchFilterGetTenants());
     }
 

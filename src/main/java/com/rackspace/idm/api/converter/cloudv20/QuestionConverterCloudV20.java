@@ -29,7 +29,7 @@ public class QuestionConverterCloudV20 {
         return mapper.map(questionEntity, Question.class);
     }
 
-    public JAXBElement<com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions> toQuestions(List<Question> questions) {
+    public JAXBElement<com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions> toQuestions(Iterable<Question> questions) {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions questionsEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createQuestions();
 
         for(Question question : questions) {

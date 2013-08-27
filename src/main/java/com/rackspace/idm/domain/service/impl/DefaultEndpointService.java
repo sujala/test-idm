@@ -1,8 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.entity.Capabilities;
-import com.rackspace.idm.domain.service.CapabilityService;
-import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -60,7 +57,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrls() {
+    public Iterable<CloudBaseUrl> getBaseUrls() {
         logger.debug("Getting baseurls");
         return this.endpointDao.getBaseUrls();
     }
@@ -68,9 +65,8 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public List<CloudBaseUrl> getGlobalBaseUrls() {
         logger.debug("Getting global baseurls");
-        List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> globalBaseUrls = new ArrayList<CloudBaseUrl>();
-        for (CloudBaseUrl baseURL : baseUrls) {
+        for (CloudBaseUrl baseURL : endpointDao.getBaseUrls()) {
             if (baseURL.getGlobal()) {
                 globalBaseUrls.add(baseURL);
             }
@@ -81,9 +77,8 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public List<CloudBaseUrl> getDefaultBaseUrls() {
         logger.debug("Getting default baseurls");
-        List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> defaultBaseUrls = new ArrayList<CloudBaseUrl>();
-        for (CloudBaseUrl baseURL : baseUrls) {
+        for (CloudBaseUrl baseURL : endpointDao.getBaseUrls()) {
             if (baseURL.getDef()!=null && baseURL.getDef()) {
                 defaultBaseUrls.add(baseURL);
             }
@@ -119,9 +114,8 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public List<CloudBaseUrl> getBaseUrlsByServiceType(String serviceType) {
         logger.debug("Getting baseurls by serviceId");
-        List<CloudBaseUrl> allBaseUrls = this.endpointDao.getBaseUrls();
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
-        for (CloudBaseUrl baseUrl : allBaseUrls) {
+        for (CloudBaseUrl baseUrl : this.endpointDao.getBaseUrls()) {
             if (baseUrl.getOpenstackType() != null && baseUrl.getOpenstackType().equals(serviceType)) {
                 filteredBaseUrls.add(baseUrl);
             }
@@ -131,7 +125,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName) {
+    public Iterable<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName) {
         logger.debug("Getting baseUrls by service name");
         return endpointDao.getBaseUrlsByService(serviceName);
     }
@@ -139,12 +133,8 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType) {
         logger.debug("Getting baseurls by baseUrlType");
-        List<CloudBaseUrl> allBaseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
-        if(allBaseUrls==null){
-            return filteredBaseUrls;
-        }
-        for (CloudBaseUrl baseUrl : allBaseUrls) {
+        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrls()) {
             if (baseUrl.getBaseUrlType() != null) {
                 if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
                     filteredBaseUrls.add(baseUrl);
@@ -156,7 +146,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
+    public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
         return endpointDao.getBaseUrlsWithPolicyId(policyId);
     }
 

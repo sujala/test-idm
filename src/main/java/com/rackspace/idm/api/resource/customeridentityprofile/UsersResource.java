@@ -56,7 +56,9 @@ public class UsersResource extends ParentResource {
 
         //TODO: Implement Authorization rules
         Users users = new Users();
-        users.getUsers().addAll(userService.getUsersByRCN(customerId));
+        for (User user : userService.getUsersByRCN(customerId)) {
+            users.getUsers().add(user);
+        }
 
         return Response.ok(userConverter.toUserListJaxb(users)).build();
     }

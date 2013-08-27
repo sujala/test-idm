@@ -129,7 +129,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public List<User> getUsersByDomain(String domainId) {
+    public Iterable<User> getUsersByDomain(String domainId) {
         return getObjects(searchFilterGetUserByDomainId(domainId));
     }
 
@@ -149,12 +149,12 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public List<User> getUsersByEmail(String email) {
+    public Iterable<User> getUsersByEmail(String email) {
         return getObjects(searchFilterGetUserByEmail(email));
     }
 
     @Override
-    public List<User> getUsers(List<String> idList) {
+    public Iterable<User> getUsers(List<String> idList) {
         return getObjects(searchFilterGetUserById(idList));
     }
 
@@ -180,18 +180,18 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public List<User> getUsersByRCN(String RCN) {
+    public Iterable<User> getUsersByRCN(String RCN) {
         return getObjects(searchFilterGetUserByRCN(RCN));
     }
 
     @Override
-    public List<User> getUsersByUsername(String username) {
+    public Iterable<User> getUsersByUsername(String username) {
         return getObjects(searchFilterGetUserByUsername(username));
     }
 
     @Override
     public boolean isUsernameUnique(String username) {
-        return getObjects(searchFilterGetUserByUsername(username)).size() == 0;
+        return !getObjects(searchFilterGetUserByUsername(username)).iterator().hasNext();
     }
 
     @Override
@@ -221,11 +221,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     public void removeUsersFromClientGroup(ClientGroup group) {
         getLogger().debug("Doing search for users that belong to group {}", group);
 
-        List<User> userList = getObjects(searchFilterGetUserByGroupDn(group));
-
-        getLogger().debug("Found {} Users", userList.size());
-
-        for (User user : userList) {
+        for (User user : getObjects(searchFilterGetUserByGroupDn(group))) {
             user.setRsGroupDN(null);
             updateObject(user);
         }
@@ -351,17 +347,17 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public List<User> getUsers() {
+    public Iterable<User> getUsers() {
         return getObjects(searchFilterGetUser());
     }
 
     @Override
-    public List<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled) {
+    public Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled) {
         return getObjects(searchFilterGetUserByDomainIdAndEnabled(domainId, enabled));
     }
 
     @Override
-    public List<User> getUsersByGroupId(String groupId) {
+    public Iterable<User> getUsersByGroupId(String groupId) {
         return getObjects(searchFiltergetUserByGroupId(groupId));
     }
 
@@ -388,7 +384,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public List<Group> getGroupsForUser(String userId) {
+    public Iterable<Group> getGroupsForUser(String userId) {
         getLogger().debug("Inside getGroupsForUser {}", userId);
 
         List<Group> groups = new ArrayList<Group>();

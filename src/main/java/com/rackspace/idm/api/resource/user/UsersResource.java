@@ -70,7 +70,7 @@ public class UsersResource extends ParentResource {
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
-        List<User> userList = null;
+        Iterable<User> userList = null;
     	if (!StringUtils.isBlank(username)) {
             userList = this.userService.getUsersByUsername(username);
     	} else {
@@ -78,7 +78,9 @@ public class UsersResource extends ParentResource {
         }
 
         Users users = new Users();
-        users.getUsers().addAll(userList);
+        for (User user : userList) {
+            users.getUsers().add(user);
+        }
 
     	return Response.ok(userConverter.toUserListJaxb(users)).build();
     }

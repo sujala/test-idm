@@ -13,7 +13,7 @@ public interface ApplicationDao {
 
     void deleteApplication(Application client);
 
-    List<Application> getAllApplications();
+    Iterable<Application> getAllApplications();
 
     Application getApplicationByClientId(String clientId);
 
@@ -33,9 +33,9 @@ public interface ApplicationDao {
     
     void updateApplication(Application client);
     
-    List<Application> getAvailableScopes();
+    Iterable<Application> getAvailableScopes();
     
-    List<Application> getOpenStackServices();
+    Iterable<Application> getOpenStackServices();
 
     void softDeleteApplication(Application application);
 
