@@ -1,23 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForPasswordCredentials;
-import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForPasswordCredentials;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-
-import javax.ws.rs.core.MediaType;
-
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 /**

@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxKsKeyApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForRaxKsKeyApiKeyCredentials;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForUser;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForUser;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 

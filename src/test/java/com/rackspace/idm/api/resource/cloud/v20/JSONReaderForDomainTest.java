@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderRaxAuthForDomain;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderRaxAuthForDomain;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthQuestion
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForRaxAuthQuestion
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 

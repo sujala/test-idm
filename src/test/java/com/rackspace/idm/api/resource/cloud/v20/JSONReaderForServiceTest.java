@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForOsKsAdmService;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForOsKsAdmService;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 

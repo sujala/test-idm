@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxAuthDefaultRegionServices;
-import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForRaxAuthDefaultRegionServices;
 import org.hamcrest.core.IsNull;
 import org.junit.Test;
 

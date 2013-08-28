@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForTenant
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForTenant
 import com.sun.jersey.api.json.JSONConfiguration
 import com.sun.jersey.api.json.JSONJAXBContext
 import com.sun.jersey.api.json.JSONMarshaller

@@ -4,8 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.JSONReaders.*
-import com.rackspace.idm.api.resource.cloud.JSONWriters.*
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
+import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.apache.commons.io.IOUtils

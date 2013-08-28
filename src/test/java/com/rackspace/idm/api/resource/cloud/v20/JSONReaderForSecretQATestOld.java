@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.api.resource.cloud.JSONReaders.JSONReaderForRaxKsQaSecretQA;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForRaxKsQaSecretQA;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
