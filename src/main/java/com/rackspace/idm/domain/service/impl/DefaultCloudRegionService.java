@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -140,7 +139,7 @@ public class DefaultCloudRegionService implements CloudRegionService {
     }
 
     @Override
-    public List<Region> getRegions(String cloud) {
+    public Iterable<Region> getRegions(String cloud) {
         return regionDao.getRegions(cloud);
     }
 

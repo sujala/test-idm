@@ -100,9 +100,9 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
         endpointRepository.addBaseUrl(cloudBaseUrl);
 
-        List<CloudBaseUrl> baseUrls = endpointRepository.getBaseUrlsWithPolicyId(policyId1);
+        Iterable<CloudBaseUrl> baseUrls = endpointRepository.getBaseUrlsWithPolicyId(policyId1);
 
-        assertThat("repositoryCloudBaseUrl", baseUrls.size(), equalTo(0));
+        assertThat("repositoryCloudBaseUrl", baseUrls.iterator().hasNext(), equalTo(false));
     }
 
     private Policy getPolicy(String policyId) {

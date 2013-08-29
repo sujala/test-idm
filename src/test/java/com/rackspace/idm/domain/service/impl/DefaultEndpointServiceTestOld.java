@@ -50,7 +50,7 @@ public class DefaultEndpointServiceTestOld {
 
     @Test
     public void getBaseUrlsByBaseUrlType_nullBaseUrls_returnsEmptyList() throws Exception {
-        when(endpointDao.getBaseUrls()).thenReturn(null);
+        when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         List<CloudBaseUrl> baseUrlsByBaseUrlType = defaultEndpointService.getBaseUrlsByBaseUrlType("");
         assertThat("list size", baseUrlsByBaseUrlType.size(), equalTo(0));
     }
@@ -92,6 +92,7 @@ public class DefaultEndpointServiceTestOld {
 
     @Test
     public void getGlobalBaseUrls_callsEndpointDao_getBaseUrls() throws Exception {
+        when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         defaultEndpointService.getGlobalBaseUrls();
         verify(endpointDao).getBaseUrls();
     }
@@ -120,6 +121,7 @@ public class DefaultEndpointServiceTestOld {
 
     @Test
     public void getDefaultBaseUrls_callsEndpointDao_getBaseUrls() throws Exception {
+        when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         defaultEndpointService.getDefaultBaseUrls();
         verify(endpointDao).getBaseUrls();
     }
@@ -159,6 +161,7 @@ public class DefaultEndpointServiceTestOld {
 
     @Test
     public void getBaseUrlsByServiceId_callsEndpointDao_getBaseUrls() throws Exception {
+        when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         defaultEndpointService.getBaseUrlsByServiceType("defaultApplicationService");
         verify(endpointDao).getBaseUrls();
     }

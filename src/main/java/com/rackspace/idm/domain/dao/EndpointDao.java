@@ -11,13 +11,13 @@ public interface EndpointDao {
     
     CloudBaseUrl getBaseUrlById(String baseUrlId);
 
-    List<CloudBaseUrl> getBaseUrlsByService(String service);
+    Iterable<CloudBaseUrl> getBaseUrlsByService(String service);
 
-    List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
+    Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
 
-    List<CloudBaseUrl> getBaseUrls();
+    Iterable<CloudBaseUrl> getBaseUrls();
 
-    List<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds);
+    Iterable<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds);
 
     void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl);
 }

@@ -143,9 +143,9 @@ public class EndpointConverterCloudV11 {
         return result;
 	}
 
-	public BaseURLList toBaseUrls(List<CloudBaseUrl> urls) {
+	public BaseURLList toBaseUrls(Iterable<CloudBaseUrl> urls) {
         BaseURLList baseUrls = of.createBaseURLList();
-        if (urls == null || urls.size() == 0) {
+        if (!urls.iterator().hasNext()) {
             return baseUrls;
         }
         for (CloudBaseUrl url : urls) {

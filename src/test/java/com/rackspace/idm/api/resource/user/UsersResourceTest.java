@@ -57,18 +57,6 @@ public class UsersResourceTest {
     }
 
     @Test
-    public void getUsers_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        usersResource.getUsers("username", null, null, "authHeader");
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
-    public void getUsers_callsAuthService_authorizeIdmSuperAdminOrRackspaceClient() throws Exception {
-        usersResource.getUsers("username", 1, 1, "authHeader");
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
-    }
-
-    @Test
     public void getUsers_usernameIsBlankResponseOk_returns200() throws Exception {
         Response response = usersResource.getUsers("", 1, 1, "authHeader");
         assertThat("response code", response.getStatus(), equalTo(200));

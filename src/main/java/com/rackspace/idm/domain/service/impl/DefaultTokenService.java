@@ -117,10 +117,9 @@ public class DefaultTokenService implements TokenService {
     
     @Override
     public void revokeAllTokensForCustomer(final String customerId) throws IOException, JAXBException {
-        logger
-            .debug("Revoking all access tokens for customer: {}.", customerId);
-        final List<User> usersList = getAllUsersForCustomerId(customerId);
-        for (final User user : usersList) {
+        logger.debug("Revoking all access tokens for customer: {}.", customerId);
+
+        for (final User user : getAllUsersForCustomerId(customerId)) {
             this.scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
 
@@ -187,11 +186,9 @@ public class DefaultTokenService implements TokenService {
         return clientsList;
     }
 
-    List<User> getAllUsersForCustomerId(final String customerId) {
+    Iterable<User> getAllUsersForCustomerId(final String customerId) {
         logger.debug("Finding Users for CustomerId: {}", customerId);
-        List<User> usersList = userService.getUsersByRCN(customerId);
-        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(), customerId);
-        return usersList;
+        return userService.getUsersByRCN(customerId);
     }
 
     int getPagingLimit() {

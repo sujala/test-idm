@@ -14,7 +14,7 @@ import java.util.List;
 public interface GroupDao {
 
     String getNextGroupId();
-    List<Group> getGroups();
+    Iterable<Group> getGroups();
     Group getGroupById(String groupId);
     Group getGroupByName(String groupName);
     void deleteGroup(String groupId);

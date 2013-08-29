@@ -19,6 +19,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
@@ -59,6 +60,9 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -478,17 +482,24 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (callerIsUserAdminOrHasUserManageRole) {
                 //TODO pagination index and offset
-                List<User> users;
                 String domainId = caller.getDomainId();
                 if (domainId == null) {
                     throw new BadRequestException("User-Admin does not have a Domain");
                 }
-                users = userService.getUsersWithDomain(domainId);
-                int numSubUsers = config.getInt("numberOfSubUsers");
-                if (users != null && users.size() > numSubUsers) {
-                    String errMsg = String.format("User cannot create more than %d sub-accounts.", numSubUsers);
-                    throw new BadRequestException(errMsg);
+                Iterable<User> users = userService.getUsersWithDomain(domainId);
+                int maxNumberOfSubUsers = config.getInt("numberOfSubUsers");
+
+                //TODO: this does not work if domain has multiple user admins
+                int numberUsers = 0;
+                while (users.iterator().hasNext()) {
+                    if (numberUsers > maxNumberOfSubUsers) {
+                        String errMsg = String.format("User cannot create more than %d sub-accounts.", maxNumberOfSubUsers);
+                        throw new BadRequestException(errMsg);
+                    }
+                    numberUsers++;
+                    users.iterator().next();
                 }
+
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
 
@@ -525,9 +536,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 tenantService.addCallerTenantRolesToUser(caller, userDO);
 
                 if (caller != null) {
-                    List<Group> groups = userService.getGroupsForUser(caller.getId());
-
-                    for (Group group :groups) {
+                    for (Group group : userService.getGroupsForUser(caller.getId())) {
                         userService.addGroupToUser(group.getGroupId(), userDO.getId());
                     }
                 }
@@ -1408,7 +1417,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(requesterScopeAccess);
 
-            List<User> users = userService.getUsersByEmail(email);
+            Iterable<User> users = userService.getUsersByEmail(email);
 
             User caller = userService.getUserByScopeAccess(requesterScopeAccess);
             if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
@@ -1424,7 +1433,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private List<User> filterUsersInDomain(List<User> users, User caller) {
+    private List<User> filterUsersInDomain(Iterable<User> users, User caller) {
         List<User> result = new ArrayList<User>();
         for (User user : users) {
             if (authorizationService.hasSameDomain(caller, user)) {
@@ -1659,7 +1668,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<CloudBaseUrl> baseUrls;
 
             if (StringUtils.isBlank(serviceId)) {
-                baseUrls = this.endpointService.getBaseUrls();
+                baseUrls = new ArrayList<CloudBaseUrl>();
+                for (CloudBaseUrl cloudBaseUrl : this.endpointService.getBaseUrls()) {
+                    baseUrls.add(cloudBaseUrl);
+                }
             } else {
                 Application client = applicationService.checkAndGetApplication(serviceId);
                 baseUrls = this.endpointService.getBaseUrlsByServiceType(client.getOpenStackType());
@@ -1770,7 +1782,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            List<Application> clients = this.applicationService.getOpenStackServices();
+            Iterable<Application> clients = this.applicationService.getOpenStackServices();
 
             return Response.ok(
                     objFactories.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());
@@ -1846,11 +1858,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<Group> groups = groupService.getGroups(marker, limit);
-
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
 
-            for (Group group : groups) {
+            for (Group group : groupService.getGroups(marker, limit)) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
             }
@@ -1942,14 +1952,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listDefaultRegionServices(String authToken) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-        List<Application> openStackServices = applicationService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
-        if (openStackServices != null) {
-            for (Application application : openStackServices) {
-                Boolean useForDefaultRegion = application.getUseForDefaultRegion();
-                if (useForDefaultRegion != null && useForDefaultRegion) {
-                    defaultRegionServices.getServiceName().add(application.getName());
-                }
+        for (Application application : applicationService.getOpenStackServices()) {
+            Boolean useForDefaultRegion = application.getUseForDefaultRegion();
+            if (useForDefaultRegion != null && useForDefaultRegion) {
+                defaultRegionServices.getServiceName().add(application.getName());
             }
         }
         return Response.ok(defaultRegionServices);
@@ -1960,11 +1967,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         List<String> serviceNames = defaultRegionServices.getServiceName();
-        List<Application> openStackServices = applicationService.getOpenStackServices();
 
         for (String serviceName : serviceNames) {
             boolean found = false;
-            for (Application application : openStackServices) {
+            for (Application application : applicationService.getOpenStackServices()) {
                 if (serviceName.equals(application.getName())) {
                     found = true;
                 }
@@ -1974,7 +1980,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
         }
-        for (Application application : openStackServices) {
+        for (Application application : applicationService.getOpenStackServices()) {
             application.setUseForDefaultRegion(false);
             applicationService.updateClient(application);
         }
@@ -2061,8 +2067,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<User> users = domainService.getUsersByDomainId(domainId);
-            if (!users.isEmpty()) {
+            Iterable<User> users = domainService.getUsersByDomainId(domainId);
+            if (users.iterator().hasNext()) {
                 throw new BadRequestException("Cannot delete Domains which contain users");
             }
             Domain domain = domainService.checkAndGetDomain(domainId);
@@ -2089,7 +2095,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         domainService.checkAndGetDomain(domainId);
-        List<User> users;
+        Iterable<User> users;
         if (enabled == null) {
             users = domainService.getUsersByDomainId(domainId);
         } else {
@@ -2320,7 +2326,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getCapabilities(String authToken, String type, String version) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<com.rackspace.idm.domain.entity.Capability> capabilitiesDO = capabilityService.getCapabilities(type, version);
+            Iterable<Capability> capabilitiesDO = capabilityService.getCapabilities(type, version);
             Capabilities capabilities = capabilityConverterCloudV20.toCapabilities(capabilitiesDO).getValue();
             return Response.ok(capabilities);
         }catch (Exception ex){
@@ -2455,7 +2461,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRegions(String authToken) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        List<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
+        Iterable<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
         return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
     }
 
@@ -2630,12 +2636,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            List<Group> groups = userService.getGroupsForUser(userId);
-            if (groups.size() == 0) {
-                Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
-                groups.add(defGroup);
-            }
+
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+            Iterable<Group> groups = userService.getGroupsForUser(userId);
+
+            if (!groups.iterator().hasNext()) {
+                Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
+                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(defGroup);
+                cloudGroups.getGroup().add(cloudGroup);
+            }
             for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
@@ -2791,7 +2800,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
             groupService.checkAndGetGroupById(groupId);
-            List<User> users = userService.getUsersByGroupId(groupId);
+            Iterable<User> users = userService.getUsersByGroupId(groupId);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
         } catch (Exception e) {
@@ -2949,8 +2958,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             String questionId = null;
 
-            List<com.rackspace.idm.domain.entity.Question> questions = questionService.getQuestions();
-            for(com.rackspace.idm.domain.entity.Question question : questions){
+            for(com.rackspace.idm.domain.entity.Question question : questionService.getQuestions()){
                 if(secrets.getQuestion().trim().equalsIgnoreCase(question.getQuestion())){
                     questionId = question.getId();
                 }

@@ -56,11 +56,11 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
 
         when:
         roleRepository.addTenantRoleToUser(user, tenantRole)
-        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user, tenantRole.clientId)
+        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user, tenantRole.clientId).collect()
         TenantRole role = roles.get(0)
-        TenantRole role2 = roleRepository.getTenantRolesForUser(user, applicationId, tenantId)[0]
+        TenantRole role2 = roleRepository.getTenantRolesForUser(user, applicationId, tenantId).collect()[0]
         roleRepository.deleteTenantRole(roles.get(0))
-        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForUser(user)
+        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForUser(user).collect()
 
         then:
         roles.size() == 1
@@ -79,11 +79,11 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
 
         when:
         roleRepository.addTenantRoleToApplication(application, tenantRole)
-        List<TenantRole> roles = roleRepository.getTenantRolesForApplication(application, tenantRole.clientId)
+        List<TenantRole> roles = roleRepository.getTenantRolesForApplication(application, tenantRole.clientId).collect()
         TenantRole role = roles.get(0)
         TenantRole role2 = roleRepository.getTenantRoleForApplication(application, role.roleRsId)
         roleRepository.deleteTenantRole(role)
-        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForApplication(application)
+        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForApplication(application).collect()
 
         then:
         roles.size() == 1
@@ -106,7 +106,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         when:
         roleRepository.addTenantRoleToUser(user, tenantRole1)
         roleRepository.addTenantRoleToUser(user, tenantRole2)
-        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user)
+        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user).collect()
         TenantRole role = roles.get(0)
         roleRepository.deleteTenantRole(role)
 
@@ -138,15 +138,15 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         when:
         roleRepository.addTenantRoleToUser(user, tenantRole1)
         roleRepository.addTenantRoleToUser(user, tenantRole2)
-        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user)
+        List<TenantRole> roles = roleRepository.getTenantRolesForUser(user).collect()
         TenantRole role = roles.get(0)
         role.tenantIds = ["1"]
         roleRepository.deleteTenantRoleForUser(user, role)
-        List<TenantRole> rolesAfterDelete1 = roleRepository.getTenantRolesForUser(user)
+        List<TenantRole> rolesAfterDelete1 = roleRepository.getTenantRolesForUser(user).collect()
 
         role.tenantIds = ["2"]
         roleRepository.deleteTenantRoleForUser(user, role)
-        List<TenantRole> rolesAfterDelete2 = roleRepository.getTenantRolesForUser(user)
+        List<TenantRole> rolesAfterDelete2 = roleRepository.getTenantRolesForUser(user).collect()
 
         then:
         roles.size() == 1

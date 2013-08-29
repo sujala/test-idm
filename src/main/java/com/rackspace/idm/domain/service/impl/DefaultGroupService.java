@@ -39,7 +39,7 @@ public class DefaultGroupService implements GroupService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public List<Group> getGroups(String marker, Integer limit) {
+    public Iterable<Group> getGroups(String marker, Integer limit) {
         return groupDao.getGroups();
     }
 
@@ -141,17 +141,14 @@ public class DefaultGroupService implements GroupService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        List<User> users = defaultUserService.getUsersByGroupId(groupId);
-        if (users.size() != 0) {
-            for (User user : users) {
-                if (user.getEnabled()) {
-                    throw new BadRequestException("Cannot delete a group with users in it.");
-                }
+        for (User user : defaultUserService.getUsersByGroupId(groupId)) {
+            if (user.getEnabled()) {
+                throw new BadRequestException("Cannot delete a group with users in it.");
             }
+        }
 
-            for (User user : users) {
-                userService.deleteGroupFromUser(grpId, user.getId());
-            }
+        for (User user : defaultUserService.getUsersByGroupId(groupId)) {
+            userService.deleteGroupFromUser(grpId, user.getId());
         }
         groupDao.deleteGroup(groupId);
     }

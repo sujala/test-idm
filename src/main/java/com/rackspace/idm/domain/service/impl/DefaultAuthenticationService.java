@@ -531,8 +531,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             }
         }
         if (!hasRackerRole) {
-            List<ClientRole> clientRoles = applicationService.getClientRolesByClientId(config.getString("idm.clientId"));
-            for (ClientRole clientRole : clientRoles) {
+            for (ClientRole clientRole : applicationService.getClientRolesByClientId(config.getString("idm.clientId"))) {
                 if (clientRole.getName().equals("Racker")) {
                     TenantRole tenantRole = new TenantRole();
                     tenantRole.setRoleRsId(clientRole.getId());
