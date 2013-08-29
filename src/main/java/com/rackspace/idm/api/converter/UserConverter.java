@@ -43,7 +43,7 @@ public class UserConverter {
         user.setPersonId(jaxbUser.getPersonId());
         user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
-        user.setMaxLoginFailuresExceeded(jaxbUser.getMaxLoginFailuresExceded());
+        user.setMaxLoginFailuresExceeded(jaxbUser.isMaxLoginFailuresExceded());
         user.setUsername(jaxbUser.getUsername());
 
         if (jaxbUser.getPasswordCredentials() != null

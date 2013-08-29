@@ -3241,6 +3241,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             policyValidator.validatePolicyName(policy.getName());
+            policyService.checkAndGetPolicy(policyId);
             com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.fromPolicy(policy);
             this.policyService.updatePolicy(policyId, updatePolicy);
             return Response.noContent();
