@@ -32,11 +32,7 @@ public class DomainConverterCloudV20 {
 
     public Domain fromDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domainEntity) {
         Domain domain = mapper.map(domainEntity, Domain.class);
-
-        //Using the Dozer mapper doesn't copy over boolean default values
-        //So we need to set them ourselves.
-        domain.setEnabled(domainEntity.getEnabled());
-
+        domain.setEnabled(domainEntity.isEnabled());
         return domain;
     }
 

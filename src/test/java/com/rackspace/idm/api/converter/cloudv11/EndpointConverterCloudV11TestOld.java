@@ -74,9 +74,9 @@ public class EndpointConverterCloudV11TestOld {
     public void toBaseUrl_returnsBaseUrl_succeeds() throws Exception {
         BaseURL url = endpointConverterCloudV11.toBaseUrl(cloudBaseUrl);
         assertThat("id", url.getId(), equalTo(1));
-        assertThat("enabled", url.getEnabled(), equalTo(true));
+        assertThat("enabled", url.isEnabled(), equalTo(true));
         assertThat("admin url", url.getAdminURL(), equalTo("adminUrl"));
-        assertThat("default", url.getDefault(), equalTo(true));
+        assertThat("default", url.isDefault(), equalTo(true));
         assertThat("internal url", url.getInternalURL(), equalTo("internalUrl"));
         assertThat("public url", url.getPublicURL(), equalTo("publicUrl"));
         assertThat("region", url.getRegion(),equalTo("region"));
@@ -89,9 +89,9 @@ public class EndpointConverterCloudV11TestOld {
         cloudBaseUrl.setBaseUrlType(null);
         BaseURL url = endpointConverterCloudV11.toBaseUrl(cloudBaseUrl);
         assertThat("id", url.getId(), equalTo(1));
-        assertThat("enabled", url.getEnabled(), equalTo(true));
+        assertThat("enabled", url.isEnabled(), equalTo(true));
         assertThat("admin url", url.getAdminURL(), equalTo("adminUrl"));
-        assertThat("default", url.getDefault(), equalTo(true));
+        assertThat("default", url.isDefault(), equalTo(true));
         assertThat("internal url", url.getInternalURL(), equalTo("internalUrl"));
         assertThat("public url", url.getPublicURL(), equalTo("publicUrl"));
         assertThat("region", url.getRegion(),equalTo("region"));
@@ -126,7 +126,7 @@ public class EndpointConverterCloudV11TestOld {
         cloudEndpoint.setBaseUrl(cloudBaseUrl);
         BaseURLRef ref = endpointConverterCloudV11.toBaseUrlRef(cloudEndpoint);
         assertThat("id", ref.getId(), equalTo(1));
-        assertThat("v1default", ref.getV1Default(), equalTo(true));
+        assertThat("v1default", ref.isV1Default(), equalTo(true));
         assertThat("reference string", ref.getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
@@ -152,7 +152,7 @@ public class EndpointConverterCloudV11TestOld {
         endpointList.add(cloudEndpoint);
         BaseURLRefList refList = endpointConverterCloudV11.toBaseUrlRefs(endpointList);
         assertThat("id", refList.getBaseURLRef().get(0).getId(), equalTo(1));
-        assertThat("v1default", refList.getBaseURLRef().get(0).getV1Default(), equalTo(true));
+        assertThat("v1default", refList.getBaseURLRef().get(0).isV1Default(), equalTo(true));
         assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
@@ -180,7 +180,7 @@ public class EndpointConverterCloudV11TestOld {
         endpointList.add(openstackEndpoint);
         BaseURLRefList refList = endpointConverterCloudV11.openstackToBaseUrlRefs(endpointList);
         assertThat("id", refList.getBaseURLRef().get(0).getId(), equalTo(1));
-        assertThat("v1default", refList.getBaseURLRef().get(0).getV1Default(), equalTo(true));
+        assertThat("v1default", refList.getBaseURLRef().get(0).isV1Default(), equalTo(true));
         assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
@@ -200,7 +200,7 @@ public class EndpointConverterCloudV11TestOld {
         openstackEndpoint.setBaseUrls(urlList);
         List<BaseURLRef> refList = endpointConverterCloudV11.toBaseUrlRef(openstackEndpoint);
         assertThat("id", refList.get(0).getId(), equalTo(1));
-        assertThat("v1deafult", refList.get(0).getV1Default(), equalTo(true));
+        assertThat("v1deafult", refList.get(0).isV1Default(), equalTo(true));
         assertThat("reference string", refList.get(0).getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
@@ -223,9 +223,9 @@ public class EndpointConverterCloudV11TestOld {
         urlList.add(cloudBaseUrl);
         BaseURLList url = endpointConverterCloudV11.toBaseUrls(urlList);
         assertThat("id", url.getBaseURL().get(0).getId(), equalTo(1));
-        assertThat("enabled", url.getBaseURL().get(0).getEnabled(), equalTo(true));
+        assertThat("enabled", url.getBaseURL().get(0).isEnabled(), equalTo(true));
         assertThat("admin url", url.getBaseURL().get(0).getAdminURL(), equalTo("adminUrl"));
-        assertThat("default", url.getBaseURL().get(0).getDefault(), equalTo(true));
+        assertThat("default", url.getBaseURL().get(0).isDefault(), equalTo(true));
         assertThat("internal url", url.getBaseURL().get(0).getInternalURL(), equalTo("internalUrl"));
         assertThat("public url", url.getBaseURL().get(0).getPublicURL(), equalTo("publicUrl"));
         assertThat("region", url.getBaseURL().get(0).getRegion(),equalTo("region"));
@@ -262,7 +262,7 @@ public class EndpointConverterCloudV11TestOld {
         urlList.add(openstackEndpoint);
         ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(urlList);
         assertThat("admin url", catalog.getService().get(0).getEndpoint().get(0).getAdminURL(), equalTo("adminUrl/nastId"));
-        assertThat("v1default", catalog.getService().get(0).getEndpoint().get(0).getV1Default(), equalTo(true));
+        assertThat("v1default", catalog.getService().get(0).getEndpoint().get(0).isV1Default(), equalTo(true));
         assertThat("internal url", catalog.getService().get(0).getEndpoint().get(0).getInternalURL(), equalTo("internalUrl/nastId"));
         assertThat("public url", catalog.getService().get(0).getEndpoint().get(0).getPublicURL(), equalTo("publicUrl/nastId"));
         assertThat("region", catalog.getService().get(0).getEndpoint().get(0).getRegion(), equalTo("region"));

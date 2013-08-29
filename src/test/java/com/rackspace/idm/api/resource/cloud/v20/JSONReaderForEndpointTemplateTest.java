@@ -163,25 +163,25 @@ public class JSONReaderForEndpointTemplateTest {
     @Test
     public void getEndpointTemplateFromJSONString_withValidJSON_setsGlobal() throws Exception {
         EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(endpointTemplateJSON);
-        assertThat("endpoint template global", endpointTemplateFromJSONString.getGlobal(), equalTo(true));
+        assertThat("endpoint template global", endpointTemplateFromJSONString.isGlobal(), equalTo(true));
     }
 
     @Test
     public void getEndpointTemplateFromJSONString_withValidJSONAndNoGlobal_setsNullGlobal() throws Exception {
         EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(emptyEndpointTemplateJSON);
-        assertThat("endpoint template global", endpointTemplateFromJSONString.getGlobal(), equalTo(false));
+        assertThat("endpoint template global", endpointTemplateFromJSONString.isGlobal(), equalTo(false));
     }
 
     @Test
     public void getEndpointTemplateFromJSONString_withValidJSON_setsEnabled() throws Exception {
         EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(endpointTemplateJSON);
-        assertThat("endpoint template Enabled", endpointTemplateFromJSONString.getEnabled(), equalTo(true));
+        assertThat("endpoint template Enabled", endpointTemplateFromJSONString.isEnabled(), equalTo(true));
     }
 
     @Test
     public void getEndpointTemplateFromJSONString_withValidJSONAndNoEnabled_setsNullEnabled() throws Exception {
         EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(emptyEndpointTemplateJSON);
-        assertThat("endpoint template Enabled", endpointTemplateFromJSONString.getEnabled(), equalTo(true));
+        assertThat("endpoint template Enabled", endpointTemplateFromJSONString.isEnabled(), equalTo(true));
     }
 
     @Test

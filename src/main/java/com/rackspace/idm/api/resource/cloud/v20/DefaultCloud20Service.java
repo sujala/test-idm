@@ -616,7 +616,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.isUsernameValid(user.getUsername());
             }
 
-            if (!user.getEnabled()) {
+            if (!user.isEnabled()) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (caller.getId().equals(userId)) {
                     throw new BadRequestException("User cannot enable/disable his/her own account.");
@@ -2023,7 +2023,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
-        domainDO.setEnabled(domain.getEnabled());
+        domainDO.setEnabled(domain.isEnabled());
         domainDO.setName(domain.getName());
         this.domainService.updateDomain(domainDO);
         return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
@@ -2903,7 +2903,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User userDO = userService.checkAndGetUserById(userId);
 
-            userDO.setEnabled(user.getEnabled());
+            userDO.setEnabled(user.isEnabled());
 
             if (userDO.isDisabled()) {
                 atomHopperClient.asyncPost(userDO, AtomHopperConstants.DISABLED);
@@ -2980,7 +2980,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             tenantDO.setDescription(tenant.getDescription());
             tenantDO.setDisplayName(tenant.getDisplayName());
-            tenantDO.setEnabled(tenant.getEnabled());
+            tenantDO.setEnabled(tenant.isEnabled());
             tenantDO.setName(tenant.getName());
 
             this.tenantService.updateTenant(tenantDO);

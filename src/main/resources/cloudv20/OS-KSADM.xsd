@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
 
 <!-- (C) 2011 OpenStack LLC., All Rights Reserved -->
-
+<!--RAX-AUTH added for development-->
 <schema
         elementFormDefault="qualified"
         attributeFormDefault="unqualified"

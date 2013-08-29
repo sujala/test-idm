@@ -130,7 +130,7 @@ public class JSONReaderForUserTest {
                 "    \"enabled\": false\n" +
                 "  }\n" +
                 "}";
-        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getEnabled(), equalTo(false));
+        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).isEnabled(), equalTo(false));
     }
 
     @Test
@@ -147,7 +147,7 @@ public class JSONReaderForUserTest {
         assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getUsername(), nullValue());
         assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getDisplayName(), nullValue());
         assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getEmail(), nullValue());
-        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getEnabled(), equalTo(true));
+        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).isEnabled(), equalTo(true));
     }
 
     @Test(expected = BadRequestException.class)
@@ -223,6 +223,6 @@ public class JSONReaderForUserTest {
                 "    \"display-name\": \"john\",\n" +
                 "  }\n" +
                 "}";
-        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).getEnabled(), equalTo(true));
+        assertThat("user", JSONReaderForUser.getUserFromJSONString(body).isEnabled(), equalTo(true));
     }
 }

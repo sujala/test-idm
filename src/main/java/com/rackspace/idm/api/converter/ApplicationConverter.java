@@ -27,8 +27,8 @@ public class ApplicationConverter {
         application.setDescription(jaxbClient.getDescription());
         application.setScope(jaxbClient.getScope());
         
-        if (jaxbClient.getEnabled() != null) {
-        	application.setEnabled(jaxbClient.getEnabled());
+        if (jaxbClient.isEnabled() != null) {
+        	application.setEnabled(jaxbClient.isEnabled());
         }
         
         if (jaxbClient.getSecretCredentials() != null

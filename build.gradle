@@ -271,14 +271,12 @@ task jaxb() {
 
         ant.xjc(destdir: generatedSrc, extension: true) {
             schema(dir: 'src/main/resources/xsd')
-            arg(value: '-enableIntrospection')
         }
 
         def cloudv11dir = 'src/main/resources/cloudv11'
         ant.xjc(destdir: generatedSrc, extension: true, binding: "$cloudv11dir/cloudv11.xjb") {
             schema(dir: cloudv11dir, excludes: '*.xjb')
             arg(value: '-nv')
-            arg(value: '-enableIntrospection')
             arg(value: '-Xannotate')
         }
 
@@ -286,7 +284,6 @@ task jaxb() {
         ant.xjc(destdir: generatedSrc, extension: true, binding: "$cloudv20dir/v20.xjb") {
             schema(dir: cloudv20dir, excludes: '*.xjb')
             arg(value: '-nv')
-            arg(value: '-enableIntrospection')
             arg(value: '-Xannotate')
         }
     }

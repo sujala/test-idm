@@ -75,7 +75,7 @@ public class JSONReaderForBaseUrlRefTest {
                 "       \"v1Default\": true\n" +
                 "   }\n" +
                 "}";
-        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).getV1Default(), equalTo(true));
+        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).isV1Default(), equalTo(true));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class JSONReaderForBaseUrlRefTest {
                 "    }\n" +
                 "}";
         assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).getId(), equalTo(0));
-        assertThat("baseURlRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).getV1Default(), equalTo(false));
+        assertThat("baseURlRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).isV1Default(), equalTo(false));
     }
 
     @Test(expected = BadRequestException.class)
@@ -122,7 +122,7 @@ public class JSONReaderForBaseUrlRefTest {
                 "       \"href\": \"../samples/baseURLRefs.json\",\n" +
                 "   }\n" +
                 "}";
-        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).getV1Default(), equalTo(false));
+        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONString(body).isV1Default(), equalTo(false));
     }
 
     @Test
@@ -152,7 +152,7 @@ public class JSONReaderForBaseUrlRefTest {
                 "       \"href\": \"../samples/baseURLRefs.json\",\n" +
                 "       \"v1Default\": true\n" +
                 "}";
-        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONStringWithoutWrapper(body).getV1Default(), equalTo(true));
+        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONStringWithoutWrapper(body).isV1Default(), equalTo(true));
     }
 
     @Test(expected = BadRequestException.class)
@@ -190,6 +190,6 @@ public class JSONReaderForBaseUrlRefTest {
                 "       \"id\": \"123\",\n" +
                 "       \"href\": \"../samples/baseURLRefs.json\",\n" +
                 "}";
-        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONStringWithoutWrapper(body).getV1Default(), equalTo(false));
+        assertThat("baseURLRef", JSONReaderForBaseUrlRef.getBaseURLRefFromJSONStringWithoutWrapper(body).isV1Default(), equalTo(false));
     }
 }

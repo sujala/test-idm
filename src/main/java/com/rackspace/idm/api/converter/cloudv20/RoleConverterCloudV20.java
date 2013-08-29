@@ -51,6 +51,7 @@ public class RoleConverterCloudV20 {
 
     public ClientRole fromRole(Role role, String clientId) {
         ClientRole clientRole = mapper.map(role, ClientRole.class);
+        clientRole.setPropagate(role.isPropagate());
         clientRole.setClientId(clientId);
 
         if (clientRole.getRsWeight() < 1) {
@@ -82,7 +83,6 @@ public class RoleConverterCloudV20 {
             Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
             jaxbRole.setDescription(role.getDescription());
             jaxbRole.setId(role.getRoleRsId());
-            //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
 
         return jaxbRole;
     }

@@ -327,7 +327,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private void replaceAddV1Default(BaseURLRef baseUrlRef, Tenant tenant, String baseUrlRefId) {
-        if(baseUrlRef.getV1Default()) {
+        if(baseUrlRef.isV1Default()) {
             if (tenant.getV1Defaults() != null) {
                 // Check for existing v1Default for replace by Service Name
                 CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(String.valueOf(baseUrlRef.getId()));
@@ -918,7 +918,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             Boolean isDisabled = gaUser.isDisabled();
 
-            gaUser.setEnabled(user.getEnabled());
+            gaUser.setEnabled(user.isEnabled());
 
             this.userService.updateUser(gaUser, false);
             if (gaUser.isDisabled() && !isDisabled) {
@@ -978,7 +978,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             gaUser.setMossoId(user.getMossoId());
             gaUser.setNastId(user.getNastId());
-            gaUser.setEnabled(user.getEnabled());
+            gaUser.setEnabled(user.isEnabled());
 
             this.userService.updateUser(gaUser, false);
 

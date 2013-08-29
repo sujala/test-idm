@@ -297,7 +297,7 @@ public class ApplicationConverterTest {
     public void toClientJaxb_withClient_setsEnabled() throws Exception {
         clientDO.setEnabled(true);
         JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
-        assertThat("enabled", applicationJAXBElement.getValue().getEnabled(), equalTo(true));
+        assertThat("enabled", applicationJAXBElement.getValue().isEnabled(), equalTo(true));
     }
 
     @Test

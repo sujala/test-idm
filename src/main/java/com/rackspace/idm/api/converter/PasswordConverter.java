@@ -30,7 +30,7 @@ public class PasswordConverter {
     	PasswordCredentials passwordCredentialsDO = new PasswordCredentials();
     	passwordCredentialsDO.setCurrentPassword(toPasswordDO(passwordCredentials.getCurrentPassword()));
     	passwordCredentialsDO.setNewPassword(toPasswordDO(passwordCredentials.getNewPassword()));
-    	passwordCredentialsDO.setVerifyCurrentPassword(passwordCredentials.getVerifyCurrentPassword());
+    	passwordCredentialsDO.setVerifyCurrentPassword(passwordCredentials.isVerifyCurrentPassword());
 
         return passwordCredentialsDO;
     }

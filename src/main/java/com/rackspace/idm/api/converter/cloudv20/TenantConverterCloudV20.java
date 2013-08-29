@@ -41,13 +41,8 @@ public class TenantConverterCloudV20 {
 
     public com.rackspace.idm.domain.entity.Tenant fromTenant(
             org.openstack.docs.identity.api.v2.Tenant jaxbTenant) {
-
         com.rackspace.idm.domain.entity.Tenant tenant = mapper.map(jaxbTenant, com.rackspace.idm.domain.entity.Tenant.class);
-
-        //Using the Dozer mapper doesn't copy over boolean default values
-        //So we need to set them ourselves.
-        tenant.setEnabled(jaxbTenant.getEnabled());
-
-        return mapper.map(jaxbTenant, com.rackspace.idm.domain.entity.Tenant.class);
+        tenant.setEnabled(jaxbTenant.isEnabled());
+        return tenant;
     }
 }

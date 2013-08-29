@@ -31,6 +31,8 @@ public class RegionConverterCloudV20 {
 
     public Region fromRegion(com.rackspace.docs.identity.api.ext.rax_auth.v1.Region regionEntity) {
         Region region = mapper.map(regionEntity, Region.class);
+        region.setIsDefault(regionEntity.isIsDefault());
+        region.setIsEnabled(regionEntity.isEnabled());
         region.setCloud(config.getString("cloud.region"));
         return region;
     }

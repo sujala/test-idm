@@ -35,7 +35,7 @@ public class UserConverterCloudV20 {
 
     public com.rackspace.idm.domain.entity.User fromUser(User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
-        userEntity.setEnabled(user.getEnabled());
+        userEntity.setEnabled(userEntity.getEnabled());
         return userEntity;
     }
 

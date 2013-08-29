@@ -125,8 +125,8 @@ public class EndpointConverterCloudV20 {
     
     public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
         CloudBaseUrl baseUrl = mapper.map(template, CloudBaseUrl.class);
-        baseUrl.setEnabled(template.getEnabled());
-        baseUrl.setGlobal(template.getGlobal());
+        baseUrl.setEnabled(template.isEnabled());
+        baseUrl.setGlobal(template.isGlobal());
 
         if (template.getVersion() != null) {
             baseUrl.setVersionId(template.getVersion().getId());

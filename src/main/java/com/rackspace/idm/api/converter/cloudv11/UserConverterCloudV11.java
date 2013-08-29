@@ -27,7 +27,7 @@ public class UserConverterCloudV11 {
         userDO.setMossoId(user.getMossoId());
         userDO.setNastId(user.getNastId());
         userDO.setApiKey(user.getKey());
-        userDO.setEnabled(user.getEnabled());
+        userDO.setEnabled(user.isEnabled());
         return userDO;
     }
     

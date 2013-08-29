@@ -43,7 +43,11 @@ public class UserConverter {
         user.setPersonId(jaxbUser.getPersonId());
         user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
+<<<<<<< HEAD
         user.setMaxLoginFailuresExceeded(jaxbUser.getMaxLoginFailuresExceded());
+=======
+        user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
+>>>>>>> Removing enableIntrospection and refactoring
         user.setUsername(jaxbUser.getUsername());
 
         if (jaxbUser.getPasswordCredentials() != null

@@ -59,13 +59,13 @@ public class JSONReaderForUserWithOnlyEnabledTest {
     @Test
     public void getUserWithOnlyEnabled_withValidJSON_returnsUserWithEnabled() throws Exception {
         UserWithOnlyEnabled user = JSONReaderForUserWithOnlyEnabled.getUserWithOnlyEnabledFromJSONString(userOnlyEnabledJSON);
-        assertThat("user enabled", user.getEnabled(), equalTo(false));
+        assertThat("user enabled", user.isEnabled(), equalTo(false));
     }
 
     @Test
     public void getUserWithOnlyEnabled_withEmptyValidJSON_returnsUserWithEnabledTrue() throws Exception {
         UserWithOnlyEnabled user = JSONReaderForUserWithOnlyEnabled.getUserWithOnlyEnabledFromJSONString(emptyUserOnlyEnabledJSON);
-        assertThat("user enabled", user.getEnabled(), equalTo(true));
+        assertThat("user enabled", user.isEnabled(), equalTo(true));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class JSONReaderForUserWithOnlyEnabledTest {
     public void getUserWithOnlyEnabled_withEmptyJSON_returnsNewUserObject() throws Exception {
         UserWithOnlyEnabled user = JSONReaderForUserWithOnlyEnabled.getUserWithOnlyEnabledFromJSONString("{ }");
         assertThat("user id", user.getId(), nullValue());
-        assertThat("user enabled", user.getEnabled(), equalTo(true));
+        assertThat("user enabled", user.isEnabled(), equalTo(true));
     }
 
     @Test(expected = BadRequestException.class)

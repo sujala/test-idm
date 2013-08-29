@@ -29,13 +29,9 @@ public class PolicyConverterCloudV20 {
 
     public Policy fromPolicy(com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy policyEntity) {
         Policy policy = mapper.map(policyEntity, Policy.class);
-
-        //Using the Dozer mapper doesn't copy over boolean default values
-        //So we need to set them ourselves.
-        policy.setEnabled(policyEntity.getEnabled());
-        policy.setGlobal(policyEntity.getGlobal());
-
-        return  policy;
+        policy.setEnabled(policyEntity.isEnabled());
+        policy.setGlobal(policyEntity.isGlobal());
+        return policy;
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {

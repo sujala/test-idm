@@ -90,19 +90,19 @@ public class JSONReaderForPasswordCredentialsTest {
     @Test
     public void getUserPasswordCredentialsFromJSONString_withValidJSON_setsVerifyCurrentPassword() throws Exception {
         UserPasswordCredentials userPasswordCredentialsFromJSONString = JSONReaderForPasswordCredentials.getUserPasswordCredentialsFromJSONString(passwordCredentialsJSON);
-        assertThat("verify current password", userPasswordCredentialsFromJSONString.getVerifyCurrentPassword(), equalTo(false));
+        assertThat("verify current password", userPasswordCredentialsFromJSONString.isVerifyCurrentPassword(), equalTo(false));
     }
 
     @Test
     public void getUserPasswordCredentialsFromJSONString_withValidJSON_withVerifyNotTrueString_setsVerifyCurrentPassword() throws Exception {
         UserPasswordCredentials userPasswordCredentialsFromJSONString = JSONReaderForPasswordCredentials.getUserPasswordCredentialsFromJSONString(passwordCredentialsWeirdVerifyJSON);
-        assertThat("verify current password", userPasswordCredentialsFromJSONString.getVerifyCurrentPassword(), equalTo(true));
+        assertThat("verify current password", userPasswordCredentialsFromJSONString.isVerifyCurrentPassword(), equalTo(true));
     }
 
     @Test
     public void getUserPasswordCredentialsFromJSONString_withValidJEmptyPasswordCredentialsSON_setsNullVerifyCurrentPassword() throws Exception {
         UserPasswordCredentials userPasswordCredentialsFromJSONString = JSONReaderForPasswordCredentials.getUserPasswordCredentialsFromJSONString(emptyPasswordCredentialsJSON);
-        assertThat("verify current password", userPasswordCredentialsFromJSONString.getVerifyCurrentPassword(), nullValue());
+        assertThat("verify current password", userPasswordCredentialsFromJSONString.isVerifyCurrentPassword(), nullValue());
     }
 
     @Test
@@ -121,7 +121,7 @@ public class JSONReaderForPasswordCredentialsTest {
     public void getUserPasswordCredentialsFromJSONString_withEmptyJSON_returnsNewUserPasswordCredentialsObject() throws Exception {
         UserPasswordCredentials userPasswordCredentialsFromJSONString = JSONReaderForPasswordCredentials.getUserPasswordCredentialsFromJSONString("{ }");
         assertThat("user password credentials", userPasswordCredentialsFromJSONString, is(UserPasswordCredentials.class));
-        assertThat("verify current password", userPasswordCredentialsFromJSONString.getVerifyCurrentPassword(), nullValue());
+        assertThat("verify current password", userPasswordCredentialsFromJSONString.isVerifyCurrentPassword(), nullValue());
     }
 
     @Test(expected = BadRequestException.class)
