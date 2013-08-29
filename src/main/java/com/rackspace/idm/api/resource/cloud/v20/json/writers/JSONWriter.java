@@ -120,49 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(AuthenticateResponse.class)) {
-            JSONObject outer = new JSONObject();
-            JSONObject access = new JSONObject();
-            AuthenticateResponse authenticateResponse = (AuthenticateResponse) object;
-            access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
-
-            if (authenticateResponse.getServiceCatalog() != null) {
-                access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
-            }
-
-            if (authenticateResponse.getUser() != null) {
-                access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
-            }
-            outer.put(JSONConstants.ACCESS, access);
-            if (authenticateResponse.getAny().size() > 0) {
-                for (Object response : authenticateResponse.getAny()) {
-                    if (response instanceof JAXBElement && ((JAXBElement) response).getDeclaredType().isAssignableFrom(UserForAuthenticateResponse.class)) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) ((JAXBElement) response).getValue();
-
-                        JSONObject subAccess = new JSONObject();
-                        subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
-                        subAccess.put(JSONConstants.NAME, userForAuthenticateResponse.getName());
-
-                        JSONArray subRoles = new JSONArray();
-
-                        for (Role role : userForAuthenticateResponse.getRoles().getRole()) {
-                            JSONObject subRole = new JSONObject();
-                            subRole.put(JSONConstants.SERVICE_ID, role.getServiceId());
-                            subRole.put(JSONConstants.DESCRIPTION, role.getDescription());
-                            subRole.put(JSONConstants.NAME, role.getName());
-                            subRole.put(JSONConstants.ID, role.getId());
-
-                            subRoles.add(subRole);
-                        }
-
-                        subAccess.put(JSONConstants.ROLES, subRoles);
-                        access.put(JSONConstants.RAX_AUTH_IMPERSONATOR, subAccess);
-                        break;
-                    }
-                }
-            }
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(ImpersonationResponse.class)) {
+        if (object.getClass().equals(ImpersonationResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
             ImpersonationResponse authenticateResponse = (ImpersonationResponse) object;

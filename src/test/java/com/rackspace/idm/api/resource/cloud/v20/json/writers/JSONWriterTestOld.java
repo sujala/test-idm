@@ -107,90 +107,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_typeAuthenticateResponseNoUserNoAny_writesToOutputStream() throws Exception {
-        Token token = new Token();
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        authenticateResponse.setServiceCatalog(serviceCatalog);
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.add(jsonObject);
-        doReturn(jsonObject).when(spy).getToken(token);
-        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
-        spy.writeTo(authenticateResponse, ServiceCatalog.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"},\"serviceCatalog\":[{\"success\":" +
-                "\"This test worked!\"}]}}"));
-    }
-
-    @Test
-    public void writeTo_typeAuthenticateResponseImpersonator_writesImpersonator() throws Exception {
-        Token token = new Token();
-
-        Role role = new Role();
-        role.setServiceId("123");
-        role.setDescription("description");
-        role.setName("name");
-        role.setId("456");
-
-        RoleList roleList = new RoleList();
-        roleList.getRole().add(role);
-
-        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
-        userForAuthenticateResponse.setName("impersonatorName");
-        userForAuthenticateResponse.setId("789");
-        userForAuthenticateResponse.setRoles(roleList);
-
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = new ObjectFactory();
-        JAXBElement<UserForAuthenticateResponse> impersonator = objectFactory.createImpersonator(userForAuthenticateResponse);
-        authenticateResponse.getAny().add(impersonator);
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", "This test worked!");
-
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.add(jsonObject);
-
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(jsonObject).when(spy).getToken(token);
-
-        spy.writeTo(authenticateResponse, ServiceCatalog.class, null, null, null, null, myOut);
-
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"},\"RAX-AUTH:impersonator\":{\"id\":\"789\",\"roles\":[{\"id\":\"456\",\"serviceId\":\"123\",\"description\":\"description\",\"name\":\"name\"}],\"name\":\"impersonatorName\"}}}"));
-    }
-
-    @Test
-    public void writeTo_typeAuthenticateResponseWithUnusableAny_writesToOutputStream() throws Exception {
-        Token token = new Token();
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
-
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        authenticateResponse.setServiceCatalog(serviceCatalog);
-        authenticateResponse.getAny().add(new Token());
-        authenticateResponse.getAny().add(new Token());
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", "This test worked!");
-
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.add(jsonObject);
-
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(jsonObject).when(spy).getToken(token);
-        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
-
-        spy.writeTo(authenticateResponse, ServiceCatalog.class, null, null, null, null, myOut);
-
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
-                "\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
-    }
-
-    @Test
     public void writeTo_typeImpersonationResponse_callsGetToken() throws Exception {
         Token token = new Token();
         ImpersonationResponse impersonationResponse = new ImpersonationResponse();
@@ -1722,34 +1638,6 @@ public class JSONWriterTestOld {
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
-    }
-
-    @Test
-    public void getAuthenticateResponse() throws Exception {
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-
-        TenantForAuthenticateResponse tenant = new TenantForAuthenticateResponse();
-        tenant.setId("id");
-        tenant.setName("name");
-
-        Token token = new Token();
-        token.setExpires(calendar);
-        token.setId("id");
-        token.setTenant(tenant);
-
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
-        authenticateResponse.setServiceCatalog(serviceCatalog);
-        authenticateResponse.setToken(token);
-
-        UserForAuthenticateResponse user = new UserForAuthenticateResponse();
-        user.setId("id");
-        user.setName("name");
-        user.setRoles(new RoleList());
-        authenticateResponse.setUser(user);
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(authenticateResponse, AuthenticateResponse.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":{\"id\":\"id\",\"name\":\"name\"}},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\",\"RAX-AUTH:defaultRegion\":\"\"}}}", myOut.toString());
     }
 
     @Test

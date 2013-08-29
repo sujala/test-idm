@@ -1,15 +1,15 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.cxf.common.util.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.*;
 import org.w3._2005.atom.Link;
 
 import javax.xml.bind.JAXBElement;
@@ -152,5 +152,114 @@ public class JsonWriterHelper {
             }
         }
         return outer;
+    }
+
+    public static JSONObject getToken(Token token) {
+        if(token == null || token.getExpires() == null){
+            throw new BadRequestException("Invalid token.");
+        }
+
+        JSONObject tokenInner = new JSONObject();
+        tokenInner.put(JSONConstants.ID, token.getId());
+        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+
+        if (token.getTenant() != null) {
+            JSONObject tenantInner = new JSONObject();
+            tokenInner.put(JSONConstants.TENANT, tenantInner);
+            tenantInner.put(JSONConstants.ID, token.getTenant().getId());
+            tenantInner.put(JSONConstants.NAME, token.getTenant().getName());
+        }
+
+        if (token.getAny().size() > 0) {
+            for (Object response : token.getAny()) {
+                if (response instanceof JAXBElement) {
+                    JAXBElement jaxbElement = ((JAXBElement)response);
+
+                    if (jaxbElement.getDeclaredType().isAssignableFrom(AuthenticatedBy.class)) {
+                        AuthenticatedBy authenticatedBy = (AuthenticatedBy) ((JAXBElement) response).getValue();
+                        JSONArray credentials = new JSONArray();
+                        for (String credential : authenticatedBy.getCredential()) {
+                            credentials.add(credential);
+                        }
+                        tokenInner.put(JSONConstants.RAX_AUTH_AUTHENTICATED_BY, credentials);
+                    }
+                }
+            }
+        }
+
+        return tokenInner;
+    }
+
+    public static JSONArray getServiceCatalog(ServiceCatalog serviceCatalog) {
+        JSONArray serviceInner = new JSONArray();
+        if (serviceCatalog != null) {
+            for (ServiceForCatalog service : serviceCatalog.getService()) {
+                JSONObject catalogItem = new JSONObject();
+                catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
+                if (service.getName() != null) {
+                    catalogItem.put(JSONConstants.NAME, service.getName());
+                }
+                if (service.getType() != null) {
+                    catalogItem.put(JSONConstants.TYPE, service.getType());
+                }
+                serviceInner.add(catalogItem);
+            }
+        }
+        return serviceInner;
+    }
+
+    public static JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
+        JSONArray endpointList = new JSONArray();
+        for (EndpointForService endpoint : endpoints) {
+            JSONObject endpointItem = new JSONObject();
+            if (endpoint.getTenantId() != null) {
+                endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
+            }
+            if (endpoint.getPublicURL() != null) {
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+            }
+            if (endpoint.getInternalURL() != null) {
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+            }
+            if (endpoint.getRegion() != null) {
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+            }
+            if (endpoint.getVersion() != null) {
+                endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
+                endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
+                endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
+            }
+            endpointList.add(endpointItem);
+        }
+        return endpointList;
+    }
+
+    public static JSONObject getTokenUser(UserForAuthenticateResponse user) {
+        JSONObject userInner = new JSONObject();
+        userInner.put(JSONConstants.ID, user.getId());
+        if (user.getName() != null) {
+            userInner.put(JSONConstants.NAME, user.getName());
+        }
+        JSONArray roleInner = new JSONArray();
+        userInner.put(JSONConstants.ROLES, roleInner);
+        if (user.getRoles() != null) {
+            RoleList roleList = user.getRoles();
+            for (Role role : roleList.getRole()) {
+                roleInner.add(getRole(role));
+            }
+        }
+
+        if (user.getOtherAttributes().size() != 0) {
+            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
+            if (!StringUtils.isEmpty(defaultRegion)) {
+                userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
+            } else {
+                userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
+            }
+        } else {
+            userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
+        }
+
+        return userInner;
     }
 }

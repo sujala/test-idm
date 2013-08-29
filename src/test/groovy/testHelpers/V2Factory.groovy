@@ -248,6 +248,7 @@ class V2Factory {
         def list = services ? services : [].asList()
         new ServiceCatalog().with {
             it.getService().addAll(list)
+            it
         }
     }
     def createTenant() {

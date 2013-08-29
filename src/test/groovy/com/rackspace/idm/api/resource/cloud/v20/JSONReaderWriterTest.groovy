@@ -29,9 +29,13 @@ import org.w3._2005.atom.Link
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import static com.rackspace.idm.JSONConstants.*
+
 class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONWriter writer = new JSONWriter();
+
+    @Shared com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory()
 
     @Shared JSONReaderForRaxAuthRegion readerForRaxAuthRegion = new JSONReaderForRaxAuthRegion()
     @Shared JSONWriterForRaxAuthRegion writerForRaxAuthRegion = new JSONWriterForRaxAuthRegion()
@@ -114,6 +118,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForCredentialListType writerForCredentialListType = new JSONWriterForCredentialListType()
     @Shared JSONWriterForRoles writerForRoles = new JSONWriterForRoles()
     @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
+    @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
 
     def "can read/write region as json"() {
         given:
@@ -877,11 +882,11 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONObject o = outer.get(JSONConstants.EXTENSION)
+        JSONObject o = outer.get(EXTENSION)
         o != null
-        o.get(JSONConstants.NAME) == "name"
-        o.get(JSONConstants.DESCRIPTION) == "description"
-        JSONArray a = o.get(JSONConstants.LINKS)
+        o.get(NAME) == "name"
+        o.get(DESCRIPTION) == "description"
+        JSONArray a = o.get(LINKS)
         a.size() == 2
     }
 
@@ -898,10 +903,10 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONObject o = outer.get(JSONConstants.VERSION)
-        o.get(JSONConstants.ID) == "id"
-        o.get(JSONConstants.STATUS) == "CURRENT"
-        JSONArray a = o.get(JSONConstants.LINKS)
+        JSONObject o = outer.get(VERSION)
+        o.get(ID) == "id"
+        o.get(STATUS) == "CURRENT"
+        JSONArray a = o.get(LINKS)
         a.size() == 2
     }
 
@@ -922,7 +927,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONArray a = outer.get(JSONConstants.EXTENSIONS)
+        JSONArray a = outer.get(EXTENSIONS)
         a.size() == 2
     }
 
@@ -944,11 +949,11 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONArray o = outer.get(JSONConstants.CREDENTIALS)
-        def api = o.getAt(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
-        api.getAt(JSONConstants.API_KEY)[0] == "apiKey"
-        def pwd = o.getAt(JSONConstants.PASSWORD_CREDENTIALS)
-        pwd.getAt(JSONConstants.PASSWORD)[0] == "password"
+        JSONArray o = outer.get(CREDENTIALS)
+        def api = o.getAt(RAX_KSKEY_API_KEY_CREDENTIALS)
+        api.getAt(API_KEY)[0] == "apiKey"
+        def pwd = o.getAt(PASSWORD_CREDENTIALS)
+        pwd.getAt(PASSWORD)[0] == "password"
 
     }
 
@@ -969,9 +974,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONArray o = outer.get(JSONConstants.ROLES)
+        JSONArray o = outer.get(ROLES)
         o.size() == 2
-        ((JSONObject)o[0]).get(JSONConstants.NAME) == "name"
+        ((JSONObject)o[0]).get(NAME) == "name"
     }
 
     def "create read/writer for users" () {
@@ -991,10 +996,68 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         json != null
-        JSONArray o = outer.get(JSONConstants.USERS)
+        JSONArray o = outer.get(USERS)
         o.size() == 2
-        ((JSONObject)o[0]).get(JSONConstants.USERNAME) == "username"
-        ((JSONObject)o[0]).get(JSONConstants.OS_KSADM_PASSWORD) == "password"
+        ((JSONObject)o[0]).get(USERNAME) == "username"
+        ((JSONObject)o[0]).get(OS_KSADM_PASSWORD) == "password"
+    }
+
+
+    def "create read/writer for AuthenticateResponse" () {
+        given:
+        Token token = v2Factory.createToken()
+        ServiceCatalog sc = v2Factory.createServiceCatalog()
+        def role = v2Factory.createRole()
+        def roles = new RoleList().with {
+            it.role = [role, role].asList()
+            it
+        }
+        def user = v2Factory.createUserForAuthenticateResponse("id", "name", roles)
+        def authResponse = v2Factory.createAuthenticateResponse(token, sc, user)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(authResponse, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(ACCESS)
+        JSONObject t = o.get(TOKEN)
+        t.get(ID) == "id"
+        JSONObject u = o.get(USER)
+        u.get(NAME) == "name"
+    }
+
+    def "can write authenticatedBy using json"() {
+        when:
+        def response = v2Factory.createAuthenticateResponse()
+        def authenticatedBy = new AuthenticatedBy().with {
+            it.credential = input.asList()
+            it
+        }
+        response.getToken().any.add(objectFactory.createAuthenticatedBy(authenticatedBy))
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(response, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject authResponse = (JSONObject) parser.parse(json);
+        JSONObject access = (JSONObject)authResponse.get(JSONConstants.ACCESS)
+        JSONObject token = (JSONObject)access.get(JSONConstants.TOKEN)
+        JSONArray authenticatedByList = (JSONArray) token.get(JSONConstants.RAX_AUTH_AUTHENTICATED_BY)
+        authenticatedByList as Set == input as Set
+
+
+        where:
+        input << [
+                ["RSA"],
+                ["RSA", "Password"]
+        ]
     }
 
     def getSecretQA(String id, String question, String answer) {
