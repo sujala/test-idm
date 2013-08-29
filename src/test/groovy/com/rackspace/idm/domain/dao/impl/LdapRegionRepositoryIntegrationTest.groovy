@@ -38,12 +38,12 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
     def "region crud"() {
         when:
         Region region = region(name)
-        List<Region> regions = regionDao.getRegions()
+        List<Region> regions = regionDao.getRegions().collect()
         regionDao.addRegion(region)
-        List<Region> modifiedRegions = regionDao.getRegions()
+        List<Region> modifiedRegions = regionDao.getRegions().collect()
         Region newRegion = regionDao.getRegion(name)
         regionDao.deleteRegion(name)
-        List<Region> originalRegions = regionDao.getRegions()
+        List<Region> originalRegions = regionDao.getRegions().collect()
 
         then:
         modifiedRegions.size() == regions.size() + 1
@@ -53,7 +53,7 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
 
     def "get region by cloud region returns region in cloud"() {
         when:
-        List<Region> emptyRegions = regionDao.getRegions(US_CLOUD_REGION)
+        List<Region> emptyRegions = regionDao.getRegions(US_CLOUD_REGION).collect()
 
         Region region1 = region(name1, US_CLOUD_REGION, true, false)
         Region region2 = region(name2, UK_CLOUD_REGION, true, false)
@@ -61,7 +61,7 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
         regionDao.addRegion(region1)
         regionDao.addRegion(region2)
 
-        List<Region> regions = regionDao.getRegions(US_CLOUD_REGION)
+        List<Region> regions = regionDao.getRegions(US_CLOUD_REGION).collect()
 
         regionDao.deleteRegion(name1)
         regionDao.deleteRegion(name2)
@@ -82,7 +82,7 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
         regionDao.addRegion(region2)
 
         Region newRegion = regionDao.getDefaultRegion(US_CLOUD_REGION)
-        List<Region> regions = regionDao.getRegions()
+        List<Region> regions = regionDao.getRegions().collect()
 
         regionDao.deleteRegion(name1)
         regionDao.deleteRegion(name2)

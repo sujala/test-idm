@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.Region;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class LdapRegionRepository extends LdapGenericRepository<Region> implements RegionDao {
 
@@ -47,12 +45,12 @@ public class LdapRegionRepository extends LdapGenericRepository<Region> implemen
     }
 
     @Override
-    public List<Region> getRegions() {
+    public Iterable<Region> getRegions() {
         return getObjects(searchFilterGetRegions());
     }
 
     @Override
-    public List<Region> getRegions(String cloud) {
+    public Iterable<Region> getRegions(String cloud) {
         return getObjects(searchFilterGetRegionsByCloud(cloud));
     }
 

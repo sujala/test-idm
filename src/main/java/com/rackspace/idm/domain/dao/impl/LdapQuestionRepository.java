@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.Question;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -54,7 +52,7 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question> impl
     }
 
     @Override
-    public List<Question> getQuestions() {
+    public Iterable<Question> getQuestions() {
         Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_QUESTION).build();
         return getObjects(searchFilter);
     }

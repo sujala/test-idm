@@ -50,13 +50,13 @@ public interface ApplicationService {
     
     void updateClientRole(ClientRole role);
     
-    List<ClientRole> getClientRolesByClientId(String clientId);
+    Iterable<ClientRole> getClientRolesByClientId(String clientId);
     
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     
     ClientRole getClientRoleById(String id);
     
-    List<ClientRole> getAllClientRoles();
+    Iterable<ClientRole> getAllClientRoles();
 
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);
 
@@ -64,7 +64,7 @@ public interface ApplicationService {
 
     PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit);
 
-    List<Application> getOpenStackServices();
+    Iterable<Application> getOpenStackServices();
 
     void softDeleteApplication(Application application);
 

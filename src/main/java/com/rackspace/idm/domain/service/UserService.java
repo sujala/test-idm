@@ -27,15 +27,15 @@ public interface UserService {
     
     void deleteUser(String username);
 
-    List<User> getUsersByRCN(String RCN);
+    Iterable<User> getUsersByRCN(String RCN);
 
-    List<User> getUsersByUsername(String username);
+    Iterable<User> getUsersByUsername(String username);
 
     List<User> getAllUsers();
 
-    List<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled);
+    Iterable<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled);
 
-    List<User> getUsersByGroupId(String groupId);
+    Iterable<User> getUsersByGroupId(String groupId);
 
     String generateApiKey();
     
@@ -45,7 +45,7 @@ public interface UserService {
 
     User getUser(String username);
 
-    List<User> getUsersByEmail(String email);
+    Iterable<User> getUsersByEmail(String email);
 
     User getUserByAuthToken(String authToken);
     
@@ -53,7 +53,7 @@ public interface UserService {
 
     User checkAndGetUserById(String id);
     
-    List<User> getUsersByTenantId(String tenantId);
+    Iterable<User> getUsersByTenantId(String tenantId);
 
     User getUserByTenantId(String tenantId);
 
@@ -117,7 +117,7 @@ public interface UserService {
 
     void setScopeAccessService(ScopeAccessService scopeAccessService);
 
-    List<User> getUsersWithDomain(String domainId);
+    Iterable<User> getUsersWithDomain(String domainId);
 
     void setTenantService(TenantService tenantService);
 
@@ -131,7 +131,7 @@ public interface UserService {
 
     void deleteGroupFromUser(String groupId, String userId);
 
-    List<Group> getGroupsForUser(String userId);
+    Iterable<Group> getGroupsForUser(String userId);
 
     boolean isUserInGroup(String userId, String groupId);
 }

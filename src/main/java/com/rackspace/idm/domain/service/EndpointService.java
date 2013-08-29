@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
 
+import java.util.Iterator;
 import java.util.List;
 
 public interface EndpointService {
@@ -16,7 +17,7 @@ public interface EndpointService {
 
     CloudBaseUrl checkAndGetEndpointTemplate(String id);
 
-    List<CloudBaseUrl> getBaseUrls();
+    Iterable<CloudBaseUrl> getBaseUrls();
 
     List<CloudBaseUrl> getGlobalBaseUrls();
     
@@ -26,11 +27,11 @@ public interface EndpointService {
 
     List<CloudBaseUrl> getBaseUrlsByServiceType(String serviceType);
 
-    List<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName);
+    Iterable<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName);
     
     List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType);
 
-    List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
+    Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
 
     List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList);
 

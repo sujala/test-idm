@@ -21,9 +21,9 @@ public interface GenericDao<T> {
     T getObject(Filter searchFilter, SearchScope scope);
     T getObject(Filter searchFilter, String dn);
     T getObject(Filter searchFilter, String dn, SearchScope scope);
-    List<T> getObjects(Filter searchFilter);
-    List<T> getObjects(Filter searchFilter, String dn);
-    List<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
+    Iterable<T> getObjects(Filter searchFilter);
+    Iterable<T> getObjects(Filter searchFilter, String dn);
+    Iterable<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);

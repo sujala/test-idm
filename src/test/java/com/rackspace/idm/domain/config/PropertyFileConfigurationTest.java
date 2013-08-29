@@ -1,13 +1,8 @@
 package com.rackspace.idm.domain.config;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.DataConfiguration;
-import org.apache.commons.configuration.web.AppletConfiguration;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.applet.Applet;
-import java.util.ResourceBundle;
 
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.Matchers.equalTo;
@@ -46,11 +41,6 @@ public class PropertyFileConfigurationTest {
     public void getConfig_returnsConfiguration() throws Exception {
         doReturn(configuration).when(spy).readConfigFile(anyString());
         assertThat("configuration", spy.getConfig(), instanceOf(Configuration.class));
-    }
-
-    @Test
-    public void faultMessageBundle_returnsResourceBundle() throws Exception {
-        assertThat("resource bundle",propertyFileConfiguration.faultMessageBundle(),instanceOf(ResourceBundle.class));
     }
 
     @Test

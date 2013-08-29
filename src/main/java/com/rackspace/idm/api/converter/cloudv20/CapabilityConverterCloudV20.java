@@ -45,7 +45,7 @@ public class CapabilityConverterCloudV20 {
         return mapper.map(capabilityEntity, com.rackspace.idm.domain.entity.Capability.class);
     }
 
-    public JAXBElement<Capabilities> toCapabilities(List<com.rackspace.idm.domain.entity.Capability> capabilities) {
+    public JAXBElement<Capabilities> toCapabilities(Iterable<com.rackspace.idm.domain.entity.Capability> capabilities) {
         Capabilities capabilitiesEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities();
         if (capabilities != null) {
             for (com.rackspace.idm.domain.entity.Capability capability : capabilities) {

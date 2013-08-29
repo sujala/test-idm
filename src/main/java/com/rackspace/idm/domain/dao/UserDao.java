@@ -18,7 +18,7 @@ public interface UserDao {
 
     void removeUsersFromClientGroup(ClientGroup group);
 
-    List<User> getUsers();
+    Iterable<User> getUsers();
 
     PaginatorContext<User> getUsers(int offset, int limit);
 
@@ -26,9 +26,9 @@ public interface UserDao {
 
     PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit);
 
-    List<User> getUsersByRCN(String RCN);
+    Iterable<User> getUsersByRCN(String RCN);
 
-    List<User> getUsersByUsername(String username);
+    Iterable<User> getUsersByUsername(String username);
 
     String[] getGroupIdsForUser(String username);
 
@@ -36,7 +36,7 @@ public interface UserDao {
 
     User getUserById(String id);
 
-    List<User> getUsersByDomain(String domainId);
+    Iterable<User> getUsersByDomain(String domainId);
 
     User getUserByRPN(String rpn);
 
@@ -44,9 +44,9 @@ public interface UserDao {
 
     User getUserByUsername(String username);
 
-    List<User> getUsersByEmail(String email);
+    Iterable<User> getUsersByEmail(String email);
 
-    List<User> getUsers(List<String> idList);
+    Iterable<User> getUsers(List<String> idList);
 
     PaginatorContext<User> getUsersToReEncrypt(int offset, int limit);
 
@@ -70,13 +70,13 @@ public interface UserDao {
 
     void unSoftDeleteUser(User user);
 
-    List<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
+    Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
 
-    List<User> getUsersByGroupId(String groupId);
+    Iterable<User> getUsersByGroupId(String groupId);
 
     void addGroupToUser(String userId, String groupId);
 
     void deleteGroupFromUser(String groupId, String userId);
 
-    List<Group> getGroupsForUser(String userId);
+    Iterable<Group> getGroupsForUser(String userId);
 }

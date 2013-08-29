@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: matt.colton
@@ -53,16 +51,16 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
 
     @Override
     public Group getGroupByName(String name){
-        List<Group> groups = getObjects(searchFilterGetGroupByName(name));
-        if (groups.size() > 0) {
-            return groups.get(0);
+        Iterable<Group> groups = getObjects(searchFilterGetGroupByName(name));
+        if (groups.iterator().hasNext()) {
+            return groups.iterator().next();
         } else {
             return null;
         }
     }
 
     @Override
-    public List<Group> getGroups() {
+    public Iterable<Group> getGroups() {
         return getObjects(searchFilterGetGroups());
     }
 

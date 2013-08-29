@@ -11,9 +11,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.List;
-
 @Component
 public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess> implements ScopeAccessDao, DaoGetEntityType {
 
@@ -49,7 +46,7 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public List<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user) {
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user) {
         return getObjects(searchFilterGetAllImpersonatedScopeAccess(), user.getUniqueId());
     }
 
@@ -74,7 +71,7 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesByUserId(String userId) {
+    public Iterable<ScopeAccess> getScopeAccessesByUserId(String userId) {
         return getObjects(searchFilterGetScopeAccessByUserId(userId));
     }
 
@@ -84,12 +81,12 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccesses(UniqueId object) {
+    public Iterable<ScopeAccess> getScopeAccesses(UniqueId object) {
         return getObjects(searchFilterGetScopeAccesses(), object.getUniqueId());
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId) {
+    public Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId) {
         return getObjects(searchFilterGetScopeAccessesByClientId(clientId));
     }
 
@@ -126,22 +123,21 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     private ScopeAccess getMostRecentScopeAccess(UniqueId object, Filter filter) throws NotFoundException {
-        List<ScopeAccess> scopeAccessList = getObjects(filter, object.getUniqueId());
+        Iterable<ScopeAccess> scopeAccessList = getObjects(filter, object.getUniqueId());
 
-        int mostRecentIndex = 0;
-
-        if (scopeAccessList.size() == 0) {
+        if (!scopeAccessList.iterator().hasNext()) {
             return null;
         }
 
-        for (int i = 0; i < scopeAccessList.size(); i++) {
-            Date max = scopeAccessList.get(mostRecentIndex).getAccessTokenExp();
-            Date current = scopeAccessList.get(i).getAccessTokenExp();
-            if (max.before(current)) {
-                mostRecentIndex = i;
+        ScopeAccess mostRecentScopeAccess = null;
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (mostRecentScopeAccess == null || mostRecentScopeAccess.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
+                mostRecentScopeAccess = scopeAccess;
             }
         }
-        return scopeAccessList.get(mostRecentIndex);
+
+        return mostRecentScopeAccess;
+
     }
 
     private Filter searchFilterGetAllImpersonatedScopeAccess() {

@@ -53,11 +53,11 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
     def "adding and deleting client roles"() {
         when:
         ClientRole role = clientRole(sharedName4, sharedRandom + "4")
-        List<ClientRole> beforeClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
+        List<ClientRole> beforeClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication).collect()
         clientRoleDao.addClientRole(sharedApplication, role)
-        List<ClientRole> clientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
+        List<ClientRole> clientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication).collect()
         clientRoleDao.deleteClientRole(role)
-        List<ClientRole> afterClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
+        List<ClientRole> afterClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication).collect()
 
         then:
         clientRoleList.size() == beforeClientRoleList.size() + 1

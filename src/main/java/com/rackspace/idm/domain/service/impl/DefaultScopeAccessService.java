@@ -124,10 +124,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
-        List<ScopeAccess> existing = scopeAccessDao.getAllImpersonatedScopeAccessForUser(user);
         ImpersonatedScopeAccess mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(user, impersonatingUsername);
 
-        for (ScopeAccess scopeAccess : existing) {
+        for (ScopeAccess scopeAccess : scopeAccessDao.getAllImpersonatedScopeAccessForUser(user)) {
             if (scopeAccess.isAccessTokenExpired(new DateTime())) {
                 scopeAccessDao.deleteScopeAccess(scopeAccess);
             }
@@ -282,9 +281,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (client == null) {
             return;
         }
-        List<ScopeAccess> saList = this.scopeAccessDao.getScopeAccesses(client);
 
-        for (ScopeAccess sa : saList) {
+        for (ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(client)) {
             sa.setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(sa);
         }
@@ -299,10 +297,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        final List<ScopeAccess> saList = this.scopeAccessDao
-                .getScopeAccesses(user);
-
-        for (final ScopeAccess sa : saList) {
+        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
             Date expireDate =  sa.getAccessTokenExp();
             sa.setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(sa);
@@ -330,10 +325,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        final List<ScopeAccess> saList = this.scopeAccessDao
-                .getScopeAccesses(user);
-
-        for (final ScopeAccess sa : saList) {
+        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
             Date expireDate =  sa.getAccessTokenExp();
             sa.setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(sa);
@@ -403,14 +395,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessListByUserId(String userId) {
+    public Iterable<ScopeAccess> getScopeAccessListByUserId(String userId) {
         logger.debug("Getting ScopeAccess list by user id {}", userId);
         if (userId == null) {
             throw new NotFoundException("Invalid user id; user id cannot be null");
         }
-        final List<ScopeAccess> scopeAccessList = this.scopeAccessDao.getScopeAccessesByUserId(userId);
-        logger.debug("Got ScopeAccess {} by user id {}", scopeAccessList, userId);
-        return scopeAccessList;
+        return this.scopeAccessDao.getScopeAccessesByUserId(userId);
     }
 
     @Override
@@ -442,19 +432,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId) {
+    public Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId) {
         logger.debug("Getting ScopeAccesses by parent {} and clientId", user, clientId);
-        List<ScopeAccess> sa = this.scopeAccessDao.getScopeAccessesByClientId(user, clientId);
-        logger.debug("Got {} ScopeAccesses for parent", sa);
-        return sa;
+        return this.scopeAccessDao.getScopeAccessesByClientId(user, clientId);
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId) {
+    public Iterable<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId) {
         logger.debug("Getting ScopeAccesses by parent {} and clientId", application, clientId);
-        List<ScopeAccess> sa = this.scopeAccessDao.getScopeAccessesByClientId(application, clientId);
-        logger.debug("Got {} ScopeAccesses for parent", sa);
-        return sa;
+        return this.scopeAccessDao.getScopeAccessesByClientId(application, clientId);
     }
 
     // Return UserScopeAccess from the directory, valid, expired or null
@@ -539,24 +525,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void deleteScopeAccessesForApplication(Application application, String clientId) {
-        List<ScopeAccess> saList = getScopeAccessesForApplicationByClientId(application, clientId);
-        for (ScopeAccess sa : saList) {
+        for (ScopeAccess sa : getScopeAccessesForApplicationByClientId(application, clientId)) {
             deleteScopeAccess(sa);
         }
     }
 
     @Override
     public void deleteScopeAccessesForUser(User user, String clientId) {
-        List<ScopeAccess> saList = getScopeAccessesForUserByClientId(user, clientId);
-        for (ScopeAccess sa : saList) {
+        for (ScopeAccess sa : getScopeAccessesForUserByClientId(user, clientId)) {
             deleteScopeAccess(sa);
         }
     }
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
-        List<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
-        if (scopeAccessList.size() == 0) {
+        Iterable<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
+        if (! scopeAccessList.iterator().hasNext()) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             if (authenticatedBy != null) {
                 scopeAccess.setAuthenticatedBy(authenticatedBy);
@@ -655,12 +639,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesForUser(User user) {
+    public Iterable<ScopeAccess> getScopeAccessesForUser(User user) {
         return scopeAccessDao.getScopeAccesses(user);
     }
 
     @Override
-    public List<ScopeAccess> getScopeAccessesForApplication(Application application) {
+    public Iterable<ScopeAccess> getScopeAccessesForApplication(Application application) {
         return scopeAccessDao.getScopeAccesses(application);
     }
 

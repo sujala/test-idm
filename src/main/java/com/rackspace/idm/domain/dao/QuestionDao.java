@@ -17,5 +17,5 @@ public interface QuestionDao {
     void updateQuestion(Question question);
     void deleteQuestion(String questionId);
     Question getQuestion(String questionId);
-    List<Question> getQuestions();
+    Iterable<Question> getQuestions();
 }

@@ -20,5 +20,5 @@ public interface DomainDao {
     PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
-    List<Domain> getDomainsForTenant(List<Tenant> tenants);
+    Iterable<Domain> getDomainsForTenant(List<Tenant> tenants);
 }

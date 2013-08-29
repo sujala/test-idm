@@ -43,52 +43,52 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForApplication(Application application) {
+    public Iterable<TenantRole> getTenantRolesForApplication(Application application) {
         return getObjects(searchFilterGetTenantRoles(), application.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForApplication(Application application, String applicationId) {
+    public Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId) {
         return getObjects(searchFilterGetTenantRolesByApplication(applicationId), application.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId) {
+    public Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId) {
         return getObjects(searchFilterGetTenantRolesByApplicationAndTenantId(applicationId, tenantId), application.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user) {
+    public Iterable<TenantRole> getTenantRolesForUser(User user) {
         return getObjects(searchFilterGetTenantRoles(), user.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user, String applicationId) {
+    public Iterable<TenantRole> getTenantRolesForUser(User user, String applicationId) {
         return getObjects(searchFilterGetTenantRolesByApplication(applicationId), user.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
+    public Iterable<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
         return getObjects(searchFilterGetTenantRolesByApplicationAndTenantId(applicationId, tenantId), user.getUniqueId());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
+    public Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
         return getObjects(searchFilterGetTenantRoles(), getSearchDnForScopeAccess(scopeAccess));
     }
 
     @Override
-    public List<TenantRole> getAllTenantRolesForTenant(String tenantId) {
+    public Iterable<TenantRole> getAllTenantRolesForTenant(String tenantId) {
         return getObjects(searchFilterGetTenantRolesByTenantId(tenantId));
     }
 
     @Override
-    public List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
+    public Iterable<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
         return getObjects(searchFilterGetTenantRolesByTenantIdAndRoleId(tenantId, roleId));
     }
 
     @Override
-    public List<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
+    public Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
         return getObjects(searchFilterGetTenantRolesByRoleId(role.getId()));
     }
 
@@ -115,9 +115,8 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public List<String> getIdsForUsersWithTenantRole(String roleId) {
         List<String> userIds = new ArrayList<String>();
-        List<TenantRole> tenantRoles = getObjects(searchFilterGetTenantRolesByRoleId(roleId));
 
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : getObjects(searchFilterGetTenantRolesByRoleId(roleId))) {
             try {
                 userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
             } catch (LDAPException e) {
