@@ -120,13 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-         if (object.getClass().equals(VersionChoice.class)) {
-            VersionChoice versionChoice = (VersionChoice) object;
-            jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
-        } else if (object.getClass().equals(Extensions.class)) {
-            Extensions extensions = (Extensions) object;
-            jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-        } else if (object.getClass().equals(CredentialListType.class)) {
+        if (object.getClass().equals(CredentialListType.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
 
@@ -350,49 +344,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
         }
         return linkArray;
-    }
-
-    JSONObject getVersionChoice(VersionChoice versionChoice) {
-
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-
-        outer.put("version", inner);
-
-        inner.put("id", versionChoice.getId());
-        if (versionChoice.getStatus() != null) {
-            inner.put("status", versionChoice.getStatus().toString());
-        }
-
-        XMLGregorianCalendar updated = versionChoice.getUpdated();
-
-        if (updated != null) {
-            inner.put("updated", updated.toXMLFormat());
-        }
-
-        if (!versionChoice.getAny().isEmpty()) {
-            JSONArray linkArray = getLinks(versionChoice.getAny());
-            if (!linkArray.isEmpty()) {
-                inner.put("links", linkArray);
-            }
-        }
-
-
-        MediaTypeList mtl = versionChoice.getMediaTypes();
-        if (mtl != null && !mtl.getMediaType().isEmpty()) {
-            JSONArray typeArray = new JSONArray();
-            for (org.openstack.docs.common.api.v1.MediaType mt : versionChoice.getMediaTypes().getMediaType()) {
-                JSONObject jtype = new JSONObject();
-                jtype.put("base", mt.getBase());
-                jtype.put("type", mt.getType());
-                typeArray.add(jtype);
-            }
-            JSONObject typeValues = new JSONObject();
-            typeValues.put("values", typeArray);
-            inner.put("media-types", typeValues);
-        }
-        return outer;
-
     }
 
     @SuppressWarnings("unchecked")
@@ -888,17 +839,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
         }
         return baseUrls;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getExtensionList(Extensions extensions) {
-        JSONObject outer = new JSONObject();
-        JSONArray list = new JSONArray();
-        outer.put(JSONConstants.EXTENSIONS, list);
-        for (Extension extension : extensions.getExtension()) {
-            list.add(getExtensionWithoutWrapper(extension));
-        }
-        return outer;
     }
 
     @SuppressWarnings("unchecked")

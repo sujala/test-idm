@@ -69,6 +69,7 @@ public final class JSONConstants {
     public static final String RAX_KSQA_SECRET_QA = "RAX-KSQA:secretQA";
     public static final String RAX_KSGRP_GROUP = "RAX-KSGRP:group";
     public static final String RAX_KSGRP_GROUPS = "RAX-KSGRP:groups";
+    public static final String STATUS = "status";
     public static final String SECRET = "secret";
     public static final String SERVICECATALOG = "serviceCatalog";
     public static final String SERVICES = "services";

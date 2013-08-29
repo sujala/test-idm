@@ -11,6 +11,8 @@ import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import org.openstack.docs.common.api.v1.Extension
+import org.openstack.docs.common.api.v1.VersionChoice
+import org.openstack.docs.common.api.v1.VersionStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -477,6 +479,25 @@ class V1Factory {
             it.description = description
             it.name = name
             it.namespace = namespace
+            it.any = [jaxBLink, jaxBLink].asList()
+            it
+        }
+    }
+
+    def createVersionChoice(){
+        return createVersionChoice("id", VersionStatus.CURRENT)
+    }
+
+    def createVersionChoice(String id, VersionStatus status){
+        def link = new Link().with {
+            it.href = "href"
+            it.type = "application/xhtml+xml"
+            it
+        }
+        def jaxBLink = new JAXBElement(new QName("org.w3._2005.atom", "link"), Link, link)
+        new VersionChoice().with {
+            it.id = id
+            it.status = status
             it.any = [jaxBLink, jaxBLink].asList()
             it
         }

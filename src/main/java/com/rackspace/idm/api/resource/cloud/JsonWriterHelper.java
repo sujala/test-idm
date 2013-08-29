@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.openstack.docs.common.api.v1.Extension;
 import org.w3._2005.atom.Link;
 
 import javax.xml.bind.JAXBElement;
@@ -38,5 +40,26 @@ public class JsonWriterHelper {
             }
         }
         return linkArray;
+    }
+
+    public static JSONObject getExtensionWithoutWrapper(Extension extension) {
+        JSONObject outer = new JSONObject();
+
+        outer.put(JSONConstants.NAME, extension.getName());
+        outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
+        outer.put(JSONConstants.ALIAS, extension.getAlias());
+        if (extension.getUpdated() != null) {
+            outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
+        }
+        outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
+
+        if (extension.getAny().size() > 0) {
+            JSONArray links = getLinks(extension.getAny());
+            if (links.size() > 0) {
+                outer.put(JSONConstants.LINKS, links);
+            }
+        }
+
+        return outer;
     }
 }

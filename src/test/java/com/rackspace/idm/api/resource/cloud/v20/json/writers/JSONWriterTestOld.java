@@ -98,26 +98,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_typeVersionChoice_callsGetVersionChoice() throws Exception {
-        VersionChoice versionChoice = new VersionChoice();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getVersionChoice(versionChoice);
-        spy.writeTo(versionChoice, VersionChoice.class, null, null, null, null, myOut);
-        verify(spy).getVersionChoice(versionChoice);
-    }
-
-    @Test
-    public void writeTo_typeVersionChoice_writesToOutputStream() throws Exception {
-        VersionChoice versionChoice = new VersionChoice();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getVersionChoice(versionChoice);
-        spy.writeTo(versionChoice, VersionChoice.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
-    }
-
-    @Test
     public void writeTo_typeCredentialListTypeNullValue_runsSuccessfully() throws Exception {
         JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, null);
         CredentialListType credentialListType = new CredentialListType();
@@ -681,157 +661,6 @@ public class JSONWriterTestOld {
         String jsonText = JSONValue.toJSONString(jsonArray);
         myOut.write(jsonText.getBytes());
         assertThat("string",myOut.toString(), equalTo("[]"));
-    }
-
-    @Test
-    public void getVersionChoice_allFieldsPopulated_returnsFullJSONObject() throws Exception {
-        Link link = new Link();
-        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        mediaTypeList.getMediaType().add(new MediaType());
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.setUpdated(calendar1);
-        versionChoice.getAny().add(jaxbElement);
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]," +
-            "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
-    }
-
-    @Test
-    public void getVersionChoice_noStatus_returnsJSONObjectNoStatus() throws Exception {
-        Link link = new Link();
-        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        mediaTypeList.getMediaType().add(new MediaType());
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setUpdated(calendar1);
-        versionChoice.getAny().add(jaxbElement);
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"links\":[{}]," +
-                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
-    }
-
-    @Test
-    public void getVersionChoice_noUpdated_returnsJSONObjectNoUpdatedField() throws Exception {
-        Link link = new Link();
-        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        mediaTypeList.getMediaType().add(new MediaType());
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.getAny().add(jaxbElement);
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"status\":\"ALPHA\",\"links\":[{}]," +
-                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
-    }
-
-    @Test
-    public void getVersionChoice_noLinks_returnsJSONObjectNoLinks() throws Exception {
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        mediaTypeList.getMediaType().add(new MediaType());
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.setUpdated(calendar1);
-        versionChoice.getAny().add(new Link());
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\"," +
-                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
-    }
-
-    @Test
-    public void getVersionChoice_anyFieldEmpty_returnsJSONObjectNoLinks() throws Exception {
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        mediaTypeList.getMediaType().add(new MediaType());
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.setUpdated(calendar1);
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\"," +
-                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
-    }
-
-    @Test
-    public void getVersionChoice_MediaListTypeNull_JSONObjectNoMediaTypes() throws Exception {
-        Link link = new Link();
-        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.setUpdated(calendar1);
-        versionChoice.getAny().add(jaxbElement);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
-    }
-
-    @Test
-    public void getVersionChoice_MediaTypeListEmpty_returnsJSONObjectNoMediaTypes() throws Exception {
-        Link link = new Link();
-        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
-        MediaTypeList mediaTypeList = new MediaTypeList();
-        VersionStatus versionStatus = VersionStatus.ALPHA;
-        DatatypeFactory f = DatatypeFactory.newInstance();
-        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
-        VersionChoice versionChoice = new VersionChoice();
-        versionChoice.setStatus(versionStatus);
-        versionChoice.setUpdated(calendar1);
-        versionChoice.getAny().add(jaxbElement);
-        versionChoice.setMediaTypes(mediaTypeList);
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-
-        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
-        String jsonText = JSONValue.toJSONString(jsonObject);
-        myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
     }
 
     @Test
@@ -1859,36 +1688,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void getExtensionList_listPopulated_returnsJSONObject() throws Exception {
-        Extension extension1 = new Extension();
-        Extension extension2 = new Extension();
-        Extensions extensions = new Extensions();
-        extensions.getExtension().add(extension1);
-        extensions.getExtension().add(extension2);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success","This test worked!");
-        doReturn(jsonObject).when(spy).getExtensionWithoutWrapper(extension1);
-        doReturn(jsonObject).when(spy).getExtensionWithoutWrapper(extension2);
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JSONObject result = spy.getExtensionList(extensions);
-        String jsonText = JSONValue.toJSONString(result);
-        myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"extensions\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}"));
-    }
-
-    @Test
-    public void getExtensionList_listEmpty_returnsJSONObject() throws Exception {
-        Extensions extensions = new Extensions();
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JSONObject result = writer.getExtensionList(extensions);
-        String jsonText = JSONValue.toJSONString(result);
-        myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"extensions\":[]}"));
-    }
-
-    @Test
     public void getEndpoint_fullyPopulated_returnsJSONObject() throws Exception {
         Endpoint endpoint = new Endpoint();
         endpoint.setRegion("USA");
@@ -2133,15 +1932,6 @@ public class JSONWriterTestOld {
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
-    }
-
-    @Test
-    public void getExtensions() throws Exception {
-        Extensions extensions = new Extensions();
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(extensions, Extensions.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"extensions\":[]}", myOut.toString());
     }
 
     @Test

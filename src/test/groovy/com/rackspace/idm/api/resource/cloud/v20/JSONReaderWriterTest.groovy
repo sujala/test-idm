@@ -6,6 +6,8 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForVersionChoice
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
@@ -15,6 +17,8 @@ import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.openstack.docs.common.api.v1.Extension
+import org.openstack.docs.common.api.v1.Extensions
+import org.openstack.docs.common.api.v1.VersionChoice
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -105,6 +109,8 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForRaxAuthDefaultRegionServices writerForDefaultRegionServices = new JSONWriterForRaxAuthDefaultRegionServices()
 
     @Shared JSONWriterForExtension writerForExtension = new JSONWriterForExtension()
+    @Shared JSONWriterForExtensions writerForExtensions = new JSONWriterForExtensions()
+    @Shared JSONWriterForVersionChoice writerForVersionChoice = new JSONWriterForVersionChoice()
 
     def "can read/write region as json"() {
         given:
@@ -873,6 +879,47 @@ class JSONReaderWriterTest extends RootServiceTest {
         o.get(JSONConstants.NAME) == "name"
         o.get(JSONConstants.DESCRIPTION) == "description"
         JSONArray a = o.get(JSONConstants.LINKS)
+        a.size() == 2
+    }
+
+    def "create read/writer for versionChoice" () {
+        given:
+        def versionChoice = v1Factory.createVersionChoice()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForVersionChoice.writeTo(versionChoice, VersionChoice.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(JSONConstants.VERSION)
+        o.get(JSONConstants.ID) == "id"
+        o.get(JSONConstants.STATUS) == "CURRENT"
+        JSONArray a = o.get(JSONConstants.LINKS)
+        a.size() == 2
+    }
+
+    def "create read/writer for extensions" () {
+        given:
+        def extension = v1Factory.createExtension()
+        def extensions = new Extensions().with {
+            it.extension = [extension, extension].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForExtensions.writeTo(extensions, Extensions.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.EXTENSIONS)
         a.size() == 2
     }
 
