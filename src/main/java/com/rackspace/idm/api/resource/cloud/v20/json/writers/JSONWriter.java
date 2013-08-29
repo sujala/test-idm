@@ -120,25 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(RoleList.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            RoleList roleList = (RoleList) object;
-            for (Role role : roleList.getRole()) {
-                list.add(getRole(role));
-            }
-            outer.put(JSONConstants.ROLES, list);
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(UserList.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            UserList userList = (UserList) object;
-            for (User user : userList.getUser()) {
-                list.add(getUser(user));
-            }
-            outer.put(JSONConstants.USERS, list);
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(AuthenticateResponse.class)) {
+        if (object.getClass().equals(AuthenticateResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) object;
@@ -591,45 +573,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         outer.put(JSONConstants.RAX_KSQA_SECRET_QA, inner);
         inner.put(JSONConstants.ANSWER, secrets.getAnswer());
         inner.put(JSONConstants.QUESTION, secrets.getQuestion());
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getUser(User user) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, user.getId());
-        outer.put(JSONConstants.USERNAME, user.getUsername());
-        if (user.getEmail() != null) {
-            outer.put(JSONConstants.EMAIL, user.getEmail());
-        }
-        outer.put(JSONConstants.ENABLED, user.isEnabled());
-        if (user instanceof UserForCreate && ((UserForCreate) user).getPassword() != null) {
-            outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
-        }
-        if (user.getCreated() != null) {
-            outer.put(JSONConstants.CREATED, user.getCreated().toString());
-
-        }
-        if (user.getUpdated() != null) {
-            outer.put(JSONConstants.UPDATED, user.getUpdated().toString());
-        }
-        if (user.getOtherAttributes().size() != 0) {
-
-            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
-            if (!StringUtils.isEmpty(defaultRegion)) {
-                outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
-            } else {
-                outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
-            }
-            String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
-            if (!StringUtils.isEmpty(password)) {
-                outer.put(JSONConstants.OS_KSADM_PASSWORD, password);
-            }
-            String domainId = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"));
-            if (!StringUtils.isEmpty(domainId)) {
-                outer.put(JSONConstants.RAX_AUTH_DOMAIN_ID, domainId);
-            }
-        }
         return outer;
     }
 

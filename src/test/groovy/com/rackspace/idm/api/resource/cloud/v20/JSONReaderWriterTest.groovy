@@ -112,6 +112,8 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForExtensions writerForExtensions = new JSONWriterForExtensions()
     @Shared JSONWriterForVersionChoice writerForVersionChoice = new JSONWriterForVersionChoice()
     @Shared JSONWriterForCredentialListType writerForCredentialListType = new JSONWriterForCredentialListType()
+    @Shared JSONWriterForRoles writerForRoles = new JSONWriterForRoles()
+    @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
 
     def "can read/write region as json"() {
         given:
@@ -948,6 +950,51 @@ class JSONReaderWriterTest extends RootServiceTest {
         def pwd = o.getAt(JSONConstants.PASSWORD_CREDENTIALS)
         pwd.getAt(JSONConstants.PASSWORD)[0] == "password"
 
+    }
+
+    def "create read/writer for roles" () {
+        given:
+        def role = v2Factory.createRole()
+        def roles = new RoleList().with {
+            it.role = [role, role].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForRoles.writeTo(roles, RoleList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(JSONConstants.ROLES)
+        o.size() == 2
+        ((JSONObject)o[0]).get(JSONConstants.NAME) == "name"
+    }
+
+    def "create read/writer for users" () {
+        given:
+        def user = v2Factory.createUserForCreate("username", "displayName", "email", true, "ORD", "domainId", "password")
+        def users = new UserList().with {
+            it.user = [user, user].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUsers.writeTo(users, UserList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(JSONConstants.USERS)
+        o.size() == 2
+        ((JSONObject)o[0]).get(JSONConstants.USERNAME) == "username"
+        ((JSONObject)o[0]).get(JSONConstants.OS_KSADM_PASSWORD) == "password"
     }
 
     def getSecretQA(String id, String question, String answer) {
