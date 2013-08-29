@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.w3._2005.atom.Link;
 
 import javax.xml.bind.JAXBElement;
@@ -60,6 +62,25 @@ public class JsonWriterHelper {
             }
         }
 
+        return outer;
+    }
+
+    public static JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        outer.put(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.API_KEY, creds.getApiKey());
+        return outer;
+    }
+
+    public static JSONObject getPasswordCredentials(
+            PasswordCredentialsBase creds) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.PASSWORD, creds.getPassword());
         return outer;
     }
 }

@@ -107,41 +107,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_typeCredentialListTypeApiKeyCredentials_callsGetApiKeyCredentials() throws Exception {
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, apiKeyCredentials);
-        CredentialListType credentialListType = new CredentialListType();
-        credentialListType.getCredential().add(apiKeyCredentialsJAXBElement);
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getApiKeyCredentials(apiKeyCredentials);
-        spy.writeTo(credentialListType, CredentialListType.class, null, null, null, null, myOut);
-        verify(spy).getApiKeyCredentials(apiKeyCredentials);
-    }
-
-    @Test
-    public void writeTo_typeCredentialListTypePasswordCredentials_callsGetPasswordCredentials() throws Exception {
-        PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase();
-        JAXBElement<PasswordCredentialsBase> passwordCredentialsBaseJAXBElement = new JAXBElement<PasswordCredentialsBase>(QName.valueOf("fee"), PasswordCredentialsBase.class, passwordCredentialsBase);
-        CredentialListType credentialListType = new CredentialListType();
-        credentialListType.getCredential().add(passwordCredentialsBaseJAXBElement);
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getPasswordCredentials(passwordCredentialsBase);
-        spy.writeTo(credentialListType, CredentialListType.class, null, null, null, null, myOut);
-        verify(spy).getPasswordCredentials(passwordCredentialsBase);
-    }
-
-    @Test
-    public void writeTo_typeCredentialListTypeEC2CredentialType_writesBlankListToOutputStream() throws Exception {
-        Ec2CredentialsType ec2CredentialsType = new Ec2CredentialsType();
-        JAXBElement<Ec2CredentialsType> ec2CredentialsTypeJAXBElement = new JAXBElement<Ec2CredentialsType>(QName.valueOf("fee"), Ec2CredentialsType.class, ec2CredentialsType);
-        CredentialListType credentialListType = new CredentialListType();
-        credentialListType.getCredential().add(ec2CredentialsTypeJAXBElement);
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(credentialListType, CredentialListType.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"credentials\":[]}"));
-    }
-
-    @Test
     public void writeTo_typeRoleList_callsGetRole() throws Exception {
         Role role = new Role();
         RoleList roleList = new RoleList();
@@ -1932,26 +1897,6 @@ public class JSONWriterTestOld {
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
-    }
-
-    @Test
-    public void getPasswordCredentialsBase_returnsValidObject() throws Exception {
-        PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase();
-        passwordCredentialsBase.setPassword("bananas");
-        passwordCredentialsBase.setUsername("jqsmith");
-        JSONObject jsonObject = writer.getPasswordCredentials(passwordCredentialsBase);
-        JSONObject jsonObject1 = (JSONObject) jsonObject.get("passwordCredentials");
-        assertThat("string", jsonObject1.get("username").toString(), equalTo("jqsmith"));
-        assertThat("string", jsonObject1.get("password").toString(), equalTo("bananas"));
-    }
-
-    @Test
-    public void getCredentialListType() throws Exception {
-        CredentialListType creds = new CredentialListType();
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(creds, CredentialListType.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"credentials\":[]}", myOut.toString());
     }
 
     @Test

@@ -111,6 +111,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForExtension writerForExtension = new JSONWriterForExtension()
     @Shared JSONWriterForExtensions writerForExtensions = new JSONWriterForExtensions()
     @Shared JSONWriterForVersionChoice writerForVersionChoice = new JSONWriterForVersionChoice()
+    @Shared JSONWriterForCredentialListType writerForCredentialListType = new JSONWriterForCredentialListType()
 
     def "can read/write region as json"() {
         given:
@@ -921,6 +922,32 @@ class JSONReaderWriterTest extends RootServiceTest {
         json != null
         JSONArray a = outer.get(JSONConstants.EXTENSIONS)
         a.size() == 2
+    }
+
+    def "create read/writer for credentials" () {
+        given:
+        def apiKeyCred = v2Factory.createJAXBApiKeyCredentials("username", "apiKey")
+        def pwdCred = v2Factory.createJAXBPasswordCredentialsBase("username", "password")
+        def credentials = new CredentialListType().with {
+            it.credential = [apiKeyCred, pwdCred].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCredentialListType.writeTo(credentials, CredentialListType.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(JSONConstants.CREDENTIALS)
+        def api = o.getAt(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+        api.getAt(JSONConstants.API_KEY)[0] == "apiKey"
+        def pwd = o.getAt(JSONConstants.PASSWORD_CREDENTIALS)
+        pwd.getAt(JSONConstants.PASSWORD)[0] == "password"
+
     }
 
     def getSecretQA(String id, String question, String answer) {

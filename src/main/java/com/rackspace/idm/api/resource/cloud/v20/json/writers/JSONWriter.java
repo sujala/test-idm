@@ -120,22 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(CredentialListType.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-
-            CredentialListType credsList = (CredentialListType) object;
-            outer.put(JSONConstants.CREDENTIALS, list);
-            for (JAXBElement<? extends CredentialType> cred : credsList.getCredential()) {
-                CredentialType credential = cred.getValue();
-                if (credential instanceof ApiKeyCredentials) {
-                    list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
-                } else if (credential instanceof PasswordCredentialsBase) {
-                    list.add(getPasswordCredentials((PasswordCredentialsBase) cred.getValue()));
-                }
-            }
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(RoleList.class)) {
+        if (object.getClass().equals(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
             RoleList roleList = (RoleList) object;
@@ -597,27 +582,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             endpointList.add(endpointItem);
         }
         return endpointList;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, inner);
-        inner.put(JSONConstants.USERNAME, creds.getUsername());
-        inner.put(JSONConstants.API_KEY, creds.getApiKey());
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getPasswordCredentials(
-            PasswordCredentialsBase creds) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
-        inner.put(JSONConstants.USERNAME, creds.getUsername());
-        inner.put(JSONConstants.PASSWORD, creds.getPassword());
-        return outer;
     }
 
     @SuppressWarnings("unchecked")
