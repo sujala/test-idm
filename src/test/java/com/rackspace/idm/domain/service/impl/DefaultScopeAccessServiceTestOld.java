@@ -290,6 +290,9 @@ public class DefaultScopeAccessServiceTestOld {
         impersonatedScopeAccess.setImpersonatingToken("token");
         User user = new User();
         when(scopeAccessDao.getAllImpersonatedScopeAccessForUser(null)).thenReturn(new ArrayList<ScopeAccess>());
+
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForUser(any(User.class))).thenReturn(new ArrayList<ScopeAccess>());
+
         spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
@@ -515,6 +518,7 @@ public class DefaultScopeAccessServiceTestOld {
     public void deleteScopeAccessesForParentByApplicationId_listEmpty_doesNotCallDeleteScopeAccess() throws Exception {
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         doReturn(list).when(spy).getScopeAccessesForUserByClientId(null, null);
+        when(scopeAccessDao.getScopeAccessesByClientId(any(Application.class), anyString())).thenReturn(new ArrayList<ScopeAccess>());
         spy.deleteScopeAccessesForApplication(null, null);
         verify(spy,never()).deleteScopeAccess(any(ScopeAccess.class));
     }

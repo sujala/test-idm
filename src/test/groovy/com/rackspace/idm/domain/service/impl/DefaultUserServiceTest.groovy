@@ -294,7 +294,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         User user = this.service.getUserByTenantId("1")
 
         then:
-        user == null;
+        user != null;
     }
 
     def "GET - users by tenant id - size > 1" (){

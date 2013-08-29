@@ -81,6 +81,7 @@ public class DefaultUserServiceTestOld {
 
     @Test
     public void hasSubUsers_callUserDao_getUsersByDomainId() throws Exception {
+        when(userDao.getUsersByDomain(anyString())).thenReturn(new ArrayList<User>());
         when((userDao.getUserById("id"))).thenReturn(new User());
         defaultUserService.hasSubUsers("id");
         verify(userDao).getUsersByDomain(anyString());

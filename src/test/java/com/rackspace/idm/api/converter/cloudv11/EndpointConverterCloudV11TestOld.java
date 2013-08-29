@@ -205,12 +205,6 @@ public class EndpointConverterCloudV11TestOld {
     }
 
     @Test
-    public void toBaseUrls_cloudBaseUrlListIsNull_returnsEmptyList() throws Exception {
-        BaseURLList baseURLList = endpointConverterCloudV11.toBaseUrls(null);
-        assertThat("list size", baseURLList.getBaseURL().size(), equalTo(0));
-    }
-
-    @Test
     public void toBaseUrls_cloudBaseUrlListSizeIsZero_returnsEmptyList() throws Exception {
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
         BaseURLList baseURLList = endpointConverterCloudV11.toBaseUrls(urlList);
