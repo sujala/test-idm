@@ -8,6 +8,7 @@
     attributeFormDefault="unqualified"
     xmlns="http://www.w3.org/2001/XMLSchema"
     xmlns:identity="http://docs.openstack.org/identity/api/v2.0"
+    xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"   
     xmlns:atom="http://www.w3.org/2005/Atom"
@@ -45,6 +46,10 @@
 
     <!-- Complex Types -->
     <complexType name="User">
+        <!-- Added for development-->
+        <attribute ref="RAX-AUTH:domainId" use="optional"/>
+        <attribute ref="RAX-AUTH:defaultRegion" use="optional"/>
+
         <attribute name="id" type="xsd:ID" use="required">            
             <annotation>
                 <xsd:documentation

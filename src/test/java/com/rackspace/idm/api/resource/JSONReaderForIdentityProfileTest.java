@@ -70,7 +70,7 @@ public class JSONReaderForIdentityProfileTest {
     @Test
     public void getIdentityProfileFromJSONString_withValidJSON_setsIdentityProfileEnabled() throws Exception {
         IdentityProfile identityProfileFromJSONString = JSONReaderForIdentityProfile.getIdentityProfileFromJSONString(identityProfileJSON);
-        assertThat("idenity profile enabled", identityProfileFromJSONString.isEnabled(), equalTo(false));
+        assertThat("idenity profile enabled", identityProfileFromJSONString.getEnabled(), equalTo(false));
     }
 
     @Test
@@ -88,7 +88,7 @@ public class JSONReaderForIdentityProfileTest {
     @Test
     public void getIdentityProfileFromJSONString_withValidJSONAndEmptyIdentityProfile_setsNullIdentityProfileEnabled() throws Exception {
         IdentityProfile identityProfileFromJSONString = JSONReaderForIdentityProfile.getIdentityProfileFromJSONString(emptyIdentityProfileJSON);
-        assertThat("idenity profile enabled", identityProfileFromJSONString.isEnabled(), nullValue());
+        assertThat("idenity profile enabled", identityProfileFromJSONString.getEnabled(), nullValue());
     }
 
     @Test

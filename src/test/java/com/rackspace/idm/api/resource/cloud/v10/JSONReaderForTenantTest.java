@@ -87,7 +87,7 @@ public class JSONReaderForTenantTest {
     @Test
     public void getTenantFromJSONString_withValidJSON_returnsTenantWithEnabled() throws Exception {
         Tenant tenantFromJSONString = JSONReaderForTenant.getTenantFromJSONString(tenantJSON);
-        assertThat("tenant enabled", tenantFromJSONString.isEnabled(), equalTo(false));
+        assertThat("tenant enabled", tenantFromJSONString.getEnabled(), equalTo(false));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class JSONReaderForTenantTest {
     @Test
     public void getTenantFromJSONString_withValidEmptyTenantJSON_returnsTenantWithEnabledTrue() throws Exception {
         Tenant tenantFromJSONString = JSONReaderForTenant.getTenantFromJSONString(emptyTenantJSON);
-        assertThat("tenant enabled", tenantFromJSONString.isEnabled(), equalTo(true));
+        assertThat("tenant enabled", tenantFromJSONString.getEnabled(), equalTo(true));
     }
 
     @Test

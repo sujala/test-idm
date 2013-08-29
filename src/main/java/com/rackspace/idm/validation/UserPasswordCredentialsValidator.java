@@ -17,7 +17,7 @@ public class UserPasswordCredentialsValidator {
     public static final String INVALID_REQUEST = "Invalid request";
 
     public void validateUserPasswordCredentials(UserPasswordCredentials userPasswordCredentials, User user) {
-        if(userPasswordCredentials.isVerifyCurrentPassword()){
+        if(userPasswordCredentials.getVerifyCurrentPassword()){
             validateCurrentPassword(userPasswordCredentials, user);
         }
         validateNewPassword(userPasswordCredentials);

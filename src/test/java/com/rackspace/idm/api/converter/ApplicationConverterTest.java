@@ -50,62 +50,62 @@ public class ApplicationConverterTest {
     @Test
     public void toClientDo_withClient_setsClientId() throws Exception {
         client.setClientId("clientId");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("client id", application.getClientId(), equalTo("clientId"));
     }
 
     @Test
     public void toClientDo_withClient_setsRCN() throws Exception {
         client.setCustomerId("customerId");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("RCN", application.getRcn(), equalTo("customerId"));
     }
 
     @Test
     public void toClientDo_withClient_setsName() throws Exception {
         client.setName("name");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("name", application.getName(), equalTo("name"));
     }
 
     @Test
     public void toClientDo_withClient_setsCallBackUrl() throws Exception {
         client.setCallBackUrl("callBackUrl");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("callback Url", application.getCallBackUrl(), equalTo("callBackUrl"));
     }
 
     @Test
     public void toClientDo_withClient_setsTitle() throws Exception {
         client.setTitle("title");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("title", application.getTitle(), equalTo("title"));
     }
 
     @Test
     public void toClientDo_withClient_setsDescription() throws Exception {
         client.setDescription("description");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("description", application.getDescription(), equalTo("description"));
     }
 
     @Test
     public void toClientDo_withClient_setsScope() throws Exception {
         client.setScope("scope");
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("scope", application.getScope(), equalTo("scope"));
     }
 
     @Test
     public void toClientDo_withClient_setsEnabled() throws Exception {
         client.setEnabled(true);
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("enabled", application.getEnabled(), equalTo(true));
     }
 
     @Test
     public void toClientDo_withClient_withNullEnabled_DoesNotSetEnabled() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("enabled", application.getEnabled(), nullValue());
     }
 
@@ -114,19 +114,19 @@ public class ApplicationConverterTest {
         ApplicationSecretCredentials applicationSecretCredentials = new ApplicationSecretCredentials();
         applicationSecretCredentials.setClientSecret("clientSecret");
         client.setSecretCredentials(applicationSecretCredentials);
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("client secret", application.getClientSecret(), equalTo("clientSecret"));
     }
 
     @Test
     public void toClientDo_withClient_withNullSecretCredentials_doesNotSetClientSecret() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("client secret", application.getClientSecretObj(), nullValue());
     }
 
     @Test
     public void toClientDo_withClient_withNullClientSecret_doesNotSetClientSecret() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = applicationConverter.toClientDO(client);
+        com.rackspace.idm.domain.entity.Application application = applicationConverter.fromApplication(client);
         assertThat("client Secret", application.getClientSecretObj(), nullValue());
     }
 
@@ -297,7 +297,7 @@ public class ApplicationConverterTest {
     public void toClientJaxb_withClient_setsEnabled() throws Exception {
         clientDO.setEnabled(true);
         JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
-        assertThat("enabled", applicationJAXBElement.getValue().isEnabled(), equalTo(true));
+        assertThat("enabled", applicationJAXBElement.getValue().getEnabled(), equalTo(true));
     }
 
     @Test

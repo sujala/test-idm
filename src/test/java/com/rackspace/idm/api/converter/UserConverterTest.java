@@ -266,7 +266,7 @@ public class UserConverterTest {
         assertThat("user country", userJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
         assertThat("user country", userJAXBElement.getValue().getDisplayName(), equalTo("displayName"));
         assertThat("user country", userJAXBElement.getValue().getEmail(), equalTo("email"));
-        assertThat("user country", userJAXBElement.getValue().isEnabled(), equalTo(true));
+        assertThat("user country", userJAXBElement.getValue().getEnabled(), equalTo(true));
         assertThat("user country", userJAXBElement.getValue().getFirstName(), equalTo("firstName"));
         assertThat("user country", userJAXBElement.getValue().getMiddleName(), equalTo("middleName"));
         assertThat("user country", userJAXBElement.getValue().getLastName(), equalTo("lastName"));
@@ -274,7 +274,7 @@ public class UserConverterTest {
         assertThat("user country", userJAXBElement.getValue().getPrefLanguage(), equalTo("en_us")); //All lowercase while Domain user is lower_UPPER
         assertThat("user country", userJAXBElement.getValue().getRegion(), equalTo("region"));
         assertThat("user country", userJAXBElement.getValue().getUsername(), equalTo("username"));
-        assertThat("user country", userJAXBElement.getValue().isMaxLoginFailuresExceded(), equalTo(false));
+        assertThat("user country", userJAXBElement.getValue().getMaxLoginFailuresExceded(), equalTo(false));
         assertThat("user country", userJAXBElement.getValue().getPasswordCredentials().getCurrentPassword().getPassword(), equalTo("password"));
         assertThat("user country", userJAXBElement.getValue().getSecret().getSecretAnswer(), equalTo("secretAnswer"));
         assertThat("user country", userJAXBElement.getValue().getSecret().getSecretQuestion(), equalTo("secretQuestion"));

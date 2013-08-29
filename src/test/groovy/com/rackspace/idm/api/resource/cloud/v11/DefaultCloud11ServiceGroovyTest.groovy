@@ -4,9 +4,7 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.CloudBaseUrl
@@ -72,7 +70,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
         ldapPatternRepository.getPattern(_) >> pattern
         userService.getUser(_) >> null
-        userConverterCloudV11.toUserDO(_) >> user1
+        userConverterCloudV11.fromUser(_) >> user1
         domainService.createNewDomain(_) >> "1"
         endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
         Application application = new Application()
@@ -108,7 +106,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
         ldapPatternRepository.getPattern(_) >> pattern
         userService.getUser(_) >> null
-        userConverterCloudV11.toUserDO(_) >> user1
+        userConverterCloudV11.fromUser(_) >> user1
         userConverterCloudV11.toCloudV11User(_, _) >> v1Factory.createUser()
         domainService.createNewDomain(_) >> "1"
         endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
@@ -148,7 +146,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         user1.setId("1")
         user1.setUsername("someN@me")
         user1.setMossoId(1)
-        userConverterCloudV11.toUserDO(_) >> user1
+        userConverterCloudV11.fromUser(_) >> user1
         domainService.createNewDomain(_) >> "1"
         endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
         Application application = new Application()

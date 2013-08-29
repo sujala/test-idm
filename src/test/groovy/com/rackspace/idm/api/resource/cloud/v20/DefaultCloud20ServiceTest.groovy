@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
@@ -610,7 +611,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
                 entityFactory.createUser("username4", "id", null, "region"),
         ]
 
-        converterMock.toUserDO(_) >>> [
+        converterMock.fromUser(_) >>> [
                 entityFactory.createUser("userDO1", null, null, "region"),
                 entityFactory.createUser("userDO2", null, null, "region"),
                 entityFactory.createUser("userDO3", null, "domain", "region"),
@@ -653,7 +654,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
 
         mockedUser.getDomainId() >> "domainId"
-        converter.toUserDO(_) >> mockedUser
+        converter.fromUser(_) >> mockedUser
         service.userConverterCloudV20 = converter
 
         userService.getUserByScopeAccess(_) >> caller
@@ -674,7 +675,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
 
         mockedUser.getDomainId() >> ""
-        converter.toUserDO(_) >> mockedUser
+        converter.fromUser(_) >> mockedUser
         service.userConverterCloudV20 = converter
 
         userService.getUserByScopeAccess(_) >> caller
@@ -1807,7 +1808,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * validator20.validatePasswordCredentials(_)
-        1 * domainConverter.toDomainDO(domain)
+        1 * domainConverter.fromDomain(domain)
         1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getTenantRolesForUser(racker)
@@ -1828,7 +1829,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * validator20.validateUsername(_)
-        1 * domainConverter.toDomainDO(domain)
+        1 * domainConverter.fromDomain(domain)
         1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getTenantRolesForUser(racker)
@@ -2009,7 +2010,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def domain1 = Mock(Domain)
         def domain2 = Mock(Domain)
 
-        domainConverter.toDomainDO(_) >>> [
+        domainConverter.fromDomain(_) >>> [
                 domain1,
                 domain2
         ]
@@ -2122,7 +2123,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "getPolicies verifies access level"() {
         given:
         allowUserAccess()
-        mockPoliciesConverter(service)
+        mockPolicyConverter(service)
 
         when:
         service.getPolicies(authToken)
@@ -2134,7 +2135,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "getPolicies gets policies"() {
         given:
         allowUserAccess()
-        mockPoliciesConverter(service)
+        mockPolicyConverter(service)
 
         when:
         def response = service.getPolicies(authToken)
@@ -2178,7 +2179,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def policy2 = Mock(Policy)
 
         policyConverter = Mock(PolicyConverterCloudV20)
-        policyConverter.toPolicyDO(_) >>> [
+        policyConverter.fromPolicy(_) >>> [
                 policy1,
                 policy2
         ]
@@ -2902,7 +2903,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "userAdmin calling getUsersByEmail filters subUsers by domain"() {
         given:
         allowUserAccess()
-        service.userConverterCloudV20 = new UserConverterCloudV20()
+        def converter = new UserConverterCloudV20()
+        converter.mapper = new DozerBeanMapper()
+        service.userConverterCloudV20 = converter
 
         def email = "email@gmail.com"
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
@@ -2934,7 +2937,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Disabling a enabled user sends an atom feed"(){
         given:
         allowUserAccess()
-        service.userConverterCloudV20 = new UserConverterCloudV20()
+        def converter = new UserConverterCloudV20()
+        converter.mapper = new DozerBeanMapper()
+        service.userConverterCloudV20 = converter
         UserForCreate user = new UserForCreate().with {
             it.username = "name"
             it.id = "2"

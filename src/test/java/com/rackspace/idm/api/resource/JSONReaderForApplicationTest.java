@@ -100,7 +100,7 @@ public class JSONReaderForApplicationTest {
     @Test
     public void getApplicationFromJSONString_withValidJSON_setsApplicationEnabled() throws Exception {
         Application applicationFromJSONString = JSONReaderForApplication.getApplicationFromJSONString(applicationJSON);
-        assertThat("application enabled", applicationFromJSONString.isEnabled(), equalTo(false));
+        assertThat("application enabled", applicationFromJSONString.getEnabled(), equalTo(false));
     }
 
     @Test
@@ -148,7 +148,7 @@ public class JSONReaderForApplicationTest {
     @Test
     public void getApplicationFromJSONString_withEmptyValidJSON_setsNullApplicationEnabled() throws Exception {
         Application applicationFromJSONString = JSONReaderForApplication.getApplicationFromJSONString(emptyApplicationJSON);
-        assertThat("application enabled", applicationFromJSONString.isEnabled(), nullValue());
+        assertThat("application enabled", applicationFromJSONString.getEnabled(), nullValue());
     }
 
     @Test

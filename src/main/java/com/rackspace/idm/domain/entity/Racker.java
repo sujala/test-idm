@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
 import lombok.Data;
+import org.dozer.Mapping;
 
 import java.util.List;
 
@@ -8,6 +9,8 @@ import java.util.List;
 public class Racker extends User implements Auditable {
 
     private String uniqueId;
+
+    @Mapping("id")
     private String rackerId;
     private List<String> rackerRoles;
 

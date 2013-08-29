@@ -17,7 +17,7 @@ public class ApplicationConverter {
     @Autowired
     private RolesConverter rolesConverter;
     
-    public Application toClientDO(com.rackspace.api.idm.v1.Application jaxbClient) {
+    public Application fromApplication(com.rackspace.api.idm.v1.Application jaxbClient) {
         Application application = new Application();
         application.setClientId(jaxbClient.getClientId());
         application.setRcn(jaxbClient.getCustomerId());
@@ -27,8 +27,8 @@ public class ApplicationConverter {
         application.setDescription(jaxbClient.getDescription());
         application.setScope(jaxbClient.getScope());
         
-        if (jaxbClient.isEnabled() != null) {
-        	application.setEnabled(jaxbClient.isEnabled());
+        if (jaxbClient.getEnabled() != null) {
+        	application.setEnabled(jaxbClient.getEnabled());
         }
         
         if (jaxbClient.getSecretCredentials() != null

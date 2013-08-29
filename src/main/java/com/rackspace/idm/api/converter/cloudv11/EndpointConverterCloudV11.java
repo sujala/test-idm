@@ -58,12 +58,12 @@ public class EndpointConverterCloudV11 {
         if (baseURL.getUserType() != null) {
             url.setBaseUrlType(baseURL.getUserType().toString());
         }
-        url.setDef(baseURL.isDefault());
+        url.setDef(baseURL.getDefault());
         url.setInternalUrl(baseURL.getInternalURL());
         url.setPublicUrl(baseURL.getPublicURL());
         url.setRegion(baseURL.getRegion());
         url.setServiceName(baseURL.getServiceName());
-        url.setEnabled(baseURL.isEnabled());
+        url.setEnabled(baseURL.getEnabled());
         if(String.valueOf(baseURL.getUserType()).equals("NAST")){
             url.setOpenstackType("object-store");
         }else{

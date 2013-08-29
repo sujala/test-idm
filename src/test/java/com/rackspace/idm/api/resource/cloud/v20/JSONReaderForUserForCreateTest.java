@@ -56,7 +56,7 @@ public class JSONReaderForUserForCreateTest {
                         "            \"RAX-AUTH:defaultRegion\":\"foo\"\n" +
                         "        }\n" +
                         "}";
-        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")), equalTo("foo"));
+        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getDefaultRegion(), equalTo("foo"));
     }
 
     @Test
@@ -147,7 +147,7 @@ public class JSONReaderForUserForCreateTest {
                 "            \"OS-KSADM:password\":\"Password48\"     \n" +
                 "        }     \n" +
                 "}\n";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).isEnabled(), equalTo(false));
+        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEnabled(), equalTo(false));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class JSONReaderForUserForCreateTest {
         assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getDisplayName(), nullValue());
         assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getPassword(), nullValue());
         assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEmail(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEnabled(), equalTo(true));
     }
 
     @Test(expected = BadRequestException.class)
@@ -262,7 +262,7 @@ public class JSONReaderForUserForCreateTest {
                 "            \"OS-KSADM:password\":\"Password48\"\n" +
                 "        }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEnabled(), equalTo(true));
     }
 
     @Test

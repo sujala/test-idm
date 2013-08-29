@@ -1,11 +1,15 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Domains;
+import org.dozer.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.xml.bind.JAXBElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,25 +21,41 @@ import org.springframework.stereotype.Component;
 @Component
 public class DomainConverterCloudV20 {
     @Autowired
-    private JAXBObjectFactories objFactories;
-    private Logger logger = LoggerFactory.getLogger(DomainConverterCloudV20.class);
+    Mapper mapper;
 
-    public Domain toDomain(com.rackspace.idm.domain.entity.Domain domain) {
-        Domain jaxbDomain = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain();
-        jaxbDomain.setId(domain.getDomainId());
-        jaxbDomain.setName(domain.getName());
-        jaxbDomain.setDescription(domain.getDescription());
-        jaxbDomain.setEnabled(domain.getEnabled());
-        return jaxbDomain;
+    @Autowired
+    private JAXBObjectFactories objFactories;
+
+    public com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain toDomain(Domain domain) {
+        return mapper.map(domain, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain.class);
     }
 
-    public com.rackspace.idm.domain.entity.Domain toDomainDO(Domain domain) {
-        com.rackspace.idm.domain.entity.Domain domainDO = new com.rackspace.idm.domain.entity.Domain();
-        domainDO.setDomainId(domain.getId());
-        domainDO.setName(domain.getName());
-        domainDO.setDescription(domain.getDescription());
-        domainDO.setEnabled(domain.isEnabled());
-        return domainDO;
+    public Domain fromDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domainEntity) {
+        Domain domain = mapper.map(domainEntity, Domain.class);
+
+        //Using the Dozer mapper doesn't copy over boolean default values
+        //So we need to set them ourselves.
+        domain.setEnabled(domainEntity.getEnabled());
+
+        return domain;
+    }
+
+    public com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains toDomains(Domains domains) {
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains jaxbDomains = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomains();
+        for(com.rackspace.idm.domain.entity.Domain domain : domains.getDomain()){
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain jaxbDomain = toDomain(domain);
+            jaxbDomains.getDomain().add(jaxbDomain);
+        }
+        return jaxbDomains;
+    }
+
+    public Domains fromDomains(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domains) {
+        com.rackspace.idm.domain.entity.Domains domainsEntity = new com.rackspace.idm.domain.entity.Domains();
+        for(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain : domains.getDomain()){
+            com.rackspace.idm.domain.entity.Domain entityDomain = fromDomain(domain);
+            domainsEntity.getDomain().add(entityDomain);
+        }
+        return domainsEntity;
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {

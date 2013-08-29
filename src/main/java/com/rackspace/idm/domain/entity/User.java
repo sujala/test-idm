@@ -13,6 +13,8 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
+import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -152,6 +154,7 @@ public class User implements Auditable, UniqueId {
     private byte[] encryptedApiKey;
     private String apiKey;
 
+    @Mapping("defaultRegion")
     @LDAPField(attribute=LdapRepository.ATTR_REGION,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
@@ -193,6 +196,7 @@ public class User implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String secureId;
 
+    @Mapping("enabled")
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
@@ -218,8 +222,8 @@ public class User implements Auditable, UniqueId {
 
     @DeleteNullValues
     @LDAPField(attribute=LdapRepository.ATTR_GROUP_ID,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+               objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
     )
     private HashSet<String> rsGroupId;
 

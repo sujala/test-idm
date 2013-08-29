@@ -7,6 +7,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.dozer.Mapping;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -20,9 +21,11 @@ public class Tenant implements Auditable, UniqueId {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String tenantId;
 
+    @Mapping("enabled")
     @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean enabled;
 

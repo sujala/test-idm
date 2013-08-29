@@ -138,7 +138,7 @@ public class DefaultCloud11ServiceTestOld {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
+        when(userConverterCloudV11.fromUser(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
@@ -1385,7 +1385,7 @@ public class DefaultCloud11ServiceTestOld {
         com.rackspace.idm.domain.entity.User user = mock(com.rackspace.idm.domain.entity.User.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(user);
-        when(enabledUser.isEnabled()).thenReturn(true);
+        when(enabledUser.getEnabled()).thenReturn(true);
         spy.setUserEnabled(request, "userId", enabledUser, null);
         verify(user).setEnabled(true);
     }
@@ -1395,7 +1395,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(enabledUser.isEnabled()).thenReturn(true);
+        when(enabledUser.getEnabled()).thenReturn(true);
         spy.setUserEnabled(request, "userId", enabledUser, null);
         verify(userService).updateUser(userDO, false);
     }
@@ -1406,7 +1406,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(enabledUser.isEnabled()).thenReturn(true);
+        when(enabledUser.getEnabled()).thenReturn(true);
         spy.setUserEnabled(request, "userId", enabledUser, null);
         verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO,openstackEndpoints);
     }
@@ -1418,7 +1418,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         userDO.setEnabled(true);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(enabledUser.isEnabled()).thenReturn(false);
+        when(enabledUser.getEnabled()).thenReturn(false);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(any(HttpServletRequest.class));
         Response.ResponseBuilder responseBuilder = spy.setUserEnabled(request, "userId", enabledUser, null);
         verify(atomHopperClient).asyncPost(any(com.rackspace.idm.domain.entity.User.class), anyString());
@@ -1430,7 +1430,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(enabledUser.isEnabled()).thenReturn(true);
+        when(enabledUser.getEnabled()).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.setUserEnabled(request, "userId", enabledUser, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -1462,7 +1462,7 @@ public class DefaultCloud11ServiceTestOld {
         com.rackspace.idm.domain.entity.User user = mock(com.rackspace.idm.domain.entity.User.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(user);
-        when(keyUser.isEnabled()).thenReturn(true);
+        when(keyUser.getEnabled()).thenReturn(true);
         spy.setUserKey(request, "userId", null, keyUser);
         verify(user).setApiKey(anyString());
     }
@@ -1472,7 +1472,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(keyUser.isEnabled()).thenReturn(true);
+        when(keyUser.getEnabled()).thenReturn(true);
         spy.setUserKey(request, "userId", null, keyUser);
         verify(userService).updateUser(userDO, false);
     }
@@ -1483,7 +1483,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(keyUser.isEnabled()).thenReturn(true);
+        when(keyUser.getEnabled()).thenReturn(true);
         spy.setUserKey(request, "userId", null, keyUser);
         verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO,endpoints);
     }
@@ -1493,7 +1493,7 @@ public class DefaultCloud11ServiceTestOld {
         UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
-        when(keyUser.isEnabled()).thenReturn(true);
+        when(keyUser.getEnabled()).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.setUserKey(request, "userId", null, keyUser);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -1829,7 +1829,7 @@ public class DefaultCloud11ServiceTestOld {
         userDO.setId("someId");
         userDO.setMossoId(123456);
         when(userService.getUser(anyString())).thenReturn(null);
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
+        when(userConverterCloudV11.fromUser(user)).thenReturn(userDO);
         doNothing().when(spy).validateMossoId(anyInt());
         doNothing().when(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
         doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());

@@ -149,13 +149,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private DomainConverterCloudV20 domainConverterCloudV20;
 
     @Autowired
-    private DomainsConverterCloudV20 domainsConverterCloudV20;
-
-    @Autowired
     private PolicyConverterCloudV20 policyConverterCloudV20;
-
-    @Autowired
-    private PoliciesConverterCloudV20 policiesConverterCloudV20;
 
     @Autowired
     private DomainService domainService;
@@ -289,7 +283,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
 
-            ClientRole clientRole = roleConverterCloudV20.toClientRoleFromRole(role, service.getClientId());
+            ClientRole clientRole = roleConverterCloudV20.fromRole(role, service.getClientId());
             isRoleWeightValid(clientRole.getRsWeight());
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, clientRole);
 
@@ -433,7 +427,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Our implmentation has the id and the name the same
             tenant.setId(tenant.getName());
-            Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
+            Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
             this.tenantService.addTenant(savedTenant);
 
@@ -461,7 +455,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             String password = userForCreate.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
 
-            User userDO = this.userConverterCloudV20.toUserDO(userForCreate);
+            User userDO = this.userConverterCloudV20.fromUser(userForCreate);
             if (password != null) {
                 validator.validatePasswordForCreateOrUpdate(userForCreate.getPassword());
             } else {
@@ -622,14 +616,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.isUsernameValid(user.getUsername());
             }
 
-            if (!user.isEnabled()) {
+            if (!user.getEnabled()) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (caller.getId().equals(userId)) {
                     throw new BadRequestException("User cannot enable/disable his/her own account.");
                 }
             }
 
-            User userDO = this.userConverterCloudV20.toUserDO(user);
+            User userDO = this.userConverterCloudV20.fromUser(user);
             if (userDO.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             }
@@ -775,7 +769,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
-            Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
+            Domain domainDO = domainConverterCloudV20.fromDomain(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
             user = result.getUser();
             user.setId(((Racker) result.getUser()).getRackerId());
@@ -784,7 +778,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
-            Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
+            Domain domainDO = domainConverterCloudV20.fromDomain(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
             user = result.getUser();
             user.setId(((Racker) result.getUser()).getRackerId());
@@ -1996,7 +1990,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            Domain savedDomain = this.domainConverterCloudV20.toDomainDO(domain);
+            Domain savedDomain = this.domainConverterCloudV20.fromDomain(domain);
             this.domainService.addDomain(savedDomain);
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String domainId = savedDomain.getDomainId();
@@ -2029,7 +2023,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
-        domainDO.setEnabled(domain.isEnabled());
+        domainDO.setEnabled(domain.getEnabled());
         domainDO.setName(domain.getName());
         this.domainService.updateDomain(domainDO);
         return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
@@ -2170,7 +2164,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         com.rackspace.idm.domain.entity.Policies savedPolicies = policyService.getPolicies(new ArrayList<String>(cloudBaseUrl.getPolicyList()));
 
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-        Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);
+        Policies policies = policyConverterCloudV20.toPolicies(savedPolicies);
         return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
     }
 
@@ -2226,7 +2220,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 Domains domains = new Domains();
                 domains.getDomain().addAll(domainContext.getValueList());
-                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
 
                 return Response.status(200).header("Link", linkHeader).entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
 
@@ -2252,7 +2246,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
             domains = cloudUserAccessibility.removeDuplicateDomains(domains);
 
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
 
             return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
         } catch (Exception ex) {
@@ -2909,7 +2903,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User userDO = userService.checkAndGetUserById(userId);
 
-            userDO.setEnabled(user.isEnabled());
+            userDO.setEnabled(user.getEnabled());
 
             if (userDO.isDisabled()) {
                 atomHopperClient.asyncPost(userDO, AtomHopperConstants.DISABLED);
@@ -2986,7 +2980,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             tenantDO.setDescription(tenant.getDescription());
             tenantDO.setDisplayName(tenant.getDisplayName());
-            tenantDO.setEnabled(tenant.isEnabled());
+            tenantDO.setEnabled(tenant.getEnabled());
             tenantDO.setName(tenant.getName());
 
             this.tenantService.updateTenant(tenantDO);
@@ -3207,7 +3201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         com.rackspace.idm.domain.entity.Policies savedPolicies = this.policyService.getPolicies();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-        Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);
+        Policies policies = policyConverterCloudV20.toPolicies(savedPolicies);
         return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
     }
 
@@ -3215,7 +3209,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Policy savedPolicy = this.policyConverterCloudV20.toPolicyDO(policy);
+            com.rackspace.idm.domain.entity.Policy savedPolicy = this.policyConverterCloudV20.fromPolicy(policy);
             policyValidator.validatePolicyName(policy.getName());
             this.policyService.addPolicy(savedPolicy);
             String policyId = savedPolicy.getPolicyId();
@@ -3247,8 +3241,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             policyValidator.validatePolicyName(policy.getName());
-            policyService.checkAndGetPolicy(policyId);
-            com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
+            com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.fromPolicy(policy);
             this.policyService.updatePolicy(policyId, updatePolicy);
             return Response.noContent();
         } catch (Exception ex) {

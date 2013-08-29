@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.User;
@@ -19,6 +20,8 @@ import java.util.List;
 
 @Component
 public class UserConverterCloudV20 {
+    @Autowired
+    Mapper mapper;
     
     private ObjectFactory objectFactory = new ObjectFactory();
 
@@ -26,22 +29,14 @@ public class UserConverterCloudV20 {
     private RoleConverterCloudV20 roleConverterCloudV20;
     private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
 
-    public com.rackspace.idm.domain.entity.User toUserDO(User user) {
+    public void setMapper(Mapper mapper) {
+        this.mapper = mapper;
+    }
 
-        com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User();
-        userDO.setUsername(user.getUsername());
-        userDO.setEmail(user.getEmail());
-        userDO.setDisplayName(user.getDisplayName());
-        userDO.setEnabled(user.isEnabled());
-        if(user instanceof UserForCreate){
-            userDO.setUserPassword(((UserForCreate) user).getPassword());
-            userDO.setPassword(((UserForCreate) user).getPassword());
-        }
-        if(user.getOtherAttributes()!=null){
-            userDO.setRegion(user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")));
-            userDO.setDomainId(user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId")));
-        }
-        return userDO;
+    public com.rackspace.idm.domain.entity.User fromUser(User user) {
+        com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
+        userEntity.setEnabled(user.getEnabled());
+        return userEntity;
     }
 
     public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
@@ -53,7 +48,7 @@ public class UserConverterCloudV20 {
         if(org.apache.commons.lang.StringUtils.isBlank(region) ){
             region = "";
         }
-        jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),region);
+        jaxbUser.setDefaultRegion(region);
         if(roles != null){
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
@@ -83,10 +78,10 @@ public class UserConverterCloudV20 {
             jaxbUser.setPassword(user.getPassword());
         }
         if(user.getRegion() != null){
-            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+            jaxbUser.setDefaultRegion(user.getRegion());
         }
         if(user.getDomainId() != null){
-            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"),user.getDomainId());
+            jaxbUser.setDomainId(user.getDomainId());
         }
 
         try {
@@ -111,19 +106,7 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
-        User jaxbUser = objectFactory.createUser();
-
-        jaxbUser.setDisplayName(user.getDisplayName());
-        jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(user.getEnabled());
-        jaxbUser.setId(user.getId());
-        jaxbUser.setUsername(user.getUsername());
-        if(user.getRegion() != null){
-            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
-        }
-        if(user.getDomainId() != null){
-            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"),user.getDomainId());
-        }
+        User jaxbUser = mapper.map(user, User.class);
 
         try {
             if (user.getCreated() != null) {
@@ -155,13 +138,5 @@ public class UserConverterCloudV20 {
         }
 
         return list;
-    }
-
-    public void setObjectFactory(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
-    }
-
-    public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
-        this.roleConverterCloudV20 = roleConverterCloudV20;
     }
 }

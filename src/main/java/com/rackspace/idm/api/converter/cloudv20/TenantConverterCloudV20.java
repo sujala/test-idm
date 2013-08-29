@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.Tenants;
 import org.slf4j.Logger;
@@ -16,48 +17,15 @@ import java.util.List;
 
 @Component
 public class TenantConverterCloudV20 {
+    @Autowired
+    Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
     private Logger logger = LoggerFactory.getLogger(TenantConverterCloudV20.class);
 
-    public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenant) {
-        Tenant jaxbTenant = objFactories.getOpenStackIdentityV2Factory()
-            .createTenant();
-        jaxbTenant.setDescription(tenant.getDescription());
-        jaxbTenant.setDisplayName(tenant.getDisplayName());
-        jaxbTenant.setEnabled(tenant.getEnabled());
-        jaxbTenant.setId(tenant.getTenantId());
-        jaxbTenant.setName(tenant.getName());
-
-        if (tenant.getCreated() != null) {
-            GregorianCalendar gc = new GregorianCalendar();
-            gc.setTime(tenant.getCreated());
-
-            XMLGregorianCalendar createdDate = null;
-            try {
-                createdDate = DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(gc);
-                jaxbTenant.setCreated(createdDate);
-            } catch (DatatypeConfigurationException e) {
-                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
-            }
-        }
-        
-        if (tenant.getUpdated() != null) {
-            GregorianCalendar gc = new GregorianCalendar();
-            gc.setTime(tenant.getUpdated());
-
-            XMLGregorianCalendar updatedDate = null;
-            try {
-                updatedDate = DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(gc);
-                jaxbTenant.setUpdated(updatedDate);
-            } catch (DatatypeConfigurationException e) {
-                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
-            }
-        }
-        return jaxbTenant;
+    public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenantEntity) {
+        return mapper.map(tenantEntity, Tenant.class);
     }
     
     public Tenants toTenantList(List<com.rackspace.idm.domain.entity.Tenant> tenants) {
@@ -71,21 +39,15 @@ public class TenantConverterCloudV20 {
         return jaxbTenants;
     }
 
-    public com.rackspace.idm.domain.entity.Tenant toTenantDO(
-        org.openstack.docs.identity.api.v2.Tenant jaxbTenant) {
-        
-        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
-        
-        tenant.setDescription(jaxbTenant.getDescription());
-        tenant.setDisplayName(jaxbTenant.getDisplayName());
-        tenant.setEnabled(jaxbTenant.isEnabled());
-        tenant.setName(jaxbTenant.getName());
-        tenant.setTenantId(jaxbTenant.getId());
-        
-        return tenant;
-    }
+    public com.rackspace.idm.domain.entity.Tenant fromTenant(
+            org.openstack.docs.identity.api.v2.Tenant jaxbTenant) {
 
-    public void setObjFactories(JAXBObjectFactories objFactories) {
-        this.objFactories = objFactories;
+        com.rackspace.idm.domain.entity.Tenant tenant = mapper.map(jaxbTenant, com.rackspace.idm.domain.entity.Tenant.class);
+
+        //Using the Dozer mapper doesn't copy over boolean default values
+        //So we need to set them ourselves.
+        tenant.setEnabled(jaxbTenant.getEnabled());
+
+        return mapper.map(jaxbTenant, com.rackspace.idm.domain.entity.Tenant.class);
     }
 }

@@ -79,7 +79,7 @@ public class CloudAuthServiceCatalogFactoryTest {
         Service service = new Service();
         service.getEndpoint().add(0,endpoint);
         CloudAuthServiceCatalogFactory.addEndpoint(service,cloudBaseUrl);
-        assertThat("Check order",service.getEndpoint().get(0).isV1Default(),equalTo(true));
+        assertThat("Check order",service.getEndpoint().get(0).getV1Default(),equalTo(true));
         assertThat("Check order",service.getEndpoint().get(0).getPublicURL(),equalTo("http://publicUrl2"));
         assertThat("Check order",service.getEndpoint().get(0).getInternalURL(),equalTo("http://internal2"));
     }

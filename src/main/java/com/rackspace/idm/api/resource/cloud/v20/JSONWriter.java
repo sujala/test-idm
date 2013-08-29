@@ -182,7 +182,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             for (EndpointTemplate template : templateList.getEndpointTemplate()) {
                 JSONObject templateItem = new JSONObject();
                 templateItem.put(JSONConstants.ID, template.getId());
-                templateItem.put(JSONConstants.ENABLED, template.isEnabled());
+                templateItem.put(JSONConstants.ENABLED, template.getEnabled());
                 if (template.getRegion() != null) {
                     templateItem.put(JSONConstants.REGION, template.getRegion());
                 }
@@ -190,7 +190,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                     templateItem.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
                 }
                 if (template.getRegion() != null) {
-                    templateItem.put(JSONConstants.GLOBAL, template.isGlobal());
+                    templateItem.put(JSONConstants.GLOBAL, template.getGlobal());
                 }
                 if (template.getName() != null) {
                     templateItem.put(JSONConstants.NAME, template.getName());
@@ -345,7 +345,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject outer = new JSONObject();
             JSONObject inner = new JSONObject();
             inner.put(JSONConstants.ID, user.getId());
-            inner.put(JSONConstants.ENABLED, user.isEnabled());
+            inner.put(JSONConstants.ENABLED, user.getEnabled());
             if (user.getKey() != null) {
                 inner.put(JSONConstants.KEY, user.getKey());
             }
@@ -446,7 +446,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         for( Domain domain : domains.getDomain()){
             JSONObject domainSave = new JSONObject();
             domainSave.put(JSONConstants.ID,domain.getId());
-            domainSave.put(JSONConstants.ENABLED,domain.isEnabled());
+            domainSave.put(JSONConstants.ENABLED,domain.getEnabled());
             domainSave.put(JSONConstants.NAME, domain.getName());
             domainSave.put(JSONConstants.DESCRIPTION, domain.getDescription());
             domainArray.add(domainSave);
@@ -556,7 +556,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getTenantWithoutWrapper(Tenant tenant) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, tenant.getId());
-        userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
+        userInner.put(JSONConstants.ENABLED, tenant.getEnabled());
         if (tenant.getName() != null) {
             userInner.put(JSONConstants.NAME, tenant.getName());
         }
@@ -572,7 +572,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getDomainWithoutWrapper(Domain domain) {
         JSONObject domainInner = new JSONObject();
         domainInner.put(JSONConstants.ID, domain.getId());
-        domainInner.put(JSONConstants.ENABLED, domain.isEnabled());
+        domainInner.put(JSONConstants.ENABLED, domain.getEnabled());
         if (domain.getName() != null) {
             domainInner.put(JSONConstants.NAME, domain.getName());
         }
@@ -586,8 +586,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getPolicyWithoutWrapper(Policy policy) {
         JSONObject policyInner = new JSONObject();
         policyInner.put(JSONConstants.ID, policy.getId());
-        policyInner.put(JSONConstants.ENABLED, policy.isEnabled());
-        policyInner.put(JSONConstants.GLOBAL, policy.isGlobal());
+        policyInner.put(JSONConstants.ENABLED, policy.getEnabled());
+        policyInner.put(JSONConstants.GLOBAL, policy.getGlobal());
         policyInner.put(JSONConstants.BLOB, policy.getBlob());
         if( policy.getType() != null){
             policyInner.put(JSONConstants.TYPE, policy.getType());
@@ -617,8 +617,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 if(policy.getType() != null){
                     policySave.put(JSONConstants.TYPE, policy.getType());
                 }
-                policySave.put(JSONConstants.ENABLED, policy.isEnabled());
-                policySave.put(JSONConstants.GLOBAL, policy.isGlobal());
+                policySave.put(JSONConstants.ENABLED, policy.getEnabled());
+                policySave.put(JSONConstants.GLOBAL, policy.getGlobal());
 
                 policyInner.add(policySave);
             }
@@ -740,8 +740,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (endpoint.getAdminURL() != null) {
                 endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
             }
-            if (endpoint.isV1Default()) {
-                endpointItem.put(JSONConstants.V1_DEFAULT, endpoint.isV1Default());
+            if (endpoint.getV1Default()) {
+                endpointItem.put(JSONConstants.V1_DEFAULT, endpoint.getV1Default());
             }
             endpointList.add(endpointItem);
         }
@@ -814,7 +814,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         if (user.getEmail() != null) {
             outer.put(JSONConstants.EMAIL, user.getEmail());
         }
-        outer.put(JSONConstants.ENABLED, user.isEnabled());
+        outer.put(JSONConstants.ENABLED, user.getEnabled());
         if (user instanceof UserForCreate && ((UserForCreate) user).getPassword() != null) {
             outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
         }
@@ -982,8 +982,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         if (template.getRegion() != null) {
             outer.put(JSONConstants.REGION, template.getRegion());
         }
-        outer.put(JSONConstants.GLOBAL, template.isGlobal());
-        outer.put(JSONConstants.ENABLED, template.isEnabled());
+        outer.put(JSONConstants.GLOBAL, template.getGlobal());
+        outer.put(JSONConstants.ENABLED, template.getEnabled());
         if (template.getVersion() != null) {
             outer.put(JSONConstants.VERSION_ID, template.getVersion().getId());
             outer.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
@@ -1008,8 +1008,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @SuppressWarnings("unchecked")
     JSONObject getBaseUrl(BaseURL url) {
         JSONObject baseURL = new JSONObject();
-        baseURL.put(JSONConstants.ENABLED, url.isEnabled());
-        baseURL.put(JSONConstants.DEFAULT, url.isDefault());
+        baseURL.put(JSONConstants.ENABLED, url.getEnabled());
+        baseURL.put(JSONConstants.DEFAULT, url.getDefault());
         if (url.getInternalURL() != null) {
             baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
         }
@@ -1037,7 +1037,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 JSONObject urlItem = new JSONObject();
                 urlItem.put(JSONConstants.ID, url.getId());
                 urlItem.put(JSONConstants.HREF, url.getHref());
-                urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
+                urlItem.put(JSONConstants.V1_DEFAULT, url.getV1Default());
                 baseUrls.add(urlItem);
             }
         }
@@ -1121,8 +1121,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     JSONObject getRegion(Region region) {
         JSONObject regionInner = new JSONObject();
         regionInner.put(JSONConstants.NAME, region.getName());
-        regionInner.put(JSONConstants.ENABLED, region.isEnabled());
-        regionInner.put(JSONConstants.IS_DEFAULT, region.isIsDefault());
+        regionInner.put(JSONConstants.ENABLED, region.getEnabled());
+        regionInner.put(JSONConstants.IS_DEFAULT, region.getIsDefault());
 
         return regionInner;
     }

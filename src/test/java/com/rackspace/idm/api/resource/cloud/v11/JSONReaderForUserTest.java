@@ -93,7 +93,7 @@ public class JSONReaderForUserTest {
     @Test
     public void getUserFromJSONString_withValidJSON_setsEnabled() throws Exception {
         User userFromJSONString = JSONReaderForUser.getUserFromJSONString(userJSON);
-        assertThat("user enabled", userFromJSONString.isEnabled(), equalTo(true));
+        assertThat("user enabled", userFromJSONString.getEnabled(), equalTo(true));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class JSONReaderForUserTest {
     @Test
     public void getUserFromJSONString_withEmptyValidJSON_setsEnabledFalse() throws Exception {
         User userFromJSONString = JSONReaderForUser.getUserFromJSONString(emptyUserJSON);
-        assertThat("user enabled", userFromJSONString.isEnabled(), equalTo(true));
+        assertThat("user enabled", userFromJSONString.getEnabled(), equalTo(true));
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.Region
 import org.apache.commons.configuration.Configuration
+import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -15,6 +16,7 @@ class RegionConverterCloudV20Test extends Specification {
     def setupSpec() {
         converterCloudV20 = new RegionConverterCloudV20().with {
             it.objFactories = new JAXBObjectFactories()
+            it.mapper = new DozerBeanMapper()
             return it
         }
     }
@@ -91,7 +93,7 @@ class RegionConverterCloudV20Test extends Specification {
     }
 
     def region() {
-        return region("name", "cloud", true, false)
+        return region("name", "cloud", false, true)
     }
 
     def regionEntity(String name, Boolean isEnabled, Boolean isDefault) {

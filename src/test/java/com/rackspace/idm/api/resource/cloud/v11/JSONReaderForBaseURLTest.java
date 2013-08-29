@@ -202,7 +202,7 @@ public class JSONReaderForBaseURLTest {
                 "    \"enabled\": false,\n" +
                 "  }\n" +
                 "}";
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isDefault(), equalTo(true));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getDefault(), equalTo(true));
     }
 
     @Test
@@ -220,7 +220,7 @@ public class JSONReaderForBaseURLTest {
                 "    \"enabled\": false,\n" +
                 "  }\n" +
                 "}";
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isEnabled(), equalTo(false));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getEnabled(), equalTo(false));
     }
 
     @Test
@@ -241,8 +241,8 @@ public class JSONReaderForBaseURLTest {
         assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getPublicURL(), nullValue());
         assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getServiceName(), nullValue());
         assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getRegion(), nullValue());
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isDefault(), equalTo(false));
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getDefault(), equalTo(false));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getEnabled(), equalTo(true));
 
     }
 
@@ -390,7 +390,7 @@ public class JSONReaderForBaseURLTest {
                 "    \"enabled\": false,\n" +
                 "  }\n" +
                 "}";
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isDefault(), equalTo(false));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getDefault(), equalTo(false));
     }
 
     @Test
@@ -407,6 +407,6 @@ public class JSONReaderForBaseURLTest {
                 "    \"default\": true,\n" +
                 "  }\n" +
                 "}";
-        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("baseURL", JSONReaderForBaseURL.getBaseURLFromJSONString(body).getEnabled(), equalTo(true));
     }
 }

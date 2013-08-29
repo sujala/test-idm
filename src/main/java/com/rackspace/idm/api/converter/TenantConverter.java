@@ -84,7 +84,7 @@ public class TenantConverter {
         
         tenant.setDescription(jaxbTenant.getDescription());
         tenant.setDisplayName(jaxbTenant.getDisplayName());
-        tenant.setEnabled(jaxbTenant.isEnabled());
+        tenant.setEnabled(jaxbTenant.getEnabled());
         tenant.setName(jaxbTenant.getName());
         tenant.setTenantId(jaxbTenant.getId());
         

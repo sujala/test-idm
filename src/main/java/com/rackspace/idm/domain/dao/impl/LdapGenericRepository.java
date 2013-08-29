@@ -58,12 +58,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         int offset = 0;
 
         PaginatorContext<T> context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
+        objects.addAll(context.getValueList());
+        offset += PAGE_SIZE;
 
         while(offset < context.getTotalRecords()) {
-            objects.addAll(context.getValueList());
-
-            offset += (PAGE_SIZE - context.getValueList().size());
             context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
+            objects.addAll(context.getValueList());
+            offset += PAGE_SIZE;
         }
 
         return objects;

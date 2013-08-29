@@ -8,6 +8,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.dozer.Mapping;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,9 +33,11 @@ public class Region implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_CLOUD, objectClass = LdapRepository.OBJECTCLASS_REGION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String cloud;
 
+    @Mapping("enabled")
     @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_REGION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean isEnabled;
 
+    @Mapping("isDefault")
     @LDAPField(attribute = LdapRepository.ATTR_USE_FOR_DEFAULT_REGION, objectClass = LdapRepository.OBJECTCLASS_REGION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean isDefault;
 

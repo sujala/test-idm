@@ -72,14 +72,14 @@ public class ObjectFactoryTest {
 
     @Test
     public void domain_enabledIsNull_returnsTrue() throws Exception {
-        boolean result = domain.isEnabled();
+        boolean result = domain.getEnabled();
         assertThat("boolean", result, equalTo(true));
     }
 
     @Test
     public void domain_enabledNotNull_returnsValue() throws Exception {
         domain.setEnabled(false);
-        boolean result = domain.isEnabled();
+        boolean result = domain.getEnabled();
         assertThat("boolean", result, equalTo(false));
     }
 

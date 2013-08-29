@@ -7,6 +7,7 @@ import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import org.dozer.Mapping;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -22,8 +23,9 @@ public class Application implements Auditable, UniqueId {
 
     private ClientSecret clientSecret;
 
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
-    private String clientId;
+    private String clientId = null;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
@@ -35,6 +37,7 @@ public class Application implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name;
 
+    @Mapping("type")
     @LDAPField(attribute = LdapRepository.ATTR_OPENSTACK_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String openStackType;
 
