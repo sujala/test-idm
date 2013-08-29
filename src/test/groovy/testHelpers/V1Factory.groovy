@@ -10,6 +10,7 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
+import org.openstack.docs.common.api.v1.Extension
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -18,6 +19,10 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.VersionForService
+import org.w3._2005.atom.Link
+
+import javax.xml.bind.JAXBElement
+import javax.xml.namespace.QName
 
 /**
  * Created with IntelliJ IDEA.
@@ -452,6 +457,28 @@ class V1Factory {
             it.password = password
             it.username = username
             return it
+        }
+    }
+
+    def createExtension(){
+        return createExtension("alias", "description", "name", "namespace")
+    }
+
+    def createExtension(String alias, String description, String name, String namespace){
+        def link = new Link().with {
+            it.href = "href"
+            it.type = "application/xhtml+xml"
+            it
+        }
+        def jaxBLink = new JAXBElement(new QName("org.w3._2005.atom", "link"), Link, link)
+
+        new Extension().with {
+            it.alias = alias
+            it.description = description
+            it.name = name
+            it.namespace = namespace
+            it.any = [jaxBLink, jaxBLink].asList()
+            it
         }
     }
 }

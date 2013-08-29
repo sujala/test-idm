@@ -4,11 +4,17 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.apache.commons.io.IOUtils
+import org.json.simple.JSONArray
+import org.json.simple.JSONObject
+import org.json.simple.parser.JSONParser
+import org.openstack.docs.common.api.v1.Extension
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -97,6 +103,8 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForRaxAuthDefaultRegionServices readerForDefaultRegionServices = new JSONReaderForRaxAuthDefaultRegionServices()
     @Shared JSONWriterForRaxAuthDefaultRegionServices writerForDefaultRegionServices = new JSONWriterForRaxAuthDefaultRegionServices()
+
+    @Shared JSONWriterForExtension writerForExtension = new JSONWriterForExtension()
 
     def "can read/write region as json"() {
         given:
@@ -845,6 +853,27 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         defaultRegionServicesObject != null
         defaultRegionServices.serviceName[0] == "cloudFile"
+    }
+
+    def "create read/writer for extension" () {
+        given:
+        def extension = v1Factory.createExtension()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForExtension.writeTo(extension, Extension.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(JSONConstants.EXTENSION)
+        o != null
+        o.get(JSONConstants.NAME) == "name"
+        o.get(JSONConstants.DESCRIPTION) == "description"
+        JSONArray a = o.get(JSONConstants.LINKS)
+        a.size() == 2
     }
 
     def getSecretQA(String id, String question, String answer) {

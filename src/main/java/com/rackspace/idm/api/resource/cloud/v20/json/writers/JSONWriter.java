@@ -120,10 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(Extension.class)) {
-            Extension extension = (Extension) object;
-            jsonText = JSONValue.toJSONString(getExtension(extension));
-        } else if (object.getClass().equals(VersionChoice.class)) {
+         if (object.getClass().equals(VersionChoice.class)) {
             VersionChoice versionChoice = (VersionChoice) object;
             jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
         } else if (object.getClass().equals(Extensions.class)) {
@@ -891,13 +888,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
         }
         return baseUrls;
-    }
-
-    @SuppressWarnings("unchecked")
-    private JSONObject getExtension(Extension extension) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.EXTENSION, getExtensionWithoutWrapper(extension));
-        return outer;
     }
 
     @SuppressWarnings("unchecked")

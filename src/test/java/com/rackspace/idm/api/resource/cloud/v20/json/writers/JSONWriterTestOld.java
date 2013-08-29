@@ -1859,20 +1859,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void getExtension() throws Exception {
-        Extension extension = new Extension();
-        extension.setAlias("alias");
-        extension.setDescription("description");
-        extension.setName("name");
-        extension.setNamespace("namespace");
-        extension.setUpdated(calendar);
-
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        writer.writeTo(extension, Extension.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"extension\":{\"updated\":\"2012-01-01\",\"alias\":\"alias\",\"description\":\"description\",\"name\":\"name\",\"namespace\":\"namespace\"}}", myOut.toString());
-    }
-
-    @Test
     public void getExtensionList_listPopulated_returnsJSONObject() throws Exception {
         Extension extension1 = new Extension();
         Extension extension2 = new Extension();

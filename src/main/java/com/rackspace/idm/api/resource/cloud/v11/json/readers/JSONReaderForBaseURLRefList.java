@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud.v11;
+package com.rackspace.idm.api.resource.cloud.v11.json.readers;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;

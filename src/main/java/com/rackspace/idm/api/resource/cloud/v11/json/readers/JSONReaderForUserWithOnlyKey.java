@@ -1,8 +1,8 @@
-package com.rackspace.idm.api.resource.cloud.v11;
+package com.rackspace.idm.api.resource.cloud.v11.json.readers;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,31 +22,31 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForUserWithOnlyEnabled implements MessageBodyReader<UserWithOnlyEnabled> {
+public class JSONReaderForUserWithOnlyKey implements MessageBodyReader<UserWithOnlyKey> {
 
-    private static Logger logger = LoggerFactory.getLogger(JSONReaderForUserWithOnlyEnabled.class);
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForUserWithOnlyKey.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
-        return type == UserWithOnlyEnabled.class;
+        return type == UserWithOnlyKey.class;
     }
 
     @Override
-    public UserWithOnlyEnabled readFrom(Class<UserWithOnlyEnabled> type, Type genericType,
+    public UserWithOnlyKey readFrom(Class<UserWithOnlyKey> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
-        UserWithOnlyEnabled object = getUserWithOnlyEnabledFromJSONString(jsonBody);
+        UserWithOnlyKey object = getUserWithOnlyKeyFromJSONString(jsonBody);
 
         return object;
     }
 
-    public static UserWithOnlyEnabled getUserWithOnlyEnabledFromJSONString(String jsonBody) {
-        UserWithOnlyEnabled user = new UserWithOnlyEnabled();
+    public static UserWithOnlyKey getUserWithOnlyKeyFromJSONString(String jsonBody) {
+        UserWithOnlyKey user = new UserWithOnlyKey();
 
         try {
             JSONParser parser = new JSONParser();
@@ -59,13 +59,13 @@ public class JSONReaderForUserWithOnlyEnabled implements MessageBodyReader<UserW
                     .toString());
 
                 Object id = obj3.get(JSONConstants.ID);
-                Object enabled = obj3.get(JSONConstants.ENABLED);
+                Object key = obj3.get(JSONConstants.KEY);
 
                 if (id != null) {
                     user.setId(id.toString());
                 }
-                if (enabled != null) {
-                    user.setEnabled(Boolean.valueOf(enabled.toString()));
+                if (key != null) {
+                    user.setKey(key.toString());
                 }
             }
         } catch (ParseException e) {
