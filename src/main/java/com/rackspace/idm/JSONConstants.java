@@ -21,6 +21,7 @@ public final class JSONConstants {
     public static final String CUSTOMER_ID = "customerId";
     public static final String DESCRIPTION = "description";
     public static final String DOMAIN = "domain";
+    public static final String DOMAINS = "domains";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
     public static final String ENDPOINT_LINKS="endpoint_links";
@@ -143,7 +144,7 @@ public final class JSONConstants {
     public static final Object RAX_AUTH_IMPERSONATOR = "RAX-AUTH:impersonator";
     public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
-    public static final Object RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
+    public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
     public static final Object RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
     public static final Object RAX_AUTH_POLICY = "RAX-AUTH:policy";
     public static final Object RAX_AUTH_POLICIES = "RAX-AUTH:policies";

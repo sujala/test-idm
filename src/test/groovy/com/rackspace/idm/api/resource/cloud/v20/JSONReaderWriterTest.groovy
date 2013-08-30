@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLRefList
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForVersionChoice
@@ -125,6 +126,9 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
     @Shared JSONWriterForBaseURLList writerForBaseURLList = new JSONWriterForBaseURLList()
     @Shared com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser writerForUser11 = new com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser()
+    @Shared JSONWriterForBaseURLRefList writerForBaseURLRefList = new JSONWriterForBaseURLRefList()
+    @Shared JSONWriterForRaxAuthDomain writerForDomain = new JSONWriterForRaxAuthDomain()
+    @Shared JSONWriterForRaxAuthDomains writerForDomains = new JSONWriterForRaxAuthDomains()
 
     def "can read/write region as json"() {
         given:
@@ -347,7 +351,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(domain, Domain, null, null, null, null, arrayOutputStream)
+        writerForDomain.writeTo(domain, Domain, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json);
 
@@ -1137,6 +1141,92 @@ class JSONReaderWriterTest extends RootServiceTest {
         o.get(KEY) == "key"
         JSONArray a = o.get(BASE_URL_REFS)
         a.size() == 2
+    }
+
+    def "create read/writer for baseURLRefList" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def baseUrlList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLRefList.writeTo(baseUrlList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.BASE_URL_REFS)
+        a.size() == 2
+    }
+
+    def "create read/writer for domain" () {
+        given:
+        def domain = v1Factory.createDomain()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDomain.writeTo(domain, Domain.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject a = outer.get(JSONConstants.RAX_AUTH_DOMAIN)
+        a.get(ID) == "id"
+        a.get(NAME) == "name"
+        a.get(ENABLED) == true
+    }
+
+    def "create read/writer for domains" () {
+        given:
+        def domain = v1Factory.createDomain()
+        def domains = v1Factory.createDomains([domain, domain].asList())
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDomains.writeTo(domains, Domains.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.RAX_AUTH_DOMAINS)
+        a.size() == 2
+        ((JSONObject)a[0]).get(ID) == "id"
+        ((JSONObject)a[0]).get(NAME) == "name"
+        ((JSONObject)a[0]).get(ENABLED) == true
+    }
+
+    def "can write baseUrlRefList"() {
+        when:
+        def baseUrlRefs = new ArrayList<BaseURLRefList>();
+        baseUrlRefs.add(v1Factory.createBaseUrlRef(baseUrlId,publicUrl,v1Default));
+        def baseUrlRefList = new BaseURLRefList();
+        baseUrlRefList.baseURLRef = baseUrlRefs;
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLRefList.writeTo(baseUrlRefList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject baseResponse = (JSONObject) parser.parse(json);
+        baseResponse.size() == 1;
+        baseResponse.get("baseURLRefs")[0]["id"] == baseUrlId;
+        baseResponse.get("baseURLRefs")[0]["href"] == publicUrl;
+        baseResponse.get("baseURLRefs")[0]["v1Default"] == v1Default;
+
+        where:
+        baseUrlId = 1;
+        publicUrl = "http://public/";
+        v1Default = false;
     }
 
     def getSecretQA(String id, String question, String answer) {

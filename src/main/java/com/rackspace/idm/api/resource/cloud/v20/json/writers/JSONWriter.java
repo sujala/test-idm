@@ -120,26 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(BaseURLRefList.class)) {
-
-            BaseURLRefList baseList = (BaseURLRefList) object;
-            JSONObject outer = new JSONObject();
-            JSONArray baseUrls = getBaseUrls(baseList);
-            outer.put(JSONConstants.BASE_URL_REFS, baseUrls);
-            jsonText = JSONValue.toJSONString(outer);
-            
-        } else if (object.getClass().equals(Domain.class)) {
-            Domain domain = (Domain) object;
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.RAX_AUTH_DOMAIN, getDomainWithoutWrapper(domain));
-            jsonText = JSONValue.toJSONString(outer);
-        } else if(object.getClass().equals(Domains.class)){
-            Domains domains = (Domains) object;
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.RAX_AUTH_DOMAINS, getDomainsWithoutWrapper(domains));
-            jsonText = JSONValue.toJSONString(outer);
-
-        } else if (object.getClass().equals(Policy.class)) {
+      if (object.getClass().equals(Policy.class)) {
             Policy policy = (Policy) object;
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.RAX_AUTH_POLICY, getPolicyWithoutWrapper(policy));
@@ -187,21 +168,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    JSONArray getDomainsWithoutWrapper(Domains domains) {
-        JSONArray domainArray = new JSONArray();
-
-        for( Domain domain : domains.getDomain()){
-            JSONObject domainSave = new JSONObject();
-            domainSave.put(JSONConstants.ID,domain.getId());
-            domainSave.put(JSONConstants.ENABLED,domain.isEnabled());
-            domainSave.put(JSONConstants.NAME, domain.getName());
-            domainSave.put(JSONConstants.DESCRIPTION, domain.getDescription());
-            domainArray.add(domainSave);
-        }
-        return domainArray;
-    }
-
-    @SuppressWarnings("unchecked")
     static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
         for (Object o : any) {
@@ -224,66 +190,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
         }
         return linkArray;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getTokenUser(UserForAuthenticateResponse user) {
-        JSONObject userInner = new JSONObject();
-        userInner.put(JSONConstants.ID, user.getId());
-        if (user.getName() != null) {
-            userInner.put(JSONConstants.NAME, user.getName());
-        }
-        JSONArray roleInner = new JSONArray();
-        userInner.put(JSONConstants.ROLES, roleInner);
-        if (user.getRoles() != null) {
-            RoleList roleList = user.getRoles();
-            for (Role role : roleList.getRole()) {
-                roleInner.add(getRole(role));
-            }
-        }
-        
-        if (user.getOtherAttributes().size() != 0) {
-            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
-            if (!StringUtils.isEmpty(defaultRegion)) {
-            	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
-            } else {
-            	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
-            }
-        } else {
-        	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
-        }
-        
-        return userInner;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getTenantWithoutWrapper(Tenant tenant) {
-        JSONObject userInner = new JSONObject();
-        userInner.put(JSONConstants.ID, tenant.getId());
-        userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
-        if (tenant.getName() != null) {
-            userInner.put(JSONConstants.NAME, tenant.getName());
-        }
-        if (tenant.getDescription() != null) {
-            userInner.put(JSONConstants.DESCRIPTION, tenant.getDescription());
-        }
-        //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
-        //userInner.put(JSONConstants.CREATED, tenant.getCreated().toString());
-        return userInner;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getDomainWithoutWrapper(Domain domain) {
-        JSONObject domainInner = new JSONObject();
-        domainInner.put(JSONConstants.ID, domain.getId());
-        domainInner.put(JSONConstants.ENABLED, domain.isEnabled());
-        if (domain.getName() != null) {
-            domainInner.put(JSONConstants.NAME, domain.getName());
-        }
-        if (domain.getDescription() != null) {
-            domainInner.put(JSONConstants.DESCRIPTION, domain.getDescription());
-        }
-        return domainInner;
     }
 
     @SuppressWarnings("unchecked")
@@ -416,18 +322,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
-        JSONArray tenantList = new JSONArray();
-        for (TenantForAuthenticateResponse tenant : tenants) {
-            JSONObject tenantItem = new JSONObject();
-            tenantItem.put(JSONConstants.ID, tenant.getId());
-            tenantItem.put(JSONConstants.NAME, tenant.getName());
-            tenantList.add(tenantItem);
-        }
-        return tenantList;
-    }
-
-    @SuppressWarnings("unchecked")
     JSONArray getEndpointsForCatalog11(List<com.rackspacecloud.docs.auth.api.v1.Endpoint> endpoints) {
         JSONArray endpointList = new JSONArray();
         for (com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint : endpoints) {
@@ -480,164 +374,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    JSONObject getSecretQA(SecretQA secrets) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.RAX_KSQA_SECRET_QA, inner);
-        inner.put(JSONConstants.ANSWER, secrets.getAnswer());
-        inner.put(JSONConstants.QUESTION, secrets.getQuestion());
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getRole(Role role) {
-        JSONObject outer = new JSONObject();
-        if (role.getId() != null) {
-            outer.put(JSONConstants.ID, role.getId());
-        }
-        if (role.getDescription() != null) {
-            outer.put(JSONConstants.DESCRIPTION, role.getDescription());
-        }
-        if (role.getName() != null) {
-            outer.put(JSONConstants.NAME, role.getName());
-        }
-        if (role.getServiceId() != null) {
-            outer.put(JSONConstants.SERVICE_ID, role.getServiceId());
-        }
-        if (role.getTenantId() != null) {
-            outer.put(JSONConstants.TENANT_ID, role.getTenantId());
-        }
-        if (role.getOtherAttributes().containsKey(QNAME_PROPAGATE)) {
-            outer.put(JSONConstants.RAX_AUTH_PROPAGATE, role.getOtherAttributes().get(QNAME_PROPAGATE));
-        }
-        if (role.getOtherAttributes().containsKey(QNAME_WEIGHT)) {
-            outer.put(JSONConstants.RAX_AUTH_WEIGHT, role.getOtherAttributes().get(QNAME_WEIGHT));
-        }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getGroups(Groups groups) {
-        JSONObject outer = new JSONObject();
-        JSONArray list = new JSONArray();
-        outer.put(JSONConstants.RAX_KSGRP_GROUPS, list);
-        for (Group group : groups.getGroup()) {
-            list.add(getGroupWithoutWrapper(group));
-        }
-        return outer;
-    }
-
-    JSONObject getGroupsList(GroupsList groupsList) {
-        JSONObject outer = new JSONObject();
-        JSONObject values = new JSONObject();
-        JSONArray list = new JSONArray();
-        outer.put(JSONConstants.GROUPS, values);
-        for (com.rackspacecloud.docs.auth.api.v1.Group group : groupsList.getGroup()) {
-            list.add(get11Group(group));
-        }
-        values.put("values", list);
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getGroup(Group group) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.RAX_KSGRP_GROUP, getGroupWithoutWrapper(group));
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getGroupWithoutWrapper(Group group) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, group.getId());
-        outer.put(JSONConstants.NAME, group.getName());
-        if (group.getDescription() != null) {
-            outer.put(JSONConstants.DESCRIPTION, group.getDescription());
-        }
-        return outer;
-    }
-
-    JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, group.getId());
-        if (group.getDescription() != null) {
-            outer.put(JSONConstants.DESCRIPTION, group.getDescription());
-        }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getServiceWithoutWrapper(Service service) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, service.getId());
-        outer.put(JSONConstants.NAME, service.getName());
-        outer.put(JSONConstants.TYPE, service.getType());
-        if (service.getDescription() != null) {
-            outer.put(JSONConstants.DESCRIPTION, service.getDescription());
-        }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getServiceList(ServiceList serviceList) {
-        JSONObject outer = new JSONObject();
-        JSONArray list = new JSONArray();
-        for (Service service : serviceList.getService()) {
-            list.add(getServiceWithoutWrapper(service));
-        }
-        outer.put(JSONConstants.SERVICES, list);
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getEndpointTemplateWithoutWrapper(
-            EndpointTemplate template) {
-        JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, template.getId());
-        if (template.getAdminURL() != null) {
-            outer.put(JSONConstants.ADMIN_URL, template.getAdminURL());
-        }
-        if (template.getInternalURL() != null) {
-            outer.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
-        }
-        if (template.getName() != null) {
-            outer.put(JSONConstants.NAME, template.getName());
-        }
-        if (template.getPublicURL() != null) {
-            outer.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
-        }
-        if (template.getType() != null) {
-            outer.put(JSONConstants.TYPE, template.getType());
-        }
-        if (template.getRegion() != null) {
-            outer.put(JSONConstants.REGION, template.getRegion());
-        }
-        outer.put(JSONConstants.GLOBAL, template.isGlobal());
-        outer.put(JSONConstants.ENABLED, template.isEnabled());
-        if (template.getVersion() != null) {
-            outer.put(JSONConstants.VERSION_ID, template.getVersion().getId());
-            outer.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
-            outer.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
-        }
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONArray getBaseUrls(BaseURLRefList baseList) {
-        JSONArray baseUrls = new JSONArray();
-        if (baseList != null) {
-            for (BaseURLRef url : baseList.getBaseURLRef()) {
-                JSONObject urlItem = new JSONObject();
-                urlItem.put(JSONConstants.ID, url.getId());
-                urlItem.put(JSONConstants.HREF, url.getHref());
-                urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
-                baseUrls.add(urlItem);
-            }
-        }
-        return baseUrls;
-    }
-
-    @SuppressWarnings("unchecked")
     JSONObject getEndpoint(Endpoint endpoint) {
         JSONObject endpointItem = new JSONObject();
         endpointItem.put(JSONConstants.ID, endpoint.getId());
@@ -668,28 +404,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
         }
         return endpointItem;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getExtensionWithoutWrapper(Extension extension) {
-        JSONObject outer = new JSONObject();
-
-        outer.put(JSONConstants.NAME, extension.getName());
-        outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
-        outer.put(JSONConstants.ALIAS, extension.getAlias());
-        if (extension.getUpdated() != null) {
-            outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
-        }
-        outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
-
-        if (extension.getAny().size() > 0) {
-            JSONArray links = JSONWriter.getLinks(extension.getAny());
-            if (links.size() > 0) {
-                outer.put(JSONConstants.LINKS, links);
-            }
-        }
-
-        return outer;
     }
 
     @SuppressWarnings("unchecked")
