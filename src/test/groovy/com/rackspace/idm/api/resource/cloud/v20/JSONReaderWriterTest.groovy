@@ -5,12 +5,15 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForVersionChoice
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.apache.commons.io.IOUtils
 import org.json.simple.JSONArray
@@ -120,6 +123,8 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
     @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
     @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
+    @Shared JSONWriterForBaseURLList writerForBaseURLList = new JSONWriterForBaseURLList()
+    @Shared com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser writerForUser11 = new com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser()
 
     def "can read/write region as json"() {
         given:
@@ -1081,6 +1086,57 @@ class JSONReaderWriterTest extends RootServiceTest {
         JSONObject o = outer.get(ACCESS)
         JSONObject t = o.get(TOKEN)
         t.get(ID) == "id"
+    }
+
+    def "create read/writer for baseURLList" () {
+        given:
+        def baseUrl = v1Factory.createBaseUrl()
+        def baseUrlList = new BaseURLList().with {
+            it.baseURL = [baseUrl, baseUrl].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLList.writeTo(baseUrlList, BaseURLList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.BASE_URLS)
+        a.size() == 2
+    }
+
+    def "create read/writer for v1.1 user" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def baseUrlList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
+            it
+        }
+
+        def user = v1Factory.createUser().with {
+            it.baseURLRefs = baseUrlList
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUser11.writeTo(user, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(USER)
+        o.get(ID) == "username"
+        o.get(ENABLED) == true
+        o.get(KEY) == "key"
+        JSONArray a = o.get(BASE_URL_REFS)
+        a.size() == 2
     }
 
     def getSecretQA(String id, String question, String answer) {

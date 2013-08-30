@@ -4,6 +4,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import org.apache.cxf.common.util.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -261,5 +264,42 @@ public class JsonWriterHelper {
         }
 
         return userInner;
+    }
+
+    public static JSONObject getBaseUrl(BaseURL url) {
+        JSONObject baseURL = new JSONObject();
+        baseURL.put(JSONConstants.ENABLED, url.isEnabled());
+        baseURL.put(JSONConstants.DEFAULT, url.isDefault());
+        if (url.getInternalURL() != null) {
+            baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
+        }
+        if (url.getPublicURL() != null) {
+            baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
+        }
+        if (url.getRegion() != null) {
+            baseURL.put(JSONConstants.REGION, url.getRegion());
+        }
+        if (url.getServiceName() != null) {
+            baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
+        }
+        if (url.getUserType() != null) {
+            baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
+        }
+        baseURL.put(JSONConstants.ID, url.getId());
+        return baseURL;
+    }
+
+    public static JSONArray getBaseUrls(BaseURLRefList baseList) {
+        JSONArray baseUrls = new JSONArray();
+        if (baseList != null) {
+            for (BaseURLRef url : baseList.getBaseURLRef()) {
+                JSONObject urlItem = new JSONObject();
+                urlItem.put(JSONConstants.ID, url.getId());
+                urlItem.put(JSONConstants.HREF, url.getHref());
+                urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
+                baseUrls.add(urlItem);
+            }
+        }
+        return baseUrls;
     }
 }

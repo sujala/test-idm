@@ -120,44 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(BaseURLList.class)) {
-            JSONObject outer = new JSONObject();
-            JSONArray list = new JSONArray();
-            BaseURLList baseList = (BaseURLList) object;
-            for (BaseURL url : baseList.getBaseURL()) {
-                list.add(getBaseUrl(url));
-            }
-            outer.put(JSONConstants.BASE_URLS, list);
-            jsonText = JSONValue.toJSONString(outer);
-            // Version 1.1 specific
-        } else if (object.getClass().equals(com.rackspacecloud.docs.auth.api.v1.User.class)) {
-            com.rackspacecloud.docs.auth.api.v1.User user = (com.rackspacecloud.docs.auth.api.v1.User) object;
-            JSONObject outer = new JSONObject();
-            JSONObject inner = new JSONObject();
-            inner.put(JSONConstants.ID, user.getId());
-            inner.put(JSONConstants.ENABLED, user.isEnabled());
-            if (user.getKey() != null) {
-                inner.put(JSONConstants.KEY, user.getKey());
-            }
-            if (user.getMossoId() != null) {
-                inner.put(JSONConstants.MOSSO_ID, user.getMossoId());
-            }
-            if (user.getNastId() != null) {
-                inner.put(JSONConstants.NAST_ID, user.getNastId());
-            }
-            if (user.getCreated() != null) {
-                inner.put(JSONConstants.CREATED, String.valueOf(user.getCreated()));
-            }
-            if (user.getUpdated() != null) {
-                inner.put(JSONConstants.UPDATED, String.valueOf(user.getUpdated()));
-            }
-            BaseURLRefList baseList = user.getBaseURLRefs();
-            JSONArray baseUrls = getBaseUrls(baseList);
-            inner.put(JSONConstants.BASE_URL_REFS, baseUrls);
-            outer.put(JSONConstants.USER, inner);
-            jsonText = JSONValue.toJSONString(outer);
-
-        } else if (object.getClass().equals(BaseURLRefList.class)) {
+        if (object.getClass().equals(BaseURLRefList.class)) {
 
             BaseURLRefList baseList = (BaseURLRefList) object;
             JSONObject outer = new JSONObject();
@@ -657,30 +620,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
         }
         return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getBaseUrl(BaseURL url) {
-        JSONObject baseURL = new JSONObject();
-        baseURL.put(JSONConstants.ENABLED, url.isEnabled());
-        baseURL.put(JSONConstants.DEFAULT, url.isDefault());
-        if (url.getInternalURL() != null) {
-            baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
-        }
-        if (url.getPublicURL() != null) {
-            baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
-        }
-        if (url.getRegion() != null) {
-            baseURL.put(JSONConstants.REGION, url.getRegion());
-        }
-        if (url.getServiceName() != null) {
-            baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
-        }
-        if (url.getUserType() != null) {
-            baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
-        }
-        baseURL.put(JSONConstants.ID, url.getId());
-        return baseURL;
     }
 
     @SuppressWarnings("unchecked")
