@@ -1836,6 +1836,7 @@ public class DefaultCloud11ServiceTestOld {
         when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
         doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());
         when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
+        when(userService.getUserById(anyString())).thenReturn(userDO);
         Response.ResponseBuilder responseBuilder = spy.createUser(null, null, null, user);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(404));
         verify(userService).deleteUser(anyString());

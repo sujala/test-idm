@@ -104,7 +104,7 @@ public class DefaultApplicationServiceTestOld {
 
     @Test
     public void getOpenStackService_callsClientDao_getOpenStackService() throws Exception {
-        when(applicationDao.getOpenStackServices(anyInt(), anyInt())).thenReturn(new PaginatorContext<Application>());
+        when(applicationDao.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         defaultApplicationService.getOpenStackServices();
         verify(applicationDao).getOpenStackServices();
     }

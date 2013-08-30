@@ -2805,13 +2805,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listUsersForTenant_responseOk_returns200() throws Exception {
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = spy.listUsersForTenant(httpHeaders, authToken, tenantId, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listUsersWithRoleForTenant_callsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -2843,12 +2836,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUsersWithRoleForTenant(null, authToken, tenantId, null, null, null);
         verify(tenantService).checkAndGetTenant(tenantId);
-    }
-
-    @Test
-    public void listUsersWithRoleForTenant_responseOk_returns200() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test

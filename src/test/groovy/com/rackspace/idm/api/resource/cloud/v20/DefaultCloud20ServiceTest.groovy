@@ -999,45 +999,52 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
-    def "addUserRole handles exceptions"() {
+    def "addUserRole not allowed without scopeAccess"() {
         given:
-        def mockedScopeAccess = Mock(ScopeAccess)
-        def user1 = entityFactory.createUser()
-        def user2 = entityFactory.createUser()
-        def user3 = entityFactory.createUser("user3", null, "domain3", "region")
-        def caller1 = entityFactory.createUser()
-        def caller2 = entityFactory.createUser()
-        def caller3 = entityFactory.createUser("caller3", null, "domain1", "region")
-        def roleToAdd = entityFactory.createClientRole(null)
-
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        userService.checkAndGetUserById(("1$userId")) >> { throw new NotFoundException()}
-
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller1, user1) >> { throw new ForbiddenException() }
-        precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller2, user2) >> { throw new ForbiddenException() }
-
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(userId) >>> [ user1, user2, user3 ]
-        userService.getUserByAuthToken(authToken) >>> [ caller1, caller2, caller3 ]
+        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> null
 
         when:
-        def response1 = service.addUserRole(headers, authToken, userId, roleId).build()
-        def response2 = service.addUserRole(headers, authToken, userId, roleId).build()
-        def response3 = service.addUserRole(headers, authToken, "1$userId", roleId).build()
-        def response4 = service.addUserRole(headers, authToken, userId, roleId).build()
-        def response5 = service.addUserRole(headers, authToken, userId, roleId).build()
-        def response6 = service.addUserRole(headers, authToken, userId, roleId).build()
+        def response = service.addUserRole(headers, authToken, userId, roleId).build()
 
         then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 404
-        response4.status == 403
-        response5.status == 403
-        response6.status == 403
+        response.status == 401
+    }
+
+    def "addUserRole not allowed without precedence"() {
+        given:
+        def mockedScopeAccess = Mock(ScopeAccess)
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def roleToAdd = entityFactory.createClientRole(null)
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >> mockedScopeAccess
+
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> { throw new ForbiddenException() }
+
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+        userService.checkAndGetUserById(userId) >> user
+        userService.getUserByAuthToken(authToken) >> caller
+
+        when:
+        def response = service.addUserRole(headers, authToken, userId, roleId).build()
+
+        then:
+        response.status == 403
+    }
+
+    def "addUserRole returns not found when user does not exist"() {
+        given:
+        def roleToAdd = entityFactory.createClientRole(null)
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >> Mock(ScopeAccess)
+        userService.checkAndGetUserById(("1$userId")) >> { throw new NotFoundException()}
+        applicationService.getClientRoleById(roleId) >> roleToAdd
+
+        when:
+        def response = service.addUserRole(headers, authToken, "1$userId", roleId).build()
+
+        then:
+        response.status == 404
     }
 
     def "deleteUserRole verifies userAdmin level access"() {
