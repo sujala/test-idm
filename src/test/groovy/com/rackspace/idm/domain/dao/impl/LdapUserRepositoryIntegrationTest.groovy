@@ -55,16 +55,18 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def username1 = "enabledUse$random"
         def username2 = "disabledUse$random"
         def username3 = "use$random"
-        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
+        def domain1 = "domain$random"
+        def domain2 = "domain2$random"
+        def user1 = createUser("1$random", username1, domain1, "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomain("1234567890")
+        def userList = ldapUserRepository.getUsersByDomain(domain1)
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
@@ -79,16 +81,18 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def username1 = "enabledUse$random"
         def username2 = "disabledUse$random"
         def username3 = "use$random"
-        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
+        def domain1 = "domain$random"
+        def domain2 = "domain2$random"
+        def user1 = createUser("1$random", username1, domain1, "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag("1234567890", true)
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, true)
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
@@ -105,16 +109,18 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def username1 = "enabledUse$random"
         def username2 = "disabledUse$random"
         def username3 = "use$random"
-        def user1 = createUser("1$random", username1, "1234567890", "email@email.com", true, "DFW", "Password1")
-        def user2 = createUser("2$random", username2, "1234567890", "email@email.com", false, "DFW", "Password1")
-        def user3 = createUser("3$random", username3, "0123456789", "email@email.com", true, "DFW", "Password1")
+        def domain1 = "domain$random"
+        def domain2 = "domain2$random"
+        def user1 = createUser("1$random", username1, domain1, "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
+        def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
         ldapUserRepository.addUser(user1)
         ldapUserRepository.addUser(user2)
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag("1234567890", false)
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, false)
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
