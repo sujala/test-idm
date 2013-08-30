@@ -119,6 +119,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForRoles writerForRoles = new JSONWriterForRoles()
     @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
     @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
+    @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
 
     def "can read/write region as json"() {
         given:
@@ -1058,6 +1059,28 @@ class JSONReaderWriterTest extends RootServiceTest {
                 ["RSA"],
                 ["RSA", "Password"]
         ]
+    }
+
+    def "create read/writer for ImpersonationResponse" () {
+        given:
+        Token token = v2Factory.createToken()
+        def impersonationResponse = new ImpersonationResponse().with {
+            it.token =  token
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForImpersonationResponse.writeTo(impersonationResponse, ImpersonationResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(ACCESS)
+        JSONObject t = o.get(TOKEN)
+        t.get(ID) == "id"
     }
 
     def getSecretQA(String id, String question, String answer) {

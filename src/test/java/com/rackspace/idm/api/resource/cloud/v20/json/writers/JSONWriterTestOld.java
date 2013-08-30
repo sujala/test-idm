@@ -107,30 +107,6 @@ public class JSONWriterTestOld {
     }
 
     @Test
-    public void writeTo_typeImpersonationResponse_callsGetToken() throws Exception {
-        Token token = new Token();
-        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
-        impersonationResponse.setToken(token);
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        doReturn(new JSONObject()).when(spy).getToken(token);
-        spy.writeTo(impersonationResponse, ImpersonationResponse.class, null, null, null, null, myOut);
-        verify(spy).getToken(token);
-    }
-
-    @Test
-    public void writeTo_typeImpersonationRequest_writesToOutputStream() throws Exception {
-        Token token = new Token();
-        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
-        impersonationResponse.setToken(token);
-        JSONObject jsonObject = new JSONObject();
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        jsonObject.put("success", "This test worked!");
-        doReturn(jsonObject).when(spy).getToken(token);
-        spy.writeTo(impersonationResponse, ImpersonationResponse.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}}}"));
-    }
-
-    @Test
     public void writeTo_typeBaseURLList_callsGetBaseURLList() throws Exception {
         BaseURL baseURL = new BaseURL();
         BaseURLList baseURLList = new BaseURLList();

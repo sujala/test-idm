@@ -120,15 +120,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
             throws IOException {
         String jsonText = "";
-        if (object.getClass().equals(ImpersonationResponse.class)) {
-            JSONObject outer = new JSONObject();
-            JSONObject access = new JSONObject();
-            ImpersonationResponse authenticateResponse = (ImpersonationResponse) object;
-            access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
-
-            outer.put(JSONConstants.ACCESS, access);
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(BaseURLList.class)) {
+        if (object.getClass().equals(BaseURLList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
             BaseURLList baseList = (BaseURLList) object;
