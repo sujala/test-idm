@@ -461,6 +461,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else {
                 password = Password.generateRandom(false, userDO).getValue();
             }
+            userDO.setUserPassword(password);
 
             User caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
