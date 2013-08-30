@@ -41,8 +41,8 @@ public interface TenantService {
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(User user);
     boolean hasTenantAccess(User user, String tenantId);
-    List<User> getUsersForTenant(String tenantId);
-    List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
+    List<User> getUsersForTenant(String tenantId, int offset, int limit);
+    List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
     List<TenantRole> getTenantRolesForTenant(String tenantId);
     boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles);
 

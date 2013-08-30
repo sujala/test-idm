@@ -44,8 +44,8 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         groupToCreate == createdGroup
         groupToUpdate == updatedGroup
 
-        groupsWithGroup.contains(updatedGroup)
-        !groupsWithoutGroup.contains(updatedGroup)
+        groupsWithGroup.getValueList().contains(updatedGroup)
+        !groupsWithoutGroup.getValueList().contains(updatedGroup)
     }
 
     def "can get group with duplicate name"() {

@@ -309,7 +309,7 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("Getting Open Stack Services");
         return this.applicationDao.getOpenStackServices();
     }
-    
+
     @Override
     public void softDeleteApplication(Application application) {
         logger.debug("SoftDeleting Application: {}", application);

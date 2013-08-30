@@ -106,16 +106,16 @@ public class Cloud20VersionResourceTestOld {
 
     @Test
     public void listUsersWithRole_responseOk_returns200() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null)).thenReturn(Response.ok());
-        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0)).thenReturn(Response.ok());
+        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
         assertThat("response code", response.getStatus(), equalTo(200));
     }
 
     @Test
     public void listUsersWithRole_callsDefaultCloud20Service_listUsersWithRole() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null)).thenReturn(Response.ok());
-        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
-        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0)).thenReturn(Response.ok());
+        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
+        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
     }
 
     @Test

@@ -47,7 +47,7 @@ public interface Cloud20Service {
 
     ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) ;
+    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) ;
 
     ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
@@ -55,7 +55,7 @@ public interface Cloud20Service {
 
     ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body) ;
 
-    ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) ;
+    ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, Integer marker, Integer limit) ;
 
     ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) ;
 
@@ -87,17 +87,17 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) ;
 
-	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) ;
+	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
 
-	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, String marker, Integer limit) ;
+	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, Integer marker, Integer limit) ;
 
-	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) ;
+	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
 
 	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
 	ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
-	ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) ;
+	ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, Integer marker, Integer limit) ;
 
 	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role);
 
@@ -105,7 +105,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) ;
+	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) ;
 
 	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service);
 
@@ -113,7 +113,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit) ;
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) ;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) ;
@@ -159,7 +159,7 @@ public interface Cloud20Service {
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) ;
 
-    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String s, Integer limit) ;
+    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String group, Integer marker, Integer limit) ;
 
     ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) ;
 
@@ -175,7 +175,7 @@ public interface Cloud20Service {
 
     ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) ;
 
-    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, String limit) ;
+    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, Integer marker, Integer limit) ;
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) ;
 
@@ -223,7 +223,7 @@ public interface Cloud20Service {
 
     ResponseBuilder deletePolicy(String authToken, String policyId);
 
-    ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit);
+    ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit);
 
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 
@@ -237,7 +237,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getServiceApis(String authToken);
 
-    ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit);
+    ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, Integer marker, Integer limit);
 
     ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region);
 

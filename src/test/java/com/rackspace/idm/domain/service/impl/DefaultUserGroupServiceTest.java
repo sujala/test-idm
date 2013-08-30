@@ -38,7 +38,7 @@ public class DefaultUserGroupServiceTest {
     @Ignore
     @Test
     public void getGroups_returnsNonNullValue() throws Exception {
-        Iterable<Group> groups = defaultUserGroupService.getGroups("0", 0);
+        Iterable<Group> groups = defaultUserGroupService.getGroups(0, 0);
         assertThat("groups", groups, notNullValue());
     }
 }

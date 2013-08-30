@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -103,7 +104,7 @@ public class DefaultApplicationServiceTestOld {
 
     @Test
     public void getOpenStackService_callsClientDao_getOpenStackService() throws Exception {
-        when(applicationDao.getOpenStackServices()).thenReturn(new ArrayList<Application>());
+        when(applicationDao.getOpenStackServices(anyInt(), anyInt())).thenReturn(new PaginatorContext<Application>());
         defaultApplicationService.getOpenStackServices();
         verify(applicationDao).getOpenStackServices();
     }

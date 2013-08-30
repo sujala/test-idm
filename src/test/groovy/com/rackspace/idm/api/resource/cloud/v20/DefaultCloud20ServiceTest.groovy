@@ -32,8 +32,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     @Shared ScopeAccess scopeAccessMock
 
-    @Shared def offset = "0"
-    @Shared def limit = "25"
+    @Shared def offset = 0
+    @Shared def limit = 25
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def questionId = "id"
@@ -68,92 +68,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         headers = Mock()
         jaxbMock = Mock(JAXBElement)
-    }
-
-    def "validateOffset null offset sets offset to 0"() {
-        when:
-        def offset = service.validateOffset(null)
-
-        then:
-        offset == 0
-    }
-
-    def "validateOffset negative offset throws bad request"() {
-        when:
-        service.validateOffset("-5")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateOffset blank offset throws bad request"() {
-        when:
-        service.validateOffset("")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateOffset valid offset sets offset"() {
-        when:
-        def offset = service.validateOffset("10")
-
-        then:
-        offset == 10
-    }
-
-    def "validateLimit null limit sets limit to default"() {
-        when:
-        config.getInt(_) >> 25
-        def limit = service.validateLimit(null)
-
-        then:
-        limit == 25
-    }
-
-    def "validateLimit negative limit throws bad request"() {
-        when:
-        service.validateLimit("-5")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateLimit blank limit throws bad request"() {
-        when:
-        service.validateLimit("")
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validateLimit limit is 0 sets to default"() {
-        when:
-        config.getInt(_) >> 25
-        def limit = service.validateLimit("0")
-
-        then:
-        limit == 25
-    }
-
-    def "validateLimit limit is too large sets to default max"() {
-        when:
-        config.getInt(_) >> 99
-        def value = 100
-        def limit = service.validateLimit(value.toString())
-
-        then:
-        limit == 99
-    }
-
-    def "validateLimit limit is valid sets limit"() {
-        when:
-        config.getInt(_) >> 100
-        def value = 99
-        def limit = service.validateLimit(value.toString())
-
-        then:
-        limit == value
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
