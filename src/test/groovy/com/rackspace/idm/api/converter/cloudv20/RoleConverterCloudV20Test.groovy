@@ -43,7 +43,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
     def "can convert jaxb role to clientRole"() {
         given:
         def weight = 100
-        def propagate = true
+        def propagate = false
 
         def jaxbRole = v2Factory.createRole()
         jaxbRole.weight = weight

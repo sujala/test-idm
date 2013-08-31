@@ -81,6 +81,8 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         when:
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = roleName
+            it.propagate = propagate
+            it.weight = weight
             return it
         }
         def response = cloud20.createRole(specificationServiceAdminToken, role)
@@ -89,12 +91,9 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         def propagateValue = null
         def weightValue = null
 
-        if (createdRole.otherAttributes.containsKey(QNAME_PROPAGATE)) {
-            propagateValue = createdRole.otherAttributes.get(QNAME_PROPAGATE).toBoolean()
-        }
-        if (createdRole.otherAttributes.containsKey(QNAME_WEIGHT)) {
-            weightValue = createdRole.otherAttributes.get(QNAME_WEIGHT).toInteger()
-        }
+        propagateValue = createdRole.propagate
+
+        weightValue = createdRole.weight
 
         then:
         propagateValue == expectedPropagate
