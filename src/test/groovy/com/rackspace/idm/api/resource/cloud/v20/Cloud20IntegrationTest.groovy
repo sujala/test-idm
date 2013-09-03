@@ -177,6 +177,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         def role = v2Factory.createRole(true, 500).with {
             it.name = "propagatingRole$sharedRandom"
+            it.propagate = true
+            it.weight = 500
+            it.otherAttributes = null
             return it
         }
         def responsePropagateRole = cloud20.createRole(serviceAdminToken, role)
