@@ -1737,6 +1737,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         when:
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = "role$sharedRandom"
+            it.propagate = propagate
+            it.weight = weight
+            it.otherAttributes = null
             return it
         }
         def response = cloud20.createRole(serviceAdminToken, role)
@@ -1746,12 +1749,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def propagateValue = null
         def weightValue = null
 
-        if (createdRole.otherAttributes.containsKey(QNAME_PROPAGATE)) {
-            propagateValue = createdRole.otherAttributes.get(QNAME_PROPAGATE).toBoolean()
-        }
-        if (createdRole.otherAttributes.containsKey(QNAME_WEIGHT)) {
-            weightValue = createdRole.otherAttributes.get(QNAME_WEIGHT).toInteger()
-        }
+        propagateValue = createdRole.propagate
+        weightValue = createdRole.weight
 
         then:
         propagateValue == expectedPropagate
@@ -1787,6 +1786,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "we cannot specify a role weight which we cannot manage"() {
         when:
         def role = v2Factory.createRole(null, weight)
+        role.otherAttributes = null
+        role.weight = weight
         def response = cloud20.createRole(token, role)
         if (response.status == 201) {
             cloud20.deleteRole(serviceAdminToken, response.getEntity(Role).value.getId())
@@ -1803,15 +1804,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "authenticate returns password authentication type in response"() {
         when:
         def response = cloud20.authenticatePassword("admin$sharedRandom", "Password1")
-        def tokenAny = response.getEntity(AuthenticateResponse).value.token.any
-        def attributes = []
-        for (attr in tokenAny) {
-            attributes.add(StringUtils.lowerCase(attr.name))
-        }
+        def authBy = response.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential[0]
 
         then:
         response.status == 200
-        attributes.contains("rax-auth:authenticatedby")
+        authBy == "PASSWORD"
     }
 
     @Ignore
@@ -1827,16 +1824,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "validate returns password authentication type in response"() {
         when:
         def response = cloud20.validateToken(serviceAdminToken, userAdminToken)
-        def blah = response.getEntity(AuthenticateResponse).value
-        def tokenAny = blah.token.any
-        def attributes = []
-        for (attr in tokenAny) {
-            attributes.add(StringUtils.lowerCase(attr.name))
-        }
+        def authBy = response.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential[0]
 
         then:
         response.status == 200
-        attributes.contains("rax-auth:authenticatedby")
+        authBy == "PASSWORD"
     }
 
     def "Identity-Admin should not be allowd to delete a service"() {

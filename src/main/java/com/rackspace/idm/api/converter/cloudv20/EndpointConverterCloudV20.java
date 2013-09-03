@@ -50,6 +50,7 @@ public class EndpointConverterCloudV20 {
         for (OpenstackEndpoint point : endpoints) {
             for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
                 Endpoint endpoint = mapper.map(baseUrl, Endpoint.class);
+                endpoint.setName(baseUrl.getServiceName());
                 if (!StringUtils.isBlank(baseUrl.getVersionId())) {
                     VersionForService version = new VersionForService();
                     version.setId(baseUrl.getVersionId());
@@ -82,6 +83,7 @@ public class EndpointConverterCloudV20 {
         EndpointTemplate template = mapper.map(baseUrl, EndpointTemplate.class);
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
+        template.setName(baseUrl.getServiceName());
 
         if (!StringUtils.isBlank(baseUrl.getVersionId())) {
             VersionForService version = new VersionForService();
@@ -112,6 +114,7 @@ public class EndpointConverterCloudV20 {
 
     public Endpoint toEndpoint(CloudBaseUrl baseUrl) {
         Endpoint endpoint = mapper.map(baseUrl, Endpoint.class);
+        endpoint.setName(baseUrl.getServiceName());
 
         if (!StringUtils.isBlank(baseUrl.getVersionId())) {
             VersionForService version = new VersionForService();
@@ -127,6 +130,7 @@ public class EndpointConverterCloudV20 {
         CloudBaseUrl baseUrl = mapper.map(template, CloudBaseUrl.class);
         baseUrl.setEnabled(template.isEnabled());
         baseUrl.setGlobal(template.isGlobal());
+        baseUrl.setServiceName(template.getName());
 
         if (template.getVersion() != null) {
             baseUrl.setVersionId(template.getVersion().getId());

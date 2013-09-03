@@ -26,8 +26,8 @@ class TokenConverterCloudV20Test extends RootServiceTest {
         Token result = converter.toToken(scopeAccess)
 
         then:
-        JAXBElement<AuthenticatedBy> authenticatedByEntity = result.any.get(0)
-        expected as Set == authenticatedByEntity.getValue().credential as Set
+        AuthenticatedBy authenticatedByEntity = result.authenticatedBy
+        expected as Set == authenticatedByEntity.credential as Set
 
         where:
         authenticatedBy     | expected
