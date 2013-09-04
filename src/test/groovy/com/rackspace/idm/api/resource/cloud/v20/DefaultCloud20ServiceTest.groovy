@@ -3194,7 +3194,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "1", user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyUserLevelAccess(_)
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
@@ -3218,7 +3218,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.updateUser(headers, authToken, userId, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyUserLevelAccess(_)
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
@@ -3385,7 +3385,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.updateUser(headers, authToken, userId, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyUserLevelAccess(_)
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)

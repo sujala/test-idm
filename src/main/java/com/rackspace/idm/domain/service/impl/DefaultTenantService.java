@@ -318,7 +318,7 @@ public class DefaultTenantService implements TenantService {
                 role.setName(tenantRole.getName());
                 role.setRoleRsId(tenantRole.getRoleRsId());
                 role.setTenantIds(tenantRole.getTenantIds());
-                tenantRole.setUserId(user.getId());
+                role.setUserId(user.getId());
                 this.addTenantRoleToUser(user, role);
             }
         }
@@ -521,7 +521,10 @@ public class DefaultTenantService implements TenantService {
 
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
             if (!userIds.contains(role.getUserId())) {
-                userIds.add(role.getUserId());
+                String userId = tenantRoleDao.getUserIdForParent(role);
+                if(!StringUtils.isBlank(userId)){
+                    userIds.add(userId);
+                }
             }
         }
 

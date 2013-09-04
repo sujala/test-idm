@@ -2058,6 +2058,60 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         authResponse.getServiceCatalog().getService()[0].getEndpoint().size() == 1
     }
 
+    def "Default User should be allow to update himself" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "defaultUserUpdate$random"
+
+        when:
+        def createUser = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "deDupeDomain$random", password)).getEntity(User)
+        def token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token.id
+        def updateUser = cloud20.updateUser(token, createUser.id, v2Factory.createUserForCreate(username, "display name", "other@email.email", true, "DFW", null, null)).getEntity(User)
+
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+
+        then:
+        createUser != null
+        token != null
+        updateUser != null
+        updateUser.displayName == "display name"
+        updateUser.email == "other@email.email"
+    }
+
+    def "List users by tenant id should display sub users" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "listUserByTenant$random"
+        def subUsername = "subListUserByTenant$random"
+        def tenant = v2Factory.createTenant("7546143", "7546143")
+        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        role.otherAttributes = v2Factory.createOtherMap(true, null)
+
+        when:
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id)
+        def token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token.id
+        def createSubUser = cloud20.createUser(token, v2Factory.createUserForCreate(subUsername, subUsername, "email@email.email", true, "DFW", null, password)).getEntity(User)
+        def listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, addTenant.id).getEntity(UserList).value
+
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.destroyUser(serviceAdminToken, createSubUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+
+        then:
+        createUser != null
+        token != null
+        createSubUser != null
+        listUsersByTenant.user.size() == 2
+        listUsersByTenant.user[0].id == createUser.id
+        listUsersByTenant.user[1].id == createSubUser.id
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
