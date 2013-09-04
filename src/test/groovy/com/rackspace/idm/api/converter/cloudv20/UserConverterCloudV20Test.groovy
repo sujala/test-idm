@@ -41,6 +41,7 @@ class UserConverterCloudV20Test extends Specification {
         user.displayName == userEntity.displayName
         user.email == userEntity.email
         user.enabled == userEntity.enabled
+        user.region == userEntity.defaultRegion
     }
 
     def "convert user from ldap to UserForCreate jersey object"() {
@@ -55,6 +56,7 @@ class UserConverterCloudV20Test extends Specification {
         user.displayName == userEntity.displayName
         user.email == userEntity.email
         user.enabled == userEntity.enabled
+        user.region == userEntity.defaultRegion
     }
 
     def "convert user from ldap to UserForAuthenticateResponse jersey object"() {
@@ -93,6 +95,7 @@ class UserConverterCloudV20Test extends Specification {
         user.displayName == userEntity.displayName
         user.email == userEntity.email
         user.enabled == userEntity.enabled
+        user.region == userEntity.defaultRegion
     }
 
     def "convert users to jersey object" () {
@@ -111,6 +114,7 @@ class UserConverterCloudV20Test extends Specification {
         user.displayName == userEntity.displayName
         user.email == userEntity.email
         user.enabled == userEntity.enabled
+        user.region == userEntity.defaultRegion
     }
 
 
@@ -129,7 +133,7 @@ class UserConverterCloudV20Test extends Specification {
             it.email = "email@email.com"
             it.displayName = "display"
             it.enabled = enabled
-//            it.defaultRegion = "region"
+            it.defaultRegion = "region"
             it.created = createdXML()
             return it
         }

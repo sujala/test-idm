@@ -25,6 +25,10 @@ class UserConverterCloudV11Test extends Specification {
     @Shared UserConverterCloudV11 converterCloudV11
     @Shared EndpointConverterCloudV11 endpointConverterCloudV11
 
+    def href = "http://something"
+    def id = 1
+    def v1Default = true
+
     def setupSpec() {
         converterCloudV11 = new UserConverterCloudV11()
     }
@@ -62,8 +66,8 @@ class UserConverterCloudV11Test extends Specification {
         user.mossoId == userEntity.mossoId
         user.nastId == userEntity.nastId
         user.enabled == userEntity.enabled
-        user.created == created()
-        user.updated == created()
+        userEntity.created.equals(createdXML())
+        userEntity.updated.equals(createdXML())
     }
 
     def "convert user from ldap to jersey object - with endpoints"() {
@@ -83,6 +87,10 @@ class UserConverterCloudV11Test extends Specification {
         user.nastId == userEntity.nastId
         user.enabled == userEntity.enabled
         userEntity.baseURLRefs.baseURLRef.size() == 1
+        userEntity.baseURLRefs.baseURLRef.get(0).href == href
+        userEntity.baseURLRefs.baseURLRef.get(0).id == id
+        userEntity.baseURLRefs.baseURLRef.get(0).v1Default == v1Default
+
     }
 
     def "convert user from ldap to openstack user jersey object - with endpoints"() {
@@ -102,6 +110,9 @@ class UserConverterCloudV11Test extends Specification {
         user.nastId == userEntity.nastId
         user.enabled == userEntity.enabled
         userEntity.baseURLRefs.baseURLRef.size() == 1
+        userEntity.baseURLRefs.baseURLRef.get(0).href == href
+        userEntity.baseURLRefs.baseURLRef.get(0).id == id
+        userEntity.baseURLRefs.baseURLRef.get(0).v1Default == v1Default
     }
 
     def "convert user from ldap to openstack userWithOnlyEnabled jersey object - with endpoints"() {
@@ -121,6 +132,9 @@ class UserConverterCloudV11Test extends Specification {
         user.nastId == userEntity.nastId
         user.enabled == userEntity.enabled
         userEntity.baseURLRefs.baseURLRef.size() == 1
+        userEntity.baseURLRefs.baseURLRef.get(0).href == href
+        userEntity.baseURLRefs.baseURLRef.get(0).id == id
+        userEntity.baseURLRefs.baseURLRef.get(0).v1Default == v1Default
     }
 
     def "convert user from ldap to openstack userWithId jersey object - with endpoints"() {
@@ -128,7 +142,7 @@ class UserConverterCloudV11Test extends Specification {
         User user = user()
 
         when:
-        com.rackspacecloud.docs.auth.api.v1.User userEntity = converterCloudV11.toCloudV11UserWithId(user)
+        com.rackspacecloud.docs.auth.api.v1.UserWithId userEntity = converterCloudV11.toCloudV11UserWithId(user)
 
         then:
         user.username == userEntity.id
@@ -151,6 +165,9 @@ class UserConverterCloudV11Test extends Specification {
         user.nastId == userEntity.nastId
         user.enabled == userEntity.enabled
         userEntity.baseURLRefs.baseURLRef.size() == 1
+        userEntity.baseURLRefs.baseURLRef.get(0).href == href
+        userEntity.baseURLRefs.baseURLRef.get(0).id == id
+        userEntity.baseURLRefs.baseURLRef.get(0).v1Default == v1Default
     }
 
     def "convert user from jersey object to ldap"() {
@@ -204,9 +221,9 @@ class UserConverterCloudV11Test extends Specification {
 
     def baseUrlRefs() {
         com.rackspacecloud.docs.auth.api.v1.BaseURLRef urlRef = new BaseURLRef()
-        urlRef.href = "http://something"
-        urlRef.id = 1
-        urlRef.v1Default = true
+        urlRef.href = href
+        urlRef.id = id
+        urlRef.v1Default = v1Default
         com.rackspacecloud.docs.auth.api.v1.BaseURLRefList urlRefList= new BaseURLRefList()
         urlRefList.baseURLRef.add(urlRef)
         urlRefList
@@ -214,7 +231,7 @@ class UserConverterCloudV11Test extends Specification {
 
     def baseUrl() {
         CloudBaseUrl baseUrl = new CloudBaseUrl()
-        baseUrl.baseUrlId = 1
+        baseUrl.baseUrlId = id
         baseUrl.v1Default = false
     }
 

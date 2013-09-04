@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.apache.commons.lang.StringUtils
 import org.joda.time.Seconds
@@ -1808,7 +1809,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 200
-        authBy == "PASSWORD"
+        authBy == GlobalConstants.AUTHENTICATED_BY_PASSWORD
     }
 
     @Ignore
@@ -1828,7 +1829,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 200
-        authBy == "PASSWORD"
+        authBy == GlobalConstants.AUTHENTICATED_BY_PASSWORD
     }
 
     def "Identity-Admin should not be allowd to delete a service"() {

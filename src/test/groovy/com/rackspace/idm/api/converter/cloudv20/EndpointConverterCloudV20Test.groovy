@@ -99,6 +99,28 @@ class EndpointConverterCloudV20Test extends Specification {
         baseUrl.versionList == version.list
     }
 
+    def "convert EndpointTemplate jersey object to ldap CloudBaseurl - no version"() {
+        given:
+        EndpointTemplate endpointTemplate = endpointTemplate()
+        endpointTemplate.version = null
+
+        when:
+        CloudBaseUrl baseUrl = converterCloudV20.toCloudBaseUrl(endpointTemplate)
+
+        then:
+        baseUrl.adminUrl == endpointTemplate.adminURL
+        baseUrl.baseUrlId == endpointTemplate.id.toString()
+        baseUrl.enabled == endpointTemplate.enabled
+        baseUrl.global == endpointTemplate.global
+        baseUrl.internalUrl == endpointTemplate.internalURL
+        baseUrl.openstackType == endpointTemplate.type
+        baseUrl.publicUrl == endpointTemplate.publicURL
+        baseUrl.region == endpointTemplate.region
+        baseUrl.versionId == null
+        baseUrl.versionInfo == null
+        baseUrl.versionList == null
+    }
+
     def "convert CloudBaseUrl list from ldap to EndpointTemplateList jersey object"() {
         given:
         CloudBaseUrl baseUrl = baseurl()
