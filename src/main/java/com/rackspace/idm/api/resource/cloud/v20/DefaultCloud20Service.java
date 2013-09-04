@@ -592,7 +592,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
             if (user.getPassword() != null) {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());

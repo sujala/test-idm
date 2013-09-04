@@ -179,6 +179,10 @@ class Cloud20Methods {
         resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def listUsersWithTenantId(String token, tenantId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def createRole(String token, Role role) {
         resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(role).post(ClientResponse)
     }
