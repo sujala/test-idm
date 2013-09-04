@@ -66,7 +66,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomain(domain1)
+        def userList = ldapUserRepository.getUsersByDomain(domain1).collect()
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
@@ -92,7 +92,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, true)
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, true).collect()
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
@@ -120,7 +120,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, false)
+        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, false).collect()
         ldapUserRepository.deleteUser(username1)
         ldapUserRepository.deleteUser(username2)
         ldapUserRepository.deleteUser(username3)
@@ -138,7 +138,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         when:
         ldapUserRepository.addUser(user1)
-        def user = ldapUserRepository.getUsersByEmail(email)
+        def user = ldapUserRepository.getUsersByEmail(email).collect()
         ldapUserRepository.deleteUser(user.get(0))
 
         then:

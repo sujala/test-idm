@@ -85,7 +85,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public List<Application> getAllApplications() {
+    public Iterable<Application> getAllApplications() {
         return getObjects(searchFilterGetApplications());
     }
 
@@ -148,12 +148,12 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public List<Application> getAvailableScopes() {
+    public Iterable<Application> getAvailableScopes() {
         return getObjects(searchFilterGetAvailableScopes());
     }
 
     @Override
-    public List<Application> getOpenStackServices() {
+    public Iterable<Application> getOpenStackServices() {
         return getObjects(searchFilterGetOpenstackServices());
     }
 

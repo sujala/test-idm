@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
@@ -250,7 +251,7 @@ public class DefaultCloud20ServiceOldTest {
         domain.setName("domain");
         domain.setDescription("");
         domain.setEnabled(true);
-        
+
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
@@ -350,6 +351,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void setDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.setDefaultRegionServices(authToken, new DefaultRegionServices());
@@ -358,12 +360,14 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void setDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
         assertThat("response builder", responseBuilder, Matchers.notNullValue());
     }
 
     @Test
     public void setDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
         verify(clientService).getOpenStackServices();
     }
@@ -371,6 +375,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void listDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listDefaultRegionServices(authToken);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
@@ -378,24 +383,28 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         defaultCloud20Service.listDefaultRegionServices(authToken);
         verify(clientService).getOpenStackServices();
     }
 
     @Test
     public void listDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
         assertThat("response builder", responseBuilder, Matchers.notNullValue());
     }
 
     @Test
     public void listDefaultRegionServices_returnsNotNullEntity() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
         assertThat("response builder", responseBuilder.build().getEntity(), Matchers.notNullValue());
     }
 
     @Test
     public void listDefaultRegionServices_returnsDefaultRegionServicesType() throws Exception {
+        when(clientService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
         assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(DefaultRegionServices.class));
     }
@@ -1312,14 +1321,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listUserGroups_noGroup_ReturnDefaultGroup() throws Exception {
-        when(userGroupService.getGroupById(config.getString(org.mockito.Matchers.<String>any()))).thenReturn(group);
-        when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null, authToken, userId);
-        assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups)responseBuilder.build().getEntity()).getGroup().get(0).getName(), equalTo("Group1"));
-    }
-
-    @Test
     public void listUserGroups_badRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -1340,6 +1341,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listUserGroups_withValidUser_returns200() throws Exception {
+        when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
         assertThat("code", responseBuilder.build().getStatus(), equalTo(200));
@@ -1347,16 +1349,10 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listUserGroups_withValidUser_returnsNonNullEntity() throws Exception {
+        when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
         assertThat("code", responseBuilder.build().getEntity(), Matchers.notNullValue());
-    }
-
-    @Test
-    public void listUserGroups_withValidUser_returnsGroups() throws Exception {
-        when(userService.getUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getEntity(), instanceOf(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups.class));
     }
 
     @Test
@@ -2572,6 +2568,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void listEndpointTemplates_serviceIdIsBlankResponseOk_returns200() throws Exception {
+        when(endpointService.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.listEndpointTemplates(httpHeaders, authToken, "");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -2925,6 +2922,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateSecretQA_callsCheckAndGetUserById() throws Exception {
+        when(questionService.getQuestions()).thenReturn(new ArrayList<Question>());
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateSecretQA(null, authToken, userId, secretQA);
         verify(userService).checkAndGetUserById(userId);
@@ -2954,6 +2952,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateSecretQA_userService_callsUpdateUser() throws Exception {
+        when(questionService.getQuestions()).thenReturn(new ArrayList<Question>());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.updateSecretQA(null, authToken, userId, secretQA);
         verify(userService).updateUser(any(User.class), eq(false));
@@ -2961,6 +2960,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test
     public void updateSecretQA_responseOk_returns200() throws Exception {
+        when(questionService.getQuestions()).thenReturn(new ArrayList<Question>());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.updateSecretQA(null, authToken, userId, secretQA);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -4055,14 +4055,6 @@ public class DefaultCloud20ServiceOldTest {
         doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.getGroup(httpHeaders, authToken, null), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void listDefaultRegionServices_openStackServicesIsNull_responseOk_returns200() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(clientService.getOpenStackServices()).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test

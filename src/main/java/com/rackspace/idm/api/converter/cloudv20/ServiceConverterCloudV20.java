@@ -22,7 +22,7 @@ public class ServiceConverterCloudV20 {
         return mapper.map(client, Service.class);
     }
     
-    public ServiceList toServiceList(List<Application> clients) {
+    public ServiceList toServiceList(Iterable<Application> clients) {
         ServiceList list = objFactories.getOpenStackIdentityExtKsadmnV1Factory().createServiceList();
         
         for (Application client : clients) {

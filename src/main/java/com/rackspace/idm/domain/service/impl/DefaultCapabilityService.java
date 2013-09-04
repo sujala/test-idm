@@ -104,7 +104,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
     }
 
     @Override
-    public List<Capability> getCapabilities(String type, String version) {
+    public Iterable<Capability> getCapabilities(String type, String version) {
         if(StringUtils.isBlank(version)){
             throw new BadRequestException("Capability's version cannot be null.");
         }
@@ -122,23 +122,22 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        List<Capability> capabilityList = ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version));
-        for(Capability capability : capabilityList){
+        for(Capability capability : ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version))){
             ldapCapabilityRepository.deleteObject(createCapabilityFilter(capability.getId(), capability.getType(), capability.getVersion()));
         }
     }
 
     @Override
     public List<ServiceApi> getServiceApis() {
-        List<ServiceApi> serviceApis = ldapServiceApiRepository.getObjects(createServiceApiFilter());
+        Iterable<ServiceApi> serviceApis = ldapServiceApiRepository.getObjects(createServiceApiFilter());
         List<ServiceApi> noDup = new ArrayList<ServiceApi>();
-        if(serviceApis != null && serviceApis.size() > 0){
+        if(serviceApis.iterator().hasNext()){
             noDup = removeDuplicateServices(serviceApis);
         }
         return noDup;
     }
 
-    private List<ServiceApi> removeDuplicateServices(List<ServiceApi> serviceApis) {
+    private List<ServiceApi> removeDuplicateServices(Iterable<ServiceApi> serviceApis) {
         List<ServiceApi> noDup = new ArrayList<ServiceApi>();
         for(ServiceApi serviceApi: serviceApis){
             if(!noDup.contains(serviceApi)){

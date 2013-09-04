@@ -34,11 +34,11 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         groupRepository.updateGroup(groupToUpdate)
         def updatedGroup = groupRepository.getGroupById(groupId)
 
-        def groupsWithGroup = groupRepository.getGroups()
+        def groupsWithGroup = groupRepository.getGroups().collect()
 
         groupRepository.deleteGroup(groupId)
 
-        def groupsWithoutGroup = groupRepository.getGroups()
+        def groupsWithoutGroup = groupRepository.getGroups().collect()
 
         then:
         groupToCreate == createdGroup

@@ -62,9 +62,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new NotFoundException(errMsg);
         }
 
-        List<ClientRole> roles = applicationRoleDao.getClientRolesForApplication(client);
-        
-        for (ClientRole role : roles) {
+        for (ClientRole role : applicationRoleDao.getClientRolesForApplication(client)) {
             this.deleteClientRole(role);
         }
 
@@ -166,11 +164,10 @@ public class DefaultApplicationService implements ApplicationService {
         if (client == null || client.getUniqueId() == null) {
             throw new IllegalArgumentException("Client cannot be null and must have uniqueID");
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForApplication(client);
 
         List<Application> clientList = new ArrayList<Application>();
 
-        for (ScopeAccess service : services) {
+        for (ScopeAccess service : scopeAccessService.getScopeAccessesForApplication(client)) {
             if (service != null) {
                 clientList.add(this.getById(service.getClientId()));
             }
@@ -236,8 +233,7 @@ public class DefaultApplicationService implements ApplicationService {
     public void deleteClientRole(ClientRole role) {
         logger.info("Delete Client Role: {}", role);
         
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForClientRole(role);
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : tenantService.getTenantRolesForClientRole(role)) {
             tenantService.deleteTenantRole(tenantRole);
         }
         
@@ -253,15 +249,13 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public List<ClientRole> getClientRolesByClientId(String clientId) {
+    public Iterable<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
         Application application = applicationDao.getApplicationByClientId(clientId);
         if (application == null) {
             throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
         }
-        List<ClientRole> roles = this.applicationRoleDao.getClientRolesForApplication(application);
-        logger.debug("Got {} Client Roles", roles.size());
-        return roles;
+        return this.applicationRoleDao.getClientRolesForApplication(application);
     }
 
     @Override
@@ -289,11 +283,9 @@ public class DefaultApplicationService implements ApplicationService {
     }
     
     @Override
-    public List<ClientRole> getAllClientRoles() {
+    public Iterable<ClientRole> getAllClientRoles() {
         logger.debug("Getting Client Roles");
-        List<ClientRole> roles = this.applicationRoleDao.getAllClientRoles();
-        logger.debug("Got {} Client Roles", roles.size());
-        return roles;
+        return this.applicationRoleDao.getAllClientRoles();
     }
 
     @Override
@@ -313,11 +305,9 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public List<Application> getOpenStackServices() {
+    public Iterable<Application> getOpenStackServices() {
         logger.debug("Getting Open Stack Services");
-        List<Application> clients = this.applicationDao.getOpenStackServices();
-        logger.debug("Got {} Open Stack Services", clients.size());
-        return clients;
+        return this.applicationDao.getOpenStackServices();
     }
     
     @Override
@@ -333,9 +323,8 @@ public class DefaultApplicationService implements ApplicationService {
 
         logger.debug("getting identity:* role for user: {}", user);
         Application application = applicationDao.getApplicationByClientId(getCloudAuthClientId());
-        List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames());
 
-        for (ClientRole role : identityRoles) {
+        for (ClientRole role : applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames())) {
             TenantRole match = tenantService.getTenantRoleForUserById(user, role.getId());
             if (match != null) {
                 result.add(role);

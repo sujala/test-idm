@@ -455,6 +455,7 @@ public class DefaultAuthenticationServiceTestOld {
         doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
         doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
         doReturn("generatedToken").when(spy).generateToken();
+        when(applicationService.getClientRolesByClientId(anyString())).thenReturn(new ArrayList<ClientRole>());
         ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
         assertThat("access token", ((HasAccessToken) scopeAccess).getAccessTokenString(), equalTo("generatedToken"));
     }

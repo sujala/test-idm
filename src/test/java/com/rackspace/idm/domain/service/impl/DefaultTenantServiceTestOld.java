@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertTrue;
@@ -130,6 +131,7 @@ public class DefaultTenantServiceTestOld {
         Entry readOnlyEntry = new ReadOnlyEntry(entry);
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
         when(scopeAccess.getLDAPEntry()).thenReturn((ReadOnlyEntry) readOnlyEntry);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(new ArrayList<TenantRole>());
 
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
         verify(tenantRoleDao).getTenantRolesForScopeAccess(scopeAccess);
@@ -269,6 +271,7 @@ public class DefaultTenantServiceTestOld {
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRoleList.add(null);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoleList);
+        when(tenantRoleDao.getTenantRolesForUser(any(User.class))).thenReturn(new ArrayList<TenantRole>());
         defaultTenantService.getTenantRolesForUser(getUser());
         verify(applicationService, times(0)).getClientRoleById(anyString());
     }

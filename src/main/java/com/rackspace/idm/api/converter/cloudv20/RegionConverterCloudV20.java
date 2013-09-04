@@ -37,7 +37,7 @@ public class RegionConverterCloudV20 {
         return region;
     }
 
-    public JAXBElement<com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions>  toRegions(List<Region> regions) {
+    public JAXBElement<com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions>  toRegions(Iterable<Region> regions) {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions regionsEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createRegions();
 
         for (Region region : regions) {

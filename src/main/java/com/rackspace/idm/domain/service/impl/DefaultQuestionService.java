@@ -9,8 +9,6 @@ import org.apache.cxf.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class DefaultQuestionService implements QuestionService {
 
@@ -56,7 +54,7 @@ public class DefaultQuestionService implements QuestionService {
     }
 
     @Override
-    public List<Question> getQuestions() {
+    public Iterable<Question> getQuestions() {
         return questionDao.getQuestions();
     }
 

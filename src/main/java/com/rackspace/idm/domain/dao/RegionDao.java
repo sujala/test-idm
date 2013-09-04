@@ -16,7 +16,7 @@ public interface RegionDao {
     void updateRegion(Region region);
     void deleteRegion(String name);
     Region getRegion(String name);
-    List<Region> getRegions();
-    List<Region> getRegions(String cloud);
+    Iterable<Region> getRegions();
+    Iterable<Region> getRegions(String cloud);
     Region getDefaultRegion(String cloud);
 }

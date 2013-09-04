@@ -11,7 +11,7 @@ public interface TenantDao {
     void deleteTenant(String tenantId);
     Tenant getTenant(String tenantId);
     Tenant getTenantByName(String name);
-    List<Tenant> getTenants();
+    Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     void updateTenant(Tenant tenant);
 }

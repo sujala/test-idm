@@ -9,5 +9,5 @@ public interface QuestionService {
     void updateQuestion(String questionId, Question question);
     void deleteQuestion(String questionId);
     Question getQuestion(String questionId);
-    List<Question> getQuestions();
+    Iterable<Question> getQuestions();
 }

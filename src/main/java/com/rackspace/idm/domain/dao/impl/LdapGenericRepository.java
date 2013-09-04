@@ -41,33 +41,20 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     private LdapPaginatorRepository<T> paginator;
 
     @Override
-    public List<T> getObjects(Filter searchFilter) {
+    public Iterable<T> getObjects(Filter searchFilter) {
         return getObjects(searchFilter, getBaseDn(), SearchScope.SUB);
     }
 
     @Override
-    public List<T> getObjects(Filter searchFilter, String dn) {
+    public Iterable<T> getObjects(Filter searchFilter, String dn) {
         return getObjects(searchFilter, dn, SearchScope.SUB);
     }
 
     @Override
-    public List<T> getObjects(Filter searchFilter, String dn, SearchScope scope) {
+    public Iterable<T> getObjects(Filter searchFilter, String dn, SearchScope scope) {
         getLogger().debug("Getting all " + entityType.toString());
 
-        List<T> objects = new ArrayList<T>();
-        int offset = 0;
-
-        PaginatorContext<T> context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
-        objects.addAll(context.getValueList());
-        offset += PAGE_SIZE;
-
-        while(offset < context.getTotalRecords()) {
-            context = getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
-            objects.addAll(context.getValueList());
-            offset += PAGE_SIZE;
-        }
-
-        return objects;
+        return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
     }
 
     @Override

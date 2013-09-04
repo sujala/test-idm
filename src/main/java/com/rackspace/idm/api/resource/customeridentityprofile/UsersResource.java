@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.customeridentityprofile;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
@@ -52,7 +53,9 @@ public class UsersResource extends ParentResource {
 
         //TODO: Implement Authorization rules
         Users users = new Users();
-        users.getUsers().addAll(userService.getUsersByRCN(customerId));
+        for (User user : userService.getUsersByRCN(customerId)) {
+            users.getUsers().add(user);
+        }
 
         return Response.ok(userConverter.toUserListJaxb(users)).build();
     }

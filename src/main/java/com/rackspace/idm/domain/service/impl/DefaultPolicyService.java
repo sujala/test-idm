@@ -127,8 +127,8 @@ public class DefaultPolicyService implements PolicyService {
     @Override
     public void deletePolicy(String policyId) {
         Policy policy = checkAndGetPolicy(policyId);
-        List<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
-        if (cloudBaseUrlList.isEmpty()) {
+        Iterable<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        if (!cloudBaseUrlList.iterator().hasNext()) {
             policyDao.deletePolicy(policy.getPolicyId());
         }else{
             throw new BadRequestException("Cannot delete policy that belongs to endpoint");
@@ -139,8 +139,8 @@ public class DefaultPolicyService implements PolicyService {
     public void softDeletePolicy(String policyId) {
         logger.debug("SoftDeleting Policy: {}", policyId);
         Policy policy = checkAndGetPolicy(policyId);
-        List<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
-        if (cloudBaseUrlList.isEmpty()) {
+        Iterable<CloudBaseUrl> cloudBaseUrlList = this.endpointService.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        if (!cloudBaseUrlList.iterator().hasNext()) {
             policyDao.softDeletePolicy(policy);
         }else{
             throw new BadRequestException("Cannot delete policy that belongs to endpoint");

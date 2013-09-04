@@ -243,25 +243,17 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersByRCN(String RCN) {
+    public Iterable<User> getUsersByRCN(String RCN) {
         logger.debug("Getting All Users");
 
-        List<User> users = this.userDao.getUsersByRCN(RCN);
-
-        logger.debug("Got All Users {}");
-
-        return users;
+        return this.userDao.getUsersByRCN(RCN);
     }
 
     @Override
-    public List<User> getUsersByUsername(String username) {
+    public Iterable<User> getUsersByUsername(String username) {
         logger.debug("Getting All Users");
 
-        List<User> users = this.userDao.getUsersByUsername(username);
-
-        logger.debug("Got All Users {}");
-
-        return users;
+        return this.userDao.getUsersByUsername(username);
     }
 
     @Override
@@ -277,25 +269,17 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled) {
+    public Iterable<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled) {
         logger.debug("Getting All Users: {} - {}", domainId, enabled);
 
-        List<User> users = this.userDao.getUsersByDomainAndEnabledFlag(domainId, enabled);
-
-        logger.debug("Got All Users {}");
-
-        return users;
+        return this.userDao.getUsersByDomainAndEnabledFlag(domainId, enabled);
     }
 
     @Override
-    public List<User> getUsersByGroupId(String groupId) {
+    public Iterable<User> getUsersByGroupId(String groupId) {
         logger.debug("Getting All Users: {} - {}", groupId);
 
-        List<User> users = this.userDao.getUsersByGroupId(groupId);
-
-        logger.debug("Got All Users {}");
-
-        return users;
+        return this.userDao.getUsersByGroupId(groupId);
     }
 
 
@@ -330,11 +314,9 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersByEmail(String email) {
+    public Iterable<User> getUsersByEmail(String email) {
         logger.debug(GETTING_USER, email);
-        List<User> users = userDao.getUsersByEmail(email);
-        logger.debug(GOT_USER, users);
-        return users;
+        return userDao.getUsersByEmail(email);
     }
 
     public User getUserByAuthToken(String authToken) {
@@ -360,7 +342,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersByTenantId(String tenantId) {
+    public Iterable<User> getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
         List<String> idList = new ArrayList<String>();
@@ -370,30 +352,26 @@ public class DefaultUserService implements UserService {
             }
             idList.add(t.getUserId());
         }
-        List<User> users = userDao.getUsers(idList);
-        logger.debug("Got list of users with tenant", tenantId);
-        return users;
+        return userDao.getUsers(idList);
     }
 
     @Override
     public User getUserByTenantId(String tenantId) {
         logger.debug("Getting user by tenantId: {}", tenantId);
-        List<User> users = getUsersByTenantId(tenantId);
+        Iterable<User> users = getUsersByTenantId(tenantId);
 
-        if(users.size() < 1){
-            return null;
-        }
-
-        if (users.size() == 1) {
-            return users.get(0);
-        }else if(users.size() > 1){
-            for (User user : users) {
-                if (authorizationService.hasUserAdminRole(user)) {
-                    return user;
-                }
+        User result = null;
+        for (User user : users) {
+            if (result == null) {
+                result = user;
+            }
+            if (authorizationService.hasUserAdminRole(user)) {
+                result = user;
+                break;
             }
         }
-        return null;
+
+        return result;
     }
 
     @Override
@@ -454,11 +432,10 @@ public class DefaultUserService implements UserService {
             logger.debug(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccess> services = scopeAccessService.getScopeAccessesForUser(user);
 
         List<Application> clientList = new ArrayList<Application>();
 
-        for (ScopeAccess service : services) {
+        for (ScopeAccess service : scopeAccessService.getScopeAccessesForUser(user)) {
             if (service instanceof UserScopeAccess) {
                 clientList
                         .add(this.applicationService.getById(service.getClientId()));
@@ -486,9 +463,7 @@ public class DefaultUserService implements UserService {
     	List<User> result = new ArrayList<User>();
     	
         if (user != null) {
-            List<User> users = userDao.getUsersByDomain(user.getDomainId());
-
-            for (User subUser : users) {
+            for (User subUser : userDao.getUsersByDomain(user.getDomainId())) {
                 if (!subUser.getId().equalsIgnoreCase(user.getId())){
                     result.add(subUser);
                 }
@@ -556,7 +531,10 @@ public class DefaultUserService implements UserService {
 
         List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId);
 
-        List<User> users = this.userDao.getUsers(userIds);
+        List<User> users = new ArrayList<User>();
+        for (User user : this.userDao.getUsers(userIds)) {
+            users.add(user);
+        }
 
         PaginatorContext<User> context = new PaginatorContext<User>();
         context.update(users, offset, limit);
@@ -570,7 +548,12 @@ public class DefaultUserService implements UserService {
     public PaginatorContext<User> getUsersWithDomainAndRole(String domainId, String roleId, int offset, int limit) {
         logger.debug("Getting Users in Domain {}", domainId);
 
-        List<User> users = this.userDao.getUsersByDomain(domainId);
+
+        List<User> users = new ArrayList<User>();
+        for (User user : this.userDao.getUsersByDomain(domainId)) {
+            users.add(user);
+        }
+
         List<User> usersWithRole = filterUsersForRole(users, roleId);
 
         PaginatorContext<User> context = new PaginatorContext<User>();
@@ -599,8 +582,8 @@ public class DefaultUserService implements UserService {
         if (user == null) {
             return false;
         }
-        List<User> users = userDao.getUsersByDomain(user.getDomainId());
-        if (users.size() == 0) {
+        Iterable<User> users = userDao.getUsersByDomain(user.getDomainId());
+        if (!users.iterator().hasNext()) {
             return false;
         }
         for (User userInList : users) {
@@ -653,8 +636,7 @@ public class DefaultUserService implements UserService {
             disableUserAdminSubUsers(currentUser);
         }
 
-        List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
-        for (ScopeAccess scopeAccess : scopeAccessList) {
+        for (ScopeAccess scopeAccess : scopeAccessService.getScopeAccessListByUserId(user.getId())) {
             ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
             scopeAccessService.updateScopeAccess(scopeAccess);
         }
@@ -853,15 +835,13 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<Group> getGroupsForUser(String userId) {
+    public Iterable<Group> getGroupsForUser(String userId) {
         return userDao.getGroupsForUser(userId);
     }
 
     @Override
 	public boolean isUserInGroup(String userId, String groupId) {
-		List<Group> groups = getGroupsForUser(userId);
-
-        for (Group currentGroup : groups) {
+        for (Group currentGroup : getGroupsForUser(userId)) {
             if (currentGroup.getGroupId().equals(groupId)) {
                 return true;
             }
@@ -904,7 +884,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public List<User> getUsersWithDomain(String domainId) {
+    public Iterable<User> getUsersWithDomain(String domainId) {
         return this.userDao.getUsersByDomain(domainId);
     }
 

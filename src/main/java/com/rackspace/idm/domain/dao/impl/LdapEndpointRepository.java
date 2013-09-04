@@ -39,12 +39,12 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsByService(String service) {
+    public Iterable<CloudBaseUrl> getBaseUrlsByService(String service) {
         return getObjects(searchFilterGetBaseUrlByService(service));
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
+    public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
         return getObjects(searchFilterGetBaseUrlByPolicyId(policyId));
     }
 
@@ -54,12 +54,12 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrls() {
+    public Iterable<CloudBaseUrl> getBaseUrls() {
         return getObjects(searchFilterGetBaseUrl());
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds) {
+    public Iterable<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds) {
         return getObjects(searchFilterGetBaseUrlById(baseUrlIds));
     }
 

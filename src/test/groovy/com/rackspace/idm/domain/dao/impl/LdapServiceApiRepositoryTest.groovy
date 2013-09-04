@@ -25,7 +25,7 @@ class LdapServiceApiRepositoryTest extends Specification{
     def "list serviceApis"(){
         when:
         Filter filter = createSearchFilter().build()
-        List<ServiceApi> baseUrlList = serviceApiRepository.getObjects(filter)
+        List<ServiceApi> baseUrlList = serviceApiRepository.getObjects(filter).collect()
 
         then:
         baseUrlList != null
