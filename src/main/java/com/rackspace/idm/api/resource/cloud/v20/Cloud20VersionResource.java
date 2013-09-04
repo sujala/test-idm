@@ -1069,7 +1069,7 @@ public class Cloud20VersionResource {
             throw new BadRequestException("Limit must be non negative");
         } else if (limit == 0) {
             return config.getInt("ldap.paging.limit.default");
-        } else if (limit >= config.getInt("ldap.paging.limit.max")) {
+        } else if (limit > config.getInt("ldap.paging.limit.max")) {
             return config.getInt("ldap.paging.limit.max");
         } else {
             return limit;

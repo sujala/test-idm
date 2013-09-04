@@ -240,7 +240,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
                 && stalePasswordMsg.equals(ldapEx.getMessage())) {
             audit.fail(stalePasswordMsg);
-            throw new StalePasswordException("Past 10 passwords for the user cannot be re-used.");
+            throw new StalePasswordException(stalePasswordMsg);
         }
     }
 
