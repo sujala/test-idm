@@ -85,6 +85,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
         endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
         applicationService.getClientRoleById(_) >> clientRole
+        userService.getUserById(_) >> user1
 
         when:
         Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
@@ -122,6 +123,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
         endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
         applicationService.getClientRoleById(_) >> clientRole
+        userService.getUserById(_) >> user1
 
         when:
         def response = service.createUser(request, null, uriInfo(), user).build()
@@ -161,6 +163,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
         endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
         applicationService.getClientRoleById(_) >> clientRole
+        userService.getUserById(_) >> user1
 
 
         when:

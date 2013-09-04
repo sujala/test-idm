@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.StalePasswordException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -227,11 +228,22 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
             audit.fail("Error updating");
+            throwIfStalePassword(ldapEx, audit);
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
         getLogger().info("Updated - {}", object);
     }
+
+    void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
+        String stalePasswordMsg = config.getString("stalePasswordMsg");
+        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
+                && stalePasswordMsg.equals(ldapEx.getMessage())) {
+            audit.fail(stalePasswordMsg);
+            throw new StalePasswordException(stalePasswordMsg);
+        }
+    }
+
 
     private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
         Audit audit = Audit.log((Auditable)object).modify();

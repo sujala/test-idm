@@ -513,7 +513,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<User> getUsersForTenant(String tenantId) {
+    public List<User> getUsersForTenant(String tenantId, int offset, int limit) {
         logger.debug("Getting Users for Tenant {}", tenantId);
         List<User> users = new ArrayList<User>();
 
@@ -585,7 +585,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole) {
+    public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
         List<User> users = new ArrayList<User>();
 
         List<String> userIds = new ArrayList<String>();

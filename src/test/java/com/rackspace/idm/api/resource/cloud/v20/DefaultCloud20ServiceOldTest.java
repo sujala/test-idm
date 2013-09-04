@@ -2672,13 +2672,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listServices_responseOk_returns200() throws Exception {
-        when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory());
-        Response.ResponseBuilder responseBuilder = spy.listServices(httpHeaders, authToken, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listUserGlobalRoles_isUserAdmin_callsVerifyDomain() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
@@ -2778,15 +2771,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listGroups_responseOk_returns200() throws Exception {
-        List<Group> groups = new ArrayList<Group>();
-        groups.add(group);
-        when(userGroupService.getGroups("marker", 1)).thenReturn(groups);
-        Response.ResponseBuilder responseBuilder = spy.listGroups(null, authToken, null, "marker", 1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listUsersForTenant_CallsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -2821,13 +2805,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listUsersForTenant_responseOk_returns200() throws Exception {
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = spy.listUsersForTenant(httpHeaders, authToken, tenantId, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listUsersWithRoleForTenant_callsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -2859,12 +2836,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUsersWithRoleForTenant(null, authToken, tenantId, null, null, null);
         verify(tenantService).checkAndGetTenant(tenantId);
-    }
-
-    @Test
-    public void listUsersWithRoleForTenant_responseOk_returns200() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -4003,7 +3974,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void listTenants_scopeAccessServiceCallsGetScopeAccessByAccessTokenReturnsNull_responseIsOk_returns200() throws Exception {
         doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
-        Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, "marker", 1);
+        Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, 0, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -4328,18 +4299,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
 
-    @Ignore
-    @Test (expected = NotFoundException.class)
-    public void addTenantToDomain_invalidTenantId_expectsNotFound() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        NotFoundException exception = new NotFoundException();
-
-        doThrow(exception).when(tenantService).checkAndGetTenant("9999999");
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-
-        defaultCloud20Service.addTenantToDomain(authToken, "135792468", "9999999");
-    }
-
     @Test
     public void getDomainTenants_validDomainId() {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -4350,31 +4309,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Ignore
-    @Test (expected = NotFoundException.class)
-    public void getDomainTenants_invalidDomainId_expectsNotFound() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        NotFoundException exception = new NotFoundException();
-
-        doThrow(exception).when(domainService).checkAndGetDomain("135792468");
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-
-        defaultCloud20Service.getDomainTenants(authToken, "135792468", "true");
-    }
-
-    @Ignore
-    @Test (expected = NotFoundException.class)
-    public void getUsersByDomainId_invalidDomainId_expectsNotFound() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        NotFoundException exception = new NotFoundException();
-
-        doThrow(exception).when(domainService).checkAndGetDomain("135792468");
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-
-        defaultCloud20Service.getUsersByDomainIdAndEnabledFlag(authToken, "135792468", "true");
-    }
-
     @Test
     public void setEmptyUserValues() throws Exception {
         User user = new User();
@@ -4382,32 +4316,5 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("email",user.getEmail(),equalTo(""));
         assertThat("domain",user.getDomainId(),equalTo(""));
         assertThat("region",user.getRegion(),equalTo(""));
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateMaker_return400() throws Exception {
-        defaultCloud20Service.validateMarker("asdf");
-    }
-
-    @Test
-    public void validateMaker_validMarker_returnsStringValue() throws Exception {
-        String marker = defaultCloud20Service.validateMarker("1");
-        assertThat("Check Marker",marker,equalTo("1"));
-    }
-
-    @Test
-    public void validateMaker_nullMarker_returnsZero() throws Exception {
-        String marker = defaultCloud20Service.validateMarker(null);
-        assertThat("Check Marker",marker,equalTo("0"));
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void validateMarker_negativeMarker_returnsBadRequest() throws Exception {
-        defaultCloud20Service.validateMarker("-5");
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void validateOffset_negativeOffset_returnsBadRequest() throws Exception {
-        defaultCloud20Service.validateOffset("-5");
     }
 }

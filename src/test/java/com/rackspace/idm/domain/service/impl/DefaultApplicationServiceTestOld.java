@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;

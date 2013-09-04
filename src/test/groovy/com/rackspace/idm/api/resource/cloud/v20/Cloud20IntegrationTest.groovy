@@ -1006,9 +1006,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         response << [
-                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "abC", "5"),
-                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "5", "bCg"),
-                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "abC", "asdf")
+                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "-1", "5"),
+                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "5", "-1"),
+                cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "-1", "-1")
         ]
     }
 
@@ -1153,8 +1153,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         response << [
-                cloud20.listUsers(serviceAdminToken, "0", "abc"),
-                cloud20.listUsers(serviceAdminToken, "abc", "10")
+                cloud20.listUsers(serviceAdminToken, "0", "-1"),
+                cloud20.listUsers(serviceAdminToken, "-1", "10")
         ]
     }
 

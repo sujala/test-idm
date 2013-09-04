@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
@@ -262,9 +263,9 @@ public class Cloud20VersionResource {
     public Response getAccessibleDomains(
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @QueryParam("marker") String marker,
-            @QueryParam("limit") String limit) {
-        return cloud20Service.getAccessibleDomains(uriInfo, authToken, marker, limit).build();
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
+        return cloud20Service.getAccessibleDomains(uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @GET
@@ -287,14 +288,14 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("email") String email,
             @QueryParam("name") String name,
-            @QueryParam("marker") String marker,
-            @QueryParam("limit") String limit) {
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
         if (!StringUtils.isBlank(name)) {
             return cloud20Service.getUserByName(httpHeaders, authToken, name).build();
         } else if (!StringUtils.isBlank(email)) {
             return cloud20Service.getUsersByEmail(httpHeaders, authToken, email).build();
         } else {
-            return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
+            return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 
@@ -352,13 +353,13 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         // Note: getTenantByName only available to admin
         if (!StringUtils.isBlank(name)) {
             return cloud20Service.getTenantByName(httpHeaders, authToken, name).build();
         } else {
-            return cloud20Service.listTenants(httpHeaders, authToken, marker, limit).build();
+            return cloud20Service.listTenants(httpHeaders, authToken, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 
@@ -473,9 +474,9 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return cloud20Service.listCredentials(httpHeaders, authToken, userId, marker, limit).build();
+        return cloud20Service.listCredentials(httpHeaders, authToken, userId, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST
@@ -575,9 +576,9 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return cloud20Service.listRolesForTenant(httpHeaders, authToken, tenantId, marker, limit).build();
+        return cloud20Service.listRolesForTenant(httpHeaders, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @GET
@@ -587,12 +588,12 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
             @QueryParam("roleId") String roleId,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         if (roleId != null) {
-            return cloud20Service.listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, marker, limit).build();
+            return cloud20Service.listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, validateMarker(marker), validateLimit(limit)).build();
         } else {
-            return cloud20Service.listUsersForTenant(httpHeaders, authToken, tenantId, marker, limit).build();
+            return cloud20Service.listUsersForTenant(httpHeaders, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 
@@ -625,9 +626,9 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("serviceId") String serviceId,
-            @QueryParam("marker") String marker,
-            @QueryParam("limit") String limit) {
-        return cloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, marker, limit).build();
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
+        return cloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST
@@ -665,9 +666,9 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("roleId") String roleId,
-            @QueryParam("marker") String marker,
-            @QueryParam("limit") String limit) {
-        return cloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, marker, limit).build();
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
+        return cloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @GET
@@ -675,10 +676,10 @@ public class Cloud20VersionResource {
     public Response listServices(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit)
         {
-        return cloud20Service.listServices(httpHeaders, authToken, marker, limit).build();
+        return cloud20Service.listServices(httpHeaders, authToken, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST
@@ -908,12 +909,12 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String groupName,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         if(groupName != null){
             return cloud20Service.getGroup(httpHeaders, authToken, groupName).build();
         }
-        return cloud20Service.listGroups(httpHeaders, authToken, groupName, marker, limit).build();
+        return cloud20Service.listGroups(httpHeaders, authToken, groupName, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @GET
@@ -950,9 +951,9 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
-            @QueryParam("marker") String marker,
-            @QueryParam("limit") String limit) {
-        return cloud20Service.getUsersForGroup(httpHeaders, authToken, groupId, marker, limit).build();
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
+        return cloud20Service.getUsersForGroup(httpHeaders, authToken, groupId, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @PUT
@@ -1048,6 +1049,31 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
         return cloud20Service.deleteQuestion(authToken, questionId).build();
+    }
+
+    protected int validateMarker(Integer offset) {
+        if (offset == null) {
+            return 0;
+        }
+        if (offset < 0) {
+            throw new BadRequestException("Marker must be non negative");
+        }
+        return offset;
+    }
+
+    protected int validateLimit(Integer limit) {
+        if (limit == null) {
+            return config.getInt("ldap.paging.limit.default");
+        }
+        if (limit < 0) {
+            throw new BadRequestException("Limit must be non negative");
+        } else if (limit == 0) {
+            return config.getInt("ldap.paging.limit.default");
+        } else if (limit > config.getInt("ldap.paging.limit.max")) {
+            return config.getInt("ldap.paging.limit.max");
+        } else {
+            return limit;
+        }
     }
 
     public void setCloud20Service(DefaultCloud20Service cloud20Service) {

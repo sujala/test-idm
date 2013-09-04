@@ -224,7 +224,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         when:
         ldapUserRepository.addUser(user);
-        ldapUserRepository.updateUser(updateUser, user, false)
+        def existingUser = ldapUserRepository.getUserById(rsId)
+        updateUser.ldapEntry = existingUser.ldapEntry
+        ldapUserRepository.updateUser(updateUser, false)
 
         then:
         thrown(StalePasswordException.class)
@@ -241,6 +243,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             it.enabled = enabled
             it.region = region
             it.password = password
+            it.userPassword = password
             return it
         }
     }

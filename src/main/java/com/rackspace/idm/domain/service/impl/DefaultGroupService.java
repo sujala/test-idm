@@ -39,7 +39,7 @@ public class DefaultGroupService implements GroupService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public Iterable<Group> getGroups(String marker, Integer limit) {
+    public Iterable<Group> getGroups(Integer marker, Integer limit) {
         return groupDao.getGroups();
     }
 

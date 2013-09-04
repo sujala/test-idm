@@ -371,6 +371,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
 
             userService.addUser(userDO);
+            userDO = userService.getUserById(userDO.getId());
             addMossoTenant(user, userDO.getId());
             String nastId = addNastTenant(user, userDO.getId());
             userDO.setNastId(nastId);

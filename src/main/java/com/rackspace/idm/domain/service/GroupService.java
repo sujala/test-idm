@@ -12,7 +12,7 @@ import java.util.List;
  * Time: 5:26 PM
  */
 public interface GroupService {
-    Iterable<Group> getGroups(String marker, Integer limit);
+    Iterable<Group> getGroups(Integer marker, Integer limit);
     List<Group> getGroupsByMossoId(Integer mossoAccountId);
     List<Group> getGroupListByMossoId(Integer mossoAccountId);
     Group getGroupById(String groupId);

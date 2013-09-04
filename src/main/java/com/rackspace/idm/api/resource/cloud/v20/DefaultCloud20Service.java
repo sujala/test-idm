@@ -1552,7 +1552,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) {
+    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, Integer marker, Integer limit) {
         try {
             ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(callerScopeAccess);
@@ -1706,21 +1706,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, Integer marker, Integer limit) {
         try {
             authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-            int offset = validateOffset(marker);
-            int resultSize = validateLimit(limit);
 
             PaginatorContext<ClientRole> context;
             User caller = userService.getUserByAuthToken(authToken);
             ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
 
             if (StringUtils.isBlank(serviceId)) {
-                context = this.applicationService.getAvailableClientRolesPaged(offset, resultSize, userIdentityRole.getRsWeight());
+                context = this.applicationService.getAvailableClientRolesPaged(marker, limit, userIdentityRole.getRsWeight());
             } else {
-                context = this.applicationService.getAvailableClientRolesPaged(serviceId, offset, resultSize, userIdentityRole.getRsWeight());
+                context = this.applicationService.getAvailableClientRolesPaged(serviceId, marker, limit, userIdentityRole.getRsWeight());
             }
 
             String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
@@ -1736,7 +1733,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
+    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -1777,7 +1774,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // KSADM Extension Role Methods
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -1793,7 +1790,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess access = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(access);
@@ -1855,7 +1852,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, Integer marker, Integer limit) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
@@ -2220,14 +2217,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
+    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            int offset = validateOffset(marker);
-            int limitAsInt = validateLimit(limit);
             if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
                     this.authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-                PaginatorContext<Domain> domainContext = this.domainService.getDomains(offset, limitAsInt);
+                PaginatorContext<Domain> domainContext = this.domainService.getDomains(marker, limit);
                 String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
 
                 Domains domains = new Domains();
@@ -2352,7 +2347,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.ok().entity(serviceApis);
     }
 
-    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
@@ -2364,8 +2359,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
 
-            int iMarker = validateOffset(marker);
-            int iLimit = validateLimit(limit);
             PaginatorContext<User> userContext;
 
             if (callerIsUserAdmin) {
@@ -2373,9 +2366,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
                     throw new BadRequestException("User-admin has no domain");
                 }
-                userContext = this.userService.getUsersWithDomainAndRole(caller.getDomainId(), roleId, iMarker, iLimit);
+                userContext = this.userService.getUsersWithDomainAndRole(caller.getDomainId(), roleId, marker, limit);
             } else {
-                userContext = this.userService.getUsersWithRole(roleId, iMarker, iLimit);
+                userContext = this.userService.getUsersWithRole(roleId, marker, limit);
             }
 
             String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
@@ -2384,49 +2377,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    protected int validateOffset(String offsetString) {
-        if (offsetString == null) {
-            return 0;
-        }
-        try {
-            if (!StringUtils.isEmpty(offsetString)) {
-                int offset = Integer.parseInt(offsetString);
-                if (offset < 0) {
-                    throw new BadRequestException("Marker must be non negative");
-                }
-                return offset;
-            } else {
-                throw new BadRequestException("Marker cannot be blank if parameter is specified");
-            }
-        } catch (Exception ex) {
-            throw new BadRequestException("Marker must be an integer");
-        }
-    }
-
-    protected int validateLimit(String limitString) {
-        if (limitString == null) {
-            return config.getInt("ldap.paging.limit.default");
-        }
-        try {
-            if (StringUtils.isBlank(limitString)) {
-                throw new BadRequestException("Limit cannot be blank if parameter is specified");
-            }
-
-            int limit = Integer.parseInt(limitString);
-            if (limit < 0) {
-                throw new BadRequestException("Limit must be non negative");
-            } else if (limit == 0) {
-                return config.getInt("ldap.paging.limit.default");
-            } else if (limit >= config.getInt("ldap.paging.limit.max")) {
-                return config.getInt("ldap.paging.limit.max");
-            } else {
-                return limit;
-            }
-        } catch (Exception ex) {
-            throw new BadRequestException("Limit must be an integer");
         }
     }
 
@@ -2795,7 +2745,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, String limit)  {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, Integer marker, Integer limit)  {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
@@ -2808,24 +2758,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    String validateMarker(String marker) {
-        String iMarker = "0";
-        try {
-            if (!StringUtils.isEmpty(marker)) {
-                if (Integer.parseInt(marker) < 0) {
-                    throw new BadRequestException("Marker must be non negative");
-                }
-                iMarker = marker;
-            }
-        } catch (Exception ex) {
-            throw new BadRequestException("Marker must be a number");
-        }
-        return iMarker;
-    }
-
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
@@ -2839,17 +2774,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
-            int offset = validateOffset(marker);
-            int limitAsInt = validateLimit(limit);
-
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                userContext = this.userService.getAllUsersPaged(offset, limitAsInt);
+                userContext = this.userService.getAllUsersPaged(marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
-                    userContext = this.userService.getAllUsersPagedWithDomain(domainId, offset, limitAsInt);
+                    userContext = this.userService.getAllUsersPagedWithDomain(domainId, marker, limit);
                 } else {
                     throw new BadRequestException("User-admin has no domain");
                 }
@@ -2867,7 +2799,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
+    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) {
 
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
@@ -2877,7 +2809,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId());
+            List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId(), marker, limit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)).getValue());
 
@@ -2888,7 +2820,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                                      String roleId, String marker, Integer limit) {
+                                                      String roleId, Integer marker, Integer limit) {
 
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
@@ -2899,7 +2831,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            List<User> users = this.tenantService.getUsersWithTenantRole(tenant, role);
+            List<User> users = this.tenantService.getUsersWithTenantRole(tenant, role, marker, limit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                     .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());

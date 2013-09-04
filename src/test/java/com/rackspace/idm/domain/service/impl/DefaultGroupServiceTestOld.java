@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rackspace.idm.domain.dao.GroupDao;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.BadRequestException;
@@ -65,12 +64,6 @@ public class DefaultGroupServiceTestOld {
         listUser.add(user2);
         listUsers.setUsers(listUser);
         spy = spy(defaultGroupService);
-    }
-
-    @Test
-    public void getGroups_returnsList() throws Exception {
-        when(groupDao.getGroups()).thenReturn(new ArrayList<com.rackspace.idm.domain.entity.Group>());
-        assertThat("groups list", defaultGroupService.getGroups(null, null), instanceOf(List.class));
     }
 
     @Test
