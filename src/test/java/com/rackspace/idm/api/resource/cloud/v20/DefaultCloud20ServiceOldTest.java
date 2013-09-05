@@ -21,6 +21,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import org.apache.commons.configuration.Configuration;
+import org.dozer.DozerBeanMapper;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -265,7 +266,7 @@ public class DefaultCloud20ServiceOldTest {
         when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
-        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
+        when(userConverterCloudV20.fromUser(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         when(userGroupService.checkAndGetGroupById(anyString())).thenReturn(group);
         when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
@@ -450,7 +451,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(false).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
         doReturn(true).when(authorizationService).authorizeCloudServiceAdmin(any(ScopeAccess.class));
-        doReturn(userHasDomain).when(userConverterCloudV20).toUserDO(userOS);
+        doReturn(userHasDomain).when(userConverterCloudV20).fromUser(userOS);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
@@ -467,7 +468,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(userConverterCloudV20.toUserDO(any(UserForCreate.class))).thenReturn(userDO);
+        when(userConverterCloudV20.fromUser(any(UserForCreate.class))).thenReturn(userDO);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
@@ -871,7 +872,7 @@ public class DefaultCloud20ServiceOldTest {
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
+        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
         verify(userService).addUser(argumentCaptor.capture());
         assertThat("user region", argumentCaptor.getValue().getRegion(), equalTo(null));
@@ -891,7 +892,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void addUser_callsUserConverter_toUserDOMethod() throws Exception {
         spy.addUser(null, null, authToken, userOS);
-        verify(userConverterCloudV20).toUserDO(userOS);
+        verify(userConverterCloudV20).fromUser(userOS);
     }
 
     @Test
@@ -952,7 +953,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         User newUser = new User();
         newUser.setDomainId("domain");
-        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(newUser);
+        when(userConverterCloudV20.fromUser(userOS)).thenReturn(newUser);
         doThrow(new DuplicateException("duplicate")).when(userService).addUser(any(User.class));
         when(exceptionHandler.conflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
         assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
@@ -1096,7 +1097,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void addTenant_callsTenantConverterCloudV20_toTenantDO() throws Exception {
         spy.addTenant(null, null, authToken, tenantOS);
-        verify(tenantConverterCloudV20).toTenantDO(tenantOS);
+        verify(tenantConverterCloudV20).fromTenant(tenantOS);
     }
 
     @Test
@@ -1118,7 +1119,8 @@ public class DefaultCloud20ServiceOldTest {
         org.openstack.docs.identity.api.v2.Tenant tenant = new org.openstack.docs.identity.api.v2.Tenant();
         JAXBElement<org.openstack.docs.identity.api.v2.Tenant> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "tenant"), org.openstack.docs.identity.api.v2.Tenant.class, null, tenant);
         org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
-        doReturn(domainTenant).when(tenantConverterCloudV20).toTenantDO(any(org.openstack.docs.identity.api.v2.Tenant.class));
+        doReturn(domainTenant).when(tenantConverterCloudV20).fromTenant(
+                any(org.openstack.docs.identity.api.v2.Tenant.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
@@ -3136,7 +3138,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
+        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
@@ -3173,7 +3175,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
 
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
+        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
 
         doReturn(true).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
         doReturn(false).when(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
@@ -4168,7 +4170,7 @@ public class DefaultCloud20ServiceOldTest {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain newDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         newDomain.setId("1");
         newDomain.setName("domain");
-        doReturn(domain).when(domainConverterCloudV20).toDomainDO(newDomain);
+        doReturn(domain).when(domainConverterCloudV20).fromDomain(newDomain);
         doReturn(newDomain).when(domainConverterCloudV20).toDomain(domain);
         when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.addDomain(authToken, uriInfo, newDomain);
@@ -4181,7 +4183,7 @@ public class DefaultCloud20ServiceOldTest {
         newDomain.setId("1");
         newDomain.setName("domain");
         when(domainService.checkAndGetDomain("1")).thenReturn(domain);
-        doReturn(domain).when(domainConverterCloudV20).toDomainDO(newDomain);
+        doReturn(domain).when(domainConverterCloudV20).fromDomain(newDomain);
         doReturn(newDomain).when(domainConverterCloudV20).toDomain(domain);
         when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.updateDomain(authToken, "1", newDomain);

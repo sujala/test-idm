@@ -7,6 +7,12 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPField;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.apache.commons.lang.ArrayUtils;
+import org.dozer.Mapping;
 
 import java.util.HashSet;
 
@@ -19,12 +25,14 @@ public class TenantRole implements Auditable, UniqueId {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ROLE_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String roleRsId;
 
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private HashSet<String> tenantIds;
 
+    @Mapping("serviceId")
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String clientId;
 

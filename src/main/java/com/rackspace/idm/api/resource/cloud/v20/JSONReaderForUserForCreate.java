@@ -64,11 +64,11 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 Object domainId = obj3.get(JSONConstants.DOMAIN_ID);
 
                 if (defaultRegion != null) {
-                    user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), defaultRegion.toString());
+                    user.setDefaultRegion(defaultRegion.toString());
                 }
 
                 if (domainId != null) {
-                    user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"), domainId.toString());
+                    user.setDomainId(domainId.toString());
                 }
 
                 if (password != null) {

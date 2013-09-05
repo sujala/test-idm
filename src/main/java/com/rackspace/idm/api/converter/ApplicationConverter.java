@@ -17,7 +17,7 @@ public class ApplicationConverter {
     @Autowired
     private RolesConverter rolesConverter;
     
-    public Application toClientDO(com.rackspace.api.idm.v1.Application jaxbClient) {
+    public Application fromApplication(com.rackspace.api.idm.v1.Application jaxbClient) {
         Application application = new Application();
         application.setClientId(jaxbClient.getClientId());
         application.setRcn(jaxbClient.getCustomerId());

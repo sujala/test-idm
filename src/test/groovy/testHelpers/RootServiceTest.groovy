@@ -4,9 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.DomainsConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.PoliciesConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
@@ -19,7 +17,6 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.service.PropertiesService
-import com.rackspace.idm.domain.service.impl.DefaultPropertiesService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.validation.Validator
@@ -131,9 +128,7 @@ class RootServiceTest extends Specification {
     @Shared UserConverterCloudV20 userConverter
     @Shared UserConverterCloudV11 userConverterV11
     @Shared DomainConverterCloudV20 domainConverter
-    @Shared DomainsConverterCloudV20 domainsConverter
     @Shared PolicyConverterCloudV20 policyConverter
-    @Shared PoliciesConverterCloudV20 policiesConverter
     @Shared CapabilityConverterCloudV20 capabilityConverter
     @Shared RegionConverterCloudV20 regionConverter
     @Shared QuestionConverterCloudV20 questionConverter
@@ -250,7 +245,7 @@ class RootServiceTest extends Specification {
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
         roleConverter.toRoleListFromClientRoles(_) >> v2Factory.createRoleList()
 
-        roleConverter.toClientRoleFromRole(_, _) >> entityFactory.createClientRole()
+        roleConverter.fromRole(_, _) >> entityFactory.createClientRole()
 
         service.roleConverterCloudV20 = roleConverter
     }
@@ -265,7 +260,7 @@ class RootServiceTest extends Specification {
     def mockTenantConverter(service) {
         tenantConverter = Mock()
         tenantConverter.toTenant(_) >> v2Factory.createTenant()
-        tenantConverter.toTenantDO(_) >> entityFactory.createTenant()
+        tenantConverter.fromTenant(_) >> entityFactory.createTenant()
         service.tenantConverterCloudV20 = tenantConverter
     }
 
@@ -279,7 +274,7 @@ class RootServiceTest extends Specification {
     def mockUserConverter(service) {
         userConverter = Mock()
         userConverter.toUser(_) >> v2Factory.createUser()
-        userConverter.toUserDO(_) >> entityFactory.createUser()
+        userConverter.fromUser(_) >> entityFactory.createUser()
         userConverter.toUserForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
         userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
         userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
@@ -290,30 +285,16 @@ class RootServiceTest extends Specification {
     def mockDomainConverter(service) {
         domainConverter = Mock()
         domainConverter.toDomain(_) >> v1Factory.createDomain()
-        domainConverter.toDomainDO(_) >> entityFactory.createDomain()
+        domainConverter.fromDomain(_) >> entityFactory.createDomain()
         service.domainConverterCloudV20 = domainConverter
-    }
-
-    def mockDomainsConverter(service) {
-        domainsConverter = Mock()
-        domainsConverter.toDomains(_) >> v1Factory.createDomains()
-        domainsConverter.toDomainsDO(_) >> entityFactory.createDomains()
-        service.domainsConverterCloudV20 = domainsConverter
     }
 
     def mockPolicyConverter(service) {
         policyConverter = Mock()
         policyConverter.toPolicy(_) >> v1Factory.createPolicy()
-        policyConverter.toPolicyDO(_) >> entityFactory.createPolicy()
+        policyConverter.fromPolicy(_) >> entityFactory.createPolicy()
         policyConverter.toPolicyForPolicies(_) >> v1Factory.createPolicy()
         service.policyConverterCloudV20 = policyConverter
-    }
-
-    def mockPoliciesConverter(service) {
-        policiesConverter = Mock()
-        policiesConverter.toPolicies(_) >> v1Factory.createPolicies()
-        policiesConverter.toPoliciesDO(_) >> entityFactory.createPolicies()
-        service.policiesConverterCloudV20 = policiesConverter
     }
 
     def mockCapabilityConverter(service) {
@@ -352,7 +333,7 @@ class RootServiceTest extends Specification {
 
     def mockUserConverter11(service) {
         userConverterV11 = Mock()
-        userConverterV11.toUserDO(_) >> entityFactory.createUser()
+        userConverterV11.fromUser(_) >> entityFactory.createUser()
         userConverterV11.toCloudV11User(_) >> v1Factory.createUser()
         userConverterV11.openstackToCloudV11User(_, _) >> v1Factory.createUser()
         userConverterV11.toCloudV11User(_, _) >> entityFactory.createUser()

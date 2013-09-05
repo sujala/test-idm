@@ -9,6 +9,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.dozer.Mapping;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -24,6 +25,7 @@ public class CloudBaseUrl implements Auditable, UniqueId {
 
     private Boolean v1Default;
 
+    @Mapping("id")
     @LDAPField(attribute=LdapRepository.ATTR_ID,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             inRDN=true,
@@ -66,6 +68,7 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String internalUrl;
 
+    @Mapping("type")
     @LDAPField(attribute=LdapRepository.ATTR_OPENSTACK_TYPE,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)

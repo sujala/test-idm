@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -13,6 +14,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
     def setupSpec() {
         converter = new RoleConverterCloudV20()
         converter.objFactories = new JAXBObjectFactories()
+        converter.mapper = new DozerBeanMapper()
     }
 
     def setup() {
@@ -34,21 +36,21 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRoleFromClientRole(clientRole)
 
         then:
-        result.otherAttributes.get(QNAME_WEIGHT) == weight.toString()
-        result.otherAttributes.get(QNAME_PROPAGATE) == propagate.toString()
+        result.weight == weight
+        result.propagate == propagate
     }
 
     def "can convert jaxb role to clientRole"() {
         given:
         def weight = 100
-        def propagate = true
+        def propagate = false
 
         def jaxbRole = v2Factory.createRole()
-        jaxbRole.otherAttributes.put(QNAME_WEIGHT, weight.toString())
-        jaxbRole.otherAttributes.put(QNAME_PROPAGATE, propagate.toString())
+        jaxbRole.weight = weight
+        jaxbRole.propagate = propagate
 
         when:
-        def result = converter.toClientRoleFromRole(jaxbRole, "clientId");
+        def result = converter.fromRole(jaxbRole, "clientId");
 
         then:
         result.rsWeight == weight
@@ -60,7 +62,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def jaxbRole = v2Factory.createRole()
 
         when:
-        def result = converter.toClientRoleFromRole(jaxbRole, "clientId");
+        def result = converter.fromRole(jaxbRole, "clientId");
 
         then:
         result.rsWeight == configWeight

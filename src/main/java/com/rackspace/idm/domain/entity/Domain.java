@@ -8,6 +8,8 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.dozer.Mapping;
 
 import java.util.Arrays;
 
@@ -26,12 +28,14 @@ public class Domain implements Auditable, UniqueId {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String domainId;
 
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name;
 
+    @Mapping("enabled")
     @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean enabled;
 

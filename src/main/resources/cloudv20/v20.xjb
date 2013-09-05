@@ -10,7 +10,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="auth"/>
             </annox:annotate>
         </jaxb:bindings>
-
+        <jaxb:bindings node="xs:complexType[@name='PasswordCredentialsBase']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passwordCredentials"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='PasswordCredentialsRequiredUsername']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passwordCredentials"/>

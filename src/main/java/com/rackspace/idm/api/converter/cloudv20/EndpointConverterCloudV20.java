@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.Endpoint;
@@ -17,6 +18,8 @@ import java.util.List;
 
 @Component
 public class EndpointConverterCloudV20 {
+    @Autowired
+    Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -46,23 +49,16 @@ public class EndpointConverterCloudV20 {
 
         for (OpenstackEndpoint point : endpoints) {
             for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
-                VersionForService version = new VersionForService();
-                version.setId(baseUrl.getVersionId());
-                version.setInfo(baseUrl.getVersionInfo());
-                version.setList(baseUrl.getVersionList());
-
-                Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
-                endpoint.setAdminURL(baseUrl.getAdminUrl());
-                endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));     //TODO: throws null pointer of Id is not set.
-                endpoint.setInternalURL(baseUrl.getInternalUrl());
+                Endpoint endpoint = mapper.map(baseUrl, Endpoint.class);
                 endpoint.setName(baseUrl.getServiceName());
-                endpoint.setPublicURL(baseUrl.getPublicUrl());
-                endpoint.setRegion(baseUrl.getRegion());
-                endpoint.setType(baseUrl.getOpenstackType());
-                endpoint.setTenantId(point.getTenantId());
-                if (!StringUtils.isBlank(version.getId())) {
+                if (!StringUtils.isBlank(baseUrl.getVersionId())) {
+                    VersionForService version = new VersionForService();
+                    version.setId(baseUrl.getVersionId());
+                    version.setInfo(baseUrl.getVersionInfo());
+                    version.setList(baseUrl.getVersionList());
                     endpoint.setVersion(version);
                 }
+
                 list.getEndpoint().add(endpoint);
             }
         }
@@ -78,47 +74,22 @@ public class EndpointConverterCloudV20 {
         }
 
         for (CloudBaseUrl baseUrl : endpoints) {
-            VersionForService version = new VersionForService();
-            version.setId(baseUrl.getVersionId());
-            version.setInfo(baseUrl.getVersionInfo());
-            version.setList(baseUrl.getVersionList());
-
-            Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
-            endpoint.setAdminURL(baseUrl.getAdminUrl());
-            endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
-            endpoint.setInternalURL(baseUrl.getInternalUrl());
-            endpoint.setName(baseUrl.getServiceName());
-            endpoint.setPublicURL(baseUrl.getPublicUrl());
-            endpoint.setRegion(baseUrl.getRegion());
-            endpoint.setType(baseUrl.getOpenstackType());
-            if (!StringUtils.isBlank(version.getId())) {
-                endpoint.setVersion(version);
-            }
-            list.getEndpoint().add(endpoint);
-
+            list.getEndpoint().add(toEndpoint(baseUrl));
         }
         return list;
     }
 
     public EndpointTemplate toEndpointTemplate(CloudBaseUrl baseUrl) {
-
-        VersionForService version = new VersionForService();
-        version.setId(baseUrl.getVersionId());
-        version.setInfo(baseUrl.getVersionInfo());
-        version.setList(baseUrl.getVersionList());
-
-        EndpointTemplate template = objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
-        template.setAdminURL(baseUrl.getAdminUrl());
+        EndpointTemplate template = mapper.map(baseUrl, EndpointTemplate.class);
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
-        template.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
-        template.setInternalURL(baseUrl.getInternalUrl());
         template.setName(baseUrl.getServiceName());
-        template.setPublicURL(baseUrl.getPublicUrl());
-        template.setRegion(baseUrl.getRegion());
-        template.setType(baseUrl.getOpenstackType());
 
-        if (!StringUtils.isBlank(version.getId())) {
+        if (!StringUtils.isBlank(baseUrl.getVersionId())) {
+            VersionForService version = new VersionForService();
+            version.setId(baseUrl.getVersionId());
+            version.setInfo(baseUrl.getVersionInfo());
+            version.setList(baseUrl.getVersionList());
             template.setVersion(version);
         }
         return template;
@@ -142,49 +113,30 @@ public class EndpointConverterCloudV20 {
     }
 
     public Endpoint toEndpoint(CloudBaseUrl baseUrl) {
-        VersionForService version = new VersionForService();
-        version.setId(baseUrl.getVersionId());
-        version.setInfo(baseUrl.getVersionInfo());
-        version.setList(baseUrl.getVersionList());
-
-        Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
-        endpoint.setAdminURL(baseUrl.getAdminUrl());
-        endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
-        endpoint.setInternalURL(baseUrl.getInternalUrl());
+        Endpoint endpoint = mapper.map(baseUrl, Endpoint.class);
         endpoint.setName(baseUrl.getServiceName());
-        endpoint.setPublicURL(baseUrl.getPublicUrl());
-        endpoint.setRegion(baseUrl.getRegion());
-        endpoint.setType(baseUrl.getOpenstackType());
-        if (!StringUtils.isBlank(version.getId())) {
+
+        if (!StringUtils.isBlank(baseUrl.getVersionId())) {
+            VersionForService version = new VersionForService();
+            version.setId(baseUrl.getVersionId());
+            version.setInfo(baseUrl.getVersionInfo());
+            version.setList(baseUrl.getVersionList());
             endpoint.setVersion(version);
         }
         return endpoint;
     }
     
     public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
-        CloudBaseUrl baseUrl = new CloudBaseUrl();
-        baseUrl.setAdminUrl(template.getAdminURL());
-        baseUrl.setBaseUrlId(String.valueOf(template.getId()));
+        CloudBaseUrl baseUrl = mapper.map(template, CloudBaseUrl.class);
         baseUrl.setEnabled(template.isEnabled());
         baseUrl.setGlobal(template.isGlobal());
-        baseUrl.setInternalUrl(template.getInternalURL());
         baseUrl.setServiceName(template.getName());
-        baseUrl.setOpenstackType(template.getType());
-        baseUrl.setPublicUrl(template.getPublicURL());
-        baseUrl.setRegion(template.getRegion());
+
         if (template.getVersion() != null) {
             baseUrl.setVersionId(template.getVersion().getId());
             baseUrl.setVersionInfo(template.getVersion().getInfo());
             baseUrl.setVersionList(template.getVersion().getList());
         }
         return baseUrl;
-    }
-
-    public void setObjFactories(JAXBObjectFactories objFactories) {
-        this.objFactories = objFactories;
-    }
-
-    public void setSf(OpenStackServiceCatalogFactory sf) {
-        this.sf = sf;
     }
 }

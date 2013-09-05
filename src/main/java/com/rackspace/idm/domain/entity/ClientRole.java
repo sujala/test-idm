@@ -8,6 +8,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.dozer.Mapping;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 @Data
@@ -32,9 +33,11 @@ public class ClientRole implements Auditable, UniqueId {
     @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String description;
 
+    @Mapping("weight")
     @LDAPField(attribute=LdapRepository.ATTR_RS_WEIGHT, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private int rsWeight;
 
+    @Mapping("propagate")
     @LDAPField(attribute=LdapRepository.ATTR_RS_PROPAGATE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Boolean propagate;
 

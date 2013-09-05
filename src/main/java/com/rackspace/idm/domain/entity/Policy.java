@@ -9,6 +9,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.dozer.Mapping;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,18 +26,23 @@ public class Policy implements Auditable, UniqueId {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String policyId;
 
+    @Mapping("name")
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String name;
 
+    @Mapping("enabled")
     @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean enabled;
 
+    @Mapping("global")
     @LDAPField(attribute = LdapRepository.ATTR_GLOBAL, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean global;
 
+    @Mapping("type")
     @LDAPField(attribute = LdapRepository.ATTR_POLICYTYPE, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String policyType;
 
@@ -45,14 +51,6 @@ public class Policy implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
-
-    public Boolean isEnabled() {
-        return enabled;
-    }
-
-    public Boolean isGlobal() {
-        return global;
-    }
 
     public String getUniqueId() {
         if (ldapEntry == null) {

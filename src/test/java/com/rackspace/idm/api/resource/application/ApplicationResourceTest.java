@@ -80,7 +80,7 @@ public class ApplicationResourceTest {
     public void updateApplication_withNonMatchingApplicationIdInPayload_throwsBadRequestException() throws Exception {
         com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application("clientId", null, null, null);
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        when(applicationConverter.toClientDO(Matchers.<Application>any())).thenReturn(application);
+        when(applicationConverter.fromApplication(Matchers.<Application>any())).thenReturn(application);
         when(applicationService.loadApplication(null)).thenReturn(null);
         Application application1 = new Application();
         application1.setClientId("foo");

@@ -96,7 +96,7 @@ public class ApplicationResource extends ParentResource {
         
         getLogger().info("Updating application: {}", applicationId);
         
-        Application applicationWithUpdates = applicationConverter.toClientDO(application.getEntity());
+        Application applicationWithUpdates = applicationConverter.fromApplication(application.getEntity());
         if(applicationWithUpdates!=null && !applicationWithUpdates.getClientId().equals(applicationId)){
             throw new BadRequestException("Application id in uri and body do not match");
         }

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
 import org.slf4j.Logger;
@@ -20,6 +21,9 @@ import java.util.List;
 
 @Component
 public class TokenConverterCloudV20 {
+    @Autowired
+    Mapper mapper;
+
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -58,7 +62,8 @@ public class TokenConverterCloudV20 {
                     authenticatedByEntity.getCredential().add(authenticatedBy);
                 }
 
-                token.getAny().add(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy(authenticatedByEntity));
+//                token.getAny().add(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy(authenticatedByEntity));
+                token.setAuthenticatedBy(authenticatedByEntity);
             }
         }
 

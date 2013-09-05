@@ -363,7 +363,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errorMsg);
             }
 
-            User userDO = this.userConverterCloudV11.toUserDO(user);
+            User userDO = this.userConverterCloudV11.fromUser(user);
             userDO.setEnabled(true);
             validateMossoId(user.getMossoId());
 

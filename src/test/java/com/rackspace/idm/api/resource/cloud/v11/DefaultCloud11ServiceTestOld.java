@@ -138,7 +138,7 @@ public class DefaultCloud11ServiceTestOld {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
+        when(userConverterCloudV11.fromUser(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
@@ -1829,7 +1829,7 @@ public class DefaultCloud11ServiceTestOld {
         userDO.setId("someId");
         userDO.setMossoId(123456);
         when(userService.getUser(anyString())).thenReturn(null);
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
+        when(userConverterCloudV11.fromUser(user)).thenReturn(userDO);
         doNothing().when(spy).validateMossoId(anyInt());
         doNothing().when(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
         doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());

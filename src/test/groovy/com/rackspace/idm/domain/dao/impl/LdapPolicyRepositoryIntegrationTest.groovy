@@ -106,7 +106,6 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         policies.getPolicy().contains(policy2)
         !policiesAfterDelete.getPolicy().contains(policy1)
         !policiesAfterDelete.getPolicy().contains(policy2)
-
     }
 
     def "Add null policy - throws exception" () {

@@ -192,6 +192,8 @@ class V2Factory {
         return new Role().with {
             it.name = "role$random"
             it.description = "desc"
+            it.propagate = propagate
+            it.weight = weight
             it.otherAttributes = other
             return it
         }
@@ -307,12 +309,8 @@ class V2Factory {
             it.displayName = (displayName != null) ? displayName : null
             it.email = (email != null) ? email : null
             it.enabled = (enabled != null) ? enabled : null
-            if (defaultRegion != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
-            }
-            if (domainId != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "domainId"), domainId)
-            }
+            it.defaultRegion = defaultRegion
+            it.domainId = domainId
             if (password != null) {
                 it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
             }
@@ -330,9 +328,7 @@ class V2Factory {
             if (password != null) {
                 it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
             }
-            if (defaultRegion != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
-            }
+            it.defaultRegion = defaultRegion
             return it
         }
     }
