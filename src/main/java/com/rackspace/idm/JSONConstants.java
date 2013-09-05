@@ -97,6 +97,7 @@ public final class JSONConstants {
     public static final String MIDDLE_NAME = "middleName";
     public static final String LAST_NAME = "lastName";
     public static final String DISPLAY_NAME = "displayName";
+    public static final String POLICY = "policy";
     public static final String PREF_LANGUAGE = "prefLanguage";
     public static final String COUNTRY = "country";
     public static final String TIME_ZONE = "timeZone";
@@ -146,7 +147,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
     public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
     public static final Object RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
-    public static final Object RAX_AUTH_POLICY = "RAX-AUTH:policy";
+    public static final String RAX_AUTH_POLICY = "RAX-AUTH:policy";
     public static final Object RAX_AUTH_POLICIES = "RAX-AUTH:policies";
     public static final Object POLICIES_ALGORITHM = "algorithm";
     public static final Object BLOB = "blob";

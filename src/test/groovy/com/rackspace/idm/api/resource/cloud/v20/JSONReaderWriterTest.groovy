@@ -129,6 +129,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForBaseURLRefList writerForBaseURLRefList = new JSONWriterForBaseURLRefList()
     @Shared JSONWriterForRaxAuthDomain writerForDomain = new JSONWriterForRaxAuthDomain()
     @Shared JSONWriterForRaxAuthDomains writerForDomains = new JSONWriterForRaxAuthDomains()
+    @Shared JSONWriterForRaxAuthPolicy writerForPolicy = new JSONWriterForRaxAuthPolicy()
 
     def "can read/write region as json"() {
         given:
@@ -334,7 +335,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(policy, Policy, null, null, null, null, arrayOutputStream)
+        writerForPolicy.writeTo(policy, Policy, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json);
 

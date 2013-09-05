@@ -146,16 +146,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(serviceCatalog));
             jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(Region.class)) {
-            Region region = (Region) object;
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.RAX_AUTH_REGION, getRegion(region));
-            jsonText = JSONValue.toJSONString(outer);
-        } else if (object.getClass().equals(Regions.class)) {
-            Regions regions = (Regions) object;
-            JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.RAX_AUTH_REGIONS, getRegions(regions));
-            jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -404,29 +394,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
         }
         return endpointItem;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getRegion(Region region) {
-        JSONObject regionInner = new JSONObject();
-        regionInner.put(JSONConstants.NAME, region.getName());
-        regionInner.put(JSONConstants.ENABLED, region.isEnabled());
-        regionInner.put(JSONConstants.IS_DEFAULT, region.isIsDefault());
-
-        return regionInner;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONArray getRegions(Regions regions) {
-        JSONArray regionInner = new JSONArray();
-
-        if(regions != null){
-            for(Region region : regions.getRegion()){
-                JSONObject jsonObject = getRegion(region);
-                regionInner.add(jsonObject);
-            }
-        }
-        return regionInner;
     }
 
     JSONMarshaller getMarshaller() throws JAXBException {
