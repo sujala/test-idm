@@ -1,45 +1,135 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
-import org.apache.commons.io.IOUtils
-import org.openstack.docs.identity.api.v2.Role
-import spock.lang.Shared
-import spock.lang.Specification
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLRefList
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForVersionChoice
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
+import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
+import com.rackspacecloud.docs.auth.api.v1.GroupsList
+import org.apache.commons.io.IOUtils
+import org.json.simple.JSONArray
+import org.json.simple.JSONObject
+import org.json.simple.parser.JSONParser
+import org.openstack.docs.common.api.v1.Extension
+import org.openstack.docs.common.api.v1.Extensions
+import org.openstack.docs.common.api.v1.VersionChoice
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
+import org.openstack.docs.identity.api.v2.*
+import org.w3._2005.atom.Link
+import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-import static com.rackspace.idm.RaxAuthConstants.*
+import static com.rackspace.idm.JSONConstants.*
 
 class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONWriter writer = new JSONWriter();
-    @Shared JSONReaderForRegion readerForRegion = new JSONReaderForRegion()
-    @Shared JSONReaderForRegions readerForRegions = new JSONReaderForRegions()
-    @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
-    @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
-    @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
-    @Shared JSONWriterForServiceApis writerForServiceApis = new JSONWriterForServiceApis()
-    @Shared JSONWriterForSecretQAs writerForSecretQAs = new JSONWriterForSecretQAs()
-    @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies()
-    @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy()
-    @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
-    @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
-    @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
+
+    @Shared com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory()
+
+    @Shared JSONReaderForRaxAuthRegion readerForRaxAuthRegion = new JSONReaderForRaxAuthRegion()
+    @Shared JSONWriterForRaxAuthRegion writerForRaxAuthRegion = new JSONWriterForRaxAuthRegion()
+
+    @Shared JSONReaderForRaxAuthRegions readerForRegions = new JSONReaderForRaxAuthRegions()
+    @Shared JSONWriterForRaxAuthRegions writerForRegions = new JSONWriterForRaxAuthRegions()
+
+    @Shared JSONWriterForRaxAuthQuestion writerForQuestion = new JSONWriterForRaxAuthQuestion()
+    @Shared JSONWriterForRaxAuthQuestions writerForQuestions = new JSONWriterForRaxAuthQuestions()
+    @Shared JSONReaderForRaxAuthQuestion readerForQuestion = new JSONReaderForRaxAuthQuestion()
+
+    @Shared JSONWriterForRaxAuthCapabilities writerForCapabilities = new JSONWriterForRaxAuthCapabilities()
+    @Shared JSONReaderForRaxAuthCapabilities readerForCapabilities = new JSONReaderForRaxAuthCapabilities()
+
+    @Shared JSONWriterForRaxAuthServiceApis writerForServiceApis = new JSONWriterForRaxAuthServiceApis()
+
+    @Shared JSONWriterForRaxAuthSecretQAs writerForSecretQAs = new JSONWriterForRaxAuthSecretQAs()
+
+    @Shared JSONWriterForUser writerForUser = new JSONWriterForUser()
+    @Shared JSONReaderForUser readerForUser = new JSONReaderForUser()
+
+    @Shared JSONReaderRaxAuthForPolicies readerForPolicies = new JSONReaderRaxAuthForPolicies()
+    @Shared JSONReaderForRaxAuthPolicy readerForPolicy = new JSONReaderForRaxAuthPolicy()
+
+    @Shared JSONReaderRaxAuthForDomain readerForDomain = new JSONReaderRaxAuthForDomain()
+
     @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
+
     @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
+    @Shared JSONWriterForRole writerForRole = new JSONWriterForRole()
+
+    @Shared JSONReaderForRaxKsKeyApiKeyCredentials readerForApiKeyCredentials = new JSONReaderForRaxKsKeyApiKeyCredentials()
+    @Shared JSONWriterForRaxKsKeyApiKeyCredentials writerForApiKeyCredentials = new JSONWriterForRaxKsKeyApiKeyCredentials()
+
+    @Shared JSONReaderForUserForCreate readerForUserForCreate = new JSONReaderForUserForCreate()
+    @Shared JSONWriterForUserForCreate writerForUserForCreate = new JSONWriterForUserForCreate()
+
+    @Shared JSONReaderForAuthenticationRequest readerForAuthenticationRequest = new JSONReaderForAuthenticationRequest()
+    @Shared JSONWriterForAuthenticationRequest writerForAuthenticationRequest = new JSONWriterForAuthenticationRequest()
+
+    @Shared JSONReaderForTenants readerForTenants = new JSONReaderForTenants()
+    @Shared JSONWriterForTenants writerForTenants = new JSONWriterForTenants()
+
+    @Shared JSONReaderForOsKsAdmService readerForService = new JSONReaderForOsKsAdmService()
+    @Shared JSONWriterForOsKsAdmService writerForService = new JSONWriterForOsKsAdmService()
+
+    @Shared JSONReaderForOsKsAdmServices readerForServices = new JSONReaderForOsKsAdmServices()
+    @Shared JSONWriterForOsKsAdmServices writerForServices = new JSONWriterForOsKsAdmServices()
+
+    @Shared JSONReaderForOsKsCatalogEndpointTemplate readerForEndpointTemplate = new JSONReaderForOsKsCatalogEndpointTemplate()
+    @Shared JSONWriterForOsKsCatalogEndpointTemplate writerForEndpointTemplate = new JSONWriterForOsKsCatalogEndpointTemplate()
+
+    @Shared JSONReaderForEndpoint readerForEndpoint = new JSONReaderForEndpoint()
+    @Shared JSONWriterForEndpoint writerForEndpoint = new JSONWriterForEndpoint()
+
+    @Shared JSONReaderForEndpoints readerForEndpoints = new JSONReaderForEndpoints()
+    @Shared JSONWriterForEndpoints writerForEndpoints = new JSONWriterForEndpoints()
+
+    @Shared JSONReaderForOsKsCatalogEndpointTemplates readerForEndpointTemplates = new JSONReaderForOsKsCatalogEndpointTemplates()
+    @Shared JSONWriterForOsKsCatalogEndpointTemplates writerForEndpointTemplates = new JSONWriterForOsKsCatalogEndpointTemplates()
+
+    @Shared JSONReaderForPasswordCredentials readerForPasswordCredentials = new JSONReaderForPasswordCredentials()
+    @Shared JSONWriterForPasswordCredentials writerForPasswordCredentials = new JSONWriterForPasswordCredentials()
+
+    @Shared JSONReaderForRaxKsGroup readerForGroup = new JSONReaderForRaxKsGroup()
+    @Shared JSONWriterForRaxKsGroup writerForGroup = new JSONWriterForRaxKsGroup()
+
+    @Shared JSONReaderForRaxKsGroups readerForGroups = new JSONReaderForRaxKsGroups()
+    @Shared JSONWriterForRaxKsGroups writerForGroups = new JSONWriterForRaxKsGroups()
+
+    @Shared JSONReaderForGroups readerForGroupsList = new JSONReaderForGroups()
+    @Shared JSONWriterForGroups writerForGroupsList = new JSONWriterForGroups()
+
+    @Shared JSONReaderForRaxAuthDefaultRegionServices readerForDefaultRegionServices = new JSONReaderForRaxAuthDefaultRegionServices()
+    @Shared JSONWriterForRaxAuthDefaultRegionServices writerForDefaultRegionServices = new JSONWriterForRaxAuthDefaultRegionServices()
+
+    @Shared JSONWriterForExtension writerForExtension = new JSONWriterForExtension()
+    @Shared JSONWriterForExtensions writerForExtensions = new JSONWriterForExtensions()
+    @Shared JSONWriterForVersionChoice writerForVersionChoice = new JSONWriterForVersionChoice()
+    @Shared JSONWriterForCredentialListType writerForCredentialListType = new JSONWriterForCredentialListType()
+    @Shared JSONWriterForRoles writerForRoles = new JSONWriterForRoles()
+    @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
+    @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
+    @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
+    @Shared JSONWriterForBaseURLList writerForBaseURLList = new JSONWriterForBaseURLList()
+    @Shared com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser writerForUser11 = new com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser()
+    @Shared JSONWriterForBaseURLRefList writerForBaseURLRefList = new JSONWriterForBaseURLRefList()
+    @Shared JSONWriterForRaxAuthDomain writerForDomain = new JSONWriterForRaxAuthDomain()
+    @Shared JSONWriterForRaxAuthDomains writerForDomains = new JSONWriterForRaxAuthDomains()
+    @Shared JSONWriterForRaxAuthPolicy writerForPolicy = new JSONWriterForRaxAuthPolicy()
 
     def "can read/write region as json"() {
         given:
@@ -47,10 +137,10 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(regionEntity, Region.class, null, null, null, null, arrayOutputStream)
+        writerForRaxAuthRegion.writeTo(regionEntity, Region.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        def readRegion = readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
+        def readRegion = readerForRaxAuthRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
 
         then:
         regionEntity.name == readRegion.name
@@ -59,14 +149,11 @@ class JSONReaderWriterTest extends RootServiceTest {
     }
 
     def "region reader throws bad request if root is not found"() {
-        given:
-        def regionEntity = region("name", true, false)
-
         when:
         def json = '{ "region": { "enabled": true, "isDefault": true, "name": "DFW" } }'
 
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
+        readerForRaxAuthRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
 
         then:
         thrown(BadRequestException)
@@ -80,7 +167,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(regionsEntity, Regions.class, null, null, null, null, arrayOutputStream)
+        writerForRegions.writeTo(regionsEntity, Regions.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
         def readRegions = readerForRegions.readFrom(Regions.class, null, null, null, null, arrayInputStream)
@@ -248,7 +335,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(policy, Policy, null, null, null, null, arrayOutputStream)
+        writerForPolicy.writeTo(policy, Policy, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json);
 
@@ -265,7 +352,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(domain, Domain, null, null, null, null, arrayOutputStream)
+        writerForDomain.writeTo(domain, Domain, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json);
 
@@ -330,24 +417,16 @@ class JSONReaderWriterTest extends RootServiceTest {
         def role = v2Factory.createRole(propagate, weight)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(role, Role, null, null, null, null, arrayOutputStream)
+        writerForRole.writeTo(role, Role, null, null, null, null, arrayOutputStream)
         String JSONString = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(JSONString)
 
         def readJSONObject = readerForRole.readFrom(Role, null, null, null, null, inputStream)
-        def otherAttributes = readJSONObject.getOtherAttributes()
-        def readPropagate = null
-        def readWeight = null
-        if (otherAttributes.containsKey(QNAME_PROPAGATE)) {
-            readPropagate = otherAttributes.get(QNAME_PROPAGATE).toBoolean()
-        }
-        if (otherAttributes.containsKey(QNAME_WEIGHT)) {
-            readWeight = readJSONObject.otherAttributes.get(QNAME_WEIGHT).toInteger()
-        }
-
         then:
-        readPropagate == propagate
-        readWeight == weight
+        if(readJSONObject.propagate != null){
+            readJSONObject.propagate as boolean == propagate
+        }
+        readJSONObject.weight == weight
 
         where:
         propagate   | weight
@@ -355,6 +434,800 @@ class JSONReaderWriterTest extends RootServiceTest {
         null        | 500
         false       | 100
         null        | null
+    }
+
+    def "can read/write user as json" () {
+        given:
+        def id = "abc123"
+        def username = "BANANAS"
+        def email = "no@rackspace.com"
+        def enabled = true
+        def displayName = "displayName"
+
+        User userObject = v2Factory.createUser().with {
+            it.displayName = displayName
+            it.id = id
+            it.username = username
+            it.email = email
+            it.enabled = enabled
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUser.writeTo(userObject, User.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def user = readerForUser.readFrom(User.class, null, null, null, null, arrayInputStream)
+
+
+        then:
+        user.id == id
+        user.username == username
+        user.email == email
+        user.enabled == enabled
+        user.displayName == displayName
+    }
+
+    def "can read/write apiKeyCreds as json" () {
+        given:
+        ApiKeyCredentials apiKeyCred = v1Factory.createApiKeyCredentials()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForApiKeyCredentials.writeTo(apiKeyCred, ApiKeyCredentials.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def apiKey = readerForApiKeyCredentials.readFrom(ApiKeyCredentials.class, null, null, null, null, arrayInputStream)
+
+
+        then:
+        apiKey.apiKey == apiKeyCred.apiKey
+        apiKey.username == apiKeyCred.username
+    }
+
+    def "create read/write userForCreate as json" () {
+        given:
+        def username = "username"
+        def displayName = "displayName"
+        def email = "someEmail@rackspace.com"
+        def enabled = true
+        def defaultRegion = "ORD"
+        def domainId = "domainId"
+        def password = "Password1"
+        def user = v2Factory.userForCreate(username, displayName, email, enabled, defaultRegion, domainId, password)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUserForCreate.writeTo(user, UserForCreate.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def userObject = readerForUserForCreate.readFrom(UserForCreate.class, null, null, null, null, arrayInputStream)
+
+        then:
+        userObject.username == username
+        userObject.domainId == domainId
+        userObject.email == email
+        userObject.enabled == enabled
+    }
+
+    def "create read/write for authenticationRequest" (){
+        given:
+        def username = "username"
+        def apiKey = "1234567890"
+        def domain = "name"
+        def authRequest = v2Factory.createApiKeyAuthenticationRequest(username, apiKey)
+        authRequest.domain = new Domain().with{
+            it.name = domain
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticationRequest.writeTo(authRequest, AuthenticationRequest.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def authObject = readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        authObject.credential.getValue().username == username
+        authObject.credential.getValue().apiKey == apiKey
+        authObject.domain.name ==  domain
+    }
+
+    def "create read/writer for tenants" () {
+        given:
+        def tenant = v2Factory.createTenant()
+        def tenants = new Tenants().with {
+            it.tenant = [tenant, tenant].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForTenants.writeTo(tenants, Tenants.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Tenants tenantsObject = readerForTenants.readFrom(Tenants.class, null, null, null, null, arrayInputStream)
+
+        then:
+        tenantsObject != null
+        tenantsObject.tenant[0].name == tenant.name
+    }
+
+    def "create read/writer for service" () {
+        given:
+        def service = v1Factory.createService()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForService.writeTo(service, Service.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Service serviceObject = readerForService.readFrom(Service.class, null, null, null, null, arrayInputStream)
+
+        then:
+        serviceObject != null
+        serviceObject.id == "id"
+        serviceObject.description == "description"
+        serviceObject.name == "name"
+        serviceObject.type == "type"
+    }
+
+    def "create read/writer for services" () {
+        given:
+        def service = v1Factory.createService()
+        def services = new ServiceList().with {
+            it.service = [service, service].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForServices.writeTo(services, ServiceList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        ServiceList servicesObject = readerForServices.readFrom(ServiceList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        servicesObject != null
+        servicesObject.service[0].id == "id"
+        servicesObject.service[0].description == "description"
+        servicesObject.service[0].name == "name"
+        servicesObject.service[0].type == "type"
+    }
+
+    def "create read/writer for endpointTemplate" () {
+        given:
+        def endpointTemplate = v1Factory.createEndpointTemplate("1", "type", "publicUrl", "name")
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpointTemplate.writeTo(endpointTemplate, EndpointTemplate.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        EndpointTemplate endpointTemplateObject = readerForEndpointTemplate.readFrom(EndpointTemplate.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointTemplateObject != null
+        endpointTemplateObject.type == endpointTemplate.type
+        endpointTemplateObject.publicURL == endpointTemplate.publicURL
+        endpointTemplateObject.name == endpointTemplate.name
+        endpointTemplateObject.id == endpointTemplate.id
+        endpointTemplateObject.enabled == endpointTemplate.enabled
+        endpointTemplateObject.version.id == "id"
+    }
+
+    def "create read/writer for endpoint" () {
+        given:
+        def link = new Link().with {
+            it.type = type
+            it.href = "href"
+            it
+        }
+        def version = new VersionForService().with {
+            it.id = "id"
+            it.info = "info"
+            it.list = "someList"
+            it
+        }
+        def endpoint = v2Factory.createEndpoint().with {
+            it.link = [link, link].asList()
+            it.version = version
+            it.publicURL = "publicUrl"
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.version.id == "id"
+        endpointObject.version.list == "someList"
+        endpointObject.link != null
+        endpointObject.link.size() == 2
+    }
+
+    def "create read/writer for endpoint - empty link" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
+            it.link = new ArrayList<>()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.version.id == "id"
+        endpointObject.link != null
+        endpointObject.link.size() == 0
+    }
+
+    def "create read/writer for endpoint - null link" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
+            it.publicURL = "publicUrl"
+            it.link = new ArrayList<>()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.version.id == "id"
+        endpointObject.version.list == "someList"
+        endpointObject.link != null
+        endpointObject.link.size() == 0
+    }
+
+
+    def "create read/writer for endpoints" () {
+        def endpoint = v2Factory.createEndpoint().with {
+            it.version = new VersionForService().with {
+                it.id = "id"
+                it.list = "someList"
+                it.info = "info"
+                it
+            }
+            it.publicURL = "publicUrl"
+            it.link = new ArrayList<>()
+            it
+        }
+        def endpoints = new EndpointList().with {
+            it.endpoint = [endpoint, endpoint].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoints.writeTo(endpoints, EndpointList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        EndpointList endpointsObject = readerForEndpoints.readFrom(EndpointList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointsObject != null
+        endpointsObject.endpoint.size() == 2
+    }
+
+    def "create read/writer for endpointTemplates" () {
+        def version = new VersionForService().with {
+            it.id = "id"
+            it.list = "someList"
+            it.info = "info"
+            it
+        }
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.version = version
+            it
+        }
+
+        def endpointTemplates = new EndpointTemplateList().with {
+            it.endpointTemplate = [endpointTemplate, endpointTemplate].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpointTemplates.writeTo(endpointTemplates, EndpointTemplateList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        EndpointTemplateList endpointTemplatesObject = readerForEndpointTemplates.readFrom(EndpointTemplateList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointTemplatesObject != null
+        endpointTemplatesObject.endpointTemplate.size() == 2
+    }
+
+    def "create read/writer for passwordCredentials" () {
+        given:
+        def cred = new PasswordCredentialsBase().with {
+            it.password = "password"
+            it.username = "username"
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForPasswordCredentials.writeTo(cred, PasswordCredentialsBase.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        PasswordCredentialsBase passwordCredentialsObject = readerForPasswordCredentials.readFrom(PasswordCredentialsBase.class, null, null, null, null, arrayInputStream)
+
+        then:
+        passwordCredentialsObject != null
+    }
+
+    def "create read/writer for group" () {
+        given:
+        def group = v1Factory.createGroup()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroup.writeTo(group, Group.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Group groupObject = readerForGroup.readFrom(Group.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupObject != null
+        groupObject.name == "name"
+    }
+
+    def "create read/writer for groups" () {
+        given:
+        Group group = new Group().with {
+            it.name = "name"
+            it
+        }
+        def groups = new Groups().with {
+            it.group = [group, group].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroups.writeTo(groups, Groups.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Groups groupsObject = readerForGroups.readFrom(Groups.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupsObject != null
+        groupsObject.group.size() == 2
+    }
+
+    def "create read/writer for groupsList" () {
+        given:
+        com.rackspacecloud.docs.auth.api.v1.Group group = new com.rackspacecloud.docs.auth.api.v1.Group().with {
+            it.id = "id"
+            it.description = "description"
+            it
+        }
+        def groupsList = new GroupsList().with {
+            it.group = [group, group].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForGroupsList.writeTo(groupsList, GroupsList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        GroupsList groupsListObject = readerForGroupsList.readFrom(GroupsList.class, null, null, null, null, arrayInputStream)
+
+        then:
+        groupsListObject != null
+        groupsListObject.group.size() == 2
+    }
+
+    def "create read/writer for defaultRegionServices" () {
+        given:
+        def serviceName = ["cloudFile", "cloudServers"].asList()
+        def defaultRegionServices = new DefaultRegionServices().with {
+            it.serviceName = serviceName
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDefaultRegionServices.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        DefaultRegionServices defaultRegionServicesObject = readerForDefaultRegionServices.readFrom(DefaultRegionServices.class, null, null, null, null, arrayInputStream)
+
+        then:
+        defaultRegionServicesObject != null
+        defaultRegionServices.serviceName[0] == "cloudFile"
+    }
+
+    def "create read/writer for extension" () {
+        given:
+        def extension = v1Factory.createExtension()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForExtension.writeTo(extension, Extension.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(EXTENSION)
+        o != null
+        o.get(NAME) == "name"
+        o.get(DESCRIPTION) == "description"
+        JSONArray a = o.get(LINKS)
+        a.size() == 2
+    }
+
+    def "create read/writer for versionChoice" () {
+        given:
+        def versionChoice = v1Factory.createVersionChoice()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForVersionChoice.writeTo(versionChoice, VersionChoice.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(VERSION)
+        o.get(ID) == "id"
+        o.get(STATUS) == "CURRENT"
+        JSONArray a = o.get(LINKS)
+        a.size() == 2
+    }
+
+    def "create read/writer for extensions" () {
+        given:
+        def extension = v1Factory.createExtension()
+        def extensions = new Extensions().with {
+            it.extension = [extension, extension].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForExtensions.writeTo(extensions, Extensions.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(EXTENSIONS)
+        a.size() == 2
+    }
+
+    def "create read/writer for credentials" () {
+        given:
+        def apiKeyCred = v2Factory.createJAXBApiKeyCredentials("username", "apiKey")
+        def pwdCred = v2Factory.createJAXBPasswordCredentialsBase("username", "password")
+        def credentials = new CredentialListType().with {
+            it.credential = [apiKeyCred, pwdCred].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCredentialListType.writeTo(credentials, CredentialListType.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(CREDENTIALS)
+        def api = o.getAt(RAX_KSKEY_API_KEY_CREDENTIALS)
+        api.getAt(API_KEY)[0] == "apiKey"
+        def pwd = o.getAt(PASSWORD_CREDENTIALS)
+        pwd.getAt(PASSWORD)[0] == "password"
+
+    }
+
+    def "create read/writer for roles" () {
+        given:
+        def role = v2Factory.createRole()
+        def roles = new RoleList().with {
+            it.role = [role, role].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForRoles.writeTo(roles, RoleList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(ROLES)
+        o.size() == 2
+        ((JSONObject)o[0]).get(NAME) == "name"
+    }
+
+    def "create read/writer for users" () {
+        given:
+        def user = v2Factory.createUserForCreate("username", "displayName", "email", true, "ORD", "domainId", "password")
+        def users = new UserList().with {
+            it.user = [user, user].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUsers.writeTo(users, UserList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray o = outer.get(USERS)
+        o.size() == 2
+        ((JSONObject)o[0]).get(USERNAME) == "username"
+        ((JSONObject)o[0]).get(OS_KSADM_PASSWORD) == "password"
+    }
+
+
+    def "create read/writer for AuthenticateResponse" () {
+        given:
+        Token token = v2Factory.createToken()
+        ServiceCatalog sc = v2Factory.createServiceCatalog()
+        def role = v2Factory.createRole()
+        def roles = new RoleList().with {
+            it.role = [role, role].asList()
+            it
+        }
+        def user = v2Factory.createUserForAuthenticateResponse("id", "name", roles)
+        def authResponse = v2Factory.createAuthenticateResponse(token, sc, user)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(authResponse, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(ACCESS)
+        JSONObject t = o.get(TOKEN)
+        t.get(ID) == "id"
+        JSONObject u = o.get(USER)
+        u.get(NAME) == "name"
+    }
+
+    def "can write authenticatedBy using json"() {
+        when:
+        def response = v2Factory.createAuthenticateResponse()
+        def authenticatedBy = new AuthenticatedBy().with {
+            it.credential = input.asList()
+            it
+        }
+        response.getToken().any.add(objectFactory.createAuthenticatedBy(authenticatedBy))
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(response, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject authResponse = (JSONObject) parser.parse(json);
+        JSONObject access = (JSONObject)authResponse.get(JSONConstants.ACCESS)
+        JSONObject token = (JSONObject)access.get(JSONConstants.TOKEN)
+        JSONArray authenticatedByList = (JSONArray) token.get(JSONConstants.RAX_AUTH_AUTHENTICATED_BY)
+        authenticatedByList as Set == input as Set
+
+
+        where:
+        input << [
+                ["RSA"],
+                ["RSA", "Password"]
+        ]
+    }
+
+    def "create read/writer for ImpersonationResponse" () {
+        given:
+        Token token = v2Factory.createToken()
+        def impersonationResponse = new ImpersonationResponse().with {
+            it.token =  token
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForImpersonationResponse.writeTo(impersonationResponse, ImpersonationResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(ACCESS)
+        JSONObject t = o.get(TOKEN)
+        t.get(ID) == "id"
+    }
+
+    def "create read/writer for baseURLList" () {
+        given:
+        def baseUrl = v1Factory.createBaseUrl()
+        def baseUrlList = new BaseURLList().with {
+            it.baseURL = [baseUrl, baseUrl].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLList.writeTo(baseUrlList, BaseURLList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.BASE_URLS)
+        a.size() == 2
+    }
+
+    def "create read/writer for v1.1 user" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def baseUrlList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
+            it
+        }
+
+        def user = v1Factory.createUser().with {
+            it.baseURLRefs = baseUrlList
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUser11.writeTo(user, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(USER)
+        o.get(ID) == "username"
+        o.get(ENABLED) == true
+        o.get(KEY) == "key"
+        JSONArray a = o.get(BASE_URL_REFS)
+        a.size() == 2
+    }
+
+    def "create read/writer for baseURLRefList" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def baseUrlList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLRefList.writeTo(baseUrlList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.BASE_URL_REFS)
+        a.size() == 2
+    }
+
+    def "create read/writer for domain" () {
+        given:
+        def domain = v1Factory.createDomain()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDomain.writeTo(domain, Domain.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject a = outer.get(JSONConstants.RAX_AUTH_DOMAIN)
+        a.get(ID) == "id"
+        a.get(NAME) == "name"
+        a.get(ENABLED) == true
+    }
+
+    def "create read/writer for domains" () {
+        given:
+        def domain = v1Factory.createDomain()
+        def domains = v1Factory.createDomains([domain, domain].asList())
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForDomains.writeTo(domains, Domains.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONArray a = outer.get(JSONConstants.RAX_AUTH_DOMAINS)
+        a.size() == 2
+        ((JSONObject)a[0]).get(ID) == "id"
+        ((JSONObject)a[0]).get(NAME) == "name"
+        ((JSONObject)a[0]).get(ENABLED) == true
+    }
+
+    def "can write baseUrlRefList"() {
+        when:
+        def baseUrlRefs = new ArrayList<BaseURLRefList>();
+        baseUrlRefs.add(v1Factory.createBaseUrlRef(baseUrlId,publicUrl,v1Default));
+        def baseUrlRefList = new BaseURLRefList();
+        baseUrlRefList.baseURLRef = baseUrlRefs;
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForBaseURLRefList.writeTo(baseUrlRefList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject baseResponse = (JSONObject) parser.parse(json);
+        baseResponse.size() == 1;
+        baseResponse.get("baseURLRefs")[0]["id"] == baseUrlId;
+        baseResponse.get("baseURLRefs")[0]["href"] == publicUrl;
+        baseResponse.get("baseURLRefs")[0]["v1Default"] == v1Default;
+
+        where:
+        baseUrlId = 1;
+        publicUrl = "http://public/";
+        v1Default = false;
     }
 
     def getSecretQA(String id, String question, String answer) {

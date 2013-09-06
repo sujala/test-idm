@@ -22,11 +22,11 @@ public class Cloud20TestHelper {
         ObjectMarshaller<AuthenticationRequest> marshaller = new ObjectMarshaller<AuthenticationRequest>();
 
         AuthenticationRequest request = new AuthenticationRequest();
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         passwordCredentialsRequiredUsername.setUsername(username);
         passwordCredentialsRequiredUsername.setPassword(password);
 
-        request.setCredential(objectFactory.createPasswordCredentials(passwordCredentialsRequiredUsername));
+        request.setCredential(objectFactory.createCredential(passwordCredentialsRequiredUsername));
 
         return marshaller.marshal(objectFactory.createAuth(request), AuthenticationRequest.class);
     }

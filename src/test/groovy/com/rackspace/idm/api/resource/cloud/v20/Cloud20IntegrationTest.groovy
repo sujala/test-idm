@@ -228,7 +228,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cloud20.destroyUser(serviceAdminToken, testUser.getId())
 
-        //TODO: DELETE DOMAINS
+        //TODO: DELETE RAX_AUTH_DOMAINS
         cloud20.deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
         cloud20.deletePolicy(serviceAdminToken, policyId)
     }
@@ -605,7 +605,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.getUserByName(serviceAdminToken, "badName"),
                 cloud20.updateUser(serviceAdminToken, "badId", new User()),
                 cloud20.deleteUser(serviceAdminToken, "badId"),
-                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsRequiredUsername("someUser", "SomePassword1"))
+                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsBase("someUser", "SomePassword1"))
         ]
     }
 
@@ -1527,7 +1527,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def response = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
         User user = response.getEntity(User)
         String password = "Password1~!@#\$%^&*_#\$%^% <>?:\"^(%)'"
-        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {
+        PasswordCredentialsBase creds = new PasswordCredentialsBase().with {
             it.username = username
             it.password = password
             return it
@@ -1535,7 +1535,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         when:
         def updateCreds = cloud20.updateCredentials(identityAdminToken, user.id, creds)
-        String updatePassword = updateCreds.getEntity(PasswordCredentialsRequiredUsername).value.password
+        String updatePassword = updateCreds.getEntity(PasswordCredentialsBase).value.password
         def authenticate = cloud20.authenticatePassword(user.username,updatePassword)
 
         then:
@@ -1549,7 +1549,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def response = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", "someDomain", "Password1"))
         User user = response.getEntity(User)
         String password = "Password1~!@א"
-        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername().with {
+        PasswordCredentialsBase creds = new PasswordCredentialsBase().with {
             it.username = username
             it.password = password
             return it
@@ -1744,7 +1744,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
             return it
         }
         def response = cloud20.createRole(serviceAdminToken, role)
-        def createdRole = response.getEntity(Role).value
+        Role createdRole = response.getEntity(Role).value
         cloud20.deleteRole(serviceAdminToken, createdRole.getId())
 
         def propagateValue = null
@@ -2104,8 +2104,19 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         token != null
         createSubUser != null
         listUsersByTenant.user.size() == 2
-        listUsersByTenant.user[0].id == createUser.id
-        listUsersByTenant.user[1].id == createSubUser.id
+        //this if/else is necessary due to difference in the order in which openldap and ca return the results
+        boolean matched = false
+        if (listUsersByTenant.user[0].id == createUser.id) {
+            listUsersByTenant.user[1].id == createSubUser.id
+            matched = true
+        }
+        else if (listUsersByTenant.user[1].id == createUser.id) {
+            listUsersByTenant.user[0].id == createSubUser.id
+            matched = true
+        }
+        else {
+            matched == true
+        }
     }
 
     def authAndExpire(String username, String password) {

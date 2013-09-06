@@ -14,6 +14,8 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
@@ -683,8 +685,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user;
 
-            if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
-                PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
+            if (credentials.getValue() instanceof PasswordCredentialsBase) {
+                PasswordCredentialsBase userCredentials = (PasswordCredentialsBase) credentials.getValue();
                 validator20.validatePasswordCredentialsForCreateOrUpdate(userCredentials);
                 user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
@@ -774,8 +776,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         UserScopeAccess usa;
         RackerScopeAccess rsa;
         List<String> authenticatedBy = new ArrayList<String>();
-        if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
-            PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+        if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
+            PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
@@ -837,7 +839,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (authenticationRequest.getToken() != null) {
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
-            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
+            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
                 authResponseTuple = authWithPasswordCredentials.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                 authResponseTuple = authWithApiKeyCredentials.authenticate(authenticationRequest);
@@ -1121,7 +1123,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .status(HttpServletResponse.SC_NOT_IMPLEMENTED);
             }
 
-            if (!credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
+            if (!credentialType.equals(JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)) {
                 throw new BadRequestException("unsupported credential type");
             }
 
@@ -1454,7 +1456,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(user.getPassword())) {
                 throw new NotFoundException("User doesn't have password credentials");
             }
-            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+            PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
             userCreds.setPassword(user.getPassword());
             userCreds.setUsername(user.getUsername());
             JAXBElement<? extends CredentialType> creds = objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds);
@@ -1561,10 +1563,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (authorizationService.authorizeCloudServiceAdmin(callerScopeAccess)) {
                 if (!StringUtils.isBlank(user.getPassword())) {
-                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                    PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
                     userCreds.setPassword(user.getPassword());
                     userCreds.setUsername(user.getUsername());
-                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds));
                 }
             }
 
@@ -3011,7 +3013,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-                                                         String credentialType, PasswordCredentialsRequiredUsername creds) {
+                                                         String credentialType, PasswordCredentialsBase creds) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -3029,7 +3031,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setPassword(creds.getPassword());
             this.userService.updateUser(user, false);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(creds).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createCredential(creds).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -3302,8 +3304,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (creds instanceof ApiKeyCredentials) {
             jaxbCreds = objFactories.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials((ApiKeyCredentials) creds);
         }
-        if (creds instanceof PasswordCredentialsRequiredUsername) {
-            jaxbCreds = objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
+        if ((PasswordCredentialsBase.class).isAssignableFrom(creds.getClass())) {
+            jaxbCreds = objFactories.getOpenStackIdentityV2Factory().createCredential(creds);
         }
 
         return jaxbCreds;

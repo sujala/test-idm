@@ -141,7 +141,7 @@ public interface Cloud20Service {
 
     ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
-        PasswordCredentialsRequiredUsername creds);
+        PasswordCredentialsBase creds);
 
     ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,

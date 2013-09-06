@@ -26,6 +26,7 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -78,7 +79,7 @@ class ObjectConverterTest extends RootServiceTest{
     def "Convert AuthenticationRequest to authenticationRequestForValidation: PasswordCredentials"(){
         when:
         def entity = v2Factory.createAuthenticationRequest()
-        entity.credential = v2Factory.createJAXBPasswordCredentialsRequiredUsername("name","Password1")
+        entity.credential = v2Factory.createJAXBPasswordCredentialsBase("name","Password1")
         entity.token = v2Factory.createTokenForAuthenticationRequest()
         entity.otherAttributes.put(new QName("http://localhost"), "hello")
         AuthenticationRequestForValidation result = converter.convert(entity)
@@ -425,7 +426,7 @@ class ObjectConverterTest extends RootServiceTest{
 
     def "Convert Credentials to CredentialsForValidation"(){
         when:
-        def passwordCred = new PasswordCredentialsRequiredUsername().with {
+        def passwordCred = new PasswordCredentialsBase().with {
             it.username = "name"
             it.password = "password"
             return it

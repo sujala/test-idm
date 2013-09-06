@@ -188,7 +188,7 @@ public class ObjectFactoryTest {
         assertThat("fault", result.code, equalTo(0));
     }
 
-    @Test
+/*    @Test
     public void tenant_callsGetAny_returnsEmptyList() throws Exception {
         List<Object> result = tenant.getAny();
         assertThat("list", result.isEmpty(), equalTo(true));
@@ -200,7 +200,7 @@ public class ObjectFactoryTest {
         any.add("test");
         List<Object> result = tenant.getAny();
         assertThat("list", result.get(0).toString(), equalTo("test"));
-    }
+    }*/
 
     @Test
     public void tenant_callsGetOtherAttributes_returnsOtherAttributes() throws Exception {

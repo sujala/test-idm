@@ -36,6 +36,9 @@ public class UserConverterCloudV20 {
     public com.rackspace.idm.domain.entity.User fromUser(User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
         userEntity.setEnabled(user.isEnabled());
+        if (user instanceof UserForCreate) {
+            userEntity.setPassword(((UserForCreate)user).getPassword());
+        }
         userEntity.setUserPassword(userEntity.getPassword());
         return userEntity;
     }
@@ -75,9 +78,12 @@ public class UserConverterCloudV20 {
         jaxbUser.setEnabled(user.getEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
+        jaxbUser.setDomainId(user.getDomainId());
+        jaxbUser.setDefaultRegion(user.getRegion());
         if (user.getPassword() != null) {
             jaxbUser.setPassword(user.getPassword());
         }
+
         if(user.getRegion() != null){
             jaxbUser.setDefaultRegion(user.getRegion());
         }

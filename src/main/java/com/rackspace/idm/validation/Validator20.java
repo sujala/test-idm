@@ -8,7 +8,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class Validator20 {
         validateEmail(user.getEmail());
     }
 
-    public void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentials) {
+    public void validatePasswordCredentials(PasswordCredentialsBase passwordCredentials) {
         String username = passwordCredentials.getUsername();
         String password = passwordCredentials.getPassword();
         validateUsername(username);
@@ -106,7 +106,7 @@ public class Validator20 {
         }
     }
 
-    public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsRequiredUsername passwordCredentials){
+    public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsBase passwordCredentials){
         validatePasswordCredentials(passwordCredentials);
         validatePasswordForCreateOrUpdate(passwordCredentials.getPassword());
     }

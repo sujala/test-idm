@@ -11,7 +11,7 @@ import com.rackspacecloud.docs.auth.api.v1.NastCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
 import org.apache.commons.lang.StringUtils;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,8 +52,8 @@ public class CloudUserExtractor {
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 usa = (UserScopeAccess) scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 user = userService.getUser(usa.getUsername());
-            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
-                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsBase.class)) {
+                PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
                 user = userService.getUser(creds.getUsername());
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();

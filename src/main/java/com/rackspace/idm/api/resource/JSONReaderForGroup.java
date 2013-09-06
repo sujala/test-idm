@@ -48,11 +48,11 @@ public class JSONReaderForGroup implements MessageBodyReader<Group> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey(JSONConstants.GROUP)) {
+            if (outer.containsKey(JSONConstants.RAX_KSGRP_GROUP)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                        JSONConstants.GROUP).toString());
+                        JSONConstants.RAX_KSGRP_GROUP).toString());
 
                 Object name = obj3.get(JSONConstants.NAME);
                 Object desc = obj3.get(JSONConstants.DESCRIPTION);

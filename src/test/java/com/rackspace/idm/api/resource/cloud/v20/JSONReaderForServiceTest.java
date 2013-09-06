@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForOsKsAdmService;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
@@ -37,86 +37,24 @@ public class JSONReaderForServiceTest {
 
     @Test
     public void isReadable_withValidClass_returnsTrue() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         boolean readable = jsonReaderForService.isReadable(Service.class, null, null, null);
         assertThat("Readable", readable, equalTo(true));
     }
 
     @Test
     public void isReadable_withInvalidClass_returnsFalse() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         boolean readable = jsonReaderForService.isReadable(Object.class, null, null, null);
         assertThat("Readable", readable, equalTo(false));
     }
 
     @Test
     public void readFrom_withValidJSON_returnsService() throws Exception {
-        JSONReaderForService jsonReaderForService = new JSONReaderForService();
+        JSONReaderForOsKsAdmService jsonReaderForService = new JSONReaderForOsKsAdmService();
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(serviceJSON.getBytes()));
         Service service = jsonReaderForService.readFrom(Service.class, null, null, null, null, inputStream);
         assertThat("service returned", service, is(Service.class));
         assertThat("service id", service.getId(), equalTo("serviceId"));
-    }
-
-    @Test
-    public void getServiceFromJSONString_withValidJSON_returnsServiceWithName() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(serviceJSON);
-        assertThat("service name", serviceFromJSONString.getName(),equalTo("serviceName") );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withValidJSON_returnsServiceWithDesc() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(serviceJSON);
-        assertThat("service desc", serviceFromJSONString.getDescription(),equalTo("description") );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withValidJSON_returnsServiceWithId() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(serviceJSON);
-        assertThat("service id", serviceFromJSONString.getId(),equalTo("serviceId") );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withValidJSON_returnsServiceWithType() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(serviceJSON);
-        assertThat("service type", serviceFromJSONString.getType(),equalTo("serviceType") );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withEmptyServiceJSON_returnsServiceWithNullName() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(emptyServiceJSON);
-        assertThat("service name", serviceFromJSONString.getName(), nullValue() );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withEmptyServiceJSON_returnsServiceWithNullDesc() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(emptyServiceJSON);
-        assertThat("service desc", serviceFromJSONString.getDescription(), nullValue() );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withEmptyServiceJSON_returnsServiceWithNullId() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(emptyServiceJSON);
-        assertThat("service id", serviceFromJSONString.getId(), nullValue() );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withEmptyServiceJSON_returnsServiceWithNullType() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString(emptyServiceJSON);
-        assertThat("service type", serviceFromJSONString.getType(), nullValue() );
-    }
-
-    @Test
-    public void getServiceFromJSONString_withEmptyJSON_returnServiceWithNullValues() throws Exception {
-        Service serviceFromJSONString = JSONReaderForService.getServiceFromJSONString("{ }");
-        assertThat("service id", serviceFromJSONString.getId(), nullValue());
-        assertThat("service desc", serviceFromJSONString.getDescription(), nullValue());
-        assertThat("service name", serviceFromJSONString.getName(), nullValue());
-        assertThat("service type", serviceFromJSONString.getType(), nullValue());
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void getServiceFromJSONString_parseException_throwsBadRequest() throws Exception {
-        JSONReaderForService.getServiceFromJSONString("invalid json string");
     }
 }

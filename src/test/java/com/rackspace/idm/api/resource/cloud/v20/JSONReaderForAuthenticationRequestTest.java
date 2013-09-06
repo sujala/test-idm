@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForAuthenticationRequest;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -85,58 +84,6 @@ public class JSONReaderForAuthenticationRequestTest {
     public void readFrom_withInvalidJSON_throwsBadRequestException() throws Exception {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream("invalid JSON string".getBytes()));
         jsonReaderForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, inputStream);
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withNoAuthRequestKey_returnsEmptyAuthenticationRequest() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString("{ }");
-        assertThat("authentication request", authenticationRequestFromJSONString.getCredential(), nullValue());
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withValidApiKeyAuthRequest_returnsAuthenticationRequestWithApiKeyCredentials() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithApiKey);
-        assertThat("authentication credentials", authenticationRequestFromJSONString.getCredential().getValue(), instanceOf(ApiKeyCredentials.class));
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withValidPasswordAuthRequest_returnsAuthenticationRequestWithPasswordCredentialsRequiredUsername() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithPassword);
-        assertThat("authentication credential", authenticationRequestFromJSONString.getCredential().getValue(), instanceOf(PasswordCredentialsRequiredUsername.class));
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withValidTokenRequest_returnsAuthenticationRequestWithToken() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithToken);
-        assertThat("authentication credentials token Id", authenticationRequestFromJSONString.getToken().getId(), equalTo("vvvvvvvv-wwww-xxxx-yyyy-zzzzzzzzzzzz"));
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withNoTokenIdRequest_returnNullTokenId() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString("{\n" +
-                "    \"auth\": {\n" +
-                "        \"token\": {\n" +
-                "        }\n" +
-                "    }\n" +
-                "}");
-        assertThat("authenticationRquest tokenId", authenticationRequestFromJSONString.getToken().getId(), nullValue());
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withTenantName_returnsAuthenticationRequestWithTenantName() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithTenantNameAndId);
-        assertThat("authentication credentials tenantName", authenticationRequestFromJSONString.getTenantName(), equalTo("jsmith"));
-    }
-
-    @Test
-    public void getAuthenticationRequestFromJSONString_withTenantId_returnsAuthenticationRequestWithTenantId() throws Exception {
-        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithTenantNameAndId);
-        assertThat("authentication credentials tenantId", authenticationRequestFromJSONString.getTenantId(), equalTo("11110000111"));
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void getAuthenticationRequestFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
-        JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString("invalid JSON string");
     }
 
 }

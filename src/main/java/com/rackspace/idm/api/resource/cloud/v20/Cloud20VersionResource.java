@@ -485,30 +485,30 @@ public class Cloud20VersionResource {
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
-        PasswordCredentialsRequiredUsername creds) {
+        PasswordCredentialsBase creds) {
         return cloud20Service.updateUserPasswordCredentials(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS, creds).build();
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response updateUserApiKeyCredentials(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, ApiKeyCredentials creds) {
-        return cloud20Service.updateUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS, creds).build();
+        return cloud20Service.updateUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, creds).build();
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS + "/RAX-AUTH/reset")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS + "/RAX-AUTH/reset")
     public Response resetUserApiKeyCredentials(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId) {
-        return cloud20Service.resetUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
+        return cloud20Service.resetUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build();
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response getUserCredentialKey(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -526,12 +526,12 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response deleteUserKeyCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return cloud20Service.deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
+        return cloud20Service.deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build();
     }
 
     @DELETE

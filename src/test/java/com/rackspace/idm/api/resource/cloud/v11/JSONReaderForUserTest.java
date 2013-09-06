@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
+import com.rackspace.idm.api.resource.cloud.v11.json.readers.JSONReaderForUser;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import org.junit.Test;

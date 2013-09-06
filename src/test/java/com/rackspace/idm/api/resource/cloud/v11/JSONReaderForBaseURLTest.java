@@ -1,9 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
+import com.rackspace.idm.api.resource.cloud.v11.json.readers.JSONReaderForBaseURL;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.UserType;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.Tenant;
