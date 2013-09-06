@@ -1948,8 +1948,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         when:
         def user = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "impersonationUserDomain$random", password)).getEntity(User)
-        DateTime date = new DateTime().plusHours(12)
-        def impersonatedToken = cloud20.impersonate(identityAdminToken, user, 43200).getEntity(ImpersonationResponse.class)
+        DateTime date = new DateTime().plusHours(3)
+        def impersonatedToken = cloud20.impersonate(identityAdminToken, user, 10800).getEntity(ImpersonationResponse.class)
         cloud20.destroyUser(serviceAdminToken, user.getId())
 
         then:
