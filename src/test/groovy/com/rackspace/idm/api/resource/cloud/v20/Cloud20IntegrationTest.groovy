@@ -2104,8 +2104,19 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         token != null
         createSubUser != null
         listUsersByTenant.user.size() == 2
-        listUsersByTenant.user[0].id == createUser.id
-        listUsersByTenant.user[1].id == createSubUser.id
+        //this if/else is necessary due to difference in the order in which openldap and ca return the results
+        boolean matched = false
+        if (listUsersByTenant.user[0].id == createUser.id) {
+            listUsersByTenant.user[1].id == createSubUser.id
+            matched = true
+        }
+        else if (listUsersByTenant.user[1].id == createUser.id) {
+            listUsersByTenant.user[0].id == createSubUser.id
+            matched = true
+        }
+        else {
+            matched == true
+        }
     }
 
     def authAndExpire(String username, String password) {

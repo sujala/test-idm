@@ -865,46 +865,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
-        UserForCreate userNoRegion = new UserForCreate();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        User retrievedUser = new User();
-        retrievedUser.setUsername("testUser");
-        retrievedUser.setId("id");
-        retrievedUser.setRegion("US of A");
-        when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
-        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
-        doNothing().when(userService).updateUser(argumentCaptor.capture(), anyBoolean());
-        spy.updateUser(httpHeaders, authToken, userId, userNoRegion);
-        verify(userService).updateUser(argumentCaptor.capture(), anyBoolean());
-        assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
-    }
-
-    @Test
-    public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
-        UriBuilder uriBuilder = mock(UriBuilder.class);
-        UserForCreate userNullPassword = new UserForCreate();
-        userNullPassword.setUsername("testUser");
-        User user = new User();
-        ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
-
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-
-        doNothing().when(spy).assignProperRole(any(ScopeAccess.class), any(User.class));
-        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-        when(uriBuilder.build()).thenReturn(new URI("uri"));
-        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new ObjectFactory());
-        when(userConverterCloudV20.fromUser(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
-        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
-
-        spy.addUser(httpHeaders, uriInfo, authToken, userNullPassword);
-        verify(userConverterCloudV20).fromUser(argumentCaptor.capture());
-        assertThat("user password", argumentCaptor.getValue().getPassword(), notNullValue());
-    }
-
-    @Test
     public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         userNoRegion.setUsername("testUser");
