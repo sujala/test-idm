@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11.json.writers;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
-import org.json.simple.JSONArray;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -17,26 +16,25 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getBaseUrls;
+import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getServiceCatalog11;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForBaseURLRefList implements MessageBodyWriter<BaseURLRefList> {
+public class JSONWriterForServiceCatalog implements MessageBodyWriter<ServiceCatalog> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == BaseURLRefList.class;
+        return type == ServiceCatalog.class;
     }
 
     @Override
-    public long getSize(BaseURLRefList baseURLRefList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public long getSize(ServiceCatalog serviceCatalog, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
     }
 
     @Override
-    public void writeTo(BaseURLRefList baseURLRefList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream) throws IOException, WebApplicationException {
+    public void writeTo(ServiceCatalog serviceCatalog, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream) throws IOException, WebApplicationException {
         JSONObject outer = new JSONObject();
-        JSONArray baseUrls = getBaseUrls(baseURLRefList);
-        outer.put(JSONConstants.BASE_URL_REFS, baseUrls);
+        outer.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(serviceCatalog));
         String jsonText = JSONValue.toJSONString(outer);
         outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
     }

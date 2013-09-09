@@ -14,13 +14,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kurt
- * Date: 8/2/12
- * Time: 5:00 PM
- * To change this template use File | Settings | File Templates.
- */
+
 public class JSONReaderForCloudAuthenticationResponseToken {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForCloudAuthenticationResponseToken.class);

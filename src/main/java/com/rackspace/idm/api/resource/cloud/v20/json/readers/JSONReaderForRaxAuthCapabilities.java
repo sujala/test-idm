@@ -14,13 +14,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 11/5/12
- * Time: 1:56 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxAuthCapabilities extends JSONReaderForArrayEntity<Capabilities> implements MessageBodyReader<Capabilities> {

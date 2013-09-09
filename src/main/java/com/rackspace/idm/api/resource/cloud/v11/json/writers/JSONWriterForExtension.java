@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11.json.writers;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JsonWriterHelper;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.openstack.docs.common.api.v1.Extension;
@@ -17,15 +16,8 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.*;
+import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getExtensionWithoutWrapper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForExtension implements MessageBodyWriter<Extension> {

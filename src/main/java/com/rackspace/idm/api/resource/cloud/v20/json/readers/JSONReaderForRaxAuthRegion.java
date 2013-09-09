@@ -16,13 +16,6 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: wmendiza
- * Date: 10/25/12
- * Time: 4:01 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxAuthRegion extends JSONReaderForEntity<Region> implements MessageBodyReader<Region> {

@@ -18,13 +18,7 @@ import java.util.LinkedHashMap;
 import static com.rackspace.idm.JSONConstants.GROUP;
 import static com.rackspace.idm.JSONConstants.RAX_KSGRP_GROUP;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxKsGroup extends JSONWriterForEntity<Group> implements MessageBodyWriter<Group> {

@@ -5,14 +5,17 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForAuthData
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLRefList
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
+import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForServiceCatalog
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForVersionChoice
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.*
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.*
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
@@ -33,11 +36,12 @@ import org.w3._2005.atom.Link
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import javax.xml.datatype.DatatypeFactory
+import javax.xml.datatype.XMLGregorianCalendar
+
 import static com.rackspace.idm.JSONConstants.*
 
 class JSONReaderWriterTest extends RootServiceTest {
-
-    @Shared JSONWriter writer = new JSONWriter();
 
     @Shared com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory()
 
@@ -61,7 +65,8 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForUser writerForUser = new JSONWriterForUser()
     @Shared JSONReaderForUser readerForUser = new JSONReaderForUser()
 
-    @Shared JSONReaderRaxAuthForPolicies readerForPolicies = new JSONReaderRaxAuthForPolicies()
+    @Shared JSONReaderForRaxAuthPolicies readerForPolicies = new JSONReaderForRaxAuthPolicies()
+    @Shared JSONWriterForRaxAuthPolicies writerForPolicies = new JSONWriterForRaxAuthPolicies()
     @Shared JSONReaderForRaxAuthPolicy readerForPolicy = new JSONReaderForRaxAuthPolicy()
 
     @Shared JSONReaderRaxAuthForDomain readerForDomain = new JSONReaderRaxAuthForDomain()
@@ -130,6 +135,8 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForRaxAuthDomain writerForDomain = new JSONWriterForRaxAuthDomain()
     @Shared JSONWriterForRaxAuthDomains writerForDomains = new JSONWriterForRaxAuthDomains()
     @Shared JSONWriterForRaxAuthPolicy writerForPolicy = new JSONWriterForRaxAuthPolicy()
+    @Shared JSONWriterForAuthData writerForAuthData = new JSONWriterForAuthData()
+    @Shared JSONWriterForServiceCatalog writerForServiceCatalog = new JSONWriterForServiceCatalog()
 
     def "can read/write region as json"() {
         given:
@@ -280,7 +287,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        writerForPolicies.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json)
 
@@ -300,7 +307,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        writerForPolicies.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json)
 
@@ -319,7 +326,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        writerForPolicies.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json)
 
@@ -1228,6 +1235,116 @@ class JSONReaderWriterTest extends RootServiceTest {
         baseUrlId = 1;
         publicUrl = "http://public/";
         v1Default = false;
+    }
+
+    def "can writer authData" () {
+        given:
+        GregorianCalendar c = new GregorianCalendar()
+        c.setTime(new Date().plus(1))
+        def token = new com.rackspacecloud.docs.auth.api.v1.Token().with {
+            it.id = "token"
+            it.expires = DatatypeFactory.newInstance().newXMLGregorianCalendar(c)
+            it
+        }
+        def endpoint = new com.rackspacecloud.docs.auth.api.v1.Endpoint().with {
+            it.adminURL = "adminUrl"
+            it.internalURL = "internalUrl"
+            it.publicURL = "publicUrl"
+            it.region = "region"
+            it.v1Default = false
+            it
+        }
+        def service = new com.rackspacecloud.docs.auth.api.v1.Service().with {
+            it.endpoint = [endpoint, endpoint].asList()
+            it.name = "name"
+            it
+        }
+        def service2 = new com.rackspacecloud.docs.auth.api.v1.Service().with {
+            it.endpoint = [endpoint, endpoint].asList()
+            it.name = "other"
+            it
+        }
+        def serviceCatalog = new com.rackspacecloud.docs.auth.api.v1.ServiceCatalog().with {
+            it.service = [service, service2].asList()
+            it
+        }
+        def authData = new AuthData().with {
+            it.token = token
+            it.serviceCatalog = serviceCatalog
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthData.writeTo(authData, AuthData.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(AUTH)
+        JSONObject tokenObject = o.get(TOKEN)
+        tokenObject.get(ID) == "token"
+        JSONObject a = o.get(SERVICECATALOG)
+        JSONArray oArray = a.get("other")
+        JSONArray nArray = a.get("name")
+        oArray.size() == 2
+        nArray.size() == 2
+        oArray[0].get(REGION) == "region"
+        nArray[0].get(REGION) == "region"
+        oArray[1].get(PUBLIC_URL) == "publicUrl"
+        nArray[1].get(PUBLIC_URL) == "publicUrl"
+    }
+
+    def "create read/writer for serviceCatalog" () {
+        given:
+        def endpoint = new com.rackspacecloud.docs.auth.api.v1.Endpoint().with {
+            it.adminURL = "adminUrl"
+            it.publicURL = "publicUrl"
+            it.region = "ORD"
+            it.v1Default = false
+            it.internalURL = "internalUrl"
+            it
+        }
+
+        def service = new com.rackspacecloud.docs.auth.api.v1.Service().with {
+            it.name = "name"
+            it.endpoint  = [endpoint, endpoint].asList()
+            it
+        }
+        def service2 = new com.rackspacecloud.docs.auth.api.v1.Service().with {
+            it.name = "other"
+            it.endpoint  = [endpoint, endpoint].asList()
+            it
+        }
+
+        def serviceCatalog = new com.rackspacecloud.docs.auth.api.v1.ServiceCatalog().with {
+            it.service = [service, service2].asList()
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForServiceCatalog.writeTo(serviceCatalog, com.rackspacecloud.docs.auth.api.v1.ServiceCatalog.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(SERVICECATALOG)
+        JSONArray array = o.get("name")
+        array[0].get(REGION) == "ORD"
+        array[0].get(PUBLIC_URL) == "publicUrl"
+        array[0].get(INTERNAL_URL) == "internalUrl"
+        array[0].get(ADMIN_URL) == "adminUrl"
+
+        JSONArray otherArray = o.get("other")
+        otherArray[0].get(REGION) == "ORD"
+        otherArray[0].get(PUBLIC_URL) == "publicUrl"
+        otherArray[0].get(INTERNAL_URL) == "internalUrl"
+        otherArray[0].get(ADMIN_URL) == "adminUrl"
     }
 
     def getSecretQA(String id, String question, String answer) {
