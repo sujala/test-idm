@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
@@ -24,7 +23,6 @@ import java.lang.reflect.Type;
 
 import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getApiKeyCredentials;
 import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getPasswordCredentials;
-import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getRsaCredentials;
 
 
 @Provider
@@ -52,8 +50,6 @@ public class JSONWriterForCredentialListType implements MessageBodyWriter<Creden
                 list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
             } else if (credential instanceof PasswordCredentialsBase) {
                 list.add(getPasswordCredentials((PasswordCredentialsBase) cred.getValue()));
-            } else if (credential instanceof RsaCredentials){
-                list.add(getRsaCredentials((RsaCredentials) cred.getValue()));
             }
         }
         String jsonText = JSONValue.toJSONString(outer);

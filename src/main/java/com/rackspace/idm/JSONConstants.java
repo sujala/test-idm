@@ -155,7 +155,7 @@ public final class JSONConstants {
     public static final Object POLICIES_ALGORITHM = "algorithm";
     public static final Object BLOB = "blob";
     public static final String RAX_AUTH_RSA_CREDENTIALS = "RAX-AUTH:rsaCredentials";
-    public static final String TOKEN_KEY = "tokenKey";
+    public static final Object TOKEN_KEY = "tokenKey";
     public static final String RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
     public static final String PROPAGATE = "propagate";
     public static final String RAX_AUTH_WEIGHT = "RAX-AUTH:weight";
