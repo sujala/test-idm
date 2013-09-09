@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
-public class JSONWriterForArrayEntity<T> {
+public abstract class JSONWriterForArrayEntity<T> {
 
     protected void write(T entity, String oldName, String newName, OutputStream entityStream) {
         OutputStream outputStream = new ByteArrayOutputStream();

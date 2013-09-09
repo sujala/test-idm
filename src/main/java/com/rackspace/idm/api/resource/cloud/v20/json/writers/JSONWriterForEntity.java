@@ -18,7 +18,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
-public class JSONWriterForEntity <T> {
+public abstract class JSONWriterForEntity <T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 

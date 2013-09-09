@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 
-public class JSONReaderForEntity<T> {
+public abstract class JSONReaderForEntity<T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 

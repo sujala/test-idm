@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 
-public class JSONReaderForArrayEntity<T> {
+public abstract class JSONReaderForArrayEntity<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
