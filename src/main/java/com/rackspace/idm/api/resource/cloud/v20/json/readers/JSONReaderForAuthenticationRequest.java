@@ -51,9 +51,9 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("auth.RAX-KSKEY:apiKeyCredentials", API_KEY_CREDENTIALS);
-        prefixValues.put("auth.RAX-AUTH:rsaCredentials", RSA_CREDENTIALS);
-        prefixValues.put("auth.RAX-AUTH:domain", DOMAIN);
+        prefixValues.put(AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH, API_KEY_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH, RSA_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_DOMAIN_PATH, DOMAIN);
 
         return read(inputStream, AUTH, prefixValues);
     }

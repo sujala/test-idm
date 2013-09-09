@@ -49,7 +49,7 @@ public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
     @Override
     public void writeTo(Endpoint endpoint, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("endpoint.link", ENDPOINT_LINKS);
+        prefixValues.put(ENDPOINT_LINKS_PATH, ENDPOINT_LINKS);
         write(endpoint, entityStream, prefixValues);
     }
 

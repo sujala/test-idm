@@ -49,7 +49,7 @@ public class JSONReaderForEndpoint implements MessageBodyReader<Endpoint> {
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("endpoint.endpoint_links", JSONConstants.LINK);
+        prefixValues.put(ENDPOINT_ENDPOINT_LINKS_PATH, JSONConstants.LINK);
 
         return read(inputStream, JSONConstants.ENDPOINT, prefixValues);
     }

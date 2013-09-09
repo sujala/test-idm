@@ -16,6 +16,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -33,7 +35,7 @@ public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> {
     @Override
     public void writeTo(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("groups.group", JSONConstants.VALUES);
+        prefixValues.put(GROUPS_LIST_PATH, VALUES);
         write(groupsList, entityStream, prefixValues);
     }
 }

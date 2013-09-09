@@ -15,6 +15,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForUser extends JSONReaderForEntity<User> {
@@ -32,10 +34,10 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> {
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("user.OS-KSADM:password","password");
-        prefixValues.put("user.RAX-AUTH:defaultRegion", "defaultRegion");
-        prefixValues.put("user.RAX-AUTH:domainId", "domainId");
+        prefixValues.put(USER_OS_KSADM_PASSWORD_PATH, PASSWORD);
+        prefixValues.put(USER_RAX_AUTH_DEFAULT_REGION_PATH, DEFAULT_REGION);
+        prefixValues.put(USER_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
 
-        return read(inputStream, JSONConstants.USER, prefixValues);
+        return read(inputStream, USER, prefixValues);
     }
 }

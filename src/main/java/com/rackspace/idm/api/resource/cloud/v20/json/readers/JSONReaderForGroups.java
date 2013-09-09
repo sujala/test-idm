@@ -14,6 +14,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+
 /*
    Used for testing
  */
@@ -35,9 +37,9 @@ public class JSONReaderForGroups extends JSONReaderForEntity<GroupsList> {
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("groups.values", JSONConstants.GROUP);
+        prefixValues.put(GROUPS_VALUES_PATH, GROUP);
 
-        return read(inputStream, JSONConstants.GROUPS, prefixValues);
+        return read(inputStream, GROUPS, prefixValues);
     }
     
 }
