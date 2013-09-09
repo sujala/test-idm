@@ -19,7 +19,7 @@ import static com.rackspace.idm.JSONConstants.OS_KSCATALOG_ENDPOINT_TEMPLATES;
  */
 //@Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForOsKsCatalogEndpointTemplates extends JSONReaderForArrayEntity<EndpointTemplateList> implements MessageBodyReader<EndpointTemplateList> {
+public class JSONReaderForOsKsCatalogEndpointTemplates extends JSONReaderForArrayEntity<EndpointTemplateList> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,

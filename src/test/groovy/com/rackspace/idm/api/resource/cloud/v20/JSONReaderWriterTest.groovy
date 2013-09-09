@@ -664,6 +664,81 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.link.size() == 2
     }
 
+    def "create read for endpoint - null info" () {
+        given:
+        def link = new Link().with {
+            it.type = type
+            it.href = "href"
+            it
+        }
+        def version = new VersionForService().with {
+            it.id = "id"
+            it.info = null
+            it.list = "someList"
+            it
+        }
+        def endpoint = v2Factory.createEndpoint().with {
+            it.link = [link, link].asList()
+            it.version = version
+            it.publicURL = "publicUrl"
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.version == null
+        endpointObject.link != null
+        endpointObject.link.size() == 2
+    }
+
+    def "create read for endpoint - null version id" () {
+        given:
+        def link = new Link().with {
+            it.type = type
+            it.href = "href"
+            it
+        }
+        def version = new VersionForService().with {
+            it.info = "info"
+            it.list = "someList"
+            it
+        }
+        def endpoint = v2Factory.createEndpoint().with {
+            it.link = [link, link].asList()
+            it.version = version
+            it.publicURL = "publicUrl"
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForEndpoint.writeTo(endpoint, Endpoint.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Endpoint endpointObject = readerForEndpoint.readFrom(Endpoint.class, null, null, null, null, arrayInputStream)
+
+        then:
+        endpointObject != null
+        endpointObject.type == endpoint.type
+        endpointObject.publicURL == endpoint.publicURL
+        endpointObject.name == endpoint.name
+        endpointObject.id == endpoint.id
+        endpointObject.version == null
+        endpointObject.link != null
+        endpointObject.link.size() == 2
+    }
+
     def "create read/writer for endpoint - empty link" () {
         def endpoint = v2Factory.createEndpoint().with {
             it.version = new VersionForService().with {

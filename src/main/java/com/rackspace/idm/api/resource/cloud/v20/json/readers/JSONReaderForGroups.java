@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 
 //@Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForGroups extends JSONReaderForEntity<GroupsList> implements MessageBodyReader<GroupsList> {
+public class JSONReaderForGroups extends JSONReaderForEntity<GroupsList> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,

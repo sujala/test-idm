@@ -19,7 +19,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxKsKeyApiKeyCredentials extends JSONWriterForEntity<ApiKeyCredentials> implements MessageBodyWriter<ApiKeyCredentials> {
+public class JSONWriterForRaxKsKeyApiKeyCredentials extends JSONWriterForEntity<ApiKeyCredentials> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == ApiKeyCredentials.class;

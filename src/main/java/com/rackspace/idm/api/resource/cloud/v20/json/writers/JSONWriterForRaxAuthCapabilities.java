@@ -16,7 +16,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthCapabilities extends JSONWriterForArrayEntity<Capabilities> implements MessageBodyWriter<Capabilities> {
+public class JSONWriterForRaxAuthCapabilities extends JSONWriterForArrayEntity<Capabilities> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Capabilities.class;

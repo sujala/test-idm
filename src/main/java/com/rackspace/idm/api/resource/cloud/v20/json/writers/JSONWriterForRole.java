@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRole extends JSONWriterForEntity<Role> implements MessageBodyWriter<Role> {
+public class JSONWriterForRole extends JSONWriterForEntity<Role> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Role.class;

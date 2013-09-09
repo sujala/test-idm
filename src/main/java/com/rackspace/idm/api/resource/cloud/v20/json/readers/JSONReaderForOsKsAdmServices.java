@@ -16,7 +16,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForOsKsAdmServices extends JSONReaderForArrayEntity<ServiceList> implements MessageBodyReader<ServiceList> {
+public class JSONReaderForOsKsAdmServices extends JSONReaderForArrayEntity<ServiceList> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,

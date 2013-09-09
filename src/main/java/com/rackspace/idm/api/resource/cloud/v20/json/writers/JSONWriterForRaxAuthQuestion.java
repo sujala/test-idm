@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthQuestion extends JSONWriterForEntity<Question> implements MessageBodyWriter<Question> {
+public class JSONWriterForRaxAuthQuestion extends JSONWriterForEntity<Question> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Question.class;

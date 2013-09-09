@@ -21,7 +21,7 @@ import static com.rackspace.idm.JSONConstants.RAX_KSGRP_GROUP;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxKsGroup extends JSONWriterForEntity<Group> implements MessageBodyWriter<Group> {
+public class JSONWriterForRaxKsGroup extends JSONWriterForEntity<Group> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Group.class;

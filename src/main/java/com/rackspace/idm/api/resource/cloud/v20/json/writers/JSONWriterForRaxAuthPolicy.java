@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthPolicy extends JSONWriterForEntity<Policy> implements MessageBodyWriter<Policy> {
+public class JSONWriterForRaxAuthPolicy extends JSONWriterForEntity<Policy> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Policy.class;

@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthQuestion extends JSONReaderForEntity<Question> implements MessageBodyReader<Question> {
+public class JSONReaderForRaxAuthQuestion extends JSONReaderForEntity<Question> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Question.class;

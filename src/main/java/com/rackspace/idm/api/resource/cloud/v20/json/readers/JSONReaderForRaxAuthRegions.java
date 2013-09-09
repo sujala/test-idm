@@ -16,7 +16,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthRegions extends JSONReaderForArrayEntity<Regions> implements MessageBodyReader<Regions> {
+public class JSONReaderForRaxAuthRegions extends JSONReaderForArrayEntity<Regions> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Regions.class;

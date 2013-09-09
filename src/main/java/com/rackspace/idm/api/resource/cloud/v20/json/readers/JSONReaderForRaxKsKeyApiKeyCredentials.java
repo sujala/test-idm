@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxKsKeyApiKeyCredentials extends JSONReaderForEntity<ApiKeyCredentials> implements MessageBodyReader<ApiKeyCredentials> {
+public class JSONReaderForRaxKsKeyApiKeyCredentials extends JSONReaderForEntity<ApiKeyCredentials> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

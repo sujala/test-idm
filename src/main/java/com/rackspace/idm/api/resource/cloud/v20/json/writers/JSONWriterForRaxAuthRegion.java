@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthRegion extends JSONWriterForEntity<Region> implements MessageBodyWriter<Region> {
+public class JSONWriterForRaxAuthRegion extends JSONWriterForEntity<Region> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Region.class;

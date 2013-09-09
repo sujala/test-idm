@@ -15,7 +15,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForEndpoints extends JSONReaderForArrayEntity<EndpointList> implements MessageBodyReader<EndpointList> {
+public class JSONReaderForEndpoints extends JSONReaderForArrayEntity<EndpointList> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,

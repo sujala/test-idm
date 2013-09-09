@@ -12,12 +12,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.ws.rs.ext.MessageBodyReader;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 
-public abstract class JSONReaderForArrayEntity<T> {
+public abstract class JSONReaderForArrayEntity<T> implements MessageBodyReader<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 

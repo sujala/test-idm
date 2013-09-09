@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthPolicy extends JSONReaderForEntity<Policy> implements MessageBodyReader<Policy> {
+public class JSONReaderForRaxAuthPolicy extends JSONReaderForEntity<Policy> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Policy.class;

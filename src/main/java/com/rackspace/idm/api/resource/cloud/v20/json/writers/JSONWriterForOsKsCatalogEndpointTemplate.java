@@ -31,7 +31,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsCatalogEndpointTemplate extends JSONWriterForEntity<EndpointTemplate> implements MessageBodyWriter<EndpointTemplate> {
+public class JSONWriterForOsKsCatalogEndpointTemplate extends JSONWriterForEntity<EndpointTemplate> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 

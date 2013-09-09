@@ -13,12 +13,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.ws.rs.ext.MessageBodyReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 
-public abstract class JSONReaderForEntity<T> {
+public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 

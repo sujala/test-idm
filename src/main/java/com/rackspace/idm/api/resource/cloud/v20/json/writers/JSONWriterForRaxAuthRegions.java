@@ -18,7 +18,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthRegions extends JSONWriterForArrayEntity<Regions> implements MessageBodyWriter<Regions> {
+public class JSONWriterForRaxAuthRegions extends JSONWriterForArrayEntity<Regions> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Regions.class;

@@ -18,7 +18,7 @@ import static com.rackspace.idm.JSONConstants.RAX_KSGRP_GROUPS;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxKsGroups extends JSONReaderForArrayEntity<Groups> implements MessageBodyReader<Groups> {
+public class JSONReaderForRaxKsGroups extends JSONReaderForArrayEntity<Groups> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Groups.class;

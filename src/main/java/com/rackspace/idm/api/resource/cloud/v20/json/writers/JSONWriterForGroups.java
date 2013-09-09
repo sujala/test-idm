@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> implements MessageBodyWriter<GroupsList> {
+public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == GroupsList.class;

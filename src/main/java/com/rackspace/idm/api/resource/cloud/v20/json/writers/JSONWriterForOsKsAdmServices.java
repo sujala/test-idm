@@ -17,7 +17,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<ServiceList> implements MessageBodyWriter<ServiceList> {
+public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<ServiceList> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == ServiceList.class;

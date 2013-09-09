@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreate> implements MessageBodyReader<UserForCreate> {
+public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreate> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,

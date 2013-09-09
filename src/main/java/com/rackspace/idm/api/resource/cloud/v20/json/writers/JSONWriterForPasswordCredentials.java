@@ -16,7 +16,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForPasswordCredentials extends JSONWriterForEntity<PasswordCredentialsBase> implements MessageBodyWriter<PasswordCredentialsBase> {
+public class JSONWriterForPasswordCredentials extends JSONWriterForEntity<PasswordCredentialsBase> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == PasswordCredentialsBase.class;
