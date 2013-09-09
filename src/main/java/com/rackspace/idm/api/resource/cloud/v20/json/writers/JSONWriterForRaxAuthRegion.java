@@ -20,15 +20,6 @@ import java.util.LinkedHashMap;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxAuthRegion extends JSONWriterForEntity<Region> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Region.class;
-    }
-
-    @Override
-    public long getSize(Region region, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(Region region, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

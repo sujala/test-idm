@@ -22,10 +22,6 @@ import static com.rackspace.idm.JSONConstants.*;
 //@Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxKsGroup extends JSONReaderForEntity<Group> {
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Group.class;
-    }
 
     @Override
     public Group readFrom(Class<Group> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

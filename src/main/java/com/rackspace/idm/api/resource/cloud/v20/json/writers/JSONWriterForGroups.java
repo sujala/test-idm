@@ -22,15 +22,6 @@ import static com.rackspace.idm.JSONConstants.*;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == GroupsList.class;
-    }
-
-    @Override
-    public long getSize(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

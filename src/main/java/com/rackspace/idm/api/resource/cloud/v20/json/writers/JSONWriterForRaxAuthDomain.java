@@ -21,15 +21,6 @@ import java.util.LinkedHashMap;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxAuthDomain extends JSONWriterForEntity<Domain> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Domain.class;
-    }
-
-    @Override
-    public long getSize(Domain domain, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(Domain domain, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

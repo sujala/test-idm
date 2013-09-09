@@ -22,15 +22,6 @@ import static com.rackspace.idm.JSONConstants.RAX_KSGRP_GROUP;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxKsGroup extends JSONWriterForEntity<Group> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Group.class;
-    }
-
-    @Override
-    public long getSize(Group group, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(Group group, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

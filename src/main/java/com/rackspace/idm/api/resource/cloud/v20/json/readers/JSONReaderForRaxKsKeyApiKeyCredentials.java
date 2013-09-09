@@ -20,11 +20,6 @@ import java.util.LinkedHashMap;
 public class JSONReaderForRaxKsKeyApiKeyCredentials extends JSONReaderForEntity<ApiKeyCredentials> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == ApiKeyCredentials.class;
-    }
-
-    @Override
     public ApiKeyCredentials readFrom(Class<ApiKeyCredentials> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

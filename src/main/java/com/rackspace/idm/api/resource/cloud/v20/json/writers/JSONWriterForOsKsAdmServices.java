@@ -18,15 +18,6 @@ import java.lang.reflect.Type;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<ServiceList> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == ServiceList.class;
-    }
-
-    @Override
-    public long getSize(ServiceList serviceList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(ServiceList serviceList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

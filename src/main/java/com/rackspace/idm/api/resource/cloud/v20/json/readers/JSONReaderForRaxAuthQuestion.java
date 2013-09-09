@@ -19,10 +19,6 @@ import java.util.LinkedHashMap;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxAuthQuestion extends JSONReaderForEntity<Question> {
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Question.class;
-    }
 
     @Override
     public Question readFrom(Class<Question> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

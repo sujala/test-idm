@@ -18,11 +18,6 @@ import java.lang.reflect.Type;
 public class JSONReaderForRaxAuthDefaultRegionServices extends JSONReaderForArrayEntity<DefaultRegionServices> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == DefaultRegionServices.class;
-    }
-
-    @Override
     public DefaultRegionServices readFrom(Class<DefaultRegionServices> type, Type genericType, Annotation[] annotations,
                                           MediaType mediaType, MultivaluedMap<String, String> httpHeaders,
                                           InputStream inputStream) throws IOException {

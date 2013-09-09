@@ -19,15 +19,6 @@ import static com.rackspace.idm.JSONConstants.*;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxAuthRegions extends JSONWriterForArrayEntity<Regions> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Regions.class;
-    }
-
-    @Override
-    public long getSize(Regions regions, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(Regions regions, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

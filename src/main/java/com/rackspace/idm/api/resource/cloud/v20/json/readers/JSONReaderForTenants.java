@@ -18,12 +18,6 @@ import java.lang.reflect.Type;
 public class JSONReaderForTenants extends JSONReaderForArrayEntity<Tenants> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
-        return type == Tenants.class;
-    }
-
-    @Override
     public Tenants readFrom(Class<Tenants> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

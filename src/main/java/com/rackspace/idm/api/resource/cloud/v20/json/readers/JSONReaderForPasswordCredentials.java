@@ -19,11 +19,6 @@ import java.lang.reflect.Type;
 public class JSONReaderForPasswordCredentials extends JSONReaderForEntity<PasswordCredentialsBase> {
 
     @Override
-    public boolean isReadable(Class<?> aClass, Type type, Annotation[] annotations, MediaType mediaType) {
-        return type == PasswordCredentialsBase.class || (PasswordCredentialsBase.class).isAssignableFrom((Class) type);
-    }
-
-    @Override
     public PasswordCredentialsBase readFrom(Class<PasswordCredentialsBase> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         return read(entityStream, JSONConstants.PASSWORD_CREDENTIALS);
     }

@@ -12,11 +12,15 @@ import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.MessageBodyReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 
 public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
@@ -24,6 +28,12 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+
+    @Override
+    public boolean isReadable(Class<?> type, Type genericType,
+                              Annotation[] annotations, MediaType mediaType) {
+        return type == entityType;
+    }
 
     protected T read(InputStream entityStream, String rootValue) {
         return read(entityStream, rootValue, null);

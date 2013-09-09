@@ -16,6 +16,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsCatalogEndpointTemplate extends JSONWriterForEntity<EndpointTemplate> {
+public class JSONWriterForOsKsCatalogEndpointTemplate implements MessageBodyWriter<EndpointTemplate> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
 

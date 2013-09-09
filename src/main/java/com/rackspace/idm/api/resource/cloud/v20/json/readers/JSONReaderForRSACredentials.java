@@ -21,11 +21,6 @@ import java.util.LinkedHashMap;
 public class JSONReaderForRSACredentials extends JSONReaderForEntity<RsaCredentials> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == RsaCredentials.class;
-    }
-
-    @Override
     public RsaCredentials readFrom(Class<RsaCredentials> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.RAX_AUTH_RSA_CREDENTIALS ,JSONConstants.RSA_CREDENTIALS);

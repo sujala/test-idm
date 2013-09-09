@@ -22,12 +22,6 @@ import static com.rackspace.idm.JSONConstants.*;
 public class JSONReaderForRole extends JSONReaderForEntity<Role> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
-        return type == Role.class;
-    }
-
-    @Override
     public Role readFrom(Class<Role> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

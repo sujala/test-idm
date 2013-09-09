@@ -24,12 +24,6 @@ import static com.rackspace.idm.JSONConstants.USER_RAX_AUTH_DOMAIN_ID_PATH;
 public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreate> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-                              MediaType mediaType) {
-        return type == UserForCreate.class;
-    }
-
-    @Override
     public UserForCreate readFrom(Class<UserForCreate> type,
                                   Type genericType, Annotation[] annotations, MediaType mediaType,
                                   MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

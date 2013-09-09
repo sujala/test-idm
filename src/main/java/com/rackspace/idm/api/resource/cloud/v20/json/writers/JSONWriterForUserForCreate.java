@@ -23,15 +23,6 @@ import static com.rackspace.idm.JSONConstants.USER_DOMAIN_ID_PATH;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUserForCreate extends JSONWriterForEntity<UserForCreate> implements MessageBodyWriter<UserForCreate> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == UserForCreate.class;
-    }
-
-    @Override
-    public long getSize(UserForCreate user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(UserForCreate user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

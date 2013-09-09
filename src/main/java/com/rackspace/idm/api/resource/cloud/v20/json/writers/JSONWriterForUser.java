@@ -28,15 +28,6 @@ import static com.rackspace.idm.JSONConstants.*;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUser extends JSONWriterForEntity<User> implements MessageBodyWriter<User> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == User.class;
-    }
-
-    @Override
-    public long getSize(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

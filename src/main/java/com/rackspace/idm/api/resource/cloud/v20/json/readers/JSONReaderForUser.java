@@ -22,12 +22,6 @@ import static com.rackspace.idm.JSONConstants.*;
 public class JSONReaderForUser extends JSONReaderForEntity<User> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
-        return type == User.class;
-    }
-
-    @Override
     public User readFrom(Class<User> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

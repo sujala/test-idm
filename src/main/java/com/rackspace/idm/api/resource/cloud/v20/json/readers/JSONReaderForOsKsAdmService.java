@@ -20,12 +20,6 @@ import java.util.LinkedHashMap;
 public class JSONReaderForOsKsAdmService extends JSONReaderForEntity<Service> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType) {
-        return type == Service.class;
-    }
-
-    @Override
     public Service readFrom(Class<Service> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

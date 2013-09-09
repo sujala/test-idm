@@ -25,12 +25,6 @@ import static com.rackspace.idm.JSONConstants.*;
 public class JSONReaderForGroups extends JSONReaderForEntity<GroupsList> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
-        return type == GroupsList.class;
-    }
-
-    @Override
     public GroupsList readFrom(Class<GroupsList> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)

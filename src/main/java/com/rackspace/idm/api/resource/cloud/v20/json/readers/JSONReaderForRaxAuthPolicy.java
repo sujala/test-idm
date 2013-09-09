@@ -23,10 +23,6 @@ import java.util.LinkedHashMap;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxAuthPolicy extends JSONReaderForEntity<Policy> {
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Policy.class;
-    }
 
     @Override
     public Policy readFrom(Class<Policy> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

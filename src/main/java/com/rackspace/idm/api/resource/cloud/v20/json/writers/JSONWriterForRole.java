@@ -26,15 +26,6 @@ import static com.rackspace.idm.JSONConstants.*;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRole extends JSONWriterForEntity<Role> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Role.class;
-    }
-
-    @Override
-    public long getSize(Role role, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(Role role, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
