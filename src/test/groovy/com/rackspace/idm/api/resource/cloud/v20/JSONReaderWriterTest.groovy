@@ -1028,8 +1028,9 @@ class JSONReaderWriterTest extends RootServiceTest {
         given:
         def apiKeyCred = v2Factory.createJAXBApiKeyCredentials("username", "apiKey")
         def pwdCred = v2Factory.createJAXBPasswordCredentialsBase("username", "password")
+        def rsaCred = v2Factory.createJAXBRsaCredentials("username", "rsa")
         def credentials = new CredentialListType().with {
-            it.credential = [apiKeyCred, pwdCred].asList()
+            it.credential = [apiKeyCred, pwdCred, rsaCred].asList()
             it
         }
 
@@ -1047,6 +1048,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         api.getAt(API_KEY)[0] == "apiKey"
         def pwd = o.getAt(PASSWORD_CREDENTIALS)
         pwd.getAt(PASSWORD)[0] == "password"
+        def rsa = o.getAt(RSA_CREDENTIALS)
+        rsa.getAt(TOKEN_KEY)[0] == "rsa"
 
     }
 

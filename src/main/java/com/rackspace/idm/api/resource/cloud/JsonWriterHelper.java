@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
@@ -95,6 +96,16 @@ public final class JsonWriterHelper {
         outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
         inner.put(JSONConstants.USERNAME, creds.getUsername());
         inner.put(JSONConstants.PASSWORD, creds.getPassword());
+        return outer;
+    }
+
+    public static JSONObject getRsaCredentials(
+            RsaCredentials creds) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        outer.put(JSONConstants.RSA_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.TOKEN_KEY, creds.getTokenKey());
         return outer;
     }
 
