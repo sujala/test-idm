@@ -76,7 +76,7 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(auth, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(auth, prefixValues);
             }else{
                 jsonObject = auth;
             }

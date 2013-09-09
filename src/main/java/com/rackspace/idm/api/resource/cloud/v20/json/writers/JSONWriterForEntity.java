@@ -39,7 +39,7 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else{
                 jsonObject = outer;
             }

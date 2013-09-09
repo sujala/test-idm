@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy
 import com.rackspace.idm.domain.config.JAXBContextResolver
 import com.sun.jersey.api.json.JSONJAXBContext
-import com.sun.jersey.api.json.JSONMarshaller
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -46,7 +45,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
-        JSONObject object = prefixMapper.addPrefix(inner, hashMap)
+        JSONObject object = prefixMapper.mapPrefix(inner, hashMap)
 
 
         then:
@@ -77,7 +76,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
-        JSONObject object = prefixMapper.addPrefix(inner, hashMap)
+        JSONObject object = prefixMapper.mapPrefix(inner, hashMap)
 
 
         then:
@@ -97,7 +96,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         hashMap.put("token.authenticatedBy", "RAX-AUTH:authenticatedBy")
 
         when:
-        JSONObject object = prefixMapper.addPrefix(inner, hashMap)
+        JSONObject object = prefixMapper.mapPrefix(inner, hashMap)
 
 
         then:

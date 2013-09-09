@@ -79,7 +79,7 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else {
                 jsonObject = outer;
             }

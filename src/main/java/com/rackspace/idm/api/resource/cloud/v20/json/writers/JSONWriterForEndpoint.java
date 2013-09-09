@@ -65,7 +65,7 @@ public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else{
                 jsonObject = outer;
             }

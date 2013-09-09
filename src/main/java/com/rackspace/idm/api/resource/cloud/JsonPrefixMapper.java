@@ -14,8 +14,14 @@ import java.util.LinkedHashMap;
  * To change this template use File | Settings | File Templates.
  */
 public class JsonPrefixMapper {
+    /*
+     The HashMap is create by assigning the key and value in the format as :: FROM -> TO
+     Key = path to the element :: value = what the element gets updated to.
 
-    public JSONObject addPrefix(JSONObject object, HashMap prefixValues){
+     replaceJsonObject method travels the path to the element and updates it.
+     */
+
+    public JSONObject mapPrefix(JSONObject object, HashMap prefixValues){
 
         for(Object key : prefixValues.keySet()){
             String[] elements = ((String)key).split("\\.");

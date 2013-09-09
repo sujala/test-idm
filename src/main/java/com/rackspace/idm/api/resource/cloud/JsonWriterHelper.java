@@ -25,13 +25,14 @@ import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
 import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/28/13
- * Time: 5:15 PM
- * To change this template use File | Settings | File Templates.
+ * Methods to help create object from json.
+ * Most methods just set values if not null.
  */
-public class JsonWriterHelper {
+public final class JsonWriterHelper {
+
+    private JsonWriterHelper(){
+        throw new AssertionError();
+    }
 
     public static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();

@@ -73,7 +73,7 @@ public class JSONReaderForOsKsCatalogEndpointTemplate implements MessageBodyRead
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else {
                 jsonObject = outer;
             }

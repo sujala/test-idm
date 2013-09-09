@@ -93,7 +93,7 @@ public class JSONReaderForEndpoint implements MessageBodyReader<Endpoint> {
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else {
                 jsonObject = outer;
             }
