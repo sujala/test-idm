@@ -12,6 +12,7 @@ public final class JSONConstants {
     public static final String RAX_KSKEY_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
     public static final String API_KEY_CREDENTIALS = "apiKeyCredentials";
     public static final String AUTH = "auth";
+    public static final String BASE = "base";
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object BASE_URLS = "baseURLs";
@@ -48,6 +49,7 @@ public final class JSONConstants {
     public static final String LINK = "link";
     public static final String LINKS = "links";
     public static final String LIST = "list";
+    public static final String MEDIA_TYPES = "media-types";
     public static final String MOSSO_CREDENTIALS = "mossoCredentials";
     public static final String MOSSO_ID = "mossoId";
     public static final String NAME = "name";
