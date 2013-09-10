@@ -1226,6 +1226,59 @@ class JSONReaderWriterTest extends RootServiceTest {
         a.size() == 2
     }
 
+    def "create read/writer for v1.1 user - test null values" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def baseUrlList = new BaseURLRefList().with {
+            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
+            it
+        }
+
+        def user = v1Factory.createUser().with {
+            it.baseURLRefs = baseUrlList
+            it.nastId = nastId
+            it.mossoId = mossoId
+            it.key = key
+            it.id = id
+            it.enabled = enabled
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUser11.writeTo(user, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        then:
+        json != null
+        JSONObject o = outer.get(USER)
+        o.get(ID) == id
+        if(enabled != null){
+            o.get(ENABLED) == enabled
+        }else{
+            o.get(ENABLED) == true
+        }
+        o.get(KEY) == key
+        o.get(MOSSO_ID) == mossoId
+        o.get(NAST_ID) == nastId
+        JSONArray a = o.get(BASE_URL_REFS)
+        a.size() == 2
+
+        where:
+        id   | nastId | mossoId | key   | enabled
+        "id" | "nast" | 1       | "key" | true
+        "id" | "nast" | 1       | null  | true
+        "id" | "nast" | null    | null  | false
+        "id" | null   | null    | null  | true
+        null | "nast" | 1       | "key" | false
+        null | null   | 1       | "key" | false
+        null | "nast" | null    | "key" | false
+        null | "nast" | 1       | null  | false
+        null | "nast" | 1       | null  | null
+    }
+
     def "create read/writer for baseURLRefList" () {
         given:
         def baseUrlRef = v1Factory.createBaseUrlRef()
