@@ -12,12 +12,14 @@ public final class JSONConstants {
     public static final String RAX_KSKEY_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
     public static final String API_KEY_CREDENTIALS = "apiKeyCredentials";
     public static final String AUTH = "auth";
+    public static final String AUTHENTICATED_BY = "authenticatedBy";
     public static final String BASE = "base";
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object BASE_URLS = "baseURLs";
     public static final Object BASE_URL = "baseURL";
     public static final String CREATED = "created";
+    public static final String CREDENTIAL = "credential";
     public static final String CREDENTIALS = "credentials";
     public static final String CUSTOMER_ID = "customerId";
     public static final String DESCRIPTION = "description";
