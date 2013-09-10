@@ -518,12 +518,14 @@ class JSONReaderWriterTest extends RootServiceTest {
         userObject.enabled == enabled
     }
 
-    def "create read/write for authenticationRequest" (){
+    def "create read/write for authenticationRequest - apiKey credentials" (){
         given:
         def username = "username"
         def apiKey = "1234567890"
         def domain = "name"
+        def tenantId = "tenantId"
         def authRequest = v2Factory.createApiKeyAuthenticationRequest(username, apiKey)
+        authRequest.tenantId = tenantId
         authRequest.domain = new Domain().with{
             it.name = domain
             it
@@ -540,6 +542,86 @@ class JSONReaderWriterTest extends RootServiceTest {
         authObject.credential.getValue().username == username
         authObject.credential.getValue().apiKey == apiKey
         authObject.domain.name ==  domain
+        authObject.tenantId == tenantId
+    }
+
+    def "create read/write for authenticationRequest - password credentials" (){
+        given:
+        def username = "username"
+        def password = "password"
+        def domain = "name"
+        def tenantId = "tenantId"
+        def authRequest = v2Factory.createPasswordAuthenticationRequest(username, password)
+        authRequest.tenantId = tenantId
+        authRequest.domain = new Domain().with{
+            it.name = domain
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticationRequest.writeTo(authRequest, AuthenticationRequest.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def authObject = readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        authObject.credential.getValue().username == username
+        authObject.credential.getValue().password == password
+        authObject.domain.name ==  domain
+    }
+
+    def "create read/write for authenticationRequest - rsa credentials" (){
+        given:
+        def username = "username"
+        def tokenKey = "tokenKey"
+        def domain = "name"
+        def authRequest = v2Factory.createRsaAuthenticationRequest(username, tokenKey)
+        authRequest.domain = new Domain().with{
+            it.name = domain
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticationRequest.writeTo(authRequest, AuthenticationRequest.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def authObject = readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        authObject.credential.getValue().username == username
+        authObject.credential.getValue().tokenKey == tokenKey
+        authObject.domain.name ==  domain
+        authObject.tenantId == null
+    }
+
+    def "create read/write for authenticationRequest - token" (){
+        given:
+        def domain = "name"
+        def token = "token"
+        def authRequest = new AuthenticationRequest().with {
+            it.token = v2Factory.createTokenForAuthenticationRequest(token)
+            it
+        }
+        authRequest.domain = new Domain().with{
+            it.name = domain
+            it
+        }
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticationRequest.writeTo(authRequest, AuthenticationRequest.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def authObject = readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        authObject.credential == null
+        authObject.token != null
+        authObject.token.id == token
+        authObject.domain.name ==  domain
+        authObject.tenantId == null
     }
 
     def "create read/writer for tenants" () {

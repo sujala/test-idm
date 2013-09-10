@@ -49,9 +49,9 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
     @Override
     public void writeTo(AuthenticationRequest authenticationRequest, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("auth.apiKeyCredentials", RAX_KSKEY_API_KEY_CREDENTIALS);
-        prefixValues.put("auth.rsaCredentials", RAX_AUTH_RSA_CREDENTIALS);
-        prefixValues.put("auth.domain", RAX_AUTH_DOMAIN);
+        prefixValues.put(AUTH_API_KEY_CREDENTIALS_PATH, RAX_KSKEY_API_KEY_CREDENTIALS);
+        prefixValues.put(AUTH_RSA_CREDENTIALS_PATH, RAX_AUTH_RSA_CREDENTIALS);
+        prefixValues.put(AUTH_DOMAIN_PATH, RAX_AUTH_DOMAIN);
 
         write(authenticationRequest, entityStream, prefixValues);
     }
@@ -69,9 +69,14 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
             JSONObject auth = getObject(entity);
 
             if(cred != null){
-                ((JSONObject)auth.get(AUTH)).put(API_KEY_CREDENTIALS, cred.get(API_KEY_CREDENTIALS));
+                if(cred.get(API_KEY_CREDENTIALS) != null){
+                    ((JSONObject)auth.get(AUTH)).put(API_KEY_CREDENTIALS, cred.get(API_KEY_CREDENTIALS));
+                } else if(cred.get(PASSWORD_CREDENTIALS) != null){
+                    ((JSONObject)auth.get(AUTH)).put(PASSWORD_CREDENTIALS, cred.get(PASSWORD_CREDENTIALS));
+                } else if(cred.get(RSA_CREDENTIALS) != null){
+                    ((JSONObject)auth.get(AUTH)).put(RSA_CREDENTIALS, cred.get(RSA_CREDENTIALS));
+                }
             }
-
 
             JSONObject jsonObject;
 

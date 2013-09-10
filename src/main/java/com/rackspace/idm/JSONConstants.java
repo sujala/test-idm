@@ -69,7 +69,7 @@ public final class JSONConstants {
     public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
     public static final String REGIONS = "regions";
-    public static final String RSA_CREDENTIALS = "RsaCredentials";
+    public static final String RSA_CREDENTIALS = "rsaCredentials";
     public static final String RAX_AUTH_REGION = "RAX-AUTH:region";
     public static final String RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final String REL = "rel";
@@ -165,6 +165,9 @@ public final class JSONConstants {
     public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
 
     //Object path
+    public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
+    public static final String AUTH_RSA_CREDENTIALS_PATH = "auth.rsaCredentials";
+    public static final String AUTH_DOMAIN_PATH = "auth.domain";
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
