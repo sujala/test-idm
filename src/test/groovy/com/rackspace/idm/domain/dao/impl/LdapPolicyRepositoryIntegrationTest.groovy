@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.entity.Policies
 import com.rackspace.idm.domain.entity.Policy
 import com.rackspace.idm.exception.NotFoundException
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -23,9 +24,49 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
     @Shared def randomness = UUID.randomUUID()
     @Shared random
 
+    @Autowired Configuration config
+
 
     def setup() {
         random = ("$randomness").replace('-', "")
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        repo.config = config
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = repo.getNextId(LdapRepository.NEXT_POLICY_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        repo.config = config
+
+        when:
+        def id = repo.getNextId(LdapRepository.NEXT_POLICY_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
     }
 
     def "Policy create/ retrieve, delete" () {

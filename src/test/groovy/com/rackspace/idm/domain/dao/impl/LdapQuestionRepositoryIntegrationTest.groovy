@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import com.rackspace.idm.domain.entity.Question
 import com.rackspace.idm.domain.entity.Questions
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -21,6 +22,8 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
     @Autowired
     private LdapQuestionRepository ldapQuestionRepository;
 
+    @Autowired Configuration config
+
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
 
@@ -29,6 +32,44 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
     }
 
     def cleanSpec(){
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        ldapQuestionRepository.config = config
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = ldapQuestionRepository.getNextId(LdapRepository.NEXT_QUESTION_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        ldapQuestionRepository.config = config
+
+        when:
+        def id = ldapQuestionRepository.getNextId(LdapRepository.NEXT_QUESTION_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
     }
 
     def "question CRUD" () {

@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientSecret
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -19,6 +20,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
+    @Autowired Configuration config
 
     @Autowired
     LdapApplicationRepository applicationDao
@@ -29,6 +31,44 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace("-", "")
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        applicationRoleDao.config = config
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = applicationRoleDao.getNextId(LdapRepository.NEXT_ROLE_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        applicationRoleDao.config = config
+
+        when:
+        def id = applicationRoleDao.getNextId(LdapRepository.NEXT_ROLE_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
     }
 
     def "can create a role that contains propagate flag"() {

@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import com.rackspace.idm.domain.entity.Capability
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.service.EndpointService
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -25,11 +26,51 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
     @Autowired
     private LdapCapabilityRepository ldapCapabilityRepository;
 
+    @Autowired Configuration config
+
     @Autowired
     private EndpointService endpointService;
 
     def setupSpec() {
         random = ("$randomness").replace('-', "")
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        ldapCapabilityRepository.config = config
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = ldapCapabilityRepository.getNextId(LdapRepository.NEXT_CAPABILITY_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        ldapCapabilityRepository.config = config
+
+        when:
+        def id = ldapCapabilityRepository.getNextId(LdapRepository.NEXT_CAPABILITY_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
     }
 
     def "CRUD capabilities"() {

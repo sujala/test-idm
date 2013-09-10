@@ -78,13 +78,6 @@ public class DefaultUserService implements UserService {
     @Autowired
     private CryptHelper cryptHelper;
 
-    private boolean userUUIDEnabled = false;
-
-    @PostConstruct
-    public void initialize() {
-        userUUIDEnabled = config.getBoolean("user.uuid.enabled");
-    }
-
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -122,7 +115,7 @@ public class DefaultUserService implements UserService {
         }
 
         if (user.getId() == null) {
-            user.setId(generateUniqueId());
+            user.setId(userDao.getNextUserId());
         }
 
         userDao.addUser(user);
@@ -155,14 +148,6 @@ public class DefaultUserService implements UserService {
         this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
 
         logger.info("Added User Scope Access for Idm to user {}", user);
-    }
-
-    private String generateUniqueId() {
-        if (userUUIDEnabled) {
-            return UUID.randomUUID().toString().replace("-", "");
-        } else {
-            return this.userDao.getNextUserId();
-        }
     }
 
     //TODO: consider removing this method. Just here so code doesn't break

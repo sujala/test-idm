@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Group
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -14,9 +15,49 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
     @Autowired
     LdapGroupRepository groupRepository
 
+    @Autowired Configuration config
+
     def setup() {
         def randomness = UUID.randomUUID()
         random = ("$randomness").replace('-', "")
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        groupRepository.config = config
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = groupRepository.getNextId(LdapRepository.NEXT_GROUP_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        groupRepository.config = config
+
+        when:
+        def id = groupRepository.getNextId(LdapRepository.NEXT_GROUP_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
     }
 
     def "group crud"() {
