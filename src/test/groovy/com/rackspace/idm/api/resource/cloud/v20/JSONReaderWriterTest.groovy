@@ -103,7 +103,6 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForEndpoints readerForEndpoints = new JSONReaderForEndpoints()
     @Shared JSONWriterForEndpoints writerForEndpoints = new JSONWriterForEndpoints()
 
-    @Shared JSONReaderForOsKsCatalogEndpointTemplates readerForEndpointTemplates = new JSONReaderForOsKsCatalogEndpointTemplates()
     @Shared JSONWriterForOsKsCatalogEndpointTemplates writerForEndpointTemplates = new JSONWriterForOsKsCatalogEndpointTemplates()
 
     @Shared JSONReaderForPasswordCredentials readerForPasswordCredentials = new JSONReaderForPasswordCredentials()
@@ -933,12 +932,28 @@ class JSONReaderWriterTest extends RootServiceTest {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForEndpointTemplates.writeTo(endpointTemplates, EndpointTemplateList.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        EndpointTemplateList endpointTemplatesObject = readerForEndpointTemplates.readFrom(EndpointTemplateList.class, null, null, null, null, arrayInputStream)
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
 
         then:
-        endpointTemplatesObject != null
-        endpointTemplatesObject.endpointTemplate.size() == 2
+        outer != null
+        JSONArray a = outer.get(OS_KSCATALOG_ENDPOINT_TEMPLATES)
+        a != null
+        a.size() == 2
+        a[0].id == 1
+        a[0].enabled == true
+        a[0].versionId == "id"
+        a[0].versionList == "someList"
+        a[0].versionInfo == "info"
+        a[0].global == true
+        a[0].name == "name"
+        a[1].id == 1
+        a[1].enabled == true
+        a[1].versionId == "id"
+        a[1].versionList == "someList"
+        a[1].versionInfo == "info"
+        a[1].global == true
+        a[1].name == "name"
     }
 
     def "create read/writer for passwordCredentials" () {
