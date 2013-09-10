@@ -70,6 +70,15 @@ class V2Factory {
         }
     }
 
+    def createRsaAuthenticationRequest(String username, String tokenKey ) {
+        def credentials = createRsaCredentials(username, tokenKey)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createCredential(credentials))
+            return it
+        }
+    }
+
     def createJAXBAuthenticateResponse() {
         def authenticateResponse = createAuthenticateResponse()
         return objFactory.createAccess(authenticateResponse)

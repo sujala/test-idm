@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
@@ -23,13 +25,14 @@ import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
 import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/28/13
- * Time: 5:15 PM
- * To change this template use File | Settings | File Templates.
+ * Methods to help create object from json.
+ * Most methods just set values if not null.
  */
-public class JsonWriterHelper {
+public final class JsonWriterHelper {
+
+    private JsonWriterHelper(){
+        throw new AssertionError();
+    }
 
     public static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
@@ -301,5 +304,80 @@ public class JsonWriterHelper {
             }
         }
         return baseUrls;
+    }
+
+    public static JSONObject getPoliciesWithoutWrapper(Policies policies) {
+        JSONObject policyOuter = new JSONObject();
+        JSONArray policyInner = new JSONArray();
+        if(policies != null){
+            for(Policy policy : policies.getPolicy()){
+                JSONObject policySave = new JSONObject();
+                if(policy.getId() != null){
+                    policySave.put(JSONConstants.ID,policy.getId());
+                }
+                if(policy.getName() != null){
+                    policySave.put(JSONConstants.NAME, policy.getName());
+                }
+                if(policy.getType() != null){
+                    policySave.put(JSONConstants.TYPE, policy.getType());
+                }
+                policySave.put(JSONConstants.ENABLED, policy.isEnabled());
+                policySave.put(JSONConstants.GLOBAL, policy.isGlobal());
+
+                policyInner.add(policySave);
+            }
+        }
+        policyOuter.put(JSONConstants.RAX_AUTH_POLICY, policyInner);
+        if (policies.getAlgorithm() != null) {
+            policyOuter.put(JSONConstants.POLICIES_ALGORITHM, policies.getAlgorithm().value());
+        }
+        return policyOuter;
+    }
+
+    public static JSONObject getServiceCatalog11(com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog) {
+        JSONObject catalogItem = new JSONObject();
+        if (serviceCatalog != null) {
+            for (com.rackspacecloud.docs.auth.api.v1.Service service : serviceCatalog.getService()) {
+                if (service.getName() != null) {
+                    catalogItem.put(service.getName(), getEndpointsForCatalog11(service.getEndpoint()));
+                }
+            }
+        }
+        return catalogItem;
+    }
+
+    public static JSONArray getEndpointsForCatalog11(List<com.rackspacecloud.docs.auth.api.v1.Endpoint> endpoints) {
+        JSONArray endpointList = new JSONArray();
+        for (com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint : endpoints) {
+            JSONObject endpointItem = new JSONObject();
+            if (endpoint.getPublicURL() != null) {
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+            }
+            if (endpoint.getInternalURL() != null) {
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+            }
+            if (endpoint.getRegion() != null) {
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+            }
+            if (endpoint.getAdminURL() != null) {
+                endpointItem.put(JSONConstants.ADMIN_URL, endpoint.getAdminURL());
+            }
+            if (endpoint.isV1Default()) {
+                endpointItem.put(JSONConstants.V1_DEFAULT, endpoint.isV1Default());
+            }
+            endpointList.add(endpointItem);
+        }
+        return endpointList;
+    }
+
+    public static JSONObject getToken11(com.rackspacecloud.docs.auth.api.v1.Token token) {
+        if(token == null || token.getExpires() == null){
+            throw new BadRequestException("Invalid token.");
+        }
+
+        JSONObject tokenInner = new JSONObject();
+        tokenInner.put(JSONConstants.ID, token.getId());
+        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        return tokenInner;
     }
 }

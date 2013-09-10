@@ -36,11 +36,4 @@ public class JSONReaderForPasswordCredentialsTest {
 
     }
 
-    @Test
-    public void isReadable_withOtherCredentials_returnsTrue() throws Exception {
-        JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = new JSONReaderForPasswordCredentials();
-        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsBase.class, ApiKeyCredentials.class, null, null);
-        assertThat("readable", readable, equalTo(false));
-
-    }
 }

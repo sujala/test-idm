@@ -21,16 +21,9 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge.munoz
- * Date: 9/08/12
- * Time: 12:57 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderRaxAuthForPolicies implements MessageBodyReader<Policies> {
+public class JSONReaderForRaxAuthPolicies implements MessageBodyReader<Policies> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Policies.class;

@@ -29,13 +29,7 @@ import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.JSONConstants.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
@@ -55,7 +49,7 @@ public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
     @Override
     public void writeTo(Endpoint endpoint, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("endpoint.link", ENDPOINT_LINKS);
+        prefixValues.put(ENDPOINT_LINKS_PATH, ENDPOINT_LINKS);
         write(endpoint, entityStream, prefixValues);
     }
 
@@ -71,7 +65,7 @@ public class JSONWriterForEndpoint implements MessageBodyWriter<Endpoint> {
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else{
                 jsonObject = outer;
             }

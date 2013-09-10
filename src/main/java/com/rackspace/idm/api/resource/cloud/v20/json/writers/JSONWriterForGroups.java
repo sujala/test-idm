@@ -16,30 +16,17 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+import static com.rackspace.idm.JSONConstants.*;
+
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> implements MessageBodyWriter<GroupsList> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == GroupsList.class;
-    }
-
-    @Override
-    public long getSize(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> {
 
     @Override
     public void writeTo(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("groups.group", JSONConstants.VALUES);
+        prefixValues.put(GROUPS_LIST_PATH, VALUES);
         write(groupsList, entityStream, prefixValues);
     }
 }

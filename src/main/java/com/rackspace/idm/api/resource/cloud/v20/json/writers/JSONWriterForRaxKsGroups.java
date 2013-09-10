@@ -17,16 +17,7 @@ import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxKsGroups extends JSONWriterForArrayEntity<Groups> implements MessageBodyWriter<Groups> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Groups.class;
-    }
-
-    @Override
-    public long getSize(Groups groups, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForRaxKsGroups extends JSONWriterForArrayEntity<Groups> {
 
     @Override
     public void writeTo(Groups groups, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

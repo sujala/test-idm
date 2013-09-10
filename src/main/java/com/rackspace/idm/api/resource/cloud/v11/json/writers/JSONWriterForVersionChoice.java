@@ -1,10 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v11.json.writers;
 
-import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.MediaTypeList;
 import org.openstack.docs.common.api.v1.VersionChoice;
 
@@ -20,15 +18,9 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import static com.rackspace.idm.JSONConstants.*;
 import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getLinks;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForVersionChoice implements MessageBodyWriter<VersionChoice> {
@@ -45,7 +37,7 @@ public class JSONWriterForVersionChoice implements MessageBodyWriter<VersionChoi
     @Override
     public void writeTo(VersionChoice versionChoice, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream) throws IOException, WebApplicationException {
         String jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
-        outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+        outputStream.write(jsonText.getBytes(UTF_8));
     }
 
     JSONObject getVersionChoice(VersionChoice versionChoice) {
@@ -53,23 +45,23 @@ public class JSONWriterForVersionChoice implements MessageBodyWriter<VersionChoi
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("version", inner);
+        outer.put(VERSION, inner);
 
-        inner.put("id", versionChoice.getId());
+        inner.put(ID, versionChoice.getId());
         if (versionChoice.getStatus() != null) {
-            inner.put("status", versionChoice.getStatus().toString());
+            inner.put(STATUS, versionChoice.getStatus().toString());
         }
 
         XMLGregorianCalendar updated = versionChoice.getUpdated();
 
         if (updated != null) {
-            inner.put("updated", updated.toXMLFormat());
+            inner.put(UPDATED, updated.toXMLFormat());
         }
 
         if (!versionChoice.getAny().isEmpty()) {
             JSONArray linkArray = getLinks(versionChoice.getAny());
             if (!linkArray.isEmpty()) {
-                inner.put("links", linkArray);
+                inner.put(LINKS, linkArray);
             }
         }
 
@@ -79,13 +71,13 @@ public class JSONWriterForVersionChoice implements MessageBodyWriter<VersionChoi
             JSONArray typeArray = new JSONArray();
             for (org.openstack.docs.common.api.v1.MediaType mt : versionChoice.getMediaTypes().getMediaType()) {
                 JSONObject jtype = new JSONObject();
-                jtype.put("base", mt.getBase());
-                jtype.put("type", mt.getType());
+                jtype.put(BASE, mt.getBase());
+                jtype.put(TYPE, mt.getType());
                 typeArray.add(jtype);
             }
             JSONObject typeValues = new JSONObject();
-            typeValues.put("values", typeArray);
-            inner.put("media-types", typeValues);
+            typeValues.put(VALUES, typeArray);
+            inner.put(MEDIA_TYPES, typeValues);
         }
         return outer;
 

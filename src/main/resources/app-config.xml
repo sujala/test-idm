@@ -50,7 +50,7 @@
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
     <context:component-scan base-package="com.rackspace.idm"/>
-    <!--User for async -->
+    <!--Used for async -->
     <task:annotation-driven/>
     <!--
          Instruct Spring to perform automatic transaction management on annotated classes.

@@ -15,15 +15,11 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRole extends JSONReaderForEntity<Role> implements MessageBodyReader<Role> {
-
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
-        return type == Role.class;
-    }
+public class JSONReaderForRole extends JSONReaderForEntity<Role> {
 
     @Override
     public Role readFrom(Class<Role> type,
@@ -32,10 +28,10 @@ public class JSONReaderForRole extends JSONReaderForEntity<Role> implements Mess
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("role.RAX-AUTH:weight", JSONConstants.WEIGHT);
-        prefixValues.put("role.RAX-AUTH:propagate", JSONConstants.PROPAGATE);
+        prefixValues.put(ROLE_RAX_AUTH_WEIGHT_PATH, WEIGHT);
+        prefixValues.put(ROLE_RAX_AUTH_PROPAGATE_PATH, PROPAGATE);
 
-        return read(inputStream, JSONConstants.ROLE, prefixValues);
+        return read(inputStream, ROLE, prefixValues);
     }
     
 }

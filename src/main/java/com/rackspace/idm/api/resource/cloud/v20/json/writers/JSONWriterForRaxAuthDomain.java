@@ -17,25 +17,10 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthDomain extends JSONWriterForEntity<Domain> implements MessageBodyWriter<Domain> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Domain.class;
-    }
-
-    @Override
-    public long getSize(Domain domain, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForRaxAuthDomain extends JSONWriterForEntity<Domain> {
 
     @Override
     public void writeTo(Domain domain, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

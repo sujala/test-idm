@@ -18,16 +18,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsAdmService extends JSONWriterForEntity<Service> implements MessageBodyWriter<Service> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Service.class;
-    }
-
-    @Override
-    public long getSize(Service service, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForOsKsAdmService extends JSONWriterForEntity<Service> {
 
     @Override
     public void writeTo(Service service, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

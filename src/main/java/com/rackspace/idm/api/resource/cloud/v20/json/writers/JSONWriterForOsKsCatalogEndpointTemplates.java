@@ -30,7 +30,7 @@ import static com.rackspace.idm.JSONConstants.VERSION;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsCatalogEndpointTemplates extends JSONWriterForArrayEntity<EndpointTemplateList> implements MessageBodyWriter<EndpointTemplateList> {
+public class JSONWriterForOsKsCatalogEndpointTemplates implements MessageBodyWriter<EndpointTemplateList> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == EndpointTemplateList.class;

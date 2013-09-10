@@ -14,20 +14,9 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 11/5/12
- * Time: 1:56 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthCapabilities extends JSONReaderForArrayEntity<Capabilities> implements MessageBodyReader<Capabilities> {
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Capabilities.class;
-    }
+public class JSONReaderForRaxAuthCapabilities extends JSONReaderForArrayEntity<Capabilities> {
 
     @Override
     public Capabilities readFrom(Class<Capabilities> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

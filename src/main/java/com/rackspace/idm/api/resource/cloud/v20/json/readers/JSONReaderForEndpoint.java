@@ -8,6 +8,7 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -48,7 +49,7 @@ public class JSONReaderForEndpoint implements MessageBodyReader<Endpoint> {
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("endpoint.endpoint_links", JSONConstants.LINK);
+        prefixValues.put(ENDPOINT_ENDPOINT_LINKS_PATH, JSONConstants.LINK);
 
         return read(inputStream, JSONConstants.ENDPOINT, prefixValues);
     }
@@ -92,7 +93,7 @@ public class JSONReaderForEndpoint implements MessageBodyReader<Endpoint> {
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else {
                 jsonObject = outer;
             }
@@ -102,7 +103,10 @@ public class JSONReaderForEndpoint implements MessageBodyReader<Endpoint> {
             om.setAnnotationIntrospector(new JaxbAnnotationIntrospector(TypeFactory.defaultInstance()));
             om.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
             Endpoint endpoint = om.readValue(jsonString.getBytes(), Endpoint.class);
-            endpoint.setVersion(versionForService);
+            if(StringUtils.isNotBlank(versionForService.getId()) && StringUtils.isNotBlank(versionForService.getInfo())
+                    && StringUtils.isNotBlank(versionForService.getList())){
+                endpoint.setVersion(versionForService);
+            }
             return endpoint;
 
         } catch (ParseException e) {

@@ -13,25 +13,10 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForPasswordCredentials extends JSONWriterForEntity<PasswordCredentialsBase> implements MessageBodyWriter<PasswordCredentialsBase> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == PasswordCredentialsBase.class;
-    }
-
-    @Override
-    public long getSize(PasswordCredentialsBase passwordCredentialsBase, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForPasswordCredentials extends JSONWriterForEntity<PasswordCredentialsBase> {
 
     @Override
     public void writeTo(PasswordCredentialsBase passwordCredentialsBase, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

@@ -51,9 +51,9 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("auth.RAX-KSKEY:apiKeyCredentials", API_KEY_CREDENTIALS);
-        prefixValues.put("auth.RAX-AUTH:rsaCredentials", RSA_CREDENTIALS);
-        prefixValues.put("auth.RAX-AUTH:domain", DOMAIN);
+        prefixValues.put(AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH, API_KEY_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH, RSA_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_DOMAIN_PATH, DOMAIN);
 
         return read(inputStream, AUTH, prefixValues);
     }
@@ -79,7 +79,7 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
             JSONObject jsonObject;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.addPrefix(outer, prefixValues);
+                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
             }else {
                 jsonObject = outer;
             }
@@ -89,29 +89,25 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
             om.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
 
             CredentialType credentialType = null;
+            JSONObject innerObject = new JSONObject();
 
-            for(Object object : jsonObject.values()){
-                if(((JSONObject)object).containsKey(API_KEY_CREDENTIALS)){
-                    JSONObject innerObject = new JSONObject();
-                    innerObject.put(API_KEY_CREDENTIALS, ((JSONObject) object).get(API_KEY_CREDENTIALS));
-                    String string = innerObject.toString();
-                    credentialType = om.readValue(string.getBytes(), ApiKeyCredentials.class);
-                    ((JSONObject)jsonObject.get(AUTH)).remove(API_KEY_CREDENTIALS);
-                }
-                if(((JSONObject)object).containsKey(PASSWORD_CREDENTIALS)){
-                    JSONObject innerObject = (JSONObject) object;
-                    innerObject.put(PASSWORD_CREDENTIALS, ((JSONObject) object).get(PASSWORD_CREDENTIALS));
-                    String string = innerObject.toString();
-                    credentialType = om.readValue(string.getBytes(), PasswordCredentialsBase.class);
-                    ((JSONObject)jsonObject.get(AUTH)).remove(PASSWORD_CREDENTIALS);
-                }
-                if(((JSONObject)object).containsKey(RSA_CREDENTIALS)){
-                    JSONObject innerObject = new JSONObject();
-                    innerObject.put(RSA_CREDENTIALS, ((JSONObject) object).get(RSA_CREDENTIALS));
-                    String string = innerObject.toString();
-                    credentialType = om.readValue(string.getBytes(), RsaCredentials.class);
-                    ((JSONObject)jsonObject.get(AUTH)).remove(RSA_CREDENTIALS);
-                }
+            JSONObject auth = (JSONObject) jsonObject.get(AUTH);
+
+            if(auth.containsKey(API_KEY_CREDENTIALS)){
+                innerObject.put(API_KEY_CREDENTIALS, auth.get(API_KEY_CREDENTIALS));
+                String string = innerObject.toString();
+                credentialType = om.readValue(string.getBytes(), ApiKeyCredentials.class);
+                ((JSONObject)jsonObject.get(AUTH)).remove(API_KEY_CREDENTIALS);
+            } else if(auth.containsKey(PASSWORD_CREDENTIALS)){
+                innerObject.put(PASSWORD_CREDENTIALS, auth.get(PASSWORD_CREDENTIALS));
+                String string = innerObject.toString();
+                credentialType = om.readValue(string.getBytes(), PasswordCredentialsBase.class);
+                ((JSONObject)jsonObject.get(AUTH)).remove(PASSWORD_CREDENTIALS);
+            } else if(auth.containsKey(RSA_CREDENTIALS)){
+                innerObject.put(RSA_CREDENTIALS, auth.get(RSA_CREDENTIALS));
+                String string = innerObject.toString();
+                credentialType = om.readValue(string.getBytes(), RsaCredentials.class);
+                ((JSONObject)jsonObject.get(AUTH)).remove(RSA_CREDENTIALS);
             }
 
             String jsonString = jsonObject.toString();

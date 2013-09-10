@@ -18,12 +18,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRSACredentials extends JSONReaderForEntity<RsaCredentials> implements MessageBodyReader<RsaCredentials> {
-
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == RsaCredentials.class;
-    }
+public class JSONReaderForRSACredentials extends JSONReaderForEntity<RsaCredentials> {
 
     @Override
     public RsaCredentials readFrom(Class<RsaCredentials> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

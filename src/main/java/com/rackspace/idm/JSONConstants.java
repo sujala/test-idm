@@ -12,15 +12,20 @@ public final class JSONConstants {
     public static final String RAX_KSKEY_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
     public static final String API_KEY_CREDENTIALS = "apiKeyCredentials";
     public static final String AUTH = "auth";
+    public static final String AUTHENTICATED_BY = "authenticatedBy";
+    public static final String BASE = "base";
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object BASE_URLS = "baseURLs";
     public static final Object BASE_URL = "baseURL";
     public static final String CREATED = "created";
+    public static final String CREDENTIAL = "credential";
     public static final String CREDENTIALS = "credentials";
     public static final String CUSTOMER_ID = "customerId";
     public static final String DESCRIPTION = "description";
+    public static final String DEFAULT_REGION = "defaultRegion";
     public static final String DOMAIN = "domain";
+    public static final String DOMAIN_ID = "domainId";
     public static final String DOMAINS = "domains";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
@@ -46,6 +51,7 @@ public final class JSONConstants {
     public static final String LINK = "link";
     public static final String LINKS = "links";
     public static final String LIST = "list";
+    public static final String MEDIA_TYPES = "media-types";
     public static final String MOSSO_CREDENTIALS = "mossoCredentials";
     public static final String MOSSO_ID = "mossoId";
     public static final String NAME = "name";
@@ -56,6 +62,8 @@ public final class JSONConstants {
     public static final String OS_KSADM_SERVICES = "OS-KSADM:services";
     public static final String PASSWORD = "password";
     public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
+    public static final String POLICY = "policy";
+    public static final String POLICIES = "policies";
     public static final String PUBLIC_URL = "publicURL";
     public static final String QUESTION = "question";
     public static final String CAPABILITIES = "capabilities";
@@ -63,7 +71,7 @@ public final class JSONConstants {
     public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
     public static final String REGIONS = "regions";
-    public static final String RSA_CREDENTIALS = "RsaCredentials";
+    public static final String RSA_CREDENTIALS = "rsaCredentials";
     public static final String RAX_AUTH_REGION = "RAX-AUTH:region";
     public static final String RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final String REL = "rel";
@@ -97,7 +105,6 @@ public final class JSONConstants {
     public static final String MIDDLE_NAME = "middleName";
     public static final String LAST_NAME = "lastName";
     public static final String DISPLAY_NAME = "displayName";
-    public static final String POLICY = "policy";
     public static final String PREF_LANGUAGE = "prefLanguage";
     public static final String COUNTRY = "country";
     public static final String TIME_ZONE = "timeZone";
@@ -138,17 +145,17 @@ public final class JSONConstants {
     public static final Object NEW_PASSWORD = "newPassword";
     public static final Object CURRENT_PASSWORD = "currentPassword";
     public static final Object VERIFY_CURRENT_PASSWORD = "verifyCurrentPassword";
-    public static final Object OS_KSADM_PASSWORD = "OS-KSADM:password";
-    public static final Object RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion";
+    public static final String OS_KSADM_PASSWORD = "OS-KSADM:password";
+    public static final String RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion";
     public static final String RAX_AUTH_DEFAULT_REGION_SERVICES = "RAX-AUTH:defaultRegionServices";
     public static final Object RAX_AUTH_IMPERSONATION = "RAX-AUTH:impersonation";
     public static final Object RAX_AUTH_IMPERSONATOR = "RAX-AUTH:impersonator";
     public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
     public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
-    public static final Object RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
+    public static final String RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
     public static final String RAX_AUTH_POLICY = "RAX-AUTH:policy";
-    public static final Object RAX_AUTH_POLICIES = "RAX-AUTH:policies";
+    public static final String RAX_AUTH_POLICIES = "RAX-AUTH:policies";
     public static final Object POLICIES_ALGORITHM = "algorithm";
     public static final Object BLOB = "blob";
     public static final String RAX_AUTH_RSA_CREDENTIALS = "RAX-AUTH:rsaCredentials";
@@ -158,4 +165,27 @@ public final class JSONConstants {
     public static final String RAX_AUTH_WEIGHT = "RAX-AUTH:weight";
     public static final String WEIGHT = "weight";
     public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
+
+    //Object path
+    public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
+    public static final String AUTH_RSA_CREDENTIALS_PATH = "auth.rsaCredentials";
+    public static final String AUTH_DOMAIN_PATH = "auth.domain";
+    public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
+    public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
+    public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
+    public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
+    public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
+    public static final String GROUPS_LIST_PATH = "groups.group";
+    public static final String GROUPS_VALUES_PATH = "groups.values";
+    public static final String ROLE_PROPAGATE_PATH = "role.propagate";
+    public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
+    public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
+    public static final String ROLE_WEIGHT_PATH = "role.weight";
+    public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";
+    public static final String USER_DEFAULT_REGION_PATH = "user.defaultRegion";
+    public static final String USER_DOMAIN_ID_PATH = "user.domainId";
+    public static final String USER_OS_KSADM_PASSWORD_PATH = "user.OS-KSADM:password";
+    public static final String USER_RAX_AUTH_DEFAULT_REGION_PATH = "user.RAX-AUTH:defaultRegion";
+    public static final String USER_RAX_AUTH_DOMAIN_ID_PATH = "user.RAX-AUTH:domainId";
+    public static final String USER_PASSWORD_PATH = "user.password";
 }

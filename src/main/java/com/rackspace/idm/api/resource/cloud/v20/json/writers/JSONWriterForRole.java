@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
-import com.rackspace.idm.JSONConstants;
 import org.openstack.docs.identity.api.v2.Role;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,6 +13,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+
+import static com.rackspace.idm.JSONConstants.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,22 +25,13 @@ import java.util.LinkedHashMap;
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRole extends JSONWriterForEntity<Role> implements MessageBodyWriter<Role> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Role.class;
-    }
-
-    @Override
-    public long getSize(Role role, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForRole extends JSONWriterForEntity<Role> {
 
     @Override
     public void writeTo(Role role, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("role.weight", JSONConstants.RAX_AUTH_WEIGHT);
-        prefixValues.put("role.propagate", JSONConstants.RAX_AUTH_PROPAGATE);
+        prefixValues.put(ROLE_WEIGHT_PATH, RAX_AUTH_WEIGHT);
+        prefixValues.put(ROLE_PROPAGATE_PATH, RAX_AUTH_PROPAGATE);
 
         write(role, entityStream, prefixValues);
     }

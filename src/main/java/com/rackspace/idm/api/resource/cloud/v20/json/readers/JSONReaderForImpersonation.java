@@ -18,13 +18,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 3/19/12
- * Time: 3:01 PM
- * To change this template use File | Settings | File Templates.
- */
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)

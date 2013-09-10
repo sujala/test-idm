@@ -4,8 +4,6 @@ import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.RoleList;
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserList;
 
@@ -20,16 +18,9 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getRole;
 import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getUser;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUsers implements MessageBodyWriter<UserList> {

@@ -17,13 +17,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForOsKsAdmService extends JSONReaderForEntity<Service> implements MessageBodyReader<Service> {
-
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType) {
-        return type == Service.class;
-    }
+public class JSONReaderForOsKsAdmService extends JSONReaderForEntity<Service> {
 
     @Override
     public Service readFrom(Class<Service> type, Type genericType,

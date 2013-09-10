@@ -16,13 +16,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForPasswordCredentials extends JSONReaderForEntity<PasswordCredentialsBase> implements
-        MessageBodyReader<PasswordCredentialsBase> {
-
-    @Override
-    public boolean isReadable(Class<?> aClass, Type type, Annotation[] annotations, MediaType mediaType) {
-        return type == PasswordCredentialsBase.class || (PasswordCredentialsBase.class).isAssignableFrom((Class) type);
-    }
+public class JSONReaderForPasswordCredentials extends JSONReaderForEntity<PasswordCredentialsBase> {
 
     @Override
     public PasswordCredentialsBase readFrom(Class<PasswordCredentialsBase> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {

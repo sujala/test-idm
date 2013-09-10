@@ -15,15 +15,13 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+import static com.rackspace.idm.JSONConstants.DOMAIN_ID;
+import static com.rackspace.idm.JSONConstants.USER_RAX_AUTH_DOMAIN_ID_PATH;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreate> implements MessageBodyReader<UserForCreate> {
-
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-                              MediaType mediaType) {
-        return type == UserForCreate.class;
-    }
+public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreate> {
 
     @Override
     public UserForCreate readFrom(Class<UserForCreate> type,
@@ -32,9 +30,9 @@ public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreat
             throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("user.OS-KSADM:password","password");
-        prefixValues.put("user.RAX-AUTH:defaultRegion", "defaultRegion");
-        prefixValues.put("user.RAX-AUTH:domainId", "domainId");
+        prefixValues.put(USER_OS_KSADM_PASSWORD_PATH, PASSWORD);
+        prefixValues.put(USER_RAX_AUTH_DEFAULT_REGION_PATH, DEFAULT_REGION);
+        prefixValues.put(USER_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
 
         return read(inputStream, JSONConstants.USER, prefixValues);
     }

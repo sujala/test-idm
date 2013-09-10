@@ -17,16 +17,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthDomains extends JSONWriterForArrayEntity<Domains> implements MessageBodyWriter<Domains> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == Domains.class;
-    }
-
-    @Override
-    public long getSize(Domains domains, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForRaxAuthDomains extends JSONWriterForArrayEntity<Domains> {
 
     @Override
     public void writeTo(Domains domains, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

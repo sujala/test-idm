@@ -17,13 +17,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxKsQaSecretQA extends JSONReaderForEntity<SecretQA> implements MessageBodyReader<SecretQA> {
-
-    @Override
-    public boolean isReadable(Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType) {
-        return type == SecretQA.class;
-    }
+public class JSONReaderForRaxKsQaSecretQA extends JSONReaderForEntity<SecretQA> {
 
     @Override
     public SecretQA readFrom(Class<SecretQA> type,

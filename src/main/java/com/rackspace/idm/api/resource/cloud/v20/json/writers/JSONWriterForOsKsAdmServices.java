@@ -14,25 +14,10 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<ServiceList> implements MessageBodyWriter<ServiceList> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == ServiceList.class;
-    }
-
-    @Override
-    public long getSize(ServiceList serviceList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
+public class JSONWriterForOsKsAdmServices extends JSONWriterForArrayEntity<ServiceList> {
 
     @Override
     public void writeTo(ServiceList serviceList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {

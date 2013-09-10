@@ -28,13 +28,7 @@ import java.lang.reflect.Type;
 import static com.rackspace.idm.JSONConstants.*;
 import static com.rackspace.idm.JSONConstants.VERSION;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForEndpoints implements MessageBodyWriter<EndpointList> {

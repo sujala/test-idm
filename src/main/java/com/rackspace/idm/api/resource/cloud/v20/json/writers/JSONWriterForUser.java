@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
+import com.rackspace.idm.JSONConstants;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.Produces;
@@ -15,6 +16,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.rackspace.idm.JSONConstants.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -25,22 +28,13 @@ import java.util.LinkedHashMap;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUser extends JSONWriterForEntity<User> implements MessageBodyWriter<User> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == User.class;
-    }
-
-    @Override
-    public long getSize(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
 
     @Override
     public void writeTo(User user, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
-        prefixValues.put("user.password","OS-KSADM:password");
-        prefixValues.put("user.defaultRegion", "RAX-AUTH:defaultRegion");
-        prefixValues.put("user.domainId", "RAX-AUTH:domainId");
+        prefixValues.put(USER_PASSWORD_PATH, OS_KSADM_PASSWORD);
+        prefixValues.put(USER_DEFAULT_REGION_PATH, RAX_AUTH_DEFAULT_REGION);
+        prefixValues.put(USER_DOMAIN_ID_PATH, RAX_AUTH_DOMAIN_ID);
         write(user, entityStream, prefixValues);
     }
 }
