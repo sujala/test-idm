@@ -972,6 +972,8 @@ class JSONReaderWriterTest extends RootServiceTest {
 
         then:
         passwordCredentialsObject != null
+        passwordCredentialsObject.password == "password"
+        passwordCredentialsObject.username == "username"
     }
 
     def "create read/writer for group" () {
@@ -986,7 +988,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         JSONObject outer = (JSONObject) parser.parse(json);
 
         then:
-        JSONObject o = outer.get(RAX_KSGRP_GROUP)
+        JSONObject o = outer.get(GROUP)
         o.get(NAME) == "name"
         o.get(ID) == "id"
         o.get(DESCRIPTION) == "description"
@@ -1069,6 +1071,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         defaultRegionServicesObject != null
         defaultRegionServices.serviceName[0] == "cloudFile"
+        defaultRegionServices.serviceName[1] == "cloudServers"
     }
 
     def "create read/writer for extension" () {

@@ -181,6 +181,7 @@ public final class JSONConstants {
     public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
     public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
     public static final String ROLE_WEIGHT_PATH = "role.weight";
+    public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";
     public static final String USER_DEFAULT_REGION_PATH = "user.defaultRegion";
     public static final String USER_DOMAIN_ID_PATH = "user.domainId";
     public static final String USER_OS_KSADM_PASSWORD_PATH = "user.OS-KSADM:password";

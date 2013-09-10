@@ -46,7 +46,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get(ACCESS);
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("token.authenticatedBy", RAX_AUTH_AUTHENTICATED_BY)
+        hashMap.put(TOKEN_AUTHENTICATED_BY, RAX_AUTH_AUTHENTICATED_BY)
 
         when:
         JSONObject object = prefixMapper.mapPrefix(inner, hashMap)
@@ -77,7 +77,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get(ACCESS);
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("token.authenticatedBy", RAX_AUTH_AUTHENTICATED_BY)
+        hashMap.put(TOKEN_AUTHENTICATED_BY, RAX_AUTH_AUTHENTICATED_BY)
 
         when:
         JSONObject object = prefixMapper.mapPrefix(inner, hashMap)
@@ -86,7 +86,9 @@ class JsonPrefixMapperTest extends RootServiceTest{
         then:
         ((JSONObject)object.get(TOKEN)).containsKey(RAX_AUTH_AUTHENTICATED_BY)
         JSONObject raxAuthBy = ((JSONObject)object.get(TOKEN)).get(RAX_AUTH_AUTHENTICATED_BY)
+        JSONObject authBy = ((JSONObject)object.get(TOKEN)).get(AUTHENTICATED_BY)
         raxAuthBy == null
+        authBy == null
     }
 
     def "Do not replace element if it exist somewhere else"(){
@@ -97,7 +99,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         JSONObject outer = (JSONObject) parser.parse(jsonString)
         JSONObject inner = (JSONObject) outer.get(ACCESS);
         HashMap<String, String[]> hashMap = new LinkedHashMap<>()
-        hashMap.put("token.authenticatedBy", RAX_AUTH_AUTHENTICATED_BY)
+        hashMap.put(TOKEN_AUTHENTICATED_BY, RAX_AUTH_AUTHENTICATED_BY)
 
         when:
         JSONObject object = prefixMapper.mapPrefix(inner, hashMap)

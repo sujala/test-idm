@@ -40,19 +40,4 @@ public class JSONReaderForUserTestOld {
     public void isReadable_typeIsNotUser_returnsFalse() throws Exception {
         assertThat("bool", jsonReaderForUser.isReadable(Tenant.class, null, null, null), equalTo(false));
     }
-
-//    @Test
-//    public void readFrom_returnsUser() throws Exception {
-//        String body = "{\n" +
-//                "  \"user\": {\n" +
-//                "    \"id\": \"123456\",\n" +
-//                "    \"username\": \"jqsmith\",\n" +
-//                "    \"display-name\": \"acme\",\n" +
-//                "    \"email\": \"john.smith@example.org\",\n" +
-//                "    \"enabled\": true\n" +
-//                "  }\n" +
-//                "}";
-//        InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(body.getBytes()));
-//        assertThat("user",jsonReaderForUser.readFrom(User.class, null, null, null, null, inputStream),instanceOf(User.class));
-//    }
 }
