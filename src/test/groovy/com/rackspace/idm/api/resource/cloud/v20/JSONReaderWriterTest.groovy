@@ -108,7 +108,6 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForPasswordCredentials readerForPasswordCredentials = new JSONReaderForPasswordCredentials()
     @Shared JSONWriterForPasswordCredentials writerForPasswordCredentials = new JSONWriterForPasswordCredentials()
 
-    @Shared JSONReaderForRaxKsGroup readerForGroup = new JSONReaderForRaxKsGroup()
     @Shared JSONWriterForRaxKsGroup writerForGroup = new JSONWriterForRaxKsGroup()
 
     @Shared JSONReaderForRaxKsGroups readerForGroups = new JSONReaderForRaxKsGroups()
@@ -983,12 +982,14 @@ class JSONReaderWriterTest extends RootServiceTest {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForGroup.writeTo(group, Group.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        Group groupObject = readerForGroup.readFrom(Group.class, null, null, null, null, arrayInputStream)
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
 
         then:
-        groupObject != null
-        groupObject.name == "name"
+        JSONObject o = outer.get(RAX_KSGRP_GROUP)
+        o.get(NAME) == "name"
+        o.get(ID) == "id"
+        o.get(DESCRIPTION) == "description"
     }
 
     def "create read/writer for groups" () {
