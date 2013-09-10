@@ -707,7 +707,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     def "create read/writer for endpoint" () {
         given:
         def link = new Link().with {
-            it.type = type
+            it.type = "type"
             it.href = "href"
             it
         }
@@ -741,12 +741,16 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.version.list == "someList"
         endpointObject.link != null
         endpointObject.link.size() == 2
+        endpointObject.link.get(0).type == "type"
+        endpointObject.link.get(0).href == "href"
+        endpointObject.link.get(1).type == "type"
+        endpointObject.link.get(1).href == "href"
     }
 
     def "create read for endpoint - null info" () {
         given:
         def link = new Link().with {
-            it.type = type
+            it.type = "type"
             it.href = "href"
             it
         }
@@ -779,12 +783,16 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.version == null
         endpointObject.link != null
         endpointObject.link.size() == 2
+        endpointObject.link.get(0).type == "type"
+        endpointObject.link.get(0).href == "href"
+        endpointObject.link.get(1).type == "type"
+        endpointObject.link.get(1).href == "href"
     }
 
     def "create read for endpoint - null version id" () {
         given:
         def link = new Link().with {
-            it.type = type
+            it.type = "type"
             it.href = "href"
             it
         }
@@ -816,6 +824,10 @@ class JSONReaderWriterTest extends RootServiceTest {
         endpointObject.version == null
         endpointObject.link != null
         endpointObject.link.size() == 2
+        endpointObject.link.get(0).type == "type"
+        endpointObject.link.get(0).href == "href"
+        endpointObject.link.get(1).type == "type"
+        endpointObject.link.get(1).href == "href"
     }
 
     def "create read/writer for endpoint - empty link" () {
@@ -988,7 +1000,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         JSONObject outer = (JSONObject) parser.parse(json);
 
         then:
-        JSONObject o = outer.get(GROUP)
+        JSONObject o = outer.get(RAX_KSGRP_GROUP)
         o.get(NAME) == "name"
         o.get(ID) == "id"
         o.get(DESCRIPTION) == "description"
@@ -1410,6 +1422,12 @@ class JSONReaderWriterTest extends RootServiceTest {
         json != null
         JSONArray a = outer.get(JSONConstants.BASE_URL_REFS)
         a.size() == 2
+        a[0].id == 1
+        a[0].v1Default == true
+        a[0].href == "href"
+        a[1].id == 1
+        a[1].v1Default == true
+        a[1].href == "href"
     }
 
     def "create read/writer for domain" () {
