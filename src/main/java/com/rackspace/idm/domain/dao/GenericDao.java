@@ -27,7 +27,17 @@ public interface GenericDao<T> {
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);
+
+    /**
+     * Deletes the single object found by executing the search filter. The children of the object are also deleted.
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If no object is found by executing the search filter
+     * @throws IllegalStateException If multiple objects are found by executing the search filter
+     *
+     * @param searchFilter
+     */
     void deleteObject(Filter searchFilter);
+
     void softDeleteObject(T object);
     void unSoftDeleteObject(T object);
     String[] getSearchAttributes();
@@ -39,6 +49,11 @@ public interface GenericDao<T> {
     void doPreEncode(T object);
     void doPostEncode(T object);
 
+    /**
+     * Deletes the single object. If the object does not exist, no error is thrown.
+     *
+     * @param object
+     */
     void deleteObject(T object);
     String getSortAttribute();
 }
