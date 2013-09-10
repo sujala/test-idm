@@ -593,6 +593,17 @@ class JSONReaderWriterTest extends RootServiceTest {
         authObject.tenantId == null
     }
 
+    def "create read/write for authenticationRequest - multipule credentials" (){
+        given:
+        String json = '{"auth":{"tenantId":"tenantId","RAX-AUTH:domain":{"name":"name"},"passwordCredentials":{"username":"username","password":"password"}, "RAX-KSKEY:apiKeyCredentials":{"username":"username","apiKey":"1234567890"}}}'
+        when:
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        readerForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, arrayInputStream)
+
+        then:
+        thrown(BadRequestException)
+    }
+
     def "create read/write for authenticationRequest - token" (){
         given:
         def domain = "name"
