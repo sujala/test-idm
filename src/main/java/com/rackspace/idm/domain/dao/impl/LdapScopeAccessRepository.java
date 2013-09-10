@@ -14,18 +14,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess> implements ScopeAccessDao, DaoGetEntityType {
 
+    @Override
     public String getBaseDn() {
         return BASE_DN;
     }
 
+    @Override
     public String getLdapEntityClass() {
         return OBJECTCLASS_SCOPEACCESS;
     }
 
+    @Override
     public String[] getSearchAttributes() {
         return ATTR_SCOPE_ACCESS_ATTRIBUTES;
     }
 
+    @Override
     public String getSortAttribute() {
         return ATTR_ACCESS_TOKEN;
     }

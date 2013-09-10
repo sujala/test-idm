@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
+import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
+import com.unboundid.util.LDAPSDKUsageException;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
@@ -234,12 +238,8 @@ public abstract class LdapRepository {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected LDAPConnectionPool getAppConnPool() {
-        return connPools.getAppConnPool();
-    }
-
     protected LDAPInterface getAppInterface() {
-        return connPools.getAppConnPool();
+        return connPools.getAppConnPoolInterface();
     }
 
     protected LDAPConnectionPool getBindConnPool() {
@@ -261,16 +261,10 @@ public abstract class LdapRepository {
 
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
         try {
-
-            SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
-                    "(objectClass=*)", ATTR_NO_ATTRIBUTES);
-
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                deleteEntryAndSubtree(entry.getDN(), audit);
-            }
-
-            getAppInterface().delete(dn);
-
+            DeleteRequest deleteRequest = new DeleteRequest(dn);
+            deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
+            LDAPInterface inter = getAppInterface();
+            inter.delete(deleteRequest);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());

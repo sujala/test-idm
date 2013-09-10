@@ -2,6 +2,6 @@ package testHelpers;
 
 /**
  */
-public interface MultiStageTaskFactory<T> {
+public interface MultiStageTaskFactory<T extends MultiStageTask> {
     T createTask();
 }
