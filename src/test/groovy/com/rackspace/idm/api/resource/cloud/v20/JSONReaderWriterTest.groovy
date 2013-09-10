@@ -115,7 +115,6 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForRaxKsGroups readerForGroups = new JSONReaderForRaxKsGroups()
     @Shared JSONWriterForRaxKsGroups writerForGroups = new JSONWriterForRaxKsGroups()
 
-    @Shared JSONReaderForGroups readerForGroupsList = new JSONReaderForGroups()
     @Shared JSONWriterForGroups writerForGroupsList = new JSONWriterForGroups()
 
     @Shared JSONReaderForRaxAuthDefaultRegionServices readerForDefaultRegionServices = new JSONReaderForRaxAuthDefaultRegionServices()
@@ -1007,8 +1006,13 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.description = "description"
             it
         }
+        com.rackspacecloud.docs.auth.api.v1.Group group2 = new com.rackspacecloud.docs.auth.api.v1.Group().with {
+            it.id = "otherId"
+            it.description = "desc"
+            it
+        }
         def groupsList = new GroupsList().with {
-            it.group = [group, group].asList()
+            it.group = [group, group2].asList()
             it
         }
 
@@ -1016,12 +1020,19 @@ class JSONReaderWriterTest extends RootServiceTest {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForGroupsList.writeTo(groupsList, GroupsList.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
-        GroupsList groupsListObject = readerForGroupsList.readFrom(GroupsList.class, null, null, null, null, arrayInputStream)
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
 
         then:
-        groupsListObject != null
-        groupsListObject.group.size() == 2
+        outer.get(GROUPS) != null
+        JSONObject o = outer.get(GROUPS)
+        o != null
+        JSONArray a = o.get(VALUES)
+        a.size() == 2
+        a[0].id == "id"
+        a[0].description == "description"
+        a[1].id == "otherId"
+        a[1].description == "desc"
     }
 
     def "create read/writer for defaultRegionServices" () {
