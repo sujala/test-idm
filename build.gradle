@@ -22,12 +22,10 @@ buildscript {
 }
 
 group = 'com.rackspace'
-ext {
-    featureVersion = '2.0'
-    ldapVersion = '2.0'
-    buildVersion = System.currentTimeMillis()
-    version = "$featureVersion-$buildVersion"
-}
+featureVersion = '2.0.0'
+ldapVersion = '2.0'
+buildVersion = System.currentTimeMillis()
+version = "$featureVersion-$buildVersion"
 
 description = """idm"""
 
