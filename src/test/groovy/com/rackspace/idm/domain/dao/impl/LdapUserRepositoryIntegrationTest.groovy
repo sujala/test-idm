@@ -11,13 +11,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 1/22/13
- * Time: 10:30 AM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
@@ -41,6 +34,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         given:
         def success = false
         ldapUserRepository.config = config
+        def originalVal = config.getBoolean("user.uuid.enabled", false)
         config.setProperty("user.uuid.enabled",true)
 
         when:
@@ -49,17 +43,21 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             Long.parseLong(id)
         } catch (Exception) {
             success = true
-        } finally {
-            config.setProperty("user.uuid.enabled",false)
         }
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("user.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
+        ldapUserRepository.config = config
+        def originalVal = config.getBoolean("user.uuid.enabled", false)
+        config.setProperty("user.uuid.enabled",false)
 
         when:
         def id = ldapUserRepository.getNextId(LdapRepository.NEXT_USER_ID)
@@ -72,6 +70,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("user.uuid.enabled",originalVal)
     }
 
     def "user crud"() {

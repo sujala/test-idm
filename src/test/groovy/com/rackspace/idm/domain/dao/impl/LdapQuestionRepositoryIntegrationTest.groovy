@@ -9,13 +9,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/26/12
- * Time: 3:36 PM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapQuestionRepositoryIntegrationTest extends Specification {
 
@@ -38,6 +31,7 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
         given:
         def success = false
         ldapQuestionRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
         config.setProperty("rsid.uuid.enabled",true)
 
         when:
@@ -52,12 +46,17 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
         ldapQuestionRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
 
         when:
         def id = ldapQuestionRepository.getNextId(LdapRepository.NEXT_QUESTION_ID)
@@ -70,6 +69,9 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "question CRUD" () {

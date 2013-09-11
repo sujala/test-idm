@@ -26,6 +26,7 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
         given:
         def success = false
         groupRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
         config.setProperty("rsid.uuid.enabled",true)
 
         when:
@@ -34,18 +35,21 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
             Long.parseLong(id)
         } catch (Exception) {
             success = true
-        } finally {
-            config.setProperty("rsid.uuid.enabled",false)
         }
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
         groupRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
 
         when:
         def id = groupRepository.getNextId(LdapRepository.NEXT_GROUP_ID)
@@ -58,6 +62,10 @@ class LdapGroupRepositoryIntegrationTest extends Specification {
 
         then:
         success == true
+
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "group crud"() {

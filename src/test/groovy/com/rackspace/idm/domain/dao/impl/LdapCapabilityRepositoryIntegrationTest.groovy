@@ -10,13 +10,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/22/12
- * Time: 4:57 PM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapCapabilityRepositoryIntegrationTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
@@ -39,6 +32,7 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
         given:
         def success = false
         ldapCapabilityRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
         config.setProperty("rsid.uuid.enabled",true)
 
         when:
@@ -47,18 +41,21 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
             Long.parseLong(id)
         } catch (Exception) {
             success = true
-        } finally {
-            config.setProperty("rsid.uuid.enabled",false)
         }
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
         ldapCapabilityRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
 
         when:
         def id = ldapCapabilityRepository.getNextId(LdapRepository.NEXT_CAPABILITY_ID)
@@ -71,6 +68,9 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "CRUD capabilities"() {

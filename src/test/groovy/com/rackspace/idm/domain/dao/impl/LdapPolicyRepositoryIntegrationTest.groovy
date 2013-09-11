@@ -9,13 +9,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: rmlynch
- * Date: 6/20/13
- * Time: 10:58 AM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
     @Autowired
@@ -35,6 +28,7 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         given:
         def success = false
         repo.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
         config.setProperty("rsid.uuid.enabled",true)
 
         when:
@@ -43,18 +37,21 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
             Long.parseLong(id)
         } catch (Exception) {
             success = true
-        } finally {
-            config.setProperty("rsid.uuid.enabled",false)
         }
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
         repo.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
 
         when:
         def id = repo.getNextId(LdapRepository.NEXT_POLICY_ID)
@@ -67,6 +64,9 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "Policy create/ retrieve, delete" () {

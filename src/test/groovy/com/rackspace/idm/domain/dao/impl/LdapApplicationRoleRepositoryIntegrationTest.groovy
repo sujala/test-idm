@@ -8,13 +8,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: wmendiza
- * Date: 3/6/13
- * Time: 12:23 PM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
@@ -37,6 +30,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         given:
         def success = false
         applicationRoleDao.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
         config.setProperty("rsid.uuid.enabled",true)
 
         when:
@@ -45,18 +39,21 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             Long.parseLong(id)
         } catch (Exception) {
             success = true
-        } finally {
-            config.setProperty("rsid.uuid.enabled",false)
         }
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "getNextId returns Long"() {
         given:
         def success = false
         applicationRoleDao.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
 
         when:
         def id = applicationRoleDao.getNextId(LdapRepository.NEXT_ROLE_ID)
@@ -69,6 +66,9 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
         then:
         success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "can create a role that contains propagate flag"() {
