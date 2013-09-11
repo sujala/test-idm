@@ -37,7 +37,7 @@ def upload_schema(location=None):
     sudo('su - dsa -c "cp /tmp/RackSchema.dxc {schema}"'.format(**globals()))
 
 @roles('dxserver')
-def resort_backup():
+def restore_backup():
     sudo('su - dsa -c "cp {backup_schema} {schema}"'.format(**globals())) 
 
 def update_schema(location=None): 
@@ -46,6 +46,6 @@ def update_schema(location=None):
     execute(start_dxserver)
 
 def revert_schema(): 
-    execute(resort_backup)
+    execute(restore_backup)
     execute(stop_dxserver)
     execute(start_dxserver)
