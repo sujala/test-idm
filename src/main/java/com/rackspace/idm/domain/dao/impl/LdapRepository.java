@@ -13,6 +13,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public abstract class LdapRepository {
 
@@ -414,9 +415,26 @@ public abstract class LdapRepository {
     protected static final String NEXT_POLICY_ID = "nextPolicyId";
     protected static final String NEXT_PATTERN_ID = "nextPatternId";
 
+    protected boolean useUuidForRsId() {
+        return config.getBoolean("rsid.uuid.enabled", false);
+    }
 
+    protected boolean useUuidForUserRsId() {
+        return config.getBoolean("user.uuid.enabled", false);
+    }
+
+    protected String getUuid() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
 
     protected String getNextId(String type) {
+        if (!type.equals(NEXT_USER_ID) && useUuidForRsId()) {
+            return getUuid();
+        }
+        else if (type.equals(NEXT_USER_ID) && useUuidForUserRsId()) {
+            return getUuid();
+        }
+
         long nextId = 0;
 
         while(true) {
