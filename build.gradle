@@ -6,11 +6,9 @@ apply plugin: 'war'
 apply plugin: 'idea'
 apply plugin: 'nexus'
 apply plugin: 'sonar-runner'
+apply plugin: 'jacoco'
 
 buildscript {
-    apply from: 'jacoco.gradle'
-
-
     repositories {
         mavenCentral()
     }
@@ -408,6 +406,14 @@ sourceSets {
         groovy {
             srcDirs srcTestDelomboked
         }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination "${buildDir}/jacocoHtml"
     }
 }
 
