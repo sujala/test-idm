@@ -13,10 +13,10 @@ import java.util.List;
 @Component
 public class RegionConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
 
     @Autowired
-    Configuration config;
+    private Configuration config;
 
     @Autowired
     private JAXBObjectFactories objFactories;

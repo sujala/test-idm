@@ -21,7 +21,7 @@ import java.util.List;
 @Component
 public class UserConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
     
     private ObjectFactory objectFactory = new ObjectFactory();
 

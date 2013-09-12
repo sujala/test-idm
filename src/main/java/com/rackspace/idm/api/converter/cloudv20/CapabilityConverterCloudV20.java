@@ -23,7 +23,7 @@ import java.util.List;
 @Component
 public class CapabilityConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;

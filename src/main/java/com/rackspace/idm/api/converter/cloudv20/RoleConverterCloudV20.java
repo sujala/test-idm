@@ -18,13 +18,13 @@ import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 @Component
 public class RoleConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
 
     @Autowired
-    Configuration config;
+    private Configuration config;
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();

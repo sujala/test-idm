@@ -22,8 +22,6 @@ public class UserValidator {
     public void validate(User user) {
         if (user == null) {
             throw new BadRequestException(USER_ID_NULL_MSG);
-        //} else if (user.getNastId() != null && user.getKey() != null) {
-            //no op
         } else if (StringUtils.isBlank(user.getId())){
                 throw new BadRequestException(USER_ID_EMPTY_MSG);
         }
@@ -34,10 +32,6 @@ public class UserValidator {
         if(!alphaNumberic.matcher(username).matches()){
             throw new BadRequestException("Username has invalid characters.");
         }
-        // removed for 1.0.12 release (migration issue 12/03/2012
-        //if(!CharUtils.isAsciiAlpha(username.charAt(0))){
-        //    throw new BadRequestException("Username must begin with an alphabetic character.");
-        //}
     }
 
 }

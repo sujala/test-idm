@@ -63,8 +63,4 @@ public class AuthConverterCloudV11 {
 
         return token;
     }
-
-    private int getCloudAuthExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds");
-    }
 }

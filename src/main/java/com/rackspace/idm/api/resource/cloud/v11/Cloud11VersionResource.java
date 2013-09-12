@@ -22,20 +22,11 @@ import java.net.URISyntaxException;
 @Component
 public class Cloud11VersionResource {
 
-    private final Configuration config;
-    private final CloudClient cloudClient;
-
     @Autowired
     private DefaultCloud11Service cloud11Service;
 
     @Context
     private UriInfo uriInfo;
-
-    @Autowired
-    public Cloud11VersionResource(Configuration config, CloudClient cloudClient) {
-        this.config = config;
-        this.cloudClient = cloudClient;
-    }
 
     @GET
     public Response getCloud11VersionInfo() throws JAXBException {
