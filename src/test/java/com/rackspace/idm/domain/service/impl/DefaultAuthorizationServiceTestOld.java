@@ -67,14 +67,15 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeCloudServiceAdmin_cloudAdminRoleNotNull_doesNotResetCloudAdminRole() throws Exception {
+        ClientRole initialRole = defaultAuthorizationService.getCloudServiceAdminRole();
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setCloudServiceAdminRole(clientRole);
+        defaultAuthorizationService.setCloudServiceAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudServiceAdmin(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getCloudServiceAdminRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setCloudServiceAdminRole(null);
+        assertThat("client role", defaultAuthorizationService.getCloudServiceAdminRole(), equalTo(clientRole));
+        defaultAuthorizationService.setCloudServiceAdminRole(initialRole);
     }
 
     @Test
@@ -92,14 +93,15 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeRacker_rackerRoleNotNull_doesNotResetRackerRole() throws Exception {
+        ClientRole initialRole = defaultAuthorizationService.getRackerRole();
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setRackerRole(clientRole);
+        defaultAuthorizationService.setRackerRole(clientRole);
         ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeRacker(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getRackerRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setRackerRole(null);
+        assertThat("client role", defaultAuthorizationService.getRackerRole(), equalTo(clientRole));
+        defaultAuthorizationService.setRackerRole(initialRole);
     }
 
     @Test
@@ -116,14 +118,15 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeCloudIdentityAdmin_cloudIdentityAdminRoleNotNull_doesResetCloudIdentityAdminRole() throws Exception {
+        ClientRole initialRole = defaultAuthorizationService.getCloudIdentityAdminRole();
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setCloudIdentityAdminRole(clientRole);
+        defaultAuthorizationService.setCloudIdentityAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getCloudIdentityAdminRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setCloudIdentityAdminRole(null);
+        assertThat("client role", defaultAuthorizationService.getCloudIdentityAdminRole(), equalTo(clientRole));
+        defaultAuthorizationService.setCloudIdentityAdminRole(initialRole);
     }
 
     @Test
@@ -161,14 +164,15 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeCloudUserAdmin_cloudUserAdminRoleNotNull_doesNotResetCloudUserAdminRole() throws Exception {
+        ClientRole initialRole = defaultAuthorizationService.getCloudUserAdminRole();
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setCloudUserAdminRole(clientRole);
+        defaultAuthorizationService.setCloudUserAdminRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getCloudUserAdminRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setCloudUserAdminRole(null);
+        assertThat("client role", defaultAuthorizationService.getCloudUserAdminRole(), equalTo(clientRole));
+        defaultAuthorizationService.setCloudUserAdminRole(initialRole);
     }
 
     @Test
@@ -185,14 +189,15 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeCloudUser_cloudUserAdminRoleNotNull_doesNotResetCloudUserAdminRole() throws Exception {
+        ClientRole initialRole = defaultAuthorizationService.getCloudUserRole();
         ClientRole clientRole = new ClientRole();
-        DefaultAuthorizationService.setCloudUserRole(clientRole);
+        defaultAuthorizationService.setCloudUserRole(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        assertThat("client role", DefaultAuthorizationService.getCloudUserRole(), equalTo(clientRole));
-        DefaultAuthorizationService.setCloudUserRole(null);
+        assertThat("client role", defaultAuthorizationService.getCloudUserRole(), equalTo(clientRole));
+        defaultAuthorizationService.setCloudUserRole(initialRole);
     }
 
     @Test
@@ -203,29 +208,18 @@ public class DefaultAuthorizationServiceTestOld {
 
     @Test
     public void authorizeIdmSuperAdmin_scopeAccessNull_returnsFalse() throws Exception {
+        spy.setIdmSuperAdminRole(new ClientRole());
         doReturn(false).when(spy).authorizeCustomerIdm(null);
         assertThat("boolean",spy.authorizeIdmSuperAdmin(null),equalTo(false));
     }
 
     @Test
     public void authorizeIdmSuperAdmin_tokenExpired_returnsFalse() throws Exception {
+        spy.setIdmSuperAdminRole(new ClientRole());
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
         when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         assertThat("boolean",spy.authorizeIdmSuperAdmin(scopeAccess),equalTo(false));
-    }
-
-    @Test
-    public void authorizeIdmSuperAdmin_idmSuperAdminRoleExists_doesNotResetIdmSuperAdminRole() throws Exception {
-        ClientRole clientRole = new ClientRole();
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        DefaultAuthorizationService.setIdmSuperAdminRole(clientRole);
-        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
-        when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
-        spy.authorizeIdmSuperAdmin(scopeAccess);
-        assertThat("client role",DefaultAuthorizationService.getIdmSuperAdminRole(),equalTo(clientRole));
-        DefaultAuthorizationService.setIdmSuperAdminRole(null);
     }
 
     @Test
