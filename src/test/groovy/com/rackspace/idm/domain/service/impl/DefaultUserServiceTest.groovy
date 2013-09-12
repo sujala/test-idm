@@ -169,29 +169,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         userDao.isUsernameUnique(_) >> true
 
         when:
-        service.initialize()
         service.addUser(createUser("region", true, null, "email@email.com", 1, "nast"))
 
         then:
-        1 * config.getBoolean("user.uuid.enabled") >> false
         1 * userDao.getNextUserId() >> "100"
-        1 * userDao.addUser(_) >> { User user ->
-            assert(user.id != null)
-        }
-    }
-
-    def "addUser generates random uid for rsId"() {
-        given:
-        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("notthesame", "cloud", true)
-        userDao.isUsernameUnique(_) >> true
-
-        when:
-        service.initialize()
-        service.addUser(createUser("region", true, null, "email@email.com", 1, "nast"))
-
-        then:
-        1 * config.getBoolean("user.uuid.enabled") >> true
-        0 * userDao.getNextUserId()
         1 * userDao.addUser(_) >> { User user ->
             assert(user.id != null)
         }

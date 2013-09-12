@@ -5,18 +5,12 @@ import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.exception.StalePasswordException
 import com.unboundid.ldap.sdk.Filter
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 1/22/13
- * Time: 10:30 AM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
@@ -25,6 +19,8 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
     EncryptionService encryptionService;
 
+    @Autowired Configuration config
+
     @Shared def random
     @Shared def username
 
@@ -32,6 +28,51 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def randomness = UUID.randomUUID()
         random = ("$randomness").replace('-', "")
         username = "someName"+random
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        ldapUserRepository.config = config
+        def originalVal = config.getBoolean("user.uuid.enabled", false)
+        config.setProperty("user.uuid.enabled",true)
+
+        when:
+        def id = ldapUserRepository.getNextId(LdapRepository.NEXT_USER_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        }
+
+        then:
+        success == true
+
+        cleanup:
+        config.setProperty("user.uuid.enabled",originalVal)
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        ldapUserRepository.config = config
+        def originalVal = config.getBoolean("user.uuid.enabled", false)
+        config.setProperty("user.uuid.enabled",false)
+
+        when:
+        def id = ldapUserRepository.getNextId(LdapRepository.NEXT_USER_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
+
+        cleanup:
+        config.setProperty("user.uuid.enabled",originalVal)
     }
 
     def "user crud"() {

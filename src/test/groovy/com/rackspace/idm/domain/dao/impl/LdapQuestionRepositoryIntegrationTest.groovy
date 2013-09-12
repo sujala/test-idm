@@ -3,23 +3,19 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import com.rackspace.idm.domain.entity.Question
 import com.rackspace.idm.domain.entity.Questions
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/26/12
- * Time: 3:36 PM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapQuestionRepositoryIntegrationTest extends Specification {
 
     @Autowired
     private LdapQuestionRepository ldapQuestionRepository;
+
+    @Autowired Configuration config
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -29,6 +25,53 @@ class LdapQuestionRepositoryIntegrationTest extends Specification {
     }
 
     def cleanSpec(){
+    }
+
+    def "getNextId returns UUID"() {
+        given:
+        def success = false
+        ldapQuestionRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",true)
+
+        when:
+        def id = ldapQuestionRepository.getNextId(LdapRepository.NEXT_QUESTION_ID)
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        } finally {
+            config.setProperty("rsid.uuid.enabled",false)
+        }
+
+        then:
+        success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
+    }
+
+    def "getNextId returns Long"() {
+        given:
+        def success = false
+        ldapQuestionRepository.config = config
+        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
+        config.setProperty("rsid.uuid.enabled",false)
+
+        when:
+        def id = ldapQuestionRepository.getNextId(LdapRepository.NEXT_QUESTION_ID)
+        try {
+            Long.parseLong(id)
+            success = true
+        } catch (Exception) {
+            //no-op
+        }
+
+        then:
+        success == true
+
+        cleanup:
+        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     def "question CRUD" () {
