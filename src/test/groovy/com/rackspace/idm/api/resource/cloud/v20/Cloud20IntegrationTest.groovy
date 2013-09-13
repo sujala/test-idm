@@ -2143,6 +2143,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         addRoleResponse.status == 200
     }
 
+<<<<<<< HEAD
     def "List users for tenant should return subUsers" () {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -2179,6 +2180,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         listUsersByTenant.user.username.contains(createSub2User.username)
     }
 
+=======
+>>>>>>> D-15297
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
