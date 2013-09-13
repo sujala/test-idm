@@ -46,10 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -583,7 +580,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             boolean found = false;
             for(Tenant tenant : tenants) {
                 if(tenant != null){
-                    for (String currentId : tenant.getBaseUrlIds()) {
+                    HashSet<String> baseUrlIds = new HashSet<String>(tenant.getBaseUrlIds());
+                    for (String currentId : baseUrlIds) {
                         if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
                             tenant.getBaseUrlIds().remove(String.valueOf(baseUrl.getBaseUrlId()));
                             if(tenant.getV1Defaults().contains(currentId)){
