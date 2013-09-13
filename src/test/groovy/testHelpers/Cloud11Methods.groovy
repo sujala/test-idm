@@ -72,6 +72,10 @@ class Cloud11Methods {
         resource.path(path11).path("users").path(username).path("baseURLRefs").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrlRefs).post(ClientResponse)
     }
 
+    def deleteBaseUrlRefs(String username, String baseUrlRefsId) {
+        resource.path(path11).path("users").path(username).path("baseURLRefs").path(baseUrlRefsId).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
     def baseEncoding(String username, String password) {
         return Base64.encode(username + ":" + password);
     }

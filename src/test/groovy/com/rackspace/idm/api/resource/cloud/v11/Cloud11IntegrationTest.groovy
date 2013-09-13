@@ -236,6 +236,37 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         baseUrlRefResponse.status == 201 //should be a 200
     }
 
+    def "Add/Remove baseUrlRef from a user" () {
+       given:
+        def username = "addRemoveBaseUrlRefUser$sharedRandom"
+        def mossoId = -2234567
+        def baseURLId = 22345678
+        User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def deleteBaseUrlRefResponse = cloud11.deleteBaseUrlRefs(username, baseUrlRef.id.toString())
+
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        cloud20.destroyUser(serviceAdminToken, getUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
+
+        then:
+        createdUser != null
+        createdUser.mossoId == mossoId
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201 //should be a 200
+        deleteBaseUrlRefResponse.status == 204
+    }
+
     def authAndExpire(username, key) {
         def token = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).token
         cloud11.revokeToken(token.id)
