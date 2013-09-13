@@ -24,8 +24,9 @@ public class LoggerMBeanTest {
 
     @Test
     public void getLogLevel_setLogLevel() throws Exception {
-        assertThat("logger level",loggerMBean.getLogLevel(),equalTo("INFO"));
+        String initialLogLevel =  loggerMBean.getLogLevel();
         loggerMBean.setLogLevel("WARN");
         assertThat("logger level",loggerMBean.getLogLevel(),equalTo("WARN"));
+        loggerMBean.setLogLevel(initialLogLevel);
     }
 }
