@@ -2144,6 +2144,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> D-15065:List users for tenant returns empty list - only after the users are created and assigning tenant role
     def "List users for tenant should return subUsers" () {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -2180,8 +2183,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         listUsersByTenant.user.username.contains(createSub2User.username)
     }
 
+<<<<<<< HEAD
 =======
 >>>>>>> D-15297
+=======
+>>>>>>> D-15065:List users for tenant returns empty list - only after the users are created and assigning tenant role
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
