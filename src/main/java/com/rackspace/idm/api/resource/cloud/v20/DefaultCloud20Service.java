@@ -2606,8 +2606,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
-            Group group = groupService.getGroupById(groupId);
+            Group group = groupService.checkAndGetGroupById(groupId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
@@ -2641,7 +2640,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateKsGroup(group);
-            validator20.validateGroupId(groupId);
 
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
@@ -2660,7 +2658,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
             groupService.deleteGroup(groupId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2673,7 +2670,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
-            validator20.validateGroupId(groupId);
             Group group = groupService.checkAndGetGroupById(groupId);
 
             User user = userService.checkAndGetUserById(userId);
@@ -2705,7 +2701,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
-            validator20.validateGroupId(groupId);
             Group group = groupService.checkAndGetGroupById(groupId);
 
             if (userId == null || userId.trim().isEmpty()) {
@@ -2744,7 +2739,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, Integer marker, Integer limit)  {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
             groupService.checkAndGetGroupById(groupId);
             Iterable<User> users = userService.getUsersByGroupId(groupId);
 

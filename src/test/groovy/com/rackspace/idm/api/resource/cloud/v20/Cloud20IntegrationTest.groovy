@@ -825,19 +825,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup(null, "this is a group")),
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup("", "this is a group")),
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup("group", null)),
-                cloud20.addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
                 cloud20.addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
                 cloud20.removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
     }
 
-    def "invalid operations on create/update group returns 'not found'"() {
+    def "invalid operations on get/create/update group returns 'not found'"() {
         expect:
         response.status == 404
 
         where:
         response << [
                 cloud20.addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
+                cloud20.addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+                cloud20.getGroupById(serviceAdminToken, "doesnotexist"),
         ]
     }
 
