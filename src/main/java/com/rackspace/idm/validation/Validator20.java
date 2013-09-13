@@ -150,14 +150,6 @@ public class Validator20 {
         }
     }
 
-    public void validateGroupId(String groupId) {
-        try {
-          Integer.parseInt(groupId.trim());
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid group id");
-        }
-    }
-
     public void validateTenantIdInRoles(String tenantId, List<TenantRole> roles) {
         if (!StringUtils.isBlank(tenantId) && !tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
             String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", tenantId);

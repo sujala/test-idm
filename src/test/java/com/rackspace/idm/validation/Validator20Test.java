@@ -529,55 +529,6 @@ public class Validator20Test {
     }
 
     @Test
-    public void validateGroupId_validGroupId() {
-        validator20.validateGroupId("1");
-    }
-
-    @Test
-    public void validateGroupId_validGroupIdWithSpaces_succeeds() {
-        validator20.validateGroupId("  1   ");
-    }
-
-    @Test
-    public void validateGroupId_nonNumericGroupId_throwsBadRequest() {
-        try{
-            validator20.validateGroupId("a");
-            assertTrue("should throw exception",false);
-        }catch (BadRequestException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test
-    public void validateGroupId_inValidGroupId_throwBadRequest() {
-        try {
-            validator20.validateGroupId(" ");
-            assertTrue("should throw exception",false);
-        } catch (BadRequestException e) {
-            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test
-    public void validateGroupId_inValidGroupIdWithSpaces_throwBadRequest() {
-        try {
-            validator20.validateGroupId(" a ");
-        } catch (Exception e) {
-            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test
-    public void validateGroupId_groupIdIsNull_throwsBadRequest() throws Exception {
-        try{
-            validator20.validateGroupId(null);
-            assertTrue("should throw exception",false);
-        }catch (BadRequestException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test
     public void validateTenantIdInRoles_tenantIdBlankAndContainedInTenantRoles_succeeds() throws Exception {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         when(tenantService.isTenantIdContainedInTenantRoles("",roles)).thenReturn(true);
