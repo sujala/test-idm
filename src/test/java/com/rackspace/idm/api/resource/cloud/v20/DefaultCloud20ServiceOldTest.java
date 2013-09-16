@@ -2998,6 +2998,7 @@ public class DefaultCloud20ServiceOldTest {
     public void updateUser_callsUserService_updateUserById() throws Exception {
         userOS.setId(userId);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
         verify(userService).updateUser(any(User.class), anyBoolean());
@@ -3009,6 +3010,7 @@ public class DefaultCloud20ServiceOldTest {
         user.setId(userId);
         userOS.setId(userId);
         ScopeAccess scopeAccess = new ScopeAccess();
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
@@ -3024,6 +3026,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
         verify(scopeAccessService).getScopeAccessForUser(user);
@@ -3038,6 +3041,7 @@ public class DefaultCloud20ServiceOldTest {
         UserScopeAccess scopeAccessForUserAdmin = new UserScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(scopeAccessForUserAdmin);
         when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
         doReturn(true).when(userService).isUsernameUnique(anyString());
@@ -3062,6 +3066,7 @@ public class DefaultCloud20ServiceOldTest {
         userOS.setUsername("username");
         ScopeAccess scopeAccess = new ScopeAccess();
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
@@ -3100,35 +3105,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdMatch_returns200() throws Exception {
-        userOS.setEnabled(false);
-        User user1 = new User();
-        user1.setId("123");
-        userOS.setId("123");
-        user.setId("123");
-        User user2 = new User();
-        user2.setId("456");
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        when(userService.checkAndGetUserById("123")).thenReturn(user1);
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user).thenReturn(user2);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, "123", userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void updateUser_cloudUserAdminIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(userService).getUserByAuthToken(authToken);
-    }
-
-    @Test
     public void updateUser_userIdUserAdmin_callsDefaultRegionService() throws Exception {
         User user = new User();
         user.setRegion("region");
@@ -3146,19 +3122,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(true).when(userService).isUsernameUnique(anyString());
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void updateUser_cloudUserAdminIsTrue_callsVerifyDomain() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(authorizationService).verifyDomain(user, user);
     }
 
     @Test

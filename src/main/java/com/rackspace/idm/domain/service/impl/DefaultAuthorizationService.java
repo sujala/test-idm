@@ -43,7 +43,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         cloudIdentityAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
         cloudUserAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
         cloudUserRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-        cloudUserManagedRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudUserManagedRole());
+        cloudUserManagedRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserManagedRole());
         rackerRole = applicationService.getClientRoleByClientIdAndRoleName(getIdmClientId(), "Racker");
     }
 
@@ -396,6 +396,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
         this.idmSuperAdminRole = idmSuperAdminRole;
     }
 
+    public ClientRole getCloudUserManagedRole() {
+        return cloudUserManagedRole;
+    }
+
+    public void setCloudUserManagedRole(ClientRole cloudUserManagedRole) {
+        this.cloudUserManagedRole = cloudUserManagedRole;
+    }
+
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
@@ -432,7 +440,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return config.getString("cloudAuth.userRole");
     }
 
-    private String getCloudUserManagedRole() {
+    private String getCloudAuthUserManagedRole() {
         return config.getString("cloudAuth.userManagedRole");
     }
 
