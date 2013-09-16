@@ -72,11 +72,13 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
-        cloud11.deleteUser(username)
-        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
 
         then:
         authResponse.status == 200
+
+        cleanup:
+        cloud11.deleteUser(username)
+        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
     }
 
     def "CRUD user v1.1"() {
@@ -90,11 +92,8 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def getUserResponse = cloud11.getUserByName(username)
         def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
         def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
-
         def updateUserResponse = cloud11.updateUser(username, userForUpdate)
-        def deleteUserResponse = cloud11.deleteUser(username)
-        def hardDeleteUserResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
+
 
         then:
         userCreateResponse.status == 201
@@ -117,9 +116,10 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         updateUser.mossoId == randomMosso+1
         updateUser.enabled == true
 
-        deleteUserResponse.status == 204
-        hardDeleteUserResponse.status == 204
-        deleteTenantResponse.status == 204
+        cleanup:
+        cloud11.deleteUser(username)
+        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
+        cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
     def "Create User with existing mosso should return a 400"() {
@@ -134,9 +134,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         user.id = "userExistingMosso2"
         def userCreateNewNameResponse = cloud11.createUser(user)
 
-        def deleteUserResponse = cloud11.deleteUser(username)
-        def hardDeleteUserResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
-        def deleteTenantResponse = cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
+
 
         then:
         userCreateResponse.status == 201
@@ -147,9 +145,10 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         userCreateNewNameResponse.status == 400
 
-        deleteUserResponse.status == 204
-        hardDeleteUserResponse.status == 204
-        deleteTenantResponse.status == 204
+        cleanup:
+        cloud11.deleteUser(username)
+        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
+        cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
     def "Don't allow disabled identity/service admin to get/create user"() {
@@ -194,9 +193,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def expTwo = authAndExpire(username, key)
         def expThree = authAndExpire(username, key)
         def endTime = new DateTime()
-
         def range = getRange(defaultExpirationSeconds, startTime, endTime)
-        cloud20.hardDeleteUser(serviceAdminToken, userId)
 
         then:
         expOne <= range.get("max")
@@ -205,13 +202,17 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         expTwo >= range.get("min")
         expThree <= range.get("max")
         expThree >= range.get("min")
+
+        cleanup:
+        cloud20.hardDeleteUser(serviceAdminToken, userId)
+
     }
 
     def "Allow baseUrls to be assigned to negative tenants" () {
         given:
         def username = "testNegativeTenantUser$sharedRandom"
-        def mossoId = -1234567
-        def baseURLId = 12345678
+        def mossoId = -1 * getRandomNumber(1000000, 2000000);
+        def baseURLId = getRandomNumber(1000000, 2000000)
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
         def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
@@ -221,26 +222,27 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def createdUser = cloud11.createUser(user).getEntity(User)
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
         def baseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
-
         def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
-        cloud20.destroyUser(serviceAdminToken, getUser.id)
-        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
-        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
-        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
-        cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
 
         then:
         createdUser != null
         createdUser.mossoId == mossoId
         baseUrlResponse.status == 201
         baseUrlRefResponse.status == 201 //should be a 200
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, getUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
     }
 
     def "Add/Remove baseUrlRef from a user" () {
        given:
         def username = "addRemoveBaseUrlRefUser$sharedRandom"
-        def mossoId = -2234567
-        def baseURLId = 22345678
+        def mossoId = -1 * getRandomNumber(1000000, 2000000);
+        def baseURLId = getRandomNumber(1000000, 2000000)
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
         def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
@@ -253,11 +255,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def deleteBaseUrlRefResponse = cloud11.deleteBaseUrlRefs(username, baseUrlRef.id.toString())
 
         def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
-        cloud20.destroyUser(serviceAdminToken, getUser.id)
-        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
-        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
-        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
-        cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
 
         then:
         createdUser != null
@@ -265,6 +262,13 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         baseUrlResponse.status == 201
         addBaseUrlRefResponse.status == 201 //should be a 200
         deleteBaseUrlRefResponse.status == 204
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, getUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
     }
 
     def authAndExpire(username, key) {

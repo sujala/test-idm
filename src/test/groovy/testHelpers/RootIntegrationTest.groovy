@@ -113,4 +113,9 @@ class RootIntegrationTest extends Specification {
         }
         return null
     }
+
+    def getRandomNumber(Integer min, Integer max){
+        Random r = new Random();
+        return r.nextInt(max - min) + min;
+    }
 }
