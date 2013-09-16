@@ -81,9 +81,6 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
         when:
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = roleName
-            it.propagate = propagate
-            it.weight = weight
-            it.otherAttributes = null
             return it
         }
         def response = cloud20.createRole(specificationServiceAdminToken, role)
@@ -474,9 +471,6 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
     def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = roleName
-            it.propagate = propagate
-            it.weight = weight
-            it.otherAttributes = null
             return it
         }
         def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)
