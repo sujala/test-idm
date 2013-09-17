@@ -246,13 +246,9 @@ public final class JsonWriterHelper {
             }
         }
 
-        if (user.getOtherAttributes().size() != 0) {
-            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
-            if (!StringUtils.isEmpty(defaultRegion)) {
-                userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
-            } else {
-                userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
-            }
+        String defaultRegion = user.getDefaultRegion();
+        if (!StringUtils.isEmpty(defaultRegion)) {
+            userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
         } else {
             userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
         }
