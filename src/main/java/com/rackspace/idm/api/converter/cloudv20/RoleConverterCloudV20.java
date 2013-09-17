@@ -39,6 +39,7 @@ public class RoleConverterCloudV20 {
                 for (String tenantId : role.getTenantIds()) {
                     Role jaxbRole = mapper.map(role, Role.class);
                     jaxbRole.setTenantId(tenantId);
+                    jaxbRoles.getRole().add(jaxbRole);
                 }
             } else {
                 Role jaxbRole = mapper.map(role, Role.class);
