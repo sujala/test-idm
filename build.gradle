@@ -255,12 +255,9 @@ test {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpFile = file("$buildDir/jacoco/classpathdumps")
     }
-<<<<<<< HEAD
 
     // show standard out and standard error of the test JVM(s) on the console. Useful for debugging tests that fail via gradle build only
     //testLogging.showStandardStreams = true
-=======
->>>>>>> Fixing Sonar with JaCoCo and minor cleanup in tests
 }
 
 jettyRun {
