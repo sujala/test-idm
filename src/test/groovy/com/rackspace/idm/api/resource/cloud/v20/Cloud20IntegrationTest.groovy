@@ -2179,6 +2179,35 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         listUsersByTenant.user.username.contains(createSub2User.username)
     }
 
+    def "Authenticate Response returns user roles" () {
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "listUserByTenant$random"
+        def tenantId = getRandomNumber(7000000, 8000000)
+        def tenant = v2Factory.createTenant(tenantId.toString(), tenantId.toString())
+        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+
+        when:
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id)
+        AuthenticateResponse authResponse = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value
+
+        then:
+        createUser != null
+        authResponse.user.roles != null
+        authResponse.user.roles.role.size() == 2
+        authResponse.user.roles.role.name.contains(role.name)
+        authResponse.user.roles.role.name.contains("identity:user-admin")
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
