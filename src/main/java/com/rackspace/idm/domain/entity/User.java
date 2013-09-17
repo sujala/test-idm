@@ -237,14 +237,6 @@ public class User implements Auditable, UniqueId {
     public User() {
     }
 
-    public Locale getPreferredLangObj() {
-        return UserLocale.parseLocale(preferredLang);
-    }
-
-    public DateTimeZone getTimeZoneObj() {
-        return DateTimeZone.forID(timeZoneId);
-    }
-
     public boolean isDisabled() {
     	return this.enabled == null || !this.enabled;
     }

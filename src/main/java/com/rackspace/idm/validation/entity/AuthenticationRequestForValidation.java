@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation.entity;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
@@ -12,7 +13,8 @@ import java.util.Map;
 
 import static com.rackspace.idm.validation.entity.Constants.MAX;
 
-@Data
+@Getter
+@Setter
 public class AuthenticationRequestForValidation {
     @Size(max = MAX)
     protected String tenantId;

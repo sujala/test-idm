@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation.entity;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -13,7 +14,8 @@ import java.util.List;
  * Time: 5:41 PM
  * To change this template use File | Settings | File Templates.
  */
-@Data
+@Getter
+@Setter
 public class DefaultRegionServicesForValidation {
     protected List<String> serviceName;
 

@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.exception.StalePasswordException
 import com.unboundid.ldap.sdk.Filter
 import org.apache.commons.configuration.Configuration
+import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -79,16 +80,37 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         given:
         String rsId = random
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+        User user1 = new User()
+        User user2 = new User()
 
         when:
         ldapUserRepository.addUser(user)
-        def retrivedUser = ldapUserRepository.getUserByUsername(username)
-        ldapUserRepository.deleteUser(retrivedUser);
+        def retrievedUser = ldapUserRepository.getUserByUsername(username)
+        def retrievedUser2 = ldapUserRepository.getUserByUsername(username)
+        ldapUserRepository.deleteUser(retrievedUser);
+        ldapUserRepository.deleteUser(retrievedUser2);
         def deletedUser = ldapUserRepository.getUserByUsername(username)
 
         then:
-        retrivedUser != null
+        retrievedUser != null
         deletedUser == null
+
+        user1.equals(user2)
+        !user1.equals(retrievedUser)
+        !retrievedUser.equals(user1)
+        retrievedUser.equals(retrievedUser2)
+
+        user1.hashCode() == user2.hashCode()
+        user1.hashCode() != retrievedUser.hashCode()
+        retrievedUser.hashCode() == retrievedUser2.hashCode()
+
+        retrievedUser.getPasswordLastUpdated() != null
+        retrievedUser.getUserPassword() != null
+        retrievedUser.isPasswordWasSelfUpdated() == false
+        retrievedUser.getSoftDeletedTimestamp() == null
+        retrievedUser.getPasswordFailureDate() == null
+        retrievedUser.getSecureId() != null
+        retrievedUser.getRsGroupDN() == null
     }
 
     def "retrieving users in a domain returns all users within the domain"() {
@@ -283,6 +305,23 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
+            it.apiKey = "key"
+            it.country = "country"
+            it.customerId = "customerId"
+            it.displayName = "displayName"
+            it.firstname = "first"
+            it.lastname = "last"
+            it.middlename = "middle"
+            it.mossoId = 0
+            it.nastId = "nastId"
+            it.personId = "personId"
+            it.preferredLang = "en_US"
+            it.timeZoneId = "American/Chicago"
+            it.secureId = "secureId"
+            it.secretAnswer = "answer"
+            it.secretQuestion = "question"
+            it.secretQuestionId = "id"
+
             it.id = id
             it.username = username
             it.domainId = domainId

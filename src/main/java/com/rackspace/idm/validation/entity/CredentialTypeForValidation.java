@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation.entity;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.Size;
 
@@ -13,7 +14,8 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
  * Time: 9:23 AM
  * To change this template use File | Settings | File Templates.
  */
-@Data
+@Getter
+@Setter
 public class CredentialTypeForValidation {
     @Size(max = MAX)
     protected String username;
