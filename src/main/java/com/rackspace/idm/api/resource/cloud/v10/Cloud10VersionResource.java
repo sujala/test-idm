@@ -64,24 +64,16 @@ public class Cloud10VersionResource {
     public static final String CACHE_CONTROL = "Cache-Control";
 
     private final Configuration config;
-    private final CloudClient cloudClient;
     private final ScopeAccessService scopeAccessService;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
     private final UserService userService;
 
     @Autowired
-    private EndpointService endpointService;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
     public Cloud10VersionResource(Configuration config,
-        CloudClient cloudClient, ScopeAccessService scopeAccessService,
+        ScopeAccessService scopeAccessService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
         UserService userService) {
         this.config = config;
-        this.cloudClient = cloudClient;
         this.scopeAccessService = scopeAccessService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.userService = userService;
@@ -126,7 +118,6 @@ public class Cloud10VersionResource {
                     List<Endpoint> endpoints = service.getEndpoint();
                     addValuetoHeather(HEADER_STORAGE_URL, endpoints.get(0).getPublicURL(), builder);
                     builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
-                   // addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoints.get(0).getInternalURL(), builder);
                 }
 
                 if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName())) {
@@ -169,13 +160,5 @@ public class Cloud10VersionResource {
         if (!StringUtils.isEmpty(value)) {
             builder.header(headerName, value);
         }
-    }
-
-    public void setTenantService(TenantService tenantService) {
-        this.tenantService = tenantService;
-    }
-
-    public void setEndpointService(EndpointService endpointService) {
-        this.endpointService = endpointService;
     }
 }

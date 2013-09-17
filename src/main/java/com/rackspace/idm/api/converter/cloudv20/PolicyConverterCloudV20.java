@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PolicyConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;

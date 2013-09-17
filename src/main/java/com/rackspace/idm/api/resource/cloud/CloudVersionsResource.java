@@ -4,7 +4,6 @@ import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource;
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
 import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
-import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,24 +28,20 @@ import java.io.StringReader;
 @Component
 public class CloudVersionsResource {
 
-    private final CloudClient cloudClient;
     private final Cloud10VersionResource cloud10VersionResource;
     private final Cloud11VersionResource cloud11VersionResource;
     private final Cloud20VersionResource cloud20VersionResource;
-    private final Configuration config;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
                                  Cloud11VersionResource cloud11VersionResource,
-                                 Cloud20VersionResource cloud20VersionResource, Configuration config,
-                                 CloudContractDescriptionBuilder cloudContractDescriptionBuilder, CloudClient cloudClient) {
+                                 Cloud20VersionResource cloud20VersionResource,
+                                 CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.cloud10VersionResource = cloud10VersionResource;
         this.cloud11VersionResource = cloud11VersionResource;
         this.cloud20VersionResource = cloud20VersionResource;
-        this.config = config;
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
-        this.cloudClient = cloudClient;
     }
 
     @GET

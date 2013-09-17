@@ -22,8 +22,7 @@ import java.util.List;
 @Component
 public class TokenConverterCloudV20 {
     @Autowired
-    Mapper mapper;
-
+    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -82,26 +81,6 @@ public class TokenConverterCloudV20 {
         }
         return null;
     }
-
-    //TODO: This is if the XSD is to be a list for tenants
-    /*
-    private List<TenantForAuthenticateResponse> toTenantsForAuthenticateResponse(List<TenantRole> tenantRoleList) {
-        List<TenantForAuthenticateResponse> tenantForAuthenticateResponseList = new ArrayList<TenantForAuthenticateResponse>();
-
-        for(TenantRole tenant : tenantRoleList) {
-            if(tenant.getTenantIds() != null) {
-                String[] tenantIds = tenant.getTenantIds();
-                for(int i=0; i < tenantIds.length; i++){
-                    TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
-                    tenantForAuthenticateResponse.setId(tenantIds[i]);
-                    tenantForAuthenticateResponse.setName(tenantIds[i]);
-                    tenantForAuthenticateResponseList.add(tenantForAuthenticateResponse);
-                }
-            }
-        }
-        return tenantForAuthenticateResponseList;
-    }
-    */
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;

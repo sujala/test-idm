@@ -125,7 +125,7 @@ public class CloudClient {
 
     Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody) {
         try {
-            Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
+            Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
                 if (key.equalsIgnoreCase("location")) {

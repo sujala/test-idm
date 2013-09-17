@@ -88,9 +88,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     private NastFacade nastFacade;
 
     @Autowired
-    private GroupService userGroupService;
-
-    @Autowired
     private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
@@ -530,16 +527,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-//	void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
-//		if (baseUrl.getDef()) {
-//		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
-//		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-//		    } else if (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) {
-//		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-//		    }
-//		}
-//	}
-
     private boolean isUkCloudRegion() {
         return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
@@ -571,11 +558,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", baseURLId, userId));
             }
 
-            String tenantId;
-            //if (baseUrl.getBaseUrlType().equals("NAST"))
-                tenantId = user.getNastId();
-            //else
-                String tenantId2 = String.valueOf(user.getMossoId());
+            String tenantId = user.getNastId();
+            String tenantId2 = String.valueOf(user.getMossoId());
+
             Tenant[] tenants = new Tenant[2];
             tenants[0] = this.tenantService.getTenant(tenantId);
             tenants[1] = this.tenantService.getTenant(tenantId2);
@@ -849,7 +834,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            User user = userService.getUser(userName); //this.checkAndGetUser(userID);
+            User user = userService.getUser(userName);
             if (user == null) {
                 String errMsg = String.format("User not found :%s", userName);
                 throw new NotFoundException(errMsg);
@@ -1260,23 +1245,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
-            /*
-            } else if (value instanceof PasswordCredentials) {
-                username = ((PasswordCredentials) value).getUsername();
-                String password = ((PasswordCredentials) value).getPassword();
-                user = userService.getUser(username);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, cloudAuthClientId);
-            } else if (value instanceof MossoCredentials) {
-                int mossoId = ((MossoCredentials) value).getMossoId();
-                String key = ((MossoCredentials) value).getKey();
-                user = userService.getUserByMossoId(mossoId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
-            } else if (value instanceof NastCredentials) {
-                String nastId = ((NastCredentials) value).getNastId();
-                String key = ((NastCredentials) value).getKey();
-                user = userService.getUserByNastId(nastId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
-            */
             }
 
             if (user == null) {
@@ -1286,7 +1254,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
-            //List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -1303,7 +1270,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private ResponseBuilder handleRedirect(String path) {
         try {
-            Response.ResponseBuilder builder = Response.status(302); //.header("Location", uri);
+            Response.ResponseBuilder builder = Response.status(302);
             builder.header("Location", config.getString("ga.endpoint") + path);
             return builder;
         } catch (Exception ex) {
@@ -1363,10 +1330,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
-    }
-
-    public void setUserGroupService(GroupService userGroupService) {
-        this.userGroupService = userGroupService;
     }
 
     public void setCloudGroupService(GroupService cloudGroupService) {

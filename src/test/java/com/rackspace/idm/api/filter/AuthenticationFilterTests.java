@@ -52,8 +52,6 @@ public class AuthenticationFilterTests {
         userService = mock(UserService.class);
         configuration = mock(Configuration.class);
         authenticationFilterWithMock = new AuthenticationFilter(scopeAccessServiceMock);
-        authenticationFilterWithMock.setUserService(userService);
-        authenticationFilterWithMock.setConfig(configuration);
     }
 
     @Test

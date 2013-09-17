@@ -154,7 +154,6 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.setAuthorizationService(authorizationService);
         defaultCloud11Service.setAtomHopperClient(atomHopperClient);
         defaultCloud11Service.setCloudGroupService(cloudGroupService);
-        defaultCloud11Service.setUserGroupService(userGroupService);
         defaultCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         defaultCloud11Service.setCredentialValidator(credentialValidator);
         defaultCloud11Service.setCloudContractDescriptionBuilder(cloudContratDescriptionBuilder);
