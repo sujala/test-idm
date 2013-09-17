@@ -1241,6 +1241,7 @@ class JSONReaderWriterTest extends RootServiceTest {
             it
         }
         def user = v2Factory.createUserForAuthenticateResponse("id", "name", roles)
+        user.defaultRegion = "defaultRegion"
         def authResponse = v2Factory.createAuthenticateResponse(token, sc, user)
 
         when:
@@ -1256,6 +1257,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         JSONObject t = o.get(TOKEN)
         t.get(ID) == "id"
         JSONObject u = o.get(USER)
+        u.get(RAX_AUTH_DEFAULT_REGION) == "defaultRegion"
         u.get(NAME) == "name"
     }
 
