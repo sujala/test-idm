@@ -21,8 +21,8 @@ import testHelpers.RootIntegrationTest
 abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String SERVICE_ADMIN_USERNAME = "authQE";
-    private static final String SERVICE_ADMIN_PWD = "Auth1234"
+    public static final String SERVICE_ADMIN_USERNAME = "authQE";
+    public static final String SERVICE_ADMIN_PWD = "Auth1234"
 
     public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
     public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
