@@ -22,11 +22,6 @@
 		<param-value>file:${idm.properties.location}/log4j.xml</param-value>
 	</context-param>
 
-    <context-param>
-        <param-name>contextConfigLocation</param-name>
-        <param-value>classpath:/app-config.xml</param-value>
-    </context-param>
-
     <listener>  
         <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>  
     </listener> 
