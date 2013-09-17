@@ -18,11 +18,10 @@ import java.util.List;
 @Component
 public class TenantConverterCloudV20 {
     @Autowired
-    Mapper mapper;
+    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
-    private Logger logger = LoggerFactory.getLogger(TenantConverterCloudV20.class);
 
     public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenantEntity) {
         return mapper.map(tenantEntity, Tenant.class);

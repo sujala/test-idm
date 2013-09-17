@@ -32,7 +32,7 @@ public class Cloud11VersionResourceTest {
         // setup
         config = mock(Configuration.class);
         cloudClient = mock(CloudClient.class);
-        cloudV11VersionResource = new Cloud11VersionResource(config, cloudClient);
+        cloudV11VersionResource = new Cloud11VersionResource();
 
         // mocks
         cloud11Service = mock(DefaultCloud11Service.class);

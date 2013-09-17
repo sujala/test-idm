@@ -221,7 +221,7 @@ class V2Factory {
             it.description = "desc"
             it.propagate = propagate
             it.weight = weight
-            it.otherAttributes = other
+            it.otherAttributes = otherAttributes
             return it
         }
     }

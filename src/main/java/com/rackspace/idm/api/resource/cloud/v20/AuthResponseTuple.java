@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class AuthResponseTuple {
-    User user;
-    UserScopeAccess userScopeAccess;
-    ImpersonatedScopeAccess impersonatedScopeAccess;
+    private User user;
+    private UserScopeAccess userScopeAccess;
+    private ImpersonatedScopeAccess impersonatedScopeAccess;
 }

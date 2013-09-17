@@ -20,14 +20,6 @@ public class TenantConverter {
     private final ObjectFactory objectFactory = new ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(TenantConverter.class);
 
-//    @Autowired
-//    private JAXBObjectFactories OBJ_FACTORIES;
-
-    /*
-     com.rackspace.api.idm.v1.Tenant
-     com.rackspace.idm.domain.entity.Tenant
-     */
-
     public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenant) {
         Tenant jaxbTenant = objectFactory.createTenant();
         jaxbTenant.setDescription(tenant.getDescription());

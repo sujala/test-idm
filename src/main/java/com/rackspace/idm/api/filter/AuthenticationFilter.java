@@ -45,12 +45,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     @Autowired
     private ScopeAccessService scopeAccessService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private Configuration config;
-
     AuthenticationFilter() {
 
     }
@@ -167,14 +161,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
     }
 
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {

@@ -236,6 +236,11 @@ idea {
     }
 }
 
+jacoco {
+    toolVersion = "0.6.2.201302030002"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
 test {
     // set heap size for the test JVM(s)
     minHeapSize = "128m"
@@ -244,6 +249,12 @@ test {
     // set JVM arguments for the test JVM(s)
     jvmArgs '-XX:MaxPermSize=1024m'
     systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/OPENLDAP')
+
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpFile = file("$buildDir/jacoco/classpathdumps")
+    }
 
     // show standard out and standard error of the test JVM(s) on the console. Useful for debugging tests that fail via gradle build only
     //testLogging.showStandardStreams = true

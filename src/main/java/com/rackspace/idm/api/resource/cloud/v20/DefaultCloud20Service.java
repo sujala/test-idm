@@ -593,8 +593,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (user.getPassword() != null) {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
+
             User retrievedUser = userService.checkAndGetUserById(userId);
             boolean isDisabled = retrievedUser.isDisabled();
+
             if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
@@ -605,33 +607,41 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            User caller = userService.getUserByAuthToken(authToken);
+            boolean isUpdatingSelf = caller.getId().equals(userId);
+            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
+            boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
 
-            if (!callerHasUserManageRole && authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
-                User caller = userService.getUserByAuthToken(authToken);
-                if (!caller.getId().equals(retrievedUser.getId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
-            }
-
-            if (callerIsUserAdmin || callerHasUserManageRole) {
-                User caller = userService.getUserByAuthToken(authToken);
-                authorizationService.verifyDomain(caller, retrievedUser);
-            }
-            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) ||
-                    (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
+            //identity admins can not update service admin accounts
+            if (callerIsIdentityAdmin && authorizationService.hasServiceAdminRole(retrievedUser)) {
                 throw new ForbiddenException("Cannot update user with same or higher access level");
             }
+
+            //sub users who are not user-managers can only update their own accounts.
+            if (callerIsSubUser && !callerHasUserManageRole && !isUpdatingSelf) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            //user admins and user managers can only update accounts within their domain
+            if (callerIsUserAdmin || callerHasUserManageRole) {
+                authorizationService.verifyDomain(caller, retrievedUser);
+            }
+
+            //user managers can not update other user managers or the user admin
+            if (callerHasUserManageRole &&
+                    (authorizationService.hasUserManageRole(retrievedUser)
+                        || authorizationService.hasUserAdminRole(retrievedUser))) {
+                throw new ForbiddenException("Cannot update user with same or higher access level");
+            }
+
             if (!StringUtils.isBlank(user.getUsername())) {
                 validator.isUsernameValid(user.getUsername());
             }
 
-            if (!user.isEnabled()) {
-                User caller = userService.getUserByAuthToken(authToken);
-                if (caller.getId().equals(userId)) {
-                    throw new BadRequestException("User cannot enable/disable his/her own account.");
-                }
+            if (!user.isEnabled() && isUpdatingSelf) {
+                throw new BadRequestException("User cannot enable/disable his/her own account.");
             }
 
             User userDO = this.userConverterCloudV20.fromUser(user);
@@ -2606,8 +2616,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
-            Group group = groupService.getGroupById(groupId);
+            Group group = groupService.checkAndGetGroupById(groupId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
@@ -2641,7 +2650,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateKsGroup(group);
-            validator20.validateGroupId(groupId);
 
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
@@ -2660,7 +2668,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
             groupService.deleteGroup(groupId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2673,7 +2680,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
-            validator20.validateGroupId(groupId);
             Group group = groupService.checkAndGetGroupById(groupId);
 
             User user = userService.checkAndGetUserById(userId);
@@ -2705,7 +2711,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
-            validator20.validateGroupId(groupId);
             Group group = groupService.checkAndGetGroupById(groupId);
 
             if (userId == null || userId.trim().isEmpty()) {
@@ -2744,7 +2749,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, Integer marker, Integer limit)  {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateGroupId(groupId);
             groupService.checkAndGetGroupById(groupId);
             Iterable<User> users = userService.getUsersByGroupId(groupId);
 

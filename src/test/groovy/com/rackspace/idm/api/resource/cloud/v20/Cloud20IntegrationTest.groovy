@@ -178,9 +178,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         def role = v2Factory.createRole(true, 500).with {
             it.name = "propagatingRole$sharedRandom"
-            it.propagate = true
-            it.weight = 500
-            it.otherAttributes = null
             return it
         }
         def responsePropagateRole = cloud20.createRole(serviceAdminToken, role)
@@ -825,19 +822,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup(null, "this is a group")),
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup("", "this is a group")),
                 cloud20.updateGroup(serviceAdminToken, group.getId(), v1Factory.createGroup("group", null)),
-                cloud20.addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
                 cloud20.addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
                 cloud20.removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
     }
 
-    def "invalid operations on create/update group returns 'not found'"() {
+    def "invalid operations on get/create/update group returns 'not found'"() {
         expect:
         response.status == 404
 
         where:
         response << [
                 cloud20.addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
+                cloud20.addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+                cloud20.getGroupById(serviceAdminToken, "doesnotexist"),
         ]
     }
 
@@ -1738,9 +1736,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         when:
         def role = v2Factory.createRole(propagate, weight).with {
             it.name = "role$sharedRandom"
-            it.propagate = propagate
-            it.weight = weight
-            it.otherAttributes = null
             return it
         }
         def response = cloud20.createRole(serviceAdminToken, role)
@@ -1787,8 +1782,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "we cannot specify a role weight which we cannot manage"() {
         when:
         def role = v2Factory.createRole(null, weight)
-        role.otherAttributes = null
-        role.weight = weight
         def response = cloud20.createRole(token, role)
         if (response.status == 201) {
             cloud20.deleteRole(serviceAdminToken, response.getEntity(Role).value.getId())
@@ -2039,6 +2032,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.deleteTenant(serviceAdminToken, addTenant.id)
         cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteRole(serviceAdminToken, createRole2.id)
         cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
 
 
@@ -2083,7 +2077,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUsername = "subListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.otherAttributes = v2Factory.createOtherMap(true, null)
+        role.propagate = true
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value

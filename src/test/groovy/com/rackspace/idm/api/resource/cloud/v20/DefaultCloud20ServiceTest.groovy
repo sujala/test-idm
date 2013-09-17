@@ -3182,53 +3182,58 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 401
     }
 
-    def "User with user-manage role can update user"() {
+    def "User with user-manage role can update user with roles"() {
         given:
         allowUserAccess()
+
         userId = "1"
         UserForCreate user = new UserForCreate().with {
             it.id = userId
             return it
         }
-        User updateUser = entityFactory.createUser().with {
+        User retrievedUser = entityFactory.createUser().with {
             it.id = userId
             return it
         }
+
+        User caller = entityFactory.createUser().with {
+            it.id = "5"
+            return it
+        }
+
+        userService.getUserByAuthToken(_) >> caller
+        userService.checkAndGetUserById(_) >> retrievedUser
+
+        //mock caller roles
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeUserManageRole(_) >> true
+        authorizationService.authorizeCloudUser(_) >> false
+
+        //mock user being updated roles
+        authorizationService.hasServiceAdminRole(_) >> updatingServiceAdmin
+        authorizationService.hasIdentityAdminRole(_) >> updatingIdentityAdmin
+        authorizationService.hasUserManageRole(_) >> updatingManagedUser
+        authorizationService.hasDefaultUserRole(_) >> updatingCloudUser
 
         when:
-        service.updateUser(headers, authToken, "1", user)
+        def result = service.updateUser(headers, authToken, "1", user)
 
         then:
-        1 * authorizationService.verifyUserLevelAccess(_)
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * userService.checkAndGetUserById(_) >> updateUser
-        1 * authorizationService.verifyDomain(_, _)
-    }
-
-
-    def "User with user-manage role cannot update user with user-manage role"() {
-        given:
-        allowUserAccess()
-        userId = "1"
-        UserForCreate user = new UserForCreate().with {
-            it.id = userId
-            return it
-        }
-        User updateUser = entityFactory.createUser().with {
-            it.id = userId
-            return it
+        //Despise this hack here, but code expects the authorization service to throw this to verify user managers/admins can not update service/identity admins.
+        //verifyDomain is tested in separate tests so just simulating what verifyDomain would do in this particular case.
+        if (updatingServiceAdmin || updatingIdentityAdmin) {
+            1 * authorizationService.verifyDomain(_,_) >> {throw new ForbiddenException()}
         }
 
-        when:
-        def result = service.updateUser(headers, authToken, userId, user)
+        result.status == expectedStatus
 
-        then:
-        1 * authorizationService.verifyUserLevelAccess(_)
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * userService.checkAndGetUserById(_) >> updateUser
-        1 * authorizationService.verifyDomain(_, _)
-        1 * authorizationService.hasUserManageRole(_) >> true
-        result.build().status == 403
+        where:
+        updatingServiceAdmin    | updatingIdentityAdmin | updatingManagedUser | updatingCloudUser   | expectedStatus
+        true                    | false                 | false               | false               | 403
+        false                   | true                 | false               | false               | 403
+        false                    | false                 | true               | false               | 403
+        false                    | false                 | false               | true               | 200
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {
@@ -3371,32 +3376,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeCloudUser(_) >> false
         1 * authorizationService.authorizeUserManageRole(_) >> true
         result.build().status == 200
-    }
-
-    def "User with user-manage role cannot update User Admin" () {
-        given:
-        allowUserAccess()
-        userId = "1"
-        UserForCreate user = new UserForCreate().with {
-            it.id = userId
-            return it
-        }
-        User updateUser = entityFactory.createUser().with {
-            it.id = userId
-            return it
-        }
-
-        when:
-        def result = service.updateUser(headers, authToken, userId, user)
-
-        then:
-        1 * authorizationService.verifyUserLevelAccess(_)
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * userService.checkAndGetUserById(_) >> updateUser
-        1 * authorizationService.verifyDomain(_, _)
-        1 * authorizationService.hasUserManageRole(_) >> false
-        1 * authorizationService.hasUserAdminRole(_) >> true
-        result.build().status == 403
     }
 
     def "User with user-manage role cannot get User Admin's API key" () {
