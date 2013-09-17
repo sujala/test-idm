@@ -220,10 +220,6 @@ class V2Factory {
             it.description = "desc"
             it.propagate = propagate
             it.weight = weight
-<<<<<<< HEAD
-            it.otherAttributes = otherAttributes
-=======
->>>>>>> Fixing Sonar with JaCoCo and minor cleanup in tests
             return it
         }
     }

@@ -2145,7 +2145,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUser2name = "sub2ListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.otherAttributes = v2Factory.createOtherMap(true, null)
+        role.propagate = true
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
