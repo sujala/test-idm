@@ -64,10 +64,6 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new DuplicateException(REGION_NAME_ALREADY_EXISTS);
         }
 
-        if (region.getId() == null) {
-            region.setId(UUID.randomUUID().toString().replace("-", ""));
-        }
-
         setAsOnlyDefaultRegion(region);
 
         logger.info("Adding Region: {}", region);
