@@ -16,13 +16,13 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class BaseUrlForValidation {
     @Size(max = MAX)
-    protected String serviceName;
+    private String serviceName;
     @Size(max = MAX)
-    protected String region;
+    private String region;
     @Size(max = MAX)
-    protected String publicURL;
+    private String publicURL;
     @Size(max = MAX)
-    protected String internalURL;
+    private String internalURL;
     @Size(max = MAX)
-    protected String adminURL;
+    private String adminURL;
 }

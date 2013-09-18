@@ -23,9 +23,8 @@ import java.util.regex.Pattern;
 @Component
 public class Validator {
     @Autowired
-    LdapPatternRepository ldapPatternRepository;
+    private LdapPatternRepository ldapPatternRepository;
 
-    private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     static final String USERNAME="username";

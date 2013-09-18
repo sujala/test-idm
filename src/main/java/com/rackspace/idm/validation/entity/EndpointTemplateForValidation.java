@@ -18,17 +18,17 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class EndpointTemplateForValidation {
     @Valid
-    protected VersionForServiceForValidation version;
+    private VersionForServiceForValidation version;
     @Size(max = MAX)
-    protected String type;
+    private String type;
     @Size(max = MAX)
-    protected String name;
+    private String name;
     @Size(max = MAX)
-    protected String region;
+    private String region;
     @Size(max = LONG_MAX)
-    protected String publicURL;
+    private String publicURL;
     @Size(max = LONG_MAX)
-    protected String internalURL;
+    private String internalURL;
     @Size(max = LONG_MAX)
-    protected String adminURL;
+    private String adminURL;
 }

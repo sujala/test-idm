@@ -17,7 +17,7 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class QuestionForValidation {
     @Size(max = MAX)
-    protected String id;
+    private String id;
     @Size(max = LONG_MAX)
-    protected String question;
+    private String question;
 }

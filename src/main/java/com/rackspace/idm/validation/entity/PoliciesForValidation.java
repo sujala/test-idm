@@ -18,8 +18,8 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class PoliciesForValidation {
     @Valid
-    protected List<PolicyForValidation> policy;
+    private List<PolicyForValidation> policy;
 
     @Size(max = MAX)
-    protected String algorithm;
+    private String algorithm;
 }

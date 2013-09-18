@@ -54,10 +54,6 @@ public class Validator20 {
         if (!alphaNumberic.matcher(username).matches()) {
             throw new BadRequestException("Username has invalid characters.");
         }
-        // Allow user to be created with number as first character | for migration (12/03/2012)
-        //if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
-        //    throw new BadRequestException("Username must begin with an alphabetic character.");
-        //}
     }
 
     public void validateEmail(String email) {

@@ -22,21 +22,21 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class UserForValidation {
     @Size(max = MAX)
-    protected String id;
+    private String id;
     @Size(max = MAX)
-    protected String username;
+    private String username;
     @Size(max = MAX)
-    protected String email;
+    private String email;
     @Size(max = MAX)
-    protected String displayName;
+    private String displayName;
     @Size(max = MAX)
-    protected String password;
+    private String password;
     @Size(max = MAX)
-    protected String nastId;
+    private String nastId;
     @Size(max = MAX)
-    protected String key;
+    private String key;
     @Valid
-    protected BaseUrlRefListForValidation baseURLRefs;
+    private BaseUrlRefListForValidation baseURLRefs;
 
     private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 
