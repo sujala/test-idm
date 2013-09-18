@@ -1,10 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspacecloud.docs.auth.api.v1.AuthData
+import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
@@ -269,6 +273,215 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
         cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
+    }
+
+    def "auth-admin call should display user's admin urls - password credentials" () {
+        given:
+        String username = "adminBaseUrl$sharedRandom"
+        String password = "Password1"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def passwordCred = v2Factory.createPasswordCredentialsBase(username, password)
+        cloud20.addCredential(serviceAdminToken, getUser.id, passwordCred)
+        def cred = v1Factory.createPasswordCredentials(username, password)
+        AuthData authData = cloud11.adminAuthenticate(cred).getEntity(AuthData)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        authData != null
+        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        authData.serviceCatalog.service[index].endpoint.adminURL[0] == adminUrl.concat("/").concat(mossoId.toString())
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth call should not display admin urls in service catalog - passwordCred" () {
+        given:
+        String username = "userAdminBaseUrlPwd$sharedRandom"
+        String password = "Password1"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def passwordCred = v2Factory.createPasswordCredentialsBase(username, password)
+        cloud20.addCredential(serviceAdminToken, getUser.id, passwordCred)
+        def cred = v1Factory.createPasswordCredentials(username, password)
+        def authResponse = cloud11.authenticate(cred)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        authResponse.status == 302
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth call should not display admin urls in service catalog - userKeyCredentials" () {
+        given:
+        String username = "userAdminBaseUrlKey$sharedRandom"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def cred = v1Factory.createUserKeyCredentials(username, key)
+        def authData = cloud11.authenticate(cred).getEntity(AuthData)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        authData != null
+        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth call should not display admin urls in service catalog - mossoCredentials" () {
+        given:
+        String username = "userAdminBaseUrlMosso$sharedRandom"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def cred = v1Factory.createMossoCredentials(mossoId, key)
+        def authResponse = cloud11.authenticate(cred)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        authResponse.status == 302
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth call should not display admin urls in service catalog - nastCredentials" () {
+        given:
+        String username = "userAdminBaseUrlNast$sharedRandom"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        def cred = v1Factory.createNastCredentials(createdUser.nastId, key)
+        def authResponse = cloud11.authenticate(cred)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        authResponse.status == 302
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth call should display admin urls in service catalog for admin user - userKeyCredentials" () {
+        given:
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        String key = "1234567890"
+        def mossoId = -1 * getRandomNumber(1000000, 2000000);
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        Tenant tenant = v2Factory.createTenant(mossoId.toString(), mossoId.toString())
+        def role = v2Factory.createRole("listUsersByTenantRole$randomness")
+
+        when:
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def endpointTemplate = new EndpointTemplate().with {
+            it.id = baseURLId
+            it
+        }
+        cloud20.addEndpoint(serviceAdminToken, mossoId.toString(), endpointTemplate)
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, addTenant.id, identityAdmin.id, createRole.id)
+        def addKey = cloud11.setUserKey(identityAdmin.username, v1Factory.createUserWithOnlyKey(key))
+        def cred = v1Factory.createUserKeyCredentials(identityAdmin.username, key)
+        def authData = cloud11.authenticate(cred).getEntity(AuthData)
+
+        then:
+        addKey.status == 200
+        baseUrlResponse.status == 201
+        authData != null
+        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        authData.serviceCatalog.service[index].endpoint.adminURL[0] == adminUrl.concat("/").concat(mossoId.toString())
+
+        cleanup:
+        cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, addTenant.id, identityAdmin.id, createRole.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
     }
 
     def authAndExpire(username, key) {
