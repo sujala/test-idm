@@ -6,17 +6,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kurt
- * Date: 6/28/12
- * Time: 1:13 PM
- * To change this template use File | Settings | File Templates.
- */
 public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
@@ -35,7 +27,7 @@ public class LdapConfigurationTest {
     }
 
     @Test
-    public void connection_callsCongifMethodGetStringArray() throws Exception {
+    public void connection_callsConfigMethodGetStringArray() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
             when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
@@ -43,7 +35,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             verify(configuration).getStringArray("ldap.serverList");
         }
@@ -59,7 +51,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
         }
@@ -75,7 +67,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
         }
@@ -91,7 +83,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
         }
@@ -107,7 +99,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
         }
@@ -122,7 +114,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (IllegalStateException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
         }
@@ -131,7 +123,7 @@ public class LdapConfigurationTest {
     @Test
     public void connection_noHostsAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
-            when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"123", "456"});
+            when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{":123", ":456"});
             when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
             when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
@@ -162,7 +154,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
             verify(configuration).getInt("ldap.server.pool.size.init",1);
         }
@@ -177,7 +169,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
             verify(configuration).getInt("ldap.server.pool.size.max",100);
         }
@@ -192,7 +184,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
             verify(configuration).getString("ldap.bind.dn");
         }
@@ -207,7 +199,7 @@ public class LdapConfigurationTest {
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
             verify(configuration).getString("ldap.bind.password");
         }
@@ -218,7 +210,7 @@ public class LdapConfigurationTest {
         try{
             doReturn(null).when(spy).connection();
             spy.connectionPools();
-            assertTrue("should throw exception",false);
+            fail("should throw exception");
         } catch (IllegalArgumentException ex){
             verify(spy,times(2)).connection();
         }
