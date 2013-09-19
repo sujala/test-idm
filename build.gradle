@@ -436,5 +436,6 @@ sonarRunner {
         property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
         property "sonar.jdbc.username", "sonarqube"
         property "sonar.jdbc.password", "sonarqube"
+        property "sonar.exclusions", "**/v1/*.java,**/v2/*.java,**/atom/*.java"
     }
 }
