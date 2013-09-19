@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Data
 public class DefaultRegionServicesForValidation {
-    protected List<String> serviceName;
+    private List<String> serviceName;
 
     @Valid
     public List<StringForValidation> getServiceNames() {

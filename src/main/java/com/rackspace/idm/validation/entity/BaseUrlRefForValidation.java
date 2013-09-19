@@ -16,5 +16,5 @@ import static com.rackspace.idm.validation.entity.Constants.LONG_MAX;
 @Data
 public class BaseUrlRefForValidation {
     @Size(max = LONG_MAX)
-    protected String href;
+    private String href;
 }

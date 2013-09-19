@@ -18,11 +18,12 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class ObjectConverter {
     private static Mapper mapper = new DozerBeanMapper();
-    private HashMap<Type, Type> mapping;
+    private Map<Type, Type> mapping;
 
     @PostConstruct
     public void setup(){

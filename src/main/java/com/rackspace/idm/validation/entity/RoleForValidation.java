@@ -23,15 +23,15 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class RoleForValidation {
     @Size(max = MAX)
-    protected String id;
+    private String id;
     @Size(max = MAX)
-    protected String name;
+    private String name;
     @Size(max = MAX)
-    protected String serviceId;
+    private String serviceId;
     @Size(max = MAX)
-    protected String tenantId;
+    private String tenantId;
     @Size(max = LONG_MAX)
-    protected String description;
+    private String description;
 
     private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 

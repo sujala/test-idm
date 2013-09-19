@@ -14,5 +14,5 @@ import javax.validation.Valid;
 @Data
 public class ImpersonationRequestForValidation {
     @Valid
-    protected UserForValidation user;
+    private UserForValidation user;
 }

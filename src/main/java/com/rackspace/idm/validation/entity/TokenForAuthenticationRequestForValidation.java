@@ -16,6 +16,6 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class TokenForAuthenticationRequestForValidation {
     @Size(max = MAX)
-    protected String id;
+    private String id;
 
 }

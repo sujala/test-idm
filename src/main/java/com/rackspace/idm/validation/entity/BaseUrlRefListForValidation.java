@@ -15,5 +15,5 @@ import java.util.List;
 @Data
 public class BaseUrlRefListForValidation {
     @Valid
-    protected List<BaseUrlRefForValidation> baseURLRef;
+    private List<BaseUrlRefForValidation> baseURLRef;
 }

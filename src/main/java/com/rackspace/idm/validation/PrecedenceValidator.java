@@ -22,9 +22,6 @@ import org.springframework.stereotype.Component;
 public class PrecedenceValidator {
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ApplicationService applicationService;
 
     @Autowired

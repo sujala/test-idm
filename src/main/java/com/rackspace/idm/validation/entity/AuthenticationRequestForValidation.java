@@ -15,15 +15,15 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class AuthenticationRequestForValidation {
     @Size(max = MAX)
-    protected String tenantId;
+    private String tenantId;
 
     @Size(max = MAX)
-    protected String tenantName;
+    private String tenantName;
 
     @Valid
-    protected TokenForAuthenticationRequestForValidation token;
+    private TokenForAuthenticationRequestForValidation token;
 
-    protected JAXBElementCredentialTypeForValidation credential;
+    private JAXBElementCredentialTypeForValidation credential;
 
     private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 

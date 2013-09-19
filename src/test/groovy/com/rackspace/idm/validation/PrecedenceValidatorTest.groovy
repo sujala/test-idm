@@ -22,7 +22,6 @@ class PrecedenceValidatorTest extends RootServiceTest {
     }
     
     def setup() {
-        mockUserService(service)
         mockApplicationService(service)
         mockConfiguration(service)
     }

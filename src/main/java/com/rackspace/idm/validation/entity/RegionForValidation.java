@@ -16,5 +16,5 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class RegionForValidation {
     @Size(max = MAX)
-    protected String name;
+    private String name;
 }

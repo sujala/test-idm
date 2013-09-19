@@ -8,6 +8,9 @@ package com.rackspace.idm.validation.entity;
  * To change this template use File | Settings | File Templates.
  */
 public class Constants {
+
+    private Constants() {}
+
     public static final int MAX = 100;
     public static final int LONG_MAX = 1000;
     public static final int MEGA_MAX = 100000;

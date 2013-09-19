@@ -16,26 +16,26 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Data
 public class CredentialTypeForValidation {
     @Size(max = MAX)
-    protected String username;
+    private String username;
 
     @Size(max = MAX)
-    protected String password;
+    private String password;
 
     @Size(max = MAX)
-    protected String tokenKey;
+    private String tokenKey;
 
     @Size(max = MAX)
-    protected String key;
+    private String key;
 
     @Size(max = MAX)
-    protected String signature;
+    private String signature;
 
     @Size(max = MAX)
-    protected String question;
+    private String question;
 
     @Size(max = MAX)
-    protected String answer;
+    private String answer;
 
     @Size(max = MAX)
-    protected String apiKey;
+    private String apiKey;
 }
