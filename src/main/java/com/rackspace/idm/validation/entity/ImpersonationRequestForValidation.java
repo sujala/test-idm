@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation.entity;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.Valid;
 
@@ -11,7 +12,8 @@ import javax.validation.Valid;
  * Time: 6:03 PM
  * To change this template use File | Settings | File Templates.
  */
-@Data
+@Getter
+@Setter
 public class ImpersonationRequestForValidation {
     @Valid
     private UserForValidation user;
