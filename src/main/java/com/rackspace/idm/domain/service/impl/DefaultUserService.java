@@ -121,7 +121,7 @@ public class DefaultUserService implements UserService {
             user.setEnabled(user.getEnabled());
         }
 
-        if (user.getId() == null) {
+        if (StringUtils.isBlank(user.getId())) {
             user.setId(generateUniqueId());
         }
 
