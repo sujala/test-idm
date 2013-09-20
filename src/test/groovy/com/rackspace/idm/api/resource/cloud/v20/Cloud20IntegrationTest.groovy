@@ -301,12 +301,29 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
     }
 
+    def 'Create User with Blank ID'() {
+        when:
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        user.id = ""
+        def response = cloud20.createUser(serviceAdminToken, user)
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        then:
+        response.status == 201
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+    }
+
     def 'User CRUD'() {
         when:
         //Create user
         def random = ("$randomness").replace('-', "")
         def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
         def response = cloud20.createUser(serviceAdminToken, user)
+
         //Get user
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
