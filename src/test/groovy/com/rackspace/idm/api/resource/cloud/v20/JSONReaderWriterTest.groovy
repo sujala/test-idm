@@ -1266,7 +1266,7 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.credential = input.asList()
             it
         }
-        response.getToken().any.add(objectFactory.createAuthenticatedBy(authenticatedBy))
+        response.getToken().setAuthenticatedBy(authenticatedBy)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForAuthenticateResponse.writeTo(response, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)

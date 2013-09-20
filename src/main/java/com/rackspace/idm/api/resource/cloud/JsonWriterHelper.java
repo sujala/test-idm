@@ -176,21 +176,12 @@ public final class JsonWriterHelper {
             tenantInner.put(JSONConstants.NAME, token.getTenant().getName());
         }
 
-        if (token.getAny().size() > 0) {
-            for (Object response : token.getAny()) {
-                if (response instanceof JAXBElement) {
-                    JAXBElement jaxbElement = ((JAXBElement)response);
-
-                    if (jaxbElement.getDeclaredType().isAssignableFrom(AuthenticatedBy.class)) {
-                        AuthenticatedBy authenticatedBy = (AuthenticatedBy) ((JAXBElement) response).getValue();
-                        JSONArray credentials = new JSONArray();
-                        for (String credential : authenticatedBy.getCredential()) {
-                            credentials.add(credential);
-                        }
-                        tokenInner.put(JSONConstants.RAX_AUTH_AUTHENTICATED_BY, credentials);
-                    }
-                }
+        if (token.getAuthenticatedBy() != null && token.getAuthenticatedBy().getCredential().size() > 0) {
+            JSONArray credentials = new JSONArray();
+            for (String credential : token.getAuthenticatedBy().getCredential()) {
+                credentials.add(credential);
             }
+            tokenInner.put(JSONConstants.RAX_AUTH_AUTHENTICATED_BY, credentials);
         }
 
         return tokenInner;
