@@ -121,9 +121,7 @@ public class DefaultUserService implements UserService {
             user.setEnabled(user.getEnabled());
         }
 
-        if (StringUtils.isBlank(user.getId())) {
-            user.setId(generateUniqueId());
-        }
+        user.setId(generateUniqueId());
 
         userDao.addUser(user);
         logger.info("Added User: {}", user);
