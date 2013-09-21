@@ -317,6 +317,25 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())
     }
 
+    def 'Update User with no username'() {
+        when:
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(serviceAdminToken, user)
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        def userForUpdate = v2Factory.createUserForUpdate(null, null, null, null, true, null, null)
+        def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
+
+        then:
+        response.status == 201
+        updateUserResponse.status == 200
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+    }
+
     def 'User CRUD'() {
         when:
         //Create user
