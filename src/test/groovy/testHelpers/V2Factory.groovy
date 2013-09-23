@@ -205,7 +205,7 @@ class V2Factory {
         }
     }
 
-    def createRole(String name, String serviceId) {
+    def createRoleWithServiceId(String name, String serviceId) {
         new Role().with {
             it.name = name
             it.serviceId = serviceId
@@ -232,7 +232,7 @@ class V2Factory {
             map.put(QNAME_PROPAGATE, Boolean.toString(propagate))
         }
         if (weight != null) {
-            map.put(QNAME_WEIGHT, Integer.toString(weight))
+            map.put(QNAME_WEIGHT, weight)
         }
         return map
     }

@@ -105,14 +105,14 @@ class PropagatingRoleIntegrationTest extends RootIntegrationTest {
 
         where:
         weight | propagate | expectedWeight | expectedPropagate
-        null   | null      | 1000           | false
-        500    | null      | 500            | false
-        500    | true      | 500            | true
-        500    | false     | 500            | false
-        100    | null      | 100            | false
-        null   | true      | 1000           | true
-        null   | false     | 1000           | false
-        2000   | true      | 2000           | true
+        null   | null      | "1000"         | false
+        "500"  | null      | "500"          | false
+        "500"  | true      | "500"          | true
+        "500"  | false     | "500"          | false
+        "100"  | null      | "100"          | false
+        null   | true      | "1000"         | true
+        null   | false     | "1000"         | false
+        "2000" | true      | "2000"         | true
     }
 
     def "service admins can add a propagating role to a user admin"() {

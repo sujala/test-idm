@@ -9,7 +9,6 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import org.apache.commons.lang.StringUtils
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -30,8 +29,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.unboundid.ldap.sdk.Modification
 import org.joda.time.DateTime
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
-
-import static com.rackspace.idm.RaxAuthConstants.*
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired LdapConnectionPools connPools
@@ -1796,11 +1793,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         weight  | propagate | expectedWeight | expectedPropagate
-        null    | null      | 1000           | false
-        100     | null      | 100            | false
-        null    | true      | 1000           | true
-        null    | false     | 1000           | false
-        2000    | true      | 2000           | true
+        null    | null      | "1000"         | false
+        "100"   | null      | "100"          | false
+        null    | true      | "1000"         | true
+        null    | false     | "1000"         | false
+        "2000"  | true      | "2000"         | true
     }
 
     def "when specifying an invalid weight we receive a bad request"() {
@@ -1816,9 +1813,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         token              | weight
-        identityAdminToken | 3
-        serviceAdminToken  | 50
-        serviceAdminToken  | 1234
+        identityAdminToken | "3"
+        serviceAdminToken  | "50"
+        serviceAdminToken  | "1234"
     }
 
     def "we cannot specify a role weight which we cannot manage"() {
@@ -1892,7 +1889,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "Service admin should be the only one to add Identity roles"() {
         when:
         String roleName = "identity:someRole" + sharedRandom
-        def result = cloud20.createRole((String)token, v2Factory.createRole(roleName, serviceId))
+        def result = cloud20.createRole((String)token, v2Factory.createRoleWithServiceId(roleName, serviceId))
         if (result.status == 201){
             cloud20.deleteRole(serviceAdminToken, result.getEntity(Role).value.id)
         }
@@ -1912,7 +1909,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "Service admin should be the only one to add roles in CI/Foundation"() {
         when:
         String roleName = "someServiceRole" + sharedRandom
-        def result = cloud20.createRole((String)token, v2Factory.createRole(roleName, serviceId))
+        def result = cloud20.createRole((String)token, v2Factory.createRoleWithServiceId(roleName, serviceId))
         if (result.status == 201){
             cloud20.deleteRole(serviceAdminToken, result.getEntity(Role).value.id)
         }
@@ -1940,7 +1937,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         String roleName = "identityGlobalRole" + sharedRandom
 
         when:
-        def identityAdminResponse = cloud20.createRole(identityAdminToken, v2Factory.createRole(roleName, null))
+        def identityAdminResponse = cloud20.createRole(identityAdminToken, v2Factory.createRoleWithServiceId(roleName, null))
         def deleteResponse = cloud20.deleteRole(serviceAdminToken, identityAdminResponse.getEntity(Role).value.id)
 
         then:
@@ -2023,7 +2020,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "negativeTenantUser$random"
         def tenant = v2Factory.createTenant("-754612", "-754612")
-        def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "name")
 
         when:
@@ -2056,8 +2053,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "deDupeUser$random"
         def tenant = v2Factory.createTenant("754612", "754612")
-        def role = v2Factory.createRole("dupeRole1$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        def role2 = v2Factory.createRole("dupeRole2$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("dupeRole1$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role2 = v2Factory.createRoleWithServiceId("dupeRole2$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "cloudServers")
 
         when:
@@ -2119,7 +2116,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "listUserByTenant$random"
         def subUsername = "subListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
-        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.otherAttributes = v2Factory.createOtherMap(true, null)
 
         when:
@@ -2163,7 +2160,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "addRoleToUser$random"
         def tenantId = "tenant$random"
         def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def role = v2Factory.createRole("addRoleToUserTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("addRoleToUserTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
@@ -2187,7 +2184,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUser1name = "sub1ListUserByTenant$random"
         def subUser2name = "sub2ListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
-        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.otherAttributes = v2Factory.createOtherMap(true, null)
 
         when:
@@ -2222,7 +2219,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "listUserByTenant$random"
         def tenantId = getRandomNumber(7000000, 8000000)
         def tenant = v2Factory.createTenant(tenantId.toString(), tenantId.toString())
-        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def role = v2Factory.createRoleWithServiceId("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
