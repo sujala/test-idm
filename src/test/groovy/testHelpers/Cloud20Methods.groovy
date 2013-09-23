@@ -213,6 +213,12 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
+    def addUserRole(String token, String userId, String roleId) {
+        resource.path(path20).path("users").path(userId)
+                .path("roles").path("OS-KSADM").path(roleId)
+                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
+    }
+
     def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
         resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)

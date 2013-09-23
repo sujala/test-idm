@@ -624,16 +624,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            //user admins and user managers can only update accounts within their domain
+            //user admins and user managers can only update accounts within their domain (this prevents userAdmins/managers from
+            //updating service/identity admins)
             if (callerIsUserAdmin || callerHasUserManageRole) {
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
 
-            //user managers can not update other user managers or the user admin
-            if (callerHasUserManageRole &&
-                    (authorizationService.hasUserManageRole(retrievedUser)
-                        || authorizationService.hasUserAdminRole(retrievedUser))) {
-                throw new ForbiddenException("Cannot update user with same or higher access level");
+            //user managers can not update the user admin. Note - usermanagers CAN update other user managers, they just
+            //can't remove the user manager role from the other user. They would be able to, however, disable the other
+            //user manager account, update email address, password, etc.
+            if (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser)) {
+                throw new ForbiddenException("Cannot update user with higher access level");
             }
 
             if (!StringUtils.isBlank(user.getUsername())) {

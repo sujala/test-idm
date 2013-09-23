@@ -20,7 +20,8 @@ import testHelpers.MultiStageTaskFactory
 import testHelpers.RootIntegrationTest
 
 /**
- * Verify the operations that an Identity Admin can perform
+ * Verify the operations that users can perform to update users (own account + others). Other test classes, in particular Cloud20IntegrationTest, perform some of these operations as well.
+ * The goal is to migrate all integration tests regarding updating a user into this class.
  */
 class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationTest {
 
@@ -57,4 +58,55 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
             cloud20.updateUser(specificationIdentityAdminToken, serviceAdminUser.getId(), serviceAdminUser)
         }
     }
+
+    def "user manage role can update self"() {
+        setup:
+        User userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+        User defaultUser = createDefaultUser(userAdminToken)
+        def defaultUserToken = authenticate(defaultUser.username)
+
+        ClientRole userManageRole = authorizationService.getCloudUserManagedRole()
+        cloud20.addUserRole(userAdminToken, defaultUser.getId(), userManageRole.getId())
+        defaultUser.setEmail("anythingelse@anything.com")
+
+        when:
+        def updateResult = cloud20.updateUser(defaultUserToken, defaultUser.getId(), defaultUser)
+
+        then:
+        updateResult.status == HttpStatus.OK.value()
+
+        cleanup:
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userAdmin)
+    }
+
+    def "user manage role can update another user manage role"() {
+        setup:
+        User userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+
+        User defaultUser = createDefaultUser(userAdminToken)
+        def defaultUserToken = authenticate(defaultUser.username)
+
+        User defaultUser2 = createDefaultUser(userAdminToken)
+
+        ClientRole userManageRole = authorizationService.getCloudUserManagedRole()
+        cloud20.addUserRole(userAdminToken, defaultUser.getId(), userManageRole.getId())
+        cloud20.addUserRole(userAdminToken, defaultUser2.getId(), userManageRole.getId())
+
+        defaultUser2.setEmail("anythingelse@anything.com")
+
+        when:
+        def updateResult = cloud20.updateUser(defaultUserToken, defaultUser2.getId(), defaultUser2)
+
+        then:
+        updateResult.status == HttpStatus.OK.value()
+
+        cleanup:
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(defaultUser2)
+        deleteUserQuietly(userAdmin)
+    }
+
 }

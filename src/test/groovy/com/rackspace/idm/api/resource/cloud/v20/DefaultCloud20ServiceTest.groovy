@@ -21,6 +21,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -3182,7 +3183,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 401
     }
 
-    def "User with user-manage role can update user with roles"() {
+    @Unroll("User with user-manage role can update different user with roles updatingServiceAdmin=#updatingServiceAdmin;updatingIdentityAdmin=#updatingIdentityAdmin;updatingUserAdmin=#updatingUserAdmin;updatingManagedUser=#updatingManagedUser;updatingCloudUser=#updatingCloudUser")
+    def "User with user-manage role can update different user with roles"() {
         given:
         allowUserAccess()
 
@@ -3213,6 +3215,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         //mock user being updated roles
         authorizationService.hasServiceAdminRole(_) >> updatingServiceAdmin
         authorizationService.hasIdentityAdminRole(_) >> updatingIdentityAdmin
+        authorizationService.hasUserAdminRole(_) >> updatingUserAdmin
         authorizationService.hasUserManageRole(_) >> updatingManagedUser
         authorizationService.hasDefaultUserRole(_) >> updatingCloudUser
 
@@ -3228,12 +3231,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         result.status == expectedStatus
 
+        //Application logic assumption is that only ONE of the following roles service/identity/useradmin/usermanage
         where:
-        updatingServiceAdmin    | updatingIdentityAdmin | updatingManagedUser | updatingCloudUser   | expectedStatus
-        true                    | false                 | false               | false               | 403
-        false                   | true                 | false               | false               | 403
-        false                    | false                 | true               | false               | 403
-        false                    | false                 | false               | true               | 200
+        updatingServiceAdmin    | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser   | expectedStatus
+        true                    | false                 | false             | false               | false               | 403
+        false                   | true                  | false             | false               | false               | 403
+        false                    | false                | true              | false               | false               | 403
+        false                    | false                | false             | true                | true                | 200
+        false                    | false                | false             | false               | true                | 200
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {
