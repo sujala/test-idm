@@ -22,6 +22,25 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         config.getInt("cloudAuth.special.rsWeight") >> configWeight
     }
 
+    def "can convert tenantRole to jaxb role"() {
+        given:
+        def weight = 100
+        def propagate = true
+        def serviceId = "serviceId"
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.propagate = propagate
+            it.clientId = serviceId
+            return it
+        }
+
+        when:
+        def result = converter.toRole(tenantRole)
+
+        then:
+        result.propagate == propagate
+        result.serviceId == serviceId
+    }
+
     def "can convert clientRole to jaxb role"() {
         given:
         def weight = 100
