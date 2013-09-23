@@ -26,9 +26,11 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         given:
         def weight = 100
         def propagate = true
+        def serviceId = "serviceId"
         def clientRole = entityFactory.createClientRole().with {
             it.rsWeight = weight
             it.propagate = propagate
+            it.clientId = serviceId
             return it
         }
 
@@ -38,23 +40,27 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         then:
         result.weight == weight
         result.propagate == propagate
+        result.serviceId == serviceId
     }
 
     def "can convert jaxb role to clientRole"() {
         given:
         def weight = 100
         def propagate = false
+        def serviceId = "serviceId"
 
         def jaxbRole = v2Factory.createRole()
         jaxbRole.weight = weight
         jaxbRole.propagate = propagate
+        jaxbRole.serviceId = serviceId
 
         when:
-        def result = converter.fromRole(jaxbRole, "clientId");
+        def result = converter.fromRole(jaxbRole, serviceId);
 
         then:
         result.rsWeight == weight
         result.propagate == propagate
+        result.clientId == serviceId
     }
 
     def "jaxb defaults to config role when converting from role to clientRole"() {

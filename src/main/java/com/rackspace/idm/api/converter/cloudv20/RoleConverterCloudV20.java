@@ -81,16 +81,19 @@ public class RoleConverterCloudV20 {
         if(role == null){
             throw new IllegalArgumentException("TenantRole cannot be null");
         }
-            Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
-            jaxbRole.setDescription(role.getDescription());
-            jaxbRole.setId(role.getRoleRsId());
-            jaxbRole.setPropagate(role.getPropagate());
+
+        Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
+        jaxbRole.setDescription(role.getDescription());
+        jaxbRole.setId(role.getRoleRsId());
+        jaxbRole.setPropagate(role.getPropagate());
+        jaxbRole.setServiceId(role.getClientId());
         return jaxbRole;
     }
 
     public Role toRoleFromClientRole(com.rackspace.idm.domain.entity.ClientRole role) {
         Role roleEntity = mapper.map(role, Role.class);
         roleEntity.setPropagate(role.getPropagate());
+        roleEntity.setServiceId(role.getClientId());
         return roleEntity;
     }
 }
