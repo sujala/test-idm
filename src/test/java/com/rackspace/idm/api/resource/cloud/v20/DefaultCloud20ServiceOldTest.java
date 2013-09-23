@@ -1365,23 +1365,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getGroupById_throwsBadRequestException_returnsResponseBuilder() throws Exception {
-        BadRequestException badRequestException = new BadRequestException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(validator20).validateGroupId(null);
-        when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.getGroupById(null, authToken, null), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void getGroupById_callsValidateGroupId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(null);
-        spy.getGroupById(null, authToken, "1");
-        verify(validator20).validateGroupId("1");
-    }
-
-    @Test
     public void getGroupById_responseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.getGroupById(httpHeaders, authToken, "1");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3556,13 +3539,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateGroup_callsValidateGroupId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.updateGroup(null, authToken, "1", groupKs);
-        verify(validator20).validateGroupId("1");
-    }
-
-    @Test
     public void updateGroup_responseOk_returns200() throws Exception {
         CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
         spy.setCloudGroupBuilder(cloudGroupBuilder);
@@ -3590,23 +3566,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteGroup_throwsBadRequestException_returnsResponseBuilder() throws Exception {
-        BadRequestException badRequestException = new BadRequestException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(validator20).validateGroupId(null);
-        when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.deleteGroup(null, authToken, null), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void deleteGroup_callsValidateGroupId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.deleteGroup(null, authToken, "1");
-        verify(validator20).validateGroupId("1");
-    }
-
-    @Test
     public void deleteGroup_cloudGroupService_callsDeleteGroup() throws Exception {
         spy.deleteGroup(null, authToken, "1");
         verify(userGroupService).deleteGroup("1");
@@ -3627,34 +3586,11 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserToGroup_throwsBadRequestException_returnsResponseBuilder() throws Exception {
-        BadRequestException badRequestException = new BadRequestException();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(badRequestException).when(validator20).validateGroupId(null);
-        when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addUserToGroup(null, authToken, null, null), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void addUserToGroup_callsValidateGroupId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserToGroup(null, authToken, "1", null);
-        verify(validator20).validateGroupId("1");
-    }
-
-    @Test
     public void removeUserFromGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.removeUserFromGroup(null, authToken, null, null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
-    public void removeUserFromGroup_callsValidateGropuId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.removeUserFromGroup(null, authToken, "1", null);
-        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -3683,13 +3619,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUsersForGroup(null, authToken, null, null, null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
-    public void getUsersForGroup_callsValidateGroupId() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        spy.getUsersForGroup(null, authToken, "1", null, null);
-        verify(validator20).validateGroupId("1");
     }
 
     @Test

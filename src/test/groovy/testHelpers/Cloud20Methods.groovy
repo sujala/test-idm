@@ -108,6 +108,10 @@ class Cloud20Methods {
         resource.uri(uri).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def getGroupById(String token, String groupId) {
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def getGroupByName(String token, String name) {
         resource.path(path20).path(RAX_GRPADM).path('groups').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
