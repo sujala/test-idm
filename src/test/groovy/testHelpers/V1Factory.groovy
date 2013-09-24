@@ -275,6 +275,19 @@ class V1Factory {
         }
     }
 
+    def createRaxKsQaSecretQA() {
+        return createRaxKsQaSecretQA("username", "answer", "question")
+    }
+
+    def createRaxKsQaSecretQA(String username, String answer, String question) {
+        new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA().with {
+            it.username = username
+            it.answer  = answer
+            it.question = question
+            return it
+        }
+    }
+
     def createSecretQA_Keystone() {
         return createSecretQA_Keystone("username", "answer", "question")
     }

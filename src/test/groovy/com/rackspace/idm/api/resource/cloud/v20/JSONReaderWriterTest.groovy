@@ -73,6 +73,9 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
 
+    @Shared JSONReaderForRaxKsQaSecretQA readerForRaxKsQaSecretQA = new JSONReaderForRaxKsQaSecretQA()
+    @Shared JSONWriterForRaxKsQaSecretQA writerForRaxKsQaSecretQA = new JSONWriterForRaxKsQaSecretQA()
+
     @Shared JSONReaderForRole readerForRole = new JSONReaderForRole()
     @Shared JSONWriterForRole writerForRole = new JSONWriterForRole()
 
@@ -395,6 +398,28 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         json != null
 
+    }
+
+    def "can read/write rax-ksqa secretQa as json"() {
+        given:
+        def secretQA = v1Factory.createRaxKsQaSecretQA()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForRaxKsQaSecretQA.writeTo(secretQA, com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser();
+        JSONObject outer = (JSONObject) parser.parse(json);
+
+        InputStream inputStream = IOUtils.toInputStream('{"RAX-KSQA:secretQA":{"username": "username","question":"question","answer": "Himalayas"}}"')
+        com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA readSecretQA = readerForRaxKsQaSecretQA.readFrom(SecretQA, null, null, null, null, inputStream)
+
+        then:
+        JSONObject o = outer.get(RAX_KSQA_SECRET_QA)
+        o.get(USERNAME) == "username"
+        o.get(ANSWER) == "answer"
+        o.get(QUESTION) == "question"
+        readSecretQA.answer == "Himalayas"
     }
 
     def "can read/write secretqa as json"() {
