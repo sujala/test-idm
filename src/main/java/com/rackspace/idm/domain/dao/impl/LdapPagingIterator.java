@@ -36,7 +36,7 @@ public class LdapPagingIterator<T> implements Iterable<T> {
                     offset = 0;
                     index = 0;
                 }
-                return offset + index < context.getTotalRecords();
+                return offset + index < context.getValueList().size();
             }
 
             @Override
