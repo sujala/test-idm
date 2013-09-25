@@ -2121,19 +2121,19 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         given:
         def domain = "someDomain$sharedRandom"
         def username = "user$sharedRandom"
-        def password = "Password1"
 
         def adminUsername1 = "userAdmin3$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", randomMosso, null, true)
-        def userAdminForCreate1 = cloud11.createUser(cloud11User)
+        cloud11.createUser(cloud11User)
         User userAdmin1 = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)
 
         def userAdminAuthResponse = cloud20.authenticateApiKey(adminUsername1, "1234567890").getEntity(AuthenticateResponse).value
-//        def userAdminAuthResponse = cloud20.authenticatePassword(adminUsername1, password).getEntity(AuthenticateResponse)
         def userAdminToken = userAdminAuthResponse.token.id
         def userAdminTenant = userAdminAuthResponse.token.tenant.id
         def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
         User subUser1 = subUserForCreate.getEntity(User)
+        def getUserResponse = cloud11.getUserByName(username)
+        com.rackspacecloud.docs.auth.api.v1.User userEntity = getUserResponse.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
 
         when:
         def listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, userAdminTenant).getEntity(UserList).value
@@ -2158,6 +2158,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.destroyUser(serviceAdminToken, userAdmin1.id)
         cloud20.destroyUser(serviceAdminToken, subUser1.id)
+        cloud20.deleteTenant(serviceAdminToken, userAdminTenant)
+        cloud20.deleteTenant(serviceAdminToken, userEntity.nastId)
 
     }
 
