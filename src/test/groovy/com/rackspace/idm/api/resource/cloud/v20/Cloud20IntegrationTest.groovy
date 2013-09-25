@@ -96,11 +96,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Shared def cloudAuthClientId
 
+    @Shared def randomMosso
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
         testDomainId = "domain1$sharedRandom"
         testDomainId2 = "domain2$sharedRandom"
         emptyDomainId = "domain3$sharedRandom"
+
+        Random randomNumber = new Random()
+        randomMosso = 10000000 + randomNumber.nextInt(1000000)
 
         this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = cloud20.authenticatePassword("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
@@ -2110,6 +2115,40 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUser != null
         updateUser.displayName == "display name"
         updateUser.email == "other@email.email"
+    }
+
+    def "When user admin creates sub-user both should be returned in list users by tenant call"() {
+        given:
+        def domain = "someDomain$sharedRandom"
+        def username = "user$sharedRandom"
+
+        def adminUsername1 = "userAdmin3$sharedRandom"
+        com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", randomMosso, null, true)
+        cloud11.createUser(cloud11User)
+        User userAdmin1 = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)
+
+        def userAdminAuthResponse = cloud20.authenticateApiKey(adminUsername1, "1234567890").getEntity(AuthenticateResponse).value
+        def userAdminToken = userAdminAuthResponse.token.id
+        def userAdminTenant = userAdminAuthResponse.token.tenant.id
+        def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
+        User subUser1 = subUserForCreate.getEntity(User)
+        def getUserResponse = cloud11.getUserByName(username)
+        com.rackspacecloud.docs.auth.api.v1.User userEntity = getUserResponse.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
+
+        when:
+        def listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, userAdminTenant).getEntity(UserList).value
+
+        then:
+        listUsersByTenant.user.size() == 2
+        listUsersByTenant.user[0].id == subUser1.id
+        listUsersByTenant.user[1].id == userAdmin1.id
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, userAdmin1.id)
+        cloud20.destroyUser(serviceAdminToken, subUser1.id)
+        cloud20.deleteTenant(serviceAdminToken, userAdminTenant)
+        cloud20.deleteTenant(serviceAdminToken, userEntity.nastId)
+
     }
 
     def "List users by tenant id should display sub users" () {
