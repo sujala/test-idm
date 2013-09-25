@@ -2140,20 +2140,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         listUsersByTenant.user.size() == 2
-        //this if/else is necessary due to difference in the order in which openldap and ca return the results
-        boolean matched = false
-        if (listUsersByTenant.user[0].id == userAdmin1.id) {
-            listUsersByTenant.user[1].id == subUser1.id
-            matched = true
-        }
-        else if (listUsersByTenant.user[1].id == userAdmin1.id) {
-            listUsersByTenant.user[0].id == subUser1.id
-            matched = true
-        }
-        else {
-            matched == true
-        }
-
+        listUsersByTenant.user[0].id == subUser1.id
+        listUsersByTenant.user[1].id == userAdmin1.id
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, userAdmin1.id)
