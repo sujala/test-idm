@@ -57,7 +57,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRoleFromClientRole(clientRole)
 
         then:
-        result.weight == "$weight"
+        result.weight == weight
         result.propagate == propagate
         result.serviceId == serviceId
     }
