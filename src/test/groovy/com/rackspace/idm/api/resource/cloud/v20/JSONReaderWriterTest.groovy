@@ -435,8 +435,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         where:
         propagate   | weight
         true        | null
-        null        | "500"
-        false       | "100"
+        null        | 500
+        false       | 100
         null        | null
     }
 
