@@ -405,7 +405,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponse.status == 204
-        listRoleResponse.status == 200
     }
 
     def "roles that CAN list roles"() {
