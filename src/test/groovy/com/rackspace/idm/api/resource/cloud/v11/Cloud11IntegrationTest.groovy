@@ -275,7 +275,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
     }
 
-    def "auth-admin call should display user's admin urls - password credentials" () {
+    def "auth-admin call should not display user's admin urls - password credentials" () {
         given:
         String username = "adminBaseUrl$sharedRandom"
         String password = "Password1"
@@ -303,7 +303,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         addBaseUrlRefResponse.status == 201
         authData != null
         Integer index = authData.serviceCatalog.service.name.indexOf(service)
-        authData.serviceCatalog.service[index].endpoint.adminURL[0] == adminUrl.concat("/").concat(mossoId.toString())
+        authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createdUser.id)
@@ -445,7 +445,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
     }
 
-    def "auth call should display admin urls in service catalog for admin user - userKeyCredentials" () {
+    def "auth call not should display admin urls in service catalog for admin user - userKeyCredentials" () {
         given:
         String service = "service"
         String adminUrl = "http://adminUrl"
@@ -475,7 +475,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         baseUrlResponse.status == 201
         authData != null
         Integer index = authData.serviceCatalog.service.name.indexOf(service)
-        authData.serviceCatalog.service[index].endpoint.adminURL[0] == adminUrl.concat("/").concat(mossoId.toString())
+        authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
         cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, addTenant.id, identityAdmin.id, createRole.id)
