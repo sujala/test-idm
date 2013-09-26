@@ -46,6 +46,18 @@ class TenantConverterCloudV20Test extends Specification {
         tenantEntity.updated.equals(createdXML())
     }
 
+    def "convert tenant from ldap to jersey object - verify display-name is null"() {
+        given:
+        Tenant tenant = tenant()
+        tenant.displayName = "displayName"
+
+        when:
+        org.openstack.docs.identity.api.v2.Tenant tenantEntity = converterCloudV20.toTenant(tenant)
+
+        then:
+        tenantEntity.displayName == null
+    }
+
     def "convert tenant from jersey object to ldap"() {
         given:
         org.openstack.docs.identity.api.v2.Tenant tenantEntity = tenantEntity()
