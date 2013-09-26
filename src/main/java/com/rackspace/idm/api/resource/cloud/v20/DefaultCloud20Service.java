@@ -654,6 +654,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             userService.updateUser(userDO, false);
+            userDO = userService.getUserById(userDO.getId());
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

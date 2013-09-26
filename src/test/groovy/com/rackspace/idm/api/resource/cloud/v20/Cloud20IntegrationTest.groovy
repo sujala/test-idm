@@ -336,6 +336,34 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())
     }
 
+    def 'update user returns all user info including domain and region'() {
+        when:
+        //Create user
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", "someDomain", "Password1")
+        def response = cloud20.createUser(identityAdminToken, user)
+        //Get user
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+        //Update user
+        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
+        def updateUser = updateUserResponse.getEntity(User)
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+        //Hard delete user
+        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        updateUserResponse.status == 200
+        updateUser.defaultRegion != null
+        updateUser.domainId != null
+        deleteResponses.status == 204
+        hardDeleteResponses.status == 204
+    }
+
     def 'User CRUD'() {
         when:
         //Create user
