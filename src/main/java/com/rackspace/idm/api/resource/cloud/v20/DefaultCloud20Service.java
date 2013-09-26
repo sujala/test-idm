@@ -1707,7 +1707,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, Integer marker, Integer limit) {
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyUserManagedLevelAccess(getScopeAccessForValidToken(authToken));
 
             PaginatorContext<ClientRole> context;
             User caller = userService.getUserByAuthToken(authToken);

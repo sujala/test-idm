@@ -415,6 +415,39 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         hardDeleteResponse.status == 204
     }
 
+    def "roles that CAN list roles"() {
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def listForServiceAdmin = cloud20.listRoles(serviceAdminToken, null, null, null)
+        def listForIdentityAdmin = cloud20.listRoles(identityAdminToken, null, null, null)
+        def listForUserAdmin = cloud20.listRoles(userAdminToken, null, null, null)
+        def listForUserManage = cloud20.listRoles(defaultUserManageRoleToken, null, null, null)
+
+        then:
+        listForServiceAdmin.status == 200
+        listForIdentityAdmin.status == 200
+        listForUserAdmin.status == 200
+        listForUserManage.status == 200
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+    }
+
+    def "roles that CANNOT list roles"() {
+
+        when:
+        def listForDefaultUser = cloud20.listRoles(defaultUserToken, null, null, null)
+
+        then:
+        listForDefaultUser.status == 403
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+    }
+
     def "User manage retrieve user by name"() {
         given:
         def random = ("$randomness").replace('-', "")
