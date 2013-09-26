@@ -100,11 +100,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             try {
                 entity = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
                 doPostEncode(entity);
+                objects.add(entity);
             } catch (LDAPPersistException e) {
                 String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
                 getLogger().error(loggerMsg);
             }
-            objects.add(entity);
         }
 
         return objects;
