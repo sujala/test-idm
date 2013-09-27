@@ -2205,8 +2205,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         getUsersByDomainId.user.size() == 2
-        getUsersByDomainId.user.username[0] == userAdmin.username
-        getUsersByDomainId.user.username[1] == subUser.username
+        getUsersByDomainId.user.username.contains(userAdmin.username)
+        getUsersByDomainId.user.username.contains(subUser.username)
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, userAdmin.id)
