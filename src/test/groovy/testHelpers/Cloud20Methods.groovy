@@ -88,6 +88,10 @@ class Cloud20Methods {
         resource.path(path20).path('users').queryParam("email", email).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
+    def getUsersByDomainId(String token, String domainId) {
+        resource.path(path20).path('RAX-AUTH').path('domains').path(domainId).path('users').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def updateUser(String token, String userId, user) {
         resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
