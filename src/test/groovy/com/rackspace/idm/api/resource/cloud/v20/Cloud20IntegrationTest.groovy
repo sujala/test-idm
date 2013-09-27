@@ -358,8 +358,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.status == 201
         response.location != null
         updateUserResponse.status == 200
-        updateUser.defaultRegion != null
-        updateUser.domainId != null
+        updateUser.defaultRegion == "ORD"
+        updateUser.domainId == "someDomain"
         deleteResponses.status == 204
         hardDeleteResponses.status == 204
     }
