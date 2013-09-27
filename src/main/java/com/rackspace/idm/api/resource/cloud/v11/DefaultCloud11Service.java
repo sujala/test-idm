@@ -1202,6 +1202,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            //TODO Hiding admin urls to keep old functionality - Need to revisit
+            hideAdminUrls(endpoints);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (NotAuthenticatedException nae) {
             return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
@@ -1287,18 +1289,20 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
-            if (!authorizationService.authorizeCloudServiceAdmin(usa) && !authorizationService.authorizeCloudIdentityAdmin(usa)) {
-                for(OpenstackEndpoint endpoint : endpoints){
-                    for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
-                        baseUrl.setAdminUrl(null);
-                    }
-                }
-            }
+            //TODO Hiding admin urls to keep old functionality - Need to revisit
+            hideAdminUrls(endpoints);
 
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    private void hideAdminUrls(List<OpenstackEndpoint> endpoints) {
+        for(OpenstackEndpoint endpoint : endpoints){
+            for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                baseUrl.setAdminUrl(null);
+            }
         }
     }
 

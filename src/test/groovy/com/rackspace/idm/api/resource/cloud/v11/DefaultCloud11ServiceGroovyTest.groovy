@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
@@ -532,6 +533,44 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         usa.accessTokenString == token
         usa.accessTokenExp == expiredDate
         usa.createTimestamp == createdDate
+    }
+
+    def "test hideAdminUrls" () {
+        given:
+        def adminUrl = "adminUrl"
+        def internalUrl = "internalUrl"
+        def publicUrl = "publicUrl"
+        def baseUrl= new CloudBaseUrl().with {
+            it.adminUrl = adminUrl
+            it.internalUrl = internalUrl
+            it.publicUrl = publicUrl
+            it
+        }
+        def endpoint = new OpenstackEndpoint().with {
+            it.baseUrls  = [baseUrl, baseUrl].asList()
+            it
+        }
+        def endpoints = [endpoint, endpoint].asList()
+
+        when:
+        service.hideAdminUrls(endpoints)
+
+        then:
+        endpoints != null
+        endpoints.size() == 2
+        endpoints.baseUrls.size() == 2
+        endpoints.baseUrls[0].publicUrl[0] == publicUrl
+        endpoints.baseUrls[0].publicUrl[1] == publicUrl
+        endpoints.baseUrls[1].publicUrl[0] == publicUrl
+        endpoints.baseUrls[1].publicUrl[1] == publicUrl
+        endpoints.baseUrls[0].internalUrl[0] == internalUrl
+        endpoints.baseUrls[0].internalUrl[1] == internalUrl
+        endpoints.baseUrls[1].internalUrl[0] == internalUrl
+        endpoints.baseUrls[1].internalUrl[1] == internalUrl
+        endpoints.baseUrls[0].adminUrl[0] == null
+        endpoints.baseUrls[0].adminUrl[1] == null
+        endpoints.baseUrls[1].adminUrl[0] == null
+        endpoints.baseUrls[1].adminUrl[1] == null
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

@@ -2173,8 +2173,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         listUsersByTenant.user.size() == 2
-        listUsersByTenant.user[0].id == subUser1.id
-        listUsersByTenant.user[1].id == userAdmin1.id
+        listUsersByTenant.user.id.contains(subUser1.id)
+        listUsersByTenant.user.id.contains(userAdmin1.id)
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, userAdmin1.id)
