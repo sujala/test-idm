@@ -1928,7 +1928,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteUserRole(null, authToken, null, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test

@@ -50,6 +50,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def identityAdmin
     @Shared def userAdmin
     @Shared def userAdminTwo
+    @Shared def defaultUserOtherDomain
     @Shared def defaultUser
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
@@ -61,6 +62,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def productRole
     @Shared def propagatingRole
     @Shared def tenant
 
@@ -150,6 +152,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         defaultUserWithManageRole = cloud20.getUserByName(userAdminToken, "defaultUserWithManageRole$sharedRandom").getEntity(User)
         defaultUserManageRoleToken = cloud20.authenticate("defaultUserWithManageRole$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
+        cloud20.createUser(userAdminTwoToken, v2Factory.createUserForCreate("otherDomainUser$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
+        defaultUserOtherDomain = cloud20.getUserByName(userAdminTwoToken, "otherDomainUser$sharedRandom").getEntity(User)
+
         cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUserWithManageRole2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserWithManageRole2 = cloud20.getUserByName(userAdminToken, "defaultUserWithManageRole2$sharedRandom").getEntity(User)
 
@@ -177,6 +182,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         createRole2.name = "sharedRole2"
         def responseRole2 = cloud20.createRole(serviceAdminToken, createRole2)
         sharedRoleTwo = responseRole2.getEntity(Role).value
+
+        //create product role
+        Role createProductRole = v2Factory.createRole()
+        createProductRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        createProductRole.name = "productRole1"
+        createProductRole.weight = 1000
+        def responseProductRole = cloud20.createRole(serviceAdminToken, createProductRole)
+        productRole = responseProductRole.getEntity(Role).value
 
         def role = v2Factory.createRole(true, 500).with {
             it.name = "propagatingRole$sharedRandom"
@@ -216,6 +229,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cloud20.deleteRole(serviceAdminToken, sharedRole.getId())
         cloud20.deleteRole(serviceAdminToken, sharedRoleTwo.getId())
+        cloud20.deleteRole(serviceAdminToken, productRole.getId())
         cloud20.deleteRole(serviceAdminToken, propagatingRole.getId())
 
         cloud20.destroyUser(serviceAdminToken, userAdmin.getId())
@@ -227,6 +241,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, defaultUserForAdminTwo.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole2.getId())
+
+        cloud20.destroyUser(serviceAdminToken, defaultUserOtherDomain.getId())
 
         cloud20.destroyUser(serviceAdminToken, testUser.getId())
 
@@ -400,12 +416,74 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         hardDeleteResponses.status == 204
     }
 
-    def "User-Admin should not be able to assign himself role of weight 100"() {
+    def "user-admin should be able to assign & remove role of weight 1000 to sub-user"() {
         when:
-        def response = cloud20.addApplicationRoleToUser(identityAdminToken, CUSTOMER_ADMIN_ROLE_ID, serviceAdmin.id)
+        def response = cloud20.addApplicationRoleToUser(userAdminToken, sharedRole.id, defaultUser.id)
+        def response2 = cloud20.deleteApplicationRoleFromUser(userAdminToken, sharedRole.id, defaultUser.id)
+
+        then:
+        response.status == 200
+        response2.status == 204
+
+        cleanup:
+        cloud20.addApplicationRoleToUser(userAdminToken, sharedRole.id, defaultUser.id)
+    }
+
+    def "user-admin should NOT be able to assign & remove role of weight 1000 to sub-user outside of his domain"() {
+        when:
+        def response = cloud20.addApplicationRoleToUser(userAdminToken, sharedRole.id, defaultUserOtherDomain.id)
+        def response2 = cloud20.deleteApplicationRoleFromUser(userAdminToken, sharedRole.id, defaultUserOtherDomain.id)
 
         then:
         response.status == 403
+        response2.status == 403
+
+        cleanup:
+        cloud20.addApplicationRoleToUser(userAdminToken, sharedRole.id, defaultUser.id)
+    }
+
+    def "User-Admin should not be able to assign himself role"() {
+        when:
+        def response = cloud20.addApplicationRoleToUser(userAdminToken, CUSTOMER_ADMIN_ROLE_ID, userAdmin.id)
+
+        then:
+        response.status == 403
+    }
+
+    def "User-Admin should not be able to remove role from himself"() {
+        when:
+        def response = cloud20.deleteApplicationRoleFromUser(userAdminToken, CUSTOMER_ADMIN_ROLE_ID, userAdmin.id)
+
+        then:
+        response.status == 403
+    }
+
+    def "user-manage should be able to assign & remove role of weight 1000 to sub-users"() {
+        when:
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def response = cloud20.addApplicationRoleToUser(defaultUserManageRoleToken, productRole.id, defaultUser.id)
+        def response2 = cloud20.deleteApplicationRoleFromUser(defaultUserManageRoleToken, productRole.id, defaultUser.id)
+
+        then:
+        response.status == 200
+        response2.status == 204
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+    }
+
+    def "user-manage should NOT be able to assign & remove role of weight 1000 to sub-users outside of his domain"() {
+        when:
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def response = cloud20.addApplicationRoleToUser(defaultUserManageRoleToken, productRole.id, defaultUserOtherDomain.id)
+        def response2 = cloud20.deleteApplicationRoleFromUser(defaultUserManageRoleToken, productRole.id, defaultUserOtherDomain.id)
+
+        then:
+        response.status == 403
+        response2.status == 403
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
     }
 
     def 'User-manage role CRUD'() {
