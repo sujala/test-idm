@@ -48,6 +48,10 @@ class Cloud11Methods {
         resource.path(path11).path("users").path(username).header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def getServiceCatalog(String username) {
+        resource.path(path11).path("users").path(username).path("serviceCatalog").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def createUser(user) {
         resource.path(path11).path("users").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }

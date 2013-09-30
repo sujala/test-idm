@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
@@ -481,6 +482,42 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, addTenant.id, identityAdmin.id, createRole.id)
         cloud20.deleteTenant(serviceAdminToken, addTenant.id)
         cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "Get service catalog for user should not display the admin urls" () {
+        given:
+        String username = "userServiceCatalog$sharedRandom"
+        String service = "service"
+        String adminUrl = "http://adminUrl"
+        def baseURLId = getRandomNumber(1000000, 2000000)
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, null, true)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+        def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
+        ServiceCatalog userServiceCatalogResponse = cloud11.getServiceCatalog(username).getEntity(ServiceCatalog)
+
+
+        then:
+        baseUrlResponse.status == 201
+        addBaseUrlRefResponse.status == 201
+        userServiceCatalogResponse != null
+        for(def adminUrls : userServiceCatalogResponse.service.endpoint.adminURL){
+            for(String url : adminUrls){
+                url == null
+            }
+        }
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
     }
 
