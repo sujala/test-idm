@@ -23,6 +23,8 @@ group = 'com.rackspace'
 featureVersion = '2.0.0'
 ldapVersion = '2.0'
 buildVersion = System.currentTimeMillis()
+gitRevision = "git rev-parse HEAD".execute().text.trim()
+
 version = "$featureVersion-$buildVersion"
 
 description = """idm"""
@@ -196,6 +198,7 @@ task copyConfig(type: Copy) {
     into 'build/config'
     ant.property(name: 'version', value: featureVersion)
     ant.property(name: 'buildVersion', value: buildVersion)
+    ant.property(name: 'gitRevision', value: gitRevision)
     filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
 }
 
@@ -206,6 +209,7 @@ task copyBaseConfig << {
             into "build/config/$destDir"
             ant.property(name: 'version', value: featureVersion)
             ant.property(name: 'buildVersion', value: buildVersion)
+            ant.property(name: 'gitRevision', value: gitRevision)
             filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
         }
     }

@@ -656,6 +656,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             userDO.setId(retrievedUser.getId());
+            if (StringUtils.isBlank(user.getUsername())) {
+                userDO.setUsername(retrievedUser.getUsername());
+            }
             ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessForUser(retrievedUser);
             if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
@@ -1715,7 +1718,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, Integer marker, Integer limit) {
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            authorizationService.verifyUserManagedLevelAccess(getScopeAccessForValidToken(authToken));
 
             PaginatorContext<ClientRole> context;
             User caller = userService.getUserByAuthToken(authToken);

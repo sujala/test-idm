@@ -96,11 +96,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Shared def cloudAuthClientId
 
+    @Shared def randomMosso
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
         testDomainId = "domain1$sharedRandom"
         testDomainId2 = "domain2$sharedRandom"
         emptyDomainId = "domain3$sharedRandom"
+
+        Random randomNumber = new Random()
+        randomMosso = 10000000 + randomNumber.nextInt(1000000)
 
         this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = cloud20.authenticatePassword("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
@@ -298,12 +303,48 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
     }
 
+    def 'Create User with Blank ID'() {
+        when:
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        user.id = ""
+        def response = cloud20.createUser(serviceAdminToken, user)
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        then:
+        response.status == 201
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+    }
+
+    def 'Update User with no username'() {
+        when:
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(serviceAdminToken, user)
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        def userForUpdate = v2Factory.createUserForUpdate(null, null, null, null, true, null, null)
+        def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
+
+        then:
+        response.status == 201
+        updateUserResponse.status == 200
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+    }
+
     def 'User CRUD'() {
         when:
         //Create user
         def random = ("$randomness").replace('-', "")
         def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
         def response = cloud20.createUser(serviceAdminToken, user)
+
         //Get user
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
@@ -369,6 +410,39 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponse.status == 204
+    }
+
+    def "roles that CAN list roles"() {
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def listForServiceAdmin = cloud20.listRoles(serviceAdminToken, null, null, null)
+        def listForIdentityAdmin = cloud20.listRoles(identityAdminToken, null, null, null)
+        def listForUserAdmin = cloud20.listRoles(userAdminToken, null, null, null)
+        def listForUserManage = cloud20.listRoles(defaultUserManageRoleToken, null, null, null)
+
+        then:
+        listForServiceAdmin.status == 200
+        listForIdentityAdmin.status == 200
+        listForUserAdmin.status == 200
+        listForUserManage.status == 200
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+    }
+
+    def "roles that CANNOT list roles"() {
+
+        when:
+        def listForDefaultUser = cloud20.listRoles(defaultUserToken, null, null, null)
+
+        then:
+        listForDefaultUser.status == 403
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
     }
 
     def "User manage retrieve user by name"() {
@@ -2067,6 +2141,40 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUser != null
         updateUser.displayName == "display name"
         updateUser.email == "other@email.email"
+    }
+
+    def "When user admin creates sub-user both should be returned in list users by tenant call"() {
+        given:
+        def domain = "someDomain$sharedRandom"
+        def username = "user$sharedRandom"
+
+        def adminUsername1 = "userAdmin3$sharedRandom"
+        com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", randomMosso, null, true)
+        cloud11.createUser(cloud11User)
+        User userAdmin1 = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)
+
+        def userAdminAuthResponse = cloud20.authenticateApiKey(adminUsername1, "1234567890").getEntity(AuthenticateResponse).value
+        def userAdminToken = userAdminAuthResponse.token.id
+        def userAdminTenant = userAdminAuthResponse.token.tenant.id
+        def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
+        User subUser1 = subUserForCreate.getEntity(User)
+        def getUserResponse = cloud11.getUserByName(username)
+        com.rackspacecloud.docs.auth.api.v1.User userEntity = getUserResponse.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
+
+        when:
+        def listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, userAdminTenant).getEntity(UserList).value
+
+        then:
+        listUsersByTenant.user.size() == 2
+        listUsersByTenant.user[0].id == subUser1.id
+        listUsersByTenant.user[1].id == userAdmin1.id
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, userAdmin1.id)
+        cloud20.destroyUser(serviceAdminToken, subUser1.id)
+        cloud20.deleteTenant(serviceAdminToken, userAdminTenant)
+        cloud20.deleteTenant(serviceAdminToken, userEntity.nastId)
+
     }
 
     def "List users by tenant id should display sub users" () {

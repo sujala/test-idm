@@ -559,8 +559,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             String tenantId2 = String.valueOf(user.getMossoId());
 
             Tenant[] tenants = new Tenant[2];
-            tenants[0] = this.tenantService.getTenant(tenantId);
-            tenants[1] = this.tenantService.getTenant(tenantId2);
+            if(StringUtils.isNotBlank(tenantId)){
+                tenants[0] = this.tenantService.getTenant(tenantId);
+            }
+            if(StringUtils.isNotBlank(tenantId2)){
+                tenants[1] = this.tenantService.getTenant(tenantId2);
+            }
 
             boolean found = false;
             for(Tenant tenant : tenants) {
@@ -1251,6 +1255,14 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+
+            if (!authorizationService.authorizeCloudServiceAdmin(usa) && !authorizationService.authorizeCloudIdentityAdmin(usa)) {
+                for(OpenstackEndpoint endpoint : endpoints){
+                    for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                        baseUrl.setAdminUrl(null);
+                    }
+                }
+            }
 
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (Exception ex) {

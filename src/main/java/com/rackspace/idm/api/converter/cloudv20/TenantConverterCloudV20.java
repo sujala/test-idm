@@ -24,7 +24,11 @@ public class TenantConverterCloudV20 {
     private JAXBObjectFactories objFactories;
 
     public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenantEntity) {
-        return mapper.map(tenantEntity, Tenant.class);
+        Tenant tenant = mapper.map(tenantEntity, Tenant.class);
+        // Setting display-name to null in order to remove it from the returned
+        // XML and json.
+        tenant.setDisplayName(null);
+        return tenant;
     }
     
     public Tenants toTenantList(List<com.rackspace.idm.domain.entity.Tenant> tenants) {
