@@ -16,3 +16,4 @@ tags
 target
 target/*
 .DS_Store
+rpmbuild/rpmbuild
