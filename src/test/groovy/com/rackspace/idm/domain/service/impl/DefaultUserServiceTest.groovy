@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.FilterParam
@@ -7,9 +8,11 @@ import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.exception.UserDisabledException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -803,6 +806,89 @@ class DefaultUserServiceTest extends RootServiceTest {
             assert(arg1.salt == salt)
         }
 
+    }
+
+    def "authenticate validates user is enabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = false
+            it
+        }
+        UserAuthenticationResult authenticated = new UserAuthenticationResult(user, true)
+        userDao.authenticate(_,_) >> authenticated
+
+        when:
+        service.authenticate("username", "password")
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "authenticateWithApiKey validates user is enabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = false
+            it
+        }
+        UserAuthenticationResult authenticated = new UserAuthenticationResult(user, true)
+        userDao.authenticateByAPIKey(_,_) >> authenticated
+
+        when:
+        service.authenticateWithApiKey("username", "apiKey")
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "authenticate validates domain is enabled"() {
+        given:
+        User user = entityFactory.createUser()
+        UserAuthenticationResult authenticated = new UserAuthenticationResult(user, true)
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = false
+            it
+        }
+        domainService.getDomain(_) >> domain
+        userDao.authenticate(_,_) >> authenticated
+
+        when:
+        service.authenticate("username", "password")
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "authenticateWithApiKey validates domain is enabled"() {
+        given:
+        User user = entityFactory.createUser()
+        UserAuthenticationResult authenticated = new UserAuthenticationResult(user, true)
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = false
+            it
+        }
+        domainService.getDomain(_) >> domain
+        userDao.authenticateByAPIKey(_,_) >> authenticated
+
+        when:
+        service.authenticateWithApiKey("username", "password")
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "authenticate works if user and domain are enabled"() {
+        given:
+        User user = entityFactory.createUser()
+        UserAuthenticationResult authenticated = new UserAuthenticationResult(user, true)
+        Domain domain = entityFactory.createDomain()
+        domainService.getDomain(_) >> domain
+        userDao.authenticate(_,_) >> authenticated
+
+        when:
+        service.authenticate("username", "password")
+
+        then:
+        notThrown(UserDisabledException)
     }
 
     def createStringPaginatorContext() {
