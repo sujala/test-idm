@@ -120,6 +120,8 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         updateUser.nastId == "someNastId1"
         updateUser.mossoId == randomMosso+1
         updateUser.enabled == true
+        updateUser.created != null
+        updateUser.updated != null
 
         cleanup:
         cloud11.deleteUser(username)

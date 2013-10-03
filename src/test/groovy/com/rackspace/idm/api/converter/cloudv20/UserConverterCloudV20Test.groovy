@@ -153,12 +153,14 @@ class UserConverterCloudV20Test extends Specification {
     }
 
     def created() {
-        new DateTime(2013,1,1,0,0,0,0)
+        new Date(2013,1,1)
     }
 
     def createdXML() {
-        DateTime created = created()
-        DatatypeFactory.newInstance().newXMLGregorianCalendar(created.toGregorianCalendar())
+        GregorianCalendar gc = new GregorianCalendar()
+        DateTime created = new DateTime(created())
+        gc.setTime(created.toDate())
+        DatatypeFactory.newInstance().newXMLGregorianCalendar(gc)
     }
 
     def racker() {
