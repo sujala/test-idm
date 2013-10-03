@@ -3447,6 +3447,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 403
     }
 
+    def "checkMaxNumberOfSubUsers does not allow creating more than maxNumberOfSubUsers"() {
+        given:
+        config.getInt("numberOfSubUsers") >> maxNumberOfUsers
+
+        List<User> users = new ArrayList<>()
+        for (int i = 0; i < numberOfUsers; i++) {
+            def user = entityFactory.createUser().with {
+                it.username = "username$i"
+                it
+            }
+            users.add(user)
+        }
+
+        when:
+        boolean result = false
+        try {
+            service.checkMaxNumberOfSubUsers(users)
+        } catch (BadRequestException e) {
+            result = true
+        }
+
+        then:
+        result == badRequest
+
+        where:
+        maxNumberOfUsers | numberOfUsers | badRequest
+        2                | 2             | true
+        2                | 1             | false
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
