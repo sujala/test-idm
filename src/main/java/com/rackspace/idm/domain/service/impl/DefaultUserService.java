@@ -168,6 +168,7 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticate(String username, String password) {
         logger.debug("Authenticating User: {} by Username", username);
         UserAuthenticationResult authenticated = userDao.authenticate(username, password);
+        validateUserStatus(authenticated);
         logger.debug("Authenticated User: {} by Username - {}", username,
                 authenticated);
         return authenticated;
@@ -177,8 +178,8 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticateWithApiKey(String username,
                                                            String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
-                username, apiKey);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(username, apiKey);
+        validateUserStatus(authenticated);
         logger.debug("Authenticated User: {} by API Key - {}", username,
                 authenticated);
         return authenticated;
@@ -928,5 +929,24 @@ public class DefaultUserService implements UserService {
     @Override
     public void setPropertiesService(PropertiesService propertiesService) {
         this.propertiesService = propertiesService;
+    }
+
+    void validateUserStatus(UserAuthenticationResult authenticated ) {
+        User user = authenticated.getUser();
+        boolean isAuthenticated = authenticated.isAuthenticated();
+        if (user != null && isAuthenticated) {
+            if (user.isDisabled()) {
+                logger.error(user.getUsername());
+                throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
+            }
+            if (user.getDomainId() != null) {
+                Domain domain = domainService.getDomain(user.getDomainId());
+                if (domain != null && !domain.getEnabled()) {
+                    logger.error(user.getUsername());
+                    throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
+                }
+            }
+            logger.debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
+        }
     }
 }

@@ -266,11 +266,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             return new UserAuthenticationResult(null, false);
         }
 
-        boolean authenticated = bindUser(user, password);
-        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
+        boolean isAuthenticated = bindUser(user, password);
+        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated);
         getLogger().debug("Authenticated User by password");
 
-        addAuditLogForAuthentication(user, authenticated);
+        addAuditLogForAuthentication(user, isAuthenticated);
 
         return authResult;
     }
@@ -281,12 +281,12 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             return new UserAuthenticationResult(null, false);
         }
 
-        boolean authenticated = !StringUtils.isBlank(user.getApiKey())  && user.getApiKey().equals(apiKey);
+        boolean isAuthenticated = !StringUtils.isBlank(user.getApiKey())  && user.getApiKey().equals(apiKey);
 
-        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
+        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
 
-        addAuditLogForAuthentication(user, authenticated);
+        addAuditLogForAuthentication(user, isAuthenticated);
 
         return authResult;
     }
@@ -312,15 +312,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
         getLogger().debug(result.toString());
         return ResultCode.SUCCESS.equals(result.getResultCode());
-    }
-
-    UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
-        if (isAuthenticated && user.isDisabled()) {
-            getLogger().error(user.getUsername());
-            throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
-        }
-        getLogger().debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
-        return new UserAuthenticationResult(user, isAuthenticated);
     }
 
     @Override
