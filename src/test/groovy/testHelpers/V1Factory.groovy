@@ -6,10 +6,13 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
+import com.rackspacecloud.docs.auth.api.v1.MossoCredentials
+import com.rackspacecloud.docs.auth.api.v1.NastCredentials
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey
 import org.openstack.docs.common.api.v1.Extension
 import org.openstack.docs.common.api.v1.VersionChoice
 import org.openstack.docs.common.api.v1.VersionStatus
@@ -66,6 +69,22 @@ class V1Factory {
             it.username = username
             it.key = apiKey
             return it
+        }
+    }
+
+    def createMossoCredentials(Integer mossoId, String apiKey) {
+        new MossoCredentials().with {
+            it.mossoId = mossoId
+            it.key = apiKey
+            it
+        }
+    }
+
+    def createNastCredentials(String nastId, String apiKey) {
+        new NastCredentials().with {
+            it.nastId = nastId
+            it.key = apiKey
+            it
         }
     }
 
@@ -271,6 +290,19 @@ class V1Factory {
         new SecretQA().with {
             it.id = id
             it.answer = answer
+            return it
+        }
+    }
+
+    def createRaxKsQaSecretQA() {
+        return createRaxKsQaSecretQA("username", "answer", "question")
+    }
+
+    def createRaxKsQaSecretQA(String username, String answer, String question) {
+        new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA().with {
+            it.username = username
+            it.answer  = answer
+            it.question = question
             return it
         }
     }
@@ -499,6 +531,13 @@ class V1Factory {
             it.id = id
             it.status = status
             it.any = [jaxBLink, jaxBLink].asList()
+            it
+        }
+    }
+
+    def createUserWithOnlyKey(String key){
+        new UserWithOnlyKey().with {
+            it.key = key
             it
         }
     }

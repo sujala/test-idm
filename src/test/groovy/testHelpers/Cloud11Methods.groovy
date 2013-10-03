@@ -33,7 +33,7 @@ class Cloud11Methods {
     }
 
     def authenticate(credentials) {
-        resource.path(path11).path("auth").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path11).path("auth").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
     def validateToken(String token) {
@@ -62,6 +62,10 @@ class Cloud11Methods {
 
     def setUserEnabled(String username, user) {
         resource.path(path11).path("users").path(username).path("enabled").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
+    }
+
+    def setUserKey(String username, user) {
+        resource.path(path11).path("users").path(username).path("key").header("Authorization", "Basic " + new String(baseEncoding(authUser,authPassword))).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
     def addBaseUrl(baseUrl) {
