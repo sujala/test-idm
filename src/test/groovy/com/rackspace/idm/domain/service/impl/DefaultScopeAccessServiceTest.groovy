@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
+import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
@@ -211,14 +212,14 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def rackerScopeAccessOne = createRackerScopeAccess("expired", "rackerId", expiredDate)
         def rackerScopeAccessTwo = createRackerScopeAccess("refresh", "rackerId", refreshDate)
         def rackerScopeAccessThree = createRackerScopeAccess("good", "rackerId", futureDate)
-        User user = entityFactory.createUser()
+        Racker racker = entityFactory.createRacker()
 
         scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 
         when:
-        service.getValidRackerScopeAccessForClientId(user, "12345", null)
-        service.getValidRackerScopeAccessForClientId(user, "12345", null)
-        service.getValidRackerScopeAccessForClientId(user, "12345", null)
+        service.getValidRackerScopeAccessForClientId(racker, "12345", null)
+        service.getValidRackerScopeAccessForClientId(racker, "12345", null)
+        service.getValidRackerScopeAccessForClientId(racker, "12345", null)
 
         then:
         2 * scopeAccessDao.addScopeAccess(_, _)
@@ -527,7 +528,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def authenticatedBy = ["RSA"].asList()
 
         when:
-        service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), "clientId", authenticatedBy)
+        service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), "clientId", authenticatedBy)
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
@@ -760,7 +761,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
 
         when:
-        def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), clientId, authedBy)
+        def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), clientId, authedBy)
 
         then:
         2 * config.getDouble("token.entropy") >> entropy

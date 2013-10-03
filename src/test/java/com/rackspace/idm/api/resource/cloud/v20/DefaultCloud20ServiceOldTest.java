@@ -795,7 +795,7 @@ public class DefaultCloud20ServiceOldTest {
         PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("Rackspace");
-        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setDomain(domain);
         authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         spy.authenticate(null, authenticationRequest);
         verify(spy).authenticateFederatedDomain(authenticationRequest, domain);
@@ -807,7 +807,7 @@ public class DefaultCloud20ServiceOldTest {
         PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("NotRackspace");
-        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setDomain(domain);
         authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);

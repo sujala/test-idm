@@ -1220,6 +1220,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
+    def "addRole verifies racker does not have access"() {
+        given:
+        def token = "rackerToken"
+        def sa = new RackerScopeAccess().with {
+            it.accessTokenString = token
+            it.accessTokenExp = new Date().plus(1)
+            it
+        }
+        mockRoleConverter(service)
+        mockScopeAccessService(service)
+
+        when:
+        def response = service.addRole(headers, uriInfo(), token, v2Factory.createRole())
+
+        then:
+        response.build().status == 403
+        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_) >> { throw new ForbiddenException() }
+    }
+
     def "addRole sets serviceId"() {
         given:
         mockRoleConverter(service)

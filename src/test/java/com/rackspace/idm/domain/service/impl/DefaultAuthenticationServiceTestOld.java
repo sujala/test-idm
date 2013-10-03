@@ -64,7 +64,7 @@ public class DefaultAuthenticationServiceTestOld {
     @Before
     public void setUp() throws Exception {
         ClientAuthenticationResult value = new ClientAuthenticationResult(new Application(), true);
-        when(userService.getUser(anyString())).thenReturn(new Racker());
+        when(userService.getUser(anyString())).thenReturn(new User());
         when(applicationService.authenticate(anyString(), anyString())).thenReturn(value);
         when(rsaClient.authenticate(anyString(),anyString())).thenReturn(true);
         when(config.getBoolean(anyString(),anyBoolean())).thenReturn(true);

@@ -145,7 +145,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public boolean doesUserContainTenantRole(User user, String roleId) {
+    public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
         TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
         return tenantRole != null;
     }
@@ -248,7 +248,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addTenantRoleToUser(User user, TenantRole role) {
+    public void addTenantRoleToUser(BaseUser user, TenantRole role) {
         if (user == null || StringUtils.isBlank(user.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
                 "User cannot be null and must have uniqueID; role cannot be null");
@@ -269,20 +269,23 @@ public class DefaultTenantService implements TenantService {
         }
 
         tenantRoleDao.addTenantRoleToUser(user, role);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
-        if (isUserAdmin(user) && cRole.getPropagate()) {
-            for (User subUser : userService.getSubUsers(user)) {
-                try {
-                    role.setLdapEntry(null);
-                    tenantRoleDao.addTenantRoleToUser(subUser, role);
-                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
-                } catch (ClientConflictException ex) {
-                    String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
-                    logger.warn(msg);
+
+        if(user instanceof User){
+            atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
+            if (isUserAdmin((User) user) && cRole.getPropagate()) {
+                for (User subUser : userService.getSubUsers((User) user)) {
+                    try {
+                        role.setLdapEntry(null);
+                        tenantRoleDao.addTenantRoleToUser(subUser, role);
+                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                    } catch (ClientConflictException ex) {
+                        String msg = String.format("User %s already has tenantRole %s", ((User)user).getId(), role.getName());
+                        logger.warn(msg);
+                    }
                 }
             }
-        }
 
+        }
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
 
@@ -452,7 +455,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user) {
+    public List<TenantRole> getTenantRolesForUser(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
         return getRoleDetails(roles);

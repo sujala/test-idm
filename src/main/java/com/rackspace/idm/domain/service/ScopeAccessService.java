@@ -9,11 +9,11 @@ import java.util.List;
 
 public interface ScopeAccessService {
 
-    void addUserScopeAccess(User user, ScopeAccess scopeAccess);
+    void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 
     void addApplicationScopeAccess(Application application, ScopeAccess scopeAccess);
 
-    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
+    ScopeAccess addImpersonatedScopeAccess(BaseUser user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
 
     boolean authenticateAccessToken(String accessTokenStr);
 
@@ -35,7 +35,7 @@ public interface ScopeAccessService {
 
     ClientScopeAccess getApplicationScopeAccess(Application application);
 
-    RackerScopeAccess getRackerScopeAccessByClientId(User user, String clientId);
+    RackerScopeAccess getRackerScopeAccessByClientId(Racker racker, String clientId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
@@ -53,7 +53,7 @@ public interface ScopeAccessService {
 
     UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
 
-    RackerScopeAccess getValidRackerScopeAccessForClientId(User user, String clientId, List<String> authenticatedBy);
+    RackerScopeAccess getValidRackerScopeAccessForClientId(Racker racker, String clientId, List<String> authenticatedBy);
 
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
 

@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
+import com.rackspace.idm.domain.entity.RackerScopeAccess
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
@@ -12,6 +14,7 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.exception.NotFoundException
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import spock.lang.Shared
@@ -571,6 +574,42 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         endpoints.baseUrls[0].adminUrl[1] == null
         endpoints.baseUrls[1].adminUrl[0] == null
         endpoints.baseUrls[1].adminUrl[1] == null
+    }
+
+    def "revoke token returns 404 if the token belongs to a racker" () {
+        given:
+        allowAccess()
+        def token = "token"
+        def sa = new RackerScopeAccess().with {
+            it.accessTokenString = token
+            it.accessTokenExp = new Date().plus(1)
+            it
+        }
+
+        when:
+        def result = service.revokeToken(request, token, headers)
+
+        then:
+        result.build().status == 404
+        1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
+    }
+
+    def "revoke token returns 204 if the token belongs to a user" () {
+        given:
+        allowAccess()
+        def token = "token"
+        def sa = new UserScopeAccess().with {
+            it.accessTokenString = token
+            it.accessTokenExp = new Date().plus(1)
+            it
+        }
+
+        when:
+        def result = service.revokeToken(request, token, headers)
+
+        then:
+        result.build().status == 204
+        1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

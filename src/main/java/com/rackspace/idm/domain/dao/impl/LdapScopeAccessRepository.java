@@ -46,12 +46,12 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user) {
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user) {
         return getObjects(searchFilterGetAllImpersonatedScopeAccess(), user.getUniqueId());
     }
 
     @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUser(User user, String impersonatingUsername) {
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername) {
         return getMostRecentScopeAccess(user, searchFilterGetAllImpersonatedScopeAccessesForUser(impersonatingUsername));
     }
 

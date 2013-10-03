@@ -28,12 +28,10 @@ import java.util.Locale;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User implements Auditable, UniqueId {
+public class User  extends BaseUser implements Auditable, UniqueId {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    private String uniqueId;
 
     @LDAPField(attribute= LdapRepository.ATTR_ID,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,

@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LdapRackerRepository extends LdapGenericRepository<Racker> implements RackerDao {
 
-    public String getBaseDN() {
+    @Override
+    public String getBaseDn() {
         return RACKERS_BASE_DN;
     }
 

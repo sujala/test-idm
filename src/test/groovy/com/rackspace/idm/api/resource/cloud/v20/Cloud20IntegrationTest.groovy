@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.joda.time.Seconds
@@ -95,6 +96,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Shared def randomMosso
 
+    @Shared def racker = "test.racker"
+    @Shared def rackerPassword = "password"
+    @Shared def rackerRole = "Racker"
+    @Shared def rackerRoleName = "team-cloud-identity"
+    @Shared def rackerToken
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
         testDomainId = "domain1$sharedRandom"
@@ -135,6 +142,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         userAdminToken = cloud20.authenticatePassword("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
         userAdminTwoToken = cloud20.authenticatePassword("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        //Racker
+        rackerToken = cloud20.authenticateRacker(racker, rackerPassword).getEntity(AuthenticateResponse).value.token.id
 
         // Default Users
         cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
@@ -2374,6 +2384,76 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, addTenant.id)
         cloud20.deleteRole(serviceAdminToken, createRole.id)
 
+    }
+
+    def "Authenticate Racker"(){
+        when:
+        def rackerAuth = cloud20.authenticateRacker(racker, rackerPassword)
+        def response = rackerAuth.getEntity(AuthenticateResponse).value
+
+        then:
+        rackerAuth.status == 200
+        response.token != null
+        response.user.roles.role.name.contains(rackerRole)
+        response.user.roles.role.name.contains(rackerRoleName)
+    }
+
+    def "Impersonate user with racker token"(){
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userForImpersonation$random"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "domain$username", password)).getEntity(User)
+        def rackerAuth = cloud20.authenticateRacker(racker, rackerPassword)
+        AuthenticateResponse response = rackerAuth.getEntity(AuthenticateResponse).value
+        def token = response.token.id
+        def userForImpersonation = new User().with {
+            it.username = createUser.username
+            it
+        }
+        def impersonationResponse = cloud20.impersonate(token, userForImpersonation)
+        ImpersonationResponse ir = impersonationResponse.getEntity(ImpersonationResponse)
+
+        then:
+        rackerAuth.status == 200
+        response.token != null
+        impersonationResponse.status == 200
+        ir != null
+        ir.token != null
+        ir.token.id != null
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+    }
+
+    def "racker token returns 403 when making admin calls" () {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                cloud20.listRoles(rackerToken, null, null, null),
+                cloud20.addApiKeyToUser(rackerToken, "id", new ApiKeyCredentials()),
+                cloud20.addTenant(rackerToken, new Tenant()),
+                cloud20.addUserToGroup(rackerToken, "groupId", "userId"),
+                cloud20.addEndpoint(rackerToken, "tenantId", new EndpointTemplate()),
+                cloud20.createUser(rackerToken, new User())
+        ]
+    }
+
+    def "validate racker token" (){
+        when:
+        def response = cloud20.validateToken(identityAdminToken, rackerToken).getEntity(AuthenticateResponse).value
+
+        then:
+        response.token != null
+        response.token.id != null
+        response.user != null
+        response.user.id == racker
+        response.user.roles.role.name.contains(rackerRole)
+        response.user.roles.role.name.contains(rackerRoleName)
     }
 
     def authAndExpire(String username, String password) {
