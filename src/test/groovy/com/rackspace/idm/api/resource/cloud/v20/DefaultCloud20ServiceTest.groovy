@@ -1084,6 +1084,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         def user = entityFactory.createUser()
+        user.id = "someotherid"
         def caller = entityFactory.createUser()
 
         userService.checkAndGetUserById(_) >> user
@@ -1174,8 +1175,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         def mockedScopeAccess = Mock(ScopeAccess)
         def user1 = entityFactory.createUser()
+        user1.id = "someotherid"
         def user2 = entityFactory.createUser("user2", null, "domain2", "region")
         def user3 = entityFactory.createUser()
+        user3.id = "someotherid"
         def caller1 = entityFactory.createUser()
         def caller2 = entityFactory.createUser("caller2", null, "domain", "region")
         def caller3 = user3

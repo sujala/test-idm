@@ -1940,23 +1940,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteUserRole_callsTenantServiceGetGlobalRolesForUser() throws Exception {
-        spy.deleteUserRole(null, authToken, userId, null);
-        verify(tenantService).getGlobalRolesForUser(any(User.class));
-    }
-
-    @Test
-    public void deleteUserRole_roleIsNull_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.deleteUserRole(null, authToken, userId, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
-    }
-
-    @Test
     public void getEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);

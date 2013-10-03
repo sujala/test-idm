@@ -1161,7 +1161,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) && user.getId().equals(caller.getId())) {
+            if (user.getId().equals(caller.getId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
@@ -1184,10 +1184,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String errMsg = String.format("Role %s not found for user %s", roleId, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
-            }
-
-            if (user.getId().equals(caller.getId())) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
