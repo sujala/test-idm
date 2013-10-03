@@ -2,10 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +13,7 @@ import java.util.List;
 public class AuthConverterCloudV20 {
 
     @Autowired
-    private JAXBObjectFactories objFactories;
+    private JAXBObjectFactories jaxbObjectFactories;
 
     @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
@@ -27,24 +24,28 @@ public class AuthConverterCloudV20 {
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
-    public AuthenticateResponse toAuthenticationResponse(User user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
-        AuthenticateResponse auth = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
+    public AuthenticateResponse toAuthenticationResponse(BaseUser user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
+        AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
         
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
-        auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
+        if(user instanceof Racker){
+            auth.setUser(this.userConverterCloudV20.toRackerForAuthenticateResponse((Racker) user, roles));
+        }else {
+            auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse((User) user, roles));
+        }
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
         
         return auth;
     }
 
     public ImpersonationResponse toImpersonationResponse(ScopeAccess scopeAccess) {
-        ImpersonationResponse auth = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
+        ImpersonationResponse auth = jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess));
         return auth;
     }
 
-    public void setObjFactories(JAXBObjectFactories objFactories) {
-        this.objFactories = objFactories;
+    public void setJaxbObjectFactories(JAXBObjectFactories jaxbObjectFactories) {
+        this.jaxbObjectFactories = jaxbObjectFactories;
     }
 
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {

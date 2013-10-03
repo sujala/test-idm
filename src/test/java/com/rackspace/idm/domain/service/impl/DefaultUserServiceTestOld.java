@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
@@ -42,6 +43,8 @@ public class DefaultUserServiceTestOld {
     private DefaultUserService defaultUserService = new DefaultUserService();
     @Mock
     private UserDao userDao;
+    @Mock
+    private RackerDao rackerDao;
     @Mock
     private AuthDao authDao;
     @Mock
@@ -298,14 +301,16 @@ public class DefaultUserServiceTestOld {
 
     @Test
     public void getUserByScopeAccess_impersonatedScopeAccessIdIsNull_returnsUser() throws Exception {
-        User user = new Racker();
+        User user = new User();
+        String username = "testUser";
+        user.setUsername(username);
         user.setEnabled(true);
         ImpersonatedScopeAccess scopeAccess = mock(ImpersonatedScopeAccess.class);
         when(scopeAccess.getRackerId()).thenReturn(null);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
-        User result = defaultUserService.getUserByScopeAccess(scopeAccess);
-        assertThat("user", result, equalTo(user));
+        when(scopeAccess.getUsername()).thenReturn(username);
+        when(userDao.getUserByUsername(username)).thenReturn(user);
+        BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
+        assertThat("user", (User)result, equalTo(user));
     }
 
     @Test
@@ -315,8 +320,8 @@ public class DefaultUserServiceTestOld {
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUsername()).thenReturn("username");
         when(userDao.getUserByUsername("username")).thenReturn(user);
-        User result = defaultUserService.getUserByScopeAccess(scopeAccess);
-        assertThat("user", result, equalTo(user));
+        BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
+        assertThat("user", (User)result, equalTo(user));
     }
 
     @Test (expected = BadRequestException.class)

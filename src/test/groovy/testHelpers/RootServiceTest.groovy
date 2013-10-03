@@ -15,6 +15,7 @@ import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.exception.ExceptionHandler
@@ -89,6 +90,7 @@ import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.ObjectFactory
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -116,6 +118,8 @@ class RootServiceTest extends Specification {
     @Shared InputValidator inputValidator
     @Shared CloudGroupBuilder cloudGroupBuilder
     @Shared CloudKsGroupBuilder cloudKsGroupBuilder
+    @Shared JAXBObjectFactories jaxbObjectFactories
+    @Shared ObjectFactory openStackIdentityV2Factory
 
     // converters
     @Shared AuthConverterCloudV20 authConverter
@@ -275,8 +279,8 @@ class RootServiceTest extends Specification {
         userConverter = Mock()
         userConverter.toUser(_) >> v2Factory.createUser()
         userConverter.fromUser(_) >> entityFactory.createUser()
-        userConverter.toUserForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
-        userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toRackerForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toRackerForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
         userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
         userConverter.toUserList(_) >> v2Factory.createUserList()
         service.userConverterCloudV20 = userConverter
@@ -710,6 +714,13 @@ class RootServiceTest extends Specification {
     def mockAuthWithApiKeyCredentials(service) {
         authWithApiKeyCredentials = Mock()
         service.authWithApiKeyCredentials = authWithApiKeyCredentials 
+    }
+
+    def mockJAXBObjectFactories(service) {
+        jaxbObjectFactories = Mock()
+        openStackIdentityV2Factory = Mock()
+        jaxbObjectFactories.getOpenStackIdentityV2Factory() >> openStackIdentityV2Factory
+        service.jaxbObjectFactories = jaxbObjectFactories
     }
 
     /*

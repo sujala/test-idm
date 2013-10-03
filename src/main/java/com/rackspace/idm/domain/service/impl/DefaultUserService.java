@@ -751,8 +751,8 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) {
-        User user;
+    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
+        BaseUser user;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));
@@ -760,10 +760,10 @@ public class DefaultUserService implements UserService {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             if (impersonatedScopeAccess.getRackerId() != null) {
                 Racker impersonatingRacker = getRackerByRackerId(impersonatedScopeAccess.getRackerId());
-                impersonatingRacker.setId(impersonatingRacker.getRackerId());
+                impersonatingRacker.setRackerId(impersonatingRacker.getRackerId());
                 impersonatingRacker.setUsername(impersonatingRacker.getUsername());
                 user = impersonatingRacker;
-                user.setEnabled(true);
+                ((Racker)user).setEnabled(true);
             } else {
                 user = getUser(impersonatedScopeAccess.getUsername());
             }

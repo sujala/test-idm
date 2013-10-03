@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.idm.JSONConstants
 import com.sun.jersey.api.client.ClientResponse
@@ -24,6 +25,7 @@ class Cloud20Methods {
 
     @Shared WebResource resource
     @Shared def v2Factory = new V2Factory()
+    @Shared def v1Factory = new V1Factory()
     @Shared String path20 = "cloud/v2.0/"
 
     static def RAX_GRPADM= "RAX-GRPADM"
@@ -40,8 +42,17 @@ class Cloud20Methods {
         resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
+    def authenticateRacker(username, password){
+        def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
+        credentials.domain =  new Domain().with {
+            it.name = "Rackspace"
+            it
+        }
+        resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+    }
+
     def validateToken(authToken, token) {
-        resource.path(path20).path("tokens").path(token).header("X-Auth-Token", authToken).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("tokens").path(token).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserByName(String token, String name) {

@@ -55,7 +55,7 @@ public class CloudUserAccessibility {
         this.userService = userService;
         this.objFactory = objFactory;
         this.config = config;
-        this.caller = userService.getUserByScopeAccess(scopeAccess);
+        this.caller = (User) userService.getUserByScopeAccess(scopeAccess);
     }
 
     public Domains getAccessibleDomainsForUser(User user) {

@@ -16,7 +16,7 @@ public interface TenantService {
     Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     
-    void addTenantRoleToUser(User user, TenantRole role);
+    void addTenantRoleToUser(BaseUser user, TenantRole role);
     void addCallerTenantRolesToUser(User caller, User user);
     void addTenantRoleToClient(Application client, TenantRole role);
     void deleteTenantRoleForUser(User user, TenantRole role);
@@ -25,7 +25,7 @@ public interface TenantService {
     void updateTenant(Tenant tenant);
     
     TenantRole getTenantRoleForUserById(User user, String roleId);
-    boolean doesUserContainTenantRole(User user, String roleId);
+    boolean doesUserContainTenantRole(BaseUser user, String roleId);
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
@@ -34,7 +34,7 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForApplication(Application user, String applicationId);
     List<TenantRole> getGlobalRolesForUser(User user, String applicationId);
     List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant);
-    List<TenantRole> getTenantRolesForUser(User user);
+    List<TenantRole> getTenantRolesForUser(BaseUser user);
     List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     @Deprecated

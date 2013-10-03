@@ -134,14 +134,14 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
-            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
             UserScopeAccess usa = (UserScopeAccess) sa;
             usa.setAccessTokenExpired();
             this.scopeAccessService.updateScopeAccess(usa);
-            User user = userService.getUserByScopeAccess(sa);
+            User user = (User) userService.getUserByScopeAccess(sa);
             atomHopperClient.asyncTokenPost(user, tokenId);
 
             return Response.noContent();
@@ -181,7 +181,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
             }
 
-            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
             }
 

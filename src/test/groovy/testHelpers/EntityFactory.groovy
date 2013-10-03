@@ -64,7 +64,7 @@ class EntityFactory extends Specification {
         return createUserAuthenticationResult(createUser(), true)
     }
 
-    def createUserAuthenticationResult(User user, boolean authenticated) {
+    def createUserAuthenticationResult(BaseUser user, boolean authenticated) {
         new UserAuthenticationResult(user, authenticated).with {
             return it
         }

@@ -341,7 +341,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        User user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
         return tenantService.doesUserContainTenantRole(user, clientRole.getId());
     }
 

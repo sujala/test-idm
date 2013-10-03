@@ -38,7 +38,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void addTenantRoleToUser(User user, TenantRole tenantRole) {
+    public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         addOrUpdateTenantRole(user.getUniqueId(), tenantRole);
     }
 
@@ -58,7 +58,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public Iterable<TenantRole> getTenantRolesForUser(User user) {
+    public Iterable<TenantRole> getTenantRolesForUser(BaseUser user) {
         return getObjects(searchFilterGetTenantRoles(), user.getUniqueId());
     }
 
@@ -221,7 +221,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public TenantRole getTenantRoleForUser(User user, String roleId) {
+    public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
         return getTenantRole(user.getUniqueId(), roleId);
     }
 

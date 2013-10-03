@@ -122,7 +122,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
+    public ImpersonatedScopeAccess addImpersonatedScopeAccess(BaseUser user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
         ImpersonatedScopeAccess mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(user, impersonatingUsername);
 
@@ -138,7 +138,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setImpersonatingToken(impersonatingToken);
 
         if (mostRecent == null) {
-            scopeAccessToAdd.setUsername(user.getUsername());
+            if(user instanceof Racker){
+                scopeAccessToAdd.setUsername(((Racker)user).getRackerId());
+            } else {
+                scopeAccessToAdd.setUsername(((User)user).getUsername());
+            }
             scopeAccessToAdd.setClientId(clientId);
             scopeAccessToAdd.setImpersonatingUsername(impersonatingUsername);
         } else {
@@ -159,7 +163,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccessToAdd;
     }
 
-    ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
+    ImpersonatedScopeAccess setImpersonatedScopeAccess(BaseUser caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
         validateExpireInElement(caller, impersonationRequest);
 
         int expirationSeconds;
@@ -182,7 +186,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return impersonatedScopeAccess;
     }
 
-    void validateExpireInElement(User caller, ImpersonationRequest impersonationRequest) {
+    void validateExpireInElement(BaseUser caller, ImpersonationRequest impersonationRequest) {
         if(impersonationRequest==null || impersonationRequest.getExpireInSeconds()==null){
             return;
         }
@@ -205,7 +209,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void addUserScopeAccess(User user, ScopeAccess scopeAccess) {
+    public void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
             String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
@@ -266,10 +270,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         expireDate =  scopeAccess.getAccessTokenExp();
         scopeAccess.setAccessTokenExpired();
         this.scopeAccessDao.updateScopeAccess(scopeAccess);
-        User user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
         if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
             logger.warn("Sending token feed to atom hopper.");
-            atomHopperClient.asyncTokenPost(user, tokenString);
+            atomHopperClient.asyncTokenPost((User) user, tokenString);
         }
         logger.debug("Done expiring access token {}", tokenString);
     }
@@ -364,10 +368,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public RackerScopeAccess getRackerScopeAccessByClientId(User user, String clientId) {
+    public RackerScopeAccess getRackerScopeAccessByClientId(Racker racker, String clientId) {
         logger.debug("Getting Racker ScopeAccess by clientId", clientId);
         RackerScopeAccess scopeAccess;
-        scopeAccess = (RackerScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
+        scopeAccess = (RackerScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientId(racker, clientId);
         logger.debug("Got Racker ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -460,18 +464,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public RackerScopeAccess getValidRackerScopeAccessForClientId(User user, String clientId, List<String> authenticatedBy) {
+    public RackerScopeAccess getValidRackerScopeAccessForClientId(Racker racker, String clientId, List<String> authenticatedBy) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
-        RackerScopeAccess scopeAccess = getRackerScopeAccessByClientId(user, clientId);
+        RackerScopeAccess scopeAccess = getRackerScopeAccessByClientId(racker, clientId);
         if (scopeAccess == null){
             int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setClientId(clientId);
-            scopeAccess.setRackerId(user.getId());
+            scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setAccessTokenString(generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccess.setAuthenticatedBy(authenticatedBy);
-            scopeAccessDao.addScopeAccess(user, scopeAccess);
+            scopeAccessDao.addScopeAccess(racker, scopeAccess);
         }
         //if expired update with new token
         scopeAccess = updateExpiredRackerScopeAccess(scopeAccess);
@@ -486,7 +490,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = userService.authenticateWithApiKey(username, apiKey);
         handleApiKeyUsernameAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_APIKEY));
+        return this.getValidUserScopeAccessForClientId((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_APIKEY));
     }
 
     private List<String> authenticateBy(String type) {
@@ -502,7 +506,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId(result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
+        return this.getValidUserScopeAccessForClientId((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
     }
 
     @Override
@@ -617,7 +621,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
         scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        User user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());

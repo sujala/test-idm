@@ -41,6 +41,14 @@ public class AuthRepositoryLdapConfigurationTest {
     @Test
     public void connection_trustedIsTrue_returnsConnection() throws Exception {
         AuthRepositoryLdapConfiguration authRepositoryLdapConfiguration = new AuthRepositoryLdapConfiguration(true);
+        Configuration config = mock(Configuration.class);
+        authRepositoryLdapConfiguration.setConfig(config);
+        when(config.getBoolean("auth.ldap.useSSL")).thenReturn(false);
+        when(config.getString("auth.ldap.server")).thenReturn("10.14.212.160");
+        when(config.getInt("auth.ldap.server.port", 636)).thenReturn(10389);
+        when(config.getInt("auth.ldap.server.pool.size.init", 1)).thenReturn(1);
+        when(config.getInt("auth.ldap.server.pool.size.max", 100)).thenReturn(100);
+        when(config.getBoolean("ldap.server.trusted", false)).thenReturn(true);
         LDAPConnectionPool result = authRepositoryLdapConfiguration.connection();
         assertThat("connection pool exists", result, notNullValue());
     }

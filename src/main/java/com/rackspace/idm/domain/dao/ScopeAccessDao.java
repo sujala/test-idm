@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 
@@ -21,13 +22,13 @@ public interface ScopeAccessDao {
 
     ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId);
 
-    ScopeAccess getMostRecentImpersonatedScopeAccessForUser(User user, String impersonatingUsername);
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername);
 
     Iterable<ScopeAccess> getScopeAccessesByUserId(String userId);
 
     Iterable<ScopeAccess> getScopeAccesses(UniqueId object);
 
-    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(User user);
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user);
 
     Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
 
