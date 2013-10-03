@@ -30,7 +30,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
-import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -62,9 +61,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -838,7 +834,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Invalid request. Specify tenantId OR tenantName, not both.");
             }
             // Check for domain in request
-            //com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = checkDomainFromAuthRequest(authenticationRequest);
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = authenticationRequest.getDomain();
             if(domain != null) {
                 AuthenticateResponse auth = authenticateFederatedDomain(authenticationRequest, domain);
@@ -3071,7 +3066,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     }
                 }
 
-                access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList));
+                access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 User impersonator;
                 User user;

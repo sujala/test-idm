@@ -29,7 +29,7 @@ public class AuthConverterCloudV20 {
         
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
         if(user instanceof Racker){
-            auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse((Racker) user, roles));
+            auth.setUser(this.userConverterCloudV20.toRackerForAuthenticateResponse((Racker) user, roles));
         }else {
             auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse((User) user, roles));
         }

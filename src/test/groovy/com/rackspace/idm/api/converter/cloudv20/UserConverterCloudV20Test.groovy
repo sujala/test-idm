@@ -76,7 +76,7 @@ class UserConverterCloudV20Test extends Specification {
         Racker racker = racker()
 
         when:
-        org.openstack.docs.identity.api.v2.UserForAuthenticateResponse userEntity = converterCloudV20.toUserForAuthenticateResponse(racker, null)
+        org.openstack.docs.identity.api.v2.UserForAuthenticateResponse userEntity = converterCloudV20.toRackerForAuthenticateResponse(racker, null)
 
         then:
         racker.username == userEntity.name

@@ -279,8 +279,8 @@ class RootServiceTest extends Specification {
         userConverter = Mock()
         userConverter.toUser(_) >> v2Factory.createUser()
         userConverter.fromUser(_) >> entityFactory.createUser()
-        userConverter.toUserForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
-        userConverter.toUserForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toRackerForAuthenticateResponse(_ as Racker, _) >> v2Factory.createUserForAuthenticateResponse()
+        userConverter.toRackerForAuthenticateResponse(_ as User, _) >> v2Factory.createUserForAuthenticateResponse()
         userConverter.toUserForCreate(_) >> v1Factory.createUserForCreate()
         userConverter.toUserList(_) >> v2Factory.createUserList()
         service.userConverterCloudV20 = userConverter

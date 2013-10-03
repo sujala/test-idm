@@ -17,7 +17,7 @@ class AuthConverterCloudV20Test extends RootServiceTest{
         mockEndpointConverter(converter)
     }
 
-    def "toAuthenticationResponse using a racker" () {
+    def "toAuthenticationResponse using a racker verifies that toUserForAuthenticateResponse uses a Racker as a parameter" () {
         given:
         Racker racker = entityFactory.createRacker()
         def sa = entityFactory.createScopeAccess()
@@ -32,11 +32,11 @@ class AuthConverterCloudV20Test extends RootServiceTest{
 
         then:
         1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse() >> new AuthenticateResponse()
-        1 * userConverter.toUserForAuthenticateResponse(racker, roles)
+        1 * userConverter.toRackerForAuthenticateResponse(racker, roles)
         response != null
     }
 
-    def "toAuthenticationResponse using a user" () {
+    def "toAuthenticationResponse using a user - verifies that toUserForAuthenticateResponse uses a User as a parameter" () {
         given:
         User user = entityFactory.createUser()
         def sa = entityFactory.createScopeAccess()
@@ -52,7 +52,7 @@ class AuthConverterCloudV20Test extends RootServiceTest{
         then:
         1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse() >> new AuthenticateResponse()
         1 * userConverter.toUserForAuthenticateResponse(user, roles)
-        0 * userConverter.toUserForAuthenticateResponse(entityFactory.createRacker(), roles)
+        0 * userConverter.toRackerForAuthenticateResponse(entityFactory.createRacker(), roles)
         response != null
     }
 

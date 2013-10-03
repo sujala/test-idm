@@ -301,15 +301,16 @@ public class DefaultUserServiceTestOld {
 
     @Test
     public void getUserByScopeAccess_impersonatedScopeAccessIdIsNull_returnsUser() throws Exception {
-        Racker user = new Racker();
+        User user = new User();
+        String username = "testUser";
+        user.setUsername(username);
         user.setEnabled(true);
         ImpersonatedScopeAccess scopeAccess = mock(ImpersonatedScopeAccess.class);
-        when(scopeAccess.getRackerId()).thenReturn("test.user");
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(null);
-        when(rackerDao.getRackerByRackerId(anyString())).thenReturn(new Racker());
+        when(scopeAccess.getRackerId()).thenReturn(null);
+        when(scopeAccess.getUsername()).thenReturn(username);
+        when(userDao.getUserByUsername(username)).thenReturn(user);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
-        assertThat("user", (Racker)result, equalTo(user));
+        assertThat("user", (User)result, equalTo(user));
     }
 
     @Test

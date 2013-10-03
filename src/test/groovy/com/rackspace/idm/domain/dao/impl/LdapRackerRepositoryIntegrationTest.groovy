@@ -25,7 +25,6 @@ class LdapRackerRepositoryIntegrationTest extends Specification{
         given:
         Racker user = new Racker().with {
             it.rackerId = random
-            it.rackerRoles = ["role1", "role2"].asList()
             it
         }
 
@@ -37,6 +36,7 @@ class LdapRackerRepositoryIntegrationTest extends Specification{
 
         then:
         retrivedRacker != null
+        retrivedRacker.rackerId == random
         deletedRacker == null
     }
 }

@@ -59,7 +59,7 @@ public class UserConverterCloudV20 {
         return jaxbUser;
     }
 
-    public UserForAuthenticateResponse toUserForAuthenticateResponse(Racker racker, List<TenantRole> roles) {
+    public UserForAuthenticateResponse toRackerForAuthenticateResponse(Racker racker, List<TenantRole> roles) {
         UserForAuthenticateResponse userForAuthenticateResponse = objectFactory.createUserForAuthenticateResponse();
         userForAuthenticateResponse.setName(racker.getUsername());
         userForAuthenticateResponse.setId(racker.getRackerId());
