@@ -732,6 +732,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, cRole);
 
+            if (user.getId().equals(caller.getId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
             checkForMultipleIdentityRoles(user, cRole);
 
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
@@ -1151,12 +1155,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            if (user.getId().equals(caller.getId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
                 if (!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
@@ -1174,10 +1183,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String errMsg = String.format("Role %s not found for user %s", roleId, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
-            }
-
-            if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);

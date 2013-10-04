@@ -39,14 +39,6 @@ class PrecedenceValidatorTest extends RootServiceTest {
         thrown(ForbiddenException)
     }
 
-    def "compareWeights throws forbidden exception if caller weight is eqaul to role weight"() {
-        when:
-        service.compareWeights(100, 100)
-
-        then:
-        thrown(ForbiddenException)
-    }
-
     def "verifyCallerRolePrecedenceForAssignment - throw ForbiddenException if caller has no Identity Role"() {
         given:
         def user = entityFactory.createUser()

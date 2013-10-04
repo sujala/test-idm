@@ -945,6 +945,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         def user = entityFactory.createUser()
+        user.id = "somethingdifferentfromcaller"
         def caller = entityFactory.createUser()
         def roleToAdd = entityFactory.createClientRole(null)
 
@@ -985,6 +986,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         def user = entityFactory.createUser()
+        user.id = "somethingdifferentfromcaller"
         def caller = entityFactory.createUser()
         def roleToAdd = entityFactory.createClientRole(null)
 
@@ -1056,7 +1058,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.deleteUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
     }
 
     def "deleteUserRole verifies user to modify is within callers domain when caller is user-admin"() {
@@ -1082,6 +1084,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         def user = entityFactory.createUser()
+        user.id = "someotherid"
         def caller = entityFactory.createUser()
 
         userService.checkAndGetUserById(_) >> user
@@ -1127,7 +1130,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        def user = entityFactory.createUser()
+        user.id = "differentid"
+
+        userService.checkAndGetUserById(_) >> user
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
 
         tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
@@ -1149,7 +1155,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        def user = entityFactory.createUser()
+        user.id = "differentid"
+
+        userService.checkAndGetUserById(_) >> user
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
 
         tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
@@ -1166,8 +1175,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         def mockedScopeAccess = Mock(ScopeAccess)
         def user1 = entityFactory.createUser()
+        user1.id = "someotherid"
         def user2 = entityFactory.createUser("user2", null, "domain2", "region")
         def user3 = entityFactory.createUser()
+        user3.id = "someotherid"
         def caller1 = entityFactory.createUser()
         def caller2 = entityFactory.createUser("caller2", null, "domain", "region")
         def caller3 = user3
@@ -1177,7 +1188,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserAdminLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
+        authorizationService.verifyUserManagedLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
         userService.checkAndGetUserById("1$userId") >> { throw new NotFoundException() }
 
         userService.checkAndGetUserById(_) >>> [ user2, user1, user3 ]
@@ -3259,6 +3270,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
         User user = entityFactory.createUser()
+        user.id = "somthingdifferentfromcaller"
         User caller = entityFactory.createUser()
 
         when:
@@ -3296,7 +3308,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * applicationService.getClientRoleById(_) >> clientRole
         1 * userService.checkAndGetUserById(_) >> user
         1 * userService.getUserByAuthToken(_) >> caller
-        1 * authorizationService.authorizeUserManageRole(_) >> true
         result.build().status == 403
     }
 
@@ -3308,6 +3319,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
         User user = entityFactory.createUser()
+        user.id = "something different from caller"
         User caller = entityFactory.createUser()
 
         when:
