@@ -990,6 +990,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setEnabled(user.isEnabled());
 
             this.userService.updateUser(gaUser, false);
+//            gaUser = this.userService.getUser(gaUser.getUsername());
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the

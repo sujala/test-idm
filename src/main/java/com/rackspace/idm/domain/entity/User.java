@@ -171,17 +171,17 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     @LDAPField(attribute=LdapRepository.ATTR_CREATED_DATE,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private DateTime created;
+    private Date created;
 
     @LDAPField(attribute=LdapRepository.ATTR_UPDATED_DATE,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private DateTime updated;
+    private Date updated;
 
     @LDAPField(attribute=LdapRepository.ATTR_SOFT_DELETED_DATE,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private DateTime softDeletedTimestamp;
+    private Date softDeletedTimestamp;
 
     @LDAPField(attribute=LdapRepository.ATTR_PWD_ACCOUNT_LOCKOUT_TIME,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,

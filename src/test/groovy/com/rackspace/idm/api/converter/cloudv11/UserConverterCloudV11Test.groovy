@@ -246,12 +246,12 @@ class UserConverterCloudV11Test extends Specification {
     }
 
     def created() {
-        new DateTime(new Date(2013,1,1))
+        new Date(2013,1,1)
     }
 
     def createdXML() {
         GregorianCalendar gc = new GregorianCalendar()
-        DateTime created = created()
+        DateTime created = new DateTime(created())
         gc.setTime(created.toDate())
         DatatypeFactory.newInstance().newXMLGregorianCalendar(gc)
     }

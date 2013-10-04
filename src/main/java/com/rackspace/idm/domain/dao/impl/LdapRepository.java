@@ -215,7 +215,7 @@ public abstract class LdapRepository {
     // Search Attributes
     protected static final String[] ATTR_DEFAULT_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
-    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
     protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_POLICY_SEARCH_ATTRIBUTES = {"*"};

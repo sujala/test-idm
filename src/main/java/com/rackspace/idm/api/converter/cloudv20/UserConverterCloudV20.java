@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.dozer.Mapper;
+import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.User;
@@ -93,16 +94,13 @@ public class UserConverterCloudV20 {
 
         try {
             if (user.getCreated() != null) {
-
                 jaxbUser.setCreated(DatatypeFactory.newInstance()
-                        .newXMLGregorianCalendar(
-                                user.getCreated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getCreated()).toGregorianCalendar()));
             }
 
             if (user.getUpdated() != null) {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
-                        .newXMLGregorianCalendar(
-                                user.getUpdated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
         }   catch (DatatypeConfigurationException e) {
@@ -117,16 +115,13 @@ public class UserConverterCloudV20 {
 
         try {
             if (user.getCreated() != null) {
-
                 jaxbUser.setCreated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getCreated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getCreated()).toGregorianCalendar()));
             }
 
             if (user.getUpdated() != null) {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getUpdated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
         } catch (DatatypeConfigurationException e) {
