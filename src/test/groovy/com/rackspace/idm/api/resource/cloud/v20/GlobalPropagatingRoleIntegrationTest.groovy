@@ -11,7 +11,10 @@ import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE
 import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT
 
-class PropagatingRoleIntegrationTest extends RootIntegrationTest {
+/**
+ * Tests the functionality of propagating roles when assigned as global roles (non-tenant specific).
+ */
+class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
     private static final String SERVICE_ADMIN_USERNAME = "authQE";
     private static final String SERVICE_ADMIN_PWD = "Auth1234"
 
