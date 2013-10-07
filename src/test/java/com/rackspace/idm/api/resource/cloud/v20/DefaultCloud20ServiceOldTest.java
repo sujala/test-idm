@@ -1341,6 +1341,7 @@ public class DefaultCloud20ServiceOldTest {
     public void listUserGroups_withValidUser_returns200() throws Exception {
         when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
         assertThat("code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -1349,6 +1350,7 @@ public class DefaultCloud20ServiceOldTest {
     public void listUserGroups_withValidUser_returnsNonNullEntity() throws Exception {
         when(userService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
         when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
         assertThat("code", responseBuilder.build().getEntity(), Matchers.notNullValue());
     }
@@ -3970,7 +3972,8 @@ public class DefaultCloud20ServiceOldTest {
         List<Group> groups = new ArrayList<Group>();
         groups.add(group);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.getGroupsForUser("userId")).thenReturn(groups);
+        when(userService.getGroupsForUser(user.getId())).thenReturn(groups);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(user);
         when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(httpHeaders, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
