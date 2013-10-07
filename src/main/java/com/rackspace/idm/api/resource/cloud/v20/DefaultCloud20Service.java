@@ -480,7 +480,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 Iterable<User> users = userService.getUsersWithDomain(domainId);
 
-                checkMaxNumberOfSubUsers(users);
+                checkMaxNumberOfUsersInDomain(users);
 
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
@@ -545,15 +545,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private void checkMaxNumberOfSubUsers(Iterable<User> users) {
-        int maxNumberOfSubUsers = config.getInt("numberOfSubUsers");
+    private void checkMaxNumberOfUsersInDomain(Iterable<User> users) {
+        int maxNumberOfUsersInDomain = config.getInt("maxNumberOfUsersInDomain");
 
         //TODO: this does not work if domain has multiple user admins
         int numberUsers = 0;
         for (User user : users) {
             numberUsers++;
-            if (numberUsers >= maxNumberOfSubUsers) {
-                String errMsg = String.format("User cannot create more than %d sub-accounts.", maxNumberOfSubUsers);
+            if (numberUsers >= maxNumberOfUsersInDomain) {
+                String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
                 throw new BadRequestException(errMsg);
             }
         }
