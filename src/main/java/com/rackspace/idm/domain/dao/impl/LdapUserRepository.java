@@ -383,10 +383,12 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         List<Group> groups = new ArrayList<Group>();
 
         User user = getObject(searchFilterGetUserById(userId));
-        for (String groupId : user.getRsGroupId()) {
-            groups.add(groupDao.getGroupById(groupId));
-        }
 
+        if(user != null){
+            for (String groupId : user.getRsGroupId()) {
+                groups.add(groupDao.getGroupById(groupId));
+            }
+        }
         return groups;
     }
 
