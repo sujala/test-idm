@@ -2528,6 +2528,25 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.user.roles.role.name.contains(rackerRoleName)
     }
 
+    def "List credentials returns de correct type for passwordCredentials"() {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "listCredentialUser$random"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        def listCredResponse = cloud20.listCredentials(serviceAdminToken, createUser.id).getEntity(CredentialListType).value
+
+        then:
+        createUser != null
+        listCredResponse != null
+        ((CredentialListType) listCredResponse).credential.get(0).name.localPart == "passwordCredentials"
+
+        cleanup:
+        cloud20.destroyUser(identityAdminToken, createUser.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

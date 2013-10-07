@@ -1571,10 +1571,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (authorizationService.authorizeCloudServiceAdmin(callerScopeAccess)) {
                 if (!StringUtils.isBlank(user.getPassword())) {
-                    PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
+                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
                     userCreds.setPassword(user.getPassword());
                     userCreds.setUsername(user.getUsername());
-                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds));
+                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
                 }
             }
 
