@@ -517,7 +517,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 0
+        config.getInt("maxNumberOfUsersInDomain") >> 0
 
         userService.getUserByAuthToken(_) >>> [
                 entityFactory.createUser("username1", "id", null, "region"),
@@ -552,7 +552,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 5
+        config.getInt("maxNumberOfUsersInDomain") >> 5
 
         when:
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
@@ -3464,9 +3464,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
     }
 
-    def "checkMaxNumberOfSubUsers does not allow creating more than maxNumberOfSubUsers"() {
+    def "checkMaxNumberOfUsersInDomain does not allow creating more than maxNumberOfUsersInDomain"() {
         given:
-        config.getInt("numberOfSubUsers") >> maxNumberOfUsers
+        config.getInt("maxNumberOfUsersInDomain") >> maxNumberOfUsersInDomain
 
         List<User> users = new ArrayList<>()
         for (int i = 0; i < numberOfUsers; i++) {
@@ -3480,7 +3480,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         when:
         boolean result = false
         try {
-            service.checkMaxNumberOfSubUsers(users)
+            service.checkMaxNumberOfUsersInDomain(users)
         } catch (BadRequestException e) {
             result = true
         }
@@ -3489,9 +3489,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result == badRequest
 
         where:
-        maxNumberOfUsers | numberOfUsers | badRequest
-        2                | 2             | true
-        2                | 1             | false
+        maxNumberOfUsersInDomain | numberOfUsers | badRequest
+        2                        | 2             | true
+        2                        | 1             | false
     }
 
     def mockServices() {
