@@ -234,10 +234,9 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def getRoleOnTenantForUser(String token, String tenantId, String userId, String roleId) {
-        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
-                .path("roles").path("OS-KSADM").path(roleId)
-                .header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    def listRolesForUserOnTenant(String token, String tenantId, String userId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId).path("roles")
+                .header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def addEndpoint(String token, String tenantId, endpointTemplate) {
