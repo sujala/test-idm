@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -18,6 +19,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
     public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
     public static final String DEFAULT_USER_USERNAME_PREFIX = "defaultUser"
+    public static final String ROLE_NAME_PREFIX = "role"
 
     public static final String DEFAULT_PASSWORD = "Password1"
 
@@ -79,6 +81,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def cleanupSpec() {
+        deleteUserQuietly(specificationIdentityAdmin)
     }
 
     def "Service admin can assign identity role to user without any role"() {
@@ -107,6 +110,25 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(identityAdmin)
     }
 
+    def "User admin can assign 1000 weight role to default user within domain"() {
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        Role role = createPropagateRole(false, 1000)
+
+        when: "As user-admin, add 1000 weight role to default user within my domain"
+        addRoleToUser(userAdminToken, defaultUser, role)
+
+        then: "default user now has user-manage role"
+        assertUserHasRole(defaultUser, role)
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(defaultUser)
+        deleteRoleQuietly(role)
+    }
+
     def "User manager can assign user-manager role to default user within domain"() {
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
@@ -132,7 +154,6 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(defaultUser)
     }
 
-
     def deleteUserQuietly(user) {
         if (user != null) {
             try {
@@ -141,6 +162,29 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
                 //ignore
             }
         }
+    }
+
+    def deleteRoleQuietly(role) {
+        if (role != null) {
+            try {
+                cloud20.deleteRole(specificationServiceAdminToken, role.getId())
+            } catch (all) {
+                //ignore
+            }
+        }
+    }
+
+    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+        def role = v2Factory.createRole(propagate, weight).with {
+            it.name = roleName
+            it.propagate = propagate
+            it.weight = weight
+            it.otherAttributes = null
+            return it
+        }
+        def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)
+        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        return propagatingRole
     }
 
     def void assertUserHasRole(user, role) {
