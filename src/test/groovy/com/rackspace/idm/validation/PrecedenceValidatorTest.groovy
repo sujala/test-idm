@@ -53,24 +53,6 @@ class PrecedenceValidatorTest extends RootServiceTest {
         thrown(ForbiddenException)
     }
 
-    def "verifyCallerRolePrecedenceForAssignment - sets callers weight to cloudAuth.special.rsWeight if caller is userAdmin"() {
-        given:
-        def user = entityFactory.createUser()
-        def role = entityFactory.createClientRole("identity:user-admin").with {
-            it.rsWeight = 1000
-            return it
-        }
-
-        applicationService.getUserIdentityRole(_) >> role
-
-        when:
-        service.verifyCallerRolePrecedenceForAssignment(user, role)
-
-        then:
-        1 * config.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
-        1 * config.getInt("cloudAuth.special.rsWeight") >> 500
-    }
-
     def "verifyCallerRolePrecedenceForAssignment - gets ClientRole from tenantRole"() {
         given:
         def user = entityFactory.createUser()
