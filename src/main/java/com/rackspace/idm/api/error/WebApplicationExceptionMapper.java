@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.error;
 
 import com.rackspace.api.common.fault.v1.*;
+import com.sun.jersey.api.ParamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,14 @@ public class WebApplicationExceptionMapper implements ExceptionMapper<WebApplica
                 BadRequestFault fault = new BadRequestFault();
                 fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
                 fault.setMessage(exception.getMessage());
+                return Response.ok(objectFactory.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
+        }
+        if (wae instanceof ParamException && cause instanceof NumberFormatException) {
+                ParamException paramException = (ParamException)wae;
+                BadRequestFault fault = new BadRequestFault();
+                fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
+                String parameter = paramException.getParameterName();
+                fault.setMessage(String.format("%s must be an integer", parameter));
                 return Response.ok(objectFactory.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
         }
 

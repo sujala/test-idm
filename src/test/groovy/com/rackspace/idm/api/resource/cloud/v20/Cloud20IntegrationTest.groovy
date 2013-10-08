@@ -1376,7 +1376,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         where:
         response << [
                 cloud20.listUsers(serviceAdminToken, "0", "-1"),
-                cloud20.listUsers(serviceAdminToken, "-1", "10")
+                cloud20.listUsers(serviceAdminToken, "-1", "10"),
+                cloud20.listUsers(serviceAdminToken, "offset", "10"),
+                cloud20.listUsers(serviceAdminToken, "0", "limit"),
         ]
     }
 
