@@ -516,7 +516,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 0
+        config.getInt("maxNumberOfUsersInDomain") >> 0
 
         userService.getUserByAuthToken(_) >>> [
                 entityFactory.createUser("username1", "id", null, "region"),
@@ -551,7 +551,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 5
+        config.getInt("maxNumberOfUsersInDomain") >> 5
 
         when:
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
@@ -3445,6 +3445,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.hasUserAdminRole(_) >> true
         result.build().status == 403
+    }
+
+    def "checkMaxNumberOfUsersInDomain does not allow creating more than maxNumberOfUsersInDomain"() {
+        given:
+        config.getInt("maxNumberOfUsersInDomain") >> maxNumberOfUsersInDomain
+
+        List<User> users = new ArrayList<>()
+        for (int i = 0; i < numberOfUsers; i++) {
+            def user = entityFactory.createUser().with {
+                it.username = "username$i"
+                it
+            }
+            users.add(user)
+        }
+
+        when:
+        boolean result = false
+        try {
+            service.checkMaxNumberOfUsersInDomain(users)
+        } catch (BadRequestException e) {
+            result = true
+        }
+
+        then:
+        result == badRequest
+
+        where:
+        maxNumberOfUsersInDomain | numberOfUsers | badRequest
+        2                        | 2             | true
+        2                        | 1             | false
     }
 
     def mockServices() {
