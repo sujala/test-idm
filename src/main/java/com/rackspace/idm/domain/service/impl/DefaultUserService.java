@@ -932,7 +932,7 @@ public class DefaultUserService implements UserService {
     }
 
     void validateUserStatus(UserAuthenticationResult authenticated ) {
-        User user = authenticated.getUser();
+        User user = (User)authenticated.getUser();
         boolean isAuthenticated = authenticated.isAuthenticated();
         if (user != null && isAuthenticated) {
             if (user.isDisabled()) {
