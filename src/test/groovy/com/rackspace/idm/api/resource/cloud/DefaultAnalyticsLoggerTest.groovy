@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.resource.cloud
 
 import com.google.gson.GsonBuilder
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.apache.commons.configuration.Configuration
 import org.apache.ws.commons.util.Base64
@@ -13,6 +16,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
     @Shared DefaultAnalyticsLogger analyticsLogger
     @Shared Configuration config
     @Shared DefaultAnalyticsLogHandler analyticsLogHandler
+    @Shared ScopeAccessService scopeAccessService;
 
     def setupSpec() {
         analyticsLogger = new DefaultAnalyticsLogger()
@@ -28,6 +32,9 @@ class DefaultAnalyticsLoggerTest extends Specification {
         analyticsLogHandler = Mock()
         analyticsLogger.analyticsLogHandler = analyticsLogHandler
 
+        scopeAccessService = Mock()
+        analyticsLogger.scopeAccessService = scopeAccessService
+
         config.getString("cloud.region") >> "US"
     }
 
@@ -41,10 +48,18 @@ class DefaultAnalyticsLoggerTest extends Specification {
     }
 
     def "userService is called and returns null when getting userId"() {
+        given:
+        def userId = "1"
+        def sa = new UserScopeAccess().with {
+            it.userRsId = userId
+            it
+        }
+
         when:
         def caller = analyticsLogger.getCaller("auth-token", null, null, null)
 
         then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
         1 * userService.getUserByAuthToken(_) >> null
         caller.id == null
         caller.username == null
@@ -101,14 +116,16 @@ class DefaultAnalyticsLoggerTest extends Specification {
     def "has token calls getUserByAuthToken"() {
         given:
         def userId = "id"
-        def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
+        def sa = new UserScopeAccess().with {
+            it.userRsId = userId
+            it
+        }
 
         when:
         def result = analyticsLogger.getUserIdFromPath("tokens/tokenId")
 
         then:
-        1 * userService.getUserByAuthToken(_) >> mockedUser
-        1 * mockedUser.getId() >> userId
+        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
         result == userId
     }
 
@@ -224,12 +241,18 @@ class DefaultAnalyticsLoggerTest extends Specification {
 
     def "remove path is called when logging and token is hashed"() {
         given:
+        def userId = "1"
+        def sa = new UserScopeAccess().with {
+            it.userRsId = userId
+            it
+        }
         userService.getUserById(_) >> Mock(com.rackspace.idm.domain.entity.User)
 
         when:
         analyticsLogger.log(new Date().getTime(), "authToken", null, "localhost", "host", "userAgent", "POST", "tokens/tokenId", 200, "", "", null, null)
 
         then:
+        2 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
         analyticsLogHandler.log(_) >> { String json ->
             def message = gsonBuilder().fromJson(json, DefaultAnalyticsLogger.Message.class)
             def resource = message.getAt("resource")
@@ -312,6 +335,10 @@ class DefaultAnalyticsLoggerTest extends Specification {
         def username = "username"
         def id = "id"
         def mockedUser = Mock(com.rackspace.idm.domain.entity.User)
+        def sa = new UserScopeAccess().with {
+            it.userRsId = id
+            it
+        }
 
         when:
         def caller = analyticsLogger.getCaller(authToken, null, null, null)
@@ -319,6 +346,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
         then:
         caller.username == username
         caller.id == id
+        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
         1 * userService.getUserByAuthToken(_) >> mockedUser
         1 * mockedUser.getUsername() >> username
         1 * mockedUser.getId() >> id

@@ -240,8 +240,8 @@ public class UserConverterTest {
     public void toUserJaxb_withDomainUser_setsFields() throws Exception {
         userDo = new com.rackspace.idm.domain.entity.User();
         userDo.setCountry("country");
-        userDo.setCreated(new DateTime(1));
-        userDo.setUpdated(new DateTime(2));
+        userDo.setCreated(new DateTime(1).toDate());
+        userDo.setUpdated(new DateTime(2).toDate());
         userDo.setCustomerId("customerId");
         userDo.setDisplayName("displayName");
         userDo.setEmail("email");

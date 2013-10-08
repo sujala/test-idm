@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,16 +64,13 @@ public class UserConverterCloudV11 {
         
         try {
             if (user.getCreated() != null) {
-
                 jaxbUser.setCreated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getCreated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getCreated()).toGregorianCalendar()));
             }
 
             if (user.getUpdated() != null) {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getUpdated().toGregorianCalendar()));
+                        .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
         } catch (DatatypeConfigurationException e) {

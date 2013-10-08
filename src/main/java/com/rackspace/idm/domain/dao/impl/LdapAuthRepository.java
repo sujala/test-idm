@@ -63,7 +63,7 @@ public class LdapAuthRepository implements AuthDao {
 
         SearchResultEntry entry = null;
         try {
-            entry = getLdapInterface().searchForEntry(BASE_DN, SearchScope.ONE, searchFilter);
+            entry = getLdapInterface().searchForEntry(getBaseDn(), SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             throw new IllegalStateException(ldapEx);
         }

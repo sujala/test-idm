@@ -77,7 +77,7 @@ public class PrecedenceValidator {
     }
 
     private void compareWeights(int callerWeight, int roleWeight) {
-        if (callerWeight >= roleWeight) {
+        if (callerWeight > roleWeight) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }

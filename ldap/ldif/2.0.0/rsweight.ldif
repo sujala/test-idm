@@ -1,0 +1,9 @@
+dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+changetype: modify
+replace: rsWeight
+rsWeight: 900
+
+dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+changetype: modify
+replace: rsWeight
+rsWeight: 750

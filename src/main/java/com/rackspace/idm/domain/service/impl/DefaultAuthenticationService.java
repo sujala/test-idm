@@ -286,7 +286,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new NotAuthenticatedException(message);
             }
 
-            UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId(uaResult.getUser(), caResult.getClient());
+            UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId((User) uaResult.getUser(), caResult.getClient());
             return usa;
         }
 
@@ -337,7 +337,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     private void updateScopeAccess(ScopeAccess scopeAccess, ScopeAccess scopeAccessToAdd) {
-        User user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
 
         if(user != null) {
             this.scopeAccessService.addUserScopeAccess(user, scopeAccessToAdd);

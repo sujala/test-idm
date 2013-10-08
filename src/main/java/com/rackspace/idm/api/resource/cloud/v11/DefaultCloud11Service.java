@@ -131,14 +131,14 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
-            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
             UserScopeAccess usa = (UserScopeAccess) sa;
             usa.setAccessTokenExpired();
             this.scopeAccessService.updateScopeAccess(usa);
-            User user = userService.getUserByScopeAccess(sa);
+            User user = (User) userService.getUserByScopeAccess(sa);
             atomHopperClient.asyncTokenPost(user, tokenId);
 
             return Response.noContent();
@@ -178,7 +178,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
             }
 
-            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
             }
 
@@ -718,6 +718,8 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 
+            hideAdminUrls(endpoints);
+
             return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -973,6 +975,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setEnabled(user.isEnabled());
 
             this.userService.updateUser(gaUser, false);
+//            gaUser = this.userService.getUser(gaUser.getUsername());
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the
@@ -1187,6 +1190,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            //TODO Hiding admin urls to keep old functionality - Need to revisit
+            hideAdminUrls(endpoints);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (NotAuthenticatedException nae) {
             return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
@@ -1255,18 +1260,20 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
-            if (!authorizationService.authorizeCloudServiceAdmin(usa) && !authorizationService.authorizeCloudIdentityAdmin(usa)) {
-                for(OpenstackEndpoint endpoint : endpoints){
-                    for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
-                        baseUrl.setAdminUrl(null);
-                    }
-                }
-            }
+            //TODO Hiding admin urls to keep old functionality - Need to revisit
+            hideAdminUrls(endpoints);
 
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    private void hideAdminUrls(List<OpenstackEndpoint> endpoints) {
+        for(OpenstackEndpoint endpoint : endpoints){
+            for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                baseUrl.setAdminUrl(null);
+            }
         }
     }
 

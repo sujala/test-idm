@@ -1558,37 +1558,6 @@ public class DefaultCloud11ServiceTestOld {
     }
 
     @Test
-    public void updateUser_userHasBaseURLRefs_callsEndpointService_getEndpointsForUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        user.setBaseURLRefs(new BaseURLRefList());
-        when(userService.getUser("userId")).thenReturn(userDO);
-        spy.updateUser(request, "userId", null, user);
-        verify(scopeAccessService).getOpenstackEndpointsForUser(Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
-    }
-
-    @Test
-    public void updateUser_userExistsAndIsValid_callsUserConverterCloudV11_toCloudV11User() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        when(userService.getUser("userId")).thenReturn(userDO);
-        spy.updateUser(request, "userId", null, user);
-        verify(userConverterCloudV11).toCloudV11User(eq(userDO), any(List.class));
-    }
-
-    @Test
-    public void updateUser_userExistsAndIsValid_return200Status() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        when(userService.getUser("userId")).thenReturn(userDO);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(request, "userId", null, user);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getBaseURLs_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);

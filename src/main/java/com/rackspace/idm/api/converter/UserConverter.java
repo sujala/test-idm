@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,16 +153,13 @@ public class UserConverter {
 
         try {
             if (user.getCreated() != null) {
-
                 returnedUser.setCreated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getCreated().toGregorianCalendar()));
+                    .newXMLGregorianCalendar(new DateTime(user.getCreated()).toGregorianCalendar()));
             }
 
             if (user.getUpdated() != null) {
                 returnedUser.setUpdated(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        user.getUpdated().toGregorianCalendar()));
+                    .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
         } catch (DatatypeConfigurationException e) {

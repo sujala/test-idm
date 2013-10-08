@@ -67,7 +67,7 @@ public interface UserService {
     
     User loadUser(String userId);
 
-    User getUserByScopeAccess(ScopeAccess scopeAccess);
+    BaseUser getUserByScopeAccess(ScopeAccess scopeAccess);
 
     boolean isUsernameUnique(String username);
 

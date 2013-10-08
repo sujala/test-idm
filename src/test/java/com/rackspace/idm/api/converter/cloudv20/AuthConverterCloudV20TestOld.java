@@ -5,19 +5,13 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.Token;
-import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
-
-import java.util.ArrayList;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,7 +23,7 @@ import static org.mockito.Mockito.when;
  * Time: 12:46 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AuthConverterCloudV20Test {
+public class AuthConverterCloudV20TestOld {
 
     AuthConverterCloudV20 authConverter;
     EndpointConverterCloudV20 endpointConverterCloudV20;
@@ -39,7 +33,7 @@ public class AuthConverterCloudV20Test {
     @Before
     public void setUp() throws Exception {
         authConverter = new AuthConverterCloudV20();
-        authConverter.setObjFactories(new JAXBObjectFactories());
+        authConverter.setJaxbObjectFactories(new JAXBObjectFactories());
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
         userConverterCloudV20 = mock(UserConverterCloudV20.class);

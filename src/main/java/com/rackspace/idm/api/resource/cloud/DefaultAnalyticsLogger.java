@@ -3,7 +3,12 @@ package com.rackspace.idm.api.resource.cloud;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.core.util.Base64;
 import lombok.Data;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -40,6 +45,9 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    ScopeAccessService scopeAccessService;
 
     @Autowired
     AnalyticsLogHandler analyticsLogHandler;
@@ -124,20 +132,31 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
     }
 
     private Caller getCaller(String authToken, String basicAuth, String remoteHost, String userAgent) {
-        Caller caller = new Caller();
-        caller.setIp(remoteHost);
-        if (authToken != null) {
-            caller.setToken(hashToken(authToken));
-            com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(authToken);
-            caller.setId(getUserIdFromUser(user));
-            caller.setUsername(getUsernameFromUser(user));
-            caller.setTokenSrc(getTokenSource(authToken));
-        } else if (basicAuth != null) {
-            caller.setUsername(getUsernameFromDecoded(getDecodedAuth(basicAuth)));
-            caller.setId(getUserIdFromBasicAuth(basicAuth));
+        try{
+            Caller caller = new Caller();
+            caller.setIp(remoteHost);
+
+            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(sa instanceof RackerScopeAccess){
+                caller.setId(((RackerScopeAccess) sa).getRackerId());
+                caller.setToken(hashToken(authToken));
+                caller.setUsername(((RackerScopeAccess) sa).getRackerId());
+                caller.setTokenSrc(getTokenSource(authToken));
+            }else if (sa instanceof UserScopeAccess) {
+                caller.setToken(hashToken(authToken));
+                com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(authToken);
+                caller.setId(getUserIdFromUser(user));
+                caller.setUsername(getUsernameFromUser(user));
+                caller.setTokenSrc(getTokenSource(authToken));
+            } else if (basicAuth != null) {
+                caller.setUsername(getUsernameFromDecoded(getDecodedAuth(basicAuth)));
+                caller.setId(getUserIdFromBasicAuth(basicAuth));
+            }
+            caller.setAgent(userAgent);
+            return caller;
+        }catch (Exception e){
+            return null;
         }
-        caller.setAgent(userAgent);
-        return caller;
     }
 
     private boolean isAuthenticateCall(String path, String method) {
@@ -293,8 +312,10 @@ public class DefaultAnalyticsLogger implements AnalyticsLogger {
         String token = parseUserTokenFromPath(path);
 
         if (token != null) {
-            com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(token);
-            userId = getUserIdFromUser(user);
+            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(token);
+            if(sa instanceof UserScopeAccess){
+                userId = ((UserScopeAccess)sa).getUserRsId();
+            }
         } else {
             userId = parseUserIdFromPath(path);
         }

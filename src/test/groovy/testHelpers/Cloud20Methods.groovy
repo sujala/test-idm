@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.idm.JSONConstants
 import com.sun.jersey.api.client.ClientResponse
@@ -24,6 +25,7 @@ class Cloud20Methods {
 
     @Shared WebResource resource
     @Shared def v2Factory = new V2Factory()
+    @Shared def v1Factory = new V1Factory()
     @Shared String path20 = "cloud/v2.0/"
 
     static def RAX_GRPADM= "RAX-GRPADM"
@@ -40,8 +42,17 @@ class Cloud20Methods {
         resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
+    def authenticateRacker(username, password){
+        def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
+        credentials.domain =  new Domain().with {
+            it.name = "Rackspace"
+            it
+        }
+        resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+    }
+
     def validateToken(authToken, token) {
-        resource.path(path20).path("tokens").path(token).header("X-Auth-Token", authToken).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("tokens").path(token).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserByName(String token, String name) {
@@ -86,6 +97,10 @@ class Cloud20Methods {
 
     def getUsersByEmail(String token, String email) {
         resource.path(path20).path('users').queryParam("email", email).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def getUsersByDomainId(String token, String domainId) {
+        resource.path(path20).path('RAX-AUTH').path('domains').path(domainId).path('users').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user) {
@@ -225,10 +240,9 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def getRoleOnTenantForUser(String token, String tenantId, String userId, String roleId) {
-        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
-                .path("roles").path("OS-KSADM").path(roleId)
-                .header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    def listRolesForUserOnTenant(String token, String tenantId, String userId) {
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId).path("roles")
+                .header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def addEndpoint(String token, String tenantId, endpointTemplate) {
@@ -321,6 +335,10 @@ class Cloud20Methods {
 
     def deleteDomain(String token, String domainId) {
         resource.path(path20).path("RAX-AUTH").path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def listCredentials(String token, String userId){
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def impersonate(String token, User user, Integer expireTime) {

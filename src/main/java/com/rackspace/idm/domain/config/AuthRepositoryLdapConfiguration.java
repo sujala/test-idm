@@ -78,8 +78,14 @@ public class AuthRepositoryLdapConfiguration {
 
         LDAPConnectionPool connPool = null;
         try {
-            SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
-            LDAPConnection conn = new LDAPConnection(sslUtil.createSSLSocketFactory(), host, port);
+            boolean isSSL = config.getBoolean("auth.ldap.useSSL");
+            LDAPConnection conn = null;
+            if (isSSL) {
+                SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
+                conn = new LDAPConnection(sslUtil.createSSLSocketFactory(), host, port);
+            } else {
+                conn = new LDAPConnection(host, port);
+            }
             connPool = new LDAPConnectionPool(conn, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);

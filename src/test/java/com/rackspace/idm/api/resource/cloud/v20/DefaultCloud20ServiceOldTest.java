@@ -21,10 +21,8 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import org.apache.commons.configuration.Configuration;
-import org.dozer.DozerBeanMapper;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -34,7 +32,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -610,7 +607,7 @@ public class DefaultCloud20ServiceOldTest {
         token.setId("rackerToken");
         when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
         spy.validateToken(null, authToken, "rackerToken", null);
-        verify(userConverterCloudV20).toUserForAuthenticateResponse(org.mockito.Matchers.any(Racker.class), org.mockito.Matchers.any(List.class));
+        verify(userConverterCloudV20).toRackerForAuthenticateResponse(org.mockito.Matchers.any(Racker.class), org.mockito.Matchers.any(List.class));
     }
 
     @Test
@@ -795,7 +792,7 @@ public class DefaultCloud20ServiceOldTest {
         PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("Rackspace");
-        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setDomain(domain);
         authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         spy.authenticate(null, authenticationRequest);
         verify(spy).authenticateFederatedDomain(authenticationRequest, domain);
@@ -807,7 +804,7 @@ public class DefaultCloud20ServiceOldTest {
         PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         domain.setName("NotRackspace");
-        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setDomain(domain);
         authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsBase.class, passwordCredentialsRequiredUsername));
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
@@ -1928,7 +1925,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteUserRole(null, authToken, null, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1937,23 +1934,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteUserRole(null, authToken, userId, null);
         verify(userService).checkAndGetUserById(userId);
-    }
-
-    @Test
-    public void deleteUserRole_callsTenantServiceGetGlobalRolesForUser() throws Exception {
-        spy.deleteUserRole(null, authToken, userId, null);
-        verify(tenantService).getGlobalRolesForUser(any(User.class));
-    }
-
-    @Test
-    public void deleteUserRole_roleIsNull_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.deleteUserRole(null, authToken, userId, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
     }
 
     @Test
@@ -3976,7 +3956,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getRackerByRackerId("rackerId")).thenReturn(racker);
         when(tenantService.getTenantRolesForScopeAccess(rackerScopeAccess)).thenReturn(roleList);
         when(userService.getRackerRoles("rackerId")).thenReturn(null);
-        when(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList)).thenReturn(userForAuthenticateResponse);
+        when(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList)).thenReturn(userForAuthenticateResponse);
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "tokenId", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
