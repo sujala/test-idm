@@ -721,7 +721,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
-    def "listUsers (caller is admin or service admin) gets paged users and returns list"() {
+    def "listUsers (caller is admin or service admin) gets enabled paged users and returns list"() {
         given:
         mockUserConverter(service)
         allowUserAccess()
@@ -742,7 +742,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        2 * userService.getAllUsersPaged(_, _) >> userContextMock
+        2 * userService.getAllEnabledUsersPaged(_, _) >> userContextMock
 
         response1.status == 200
         response2.status == 200

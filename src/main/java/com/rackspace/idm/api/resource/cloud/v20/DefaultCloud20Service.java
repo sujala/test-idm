@@ -2808,7 +2808,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                userContext = this.userService.getAllUsersPaged(marker, limit);
+                userContext = this.userService.getAllEnabledUsersPaged(marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
