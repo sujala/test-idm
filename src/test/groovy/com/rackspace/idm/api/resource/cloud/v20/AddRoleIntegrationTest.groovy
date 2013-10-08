@@ -16,6 +16,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     private static final String SERVICE_ADMIN_PWD = "Auth1234"
 
     public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
+    public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
+    public static final String DEFAULT_USER_USERNAME_PREFIX = "defaultUser"
 
     public static final String DEFAULT_PASSWORD = "Password1"
 
@@ -28,6 +30,12 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     def specificationServiceAdmin
     @Shared
     def specificationServiceAdminToken
+
+    @Shared
+    def specificationIdentityAdmin
+
+    @Shared
+    def specificationIdentityAdminToken
 
     @Autowired
     DefaultAuthorizationService defaultAuthorizationService
@@ -57,6 +65,13 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         assert serviceAdminAuthResponse.value instanceof AuthenticateResponse
         specificationServiceAdminToken = serviceAdminAuthResponse.value.token.id
         specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(User)
+
+        //create a new shared identity admin for these tests
+        specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
+        def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
+        //verify the authentication worked before retrieving the token
+        assert identityAdminAuthResponse.value instanceof AuthenticateResponse
+        specificationIdentityAdminToken = identityAdminAuthResponse.value.token.id
     }
 
     def setup() {
@@ -92,6 +107,32 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(identityAdmin)
     }
 
+    def "User manager can assign user-manager role to default user within domain"() {
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+
+        def userManager = createDefaultUser(userAdminToken)
+        def userManagerToken = authenticate(userManager.username)
+
+        def defaultUser = createDefaultUser(userAdminToken)
+
+        ClientRole userManageRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityUserManageRole());
+        addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        assertUserHasRole(userManager, userManageRole) //verify test state
+
+        when: "As user-manager, add user-manager role to default user within my domain"
+        addRoleToUser(userManagerToken, defaultUser, userManageRole)
+
+        then: "default user now has user-manage role"
+        assertUserHasRole(defaultUser, userManageRole)
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(userManager)
+        deleteUserQuietly(defaultUser)
+    }
+
+
     def deleteUserQuietly(user) {
         if (user != null) {
             try {
@@ -124,6 +165,18 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         return userAdmin;
     }
 
+    def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
+        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+        def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(User)
+        return userAdmin;
+    }
+
+    def createDefaultUser(String callerToken, String userName = DEFAULT_USER_USERNAME_PREFIX + getNormalizedRandomString()) {
+        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        def user = cloud20.getUserByName(callerToken, userName).getEntity(User)
+        return user
+    }
+
     def authenticate(String userName) {
         def token = cloud20.authenticatePassword(userName, DEFAULT_PASSWORD).getEntity(AuthenticateResponse).value.token.id
         return token;
@@ -135,6 +188,14 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
     def String getCloudAuthIdentityAdminRole() {
         return config.getString("cloudAuth.adminRole");
+    }
+
+    def String getCloudAuthIdentityUserManageRole() {
+        return config.getString("cloudAuth.userManagedRole");
+    }
+
+    def String getCloudAuthDefaultUserRole() {
+        return config.getString("cloudAuth.userRole");
     }
 
     private String getCloudAuthClientId() {
