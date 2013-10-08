@@ -31,6 +31,51 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         sharedRandom = ("$randomness").replace("-", "")
     }
 
+    def "roles are returned if their rsWeight is greater than or equal to maxWeightAvailable"() {
+        given:
+        def clientId = "clientId$sharedRandom"
+        def roleName = "roleName1$sharedRandom"
+
+        ClientSecret clientSecret = ClientSecret.newInstance("secret")
+
+        def application = new Application(clientId, clientSecret, "name", "RCN-123").with {
+            it.salt = "a1 b1"
+            it.encryptionVersion = "0"
+            it
+        }
+
+        def clientRole = entityFactory.createClientRole().with {
+            it.clientId = clientId
+            it.id = roleName
+            it.name = roleName
+            it.propagate = true
+            it.rsWeight = rsWeight
+            return it
+        }
+
+        applicationDao.addApplication(application)
+        def createApplication = applicationDao.getApplicationByClientId(clientId)
+        applicationRoleDao.addClientRole(createApplication, clientRole)
+
+        when:
+        def context = applicationRoleDao.getAvailableClientRolesPaged(0, 10000, maxWeightAvailable)
+        boolean containsRole = context.valueList.name.contains(clientRole.name)
+
+        then:
+        containsRole == shouldContainRole
+
+        cleanup:
+        def createdClientRole = applicationRoleDao.getClientRoleByApplicationAndName(clientId, roleName)
+        applicationRoleDao.deleteClientRole(createdClientRole)
+        applicationDao.deleteApplication(createApplication)
+
+        where:
+        rsWeight    | maxWeightAvailable  | shouldContainRole
+        500         | 0                   | true
+        500         | 500                 | true
+        500         | 1000                | false
+    }
+
     def "can create a role that contains propagate flag"() {
         given:
         def clientId = "clientId$sharedRandom"

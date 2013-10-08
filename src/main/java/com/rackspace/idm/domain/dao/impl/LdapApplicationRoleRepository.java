@@ -116,38 +116,16 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     private Filter searchFilter_availableClientRoles(int maxWeightAvaibale) {
-        List<Filter> orFilterList = getRoleWeightsOrFilter(maxWeightAvaibale);
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
-                .addOrAttributes(orFilterList).build();
-    }
-
-    private List<Filter> getRoleWeightsOrFilter(int maxWeightAvailable) {
-        List<Filter> orFilterList = new ArrayList<Filter>();
-        for (Integer weight : getRoleWeights()) {
-            if (!(weight < maxWeightAvailable)) {
-                orFilterList.add(Filter.createEqualityFilter("rsWeight", weight.toString()));
-            }
-        }
-        return orFilterList;
-    }
-
-    private List<Integer> getRoleWeights() {
-        List<Integer> weights = new ArrayList<Integer>();
-        weights.add(config.getInt("cloudAuth.defaultUser.rsWeight"));
-        weights.add(config.getInt("cloudAuth.userAdmin.rsWeight"));
-        weights.add(config.getInt("cloudAuth.special.rsWeight"));
-        weights.add(config.getInt("cloudAuth.admin.rsWeight"));
-        weights.add(config.getInt("cloudAuth.serviceAdmin.rsWeight"));
-        return weights;
+                .addGreaterOrEqualAttribute(ATTR_RS_WEIGHT, String.valueOf(maxWeightAvaibale)).build();
     }
 
     private Filter searchFilter_availableRolesByApplicationId(String applicationId, int maxWeightAvailable) {
-        List<Filter> orFilterList = getRoleWeightsOrFilter(maxWeightAvailable);
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId)
-                .addOrAttributes(orFilterList).build();
+                .addGreaterOrEqualAttribute(ATTR_RS_WEIGHT, String.valueOf(maxWeightAvailable)).build();
     }
 
     private Filter searchFilter_byApplicationId(String applicationId) {
