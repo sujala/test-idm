@@ -131,6 +131,29 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         userList.get(0).username == username2
     }
 
+    def "retrieving enabled users does not retrieve disabled users"() {
+        given:
+        String username1 = "enabledUse$random"
+        String username2 = "disabledUse$random"
+        def user1 = createUser("1$random", username1, "domain$random", "email@email.com", true, "DFW", "Password1")
+        def user2 = createUser("2$random", username2, "domain$random", "email@email.com", false, "DFW", "Password1")
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+
+        when:
+        def userList = ldapUserRepository.getEnabledUsers(0, 1000).valueList.collect()
+
+        then:
+        userList != null
+        userList.username.contains(username1)
+        !userList.username.contains(username2)
+
+        cleanup:
+        ldapUserRepository.deleteUser(username1)
+        ldapUserRepository.deleteUser(username2)
+    }
+
     def "calling getUserByEmail returns the user"() {
         given:
         def email = "email$random@email.com"

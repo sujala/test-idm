@@ -824,6 +824,18 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     }
 
+    def "getAllEnabledUsersPaged gets the enabled users"() {
+        given:
+        PaginatorContext<User> context = new PaginatorContext<>()
+
+        when:
+        def result = service.getAllEnabledUsersPaged(0, 1)
+
+        then:
+        1 * userDao.getEnabledUsers(_, _) >> context
+        result == context
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25
