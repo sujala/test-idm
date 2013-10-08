@@ -494,6 +494,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
+                userDO.setRegion(caller.getRegion());
 
                 // If creating sub-user, set DomainId of caller
                 assignUserToCallersDomain(caller, userDO);
