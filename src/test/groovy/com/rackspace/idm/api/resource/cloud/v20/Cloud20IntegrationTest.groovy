@@ -2547,6 +2547,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(identityAdminToken, createUser.id)
     }
 
+    def "List Groups with invalid name - returns 404" () {
+        when:
+        def listGroupsResponse = cloud20.listGroupsForUser(serviceAdminToken, "badUserId")
+        then:
+        listGroupsResponse.status == 404
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
