@@ -172,6 +172,12 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
+    public PaginatorContext<User> getEnabledUsers(int offset, int limit) {
+        return getObjectsPaged(searchFilterGetEnabledUser(), offset, limit);
+    }
+
+
+    @Override
     public PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit) {
         return getObjectsPaged(searchFiltergetUserByGroupId(groupId), offset, limit);
     }
@@ -404,6 +410,13 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private Filter searchFilterGetUser() {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetEnabledUser() {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .build();
     }
 

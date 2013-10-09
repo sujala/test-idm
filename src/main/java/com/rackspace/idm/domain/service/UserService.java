@@ -99,6 +99,8 @@ public interface UserService {
     
     PaginatorContext<User> getAllUsersPaged(int offset, int limit);
 
+    PaginatorContext<User> getAllEnabledUsersPaged(int offset, int limit);
+
     PaginatorContext<User> getAllUsersPagedWithDomain(String domainId, int offset, int limit);
 
     PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit);
