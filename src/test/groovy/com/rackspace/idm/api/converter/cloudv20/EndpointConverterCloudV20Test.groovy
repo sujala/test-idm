@@ -237,6 +237,7 @@ class EndpointConverterCloudV20Test extends Specification {
         baseUrl.versionId == version.id
         baseUrl.versionInfo == version.info
         baseUrl.versionList == version.list
+        osEndpoint.tenantId == endpoint.tenantId
     }
 
     def "convert OpenstackEndpoint list from ldap to EndpointList jersey object - null list"() {
