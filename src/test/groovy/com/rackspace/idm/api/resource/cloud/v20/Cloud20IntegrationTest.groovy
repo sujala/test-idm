@@ -376,8 +376,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateUser = updateUserResponse.getEntity(User)
         //Delete user
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
-        //Hard delete user
-        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         then:
         response.status == 201
@@ -386,7 +384,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUser.defaultRegion == "ORD"
         updateUser.domainId == "someDomain"
         deleteResponses.status == 204
-        hardDeleteResponses.status == 204
     }
 
     def 'User CRUD'() {
@@ -408,8 +405,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
-        //Hard delete user
-        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         then:
         response.status == 201
@@ -420,7 +415,41 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserByEmailResponse.status == 200
         updateUserResponse.status == 200
         deleteResponses.status == 204
-        hardDeleteResponses.status == 204
+    }
+
+    def "username should be able to be re-used after being deleted"() {
+        when:
+        //Create user
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(serviceAdminToken, user)
+
+        //Get user
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        //Delete user
+        def deleteResponse = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+
+        //Recreate user
+        def recreateResponse = cloud20.createUser(serviceAdminToken, user)
+
+        //Get user
+        def getRecreateUserResponse = cloud20.getUser(serviceAdminToken, recreateResponse.location)
+        def recreateUserEntity = getRecreateUserResponse.getEntity(User)
+
+        //Delete user again for cleanup
+        def deleteResponseAgain = cloud20.deleteUser(serviceAdminToken, recreateUserEntity.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        deleteResponse.status == 204
+        recreateResponse.status == 201
+        recreateResponse.location != null
+        recreateUserEntity.username == userEntity.username
+        deleteResponseAgain.status == 204
     }
 
     def "user-admin should be able to assign & remove role of weight 1000 to sub-user"() {
@@ -506,7 +535,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
@@ -516,7 +544,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserResponse.status == 200
         updateUserResponse.status == 200
         deleteResponses.status == 204
-        hardDeleteResponse.status == 204
     }
 
     def "roles that CAN list roles"() {
@@ -570,7 +597,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
@@ -579,7 +605,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.location != null
         getUserResponse.status == 200
         deleteResponses.status == 204
-        hardDeleteResponse.status == 204
     }
 
     def "User manage retrieve user by email"() {
@@ -602,7 +627,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
@@ -612,7 +636,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserByEmailResponse.status == 200
         getUserResponse.status == 200
         deleteResponses.status == 204
-        hardDeleteResponse.status == 204
     }
 
     def "user manage get user's api key" () {
@@ -637,7 +660,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        def hardDeleteResponse = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
@@ -648,7 +670,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         createApiKey.status == 200
         getApiKeyResponse.status == 200
         deleteResponses.status == 204
-        hardDeleteResponse.status == 204
     }
 
     def "user-manage cannot update/delete another user with user-manage"() {
@@ -670,7 +691,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Hard delete user
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
         def actualDelete = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
@@ -680,7 +700,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserResponse.status == 200
         deleteResponses.status == 401
         actualDelete.status == 204
-        hardDeleteResponses.status == 204
     }
 
     def "user-manage cannot be added to user admin"() {
@@ -701,7 +720,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Hard delete user
         cloud20.deleteApplicationRoleFromUser(identityAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
         def actualDelete = cloud20.deleteUser(identityAdminToken, userEntity.getId())
-        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
 
         then:
         response.status == 201
@@ -710,7 +728,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         addUserManageRole.status == 400
         getUserRole.status == 404
         actualDelete.status == 204
-        hardDeleteResponses.status == 204
     }
 
     def "user-manage cannot update user admin" () {
@@ -1754,7 +1771,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateUserResponse = cloud20.updateUser(serviceAdminToken, user.id, userForUpdate)
         def validateResponse = cloud20.validateToken(serviceAdminToken, token)
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, user.id)
-        def hardDeleteRespones = cloud20.hardDeleteUser(serviceAdminToken, user.id)
 
         then:
         authRequest.status == 200
@@ -1762,7 +1778,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateUserResponse.status == 200
         validateResponse.status == 404
         deleteResponses.status == 204
-        hardDeleteRespones.status == 204
     }
 
     def "Disable a userAdmin disables his subUsers"() {
@@ -1883,8 +1898,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Clean data
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, defaultUser.id)
         def deleteAdminResponses = cloud20.deleteUser(serviceAdminToken, userAdmin.id)
-        def hardDeleteRespones = cloud20.hardDeleteUser(serviceAdminToken, defaultUser.id)
-        def hardDeleteAdminRespones = cloud20.hardDeleteUser(serviceAdminToken, userAdmin.id)
         def deleteGroupResponse = cloud20.deleteGroup(serviceAdminToken, group.value.id)
         def deleteDomainResponse = cloud20.deleteDomain(serviceAdminToken, domainId)
 
@@ -1907,8 +1920,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         deleteResponses.status == 204
         deleteAdminResponses.status == 204
-        hardDeleteRespones.status == 204
-        hardDeleteAdminRespones.status == 204
         deleteGroupResponse.status == 204
         deleteDomainResponse.status == 204
     }

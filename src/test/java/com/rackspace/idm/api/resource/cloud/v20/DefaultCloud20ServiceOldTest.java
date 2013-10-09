@@ -968,7 +968,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getUserById(userId)).thenReturn(user1);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         spy.deleteUser(null, authToken, userId);
-        verify(userService).softDeleteUser(any(User.class));
+        verify(userService).deleteUser(any(User.class));
     }
 
     @Test

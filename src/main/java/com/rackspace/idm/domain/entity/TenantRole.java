@@ -61,6 +61,11 @@ public class TenantRole implements Auditable, UniqueId {
     }
 
     @Override
+    public String toString() {
+        return getAuditContext();
+    }
+
+    @Override
     public String getAuditContext() {
         String format = "roleRsId=%s,clientId=%s,tenantRsIds=%s";
         return String.format(format, getRoleRsId(), getClientId(), getTenantIds());
