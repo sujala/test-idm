@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
@@ -3492,6 +3494,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         maxNumberOfUsersInDomain | numberOfUsers | badRequest
         2                        | 2             | true
         2                        | 1             | false
+    }
+
+    def "deleteUserCredential returns 404 if the apiKeyCredentials are not found"() {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser().with {
+            it.apiKey = apiKey
+            it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        when:
+        def result = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+
+        then:
+        result.getStatus() == 404
+
+        where:
+        apiKey << [null, ""]
     }
 
     def mockServices() {
