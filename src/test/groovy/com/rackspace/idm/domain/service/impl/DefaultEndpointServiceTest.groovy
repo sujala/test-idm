@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -28,5 +29,20 @@ class DefaultEndpointServiceTest extends RootServiceTest {
 
         then:
         1 * endpointDao.getBaseUrlsWithPolicyId("policyId")
+    }
+
+    def "deletePolicyToEndpoint throws NotFoundException if policy does not exist"() {
+        given:
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.policyList = [].asList()
+            it
+        }
+        endpointDao.getBaseUrlById(_) >> baseUrl
+
+        when:
+        service.deletePolicyToEndpoint("0", "1")
+
+        then:
+        thrown(NotFoundException)
     }
 }
