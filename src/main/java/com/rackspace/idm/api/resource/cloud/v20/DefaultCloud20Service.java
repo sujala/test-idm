@@ -1140,7 +1140,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            if (user.getApiKey() == null) {
+            if (StringUtils.isEmpty(user.getApiKey())) {
                 throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
             }
 
