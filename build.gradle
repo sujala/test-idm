@@ -23,7 +23,6 @@ buildscript {
 
 group = 'com.rackspace'
 featureVersion = '2.0.0'
-ldapVersion = '2.0'
 buildVersion = System.currentTimeMillis()
 gitRevision = "git rev-parse HEAD".execute().text.trim()
 
@@ -228,10 +227,7 @@ task zipConfig(type: Zip) {
 
 task zipLdap(type: Zip) {
     classifier = 'ldap'
-    def ldapDirName = "ldap/ldif/$ldapVersion"
-    if (new File(ldapDirName).exists()) {
-        from ldapDirName
-    }
+    from "ldap"
 }
 
 idea {
