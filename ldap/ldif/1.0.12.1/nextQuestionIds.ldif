@@ -1,5 +1,0 @@
-dn: cn=nextQuestionId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
-objectClass:top
-objectClass:rsNextId
-cn: nextQuestionId
-rsId: 1000

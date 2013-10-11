@@ -1,6 +1,0 @@
-dn: rsId=0,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: rsGroup
-rsId: 0
-name: Default
-description: Default

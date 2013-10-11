@@ -1,4 +1,0 @@
-dn: ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
-objectClass: organizationalUnit
-objectClass: top
-ou: domains
