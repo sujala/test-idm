@@ -613,6 +613,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> [].asList()
+        domainService.getDomainAdmins(_) >> [].asList()
 
         when:
         service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
@@ -636,6 +637,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> [].asList()
         userService.getGroupsForUser(_) >> groups
+        domainService.getDomainAdmins(_) >> [].asList()
 
         when:
         service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
@@ -3176,6 +3178,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         2 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.getUsersWithDomain(_) >> [].asList()
+        1 * domainService.getDomainAdmins(_) >> [].asList()
         notThrown(BadRequestException)
         1 * defaultRegionService.validateDefaultRegion(_)
         1 * userService.addUser(_)

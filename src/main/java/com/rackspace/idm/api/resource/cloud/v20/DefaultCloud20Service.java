@@ -494,7 +494,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
-                userDO.setRegion(caller.getRegion());
+
+                // When creating sub-user, set the default region to the
+                // default region of the User Admin for the domain. If there
+                // is more than one admin for the domain, then set the
+                // default region to that of the caller
+                List<User> admins = this.domainService.getDomainAdmins(domainId);
+                if (admins.size() == 1) {
+                    userDO.setRegion(admins.get(0).getRegion());
+                } else {
+                    userDO.setRegion(caller.getRegion());
+                }
 
                 // If creating sub-user, set DomainId of caller
                 assignUserToCallersDomain(caller, userDO);
