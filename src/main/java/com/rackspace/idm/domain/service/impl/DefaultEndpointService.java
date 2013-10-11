@@ -218,6 +218,11 @@ public class DefaultEndpointService implements EndpointService {
 	@Override
 	public void deletePolicyToEndpoint(String baseUrlId, String policyId) {
         CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
+        if (!baseUrl.getPolicyList().contains(policyId)) {
+            String errMsg = String.format("PolicyId %s not found", policyId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
         baseUrl.getPolicyList().remove(policyId);
         endpointDao.updateCloudBaseUrl(baseUrl);
     }
