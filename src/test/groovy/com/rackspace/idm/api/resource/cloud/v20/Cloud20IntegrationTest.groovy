@@ -361,6 +361,44 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())
     }
 
+    def 'user created by user-admin or user-manage gets region from that user'() {
+        when:
+        //Create user by user-admin
+        def random = ("$randomness").replace('-', "")
+        def user = v2Factory.createUserForCreate("bob" + random, "displayName", "test@rackspace.com", true, null, "someDomain", "Password1")
+        def response = cloud20.createUser(userAdminToken, user)
+        //Get user
+        def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
+        def userEntity = getUserResponse.getEntity(User)
+
+        //Add user-manage role to user
+        def addRole = cloud20.addUserRole(userAdminToken, userEntity.getId(), USER_MANAGE_ROLE_ID)
+
+        def newUserToken = cloud20.authenticatePassword(userEntity.username, "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        //Add another user by user-manage
+        def user2 = v2Factory.createUserForCreate("steve" + random, "displayName", "test@rackspace.com", true, null, "someDomain", "Password1")
+        def response2 = cloud20.createUser(newUserToken, user2)
+        //Get user
+        def getUserResponse2 = cloud20.getUser(serviceAdminToken, response2.location)
+        def userEntity2 = getUserResponse2.getEntity(User)
+
+        //Delete users
+        def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+        def deleteResponses2 = cloud20.deleteUser(serviceAdminToken, userEntity2.getId())
+        //Hard delete users
+        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
+        def hardDeleteResponses2 = cloud20.hardDeleteUser(serviceAdminToken, userEntity2.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        userEntity.defaultRegion == userAdmin.defaultRegion
+        userEntity2.defaultRegion == userAdmin.defaultRegion
+        deleteResponses.status == 204
+        hardDeleteResponses.status == 204
+    }
+
     def 'update user returns all user info including domain and region'() {
         when:
         //Create user
