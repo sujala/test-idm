@@ -464,6 +464,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 password = Password.generateRandom(false, userDO).getValue();
             }
 
+            if(getApiKeyUuidEnabled()){
+                userDO.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
+            }
+
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
@@ -3297,6 +3301,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 baseUrl.setAdminUrl(null);
             }
         }
+    }
+
+    private Boolean getApiKeyUuidEnabled(){
+        return config.getBoolean("apiKey.uuid.enabled");
     }
 
     private String getCloudAuthClientId() {

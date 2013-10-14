@@ -357,6 +357,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errorMsg);
             }
 
+            if(getApiKeyUuidEnabled() && StringUtils.isBlank(user.getKey())){
+                user.setKey(UUID.randomUUID().toString().replaceAll("-", ""));
+            }
+
             User userDO = this.userConverterCloudV11.fromUser(user);
             userDO.setEnabled(true);
             validateMossoId(user.getMossoId());
@@ -1343,6 +1347,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {
         this.credentialUnmarshaller = credentialUnmarshaller;
+    }
+
+    private Boolean getApiKeyUuidEnabled(){
+        return config.getBoolean("apiKey.uuid.enabled");
     }
 
     private String getCloudAuthUserAdminRole() {

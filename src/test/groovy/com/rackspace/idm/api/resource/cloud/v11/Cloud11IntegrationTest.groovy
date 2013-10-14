@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
+import com.rackspace.idm.JSONConstants
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
@@ -521,6 +522,59 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "Creating user without apikey will generate an apikey - 'apiKey.uuid.enabled' = true" () {
+        given:
+        String username = "userNoApiKey$sharedRandom"
+        def mossoId = getRandomNumber(1000000, 2000000);
+        User user = v1Factory.createUser(username, null, mossoId, null, true)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def getUserResponse = cloud20.getUserByName(identityAdminToken, createdUser.id)
+        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User)
+        def listCred = cloud20.listCredentials(serviceAdminToken, userEntity.id).getEntity(String)
+        def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
+
+        then:
+        createdUser != null
+        createdUser.key != null
+        listCred.contains(JSONConstants.PASSWORD_CREDENTIALS)
+        listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
+        authResponse.status == 200
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
+    }
+
+    def "Creating user with apikey will use provided apikey - 'apiKey.uuid.enabled' = true" () {
+        given:
+        String username = "userApiKeyUuid$sharedRandom"
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def apiKey = "1234567890"
+        User user = v1Factory.createUser(username, apiKey, mossoId, null, true)
+
+        when:
+        def createdUser = cloud11.createUser(user).getEntity(User)
+        def getUserResponse = cloud20.getUserByName(identityAdminToken, createdUser.id)
+        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User)
+        def listCred = cloud20.listCredentials(serviceAdminToken, userEntity.id).getEntity(String)
+        def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
+
+        then:
+        createdUser != null
+        listCred.contains(JSONConstants.PASSWORD_CREDENTIALS)
+        listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
+        createdUser.key == apiKey
+        authResponse.status == 200
+
+        cleanup: "Clean up data"
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
+        cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
     }
 
     def authAndExpire(username, key) {

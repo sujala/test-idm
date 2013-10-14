@@ -612,6 +612,44 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
     }
 
+    def "Create user will have no api key if apiKey.uuid.enabled=false" () {
+        given:
+        allowAccess()
+        def user = new User().with {
+            it.id = "id"
+            it.mossoId = 1
+            it.nastId = "nast"
+            it
+        }
+
+        when:
+        service.createUser(request, headers, uriInfo(), user)
+
+        then:
+        1 * config.getBoolean("apiKey.uuid.enabled") >> false
+        1 * userConverterCloudV11.fromUser(_) >> { User u ->
+            assert(u.key == null)}
+    }
+
+    def "Create user will have an api key if apiKey.uuid.enabled=true" () {
+        given:
+        allowAccess()
+        def user = new User().with {
+            it.id = "id"
+            it.mossoId = 1
+            it.nastId = "nast"
+            it
+        }
+
+        when:
+        service.createUser(request, headers, uriInfo(), user)
+
+        then:
+        1 * config.getBoolean("apiKey.uuid.enabled") >> true
+        1 * userConverterCloudV11.fromUser(_) >> { User u ->
+            assert(u.key != null)}
+    }
+
     def createUser(String id, String username, int mossoId, String nastId) {
         new com.rackspace.idm.domain.entity.User().with {
             it.id = id
