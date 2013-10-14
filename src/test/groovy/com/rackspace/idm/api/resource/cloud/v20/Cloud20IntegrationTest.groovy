@@ -2578,6 +2578,30 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(identityAdminToken, createUser.id)
     }
 
+    def "Create user should auto generate an apikey which will allows new user to authenticate" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userApiKey$random"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "Domain$username", password)).getEntity(User)
+        String listCredResponse = cloud20.listCredentials(serviceAdminToken, createUser.id).getEntity(String)
+        def apiKey = cloud11.getUserByName(username).getEntity(com.rackspacecloud.docs.auth.api.v1.User).key
+        def authenticate = cloud20.authenticateApiKey(username, apiKey)
+
+        then:
+        createUser != null
+        listCredResponse != null
+        listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS)
+        listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS)
+        apiKey != null
+        authenticate.status == 200
+
+        cleanup:
+        cloud20.destroyUser(identityAdminToken, createUser.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
