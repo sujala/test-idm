@@ -1130,7 +1130,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
             if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
                 IdentityFault fault = new IdentityFault();
@@ -1149,6 +1150,54 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (user.getApiKey() == null) {
                 throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
+            }
+
+            User caller = userService.getUserByAuthToken(authToken);
+
+            boolean isSelfDelete = caller.getId().equals(user.getId());
+
+            boolean callerIsServiceAdmin = authorizationService.hasServiceAdminRole(caller);
+            boolean callerIsIdentityAdmin = authorizationService.hasIdentityAdminRole(caller);
+            boolean callerIsUserAdmin = authorizationService.hasUserAdminRole(caller);
+            boolean callerHasUserManageRole = authorizationService.hasUserManageRole(caller);
+
+            boolean userIsServiceAdmin = authorizationService.hasServiceAdminRole(user);
+            boolean userIsIdentityAdmin = authorizationService.hasIdentityAdminRole(user);
+            boolean userIsUserAdmin = authorizationService.hasUserAdminRole(user);
+            boolean userHasUserManage = authorizationService.hasUserManageRole(user);
+
+            boolean authorized = false;
+
+            // This will throw a Forbidden Exception if the caller is not a the same
+            // level or above the user being modified except in the case of self delete.
+            if (!isSelfDelete) {
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            }
+
+            if (isSelfDelete) {
+                // All users can delete API Key Credentials from themselves
+                // EXCEPT for identity:user-admins
+                authorized = !userIsUserAdmin;
+            } else if (callerIsServiceAdmin) {
+                // identity:service-admin can delete API Key Credential from all users
+                // EXCEPT other identity:service-admin
+                authorized = !userIsServiceAdmin;
+            } else if (callerIsIdentityAdmin) {
+                // identity:admin can delete API KEy Credentials from all users
+                // EXCEPT for identity:service-admins and other identity:admins
+                authorized = !userIsIdentityAdmin;
+            } else if (callerIsUserAdmin) {
+                // identity:user-admin can delete API Key Credentials from identity:user-manage
+                // and identity:default users within their domain.
+                authorized = !userIsUserAdmin && caller.getDomainId().equals(user.getDomainId());
+            } else if (callerHasUserManageRole) {
+                // identity:user-manage can delete API Key Credentails from identity:default
+                // users within their domain.
+                authorized = !userHasUserManage && caller.getDomainId().equals(user.getDomainId());
+            }
+
+            if (!authorized) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             user.setApiKey("");
