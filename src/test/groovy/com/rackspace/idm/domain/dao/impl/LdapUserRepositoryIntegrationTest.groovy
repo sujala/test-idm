@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.exception.StalePasswordException
 import com.unboundid.ldap.sdk.Filter
+import com.unboundid.ldap.sdk.LDAPException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -259,6 +260,24 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         thrown(StalePasswordException.class)
+        ldapUserRepository.deleteUser(user)
+    }
+
+    def "modified and created timestamps should not be considered by the persister" () {
+        given:
+        def rsId = "testTimeStamps$random"
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+
+        when:
+        ldapUserRepository.addUser(user)
+        user.created = new Date()
+        user.updated = new Date().plus(1)
+        ldapUserRepository.updateUser(user, false)
+
+        then:
+        notThrown(LDAPException)
+
+        cleanup:
         ldapUserRepository.deleteUser(user)
     }
 

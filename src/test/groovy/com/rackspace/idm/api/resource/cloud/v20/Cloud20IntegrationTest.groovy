@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.joda.time.Seconds
@@ -1527,7 +1528,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "Create createSecretQA and get createSecretQA"() {
         when:
         def response = cloud20.createSecretQA(serviceAdminToken,defaultUser.getId(), v1Factory.createSecretQA("1","answer"))
-        def createSecretQAResponse = cloud20.getSecretQA(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
+        def createSecretQAResponse = cloud20.getSecretQAs(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
 
         then:
         response.status == 200
@@ -1547,12 +1548,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.createSecretQA(userAdminToken, identityAdmin.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(userAdminToken, userAdminTwo.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(userAdminToken, defaultUserForAdminTwo.getId(), v1Factory.createSecretQA("1", "answer")),
-                cloud20.getSecretQA(defaultUserToken, serviceAdmin.getId()),
-                cloud20.getSecretQA(defaultUserToken, identityAdmin.getId()),
-                cloud20.getSecretQA(userAdminToken, serviceAdmin.getId()),
-                cloud20.getSecretQA(userAdminToken, identityAdmin.getId()),
-                cloud20.getSecretQA(userAdminToken, userAdminTwo.getId()),
-                cloud20.getSecretQA(userAdminToken, defaultUserForAdminTwo.getId())
+                cloud20.getSecretQAs(defaultUserToken, serviceAdmin.getId()),
+                cloud20.getSecretQAs(defaultUserToken, identityAdmin.getId()),
+                cloud20.getSecretQAs(userAdminToken, serviceAdmin.getId()),
+                cloud20.getSecretQAs(userAdminToken, identityAdmin.getId()),
+                cloud20.getSecretQAs(userAdminToken, userAdminTwo.getId()),
+                cloud20.getSecretQAs(userAdminToken, defaultUserForAdminTwo.getId())
         ]
 
     }
@@ -1567,10 +1568,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.createSecretQA("", defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(null, defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(null, defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
-                cloud20.getSecretQA("", serviceAdmin.getId()),
-                cloud20.getSecretQA("", identityAdmin.getId()),
-                cloud20.getSecretQA(null, serviceAdmin.getId()),
-                cloud20.getSecretQA(null, identityAdmin.getId()),
+                cloud20.getSecretQAs("", serviceAdmin.getId()),
+                cloud20.getSecretQAs("", identityAdmin.getId()),
+                cloud20.getSecretQAs(null, serviceAdmin.getId()),
+                cloud20.getSecretQAs(null, identityAdmin.getId()),
         ]
 
     }
@@ -1595,7 +1596,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response << [
                 cloud20.createSecretQA(serviceAdminToken, "badId", v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(serviceAdminToken, defaultUser.getId(), v1Factory.createSecretQA("badId", "answer")),
-                cloud20.getSecretQA(serviceAdminToken, "badId")
+                cloud20.getSecretQAs(serviceAdminToken, "badId")
         ]
 
     }
@@ -1610,10 +1611,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.createSecretQA(identityAdminToken, defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(userAdminToken, defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
                 cloud20.createSecretQA(defaultUserToken, defaultUser.getId(), v1Factory.createSecretQA("1", "answer")),
-                cloud20.getSecretQA(serviceAdminToken, defaultUser.getId()),
-                cloud20.getSecretQA(identityAdminToken, defaultUser.getId()),
-                cloud20.getSecretQA(userAdminToken, defaultUser.getId()),
-                cloud20.getSecretQA(defaultUserToken, defaultUser.getId()),
+                cloud20.getSecretQAs(serviceAdminToken, defaultUser.getId()),
+                cloud20.getSecretQAs(identityAdminToken, defaultUser.getId()),
+                cloud20.getSecretQAs(userAdminToken, defaultUser.getId()),
+                cloud20.getSecretQAs(defaultUserToken, defaultUser.getId()),
         ]
     }
 
@@ -2556,6 +2557,34 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def listGroupsResponse = cloud20.listGroupsForUser(serviceAdminToken, "badUserId")
         then:
         listGroupsResponse.status == 404
+    }
+
+    def "Updating user's secretQA twice with same data - returns 200" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "updateUserSecretQA$random"
+        def secretQA = v1Factory.createSecretQA("1", "Somewhere over the rainbow!")
+        def updateSecreatQA = v1Factory.createRaxKsQaSecretQA()
+
+        when:
+        def user = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "updateUserSecretQADomain$random", password)).getEntity(User)
+        def createSecretQAResponse = cloud20.createSecretQA(identityAdminToken, user.id, secretQA)
+        def updateSecretQAResponse = cloud20.updateSecretQA(identityAdminToken, user.id, updateSecreatQA)
+        def updateSecretQAResponse2 = cloud20.updateSecretQA(identityAdminToken, user.id, updateSecreatQA)
+        def getSecretQAResponse = cloud20.getSecretQA(identityAdminToken, user.id)
+        def secretQAEntity = getSecretQAResponse.getEntity(SecretQA)
+
+        then:
+        createSecretQAResponse.status == 200
+        updateSecretQAResponse.status == 200
+        updateSecretQAResponse2.status == 200
+        getSecretQAResponse.status == 200
+        secretQAEntity.answer == updateSecreatQA.answer
+        secretQAEntity.question == updateSecreatQA.question
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, user.id)
     }
 
     def authAndExpire(String username, String password) {
