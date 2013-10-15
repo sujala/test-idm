@@ -357,7 +357,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errorMsg);
             }
 
-            if(getApiKeyUuidEnabled() && StringUtils.isBlank(user.getKey())){
+            if(getGenerateApiKeyUserForCreate() && StringUtils.isBlank(user.getKey())){
                 user.setKey(UUID.randomUUID().toString().replaceAll("-", ""));
             }
 
@@ -1349,8 +1349,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    private Boolean getApiKeyUuidEnabled(){
-        return config.getBoolean("apiKey.uuid.enabled");
+    private Boolean getGenerateApiKeyUserForCreate(){
+        return config.getBoolean("generate.apiKey.userForCreate");
     }
 
     private String getCloudAuthUserAdminRole() {

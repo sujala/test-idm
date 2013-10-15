@@ -464,7 +464,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 password = Password.generateRandom(false, userDO).getValue();
             }
 
-            if(getApiKeyUuidEnabled()){
+            if(getGenerateApiKeyUserForCreate()){
                 userDO.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
             }
 
@@ -3303,8 +3303,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private Boolean getApiKeyUuidEnabled(){
-        return config.getBoolean("apiKey.uuid.enabled");
+    private Boolean getGenerateApiKeyUserForCreate(){
+        return config.getBoolean("generate.apiKey.userForCreate");
     }
 
     private String getCloudAuthClientId() {

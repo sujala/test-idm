@@ -612,7 +612,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
     }
 
-    def "Create user will have no api key if apiKey.uuid.enabled=false" () {
+    def "Create user will have no api key if generate.apiKey.userForCreate=false" () {
         given:
         allowAccess()
         def user = new User().with {
@@ -626,12 +626,33 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.createUser(request, headers, uriInfo(), user)
 
         then:
-        1 * config.getBoolean("apiKey.uuid.enabled") >> false
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
         1 * userConverterCloudV11.fromUser(_) >> { User u ->
             assert(u.key == null)}
     }
 
-    def "Create user will have an api key if apiKey.uuid.enabled=true" () {
+    def "Create user will have api key if provided - generate.apiKey.userForCreate=false" () {
+        given:
+        allowAccess()
+        def key = "key"
+        def user = new User().with {
+            it.id = "id"
+            it.mossoId = 1
+            it.nastId = "nast"
+            it.key = key
+            it
+        }
+
+        when:
+        service.createUser(request, headers, uriInfo(), user)
+
+        then:
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
+        1 * userConverterCloudV11.fromUser(_) >> { User u ->
+            assert(u.key == key)}
+    }
+
+    def "Create user will have an api key if generate.apiKey.userForCreate=true" () {
         given:
         allowAccess()
         def user = new User().with {
@@ -645,9 +666,30 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.createUser(request, headers, uriInfo(), user)
 
         then:
-        1 * config.getBoolean("apiKey.uuid.enabled") >> true
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
         1 * userConverterCloudV11.fromUser(_) >> { User u ->
             assert(u.key != null)}
+    }
+
+    def "Create user will use provided api key if generate.apiKey.userForCreate=true" () {
+        given:
+        allowAccess()
+        def key = "key"
+        def user = new User().with {
+            it.id = "id"
+            it.mossoId = 1
+            it.nastId = "nast"
+            it.key = key
+            it
+        }
+
+        when:
+        service.createUser(request, headers, uriInfo(), user)
+
+        then:
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
+        1 * userConverterCloudV11.fromUser(_) >> { User u ->
+            assert(u.key == key)}
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

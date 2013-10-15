@@ -3434,6 +3434,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 403
     }
 
+    def "Create user will generate an apiKey - generate.apiKey.userForCreate=true" () {
+        given:
+        allowUserAccess()
+        def user = v1Factory.createUserForCreate()
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
+        1 * userService.addUser(_) >> {User u ->
+            assert(u.apiKey != null)
+        }
+    }
+
+    def "Create user will not generate an apiKey - generate.apiKey.userForCreate=false" () {
+        given:
+        allowUserAccess()
+        def user = v1Factory.createUserForCreate()
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
+        1 * userService.addUser(_) >> {User u ->
+            assert(u.apiKey == null)
+        }
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
