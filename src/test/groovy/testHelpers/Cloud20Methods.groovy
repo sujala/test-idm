@@ -30,6 +30,7 @@ class Cloud20Methods {
 
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
+    static def RAX_KSQA = "RAX-KSQA"
     static def OS_KSCATALOG = "OS-KSCATALOG"
     static def X_AUTH_TOKEN = "X-Auth-Token"
 
@@ -315,12 +316,20 @@ class Cloud20Methods {
         resource.path(path20).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
-    def getSecretQA(String token, String userId){
+    def getSecretQAs(String token, String userId){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createSecretQA(String token, String userId, secretqa){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+    }
+
+    def getSecretQA(String token, String userId){
+        resource.path(path20).path('users').path(userId).path(RAX_KSQA).path('secretqa').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateSecretQA(String token, String userId, secretqa){
+        resource.path(path20).path('users').path(userId).path(RAX_KSQA).path('secretqa').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).put(ClientResponse)
     }
 
     def getRole(String token, String roleId) {
