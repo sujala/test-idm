@@ -9,6 +9,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -2573,6 +2574,35 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         createUser != null
         listCredResponse != null
         ((CredentialListType) listCredResponse).credential.get(0).name.localPart == "passwordCredentials"
+
+        cleanup:
+        cloud20.destroyUser(identityAdminToken, createUser.id)
+    }
+
+    def "Create user should auto generate an apikey which will allows new user to authenticate" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userApiKey$random"
+        def flag = config.getBoolean("generate.apiKey.userForCreate")
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "Domain$username", password)).getEntity(User)
+        String listCredResponse = cloud20.listCredentials(serviceAdminToken, createUser.id).getEntity(String)
+        def apiKey = cloud11.getUserByName(username).getEntity(com.rackspacecloud.docs.auth.api.v1.User).key
+        def authenticate = cloud20.authenticateApiKey(username, apiKey)
+
+        then:
+        if(flag){
+            createUser != null
+            listCredResponse != null
+            listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS)
+            listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS)
+            apiKey != null
+            authenticate.status == 200
+        } else {
+            true
+        }
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)
