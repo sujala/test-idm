@@ -79,6 +79,11 @@ class Cloud20Methods {
         resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
+    def deleteUserApiKey(String token, String userId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+
     def getUser(String token, URI location) {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
