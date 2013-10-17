@@ -272,9 +272,9 @@ public class DefaultTenantService implements TenantService {
         validateTenantRole(role);
 
         tenantRoleDao.addTenantRoleToUser(user, role);
-<<<<<<< HEAD
 
         if(user instanceof User){
+            ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
             atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
             if (isUserAdmin((User) user) && cRole.getPropagate()) {
                 for (User subUser : userService.getSubUsers((User) user)) {
@@ -286,20 +286,6 @@ public class DefaultTenantService implements TenantService {
                         String msg = String.format("User %s already has tenantRole %s", ((User)user).getId(), role.getName());
                         logger.warn(msg);
                     }
-=======
-        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
-
-        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
-        if (isUserAdmin(user) && cRole.getPropagate()) {
-            for (User subUser : userService.getSubUsers(user)) {
-                try {
-                    role.setLdapEntry(null);
-                    tenantRoleDao.addTenantRoleToUser(subUser, role);
-                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
-                } catch (ClientConflictException ex) {
-                    String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
-                    logger.warn(msg);
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
                 }
             }
 
@@ -484,7 +470,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(BaseUser user) {
+    public List<TenantRole> getTenantRolesForUser(User user) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
         return getRoleDetails(roles);

@@ -2,11 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
-<<<<<<< HEAD
 import com.rackspace.idm.JSONConstants
-=======
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
@@ -3489,7 +3486,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 403
     }
 
-<<<<<<< HEAD
     def "Create user will generate an apiKey - generate.apiKey.userForCreate=true" () {
         given:
         allowUserAccess()
@@ -3567,7 +3563,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         apiKey << [null, ""]
-=======
+    }
+
     def "Validate a saml response" () {
         given:
         def samlResponse = Mock(org.opensaml.saml2.core.Response)
@@ -3599,7 +3596,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * tenantService.getTenantsForFederatedTokenByTenantRoles(_)  >> [].asList()
         result.status == 200
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     }
 
     def mockServices() {

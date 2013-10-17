@@ -1,19 +1,13 @@
 package com.rackspace.idm.domain.service.impl
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+
 import com.rackspace.idm.GlobalConstants
-<<<<<<< HEAD
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
-=======
-import com.rackspace.idm.domain.entity.*
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
 import com.unboundid.util.LDAPSDKUsageException
-import org.joda.time.DateTime
 import spock.lang.Ignore
 import spock.lang.Shared
-<<<<<<< HEAD
 import com.rackspace.idm.domain.entity.ScopeAccess
 import org.joda.time.DateTime
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -24,9 +18,8 @@ import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import spock.lang.Unroll
-=======
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
 import testHelpers.RootServiceTest
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob

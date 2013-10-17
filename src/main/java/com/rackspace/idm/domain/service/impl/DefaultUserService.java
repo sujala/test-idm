@@ -10,6 +10,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
+import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.ws.rs.HEAD;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -769,13 +772,9 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-<<<<<<< HEAD
     public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
-        BaseUser user;
-=======
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) {
-        User user = null;
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
+
+        BaseUser user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));

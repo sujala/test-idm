@@ -15,14 +15,10 @@ public interface TenantService {
     Tenant getTenantByName(String name);
     Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
-    
-<<<<<<< HEAD
+
     void addTenantRoleToUser(BaseUser user, TenantRole role);
-=======
-    void addTenantRoleToUser(User user, TenantRole role);
     void addTenantRoleToFederatedToken(FederatedToken token, TenantRole role);
     void addTenantRolesToFederatedToken(FederatedToken token, List<TenantRole> tenantRoles);
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     void addCallerTenantRolesToUser(User caller, User user);
     void addTenantRoleToClient(Application client, TenantRole role);
     void deleteTenantRoleForUser(User user, TenantRole role);
@@ -32,12 +28,10 @@ public interface TenantService {
 
     List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
     TenantRole getTenantRoleForUserById(User user, String roleId);
-<<<<<<< HEAD
+
     boolean doesUserContainTenantRole(BaseUser user, String roleId);
-=======
-    boolean doesUserContainTenantRole(User user, String roleId);
     boolean doesFederatedTokenContainTenantRole(FederatedToken token, String roleId);
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
+
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);

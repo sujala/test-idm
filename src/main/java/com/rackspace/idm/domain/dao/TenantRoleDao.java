@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rsa.cryptoj.c.B;
 
 import java.util.List;
 
 public interface TenantRoleDao {
     void addTenantRoleToApplication(Application application, TenantRole tenantRole);
+
     void addTenantRoleToUser(BaseUser user, TenantRole tenantRole);
     void addTenantRoleToFederatedToken(FederatedToken token, TenantRole tenantRole);
     Iterable<TenantRole> getTenantRolesForApplication(Application application);

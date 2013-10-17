@@ -340,17 +340,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-<<<<<<< HEAD
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-=======
         if (scopeAccess instanceof FederatedToken) {
             //federated scope accesses has role / tenant information stored at the token level
             FederatedToken token = (FederatedToken)scopeAccess;
             return tenantService.doesFederatedTokenContainTenantRole(token, clientRole.getId());
         }
 
-        User user = userService.getUserByScopeAccess(scopeAccess);
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+
         return tenantService.doesUserContainTenantRole(user, clientRole.getId());
     }
 

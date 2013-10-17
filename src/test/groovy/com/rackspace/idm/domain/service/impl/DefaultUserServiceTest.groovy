@@ -1,5 +1,4 @@
 package com.rackspace.idm.domain.service.impl
-<<<<<<< HEAD
 
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.PaginatorContext
@@ -10,10 +9,7 @@ import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
-=======
 import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.entity.*
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
@@ -758,7 +754,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         notThrown(NotFoundException)
     }
 
-    def "callig getUsersByEmail returns the user"() {
+    def "calling getUsersByEmail returns the user"() {
         given:
         def user = entityFactory.createUser()
 
@@ -814,7 +810,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     }
 
-<<<<<<< HEAD
     def "authenticate validates user is enabled"() {
         given:
         User user = entityFactory.createUser().with {
@@ -908,7 +903,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * userDao.getEnabledUsers(_, _) >> context
         result == context
-=======
+    }
+
     def "get federated user from federated token"() {
         given:
         def user = entityFactory.createUser()
@@ -924,7 +920,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         result == user
         notThrown(NotFoundException)
->>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     }
 
     def createStringPaginatorContext() {

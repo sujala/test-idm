@@ -26,6 +26,10 @@ public class AuthConverterCloudV20 {
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     public AuthenticateResponse toAuthenticationResponse(AuthData authData) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
@@ -38,7 +42,7 @@ public class AuthConverterCloudV20 {
 
     public AuthenticateResponse toAuthenticationResponse(BaseUser user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-        
+
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
         if(user instanceof Racker){
             auth.setUser(this.userConverterCloudV20.toRackerForAuthenticateResponse((Racker) user, roles));
