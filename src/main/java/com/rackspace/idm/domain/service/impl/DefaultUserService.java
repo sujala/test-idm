@@ -389,7 +389,14 @@ public class DefaultUserService implements UserService {
                 return clientRole.getRsWeight();
             }
         }
-        return config.getInt("cloudAuth.defaultUser.rsWeight");
+        return getDefaultUserWeight();
+    }
+
+    private int getDefaultUserWeight() {
+        String clientId = config.getString("cloudAuth.clientId");
+        String roleName = config.getString("cloudAuth.userRole");
+        ClientRole defaultUserRole = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        return defaultUserRole.getRsWeight();
     }
 
     @Override

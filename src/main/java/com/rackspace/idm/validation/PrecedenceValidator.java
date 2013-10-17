@@ -72,9 +72,6 @@ public class PrecedenceValidator {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
         int callerWeight = callerIdentityRole.getRsWeight();
-        if (callerIdentityRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))) {
-            callerWeight = config.getInt("cloudAuth.special.rsWeight");
-        }
         compareWeights(callerWeight, role.getRsWeight());
 
     }

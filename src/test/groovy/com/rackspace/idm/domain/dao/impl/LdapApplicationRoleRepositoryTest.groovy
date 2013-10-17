@@ -33,12 +33,6 @@ class LdapApplicationRoleRepositoryTest extends Specification {
     def setup() {
         config = Mock()
         repo.config = config
-
-        config.getInt("cloudAuth.defaultUser.rsWeight") >> 2000
-        config.getInt("cloudAuth.userAdmin.rsWeight") >> 1000
-        config.getInt("cloudAuth.special.rsWeight") >> 500
-        config.getInt("cloudAuth.admin.rsWeight") >> 100
-        config.getInt("cloudAuth.serviceAdmin.rsWeight") >> 0
     }
 
     def "searchFilter_availableClientRoles returns appropriate search filter"() {

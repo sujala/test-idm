@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 /**
@@ -31,6 +32,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         sharedRandom = ("$randomness").replace("-", "")
     }
 
+    @Unroll
     def "roles are returned if their rsWeight is greater than or equal to maxWeightAvailable"() {
         given:
         def clientId = "clientId$sharedRandom"

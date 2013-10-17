@@ -198,7 +198,6 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(userAdmin)
     }
 
-    @Ignore("There is an issue with special weight being used as both default weight when none is provided, and as modifying the user-admin role weight when user-admin is the caller. Once the appropriate way to handle cloudAuth.special.rsWeight property is determined this test case should not be ignored")
     def "acl test: user managers can not list roles for user-admin users within domain"() {
         //create a user admin and 2 sub-users
         def userAdmin = createUserAdmin()
