@@ -246,6 +246,18 @@ public final class JsonWriterHelper {
             }
         }
 
+        if (user.getOtherAttributes().size() != 0) {
+            String federated = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federated"));
+            if (!StringUtils.isEmpty(federated)) {
+                userInner.put(JSONConstants.RAX_AUTH_FEDERATED, federated);
+            }
+
+            String federatedIdp = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federatedIdp"));
+            if (!StringUtils.isEmpty(federatedIdp)) {
+                userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, federatedIdp);
+            }
+        }
+
         String defaultRegion = user.getDefaultRegion();
         if (!StringUtils.isEmpty(defaultRegion)) {
             userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);

@@ -14,15 +14,14 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
-import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -30,7 +29,9 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
+import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -47,9 +48,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -61,6 +62,9 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -75,6 +79,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -155,6 +160,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private FederatedIdentityService federatedIdentityService;
 
     @Autowired
     private PolicyService policyService;
@@ -363,6 +371,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantRole.getTenantIds().add(tenant.getTenantId());
 
             tenantService.addTenantRoleToUser(user, tenantRole);
+
 
             return Response.ok();
 
@@ -799,7 +808,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Service Methods
 
     AuthenticateResponse authenticateFederatedDomain(AuthenticationRequest authenticationRequest,
-                                                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+                                                     com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         // ToDo: Validate Domain
         if(!domain.getName().equalsIgnoreCase(GlobalConstants.RACKSPACE_DOMAIN)){
             throw new BadRequestException("Invalid domain specified");
@@ -900,6 +909,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse) throws Throwable {
+        AuthData authInfo = federatedIdentityService.generateAuthenticationInfo(samlResponse);
+        AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(authInfo);
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
+}
+
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
         AuthenticateResponse auth;
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
@@ -960,34 +976,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthenticatedException(errorMessage, e);
         }
         return user;
-    }
-
-    @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-            ScopeAccess sa = checkAndGetToken(tokenId);
-            User user = userService.getUserByAuthToken(tokenId);
-
-            if (!StringUtils.isBlank(tenantId)) {
-                List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
-                if (!tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
-                    throw new NotFoundException();
-                }
-            }
-            return Response.ok();
-        } catch (BadRequestException bre) {
-            return exceptionHandler.badRequestExceptionResponse(bre.getMessage());
-        } catch (NotAuthorizedException nae) {
-            return Response.ok().status(Status.UNAUTHORIZED);
-        } catch (ForbiddenException fe) {
-            return Response.ok().status(Status.FORBIDDEN);
-        } catch (NotFoundException nfe) {
-            return Response.ok().status(Status.NOT_FOUND);
-        } catch (Exception ex) {
-            return Response.ok().status(Status.INTERNAL_SERVER_ERROR);
-        }
     }
 
     @Override
@@ -1729,6 +1717,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
                 sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
+
             if(sa == null) {
                 throw new NotFoundException("Valid token not found");
             }
@@ -1877,9 +1866,17 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess access = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(access);
-            User user = (User) userService.getUserByScopeAccess(access);
 
-            List<Tenant> tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
+            List<Tenant> tenants = null;
+            if (access instanceof FederatedToken) {
+                //federated scope accesses has role / tenant information stored at the token level
+                FederatedToken federatedToken = (FederatedToken)access;
+                tenants = this.tenantService.getTenantsForFederatedTokenByTenantRoles(federatedToken);
+            }
+            else {
+                User user = (User) userService.getUserByScopeAccess(access);
+                tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
+            }
 
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
@@ -3154,7 +3151,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
-            } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
+            }
+            else if (sa instanceof FederatedToken) {
+                FederatedToken federatedTokenInfo = (FederatedToken) sa;
+                AuthData authData = federatedIdentityService.getAuthenticationInfo(federatedTokenInfo);
+                validator20.validateTenantIdInRoles(tenantId, authData.getToken().getRoles());
+                access = authConverterCloudV20.toAuthenticationResponse(authData);
+            }
+            else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 User impersonator;
                 User user;
                 List<TenantRole> roles;
@@ -3180,7 +3184,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.getAny().add(impersonatorJAXBElement);
                 }
             }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(access).getValue());
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -3191,7 +3197,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
-        User user = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
+
         return Response.status(204);
     }
 
@@ -3432,7 +3438,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if(authenticationRequest.getAny() != null && authenticationRequest.getAny().size() > 0) {
             for(int i=0;i<authenticationRequest.getAny().size();i++) {
                 try {
-                    com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+                    com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = null;
                     if(authenticationRequest.getAny().get(i) instanceof com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) {
                         domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) authenticationRequest.getAny().get(i);
                         return domain;

@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.Role;
@@ -11,9 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE;
-import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT;
 
 @Component
 public class RoleConverterCloudV20 {
@@ -28,14 +26,12 @@ public class RoleConverterCloudV20 {
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();
-
         if (roles == null || roles.size() == 0) {
             return jaxbRoles;
         }
+
         for (TenantRole role : roles) {
-
             if (role.getTenantIds() != null && role.getTenantIds().size() > 0) {
-
                 for (String tenantId : role.getTenantIds()) {
                     Role jaxbRole = mapper.map(role, Role.class);
                     jaxbRole.setTenantId(tenantId);
@@ -86,7 +82,7 @@ public class RoleConverterCloudV20 {
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getRoleRsId());
         jaxbRole.setPropagate(role.getPropagate());
-        jaxbRole.setServiceId(role.getClientId());
+
         return jaxbRole;
     }
 

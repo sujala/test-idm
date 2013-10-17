@@ -13,18 +13,15 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
-import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
@@ -65,6 +62,10 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     private String password;
 
     private boolean passwordIsNew = true;
+
+    private boolean federated = false;
+
+    private String federatedIdp;
 
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD_UPDATED_TIMESTAMP,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,

@@ -7,10 +7,12 @@ import java.util.List;
 public interface TenantRoleDao {
     void addTenantRoleToApplication(Application application, TenantRole tenantRole);
     void addTenantRoleToUser(BaseUser user, TenantRole tenantRole);
+    void addTenantRoleToFederatedToken(FederatedToken token, TenantRole tenantRole);
     Iterable<TenantRole> getTenantRolesForApplication(Application application);
     Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId);
     Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     Iterable<TenantRole> getTenantRolesForUser(BaseUser user);
+    Iterable<TenantRole> getTenantRolesForFederatedToken(FederatedToken token);
     Iterable<TenantRole> getTenantRolesForUser(User user, String applicationId);
     Iterable<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
@@ -19,6 +21,7 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
     TenantRole getTenantRoleForApplication(Application application, String roleId);
     TenantRole getTenantRoleForUser(BaseUser user, String roleId);
+    TenantRole getTenantRoleForFederatedToken(FederatedToken token, String roleId);
     void updateTenantRole(TenantRole tenantRole);
     void deleteTenantRoleForUser(User user, TenantRole tenantRole);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);

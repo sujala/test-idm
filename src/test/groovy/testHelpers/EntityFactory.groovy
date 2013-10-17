@@ -1,12 +1,9 @@
 package testHelpers
-
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
-import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
-import spock.lang.Shared
 import spock.lang.Specification
-
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -337,6 +334,7 @@ class EntityFactory extends Specification {
             it.tenantIds = []
             it.userId = "1"
             it.roleRsId = "1"
+            it.clientId = CLIENT
             it.ldapEntry = new ReadOnlyEntry("roleRsId=1,cn=ROLES,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com")
             return it
         }
@@ -387,6 +385,13 @@ class EntityFactory extends Specification {
 
     def createScopeAccess() {
         new ScopeAccess().with {
+            it.accessTokenString = "ats"
+            return it
+        }
+    }
+
+    def createFederatedToken() {
+        new FederatedToken().with {
             it.accessTokenString = "ats"
             return it
         }

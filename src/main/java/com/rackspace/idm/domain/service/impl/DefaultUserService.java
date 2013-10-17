@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,6 +56,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private RackerDao rackerDao;
+
+    @Autowired
+    private FederatedUserDao federatedUserDao;
 
     @Autowired
     private TenantService tenantService;
@@ -766,12 +769,27 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+<<<<<<< HEAD
     public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
         BaseUser user;
+=======
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) {
+        User user = null;
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));
-        } else if (scopeAccess instanceof ImpersonatedScopeAccess) {
+        }
+        else if (scopeAccess instanceof FederatedToken) {
+            //whenever a caller makes a request with a token, the code
+            //attempts to get the user for the calling token, so it can
+            //apply authorization rules, policies, etc
+            //federated users are stored in a different space,
+            //TODO: investigate encapsulating this in UserDao
+            FederatedToken token = (FederatedToken) scopeAccess;
+            user = federatedUserDao.getUserByToken(token);
+        }
+        else if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             if (impersonatedScopeAccess.getRackerId() != null) {
                 Racker impersonatingRacker = getRackerByRackerId(impersonatedScopeAccess.getRackerId());

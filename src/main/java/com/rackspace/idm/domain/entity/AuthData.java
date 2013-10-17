@@ -1,85 +1,44 @@
 package com.rackspace.idm.domain.entity;
 
+import lombok.Data;
 import org.joda.time.DateTime;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+@Data
 public class AuthData {
 
+    /**
+    * @deprecated
+    * using scope access to retain token info
+    */
+    @Deprecated
     private String accessToken;
+
+    /**
+     * @deprecated
+     * using scope access to retain token info
+     */
+    @Deprecated
     private String refreshToken;
+
+    /**
+     * @deprecated
+     * using scope access to retain token info
+     */
+    @Deprecated
     private Date accessTokenExpiration;
+
+    private boolean isPasswordResetOnlyToken;
     private User user;
     private Application application;
-    private Racker racker;
-    private boolean isPasswordResetOnlyToken;
     private DateTime passwordExpirationDate;
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public Date getAccessTokenExpiration() {
-        return accessTokenExpiration;
-    }
-
-    public void setAccessTokenExpiration(Date accessTokenExpiration) {
-        this.accessTokenExpiration = accessTokenExpiration;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Application getApplication() {
-        return application;
-    }
-
-    public void setApplication(Application application) {
-        this.application = application;
-    }
-
-    public Racker getRacker() {
-        return racker;
-    }
-
-    public void setRacker(Racker racker) {
-        this.racker = racker;
-    }
-
-    public boolean isPasswordResetOnlyToken() {
-        return isPasswordResetOnlyToken;
-    }
-
-    public void setPasswordResetOnlyToken(boolean isPasswordResetOnlyToken) {
-        this.isPasswordResetOnlyToken = isPasswordResetOnlyToken;
-    }
-
-    public DateTime getPasswordExpirationDate() {
-        return passwordExpirationDate;
-    }
-
-    public void setPasswordExpirationDate(DateTime passwordExpirationDate) {
-        this.passwordExpirationDate = passwordExpirationDate;
-    }
+    private Racker racker;
+    private ScopeAccess token;
+    private List<OpenstackEndpoint> endpoints;
 
     public int getDaysUntilPasswordExpiration() {
         if (passwordExpirationDate != null) {

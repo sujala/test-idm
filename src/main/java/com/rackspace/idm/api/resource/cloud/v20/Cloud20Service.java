@@ -25,13 +25,13 @@ public interface Cloud20Service {
 
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
+    ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse) throws Throwable;
+
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException;
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken) throws IOException, JAXBException;
-
-    ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) ;
 
     ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) ;
 

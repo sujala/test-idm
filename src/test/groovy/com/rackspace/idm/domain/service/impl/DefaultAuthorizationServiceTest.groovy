@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -440,6 +439,23 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         false           | null      | "domain2"
         false           | "domain1" | null
         false           | null      | null
+    }
+
+    def "authorize federated token" () {
+        when:
+        def result = service.authorize(token, clientRole)
+
+        then:
+        result == expectedResult
+        scopeAccessService.isScopeAccessExpired(token) >> expired
+        tenantService.doesFederatedTokenContainTenantRole(_, _) >> hasTenantRole
+
+        where:
+        expectedResult  | expired   | hasTenantRole | token                                | clientRole
+        false           | true      | false         | createFederatedToken("aa","bb","cc") | entityFactory.createClientRole()
+        false           | true      | true          | createFederatedToken("aa","bb","cc") | entityFactory.createClientRole()
+        false           | false     | false         | createFederatedToken("aa","bb","cc") | entityFactory.createClientRole()
+        true            | false     | true          | createFederatedToken("aa","bb","cc") | entityFactory.createClientRole()
     }
 
     def retrieveAccessControlRoles() {

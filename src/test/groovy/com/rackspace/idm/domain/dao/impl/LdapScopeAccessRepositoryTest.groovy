@@ -1,11 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.unboundid.ldap.sdk.ReadOnlyEntry
-import spock.lang.Shared
 import testHelpers.RootServiceTest
-
 /**
  * Created with IntelliJ IDEA.
  * User: rmlynch
@@ -28,5 +23,13 @@ class LdapScopeAccessRepositoryTest extends RootServiceTest {
 
         then:
         id == parsedClientId
+    }
+
+    def "ensure base dn is set to correct value" () {
+        when:
+        def baseDn = scopeAccessDao.getBaseDn()
+
+        then:
+        baseDn == LdapRepository.SCOPE_ACCESS_BASE_DN
     }
 }

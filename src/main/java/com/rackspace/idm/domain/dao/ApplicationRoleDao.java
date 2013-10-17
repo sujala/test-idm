@@ -22,6 +22,7 @@ public interface ApplicationRoleDao {
     ClientRole getClientRole(String applicationId);
     ClientRole getClientRoleByApplicationAndName(Application application, ClientRole role);
     ClientRole getClientRoleByApplicationAndName(String applicationId, String roleName);
+    ClientRole getRoleByName(String roleName);
 
     Iterable<ClientRole> getClientRolesForApplication(Application application);
     Iterable<ClientRole> getAllClientRoles();

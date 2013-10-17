@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -44,6 +45,10 @@ public class UserConverterCloudV20 {
         return userEntity;
     }
 
+    public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user) {
+        return toUserForAuthenticateResponse(user, user.getRoles());
+    }
+
     public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
         UserForAuthenticateResponse jaxbUser = objectFactory.createUserForAuthenticateResponse();
 
@@ -54,9 +59,21 @@ public class UserConverterCloudV20 {
             region = "";
         }
         jaxbUser.setDefaultRegion(region);
+
         if(roles != null){
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
+
+        //add if user is federated
+        QName federated = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federated");
+        jaxbUser.getOtherAttributes().put(federated, Boolean.valueOf(user.isFederated()).toString());
+
+        //add if user is federated
+        if (StringUtils.isNotBlank(user.getFederatedIdp())) {
+            QName federatedIdp = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federatedIdp");
+            jaxbUser.getOtherAttributes().put(federatedIdp, user.getFederatedIdp());
+        }
+
         return jaxbUser;
     }
 

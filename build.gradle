@@ -73,6 +73,7 @@ dependencies {
 
     ajc 'org.aspectj:aspectjtools:1.7.1'
     compile 'org.aspectj:aspectjrt:1.7.1'
+    compile 'org.opensaml:opensaml:2.5.3'
 
     compile group: 'net.sf.dozer', name: 'dozer', version:'5.3.2'
     compile group: 'com.github.peichhorn', name: 'lombok-pg', version:'0.11.2'

@@ -16,16 +16,28 @@ public interface TenantService {
     Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     
+<<<<<<< HEAD
     void addTenantRoleToUser(BaseUser user, TenantRole role);
+=======
+    void addTenantRoleToUser(User user, TenantRole role);
+    void addTenantRoleToFederatedToken(FederatedToken token, TenantRole role);
+    void addTenantRolesToFederatedToken(FederatedToken token, List<TenantRole> tenantRoles);
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     void addCallerTenantRolesToUser(User caller, User user);
     void addTenantRoleToClient(Application client, TenantRole role);
     void deleteTenantRoleForUser(User user, TenantRole role);
     void deleteTenantRoleForApplication(Application application, TenantRole role);
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);
-    
+
+    List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
     TenantRole getTenantRoleForUserById(User user, String roleId);
+<<<<<<< HEAD
     boolean doesUserContainTenantRole(BaseUser user, String roleId);
+=======
+    boolean doesUserContainTenantRole(User user, String roleId);
+    boolean doesFederatedTokenContainTenantRole(FederatedToken token, String roleId);
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
@@ -37,9 +49,11 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForUser(BaseUser user);
     List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
+    List<TenantRole> getTenantRolesForFederatedToken(FederatedToken token);
     @Deprecated
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(User user);
+    List<Tenant> getTenantsForFederatedTokenByTenantRoles(FederatedToken token);
     boolean hasTenantAccess(User user, String tenantId);
     List<User> getUsersForTenant(String tenantId, int offset, int limit);
     List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);

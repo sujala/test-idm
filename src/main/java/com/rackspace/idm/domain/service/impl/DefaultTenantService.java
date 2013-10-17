@@ -151,6 +151,12 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public boolean doesFederatedTokenContainTenantRole(FederatedToken token, String roleId) {
+        TenantRole tenantRole = tenantRoleDao.getTenantRoleForFederatedToken(token, roleId);
+        return tenantRole != null;
+    }
+
+    @Override
     public TenantRole getTenantRoleForApplicationById(Application application, String id) {
         return tenantRoleDao.getTenantRoleForApplication(application, id);
     }
@@ -162,23 +168,10 @@ public class DefaultTenantService implements TenantService {
         }
 
         logger.info("Getting Tenants for Parent");
-        List<Tenant> tenants = new ArrayList<Tenant>();
-        List<String> tenantIds = new ArrayList<String>();
-        for (TenantRole role : this.tenantRoleDao.getTenantRolesForUser(user)) {
-            if (role.getTenantIds() != null && role.getTenantIds().size() > 0) {
-                for (String tenantId : role.getTenantIds()) {
-                    if (!tenantIds.contains(tenantId)) {
-                        tenantIds.add(tenantId);
-                    }
-                }
-            }
-        }
-        for (String tenantId : tenantIds) {
-            Tenant tenant = this.getTenant(tenantId);
-            if (tenant != null && tenant.getEnabled()) {
-                tenants.add(tenant);
-            }
-        }
+
+        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+        List<Tenant> tenants = getTenants(tenantRoles);
+
         logger.info("Got {} tenants", tenants.size());
         return tenants;
     }
@@ -190,24 +183,46 @@ public class DefaultTenantService implements TenantService {
         }
 
         logger.info("Getting Tenants for Parent");
+
+        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForScopeAccess(sa);
+        List<Tenant> tenants = getTenants(tenantRoles);
+
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
+    }
+
+    @Override
+    public List<Tenant> getTenantsForFederatedTokenByTenantRoles(FederatedToken token) {
+        if (token == null) {
+            throw new IllegalStateException();
+        }
+
+        logger.info("Getting Tenants for Parent");
+
+        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForFederatedToken(token);
+        List<Tenant> tenants = getTenants(tenantRoles);
+
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
+    }
+
+    private List<Tenant> getTenants(Iterable<TenantRole> tenantRoles) {
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
-        for (TenantRole role : this.tenantRoleDao.getTenantRolesForScopeAccess(sa)) {
+        for (TenantRole role : tenantRoles) {
             if (role.getTenantIds() != null && role.getTenantIds().size() > 0) {
                 for (String tenantId : role.getTenantIds()) {
                     if (!tenantIds.contains(tenantId)) {
-                        tenantIds.add(tenantId);
+                        Tenant tenant = this.getTenant(tenantId);
+                        if (tenant != null && tenant.getEnabled()) {
+                            tenants.add(tenant);
+                            tenantIds.add(tenantId);
+                        }
                     }
                 }
             }
         }
-        for (String tenantId : tenantIds) {
-            Tenant tenant = this.getTenant(tenantId);
-            if (tenant != null && tenant.getEnabled()) {
-                tenants.add(tenant);
-            }
-        }
-        logger.info("Got {} tenants", tenants.size());
+
         return tenants;
     }
 
@@ -254,21 +269,10 @@ public class DefaultTenantService implements TenantService {
                 "User cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application client = this.applicationService.getById(role.getClientId());
-        if (client == null) {
-            String errMsg = String.format("Client %s not found", role.getClientId());
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
-        if (cRole == null) {
-            String errMsg = String.format("ClientRole %s not found", role.getName());
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        validateTenantRole(role);
 
         tenantRoleDao.addTenantRoleToUser(user, role);
+<<<<<<< HEAD
 
         if(user instanceof User){
             atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
@@ -282,6 +286,20 @@ public class DefaultTenantService implements TenantService {
                         String msg = String.format("User %s already has tenantRole %s", ((User)user).getId(), role.getName());
                         logger.warn(msg);
                     }
+=======
+        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+
+        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        if (isUserAdmin(user) && cRole.getPropagate()) {
+            for (User subUser : userService.getSubUsers(user)) {
+                try {
+                    role.setLdapEntry(null);
+                    tenantRoleDao.addTenantRoleToUser(subUser, role);
+                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                } catch (ClientConflictException ex) {
+                    String msg = String.format("User %s already has tenantRole %s", user.getId(), role.getName());
+                    logger.warn(msg);
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
                 }
             }
 
@@ -334,23 +352,34 @@ public class DefaultTenantService implements TenantService {
                 "Client cannot be null and must have uniqueID; role cannot be null");
         }
 
-        Application owner = this.applicationService.getById(role.getClientId());
-        if (owner == null) {
-            String errMsg = String.format("Client %s not found", role.getClientId());
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
-        if (cRole == null) {
-            String errMsg = String.format("ClientRole %s not found", role.getName());
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        validateTenantRole(role);
 
         tenantRoleDao.addTenantRoleToApplication(client, role);
 
         logger.info("Added tenantRole {} to client {}", role, client);
+    }
+
+    @Override
+    public void addTenantRolesToFederatedToken(FederatedToken token, List<TenantRole> tenantRoles) {
+        for (TenantRole tenantRole : tenantRoles) {
+             addTenantRoleToFederatedToken(token, tenantRole);
+        }
+
+        logger.info("Added tenantRoles {} to federated token {}", tenantRoles, token);
+    }
+
+    @Override
+    public void addTenantRoleToFederatedToken(FederatedToken token, TenantRole role) {
+        if (token == null || StringUtils.isBlank(token.getUniqueId()) || role == null) {
+            throw new IllegalArgumentException(
+                    "Federated token cannot be null and must have uniqueID; role cannot be null");
+        }
+
+        validateTenantRole(role);
+
+        tenantRoleDao.addTenantRoleToFederatedToken(token, role);
+
+        logger.info("Added tenantRole {} to federated token {}", role, token);
     }
 
     @Override
@@ -462,13 +491,21 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<TenantRole> getTenantRolesForFederatedToken(FederatedToken token) {
+        logger.debug(GETTING_TENANT_ROLES);
+        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForFederatedToken(token);
+        return getRoleDetails(roles);
+    }
+
+    @Override
     public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId, tenantId);
         return getRoleDetails(roles);
     }
 
-    private List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
+    @Override
+    public List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null) {
@@ -687,5 +724,21 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
         this.tenantRoleDao = tenantRoleDao;
+    }
+
+    private void validateTenantRole(TenantRole role) {
+        Application owner = this.applicationService.getById(role.getClientId());
+        if (owner == null) {
+            String errMsg = String.format("Client %s not found", role.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        if (cRole == null) {
+            String errMsg = String.format("ClientRole %s not found", role.getName());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
     }
 }

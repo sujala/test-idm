@@ -1,4 +1,5 @@
 package com.rackspace.idm.domain.service.impl
+<<<<<<< HEAD
 
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.PaginatorContext
@@ -9,13 +10,16 @@ import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
+=======
+import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.entity.*
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -25,6 +29,8 @@ import testHelpers.RootServiceTest
  */
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
+
+    @Shared FederatedUserDao mockFederatedUserDao
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -808,6 +814,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     }
 
+<<<<<<< HEAD
     def "authenticate validates user is enabled"() {
         given:
         User user = entityFactory.createUser().with {
@@ -901,6 +908,23 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * userDao.getEnabledUsers(_, _) >> context
         result == context
+=======
+    def "get federated user from federated token"() {
+        given:
+        def user = entityFactory.createUser()
+        def federatedToken = createFederatedToken("239843lsdfsfd","http://test.com","john.doe")
+        mockFederatedUserDao(service)
+
+        and:
+        mockFederatedUserDao.getUserByToken(federatedToken) >> user
+
+        when:
+        def result = service.getUserByScopeAccess(federatedToken)
+
+        then:
+        result == user
+        notThrown(NotFoundException)
+>>>>>>> B-58104 Identity Federation Accept SAML Response and Generate Token
     }
 
     def createStringPaginatorContext() {
@@ -912,6 +936,11 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.valueList = [].asList()
             return it
         }
+    }
+
+    def mockFederatedUserDao(service) {
+        mockFederatedUserDao = Mock()
+        service.federatedUserDao = mockFederatedUserDao
     }
 
     def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {

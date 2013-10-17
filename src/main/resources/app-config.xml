@@ -12,7 +12,6 @@
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
 			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
 
-
     <!--
         Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
         for the required JAR files. See the PetStore sample application also shipped with
@@ -47,6 +46,11 @@
     <aop:aspectj-autoproxy />
 
     <bean id="validateAspect" class="com.rackspace.idm.aspect.ValidateAspect" factory-method="aspectOf" />
+
+    <bean id="bootstrapOpenSaml" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetClass"><value>org.opensaml.DefaultBootstrap</value></property>
+        <property name="targetMethod"><value>bootstrap</value></property>
+    </bean>
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
     <context:component-scan base-package="com.rackspace.idm"/>

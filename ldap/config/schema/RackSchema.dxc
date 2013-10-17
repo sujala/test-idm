@@ -1197,3 +1197,18 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.33) = {
         encryptedValue,
         value
 };
+
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.34) = {
+    name = federatedUserScopeAccess
+    ldap-names = federatedUserScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        userRsId
+    may-contain
+        accessToken,
+        accessTokenExp,
+        roleNames,
+        serviceNames
+};

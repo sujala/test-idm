@@ -7,11 +7,6 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
-import org.apache.commons.lang.ArrayUtils;
 import org.dozer.Mapping;
 
 import java.util.HashSet;

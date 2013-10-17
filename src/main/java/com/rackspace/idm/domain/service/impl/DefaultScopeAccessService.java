@@ -83,7 +83,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // First get the tenantRoles for the token
         List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(token);
-
         if (roles == null || roles.size() == 0) {
             return endpoints;
         }
@@ -91,7 +90,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         // Second get the tenants from each of those roles
         List<Tenant> tenants = getTenants(roles);
 
-        // Third get the endppoints for each tenant
+        // Third get the endpoints for each tenant
         for (Tenant tenant : tenants) {
             OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
@@ -538,6 +537,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public void deleteScopeAccessesForUser(User user, String clientId) {
         for (ScopeAccess sa : getScopeAccessesForUserByClientId(user, clientId)) {
             deleteScopeAccess(sa);
+        }
+    }
+
+    @Override
+    public void deleteExpiredTokens(User user) {
+        Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
+        if (tokenIterator != null) {
+            for (ScopeAccess token : tokenIterator) {
+                if (token.isAccessTokenExpired(new DateTime())) {
+                    this.deleteScopeAccess(token);
+                }
+            }
         }
     }
 
