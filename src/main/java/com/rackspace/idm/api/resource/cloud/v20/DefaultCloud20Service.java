@@ -483,18 +483,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("User-Admin does not have a Domain");
                 }
                 Iterable<User> users = userService.getUsersWithDomain(domainId);
-                int maxNumberOfSubUsers = config.getInt("numberOfSubUsers");
 
-                //TODO: this does not work if domain has multiple user admins
-                int numberUsers = 0;
-                while (users.iterator().hasNext()) {
-                    if (numberUsers > maxNumberOfSubUsers) {
-                        String errMsg = String.format("User cannot create more than %d sub-accounts.", maxNumberOfSubUsers);
-                        throw new BadRequestException(errMsg);
-                    }
-                    numberUsers++;
-                    users.iterator().next();
-                }
+                checkMaxNumberOfUsersInDomain(users);
 
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
@@ -567,6 +557,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void checkMaxNumberOfUsersInDomain(Iterable<User> users) {
+        int maxNumberOfUsersInDomain = config.getInt("maxNumberOfUsersInDomain");
+
+        //TODO: this does not work if domain has multiple user admins
+        int numberUsers = 0;
+        for (User user : users) {
+            numberUsers++;
+            if (numberUsers >= maxNumberOfUsersInDomain) {
+                String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
+                throw new BadRequestException(errMsg);
+            }
         }
     }
 
@@ -1162,7 +1166,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            if (user.getApiKey() == null) {
+            if (StringUtils.isEmpty(user.getApiKey())) {
                 throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
             }
 
@@ -2618,7 +2622,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
-            Iterable<Group> groups = userService.getGroupsForUser(userId);
+
+            User user = userService.checkAndGetUserById(userId);
+
+            Iterable<Group> groups = userService.getGroupsForUser(user.getId());
 
             if (!groups.iterator().hasNext()) {
                 Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
@@ -2801,7 +2808,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                userContext = this.userService.getAllUsersPaged(marker, limit);
+                userContext = this.userService.getAllEnabledUsersPaged(marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();

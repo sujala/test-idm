@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
@@ -517,7 +519,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 0
+        config.getInt("maxNumberOfUsersInDomain") >> 0
 
         userService.getUserByAuthToken(_) >>> [
                 entityFactory.createUser("username1", "id", null, "region"),
@@ -552,7 +554,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
-        config.getInt("numberOfSubUsers") >> 5
+        config.getInt("maxNumberOfUsersInDomain") >> 5
+        domainService.getDomainAdmins(_) >> [].asList()
 
         when:
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
@@ -721,7 +724,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 200
     }
 
-    def "listUsers (caller is admin or service admin) gets paged users and returns list"() {
+    def "listUsers (caller is admin or service admin) gets enabled paged users and returns list"() {
         given:
         mockUserConverter(service)
         allowUserAccess()
@@ -742,7 +745,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        2 * userService.getAllUsersPaged(_, _) >> userContextMock
+        2 * userService.getAllEnabledUsersPaged(_, _) >> userContextMock
 
         response1.status == 200
         response2.status == 200
@@ -3462,6 +3465,55 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.addUser(_) >> {User u ->
             assert(u.apiKey == null)
         }
+    }
+
+    def "checkMaxNumberOfUsersInDomain does not allow creating more than maxNumberOfUsersInDomain"() {
+        given:
+        config.getInt("maxNumberOfUsersInDomain") >> maxNumberOfUsersInDomain
+
+        List<User> users = new ArrayList<>()
+        for (int i = 0; i < numberOfUsers; i++) {
+            def user = entityFactory.createUser().with {
+                it.username = "username$i"
+                it
+            }
+            users.add(user)
+        }
+
+        when:
+        boolean result = false
+        try {
+            service.checkMaxNumberOfUsersInDomain(users)
+        } catch (BadRequestException e) {
+            result = true
+        }
+
+        then:
+        result == badRequest
+
+        where:
+        maxNumberOfUsersInDomain | numberOfUsers | badRequest
+        2                        | 2             | true
+        2                        | 1             | false
+    }
+
+    def "deleteUserCredential returns 404 if the apiKeyCredentials are not found"() {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser().with {
+            it.apiKey = apiKey
+            it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        when:
+        def result = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+
+        then:
+        result.getStatus() == 404
+
+        where:
+        apiKey << [null, ""]
     }
 
     def mockServices() {

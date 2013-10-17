@@ -1376,7 +1376,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         where:
         response << [
                 cloud20.listUsers(serviceAdminToken, "0", "-1"),
-                cloud20.listUsers(serviceAdminToken, "-1", "10")
+                cloud20.listUsers(serviceAdminToken, "-1", "10"),
+                cloud20.listUsers(serviceAdminToken, "offset", "10"),
+                cloud20.listUsers(serviceAdminToken, "0", "limit"),
         ]
     }
 
@@ -1525,6 +1527,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateResponse = cloud20.updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
         def deletePolicyResponse = cloud20.deletePolicy(serviceAdminToken, policyId)
         def deleteResponse = cloud20.deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
+        def deleteResponse2 = cloud20.deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
 
         then:
         addResponse.status == 204
@@ -1532,6 +1535,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         updateResponse.status == 204
         deletePolicyResponse.status == 400
         deleteResponse.status == 204
+        deleteResponse2.status == 404
     }
 
     def "update policy to endpoint without endpoint without policy returns 404"() {
@@ -2606,6 +2610,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)
+    }
+
+    def "List Groups with invalid name - returns 404" () {
+        when:
+        def listGroupsResponse = cloud20.listGroupsForUser(serviceAdminToken, "badUserId")
+        then:
+        listGroupsResponse.status == 404
     }
 
     def authAndExpire(String username, String password) {

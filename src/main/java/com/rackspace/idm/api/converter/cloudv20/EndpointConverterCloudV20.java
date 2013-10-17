@@ -50,6 +50,7 @@ public class EndpointConverterCloudV20 {
         for (OpenstackEndpoint point : endpoints) {
             for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
                 Endpoint endpoint = mapper.map(baseUrl, Endpoint.class);
+                endpoint.setTenantId(point.getTenantId());
                 endpoint.setName(baseUrl.getServiceName());
                 if (!StringUtils.isBlank(baseUrl.getVersionId())) {
                     VersionForService version = new VersionForService();

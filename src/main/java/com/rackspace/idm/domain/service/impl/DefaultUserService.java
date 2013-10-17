@@ -514,6 +514,17 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public PaginatorContext<User> getAllEnabledUsersPaged(int offset, int limit) {
+        logger.debug("Getting All Enabled Users paged");
+
+        PaginatorContext<User> users = this.userDao.getEnabledUsers(offset, limit);
+
+        logger.debug("Got All Enabled Users paged");
+
+        return users;
+    }
+
+    @Override
     public PaginatorContext<User> getAllUsersPagedWithDomain(String domainId, int offset, int limit) {
         logger.debug("Getting Users in Domain {}", domainId);
 

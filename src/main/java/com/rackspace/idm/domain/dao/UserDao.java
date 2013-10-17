@@ -22,6 +22,8 @@ public interface UserDao {
 
     PaginatorContext<User> getUsers(int offset, int limit);
 
+    PaginatorContext<User> getEnabledUsers(int offset, int limit);
+
     PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
 
     PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit);

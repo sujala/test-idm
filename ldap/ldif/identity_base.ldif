@@ -1,0 +1,272 @@
+version: 1
+
+dn: o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organization
+o: rackspace
+
+dn: ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: applications
+
+dn: ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: cloud
+
+dn: ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: questions
+
+dn: rsId=1,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: What is the location of a dream vacation?
+rsId: 1
+
+dn: rsId=2,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: Where is the best place to live?
+rsId: 2
+
+dn: rsId=3,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: What is your favorite book?
+rsId: 3
+
+dn: rsId=4,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: What is your favorite color?
+rsId: 4
+
+dn: rsId=5,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: Who let the dogs out?
+rsId: 5
+
+dn: rsId=6,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+question: What is your pass phrase?
+rsId: 6
+
+dn: ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: regions
+
+dn: ou=capabilities,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: capabilities
+
+dn: ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: baseUrls
+
+dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: adminUsers
+
+dn: ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: configuration
+
+dn: ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: patterns
+
+dn: rsId=5,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: top
+objectClass: rsPattern
+cn: email
+errMsg: Expecting valid email address
+pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
+rsId: 5
+
+dn: rsId=1,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: rsPattern
+cn: username
+errMsg: Username must begin with an alphanumeric character, have no spaces, 
+ and only contain the following valid special characters: - _ . @
+pattern: ^[A-Za-z0-9][a-zA-Z0-9-_.@]*
+rsId: 1
+description: AlphaNumeric w/ some special characters (- | _ | @ | .)
+
+dn: rsId=2,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: rsPattern
+cn: phone
+errMsg: Phone number has invalid characters.
+pattern: [0-9]*
+rsId: 2
+description: Checks for invalid characters on a phone number.
+
+dn: rsId=3,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: rsPattern
+cn: password
+errMsg: Password must be at least 8 characters in length, must contain at le
+ ast one uppercase letter, one lowercase letter, and one numeric character.
+pattern:: Xig/PS4qXGQpKD89LipbYS16XSkoPz0uKltBLVpdKVthLXpBLVpcZD0rYHxcKCl7fV
+ xbXF06OyInPD4sLj8vXFxcXMKjfiFAIyVeJiQqXyAtXXs4LH0k
+rsId: 3
+description: Checks for invalid characters on a phone number.
+
+dn: rsId=4,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: rsPattern
+cn: token
+errMsg: Invalid token
+pattern: ^[A-Za-z0-9-]+$
+rsId: 4
+description: Checks for invalid characters on a token.
+
+dn: ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: properties
+
+dn: cn=encryptionVersionId,ou=properties,ou=configuration,ou=cloud,o=rackspa
+ ce,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsProperty
+cn: encryptionVersionId
+value: 0
+
+dn: ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: domains
+
+dn: ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+
+dn: rsId=0,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsGroup
+name: Default
+rsId: 0
+description: Default Limits
+
+dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: policies
+
+dn: rsId=100000000,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPolicy
+blob: blob
+cn: name
+enabled: TRUE
+policyType: type
+rsGlobal: TRUE
+rsId: 100000000
+description: description
+
+dn: ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: tenants
+
+dn: ou=customers,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: customers
+
+dn: ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: nextIds
+
+dn: cn=nextQuestionId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextQuestionId
+rsId: 1328
+
+dn: cn=nextGroupId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextGroupId
+rsId: 11947
+
+dn: cn=nextPolicyId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextPolicyId
+rsId: 4120
+
+dn: cn=nextCapabilityId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextCapabilityId
+rsId: 1712
+
+dn: cn=nextUserId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextUserId
+rsId: 10052898
+
+dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextRoleId
+rsId: 10019855
+
+dn: cn=nextCustomerId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextCustomerId
+rsId: 10001024
+
+dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextTenantId
+rsId: 10020
+
+dn: ou=rackers,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: rackers
+
+dn: ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: softDeleted
+
+dn: ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: customers
+
+dn: ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: applications
+
+dn: ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
+
+dn: ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+
