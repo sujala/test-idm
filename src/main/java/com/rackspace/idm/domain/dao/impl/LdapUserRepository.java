@@ -507,6 +507,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private Filter searchFiltergetUserByGroupId(String groupId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_GROUP_ID, groupId)
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
     }
