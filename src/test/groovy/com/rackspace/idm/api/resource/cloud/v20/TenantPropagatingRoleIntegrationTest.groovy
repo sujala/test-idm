@@ -487,11 +487,10 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
-        def role = v2Factory.createRole(propagate, weight).with {
+    def createPropagateRole(boolean propagate = true, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+        def role = v2Factory.createRole(propagate).with {
             it.name = roleName
             it.propagate = propagate
-            it.weight = weight
             it.otherAttributes = null
             return it
         }

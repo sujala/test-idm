@@ -213,26 +213,22 @@ class V2Factory {
         }
     }
 
-    def createRole(propagate, weight) {
-        def other = createOtherMap(propagate, weight)
+    def createRole(Object propagate) {
+        def other = createOtherMap(propagate)
         def random = UUID.randomUUID().toString().replace("-", "")
         return new Role().with {
             it.name = "role$random"
             it.description = "desc"
             it.propagate = propagate
-            it.weight = weight
             it.otherAttributes = other
             return it
         }
     }
 
-    def createOtherMap(propagate, weight) {
+    def createOtherMap(Object propagate) {
         def map = new HashMap<QName, Object>()
         if (propagate != null) {
             map.put(QNAME_PROPAGATE, Boolean.toString(propagate))
-        }
-        if (weight != null) {
-            map.put(QNAME_WEIGHT, Integer.toString(weight))
         }
         return map
     }

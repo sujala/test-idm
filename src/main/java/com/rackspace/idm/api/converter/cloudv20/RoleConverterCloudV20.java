@@ -54,10 +54,7 @@ public class RoleConverterCloudV20 {
         ClientRole clientRole = mapper.map(role, ClientRole.class);
         clientRole.setPropagate(role.isPropagate());
         clientRole.setClientId(clientId);
-
-        if (role.getWeight() == null) {
-            clientRole.setRsWeight(config.getInt("default.rsWeight"));
-        }
+        clientRole.setRsWeight(config.getInt("default.rsWeight"));
 
         return clientRole;
     }
