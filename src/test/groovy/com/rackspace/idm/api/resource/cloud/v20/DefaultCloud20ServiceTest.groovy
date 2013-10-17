@@ -555,6 +555,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
         userService.getUsersWithDomain(_) >> users
         config.getInt("maxNumberOfUsersInDomain") >> 5
+        domainService.getDomainAdmins(_) >> [].asList()
 
         when:
         def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
