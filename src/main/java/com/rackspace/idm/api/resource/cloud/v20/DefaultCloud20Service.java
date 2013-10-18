@@ -2755,9 +2755,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             groupService.checkAndGetGroupById(groupId);
-            Iterable<User> users = userService.getUsersByGroupId(groupId);
+            PaginatorContext<User> users = userService.getUsersByGroupId(groupId, marker, limit);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getValueList())).getValue());
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
         }
