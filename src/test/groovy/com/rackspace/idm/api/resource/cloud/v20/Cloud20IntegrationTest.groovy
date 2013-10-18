@@ -2612,6 +2612,29 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, createSubUser.id)
     }
 
+    def "Updating policy with bold and type null - return 200" () {
+        given:
+        def name = "policy$sharedRandom"
+        Policy policy = v1Factory.createPolicy(name, "someBlob", "type")
+
+        when:
+        def createPolicy = cloud20.addPolicy(identityAdminToken, policy)
+        def policyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
+        policy.blob = null
+        policy.type = null
+        policy.description = "new description"
+        def updatePolicy = cloud20.updatePolicy(identityAdminToken, policyEntity.id, policy)
+        def updatedPolicyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
+
+        then:
+        updatePolicy.status == 204
+        updatedPolicyEntity.blob == "someBlob"
+        updatedPolicyEntity.type == "type"
+
+        cleanup:
+        cloud20.deletePolicy(identityAdminToken, policyEntity.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

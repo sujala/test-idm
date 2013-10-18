@@ -250,10 +250,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
 
         String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
-        List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
-        audit.modify(mods);
-        if (mods.size() > 0) {
-            persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+        if(attributes.length > 0){
+            List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
+            audit.modify(mods);
+            if (mods.size() > 0) {
+                persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+            }
         }
     }
 
