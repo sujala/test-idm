@@ -620,7 +620,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
-            this.userService.softDeleteUser(retrievedUser);
+            this.userService.deleteUser(retrievedUser);
 
             //AtomHopper
             atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DELETED);

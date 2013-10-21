@@ -3201,7 +3201,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.verifyDomain(_, _)
-        1 * userService.softDeleteUser(_)
+        1 * userService.deleteUser(_)
     }
 
     def "User with user-manage role cannot delete user with user-manage role" () {

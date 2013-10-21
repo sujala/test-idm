@@ -30,8 +30,11 @@ public class DefaultUserService implements UserService {
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
     public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
+    private static final String DELETE_USER_LOG_NAME = "userDelete";
+    private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
 
     @Autowired
     private PasswordComplexityService passwordComplexityService;
@@ -222,18 +225,18 @@ public class DefaultUserService implements UserService {
     public void deleteUser(User user) {
         logger.info("Deleting User: {}", user.getUsername());
 
+        List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
         this.userDao.deleteUser(user);
+        deleteUserLogger.warn(DELETE_USER_FORMAT,
+                new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
 
         logger.info("Deleted User: {}", user.getUsername());
     }
 
     @Override
     public void deleteUser(String username) {
-        logger.info("Deleting User: {}", username);
-
-        this.userDao.deleteUser(username);
-
-        logger.info("Deleted User: {}", username);
+        User user = this.userDao.getUserByUsername(username);
+        this.deleteUser(user);
     }
 
     @Override

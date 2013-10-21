@@ -948,7 +948,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(userDO);
         spy.deleteUser(null, null, null);
-        verify(userService).softDeleteUser(userDO);
+        verify(userService).deleteUser(userDO);
     }
 //TODO
     @Test

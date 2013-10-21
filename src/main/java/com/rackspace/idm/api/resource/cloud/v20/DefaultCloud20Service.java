@@ -1122,7 +1122,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
                 throw new NotAuthorizedException("Cannot delete user with same access level");
             }
-            userService.softDeleteUser(user);
+            userService.deleteUser(user);
 
             atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
 
