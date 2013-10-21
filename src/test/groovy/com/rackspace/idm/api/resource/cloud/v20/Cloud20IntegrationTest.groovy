@@ -2587,6 +2587,31 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, user.id)
     }
 
+    def "List credentials for subUser using userAdmin within same domain returns 403"() {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "listCredentialUser$random"
+        def subUsername = "listCredentialSubUser$random"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        String userAdminToken = cloud20.authenticate(username, password).getEntity(AuthenticateResponse).value.token.id
+        def createSubUser = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(subUsername, subUsername, "email@email.email", true, "DFW", null, password)).getEntity(User)
+        def listCredResponse = cloud20.listCredentials(userAdminToken, createSubUser.id)
+
+        then:
+        createUser != null
+        userAdminToken != null
+        createSubUser != null
+        listCredResponse != null
+        listCredResponse.status == 403
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.destroyUser(serviceAdminToken, createSubUser.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
