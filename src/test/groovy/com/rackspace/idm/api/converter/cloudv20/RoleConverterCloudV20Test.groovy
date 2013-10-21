@@ -19,7 +19,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
     def setup() {
         mockConfiguration(converter)
-        config.getInt("cloudAuth.special.rsWeight") >> configWeight
+        config.getInt("default.rsWeight") >> configWeight
     }
 
     def "can convert tenantRole to jaxb role"() {

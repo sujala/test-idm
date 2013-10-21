@@ -56,7 +56,7 @@ public class RoleConverterCloudV20 {
         clientRole.setClientId(clientId);
 
         if (role.getWeight() == null) {
-            clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
+            clientRole.setRsWeight(config.getInt("default.rsWeight"));
         }
 
         return clientRole;

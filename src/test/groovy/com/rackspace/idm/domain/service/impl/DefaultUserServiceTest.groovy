@@ -405,6 +405,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "getUsersWeight gets users tenantRoles"() {
         given:
         def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = "3"; return it }
+        def clientRole = entityFactory.createClientRole(2000)
         def user = entityFactory.createUser().with {
             it.username = "username"
             it.roles = [ tenantRole ].asList()
@@ -412,6 +413,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
 
         when:
+        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> clientRole
         service.getUserWeight(user, "applicationId")
 
         then:
@@ -516,6 +518,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.roleRsId = "0"
             return it
         }
+        def clientRole = entityFactory.createClientRole(2000);
         def user = entityFactory.createUser().with {
             it.roles = [ tenantRole ].asList()
             return it
@@ -525,7 +528,9 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
         applicationService.getClientRoleById("0") >> applicationRole
-        config.getInt("cloudAuth.defaultUser.rsWeight") >> 2000
+        config.getString("cloudAuth.clientId") >> "id"
+        config.getString("cloudAuth.userRole") >> "role"
+        applicationService.getClientRoleByClientIdAndRoleName("id", "role") >> clientRole
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
