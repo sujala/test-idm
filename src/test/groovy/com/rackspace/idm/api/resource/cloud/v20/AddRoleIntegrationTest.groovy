@@ -101,7 +101,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"
-        addRoleToUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
+        def status = addRoleToUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
+        assert status == HttpStatus.OK.value()
 
         then: "user admin has role"
         assertUserHasRole(identityAdmin, cloudIdentityAdminRole)
@@ -118,7 +119,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         Role role = createPropagateRole(false, 1000)
 
         when: "As user-admin, add 1000 weight role to default user within my domain"
-        addRoleToUser(userAdminToken, defaultUser, role)
+        def status = addRoleToUser(userAdminToken, defaultUser, role)
+        assert status == HttpStatus.OK.value()
 
         then: "default user now has user-manage role"
         assertUserHasRole(defaultUser, role)
@@ -129,7 +131,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteRoleQuietly(role)
     }
 
-    def "User manager can assign user-manager role to default user within domain"() {
+    def "User manager cannot assign user-manager role to default user within domain"() {
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
 
@@ -139,14 +141,15 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         ClientRole userManageRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityUserManageRole());
-        addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        assert status == HttpStatus.OK.value()
         assertUserHasRole(userManager, userManageRole) //verify test state
 
         when: "As user-manager, add user-manager role to default user within my domain"
-        addRoleToUser(userManagerToken, defaultUser, userManageRole)
+        def forbiddenStatus = addRoleToUser(userManagerToken, defaultUser, userManageRole)
 
-        then: "default user now has user-manage role"
-        assertUserHasRole(defaultUser, userManageRole)
+        then:
+        assert forbiddenStatus == HttpStatus.FORBIDDEN.value()
 
         cleanup:
         deleteUserQuietly(userAdmin)
@@ -195,8 +198,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.NOT_FOUND.value()
     }
 
-    def void addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
-        assert cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.OK.value()
+    def addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
+        return cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status
     }
 
     def void removeRoleFromUser(callerToken, userToRemoveRoleFrom, roleToRemove) {
