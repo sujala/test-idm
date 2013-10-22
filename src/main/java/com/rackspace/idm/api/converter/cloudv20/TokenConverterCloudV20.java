@@ -69,6 +69,9 @@ public class TokenConverterCloudV20 {
     TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
         for (TenantRole tenant : tenantRoleList) {
             // TODO: Check for other names? This is to match the Mosso Type. This is a hack!!
+            // trying to identify the mosso tenant, and any tenant that has the role "compute:default"
+            // is deemed the mosso tenant. In the future we will get rid of this completely by allowing
+            // multiple tenants in the token response. We are stuck because the contract controlled by openstack.
             if (tenant.getName().equals("compute:default")) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tenant.getTenantIds().iterator().next());
