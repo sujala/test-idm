@@ -1423,14 +1423,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) {
         try {
             ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(requesterScopeAccess);
+            authorizationService.verifyUserManagedLevelAccess(requesterScopeAccess);
 
             Iterable<User> users = userService.getUsersByEmail(email);
 
             User caller = (User) userService.getUserByScopeAccess(requesterScopeAccess);
             if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                     authorizationService.authorizeCloudUserAdmin(requesterScopeAccess) ||
-                     authorizationService.authorizeCloudUser(requesterScopeAccess)) {
+                     authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
                 users = filterUsersInDomain(users, caller);
             }
 

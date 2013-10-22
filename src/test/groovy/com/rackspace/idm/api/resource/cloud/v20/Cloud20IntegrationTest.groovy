@@ -2639,6 +2639,40 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deletePolicy(identityAdminToken, policyEntity.id)
     }
 
+    def "Default user should not be allow to retrieve users by email unless its promoted to user-manage"() {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userByEmail$random"
+        def subUsername = "subUserByEmail$random"
+        def email = "testEmail@rackspace.com"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        String userAdminToken = cloud20.authenticate(username, password).getEntity(AuthenticateResponse).value.token.id
+        def createSubUser = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(subUsername, subUsername, email, true, "DFW", null, password)).getEntity(User)
+        String defaultUserToken = cloud20.authenticate(subUsername, password).getEntity(AuthenticateResponse).value.token.id
+        def getUsersByEmail = cloud20.getUsersByEmail(defaultUserToken, email)
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, createSubUser.id)
+        def userManageToken = cloud20.authenticate(subUsername, password).getEntity(AuthenticateResponse).value.token.id
+        def getUsersByEmailUserManage = cloud20.getUsersByEmail(userManageToken, email)
+        def usersByEmailUserManage = getUsersByEmailUserManage.getEntity(UserList)
+
+        then:
+        createUser != null
+        userAdminToken != null
+        createSubUser != null
+        defaultUserToken != null
+        getUsersByEmail.status == 403
+        userManageToken != null
+        getUsersByEmailUserManage.status == 200
+        usersByEmailUserManage.value.user.size() == 2
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.destroyUser(serviceAdminToken, createSubUser.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
