@@ -11,6 +11,8 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -36,6 +38,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultCloud20Service cloud20Service
+    @Autowired DefaultApplicationService applicationService
 
     @Shared JAXBObjectFactories objFactories;
 
@@ -64,7 +67,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
-    @Shared def productRole
     @Shared def propagatingRole
     @Shared def tenant
 
@@ -184,28 +186,19 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //create role
         Role createRole = v2Factory.createRole()
         createRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-        createRole.name = "sharedRole1"
+        createRole.name = "sharedRole1$sharedRandom"
         def responseRole = cloud20.createRole(serviceAdminToken, createRole)
         sharedRole = responseRole.getEntity(Role).value
 
         Role createRole2 = v2Factory.createRole()
         createRole2.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-        createRole2.name = "sharedRole2"
+        createRole2.name = "sharedRole2$sharedRandom"
         def responseRole2 = cloud20.createRole(serviceAdminToken, createRole2)
         sharedRoleTwo = responseRole2.getEntity(Role).value
 
-        //create product role
-        Role createProductRole = v2Factory.createRole()
-        createProductRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-        createProductRole.name = "productRole$sharedRandom"
-        createProductRole.weight = 1000
-        def responseProductRole = cloud20.createRole(serviceAdminToken, createProductRole)
-        productRole = responseProductRole.getEntity(Role).value
-
-        def role = v2Factory.createRole(true, 500).with {
+        def role = v2Factory.createRole(true).with {
             it.name = "propagatingRole$sharedRandom"
             it.propagate = true
-            it.weight = 500
             it.otherAttributes = null
             return it
         }
@@ -220,12 +213,32 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
 
         //Add role to identity-admin and default-users
-        cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+       cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
         cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
         cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
         cloud20.addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
 
         //testIdentityRole = getRole(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
+    }
+
+    def createClientRole(sharedRandom, weight) {
+        def productRole = v2Factory.createRole()
+        productRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        productRole.name = "productRole$sharedRandom"
+        def daoProductRole = new ClientRole().with {
+            it.clientId = productRole.serviceId
+            it.name = productRole.name
+            it.rsWeight = weight
+            it
+        }
+        applicationService.addClientRole(daoProductRole);
+        productRole.setId(daoProductRole.getId())
+        return productRole
+    }
+
+    def deleteClientRole(roleId) {
+        def clientRole = applicationService.getClientRoleById(roleId)
+        applicationService.deleteClientRole(clientRole)
     }
 
     def setup() {
@@ -240,7 +253,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cloud20.deleteRole(serviceAdminToken, sharedRole.getId())
         cloud20.deleteRole(serviceAdminToken, sharedRoleTwo.getId())
-        cloud20.deleteRole(serviceAdminToken, productRole.getId())
         cloud20.deleteRole(serviceAdminToken, propagatingRole.getId())
 
         cloud20.destroyUser(serviceAdminToken, userAdmin.getId())
@@ -429,8 +441,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "user-admin should be able to assign & remove role of weight 1000 to sub-user"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         def response = cloud20.addApplicationRoleToUser(userAdminToken, productRole.id, defaultUser.id)
         def response2 = cloud20.deleteApplicationRoleFromUser(userAdminToken, productRole.id, defaultUser.id)
+        deleteClientRole(productRole.id)
 
         then:
         response.status == 200
@@ -439,8 +453,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "user-admin should NOT be able to assign & remove role of weight 1000 to sub-user outside of his domain"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         def response = cloud20.addApplicationRoleToUser(userAdminToken, productRole.id, defaultUserOtherDomain.id)
         def response2 = cloud20.deleteApplicationRoleFromUser(userAdminToken, productRole.id, defaultUserOtherDomain.id)
+        deleteClientRole(productRole.id)
 
         then:
         response.status == 403
@@ -449,7 +465,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "User-Admin should not be able to assign himself role"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         def response = cloud20.addApplicationRoleToUser(userAdminToken, productRole.id, userAdmin.id)
+        deleteClientRole(productRole.id)
 
         then:
         response.status == 403
@@ -457,7 +475,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "User-Admin should not be able to remove role from himself"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         def response = cloud20.deleteApplicationRoleFromUser(userAdminToken, productRole.id, userAdmin.id)
+        deleteClientRole(productRole.id)
 
         then:
         response.status == 403
@@ -465,9 +485,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "user-manage should be able to assign & remove role of weight 1000 to sub-users"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
         def response = cloud20.addApplicationRoleToUser(defaultUserManageRoleToken, productRole.id, defaultUser.id)
         def response2 = cloud20.deleteApplicationRoleFromUser(defaultUserManageRoleToken, productRole.id, defaultUser.id)
+        deleteClientRole(productRole.id)
 
         then:
         response.status == 200
@@ -479,9 +501,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "user-manage should NOT be able to assign & remove role of weight 1000 to sub-users outside of his domain"() {
         when:
+        def productRole = createClientRole(sharedRandom, 1000)
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
         def response = cloud20.addApplicationRoleToUser(defaultUserManageRoleToken, productRole.id, defaultUserOtherDomain.id)
         def response2 = cloud20.deleteApplicationRoleFromUser(defaultUserManageRoleToken, productRole.id, defaultUserOtherDomain.id)
+        deleteClientRole(productRole.id)
+
 
         then:
         response.status == 403
@@ -1921,12 +1946,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteDomainResponse.status == 204
     }
 
-    def "we can create a role when specifying weight and propagate values"() {
+    def "we can create a role when specifying propagate values"() {
         when:
-        def role = v2Factory.createRole(propagate, weight).with {
+        def role = v2Factory.createRole(propagate).with {
             it.name = "role$sharedRandom"
             it.propagate = propagate
-            it.weight = weight
             it.otherAttributes = null
             return it
         }
@@ -1934,59 +1958,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         Role createdRole = response.getEntity(Role).value
         cloud20.deleteRole(serviceAdminToken, createdRole.getId())
 
-        def propagateValue = null
-        def weightValue = null
-
-        propagateValue = createdRole.propagate
-        weightValue = createdRole.weight
+        def propagateValue = createdRole.propagate
 
         then:
         propagateValue == expectedPropagate
-        weightValue == expectedWeight
 
         where:
-        weight  | propagate | expectedWeight | expectedPropagate
-        null    | null      | 1000           | false
-        100     | null      | 100            | false
-        null    | true      | 1000           | true
-        null    | false     | 1000           | false
-        2000    | true      | 2000           | true
-    }
-
-    def "when specifying an invalid weight we receive a bad request"() {
-        when:
-        def role = v2Factory.createRole(null, weight)
-        def response = cloud20.createRole(token, role)
-        if (response.status == 201) {
-            cloud20.deleteRole(serviceAdminToken, response.getEntity(Role).value.getId())
-        }
-
-        then:
-        response.status == 400
-
-        where:
-        token              | weight
-        identityAdminToken | 3
-        serviceAdminToken  | 50
-        serviceAdminToken  | 1234
-    }
-
-    def "we cannot specify a role weight which we cannot manage"() {
-        when:
-        def role = v2Factory.createRole(null, weight)
-        role.otherAttributes = null
-        role.weight = weight
-        def response = cloud20.createRole(token, role)
-        if (response.status == 201) {
-            cloud20.deleteRole(serviceAdminToken, response.getEntity(Role).value.getId())
-        }
-
-        then:
-        response.status == 403
-
-        where:
-        token              | weight
-        identityAdminToken | 0
+        propagate | expectedPropagate
+        true      | true
+        false     | false
+        null      | false
     }
 
     def "authenticate returns password authentication type in response"() {
@@ -2338,7 +2319,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUsername = "subListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.otherAttributes = v2Factory.createOtherMap(true, null)
+        role.otherAttributes = v2Factory.createOtherMap(true)
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
@@ -2406,7 +2387,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUser2name = "sub2ListUserByTenant$random"
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.otherAttributes = v2Factory.createOtherMap(true, null)
+        role.otherAttributes = v2Factory.createOtherMap(true)
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value

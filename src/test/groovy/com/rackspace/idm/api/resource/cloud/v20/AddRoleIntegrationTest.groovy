@@ -22,6 +22,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     public static final String ROLE_NAME_PREFIX = "role"
 
     public static final String DEFAULT_PASSWORD = "Password1"
+    public static final String APPLICATION_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
 
     /**
      * Random string generated for entire test class. Same for all feature methods.
@@ -175,16 +176,23 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
-        def role = v2Factory.createRole(propagate, weight).with {
+        def role = entityFactory.createClientRole().with {
+            it.id = getNormalizedRandomString()
             it.name = roleName
             it.propagate = propagate
-            it.weight = weight
-            it.otherAttributes = null
-            return it
+            it.rsWeight = weight
+            it.clientId = APPLICATION_ID
+            it
         }
-        def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)
-        def propagatingRole = responsePropagateRole.getEntity(Role).value
-        return propagatingRole
+
+        applicationService.addClientRole(role)
+
+        return v2Factory.createRole().with {
+            it.id = role.id
+            it.name = role.name
+            it.propagate = role.propagate
+            it
+        }
     }
 
     def void assertUserHasRole(user, role) {
