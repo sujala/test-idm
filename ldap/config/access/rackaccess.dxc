@@ -1,0 +1,37 @@
+# Access configuration file written by Chef
+
+clear access;
+
+set access-controls = true;
+set dynamic-access-control = false;
+
+# rts-admin user
+set super-user = {
+  user = <dc com><dc rackspace><ou internal><uid rts-admin>
+};
+
+# admin user
+set admin-user = {
+  user = <dc com><dc rackspace><ou internal><cn admin>
+  subtree = <dc com><dc rackspace>
+};
+
+# ops_monitor user
+set admin-user = {
+  user = <dc com><dc rackspace><ou internal><cn ops_monitor>
+  subtree = <dc com><dc rackspace>
+  perms = read
+};
+
+# devops user
+set admin-user = {
+    own-entry
+    entry = <dc com><dc rackspace><ou internal><cn devops_user>
+};
+
+# Set all external users to admin their own entry
+set reg-user = {
+  own-entry
+  subtree = <dc com><dc Rackspace><o rackspace>
+  perms = all
+};
