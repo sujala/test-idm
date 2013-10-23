@@ -327,7 +327,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
 
         when: "add propagating roles to identity admin"
         //add the tenant role to user-admin
-        assertAddTenantRoleToUserReturnsStatus(specificationIdentityAdminToken, tenant, identityAdmin, propagatingRole)
+        assertAddTenantRoleToUserReturnsStatus(specificationServiceAdminToken, tenant, identityAdmin, propagatingRole)
 
         then: "existing users do not get propagating role"
         assertUserHasRoleOnTenant(identityAdmin, tenant, propagatingRole)
@@ -354,7 +354,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         Tenant tenant = createTenant(specificationServiceAdminToken)
 
         //add the tenant role to user-admin
-        assertAddTenantRoleToUserReturnsStatus(specificationIdentityAdminToken, tenant, identityAdmin, propagatingRole)
+        assertAddTenantRoleToUserReturnsStatus(specificationServiceAdminToken, tenant, identityAdmin, propagatingRole)
 
         when: "create new user-admin and default user"
         def userAdmin = createUserAdmin(identityAdminToken)
