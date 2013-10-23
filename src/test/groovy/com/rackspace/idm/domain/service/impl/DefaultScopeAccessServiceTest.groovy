@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 /**
@@ -677,6 +678,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         result >= min
     }
 
+    @Unroll
     def "setImpersonatedScopeAccess adds entropy to token expiration"() {
         given:
         config.getInt("token.impersonatedByRackerMaxSeconds") >> exSeconds * 2

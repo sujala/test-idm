@@ -6,6 +6,7 @@ import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -71,6 +72,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
+    @Unroll
     def "roles are returned if their rsWeight is greater than or equal to maxWeightAvailable"() {
         given:
         def clientId = "clientId$sharedRandom"
