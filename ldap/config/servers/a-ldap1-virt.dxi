@@ -2,25 +2,24 @@
 # Initialization file written by DXnewdsa
 #
 # logging and tracing
-source "../logging/RackLogging.dxc";
+source "../logging/racklogging.dxc";
 
 # schema
-clear schema;
-source "../schema/Rackspace.dxg";
+source "../schema/rackschema.dxg";
 
 # knowledge
 clear dsas;
-source "../knowledge/RackKnowledge.dxg";
+source "../knowledge/a-ldap1-virt.dxc";
 
 # operational settings
-source "../settings/RackSettings.dxc";
+source "../settings/racksettings.dxc";
 
 # service limits
-source "../limits/RackLimits.dxc";
+source "../limits/racklimits.dxc";
 
 # access controls
 clear access;
-source "../access/RackAccess.dxc";
+source "../access/default.dxc";
 
 # ssl
 source "../ssld/default.dxc";
@@ -29,11 +28,10 @@ source "../ssld/default.dxc";
 # source "../replication/";
 
 # multiwrite DISP recovery
-#set multi-write-disp-recovery = false;
-set multi-write-disp-recovery = true;
+set multi-write-disp-recovery = false;
 
 # grid configuration
 set dxgrid-db-location = "data";
-set dxgrid-db-size = 500;
+set dxgrid-db-size = 100;
 set cache-index = all-attributes;
 set lookup-cache = true;
