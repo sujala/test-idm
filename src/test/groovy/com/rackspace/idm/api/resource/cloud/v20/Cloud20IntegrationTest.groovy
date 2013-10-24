@@ -387,9 +387,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Delete users
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
         def deleteResponses2 = cloud20.deleteUser(serviceAdminToken, userEntity2.getId())
-        //Hard delete users
-        def hardDeleteResponses = cloud20.hardDeleteUser(serviceAdminToken, userEntity.getId())
-        def hardDeleteResponses2 = cloud20.hardDeleteUser(serviceAdminToken, userEntity2.getId())
 
         then:
         response.status == 201
@@ -397,7 +394,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         userEntity.defaultRegion == userAdmin.defaultRegion
         userEntity2.defaultRegion == userAdmin.defaultRegion
         deleteResponses.status == 204
-        hardDeleteResponses.status == 204
     }
 
     def 'update user returns all user info including domain and region'() {
@@ -2204,7 +2200,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         impersonatedToken.token != null
         def expireTime = impersonatedToken.token.expires.toGregorianCalendar().getTime()
         def diff = Math.abs(Seconds.secondsBetween(new DateTime(date.toDate()), new DateTime(expireTime)).seconds)
-        diff < 108 //1 % of 3 hours
+        diff <= 108 //1 % of 3 hours
 
     }
 
