@@ -523,6 +523,37 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
     }
 
+    def "revoke token should disable a users token"() {
+        given:
+        def username = "user" + sharedRandom
+        def apiKey = "1234567890"
+        User user = v1Factory.createUser(username, apiKey, randomMosso, null, true)
+
+        when:
+        def userCreateResponse = cloud11.createUser(user)
+        assert (userCreateResponse.status == 201)
+
+        def authResponse = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, apiKey))
+        assert (authResponse.status == 200)
+
+        def token = authResponse.getEntity(AuthData).token.id
+        def validateResponse = cloud11.validateToken(token)
+        assert (validateResponse.status == 200)
+
+        def revokeResponse = cloud11.revokeToken(token)
+        assert (revokeResponse.status == 204)
+
+        def getTokenResponse = cloud11.getToken(token)
+        def failedValidateResponse = cloud11.validateToken(token)
+
+        then:
+        getTokenResponse.status == 404
+        failedValidateResponse.status == 404
+
+        cleanup:
+        cloud11.deleteUser(username)
+    }
+
     def authAndExpire(username, key) {
         def token = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).token
         cloud11.revokeToken(token.id)
