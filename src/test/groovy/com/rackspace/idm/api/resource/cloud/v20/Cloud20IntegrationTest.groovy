@@ -638,6 +638,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //Delete apiKey
         def deleteApiKeyResponse = cloud20.deleteUserApiKey(serviceAdminToken, userEntity.getId())
 
+        //Get apiKey Again should be Not Found
+        def getApiKeyResponse404 = cloud20.getUserApiKey(defaultUserManageRoleToken, userEntity.getId())
+
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
 
@@ -650,6 +653,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         createApiKey.status == 200
         getApiKeyResponse.status == 200
         deleteApiKeyResponse.status == 204
+        getApiKeyResponse404.status == 404
         deleteResponses.status == 204
     }
 
