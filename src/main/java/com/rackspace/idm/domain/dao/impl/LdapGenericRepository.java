@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -261,7 +262,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     private String[] getLDAPFieldAttributes(T object, boolean deleteNullAttributes) {
         List<String> attributes = new ArrayList<String>();
-        for (Field field : object.getClass().getDeclaredFields()) {
+        for (Field field : getDeclaredFields(object.getClass())) {
             boolean hasDeleteNullValueAnnotation = false;
             String attribute = null;
             for (Annotation annotation : field.getAnnotations()) {
@@ -284,6 +285,17 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             }
         }
         return attributes.toArray(new String[attributes.size()]);
+    }
+
+    private List<Field> getDeclaredFields(Class<?> type) {
+        List<Field> result = new ArrayList<Field>();
+        Collections.addAll(result, type.getDeclaredFields());
+
+        if (type.getSuperclass() != null) {
+            result.addAll(getDeclaredFields(type.getSuperclass()));
+        }
+
+        return result;
     }
 
     @Override
