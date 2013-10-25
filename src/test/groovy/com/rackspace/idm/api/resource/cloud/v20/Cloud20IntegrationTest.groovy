@@ -2673,6 +2673,24 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, createSubUser.id)
     }
 
+    def "racker revoke token should disable rackers token"() {
+        when:
+        def rackerAuth = cloud20.authenticateRacker(racker, rackerPassword)
+        assert (rackerAuth.status == 200)
+
+        def token = rackerAuth.getEntity(AuthenticateResponse).value.token.id
+        def validateResponse = cloud20.validateToken(serviceAdminToken, token)
+        assert (validateResponse.status == 200)
+
+        def revokeResponse = cloud20.revokeUserToken(serviceAdminToken, token)
+        assert (revokeResponse.status == 204)
+
+        def failedValidateResponse = cloud20.validateToken(serviceAdminToken, token)
+
+        then:
+        failedValidateResponse.status == 404
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

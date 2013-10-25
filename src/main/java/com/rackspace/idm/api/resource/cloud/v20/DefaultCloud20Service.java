@@ -3115,7 +3115,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
         scopeAccessService.expireAccessToken(authToken);
-        User user = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
         return Response.status(204);
     }
 

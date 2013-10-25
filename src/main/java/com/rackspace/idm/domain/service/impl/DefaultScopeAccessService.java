@@ -271,7 +271,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccess.setAccessTokenExpired();
         this.scopeAccessDao.updateScopeAccess(scopeAccess);
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        if(user != null && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
+        if(user != null && user instanceof User && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
             logger.warn("Sending token feed to atom hopper.");
             atomHopperClient.asyncTokenPost((User) user, tokenString);
         }
