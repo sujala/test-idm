@@ -10,6 +10,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
@@ -84,11 +85,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     static def USER_MANAGE_ROLE_ID = "7"
     static def CUSTOMER_ADMIN_ROLE_ID = "11"
+    static def DEFAULT_PASSWORD = "Password1"
+    static def DEFAULT_APIKEY = "0123456789"
+
     @Shared REFRESH_WINDOW_HOURS
     @Shared CLOUD_CLIENT_ID
     @Shared BASE_DN = "o=rackspace,dc=rackspace,dc=com"
     @Shared SCOPE = SearchScope.SUB
-    
+
     @Shared def USER_FOR_AUTH
     @Shared def USER_FOR_AUTH_PWD
 
@@ -2689,6 +2693,43 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         failedValidateResponse.status == 404
+    }
+
+    def "auth with apikey returns apikey as the type of authentication"() {
+        given:
+        def username = "username" + getRandomUUID()
+
+        when:
+        def createUser = cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(username, "display", "$username@email.com", true, null, null, DEFAULT_PASSWORD))
+        assert (createUser.status == 201)
+
+        def getUserResponse = cloud20.getUserByName(identityAdminToken, username)
+        assert (getUserResponse.status == 200)
+        def userEntity = getUserResponse.getEntity(User)
+
+        def createApiKey = cloud20.addApiKeyToUser(serviceAdminToken, userEntity.getId(), v2Factory.createApiKeyCredentials(username, DEFAULT_APIKEY))
+        assert (createApiKey.status == 200)
+
+        def authApikeyResponse = cloud20.authenticateApiKey(username, DEFAULT_APIKEY)
+        assert (authApikeyResponse.status == 200)
+        AuthenticateResponse apiKeyResponse = authApikeyResponse.getEntity(AuthenticateResponse).value
+        def validateApikeyResponse = cloud20.validateToken(serviceAdminToken, apiKeyResponse.token.id)
+
+        def authPasswordResponse = cloud20.authenticatePassword(username, DEFAULT_PASSWORD)
+        assert (authPasswordResponse.status == 200)
+        AuthenticateResponse passwordResponse = authPasswordResponse.getEntity(AuthenticateResponse).value
+        def validatePasswordResponse = cloud20.validateToken(serviceAdminToken, passwordResponse.token.id)
+
+        then: "validate token created with apikey states authenticated by apikey"
+        validateApikeyResponse.status == 200
+        validateApikeyResponse.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_APIKEY)
+
+        then: "validate password token states authenticated by apikey since it was created by an apikey"
+        validatePasswordResponse.status == 200
+        validatePasswordResponse.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_APIKEY)
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
     }
 
     def authAndExpire(String username, String password) {
