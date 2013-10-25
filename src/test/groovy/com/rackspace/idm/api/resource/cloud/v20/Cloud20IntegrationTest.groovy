@@ -2487,6 +2487,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def "racker token returns 403 when making admin calls" () {
+        given:
+        rackerToken = cloud20.authenticateRacker(racker, rackerPassword).getEntity(AuthenticateResponse).value.token.id
+
         expect:
         response.status == 403
 
@@ -2502,6 +2505,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def "validate racker token" (){
+        given:
+        rackerToken = cloud20.authenticateRacker(racker, rackerPassword).getEntity(AuthenticateResponse).value.token.id
+
         when:
         def response = cloud20.validateToken(identityAdminToken, rackerToken).getEntity(AuthenticateResponse).value
 
@@ -2648,7 +2654,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def email = "testEmail@rackspace.com"
 
         when:
-        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", "listUserOnTenantDomain$random", password)).getEntity(User)
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", username.concat("Domain"), password)).getEntity(User)
         String userAdminToken = cloud20.authenticate(username, password).getEntity(AuthenticateResponse).value.token.id
         def createSubUser = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(subUsername, subUsername, email, true, "DFW", null, password)).getEntity(User)
         String defaultUserToken = cloud20.authenticate(subUsername, password).getEntity(AuthenticateResponse).value.token.id
@@ -2671,6 +2677,71 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.destroyUser(serviceAdminToken, createSubUser.id)
+        cloud20.deleteDomain(serviceAdminToken, createUser.domainId)
+    }
+
+    def "Update a users domainId to null or a blank value should not update the domain" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "updateDomainSpacesUser$random"
+        def email = "test@rackspace.com"
+        def domainId = username.concat("Domain")
+
+        def updateUser = new User().with {
+            it.username = username
+            it.domainId = domainValue
+            it.enabled = true
+            it
+        }
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", domainId, password)).getEntity(User)
+        def updateUserResponse = cloud20.updateUser(identityAdminToken, createUser.id, updateUser)
+        def updateUserObject = updateUserResponse.getEntity(User)
+
+        then:
+        createUser != null
+        updateUserResponse.status == status
+        updateUserObject.domainId == domainId
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteDomain(serviceAdminToken, domainId)
+
+        where:
+        domainValue| status
+        "    "     | 200
+        ""         | 200
+        null       | 200
+    }
+
+    def "Update a users domainId to an invalid domain returns 400" () {
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "updateDomainSpacesUser$random"
+        def email = "test@rackspace.com"
+        def domainId = username.concat("Domain")
+
+        def updateUser = new User().with {
+            it.username = username
+            it.domainId = "badDomain"
+            it.enabled = true
+            it
+        }
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", domainId, password)).getEntity(User)
+        def updateUserResponse = cloud20.updateUser(identityAdminToken, createUser.id, updateUser)
+
+        then:
+        createUser != null
+        updateUserResponse.status == 400
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteDomain(serviceAdminToken, domainId)
     }
 
     def "racker revoke token should disable rackers token"() {

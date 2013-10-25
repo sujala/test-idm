@@ -605,6 +605,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            String domainId = user.getDomainId();
+            if(StringUtils.isNotBlank(domainId)){
+                Domain domain = domainService.getDomain(domainId);
+                if(domain == null){
+                    String errMsg = String.format("Domain %s does not exist.", domainId);
+                    throw new BadRequestException(errMsg);
+                }
+            }
+
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
 
