@@ -682,6 +682,7 @@ public class DefaultCloud20ServiceOldTest {
         impersonatedScopeAccess.setAccessTokenString("impToken");
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
+        when(userService.getUserByScopeAccess(any(ScopeAccess.class))).thenReturn(new Racker());
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
