@@ -673,6 +673,48 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteResponses.status == 204
     }
 
+    def "delete user api key"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def userName = "somename$random"
+
+        when:
+        //Create user
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        def user = v2Factory.createUserForCreate(userName, "displayName", "test@rackspace.com", true, "ORD", null, "Password1")
+        def response = cloud20.createUser(defaultUserManageRoleToken, user)
+
+        //Get user
+        def getUserResponse = cloud20.getUserByName(defaultUserManageRoleToken, userName)
+        def userEntity = getUserResponse.getEntity(User)
+
+        //Get apiKey
+        def createApiKey = cloud20.addApiKeyToUser(serviceAdminToken, userEntity.getId(), v2Factory.createApiKeyCredentials(userName, "bananas"))
+        def getApiKeyResponse = cloud20.getUserApiKey(defaultUserManageRoleToken, userEntity.getId())
+
+        //Delete apiKey
+        def deleteApiKeyResponse = cloud20.deleteUserApiKey(serviceAdminToken, userEntity.getId())
+
+        //Get apiKey Again should be Not Found
+        def getApiKeyResponse404 = cloud20.getUserApiKey(defaultUserManageRoleToken, userEntity.getId())
+
+        //Delete user
+        def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
+
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+
+        then:
+        response.status == 201
+        response.location != null
+        getUserResponse.status == 200
+        createApiKey.status == 200
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+        getApiKeyResponse404.status == 404
+        deleteResponses.status == 204
+    }
+
     def "user manage get user's api key" () {
         given:
         def random = ("$randomness").replace('-', "")

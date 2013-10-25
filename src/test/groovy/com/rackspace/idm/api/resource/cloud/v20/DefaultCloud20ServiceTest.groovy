@@ -2962,6 +2962,101 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         null    | "service" | BadRequestException
     }
 
+    @Unroll
+    def "delete api key credential"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def userInDomain = entityFactory.createUser("caller", "userId2", "domainId", "region")
+        userInDomain.apiKey = "key"
+        def userOutOfDomain = entityFactory.createUser("caller", "userId2", "domainId2", "region")
+        userOutOfDomain.apiKey = "key"
+
+        when:
+        def inDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+        def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+
+        then:
+        2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
+        2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
+        4 * authorizationService.hasServiceAdminRole(_) >>> [ callerSA, userSA, callerSA, userSA ]
+        4 * authorizationService.hasIdentityAdminRole(_) >>> [ callerIA, userIA, callerIA, userIA ]
+        4 * authorizationService.hasUserAdminRole(_) >>> [ callerUA, userUA, callerUA, userUA ]
+        4 * authorizationService.hasUserManageRole(_) >>> [ callerUM, userUM, callerUM, userUM ]
+        if (precedenceForbidden) {
+            2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        }
+
+
+        inDomainResult.status == inDomain
+        outDomainResult.status == outDomain
+
+        where:
+        callerSA | callerIA | callerUA | callerUM | userSA | userIA | userUA | userUM | inDomain | outDomain | precedenceForbidden
+        // identity:service-admin calls
+        true     | false    | false    | false    | true   | false  | false  | false  | 403      | 403       | false
+        true     | false    | false    | false    | false  | true   | false  | false  | 204      | 204       | false
+        true     | false    | false    | false    | false  | false  | true   | false  | 204      | 204       | false
+        true     | false    | false    | false    | false  | false  | false  | true   | 204      | 204       | false
+        true     | false    | false    | false    | false  | false  | false  | false  | 204      | 204       | false
+        // identity:admin calls
+        false    | true     | false    | false    | true   | false  | false  | false  | 403      | 403       | true
+        false    | true     | false    | false    | false  | true   | false  | false  | 403      | 403       | false
+        false    | true     | false    | false    | false  | false  | true   | false  | 204      | 204       | false
+        false    | true     | false    | false    | false  | false  | false  | true   | 204      | 204       | false
+        false    | true     | false    | false    | false  | false  | false  | false  | 204      | 204       | false
+        // identity:user-admin calls
+        false    | false    | true     | false    | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | true     | false    | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | true     | false    | false  | false  | true   | false  | 403      | 403       | false
+        false    | false    | true     | false    | false  | false  | false  | true   | 204      | 403       | false
+        false    | false    | true     | false    | false  | false  | false  | false  | 204      | 403       | false
+        // identity:user-manage calls
+        false    | false    | false    | true     | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | false    | true     | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | false    | true     | false  | false  | true   | false  | 403      | 403       | true
+        false    | false    | false    | true     | false  | false  | false  | true   | 403      | 403       | false
+        false    | false    | false    | true     | false  | false  | false  | false  | 204      | 403       | false
+        // identity:default calls
+        false    | false    | false    | false    | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | false    | false    | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | false    | false    | false  | false  | true   | false  | 403      | 403       | true
+        false    | false    | false    | false    | false  | false  | false  | true   | 403      | 403       | true
+        false    | false    | false    | false    | false  | false  | false  | false  | 403      | 403       | false
+    }
+
+    @Unroll
+    def "self delete api key credentials"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        caller.apiKey = "key"
+
+        when:
+        def result = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+
+        then:
+        1 * userService.checkAndGetUserById(_) >> caller
+        1 * userService.getUserByAuthToken(_) >> caller
+        2 * authorizationService.hasServiceAdminRole(_) >> callerSA
+        2 * authorizationService.hasIdentityAdminRole(_) >> callerIA
+        2 * authorizationService.hasUserAdminRole(_) >> callerUA
+        2 * authorizationService.hasUserManageRole(_) >>> callerUM
+
+        result.status == expectedResult
+
+        where:
+        where:
+        callerSA | callerIA | callerUA | callerUM | expectedResult
+        true     | false    | false    | false    | 204
+        false    | true     | false    | false    | 204
+        false    | false    | true     | false    | 403
+        false    | false    | false    | true     | 204
+        false    | false    | false    | false    | 204
+    }
+
     def "validate role for create - if service id is null set it"(){
         given:
         def role = v2Factory.createRole("name", null, null)

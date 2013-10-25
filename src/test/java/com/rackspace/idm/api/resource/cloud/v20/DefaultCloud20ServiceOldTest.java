@@ -1854,14 +1854,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.deleteUserCredential(null, authToken, null, null);
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
-    }
-
-    @Test
     public void deleteUserCredential_passwordCredentials_returns501() throws Exception {
         String credentialType = "passwordCredentials";
         Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, null, credentialType);
@@ -1884,27 +1876,6 @@ public class DefaultCloud20ServiceOldTest {
         String credentialType = "RAX-KSKEY:apiKeyCredentials";
         spy.deleteUserCredential(null, authToken, "userId", credentialType);
         verify(userService).checkAndGetUserById("userId");
-    }
-
-    @Test
-    public void deleteUserCredential_APIKeyCredential_callsUserServiceUpdateUser() throws Exception {
-        String credentialType = "RAX-KSKEY:apiKeyCredentials";
-        User user = new User();
-        user.setApiKey("123");
-        when(userService.checkAndGetUserById("userId")).thenReturn(user);
-        spy.deleteUserCredential(null, authToken, "userId", credentialType);
-        verify(userService).updateUser(any(User.class), eq(false));
-    }
-
-    @Test
-    public void deleteUserCredential_APIKeyCredentialResponseNoContent_returns204() throws Exception {
-        String credentialType = "RAX-KSKEY:apiKeyCredentials";
-        User user = new User();
-        user.setApiKey("123");
-        when(userService.checkAndGetUserById("userId")).thenReturn(user);
-        doNothing().when(userService).updateUser(any(User.class), eq(false));
-        Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, "userId", credentialType);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
