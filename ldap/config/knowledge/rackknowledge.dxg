@@ -1,0 +1,8 @@
+# data dsas
+source "a-ldap1-virt.dxc";
+
+# router dsas
+source "router-a-ldap1-virt.dxc";
+
+set precedence = a-ldap1-virt;
+set write-precedence = a-ldap1-virt;

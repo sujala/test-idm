@@ -1,8 +1,4 @@
-# Computer Associates DXserver/config/logging
-# $RCSfile: default.dxc,v $ $Revision: 4.11 $
-# This is a read-only default configuration file. If you need to make changes, 
-# copy this file and reference the new file from servers/<dsa>.dxi
-#
+# Logging configuration file written by Chef
 
 # DSA trace log - Used for debugging
 set trace-log = "logs/$s_trace.log";
@@ -13,3 +9,12 @@ set warn-log = "logs/$s_warn.log";
 set stats-log = "logs/$s_stats.log";
 set diag-log = "logs/$s_diag.log";
 set summary-log = "logs/$s_summary.log";
+set time-log = "logs/$s_time.log";
+
+# log thresholds
+set time-log-update-threshold = 100;
+set time-log-search-threshold = 100;
+
+# Rollover the alarm and trace logs at 1 past midnight
+set rollover-trace-log = true;
+set rollover-alarm-log = true;
