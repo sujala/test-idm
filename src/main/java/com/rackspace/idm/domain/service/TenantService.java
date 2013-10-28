@@ -27,6 +27,9 @@ public interface TenantService {
     void updateTenant(Tenant tenant);
 
     List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
+
+    void deleteProductRolesForUser(User user);
+    
     TenantRole getTenantRoleForUserById(User user, String roleId);
 
     boolean doesUserContainTenantRole(BaseUser user, String roleId);

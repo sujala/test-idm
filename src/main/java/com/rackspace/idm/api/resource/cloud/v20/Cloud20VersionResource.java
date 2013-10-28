@@ -335,6 +335,16 @@ public class Cloud20VersionResource {
         }
     }
 
+    @DELETE
+    @Path("users/{userId}/roles")
+    public Response deleteUserRoles(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @QueryParam("type") String roleType) {
+        return cloud20Service.deleteUserRoles(httpHeaders, authToken, userId, roleType).build();
+    }
+
     @GET
     @Path("users/{userId}/RAX-AUTH/domains")
     public Response getAccessibleDomainsForUser(

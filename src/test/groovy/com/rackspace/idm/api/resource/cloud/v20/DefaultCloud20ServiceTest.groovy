@@ -2945,6 +2945,74 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     @Unroll
+    def "delete user product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def userInDomain = entityFactory.createUser("caller", "userId2", "domainId", "region")
+        def userOutOfDomain = entityFactory.createUser("caller", "userId2", "domainId2", "region")
+
+        when:
+        def inDomainResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def outDomainResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        if (callerDefault) {
+            2 * authorizationService.verifyUserManagedLevelAccess(_) >> {throw new ForbiddenException()}
+        } else {
+            2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
+            2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
+
+            if (precedenceForbidden) {
+                2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+            } else {
+                2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> null
+                2 * authorizationService.authorizeCloudUserAdmin(_) >> callerUA
+                if (!callerUA) {
+                    2 * authorizationService.authorizeUserManageRole(_) >> callerUM
+                }
+            }
+        }
+
+        inDomainResult.status == inDomain
+        outDomainResult.status == outDomain
+
+        where:
+        callerSA | callerIA | callerUA | callerUM | callerDefault | userSA | userIA | userUA | userUM | inDomain | outDomain | precedenceForbidden
+        // identity:service-admin calls
+        true     | false    | false    | false    | false         | true   | false  | false  | false  | 403      | 403       | true
+        true     | false    | false    | false    | false         | false  | true   | false  | false  | 204      | 204       | false
+        true     | false    | false    | false    | false         | false  | false  | true   | false  | 204      | 204       | false
+        true     | false    | false    | false    | false         | false  | false  | false  | true   | 204      | 204       | false
+        true     | false    | false    | false    | false         | false  | false  | false  | false  | 204      | 204       | false
+        // identity:admin calls
+        false    | true     | false    | false    | false         | true   | false  | false  | false  | 403      | 403       | true
+        false    | true     | false    | false    | false         | false  | true   | false  | false  | 403      | 403       | true
+        false    | true     | false    | false    | false         | false  | false  | true   | false  | 204      | 204       | false
+        false    | true     | false    | false    | false         | false  | false  | false  | true   | 204      | 204       | false
+        false    | true     | false    | false    | false         | false  | false  | false  | false  | 204      | 204       | false
+        // identity:user-admin calls
+        false    | false    | true     | false    | false         | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | true     | false    | false         | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | true     | false    | false         | false  | false  | true   | false  | 403      | 403       | true
+        false    | false    | true     | false    | false         | false  | false  | false  | true   | 204      | 403       | false
+        false    | false    | true     | false    | false         | false  | false  | false  | false  | 204      | 403       | false
+        // identity:user-manage calls
+        false    | false    | false    | true     | false         | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | false    | true     | false         | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | false    | true     | false         | false  | false  | true   | false  | 403      | 403       | true
+        false    | false    | false    | true     | false         | false  | false  | false  | true   | 403      | 403       | true
+        false    | false    | false    | true     | false         | false  | false  | false  | false  | 204      | 403       | false
+        // identity:default calls
+        false    | false    | false    | false    | true          | true   | false  | false  | false  | 403      | 403       | true
+        false    | false    | false    | false    | true          | false  | true   | false  | false  | 403      | 403       | true
+        false    | false    | false    | false    | true          | false  | false  | true   | false  | 403      | 403       | true
+        false    | false    | false    | false    | true          | false  | false  | false  | true   | 403      | 403       | true
+        false    | false    | false    | false    | true          | false  | false  | false  | false  | 403      | 403       | true
+    }
+
+    @Unroll
     def "delete api key credential"() {
         given:
         allowUserAccess()

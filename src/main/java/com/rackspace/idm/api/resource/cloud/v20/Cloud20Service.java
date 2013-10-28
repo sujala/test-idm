@@ -47,6 +47,8 @@ public interface Cloud20Service {
 
     ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) ;
 
+    ResponseBuilder deleteUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String roleType);
+
     ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) ;
 
     ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) ;

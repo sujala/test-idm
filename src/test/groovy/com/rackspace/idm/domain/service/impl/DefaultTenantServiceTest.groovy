@@ -32,6 +32,25 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
     }
 
+    def "delete product roles for user deletes all 1000 weight roles"() {
+        given:
+        def role = entityFactory.createTenantRole()
+        role.roleRsId = "id"
+        def clientRole = entityFactory.createClientRole(1000)
+        def user = entityFactory.createUser()
+
+        tenantRoleDao.getTenantRolesForUser(user) >> [ role ].asList()
+        applicationService.getClientRoleById(_) >> clientRole
+        config.getInt(_) >> 1000
+
+        when:
+        service.deleteProductRolesForUser(user)
+
+        then:
+        applicationService.getClientRoleById(_) >> clientRole
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+    }
+
     def "add TenantRole To Client throws NotFoundException if clientRole is Null"() {
         given:
         def tenantRole = entityFactory.createTenantRole("role")

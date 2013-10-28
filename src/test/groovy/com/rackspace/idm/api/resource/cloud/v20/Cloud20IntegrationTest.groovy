@@ -56,6 +56,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def defaultUserForAdminTwo
     @Shared def defaultUserWithManageRole
     @Shared def defaultUserWithManageRole2
+    @Shared def defaultUserForProductRole
     @Shared def testUser
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -161,6 +162,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUserWithManageRole$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserWithManageRole = cloud20.getUserByName(userAdminToken, "defaultUserWithManageRole$sharedRandom").getEntity(User)
         defaultUserManageRoleToken = cloud20.authenticate("defaultUserWithManageRole$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        cloud20.createUser(userAdminToken, v2Factory.createUserForCreate("defaultUserForProductRole$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserForProductRole = cloud20.getUserByName(userAdminToken, "defaultUserForProductRole$sharedRandom").getEntity(User)
 
         cloud20.createUser(userAdminTwoToken, v2Factory.createUserForCreate("otherDomainUser$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
         defaultUserOtherDomain = cloud20.getUserByName(userAdminTwoToken, "otherDomainUser$sharedRandom").getEntity(User)
@@ -1446,7 +1450,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def users = cloud20.listUsers(userAdminToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 6
+        users.size() == 7
     }
 
     def "listUsers caller is user-manage returns users from domain"() {
@@ -2106,6 +2110,27 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         authResp.getEntity(AuthenticateResponse).getToken().getAny().contains("rax-auth:authenticatedBy")
+    }
+
+    def "remove product roles removes all 1000 weight roles"() {
+        when:
+        def addRoleResponse = cloud20.addApplicationRoleToUser(userAdminToken, productRole.id, defaultUserForProductRole.id)
+        def listRolesResponse = cloud20.listUserGlobalRoles(serviceAdminToken, defaultUserForProductRole.id)
+        def roleList = listRolesResponse.getEntity(RoleList).value
+        def removeRolesResponse = cloud20.deleteUserProductRoles(serviceAdminToken, defaultUserForProductRole.id, "rbac")
+        def relistRolesResponse = cloud20.listUserGlobalRoles(serviceAdminToken, defaultUserForProductRole.id)
+        def roleList2 = relistRolesResponse.getEntity(RoleList).value
+
+        then:
+        addRoleResponse.status == 200
+        listRolesResponse.status == 200
+        roleList.role.size() == 2
+        roleList.role.get(0).id == productRole.id
+        roleList.role.get(1).id == defaultUserRoleId
+        removeRolesResponse.status == 204
+        relistRolesResponse.status == 200
+        roleList2.role.size() == 1
+        roleList2.role.get(0).id == defaultUserRoleId
     }
 
     def "validate returns password authentication type in response"() {

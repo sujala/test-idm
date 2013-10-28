@@ -253,6 +253,27 @@ public class DefaultTenantService implements TenantService {
         logger.info("Deleted Global Role {}", role);
     }
 
+    private int getDefaultRsWeight() {
+        return config.getInt("default.rsWeight");
+    }
+
+    @Override
+    public void deleteProductRolesForUser(User user) {
+        logger.info("Deleting Product Roles for {}", user);
+        Iterable<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user);
+
+        for (TenantRole role : tenantRoles) {
+            if (role != null) {
+                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                if (cRole != null && cRole.getRsWeight() == getDefaultRsWeight()) {
+                    deleteTenantRoleForUser(user, role);
+                }
+            }
+        }
+
+        logger.info("Deleted Product Roles for {}", user);
+    }
+
     @Override
     public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
         if (scopeAccess == null) {

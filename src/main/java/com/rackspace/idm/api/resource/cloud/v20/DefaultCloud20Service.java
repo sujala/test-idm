@@ -1947,6 +1947,38 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder deleteUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String roleType) {
+        try {
+
+            // Currently only roleType=rbac is supported
+            if (!roleType.equals("rbac")) {
+                throw new BadRequestException(String.format("type '%s' not supported", roleType));
+            }
+
+            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserManagedLevelAccess(callersScopeAccess);
+
+            User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
+            if (authorizationService.authorizeCloudUserAdmin(callersScopeAccess) ||
+                    authorizationService.authorizeUserManageRole(callersScopeAccess)) {
+                if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
+            tenantService.deleteProductRolesForUser(user);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
                                                           String serviceId) {
         try {
