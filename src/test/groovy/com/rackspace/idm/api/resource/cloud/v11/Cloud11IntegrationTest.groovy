@@ -579,8 +579,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         null   | 201
         ""     | 201
         "  "   | 201
-
-
     }
 
     def "update user's nastId - blanks" () {
