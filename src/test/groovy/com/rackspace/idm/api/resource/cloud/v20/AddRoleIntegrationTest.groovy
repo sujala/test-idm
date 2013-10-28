@@ -151,6 +151,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         then:
         assert forbiddenStatus == HttpStatus.FORBIDDEN.value()
+        assertUserDoesNotHaveRole(defaultUser, userManageRole)
 
         cleanup:
         deleteUserQuietly(userAdmin)
