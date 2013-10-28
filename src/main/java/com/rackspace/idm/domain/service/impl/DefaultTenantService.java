@@ -392,12 +392,12 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUser(User user) {
+    public List<TenantRole> getGlobalRolesForUser(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException(
                     "User cannot be null.");
         }
-        logger.debug("Getting Global Roles for user {}", user.getUsername());
+        logger.debug("Getting Global Roles for user {}", user.getUniqueId());
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
         return getGlobalRoles(roles);
     }

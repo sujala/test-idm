@@ -29,7 +29,7 @@ public interface TenantService {
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
-    List<TenantRole> getGlobalRolesForUser(User user);
+    List<TenantRole> getGlobalRolesForUser(BaseUser user);
     List<TenantRole> getGlobalRolesForApplication(Application application);
     List<TenantRole> getGlobalRolesForApplication(Application user, String applicationId);
     List<TenantRole> getGlobalRolesForUser(User user, String applicationId);

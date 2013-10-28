@@ -2477,6 +2477,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
         def impersonationResponse = cloud20.impersonate(token, userForImpersonation)
         ImpersonationResponse ir = impersonationResponse.getEntity(ImpersonationResponse)
+        def impersonatedToken = ir.token.id
+
+        def validateResponse = cloud20.validateToken(identityAdminToken, impersonatedToken)
 
         then:
         rackerAuth.status == 200
@@ -2485,6 +2488,41 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ir != null
         ir.token != null
         ir.token.id != null
+
+        validateResponse.status == 200
+        def validateEntity = validateResponse.getEntity(AuthenticateResponse).value
+        validateEntity.any.attributes.nodes[0].value.contains(racker)
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+    }
+
+    def "Impersonate user with identity admin token"(){
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userForImpersonation$random"
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "domain$username", password)).getEntity(User)
+        def userForImpersonation = new User().with {
+            it.username = createUser.username
+            it
+        }
+        def impersonationResponse = cloud20.impersonate(identityAdminToken, userForImpersonation)
+        ImpersonationResponse impersonationEntity = impersonationResponse.getEntity(ImpersonationResponse)
+        def impersonatedToken = impersonationEntity.token.id
+
+        def validateResponse = cloud20.validateToken(identityAdminToken, impersonatedToken)
+
+        then:
+        impersonationResponse.status == 200
+        impersonationEntity != null
+        impersonationEntity.token != null
+        impersonationEntity.token.id != null
+
+        def validateEntity = validateResponse.getEntity(AuthenticateResponse).value
+        validateEntity.any.attributes.nodes[0].value.contains("auth")
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)

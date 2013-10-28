@@ -3088,7 +3088,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
-                User impersonator;
+                BaseUser impersonator;
                 User user;
                 List<TenantRole> roles;
                 if (sa instanceof UserScopeAccess) {
@@ -3100,14 +3100,21 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                    impersonator = (User) userService.getUserByScopeAccess(isa);
+                    impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
                     roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
-                    UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
+                    UserForAuthenticateResponse userForAuthenticateResponse = null;
+                    if (impersonator instanceof User) {
+                        userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse((User)impersonator, impRoles);
+                    } else if (impersonator instanceof Racker) {
+                        userForAuthenticateResponse = userConverterCloudV20.toRackerForAuthenticateResponse((Racker)impersonator, impRoles);
+                    } else {
+                        throw new IllegalStateException("Unrecognized type of user '" + user.getClass().getName() + "'");
+                    }
                     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
                     JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
                     access.getAny().add(impersonatorJAXBElement);
