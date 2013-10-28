@@ -14,6 +14,7 @@ import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -276,11 +277,15 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             }
             if (deleteNullAttributes) {
                 if (hasDeleteNullValueAnnotation) {
-                    attributes.add(attribute);
+                    if(shouldAddAttribute(object, field)){
+                        attributes.add(attribute);
+                    }
                 }
             } else {
                 if (!hasDeleteNullValueAnnotation) {
-                    attributes.add(attribute);
+                    if (shouldAddAttribute(object, field)){
+                        attributes.add(attribute);
+                    }
                 }
             }
         }
@@ -296,6 +301,26 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         }
 
         return result;
+    }
+
+    /**
+     * Fields coming into this method come from the object using reflection.
+     * So, the getProperty should always find the attribute. Blank strings are
+     * a constrain violation in the directory for an update hence why the fields
+     * need to be ignored. If it fails to get the property the method returns true
+     * keeping old functionality which makes it save to ignore any exceptions.
+     */
+    private boolean shouldAddAttribute(T object, Field field) {
+        try {
+            if (field.getType() != String.class) {
+                return true;
+            } else {
+                String value = BeanUtils.getProperty(object, field.getName());
+                return StringUtils.isNotBlank(value);
+            }
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     @Override
