@@ -2112,6 +2112,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         authResp.getEntity(AuthenticateResponse).getToken().getAny().contains("rax-auth:authenticatedBy")
     }
 
+    def "remove product roles throws 400 when type not rbac"() {
+        when:
+        def removeRolesResponse = cloud20.deleteUserProductRoles(serviceAdminToken, defaultUserForProductRole.id, "NOTRBAC")
+
+        then:
+        removeRolesResponse.status == 400
+    }
+
     def "remove product roles removes all 1000 weight roles"() {
         when:
         def addRoleResponse = cloud20.addApplicationRoleToUser(userAdminToken, productRole.id, defaultUserForProductRole.id)
