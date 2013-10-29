@@ -119,7 +119,7 @@ class RootIntegrationTest extends Specification {
         return r.nextInt(max - min) + min;
     }
 
-    def getRandomUUID() {
-        UUID.randomUUID().toString().replace('-', '')
+    def getRandomUUID(prefix='') {
+        String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
     }
 }
