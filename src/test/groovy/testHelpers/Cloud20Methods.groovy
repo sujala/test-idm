@@ -11,6 +11,7 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 
+import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
@@ -78,6 +79,10 @@ class Cloud20Methods {
 
     def getUserApiKey(String token, String userId) {
         resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def deleteUserApiKey(String token, String userId) {
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(RAX_KSKEY_API_KEY_CREDENTIALS).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def getUser(String token, URI location) {
@@ -392,7 +397,7 @@ class Cloud20Methods {
     }
 
     def updateCredentials(String token, String userId, creds) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
     }
 
     def getAdminsForUser(String token, String userId) {

@@ -2841,6 +2841,37 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())
     }
 
+    def "Delete user's apiKey"(){
+        given:
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "userApiKey$random"
+        def email = "test@rackspace.com"
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User().with {
+            it.key = "key"
+            it
+        }
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", username.concat("Domain"), password)).getEntity(User)
+        def setApiKey = cloud11.setUserKey(createUser.username, user)
+        def userObject = setApiKey.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
+        def deleteApiKey = cloud20.deleteUserApiKey(identityAdminToken, createUser.id)
+        def getApiKey = cloud20.getUserApiKey(identityAdminToken, createUser.id)
+
+        then:
+        createUser != null
+        setApiKey.status == 200
+        userObject.key == "key"
+        deleteApiKey.status == 204
+        getApiKey.status == 404
+
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteDomain(serviceAdminToken, createUser.domainId)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
