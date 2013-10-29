@@ -1835,13 +1835,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = getUser(callersScopeAccess);
             if (!authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
-                    && !authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)) {
-                //is either a user-admin or default user
-                if (authorizationService.authorizeCloudUser(callersScopeAccess)) {
-                    authorizationService.verifySelf(caller, user);
-                } else {
-                    authorizationService.verifyDomain(caller, user);
+                    && !authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
+                    //user is requesting self
+                    && !user.getId().equals(caller.getId())) {
+
+                if(!user.getDomainId().equals(caller.getDomainId())) {
+                    throw new ForbiddenException("Not Authorized");
                 }
+
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             }
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());

@@ -2641,37 +2641,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listUserGlobalRoles_isUserAdmin_callsVerifyDomain() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        User caller = new User();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(caller).when(spy).getUser(scopeAccess);
-        when(userService.getUserById(userId)).thenReturn(user);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-
-        spy.listUserGlobalRoles(null, authToken, userId);
-        verify(authorizationService).verifyDomain(caller, user);
-    }
-
-    @Test
-    public void listUserGlobalRoles_isDefaultUser_callsVerifySelf() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        User requester = new User();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).getUser(scopeAccess);
-        when(userService.getUserById(userId)).thenReturn(user);
-        doReturn(requester).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
-        spy.listUserGlobalRoles(null, authToken, userId);
-        verify(authorizationService).verifySelf(requester, user);
-    }
-
-    @Test
     public void listUserGlobalRoles_callsVerifyUserLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
