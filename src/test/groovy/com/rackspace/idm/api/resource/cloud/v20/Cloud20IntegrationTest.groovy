@@ -2872,6 +2872,35 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteDomain(serviceAdminToken, createUser.domainId)
     }
 
+    def "Add user to group within a valid domain" () {
+        given:
+        def username = "addGrpToUser$sharedRandom"
+        def groupName = "validGroup$sharedRandom"
+        def group = v1Factory.createGroup(groupName, "desc")
+        def password = "Password1"
+        def email = "test@rackspace.com"
+        def domainId = username.concat("Domain")
+
+        when:
+        def createGroup = cloud20.createGroup(identityAdminToken, group).getEntity(Group).value
+        def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, email, true, "DFW", domainId, password)).getEntity(User)
+        def addGroupToUser = cloud20.addUserToGroup(identityAdminToken, createGroup.id, createUser.id)
+        def usersFromGroup = cloud20.getUsersFromGroup(identityAdminToken, createGroup.id).getEntity(UserList).value
+
+        then:
+        createGroup != null
+        createGroup.name == groupName
+        createUser != null
+        createUser.username == username
+        addGroupToUser.status == 204
+        usersFromGroup.user.id.contains(createUser.id)
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteDomain(serviceAdminToken, domainId)
+        cloud20.deleteGroup(serviceAdminToken, createGroup.id)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
