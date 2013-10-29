@@ -2769,14 +2769,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
 
-            //if default user
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+            //if default user & NOT user-manage
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)
+                    && !authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
                 List<User> users = new ArrayList<User>();
                 users.add(caller);
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
-            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
