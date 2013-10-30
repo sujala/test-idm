@@ -2901,6 +2901,37 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteGroup(serviceAdminToken, createGroup.id)
     }
 
+    def "identity admin should be able to update a group"() {
+        given:
+        def groupName = getRandomUUID("group")
+        def groupDesc = "this is a group"
+        def updatedGroupDesc = "updated group"
+
+        when:
+        def createGroupResponse = cloud20.createGroup(identityAdminToken, v1Factory.createGroup(groupName, groupDesc))
+        assert (createGroupResponse.status == 201)
+
+        def getGroupResponse = cloud20.getGroup(identityAdminToken, createGroupResponse.location)
+        assert (getGroupResponse.status == 200)
+        Group groupEntity = getGroupResponse.getEntity(Group).value
+        def groupId = groupEntity.id
+
+        def updateGroupResponse = cloud20.updateGroup(identityAdminToken, groupId, v1Factory.createGroup(groupName, updatedGroupDesc))
+        assert (updateGroupResponse.status == 200)
+
+        getGroupResponse = cloud20.getGroup(identityAdminToken, createGroupResponse.location)
+        assert (getGroupResponse.status == 200)
+        Group updatedGroupEntity = getGroupResponse.getEntity(Group).value
+
+        then:
+        groupEntity.description == groupDesc
+        updateGroupResponse.status == 200
+        updatedGroupEntity.description == updatedGroupDesc
+
+        cleanup:
+        cloud20.deleteGroup(identityAdminToken, groupId)
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
