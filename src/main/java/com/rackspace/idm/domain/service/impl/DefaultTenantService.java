@@ -258,7 +258,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteProductRolesForUser(User user) {
+    public void deleteRbacRolesForUser(User user) {
         logger.info("Deleting Product Roles for {}", user);
         Iterable<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user);
 

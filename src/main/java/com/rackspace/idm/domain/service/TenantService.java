@@ -16,6 +16,7 @@ public interface TenantService {
     Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
 
+    
     void addTenantRoleToUser(BaseUser user, TenantRole role);
     void addTenantRoleToFederatedToken(FederatedToken token, TenantRole role);
     void addTenantRolesToFederatedToken(FederatedToken token, List<TenantRole> tenantRoles);
@@ -26,9 +27,7 @@ public interface TenantService {
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);
 
-    List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
-
-    void deleteProductRolesForUser(User user);
+    void deleteRbacRolesForUser(User user);
     
     TenantRole getTenantRoleForUserById(User user, String roleId);
 

@@ -1,9 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
@@ -32,7 +30,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
     }
 
-    def "delete product roles for user deletes all 1000 weight roles"() {
+    def "delete rbac roles for user deletes all rbac roles (roles where weight=default.rsWeight)"() {
         given:
         def role = entityFactory.createTenantRole()
         role.roleRsId = "id"
@@ -41,10 +39,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         tenantRoleDao.getTenantRolesForUser(user) >> [ role ].asList()
         applicationService.getClientRoleById(_) >> clientRole
-        config.getInt(_) >> 1000
+        config.getInt("default.rsWeight") >> 1000
 
         when:
-        service.deleteProductRolesForUser(user)
+        service.deleteRbacRolesForUser(user)
 
         then:
         applicationService.getClientRoleById(_) >> clientRole

@@ -14,6 +14,8 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
@@ -79,7 +81,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
-
+    public static final String RBAC = "rbac";
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -1951,7 +1953,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
 
             // Currently only roleType=rbac is supported
-            if (!roleType.equals("rbac")) {
+            if (!roleType.equals(RBAC)) {
                 throw new BadRequestException(String.format("type '%s' not supported", roleType));
             }
 
@@ -1970,7 +1972,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            tenantService.deleteProductRolesForUser(user);
+            tenantService.deleteRbacRolesForUser(user);
 
             return Response.noContent();
         } catch (Exception ex) {
