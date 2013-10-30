@@ -332,7 +332,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
@@ -340,7 +340,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)
+                    || authorizationService.authorizeUserManageRole(scopeAccess)) {
                 if (!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
@@ -1020,7 +1021,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
@@ -1028,7 +1029,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)
+                    || authorizationService.authorizeUserManageRole(scopeAccess)) {
                 if (!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
