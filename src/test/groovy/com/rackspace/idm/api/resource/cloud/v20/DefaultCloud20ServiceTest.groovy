@@ -3235,6 +3235,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * userService.getUserByAuthToken(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
     }
 
@@ -3243,6 +3244,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         userId = "1"
+        def otherUserId = "2"
         UserForCreate user = new UserForCreate().with {
             it.id = userId
             return it
@@ -3251,14 +3253,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.id = userId
             return it
         }
+        User caller = entityFactory.createUser().with {
+            it.id = otherUserId
+            return it
+        }
 
         when:
         def result = service.updateUser(headers, authToken, userId, user)
 
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
-        1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * userService.getUserByAuthToken(_) >> caller
+        1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> true
         result.build().status == 403
@@ -3427,6 +3434,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * userService.checkAndGetUserById(_) >> updateUser
+        1 * userService.getUserByAuthToken(_) >> updateUser
         1 * authorizationService.verifyDomain(_, _)
         1 * authorizationService.hasUserManageRole(_) >> false
         1 * authorizationService.hasUserAdminRole(_) >> true
