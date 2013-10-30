@@ -1,41 +1,31 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
+import com.unboundid.ldap.sdk.Modification
+import com.unboundid.ldap.sdk.SearchResultEntry
+import com.unboundid.ldap.sdk.SearchScope
+import com.unboundid.ldap.sdk.persist.LDAPPersister
+import org.apache.commons.configuration.Configuration
+import org.joda.time.DateTime
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.v2.*
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import org.openstack.docs.identity.api.v2.*
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
-import org.springframework.beans.factory.annotation.Autowired
-import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
-import com.unboundid.ldap.sdk.SearchScope
-import com.unboundid.ldap.sdk.SearchResultEntry
-import com.unboundid.ldap.sdk.persist.LDAPPersister
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.unboundid.ldap.sdk.Modification
-import org.joda.time.DateTime
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
-
-import javax.xml.namespace.QName
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired LdapConnectionPools connPools
