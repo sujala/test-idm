@@ -832,20 +832,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateUser_userIdDoesNotMatchUriId_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        UserForCreate userForCreate = new UserForCreate();
-        userForCreate.setId("notSameId");
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
-
-        assertThat("response builder", spy.updateUser(httpHeaders, authToken, "123", userForCreate), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
-    }
-
-    @Test
     public void updateUser_userCannotDisableOwnAccount_throwsBadRequest() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -2930,57 +2916,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateUser_callsUserService_updateUserById() throws Exception {
-        userOS.setId(userId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(userService).updateUser(any(User.class), anyBoolean());
-    }
-
-    @Test
-    public void updateUser_callsAuthorizeCloudUser() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(authorizationService).authorizeCloudUser(scopeAccess);
-    }
-
-    @Test
-    public void updateUser_callsGetScopeAccessByUserId() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(scopeAccessService).getScopeAccessForUser(user);
-    }
-
-    @Test
-    public void updateUser_userIsUserAdminUser_callsDefaultRegionService() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        UserScopeAccess scopeAccessForUserAdmin = new UserScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(scopeAccessService.getScopeAccessForUser(user)).thenReturn(scopeAccessForUserAdmin);
-        when(authorizationService.hasUserAdminRole(user)).thenReturn(true);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
-    }
-
-    @Test
     public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         userOS.setPassword("123");
@@ -2988,21 +2923,6 @@ public class DefaultCloud20ServiceOldTest {
         spy.updateUser(null, authToken, userId, userOS);
         verify(validator).validatePasswordForCreateOrUpdate("123");
     }
-
-    @Test
-    public void updateUser_usernameNotBlank_callsValidateUsernameForUpdateOrCreate() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        userOS.setUsername("username");
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(validator).isUsernameValid("username");
-    }
-
 
     @Test
     public void updateUser_authorizationServiceAuthorizeCloudUserIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
@@ -3032,23 +2952,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUser(null, authToken, userId, userOS), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
-    }
-
-    @Test
-    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdMatch_returns200() throws Exception {
-        userOS.setEnabled(false);
-        User user1 = new User();
-        user1.setId("123");
-        userOS.setId("123");
-        user.setId("123");
-        User user2 = new User();
-        user2.setId("456");
-        doReturn(true).when(userService).isUsernameUnique(anyString());
-        when(userService.checkAndGetUserById("123")).thenReturn(user1);
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user).thenReturn(user2);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, "123", userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test

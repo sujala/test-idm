@@ -595,6 +595,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
             User retrievedUser = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            boolean isSelfUpdate = caller.getId().equals(retrievedUser.getId());
+
             boolean isDisabled = retrievedUser.isDisabled();
             if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException("Id in url does not match id in body.");
@@ -619,26 +623,25 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
 
             if (!callerHasUserManageRole && authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
-                User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getId().equals(retrievedUser.getId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
 
             if (callerIsUserAdmin || callerHasUserManageRole) {
-                User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
-            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser)) ||
+
+            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser) && !isSelfUpdate) ||
                     (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
                 throw new ForbiddenException("Cannot update user with same or higher access level");
             }
+
             if (!StringUtils.isBlank(user.getUsername())) {
                 validator.isUsernameValid(user.getUsername());
             }
 
             if (!user.isEnabled()) {
-                User caller = userService.getUserByAuthToken(authToken);
                 if (caller.getId().equals(userId)) {
                     throw new BadRequestException("User cannot enable/disable his/her own account.");
                 }
