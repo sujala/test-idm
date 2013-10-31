@@ -120,6 +120,7 @@ class Cloud20UserManageIntegrationTest extends RootIntegrationTest {
         token               | userId            | status
         userAdminDDToken    | defaultUser.id    | 403
         defaultUserSDToken  | defaultUser.id    | 403
+        userAdminToken      | identityAdmin.id  | 403
         "invalidToken"      | defaultUser.id    | 401
     }
 

@@ -1839,12 +1839,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User caller = getUser(callersScopeAccess);
-            if (!authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
-                    && !authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
+            if (!(authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
+                    || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
                     //user is requesting self
-                    && !user.getId().equals(caller.getId())) {
+                    || user.getId().equals(caller.getId()))) {
 
-                if(!user.getDomainId().equals(caller.getDomainId())) {
+                if(caller.getDomainId() == null) {
+                    //caller is a user admin, user manage, or default user but with a null domain ID
+                    //this is bad data, but protecting against it anyways
+                    throw new ForbiddenException("Not Authorized");
+                } else if(!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException("Not Authorized");
                 }
 
