@@ -1452,7 +1452,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addRolesToUserOnTenant(null, authToken, null, null, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1784,7 +1784,7 @@ public class DefaultCloud20ServiceOldTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, null, null);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test

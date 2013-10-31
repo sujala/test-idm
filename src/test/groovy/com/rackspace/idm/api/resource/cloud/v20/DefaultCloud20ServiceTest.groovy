@@ -1415,7 +1415,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
     }
 
     def "addRolesToUserOnTenant verifies tenant access"() {
@@ -1530,7 +1530,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.status == 401
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        1 * authorizationService.verifyUserManagedLevelAccess(_) >> { throw new ForbiddenException() }
         response2.status == 403
     }
 
