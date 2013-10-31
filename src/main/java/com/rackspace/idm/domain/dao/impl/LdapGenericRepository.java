@@ -237,12 +237,21 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Updated - {}", object);
     }
 
+    /*
+     * Ldap has a constrain violation that does not allow a user entity to update a password
+     * to one of its last previous passwords. Updating to the current
+     * password, ldap message is 'Password matches previous password' else if updating to a
+     * previous password the message is 'Password match in history'.
+     */
     void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
-        String stalePasswordMsg = config.getString("stalePasswordMsg");
-        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
-                && stalePasswordMsg.equals(ldapEx.getMessage())) {
-            audit.fail(stalePasswordMsg);
-            throw new StalePasswordException(stalePasswordMsg);
+        String[] stalePasswordMsg = config.getStringArray("stalePasswordMsg");
+        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())){
+            for(String msg : stalePasswordMsg){
+                if(msg.equals(ldapEx.getMessage())){
+                    audit.fail(msg);
+                    throw new StalePasswordException(msg);
+                }
+            }
         }
     }
 

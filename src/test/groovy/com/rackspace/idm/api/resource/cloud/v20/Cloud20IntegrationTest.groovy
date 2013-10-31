@@ -1,39 +1,31 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
+import com.unboundid.ldap.sdk.Modification
+import com.unboundid.ldap.sdk.SearchResultEntry
+import com.unboundid.ldap.sdk.SearchScope
+import com.unboundid.ldap.sdk.persist.LDAPPersister
+import org.apache.commons.configuration.Configuration
+import org.joda.time.DateTime
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.v2.*
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import org.openstack.docs.identity.api.v2.*
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
-import org.springframework.beans.factory.annotation.Autowired
-import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
-import com.unboundid.ldap.sdk.SearchScope
-import com.unboundid.ldap.sdk.SearchResultEntry
-import com.unboundid.ldap.sdk.persist.LDAPPersister
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.unboundid.ldap.sdk.Modification
-import org.joda.time.DateTime
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired LdapConnectionPools connPools
@@ -2930,6 +2922,37 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.deleteGroup(identityAdminToken, groupId)
+    }
+
+    def "Update user's password with its previous password - returns 400" () {
+        given:
+        def username = "updatePasswordUser$sharedRandom"
+        def password = "Password1"
+        def email = "test@rackspace.com"
+        def domainId = username.concat("Domain")
+        def user = v2Factory.createUserForCreate(username, username, email, true, "DFW", domainId, password);
+        def updateUser = v2Factory.createUserForCreate(username, username, email, true, "DFW", domainId, password.concat("1"));
+
+        when:
+        def createUser = cloud20.createUser(identityAdminToken, user).getEntity(User)
+        def updateUserResponse = cloud20.updateUser(identityAdminToken, createUser.id, updateUser)
+        def updateCurrentUserPasswordResponse = cloud20.updateUser(identityAdminToken, createUser.id, updateUser)
+        def updateUserOldPasswordResponse = cloud20.updateUser(identityAdminToken, createUser.id, user)
+
+
+        then:
+        createUser != null
+        createUser.username == username
+        updateUserResponse != null
+        updateUserResponse.status == 200
+        updateCurrentUserPasswordResponse != null
+        updateCurrentUserPasswordResponse.status == 400
+        updateUserOldPasswordResponse != null
+        updateUserOldPasswordResponse.status == 400
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteDomain(serviceAdminToken, domainId)
     }
 
     def authAndExpire(String username, String password) {
