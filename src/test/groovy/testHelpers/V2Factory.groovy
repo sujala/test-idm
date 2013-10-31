@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
+import org.springframework.stereotype.Component
 
 import javax.xml.datatype.DatatypeFactory
 import javax.xml.namespace.QName
@@ -18,6 +19,7 @@ import static com.rackspace.idm.RaxAuthConstants.*
  * Time: 10:14 AM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 class V2Factory {
 
     private static ID = "id"

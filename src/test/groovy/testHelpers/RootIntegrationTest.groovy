@@ -1,7 +1,9 @@
 package testHelpers
 
+import com.rackspace.idm.helpers.Cloud20Utils
 import com.sun.jersey.api.client.WebResource
 import org.joda.time.DateTime
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -16,6 +18,8 @@ import spock.lang.Specification
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RootIntegrationTest extends Specification {
 
+    @Autowired Cloud20Utils utils
+
     @Shared double entropy
     @Shared int defaultExpirationSeconds
 
@@ -28,6 +32,8 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud10Methods cloud10 = new Cloud10Methods()
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
+
+
 
     public setupSpec(){
         cloud10.init()

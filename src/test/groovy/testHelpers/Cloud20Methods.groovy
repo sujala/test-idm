@@ -9,6 +9,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.stereotype.Component
 import spock.lang.Shared
 
 import static com.rackspace.idm.JSONConstants.*
@@ -22,6 +23,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
  * Time: 1:00 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 class Cloud20Methods {
 
     @Shared WebResource resource

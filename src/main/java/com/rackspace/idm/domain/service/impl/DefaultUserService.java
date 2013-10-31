@@ -769,7 +769,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
+    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled) {
         BaseUser user;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
@@ -794,10 +794,15 @@ public class DefaultUserService implements UserService {
         if (user == null) {
             throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
         }
-        if (user.isDisabled()) {
+        if (checkUserDisabled && user.isDisabled()) {
             throw new NotFoundException("Token not found.");
         }
         return user;
+    }
+
+    @Override
+    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
+        return getUserByScopeAccess(scopeAccess, true);
     }
 
     @Override
