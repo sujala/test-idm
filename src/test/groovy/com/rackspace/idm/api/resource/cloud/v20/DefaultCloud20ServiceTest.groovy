@@ -778,6 +778,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.getMetadata().get("Link") != null
     }
 
+    def "listUsers (caller is user manaage) gets paged users with domain filter and returns list"() {
+        given:
+        mockUserConverter(service)
+        allowUserAccess()
+
+        authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.authorizeUserManageRole(_) >> true
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        def userContextMock = Mock(PaginatorContext)
+        userContextMock.getValueList() >> [].asList()
+
+        userService.getUser(_) >> entityFactory.createUser()
+
+        userPaginator.createLinkHeader(_, _) >> "link header"
+
+        when:
+        def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        userService.getAllUsersPagedWithDomain(_, _, _) >> { arg1, arg2, arg3 ->
+            assert(arg1 == "domainId")
+            return userContextMock
+        }
+
+        response1.status == 200
+        response1.getMetadata().get("Link") != null
+    }
+
     def "listUsers handles exceptions"() {
         given:
         mockUserConverter(service)
@@ -788,7 +818,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         scopeAccessMock.getLDAPEntry() >> createLdapEntry()
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
-        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
 
         userService.getUser(_) >>> [
                 entityFactory.createUser(),

@@ -1339,6 +1339,18 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         users.size() == 6
     }
 
+    def "listUsers caller is user-manage returns users from domain"() {
+        when:
+        cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+        def users = cloud20.listUsers(defaultUserManageRoleToken).getEntity(UserList).value.user
+
+        then:
+        users.size() == 6
+
+        cleanup:
+        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
+    }
+
     def "listUsers caller is identity-admin or higher returns paged results"() {
         expect:
         response.status == 200
