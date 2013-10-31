@@ -621,7 +621,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
         scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
