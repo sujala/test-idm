@@ -640,15 +640,18 @@ public class DefaultUserService implements UserService {
         // Expire all User tokens if we are updating the password field
         User currentUser = userDao.getUserById(user.getId());
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
-        if(checkForPasswordUpdate(currentUser, user) || userIsBeingDisabled)  {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
-        }
 
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user, hasSelfUpdatedPassword);
+
+        if(checkForPasswordUpdate(currentUser, user)){
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
+        }
+
         if (userIsBeingDisabled) {
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
             disableUserAdminSubUsers(currentUser);
         }
 
