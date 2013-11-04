@@ -384,13 +384,13 @@ class Cloud20Methods {
         resource.path(path20).path("tokens").path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listRoles(String token, String serviceId, String offset, String limit) {
+    def listRoles(String token, String serviceId, String masker, String limit) {
         def queryParams = new MultivaluedMapImpl()
         if (serviceId != null) {
             queryParams.add("serviceId", serviceId)
         }
-        if (offset != null) {
-            queryParams.add("marker", offset)
+        if (masker != null) {
+            queryParams.add("marker", masker)
         }
         if (limit != null) {
             queryParams.add("limit", limit)
