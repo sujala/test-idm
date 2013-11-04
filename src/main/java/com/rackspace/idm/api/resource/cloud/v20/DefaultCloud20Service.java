@@ -1292,8 +1292,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserManagedLevelAccess(callersScopeAccess);
+            User caller = getUser(callersScopeAccess);
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
+
             ClientRole role = checkAndGetClientRole(roleId);
+            if(userIdentityRole == null || userIdentityRole.getRsWeight() > role.getRsWeight()) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                     .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)).getValue());
         } catch (Exception ex) {
