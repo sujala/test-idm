@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import org.apache.commons.configuration.Configuration
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
@@ -18,6 +20,9 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
     @Shared def domainId
+
+    @Autowired
+    Configuration config
 
     def "List roles"() {
         given:
@@ -78,5 +83,24 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         4        | 1      | 3     | 3
         5        | 3      | 2     | 2
         5        | 4      | 2     | 1
+    }
+
+    def "User manage should not be allowed to list the Identity:admin role" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        String adminRole = config.getString('cloudAuth.adminRole')
+
+        when:
+        def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
+        def roles = utils.listRoles(userManageToken, null, null, "1000")
+
+        then:
+        roles != null
+        !roles.role.name.contains(adminRole)
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
     }
 }
