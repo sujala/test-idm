@@ -577,6 +577,22 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
     }
 
+    def "user admin able to list and query for created role"() {
+
+        when:
+        def createdRole = cloud20.createRole(identityAdminToken, v2Factory.createRole("userAdminGlobalRole$sharedRandom", null)).getEntity(Role).value
+        def roleListResponse = cloud20.listRoles(userAdminToken, null, "0", "500")
+        def roleResponse = cloud20.getRole(userAdminToken, createdRole.id)
+
+        then:
+        roleListResponse.status == 200
+        roleListResponse.getEntity(RoleList).value.role.id.contains(createdRole.id)
+        roleResponse.status == 200
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, createdRole.id)
+    }
+
     def "User manage retrieve user by name"() {
         given:
         def random = ("$randomness").replace('-', "")

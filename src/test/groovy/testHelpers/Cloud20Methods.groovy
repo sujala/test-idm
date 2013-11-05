@@ -344,7 +344,7 @@ class Cloud20Methods {
     }
 
     def getRole(String token, String roleId) {
-        resource.path(path20).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path('OS-KSADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def validateToken(String token, String validateToken){
