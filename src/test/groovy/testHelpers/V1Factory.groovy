@@ -14,6 +14,7 @@ import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey
+import org.joda.time.DateTime
 import org.openstack.docs.common.api.v1.Extension
 import org.openstack.docs.common.api.v1.VersionChoice
 import org.openstack.docs.common.api.v1.VersionStatus
@@ -23,11 +24,14 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.VersionForService
+import org.springframework.stereotype.Component
 import org.w3._2005.atom.Link
 
 import javax.xml.bind.JAXBElement
+import javax.xml.datatype.DatatypeFactory
 import javax.xml.namespace.QName
 
 /**
@@ -37,6 +41,7 @@ import javax.xml.namespace.QName
  * Time: 9:36 AM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 class V1Factory {
 
     private static ID = "id"
@@ -51,7 +56,6 @@ class V1Factory {
     private static TYPE="type"
 
     private static objFactory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory()
-    private static V2Factory v2Factory = new V2Factory()
 
     def createApiKeyCredentials() {
         return createApiKeyCredentials("username", "apiKey")
@@ -207,7 +211,13 @@ class V1Factory {
     }
 
     def createImpersonationResponse() {
-        return createImpersonationResponse(v2Factory.createToken())
+        def token = new Token().with {
+            it.id = ID
+            it.expires = DatatypeFactory.newInstance().newXMLGregorianCalendar(new DateTime().toGregorianCalendar())
+            it.tenant = new TenantForAuthenticateResponse()
+            return it
+        }
+        return createImpersonationResponse(token)
     }
 
     def createImpersonationResponse(Token token) {

@@ -23,20 +23,15 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def serviceName = utils.getRandomUUID("listRoleService")
-        def service = v1Factory.createService(serviceName, serviceName)
-        def roleName = utils.getRandomUUID("role")
-        def role = v1Factory.createRole(roleName)
 
         when:
         def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
-        def createService = utils.createService(utils.getServiceAdminToken(), service)
-        role.serviceId = createService.id
-        def createRole = utils.createRole(identityAdminToken, role)
-        def listRoles = utils.listRoles(identityAdminToken, createService.id, "0", "1")
+        def service = utils.createService()
+        def createRole = utils.createRole(service)
+        def listRoles = utils.listRoles(identityAdminToken, service.id, "0", "1")
 
         then:
-        createService != null
+        service != null
         createRole != null
         listRoles != null
         listRoles.role.size() == 1
@@ -45,30 +40,26 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
         utils.deleteRole(createRole)
-        utils.deleteService(createService)
+        utils.deleteService(service)
     }
 
     def "Allow pagination on list roles"() {
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def serviceName = utils.getRandomUUID("listRoleService")
-        def service = v1Factory.createService(serviceName, serviceName)
         def listRoles = new ArrayList()
 
         when:
         def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
-        def createService = utils.createService(utils.getServiceAdminToken(), service)
+        def service = utils.createService()
         for(def i = 0; i < roleList; i ++){
-            def role = v1Factory.createRole(utils.getRandomUUID("role".concat(i.toString())))
-            role.serviceId = createService.id
-            def createRole = utils.createRole(identityAdminToken, role)
+            def createRole = utils.createRole(service)
             listRoles.add(createRole)
         }
-        def roles = utils.listRoles(identityAdminToken, createService.id, marker.toString(), limit.toString())
+        def roles = utils.listRoles(identityAdminToken, service.id, marker.toString(), limit.toString())
 
         then:
-        createService != null
+        service != null
         roles != null
         roles.role.size() == size
 
@@ -78,7 +69,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         for(def role : listRoles){
             utils.deleteRole(role)
         }
-        utils.deleteService(createService)
+        utils.deleteService(service)
 
         where:
         roleList | marker | limit | size

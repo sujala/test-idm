@@ -1,8 +1,6 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
-import com.rackspace.idm.Constants
-import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
@@ -12,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 import testHelpers.Cloud20Methods
+import testHelpers.V1Factory
 import testHelpers.V2Factory
 
 import javax.annotation.PostConstruct
@@ -27,6 +26,9 @@ class Cloud20Utils {
 
     @Autowired
     V2Factory factory
+
+    @Autowired
+    V1Factory v1Factory
 
     @Shared
     def serviceAdminToken
@@ -149,8 +151,10 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
-    def createService(token, service) {
-        def response = methods.createService(token, service)
+    def createService() {
+        def serviceName = getRandomUUID("service")
+        def service = v1Factory.createService(serviceName, serviceName)
+        def response = methods.createService(getServiceAdminToken(), service)
         assert (response.status == SC_CREATED)
         response.getEntity(Service)
     }
@@ -160,8 +164,13 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def createRole(token, role) {
-        def respones = methods.createRole(token, role)
+    def createRole(service=null) {
+        def roleName = getRandomUUID("role")
+        def role = factory.createRole(roleName)
+        if(service != null){
+            role.serviceId = service.id
+        }
+        def respones = methods.createRole(getServiceAdminToken(), role)
         assert (respones.status == SC_CREATED)
         respones.getEntity(Role).value
     }
