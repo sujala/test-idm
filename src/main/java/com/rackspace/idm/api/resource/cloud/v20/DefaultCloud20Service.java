@@ -1783,7 +1783,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            boolean self = caller.getId().equals(user.getId());
+
+            if (!self) {
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            }
 
             List<TenantRole> roles = this.tenantService.getTenantRolesForUserOnTenant(user, tenant);
 

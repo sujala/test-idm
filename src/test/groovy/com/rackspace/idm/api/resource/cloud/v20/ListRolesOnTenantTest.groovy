@@ -110,6 +110,24 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
 
     }
 
+    def "Service Admin and Identity Admin CAN list roles on tenants for self"() {
+
+        def tenant = v2Factory.createTenant("tenant" + getNormalizedRandomString(), "tenantName" + getNormalizedRandomString())
+        def addTenantResponse = addTenant(specificationServiceAdminToken, tenant)
+        def addedTenant = addTenantResponse.getEntity(Tenant.class).value
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationServiceAdminToken, addedTenant.id, specificationServiceAdmin.id)
+        def listUserRoleOnTenant2 = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, specificationIdentityAdmin.id)
+
+        then:
+        listUserRoleOnTenant.status == HttpStatus.OK.value()
+        listUserRoleOnTenant2.status == HttpStatus.OK.value()
+
+        cleanup:
+        deleteTenantQuietly(tenant)
+    }
+
     def "Identity Admin CAN list user roles on tenants (except for Service Admins)"() {
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
