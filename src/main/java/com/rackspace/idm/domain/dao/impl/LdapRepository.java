@@ -85,7 +85,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CLIENT_SECRET = "userPassword";
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
-    public static final String ATTR_PUBLIC_KEY = "publicKey";
+    public static final String ATTR_PUBLIC_KEY = "nisPublicKey";
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
@@ -110,7 +110,7 @@ public abstract class LdapRepository {
     public static final String ATTR_NAST_ID = "rsNastId";
     public static final String ATTR_NO_ATTRIBUTES = "NO_ATTRIBUTES";
     public static final String ATTR_O = "o";
-    public static final String ATTR_URI = "uri";
+    public static final String ATTR_URI = "labeledUri";
     public static final String ATTR_OBJECT_CLASS = "objectClass";
     public static final String ATTR_OU = "ou";
     public static final String ATTR_OWNER = "owner";

@@ -84,6 +84,8 @@
         <attribute name="id" type="xsd:string"/>
         <attribute name="name" type="xsd:string"/>
         <attribute ref="RAX-AUTH:defaultRegion" use="optional"/>
+        <attribute ref="RAX-AUTH:federated" use="optional"/>
+        <attribute ref="RAX-AUTH:federatedIdp" use="optional"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     

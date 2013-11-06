@@ -914,7 +914,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         AuthData authInfo = federatedIdentityService.generateAuthenticationInfo(samlResponse);
         AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(authInfo);
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
-}
+    }
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
         AuthenticateResponse auth;

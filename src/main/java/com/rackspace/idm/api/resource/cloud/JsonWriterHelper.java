@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -246,16 +245,10 @@ public final class JsonWriterHelper {
             }
         }
 
-        if (user.getOtherAttributes().size() != 0) {
-            String federated = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federated"));
-            if (!StringUtils.isEmpty(federated)) {
-                userInner.put(JSONConstants.RAX_AUTH_FEDERATED, federated);
-            }
+        userInner.put(JSONConstants.RAX_AUTH_FEDERATED, user.isFederated());
 
-            String federatedIdp = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federatedIdp"));
-            if (!StringUtils.isEmpty(federatedIdp)) {
-                userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, federatedIdp);
-            }
+        if (!StringUtils.isEmpty(user.getFederatedIdp())) {
+            userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
         }
 
         String defaultRegion = user.getDefaultRegion();

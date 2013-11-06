@@ -732,19 +732,11 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.99) = {
     description = "name of identity provider"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.100) = {
-    name = uri
-    ldap-names = uri
-    equality = caseIgnoreMatch
-    syntax = directoryString
-    description = "unique resource identifier"
-};
-
-schema set attribute (1.3.6.1.4.1.20988.2.1.101) = {
-    name = publicKey
-    ldap-names = publicKey
+# attribute comes from rfc2703bis schema.
+schema set attribute (1.3.6.1.1.1.1.28) = {
+    name   = nisPublicKey
     syntax = octetString
-    description = "public key"
+    single-valued
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -1233,4 +1225,17 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.34) = {
     may-contain
         accessToken,
         accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
+    name = externalProvider
+    ldap-names = externalProvider
+    subclass-of organizationalUnit
+    kind = structural
+    must-contain
+        ou,
+        labeledUri
+    may-contain
+        description,
+        nisPublicKey
 };

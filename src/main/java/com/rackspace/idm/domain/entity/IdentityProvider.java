@@ -6,9 +6,11 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER)
 public class IdentityProvider implements Auditable, UniqueId {
 

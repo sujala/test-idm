@@ -11,9 +11,9 @@ objectClass: top
 objectClass: organizationalUnit
 objectClass: externalProvider
 ou: dedicated
-uri: http://my.rackspace.com
+labeledUri: http://my.rackspace.com
 description: Identity provider for dedicated
-publicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI5VENDQVorZ0F3SUJBZ0lKQU
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI5VENDQVorZ0F3SUJBZ0lKQU
  1wdUw4cjNwZUNiTUEwR0NTcUdTSWIzRFFFQkJRVUFNRll4Q3pBSkJnTlYKQkFZVEFsVlRNUTR3REF
  ZRFZRUUlEQVZVWlhoaGN6RVVNQklHQTFVRUJ3d0xVMkZ1SUVGdWRHOXVhVzh4SVRBZgpCZ05WQkFv
  TUdFbHVkR1Z5Ym1WMElGZHBaR2RwZEhNZ1VIUjVJRXgwWkRBZUZ3MHhNekEzTURreU1qSTNORGxhC

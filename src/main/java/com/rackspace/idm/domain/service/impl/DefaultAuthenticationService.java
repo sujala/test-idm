@@ -157,6 +157,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         AuthData authData = new AuthData();
 
         if (scopeAccess != null) {
+            authData.setToken(scopeAccess);
             authData.setAccessToken(scopeAccess.getAccessTokenString());
             authData.setAccessTokenExpiration(scopeAccess.getAccessTokenExp());
         }

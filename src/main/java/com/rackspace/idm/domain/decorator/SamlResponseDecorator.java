@@ -12,7 +12,9 @@ import java.util.List;
 
 /*
  decorator class around saml response, that contains a lot of convenience
- methods to retrieve attributes from a saml response
+ methods to retrieve attributes from a saml response.
+
+ class assumes that only one saml assertion exists in the saml response.
  */
 public class SamlResponseDecorator {
 

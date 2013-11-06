@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.namespace.QName;
 import java.util.List;
 
 @Component
@@ -64,14 +63,10 @@ public class UserConverterCloudV20 {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
-        //add if user is federated
-        QName federated = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federated");
-        jaxbUser.getOtherAttributes().put(federated, Boolean.valueOf(user.isFederated()).toString());
+        jaxbUser.setFederated(user.isFederated());
 
-        //add if user is federated
         if (StringUtils.isNotBlank(user.getFederatedIdp())) {
-            QName federatedIdp = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "federatedIdp");
-            jaxbUser.getOtherAttributes().put(federatedIdp, user.getFederatedIdp());
+            jaxbUser.setFederatedIdp(user.getFederatedIdp());
         }
 
         return jaxbUser;

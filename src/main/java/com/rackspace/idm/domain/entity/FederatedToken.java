@@ -3,9 +3,11 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_FEDERATEDUSERSCOPEACCESS,requestAllAttributes=true)
 public class FederatedToken extends UserScopeAccess {
 

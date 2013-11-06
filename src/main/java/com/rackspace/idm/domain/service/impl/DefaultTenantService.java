@@ -654,6 +654,7 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<Tenant> getTenantsByDomainId(String domainId) {
+        //TODO: This should probably return an empty list as opposed to throwing an exception
         Domain domain = domainService.getDomain(domainId);
         if(domain.getTenantIds() == null) {
             throw new NotFoundException("No tenants belong to this domain.");
