@@ -31,7 +31,7 @@ public class SamlResponseValidator {
     @Autowired
     IdentityProviderDao identityProviderDao;
 
-    public void validate(SamlResponseDecorator samlResponseDecorator) throws Throwable {
+    public void validate(SamlResponseDecorator samlResponseDecorator) {
         validateIssuer(samlResponseDecorator);
         validateSignature(samlResponseDecorator);
         validateAssertion(samlResponseDecorator);
@@ -45,7 +45,7 @@ public class SamlResponseValidator {
         validateRoles(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
     }
 
-    private void validateSignature(SamlResponseDecorator samlResponseDecorator) throws Throwable{
+    private void validateSignature(SamlResponseDecorator samlResponseDecorator) {
         if (samlResponseDecorator.getSamlResponse().getSignature() == null) {
             throw new BadRequestException("No Signature specified");
         }
@@ -60,13 +60,13 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateAssertion(SamlResponseDecorator samlResponseDecorator) throws Throwable {
+    private void validateAssertion(SamlResponseDecorator samlResponseDecorator) {
         if (samlResponseDecorator.getSamlResponse().getAssertions() == null || samlResponseDecorator.getSamlResponse().getAssertions().size() == 0) {
             throw new BadRequestException("No Assertions specified");
         }
     }
 
-    private void validateIssuer(SamlResponseDecorator samlResponseDecorator) throws Throwable {
+    private void validateIssuer(SamlResponseDecorator samlResponseDecorator) {
         if (samlResponseDecorator.getSamlResponse().getIssuer() == null || StringUtils.isBlank(samlResponseDecorator.getSamlResponse().getIssuer().getValue())) {
             throw new BadRequestException("Issuer is not specified");
         }
@@ -76,14 +76,14 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateSubject(Assertion samlAssertion) throws Throwable {
+    private void validateSubject(Assertion samlAssertion) {
         if (samlAssertion.getSubject() == null || samlAssertion.getSubject().getNameID() == null
                 || StringUtils.isBlank(samlAssertion.getSubject().getNameID().getValue())) {
             throw new BadRequestException("Subject is not specified");
         }
     }
 
-    private void validateSubjectConfirmationNotOnOrAfterDate(Assertion samlAssertion) throws Throwable {
+    private void validateSubjectConfirmationNotOnOrAfterDate(Assertion samlAssertion) {
         if (samlAssertion.getSubject().getSubjectConfirmations() == null ||
             samlAssertion.getSubject().getSubjectConfirmations().size() == 0 ||
             samlAssertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData() == null ||
@@ -96,7 +96,7 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateAuthInstant(Assertion samlAssertion) throws Throwable {
+    private void validateAuthInstant(Assertion samlAssertion) {
         if (samlAssertion.getAuthnStatements() == null ||
             samlAssertion.getAuthnStatements().size() == 0 ||
             samlAssertion.getAuthnStatements().get(0).getAuthnInstant() == null) {
@@ -104,7 +104,7 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateAuthContextClassRef(Assertion samlAssertion) throws Throwable {
+    private void validateAuthContextClassRef(Assertion samlAssertion) {
         if (samlAssertion.getAuthnStatements().get(0).getAuthnContext() == null ||
             samlAssertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
             throw new BadRequestException("AuthContextClassRef is not specified");
@@ -115,7 +115,7 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateDomain(List<String> domain) throws Throwable {
+    private void validateDomain(List<String> domain) {
         if (domain == null || domain.size() == 0) {
             throw new BadRequestException("domain attribute is not specified");
         }
@@ -129,7 +129,7 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateRoles(List<String> roles) throws Throwable {
+    private void validateRoles(List<String> roles) {
         if (roles == null || roles.size() == 0) {
             throw new BadRequestException("roles attribute is not specified");
         }

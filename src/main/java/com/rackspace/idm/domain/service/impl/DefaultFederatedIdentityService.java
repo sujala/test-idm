@@ -50,7 +50,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private Configuration config;
 
     @Override
-    public AuthData generateAuthenticationInfo(Response response) throws Throwable {
+    public AuthData generateAuthenticationInfo(Response response) {
         SamlResponseDecorator samlResponse = new SamlResponseDecorator(response);
         samlResponseValidator.validate(samlResponse);
 

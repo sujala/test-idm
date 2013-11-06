@@ -1,4 +1,6 @@
 package com.rackspace.idm.util
+
+import com.rackspace.idm.exception.BadRequestException
 import org.joda.time.DateTime
 import org.opensaml.saml2.core.*
 import spock.lang.Shared
@@ -124,7 +126,7 @@ class SamlUnmarshallerTest extends Specification {
             Response response = samlUnmarshaller.unmarshallResponse(samlStr)
 
         then:
-            thrown(Throwable)
+            thrown(BadRequestException)
     }
 
     def "Unmarshall Saml Response throws when unknown element present" (){
@@ -149,7 +151,7 @@ class SamlUnmarshallerTest extends Specification {
             Response response = samlUnmarshaller.unmarshallResponse(samlStr)
 
         then:
-            thrown(Throwable)
+            thrown(BadRequestException)
     }
 
     def cleanupSpec() {

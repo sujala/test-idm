@@ -84,8 +84,7 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("RAX-AUTH/saml-tokens")
-    public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders,
-                                            String samlResponse) throws Throwable {
+    public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
         org.opensaml.saml2.core.Response response = samlUnmarshaller.unmarshallResponse(samlResponse);
 
         return cloud20Service.validateSamlResponse(httpHeaders, response).build();
