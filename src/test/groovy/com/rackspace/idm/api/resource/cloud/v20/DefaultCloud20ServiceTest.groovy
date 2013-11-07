@@ -10,6 +10,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -2944,72 +2945,198 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         null    | "service" | BadRequestException
     }
 
-    @Unroll
-    def "delete user product roles"() {
+    @Unroll("service admin deleting product roles on #userRole returns #expectedResult")
+    def "service admin CAN delete a users product roles"() {
         given:
         allowUserAccess()
 
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
-        def userInDomain = entityFactory.createUser("caller", "userId2", "domainId", "region")
-        def userOutOfDomain = entityFactory.createUser("caller", "userId2", "domainId2", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def inDomainResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
-        def outDomainResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
 
         then:
-        if (callerDefault) {
-            2 * authorizationService.verifyUserManagedLevelAccess(_) >> {throw new ForbiddenException()}
-        } else {
-            2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
-            2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
 
-            if (precedenceForbidden) {
-                2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
-            } else {
-                2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> null
-                2 * authorizationService.authorizeCloudUserAdmin(_) >> callerUA
-                if (!callerUA) {
-                    2 * authorizationService.authorizeUserManageRole(_) >> callerUM
-                }
-            }
+        if (precedenceThrowsForbidden) {
+            precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
         }
 
-        inDomainResult.status == inDomain
-        outDomainResult.status == outDomain
+        deleteRolesResult.status == expectedResult
 
         where:
-        callerSA | callerIA | callerUA | callerUM | callerDefault | userSA | userIA | userUA | userUM | inDomain | outDomain | precedenceForbidden
-        // identity:service-admin calls
-        true     | false    | false    | false    | false         | true   | false  | false  | false  | 403      | 403       | true
-        true     | false    | false    | false    | false         | false  | true   | false  | false  | 204      | 204       | false
-        true     | false    | false    | false    | false         | false  | false  | true   | false  | 204      | 204       | false
-        true     | false    | false    | false    | false         | false  | false  | false  | true   | 204      | 204       | false
-        true     | false    | false    | false    | false         | false  | false  | false  | false  | 204      | 204       | false
-        // identity:admin calls
-        false    | true     | false    | false    | false         | true   | false  | false  | false  | 403      | 403       | true
-        false    | true     | false    | false    | false         | false  | true   | false  | false  | 403      | 403       | true
-        false    | true     | false    | false    | false         | false  | false  | true   | false  | 204      | 204       | false
-        false    | true     | false    | false    | false         | false  | false  | false  | true   | 204      | 204       | false
-        false    | true     | false    | false    | false         | false  | false  | false  | false  | 204      | 204       | false
-        // identity:user-admin calls
-        false    | false    | true     | false    | false         | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | true     | false    | false         | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | true     | false    | false         | false  | false  | true   | false  | 403      | 403       | true
-        false    | false    | true     | false    | false         | false  | false  | false  | true   | 204      | 403       | false
-        false    | false    | true     | false    | false         | false  | false  | false  | false  | 204      | 403       | false
-        // identity:user-manage calls
-        false    | false    | false    | true     | false         | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | false    | true     | false         | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | false    | true     | false         | false  | false  | true   | false  | 403      | 403       | true
-        false    | false    | false    | true     | false         | false  | false  | false  | true   | 403      | 403       | true
-        false    | false    | false    | true     | false         | false  | false  | false  | false  | 204      | 403       | false
-        // identity:default calls
-        false    | false    | false    | false    | true          | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | false    | false    | true          | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | false    | false    | true          | false  | false  | true   | false  | 403      | 403       | true
-        false    | false    | false    | false    | true          | false  | false  | false  | true   | 403      | 403       | true
-        false    | false    | false    | false    | true          | false  | false  | false  | false  | 403      | 403       | true
+        userRole                 | precedenceThrowsForbidden | expectedResult
+        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:admin"         | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:user-admin"    | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+    }
+
+    @Unroll("identity admin deleting product roles on #userRole returns #expectedResult")
+    def "identity admin CAN delete a users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        if (precedenceThrowsForbidden) {
+            precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        }
+
+        deleteRolesResult.status == expectedResult
+
+        where:
+        userRole                 | precedenceThrowsForbidden | expectedResult
+        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-admin"    | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+    }
+
+    @Unroll("user admin deleting product roles on #userRole returns #expectedResult")
+    def "user admin CAN delete a users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        if (precedenceThrowsForbidden) {
+            precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        }
+
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        authorizationService.authorizeUserManageRole(_) >> false
+
+        deleteRolesResult.status == expectedResult
+
+        where:
+        userRole                 | precedenceThrowsForbidden | expectedResult
+        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+    }
+
+    def "user admin CANNOT delete a different domain users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        authorizationService.authorizeUserManageRole(_) >> false
+
+        deleteRolesResult.status == HttpStatus.SC_FORBIDDEN
+    }
+
+    @Unroll("user manage deleting product roles on #userRole returns #expectedResult")
+    def "user manage CAN delete a users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        if (precedenceThrowsForbidden) {
+            precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        }
+
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeUserManageRole(_) >> true
+
+        deleteRolesResult.status == expectedResult
+
+        where:
+        userRole                 | precedenceThrowsForbidden | expectedResult
+        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-manage"   | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+    }
+
+    def "user manage CANNOT delete a different domain users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeUserManageRole(_) >> true
+
+        deleteRolesResult.status == HttpStatus.SC_FORBIDDEN
+    }
+
+    @Unroll("default user deleting product roles on #userRole returns #expectedResult")
+    def "default user CANNOT delete a users product roles"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def user = entityFactory.createUser("user", "userId2", "domainId", "region")
+
+        when:
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+
+        then:
+        userService.checkAndGetUserById(_) >> user
+        userService.getUserByAuthToken(_) >> caller
+
+        if (precedenceThrowsForbidden) {
+            precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        }
+
+        deleteRolesResult.status == expectedResult
+
+        where:
+        userRole                 | precedenceThrowsForbidden | expectedResult
+        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:user-manage"   | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:default"       | true                      | HttpStatus.SC_FORBIDDEN
     }
 
     @Unroll
