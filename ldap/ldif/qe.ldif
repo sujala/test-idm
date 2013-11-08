@@ -1,0 +1,146 @@
+dn: rsId=StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09,ou=tenants,ou=cloud,
+ o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+cn: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+enabled: TRUE
+rsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 11
+tenantDisplayName: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=983452,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+cn: 983452
+enabled: TRUE
+rsId: 983452
+baseUrlId: 135
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+tenantDisplayName: 983452
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=983452,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+cn: 983452
+enabled: TRUE
+rsId: 983452
+description: Default Domain
+tenantRsId: 983452
+tenantRsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+
+dn: rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: 3a4407a6b3e349998478409c5b7eda14
+clearPassword:: gjQdoGHTuOXPH4fECvMnsg==
+enabled: TRUE
+encryptionSalt: e3 1b 06 4c 50 3f 7e ed 91 2f f7 91 47 ae 93
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131107011325.242Z
+preferredLanguage: en_US
+rsApiKey:: 2/DFjhASk0f9SBMdaW457jLCoO7nxvvwDjiSmHDSbUkymcryUT6U0yWGOJVGB6Kw
+rsDomainId: 983452
+rsMossoId: 983452
+rsNastId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+rsRegion: ORD
+secretAnswer:: Uv1LGk0mZpLhrbYoASrOeg==
+secretQuestion:: KqVIjuJ4KSJdTahVxy+yw0lcP4kzcwuizjYfX7ciwOy+QKjv9heiA+bVF7j
+ 7EvzZdFjU9Bdmh3S+qHUWGp1hEw==
+secretQuestionId:: gOtvzwQZ4QhZIQ/PnebrYg==
+timeZone: America/Chicago
+uid: cloudCafeUserAdmin
+userPassword:: e1NTSEE1MTJ9YVY3Y1NWdDBDMkVzMmVmQnRFSTdVN2dWaGxOK3pTNkFQSGxhS
+ 2gyckdKcWdiMUo3amdjTGxtRXFtOENjNWZmV3ptRFlqVXhuRWJlak53ZkE1Q0N2TlFPQlBVMD0=
+
+dn: cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+
+dn: roleRsId=5,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+
+dn: roleRsId=6,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 983452
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+
+dn: cn=TOKENS,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=35b9cffd47d444a396d3d6b7ee7abe2b,cn=TOKENS,rsId=3a4407a6b3e3
+ 49998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+accessToken: 35b9cffd47d444a396d3d6b7ee7abe2b
+accessTokenExp: 20131109035948.813Z
+clientRCN: RACKSPACE
+rsType: APIKEY
+uid: cloudCafeUserAdmin
+
+dn: rsId=10053953,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c
+ 331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+cn: Role 100
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 10053953
+rsWeight: 100
+
+dn: rsId=10053954,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c
+ 331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+cn: Role 500
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 10053954
+rsWeight: 500
+
+dn: rsId=10053955,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c
+ 331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+cn: Role 1000
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 10053955
+rsWeight: 1000
+
+dn: rsId=10053956,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c
+ 331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+cn: Role 2000
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 10053956
+rsWeight: 2000
