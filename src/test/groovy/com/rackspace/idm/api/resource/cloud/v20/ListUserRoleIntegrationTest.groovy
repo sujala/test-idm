@@ -15,17 +15,10 @@ import testHelpers.RootIntegrationTest
 import com.sun.jersey.api.client.ClientResponse
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForArrayEntity;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.RoleList;
-
-import javax.ws.rs.Consumes;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForArrayEntity
+import org.openstack.docs.identity.api.v2.RoleList
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.Provider;
-import java.io.IOException;
-import java.io.InputStream;
-
+import javax.ws.rs.core.MultivaluedMap
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 

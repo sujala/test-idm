@@ -1976,11 +1976,11 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getRole_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void getRole_callsVerifyManagedUserLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getRole(null, authToken, null);
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyUserManagedLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1991,12 +1991,6 @@ public class DefaultCloud20ServiceOldTest {
         doThrow(notFoundException).when(spy).checkAndGetClientRole(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getRole(null, authToken, null), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void getRole_responseOk_returns200() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getRole(httpHeaders, authToken, roleId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test

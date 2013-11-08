@@ -627,6 +627,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             boolean isUpdatingSelf = caller.getId().equals(userId);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
+
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
@@ -637,6 +638,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if(domain == null){
                     String errMsg = String.format("Domain %s does not exist.", domainId);
                     throw new BadRequestException(errMsg);
+                }
+            }
+            if (!callerHasUserManageRole && authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+                if (!caller.getId().equals(retrievedUser.getId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
 
@@ -1363,8 +1369,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserManagedLevelAccess(callersScopeAccess);
+            User caller = getUser(callersScopeAccess);
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
+
             ClientRole role = checkAndGetClientRole(roleId);
+            if(userIdentityRole == null || userIdentityRole.getRsWeight() > role.getRsWeight()) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                     .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)).getValue());
         } catch (Exception ex) {
@@ -1910,12 +1924,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User caller = getUser(callersScopeAccess);
-            if (!authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
-                    && !authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
-                    //user is requesting self
-                    && !user.getId().equals(caller.getId())) {
 
-                if(!user.getDomainId().equals(caller.getDomainId())) {
+            if (!(authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
+                    || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
+                    //user is requesting self
+                    || user.getId().equals(caller.getId()))) {
+
+                if(caller.getDomainId() == null) {
+                    //caller is a user admin, user manage, or default user but with a null domain ID
+                    //this is bad data, but protecting against it anyways
+                    throw new ForbiddenException("Not Authorized");
+                } else if(!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException("Not Authorized");
                 }
 

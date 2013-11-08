@@ -1,18 +1,22 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
-import com.rackspace.idm.Constants
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 import testHelpers.Cloud20Methods
+import testHelpers.V1Factory
 import testHelpers.V2Factory
 
 import javax.annotation.PostConstruct
 
 import static com.rackspace.idm.Constants.*
+import static org.apache.http.HttpStatus.*
 
 @Component
 class Cloud20Utils {
@@ -22,6 +26,9 @@ class Cloud20Utils {
 
     @Autowired
     V2Factory factory
+
+    @Autowired
+    V1Factory v1Factory
 
     @Shared
     def serviceAdminToken
@@ -33,7 +40,7 @@ class Cloud20Utils {
 
     def getToken(username, password) {
         def response = methods.authenticatePassword(username, password)
-        assert (response.status == 200)
+        assert (response.status == SC_OK)
         def entity = response.getEntity(AuthenticateResponse).value
         assert (entity != null)
         entity.token.id
@@ -41,7 +48,9 @@ class Cloud20Utils {
 
     def createUser(token, username=getRandomUUID(), domainId=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD))
-        assert (response.status == 201)
+
+        assert (response.status == SC_CREATED)
+
         def entity = response.getEntity(User)
         assert (entity != null)
         return entity
@@ -49,12 +58,13 @@ class Cloud20Utils {
 
     def addRoleToUser(user, roleId, token=getServiceAdminToken()) {
         def response = methods.addApplicationRoleToUser(token, roleId, user.id)
-        assert (response.status == 200)
+
+        assert (response.status == SC_OK)
     }
 
     def deleteUser(user) {
         def response = methods.deleteUser(getServiceAdminToken(), user.id)
-        assert (response.status == 204)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def createDomain() {
@@ -66,7 +76,7 @@ class Cloud20Utils {
             return
         }
         def response = methods.deleteDomain(getServiceAdminToken(), domainId)
-        assert (response.status == 204)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def getServiceAdminToken() {
@@ -117,7 +127,9 @@ class Cloud20Utils {
 
     def getImpersonatedToken(impersonator, user) {
         def response = impersonate(impersonator, user)
-        assert (response.status == 200)
+
+        assert (response.status == SC_OK)
+
         def entity = response.getEntity(ImpersonationResponse)
         assert (entity != null)
         entity.token.id
@@ -125,7 +137,9 @@ class Cloud20Utils {
 
     def updateUser(user) {
         def response = methods.updateUser(getServiceAdminToken(), user.id, user)
-        assert (response.status == 200)
+
+        assert (response.status == SC_OK)
+
     }
 
     def disableUser(user) {
@@ -136,5 +150,40 @@ class Cloud20Utils {
     def validateToken(token) {
         def response = methods.validateToken(getServiceAdminToken(), token)
         response.status
+    }
+
+    def listRoles(token, serviceId, marker, limit) {
+        def response = methods.listRoles(token, serviceId, marker, limit)
+        assert (response.status == SC_OK)
+        response.getEntity(RoleList).value
+    }
+
+    def createService() {
+        def serviceName = getRandomUUID("service")
+        def service = v1Factory.createService(serviceName, serviceName)
+        def response = methods.createService(getServiceAdminToken(), service)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Service)
+    }
+
+    def deleteService(service) {
+        def response = methods.deleteService(getServiceAdminToken(), service.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def createRole(service=null) {
+        def roleName = getRandomUUID("role")
+        def role = factory.createRole(roleName)
+        if(service != null){
+            role.serviceId = service.id
+        }
+        def respones = methods.createRole(getServiceAdminToken(), role)
+        assert (respones.status == SC_CREATED)
+        respones.getEntity(Role).value
+    }
+
+    def deleteRole(role) {
+        def response = methods.deleteRole(getServiceAdminToken(), role.id)
+        assert (response.status == SC_NO_CONTENT)
     }
 }

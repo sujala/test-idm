@@ -3395,12 +3395,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         //Application logic assumption is that only ONE of the following roles service/identity/useradmin/usermanage
         where:
-        updatingServiceAdmin    | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser   | expectedStatus
-        true                    | false                 | false             | false               | false               | 403
-        false                   | true                  | false             | false               | false               | 403
-        false                    | false                | true              | false               | false               | 403
-        false                    | false                | false             | true                | true                | 403
-        false                    | false                | false             | false               | true                | 200
+        updatingServiceAdmin | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser | expectedStatus
+        true                 | false                 | false             | false               | false             | 403
+        false                | true                  | false             | false               | false             | 403
+        false                | false                 | true              | false               | false             | 403
+        false                | false                 | false             | true                | true              | 403
+        false                | false                 | false             | false               | true              | 200
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {
