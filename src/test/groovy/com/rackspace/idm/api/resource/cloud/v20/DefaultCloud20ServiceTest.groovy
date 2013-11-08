@@ -3550,6 +3550,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
 
         when:
         def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
@@ -3557,11 +3558,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * userService.getUserById(_) >> user
+        1 * userService.getUser(_) >> caller
         1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * userService.checkAndGetUserById(_) >> updateUser
-        1 * userService.getUserByAuthToken(_) >> updateUser
-        1 * authorizationService.verifyDomain(_, _)
-        1 * authorizationService.hasUserManageRole(_) >> false
         1 * authorizationService.hasUserAdminRole(_) >> true
         result.build().status == 403
     }

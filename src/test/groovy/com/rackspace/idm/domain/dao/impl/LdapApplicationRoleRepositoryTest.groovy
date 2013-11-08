@@ -72,6 +72,6 @@ class LdapApplicationRoleRepositoryTest extends Specification {
         def filter = repo.searchFilter_availableRolesByApplicationId("applicationId", 2000)
 
         then:
-        filter.toString().equals("(&(objectClass=clientRole)(clientId=applicationId)(|(rsWeight=2500)))")
+        filter.toString().equals("(&(objectClass=clientRole)(clientId=applicationId)(rsWeight>=2000))")
     }
 }
