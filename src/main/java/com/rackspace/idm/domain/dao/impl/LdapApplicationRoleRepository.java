@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -115,10 +116,23 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     }
 
-    private Filter searchFilter_availableClientRoles(int maxWeightAvaibale) {
+    private Filter searchFilter_availableClientRoles(int maxWeightAvailable) {
+        List<Filter> orFilterList = getRoleWeightsOrFilter(maxWeightAvailable);
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
-                .addGreaterOrEqualAttribute(ATTR_RS_WEIGHT, String.valueOf(maxWeightAvaibale)).build();
+                .addOrAttributes(orFilterList).build();
+    }
+
+    private List<Filter> getRoleWeightsOrFilter(int maxWeightAvailable) {
+        List<Filter> orFilterList = new ArrayList<Filter>();
+        //Todo: fix this hack
+        //rsWeight role 2500 does not exist; added to prevent default user from getting all roles
+        for (Integer weight : Arrays.asList(0, 100, 500, 750, 900, 1000, 2000, 2500)) {
+            if (maxWeightAvailable < weight) {
+                orFilterList.add(Filter.createEqualityFilter("rsWeight", weight.toString()));
+            }
+        }
+        return orFilterList;
     }
 
     private Filter searchFilter_availableRolesByApplicationId(String applicationId, int maxWeightAvailable) {

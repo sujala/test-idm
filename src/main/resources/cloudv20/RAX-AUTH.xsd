@@ -23,7 +23,6 @@
     <attribute name="defaultRegion" type="xsd:string" />
     <attribute name="domainId" type="xsd:string" />
     <attribute name="propagate" type="xsd:boolean" />
-    <attribute name="weight" type="int" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />

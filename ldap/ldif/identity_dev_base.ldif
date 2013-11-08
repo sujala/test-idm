@@ -2245,7 +2245,6 @@ cn: LON
 enabled: TRUE
 rsCloud: UK
 useForDefaultRegion: TRUE
-rsId: fe4c8524dc5b432699c260aba9ca650b
 
 dn: cn=IAD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsCloudRegion
@@ -2253,7 +2252,6 @@ cn: IAD
 enabled: TRUE
 rsCloud: US
 useForDefaultRegion: FALSE
-rsId: 6a0aee124e59421390c01e9f4a37f7d5
 
 dn: cn=DFW,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsCloudRegion
@@ -2261,7 +2259,6 @@ cn: DFW
 enabled: TRUE
 rsCloud: US
 useForDefaultRegion: FALSE
-rsId: fd60097006cd462c88a77e16a443f566
 
 dn: cn=ORD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsCloudRegion
@@ -2269,7 +2266,6 @@ cn: ORD
 enabled: TRUE
 rsCloud: US
 useForDefaultRegion: TRUE
-rsId: 93b6fc4a4d9c4be2902d811a93d424e1
 
 dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rack
  space,dc=rackspace,dc=com

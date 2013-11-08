@@ -14,6 +14,7 @@ import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -235,12 +237,21 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Updated - {}", object);
     }
 
+    /*
+     * Ldap has a constrain violation that does not allow a user entity to update a password
+     * to one of its last previous passwords. Updating to the current
+     * password, ldap message is 'Password matches previous password' else if updating to a
+     * previous password the message is 'Password match in history'.
+     */
     void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
-        String stalePasswordMsg = config.getString("stalePasswordMsg");
-        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
-                && stalePasswordMsg.equals(ldapEx.getMessage())) {
-            audit.fail(stalePasswordMsg);
-            throw new StalePasswordException(stalePasswordMsg);
+        String[] stalePasswordMsg = config.getStringArray("stalePasswordMsg");
+        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())){
+            for(String msg : stalePasswordMsg){
+                if(msg.equals(ldapEx.getMessage())){
+                    audit.fail(msg);
+                    throw new StalePasswordException(msg);
+                }
+            }
         }
     }
 
@@ -250,16 +261,18 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
 
         String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
-        List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
-        audit.modify(mods);
-        if (mods.size() > 0) {
-            persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+        if(attributes.length > 0){
+            List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
+            audit.modify(mods);
+            if (mods.size() > 0) {
+                persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+            }
         }
     }
 
     private String[] getLDAPFieldAttributes(T object, boolean deleteNullAttributes) {
         List<String> attributes = new ArrayList<String>();
-        for (Field field : object.getClass().getDeclaredFields()) {
+        for (Field field : getDeclaredFields(object.getClass())) {
             boolean hasDeleteNullValueAnnotation = false;
             String attribute = null;
             for (Annotation annotation : field.getAnnotations()) {
@@ -273,15 +286,50 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             }
             if (deleteNullAttributes) {
                 if (hasDeleteNullValueAnnotation) {
-                    attributes.add(attribute);
+                    if(shouldAddAttribute(object, field)){
+                        attributes.add(attribute);
+                    }
                 }
             } else {
                 if (!hasDeleteNullValueAnnotation) {
-                    attributes.add(attribute);
+                    if (shouldAddAttribute(object, field)){
+                        attributes.add(attribute);
+                    }
                 }
             }
         }
         return attributes.toArray(new String[attributes.size()]);
+    }
+
+    private List<Field> getDeclaredFields(Class<?> type) {
+        List<Field> result = new ArrayList<Field>();
+        Collections.addAll(result, type.getDeclaredFields());
+
+        if (type.getSuperclass() != null) {
+            result.addAll(getDeclaredFields(type.getSuperclass()));
+        }
+
+        return result;
+    }
+
+    /**
+     * Fields coming into this method come from the object using reflection.
+     * So, the getProperty should always find the attribute. Blank strings are
+     * a constrain violation in the directory for an update hence why the fields
+     * need to be ignored. If it fails to get the property the method returns true
+     * keeping old functionality which makes it save to ignore any exceptions.
+     */
+    private boolean shouldAddAttribute(T object, Field field) {
+        try {
+            if (field.getType() != String.class) {
+                return true;
+            } else {
+                String value = BeanUtils.getProperty(object, field.getName());
+                return StringUtils.isNotBlank(value);
+            }
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     @Override
