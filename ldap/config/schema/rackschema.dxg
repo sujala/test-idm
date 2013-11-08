@@ -1,0 +1,11 @@
+# Schema configuration file written by Chef
+
+source "x500.dxc";
+source "cosine.dxc";
+source "umich.dxc";
+source "inetop.dxc";
+source "dxserver.dxc";
+source "nsroaming.dxc";
+source "sunone.dxc";
+
+source "rackschema.dxc";

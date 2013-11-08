@@ -22,6 +22,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     public static final String ROLE_NAME_PREFIX = "role"
 
     public static final String DEFAULT_PASSWORD = "Password1"
+    public static final String APPLICATION_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
 
     /**
      * Random string generated for entire test class. Same for all feature methods.
@@ -101,7 +102,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"
-        addRoleToUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
+        def status = addRoleToUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
+        assert status == HttpStatus.OK.value()
 
         then: "user admin has role"
         assertUserHasRole(identityAdmin, cloudIdentityAdminRole)
@@ -118,7 +120,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         Role role = createPropagateRole(false, 1000)
 
         when: "As user-admin, add 1000 weight role to default user within my domain"
-        addRoleToUser(userAdminToken, defaultUser, role)
+        def status = addRoleToUser(userAdminToken, defaultUser, role)
+        assert status == HttpStatus.OK.value()
 
         then: "default user now has user-manage role"
         assertUserHasRole(defaultUser, role)
@@ -129,7 +132,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteRoleQuietly(role)
     }
 
-    def "User manager can assign user-manager role to default user within domain"() {
+    def "User manager cannot assign user-manager role to default user within domain"() {
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
 
@@ -139,14 +142,16 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         ClientRole userManageRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityUserManageRole());
-        addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        assert status == HttpStatus.OK.value()
         assertUserHasRole(userManager, userManageRole) //verify test state
 
         when: "As user-manager, add user-manager role to default user within my domain"
-        addRoleToUser(userManagerToken, defaultUser, userManageRole)
+        def forbiddenStatus = addRoleToUser(userManagerToken, defaultUser, userManageRole)
 
-        then: "default user now has user-manage role"
-        assertUserHasRole(defaultUser, userManageRole)
+        then:
+        assert forbiddenStatus == HttpStatus.FORBIDDEN.value()
+        assertUserDoesNotHaveRole(defaultUser, userManageRole)
 
         cleanup:
         deleteUserQuietly(userAdmin)
@@ -175,16 +180,23 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
-        def role = v2Factory.createRole(propagate, weight).with {
+        def role = entityFactory.createClientRole().with {
+            it.id = getNormalizedRandomString()
             it.name = roleName
             it.propagate = propagate
-            it.weight = weight
-            it.otherAttributes = null
-            return it
+            it.rsWeight = weight
+            it.clientId = APPLICATION_ID
+            it
         }
-        def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)
-        def propagatingRole = responsePropagateRole.getEntity(Role).value
-        return propagatingRole
+
+        applicationService.addClientRole(role)
+
+        return v2Factory.createRole().with {
+            it.id = role.id
+            it.name = role.name
+            it.propagate = role.propagate
+            it
+        }
     }
 
     def void assertUserHasRole(user, role) {
@@ -195,8 +207,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.NOT_FOUND.value()
     }
 
-    def void addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
-        assert cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.OK.value()
+    def addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
+        return cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status
     }
 
     def void removeRoleFromUser(callerToken, userToRemoveRoleFrom, roleToRemove) {

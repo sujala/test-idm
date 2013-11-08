@@ -9,8 +9,10 @@ import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.stereotype.Component
 import spock.lang.Shared
 
+import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
@@ -21,6 +23,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
  * Time: 1:00 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 class Cloud20Methods {
 
     @Shared WebResource resource
@@ -30,6 +33,7 @@ class Cloud20Methods {
 
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
+    static def RAX_KSQA = "RAX-KSQA"
     static def OS_KSCATALOG = "OS-KSCATALOG"
     static def X_AUTH_TOKEN = "X-Auth-Token"
 
@@ -80,9 +84,8 @@ class Cloud20Methods {
     }
 
     def deleteUserApiKey(String token, String userId) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(RAX_KSKEY_API_KEY_CREDENTIALS).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
-
 
     def getUser(String token, URI location) {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
@@ -298,6 +301,10 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
     }
 
+    def updatePolicy(String token, String policyId, policy) {
+        resource.path(path20).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).put(ClientResponse)
+    }
+
     def getPolicy(String token, location) {
         resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
@@ -326,12 +333,20 @@ class Cloud20Methods {
         resource.path(path20).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
-    def getSecretQA(String token, String userId){
+    def getSecretQAs(String token, String userId){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createSecretQA(String token, String userId, secretqa){
         resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+    }
+
+    def getSecretQA(String token, String userId){
+        resource.path(path20).path('users').path(userId).path(RAX_KSQA).path('secretqa').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateSecretQA(String token, String userId, secretqa){
+        resource.path(path20).path('users').path(userId).path(RAX_KSQA).path('secretqa').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).put(ClientResponse)
     }
 
     def getRole(String token, String roleId) {
@@ -390,7 +405,7 @@ class Cloud20Methods {
     }
 
     def updateCredentials(String token, String userId, creds) {
-        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(JSONConstants.PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("OS-KSADM").path("credentials").path(PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
     }
 
     def getAdminsForUser(String token, String userId) {
