@@ -2417,7 +2417,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.propagate = true
-        role.otherAttributes = v2Factory.createOtherMap(true)
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
@@ -2448,9 +2447,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
             listUsersByTenant.user[0].id == createSubUser.id
             matched = true
         }
-        else {
-            matched == true
-        }
+
+        matched == true
     }
 
     def "Add role to user on tenant using identity:admin token should return 200" () {
@@ -2486,7 +2484,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def tenant = v2Factory.createTenant("7546143", "7546143")
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.propagate = true
-        role.otherAttributes = v2Factory.createOtherMap(true)
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
