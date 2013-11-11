@@ -84,22 +84,4 @@ class LdapRouterMBeanIntegrationTest extends Specification {
         assertThat("server connection status", serverConnectionStatus.values().contains("up"), equalTo(true));
         assertThat("server connection status", serverConnectionStatus.values().contains("down"), equalTo(false));
     }
-
-    def "reset does not throw exception" (){
-        when:
-        ldapRouterMBean.reset()
-
-        then:
-        notThrown(Exception)
-    }
-
-    def "reset does not throw exception even when connections already closed" (){
-        when:
-        ldapRouterMBean.connPools.appConnPool.close()
-        ldapRouterMBean.connPools.bindConnPool.close()
-        ldapRouterMBean.reset()
-
-        then:
-        notThrown(Exception)
-    }
 }
