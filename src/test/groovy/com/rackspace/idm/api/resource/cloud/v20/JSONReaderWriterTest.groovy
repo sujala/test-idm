@@ -37,7 +37,6 @@ import spock.lang.Shared
 import testHelpers.RootServiceTest
 
 import javax.xml.datatype.DatatypeFactory
-import javax.xml.datatype.XMLGregorianCalendar
 
 import static com.rackspace.idm.JSONConstants.*
 
@@ -443,7 +442,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     def "can read/write roles as json"() {
         when:
-        def role = v2Factory.createRole(propagate, weight)
+        def role = v2Factory.createRole(propagate)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForRole.writeTo(role, Role, null, null, null, null, arrayOutputStream)
@@ -455,14 +454,9 @@ class JSONReaderWriterTest extends RootServiceTest {
         if(readJSONObject.propagate != null){
             readJSONObject.propagate as boolean == propagate
         }
-        readJSONObject.weight == weight
 
         where:
-        propagate   | weight
-        true        | null
-        null        | 500
-        false       | 100
-        null        | null
+        propagate << [true, false, null]
     }
 
     def "can read/write user as json" () {

@@ -588,6 +588,95 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
     }
 
+    def "revoke token should disable a users token"() {
+        given:
+        def username = "user" + sharedRandom
+        def apiKey = "1234567890"
+        User user = v1Factory.createUser(username, apiKey, randomMosso, null, true)
+
+        when:
+        def userCreateResponse = cloud11.createUser(user)
+        assert (userCreateResponse.status == 201)
+
+        def authResponse = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, apiKey))
+        assert (authResponse.status == 200)
+
+        def token = authResponse.getEntity(AuthData).token.id
+        def validateResponse = cloud11.validateToken(token)
+        assert (validateResponse.status == 200)
+
+        def revokeResponse = cloud11.revokeToken(token)
+        assert (revokeResponse.status == 204)
+
+        def getTokenResponse = cloud11.getToken(token)
+        def failedValidateResponse = cloud11.validateToken(token)
+
+        then:
+        getTokenResponse.status == 404
+        failedValidateResponse.status == 404
+
+        cleanup:
+        cloud11.deleteUser(username)
+    }
+
+    def "Create user with blank nastIds" () {
+        given:
+        String username = "nullNastUser$sharedRandom"
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, nastId , true)
+
+        when:
+        def createdUserResponse = cloud11.createUser(user)
+        def createdUser = createdUserResponse.getEntity(User)
+        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User)
+
+        then:
+        createdUserResponse.status  == status
+        createdUser.nastId != null
+        createdUser.nastId != nastId
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, userEntity.id)
+
+        where:
+        nastId | status
+        null   | 201
+        ""     | 201
+        "  "   | 201
+    }
+
+    def "update user's nastId - blanks" () {
+        given:
+        String username = "spacesNastUpdateUser$sharedRandom"
+        def mossoId = getRandomNumber(1000000, 2000000);
+        def key = "1234567890"
+        User user = v1Factory.createUser(username, key, mossoId, null , true)
+
+        when:
+        def createdUserResponse = cloud11.createUser(user)
+        def createdUser = createdUserResponse.getEntity(User)
+        user.nastId = nastId
+        def updateUserResponse = cloud11.updateUser(username, user)
+        def updateUser = updateUserResponse.getEntity(User)
+        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User)
+
+        then:
+        createdUserResponse.status  == 201
+        createdUser.nastId != null
+        updateUserResponse.status == status
+        updateUser.nastId == createdUser.nastId
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, userEntity.id)
+
+        where:
+        nastId | status
+        ""     | 200
+        "   "  | 200
+        null   | 200
+    }
+
     def authAndExpire(username, key) {
         def token = cloud11.authenticate(v1Factory.createUserKeyCredentials(username, key)).getEntity(AuthData).token
         cloud11.revokeToken(token.id)

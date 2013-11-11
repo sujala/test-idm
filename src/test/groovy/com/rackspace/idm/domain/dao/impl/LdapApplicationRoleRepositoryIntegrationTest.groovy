@@ -73,7 +73,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
     }
 
     @Unroll
-    def "roles are returned if their rsWeight is greater than or equal to maxWeightAvailable"() {
+    def "roles are returned if their rsWeight is greater than maxWeightAvailable"() {
         given:
         def clientId = "clientId$sharedRandom"
         def roleName = "roleName1$sharedRandom"
@@ -114,7 +114,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         where:
         rsWeight    | maxWeightAvailable  | shouldContainRole
         500         | 0                   | true
-        500         | 500                 | true
+        500         | 500                 | false
         500         | 1000                | false
     }
 

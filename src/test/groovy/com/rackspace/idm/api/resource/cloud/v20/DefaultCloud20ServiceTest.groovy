@@ -782,6 +782,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.getMetadata().get("Link") != null
     }
 
+    def "listUsers (caller is user manaage) gets paged users with domain filter and returns list"() {
+        given:
+        mockUserConverter(service)
+        allowUserAccess()
+
+        authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.authorizeUserManageRole(_) >> true
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        def userContextMock = Mock(PaginatorContext)
+        userContextMock.getValueList() >> [].asList()
+
+        userService.getUser(_) >> entityFactory.createUser()
+
+        userPaginator.createLinkHeader(_, _) >> "link header"
+
+        when:
+        def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        userService.getAllUsersPagedWithDomain(_, _, _) >> { arg1, arg2, arg3 ->
+            assert(arg1 == "domainId")
+            return userContextMock
+        }
+
+        response1.status == 200
+        response1.getMetadata().get("Link") != null
+    }
+
     def "listUsers handles exceptions"() {
         given:
         mockUserConverter(service)
@@ -792,7 +822,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         scopeAccessMock.getLDAPEntry() >> createLdapEntry()
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
-        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
 
         userService.getUser(_) >>> [
                 entityFactory.createUser(),
@@ -1419,7 +1449,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
     }
 
     def "addRolesToUserOnTenant verifies tenant access"() {
@@ -1534,7 +1564,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.status == 401
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        1 * authorizationService.verifyUserManagedLevelAccess(_) >> { throw new ForbiddenException() }
         response2.status == 403
     }
 
@@ -3365,12 +3395,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         //Application logic assumption is that only ONE of the following roles service/identity/useradmin/usermanage
         where:
-        updatingServiceAdmin    | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser   | expectedStatus
-        true                    | false                 | false             | false               | false               | 403
-        false                   | true                  | false             | false               | false               | 403
-        false                    | false                | true              | false               | false               | 403
-        false                    | false                | false             | true                | true                | 200
-        false                    | false                | false             | false               | true                | 200
+        updatingServiceAdmin | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser | expectedStatus
+        true                 | false                 | false             | false               | false             | 403
+        false                | true                  | false             | false               | false             | 403
+        false                | false                 | true              | false               | false             | 403
+        false                | false                 | false             | true                | true              | 403
+        false                | false                 | false             | false               | true              | 200
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {
@@ -3520,6 +3550,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
 
         when:
         def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
@@ -3527,6 +3558,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * userService.getUserById(_) >> user
+        1 * userService.getUser(_) >> caller
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.hasUserAdminRole(_) >> true
         result.build().status == 403

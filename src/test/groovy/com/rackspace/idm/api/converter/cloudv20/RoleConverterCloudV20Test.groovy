@@ -19,7 +19,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
     def setup() {
         mockConfiguration(converter)
-        config.getInt("cloudAuth.special.rsWeight") >> configWeight
+        config.getInt("default.rsWeight") >> configWeight
     }
 
     def "can convert tenantRole to jaxb role"() {
@@ -57,19 +57,17 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRoleFromClientRole(clientRole)
 
         then:
-        result.weight == weight
         result.propagate == propagate
         result.serviceId == serviceId
     }
 
     def "can convert jaxb role to clientRole"() {
         given:
-        def weight = 100
+        def weight = 200
         def propagate = false
         def serviceId = "serviceId"
 
         def jaxbRole = v2Factory.createRole()
-        jaxbRole.weight = weight
         jaxbRole.propagate = propagate
         jaxbRole.serviceId = serviceId
 

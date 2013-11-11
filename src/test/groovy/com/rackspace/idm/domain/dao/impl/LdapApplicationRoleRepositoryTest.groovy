@@ -19,11 +19,11 @@ class LdapApplicationRoleRepositoryTest extends Specification {
     @Shared Configuration config
     @Shared LdapApplicationRoleRepository repo
 
-    @Shared defaultWeightFilterString = "(&(objectClass=clientRole)(rsWeight>=2000))"
-    @Shared userAdminWeightFilterString = "(&(objectClass=clientRole)(rsWeight>=1000))"
-    @Shared specialWeightFilterString = "(&(objectClass=clientRole)(rsWeight>=500))"
-    @Shared adminWeightFilterString = "(&(objectClass=clientRole)(rsWeight>=100))"
-    @Shared serviceAdminWeightFilterString = "(&(objectClass=clientRole)(rsWeight>=0))"
+    @Shared defaultWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=2500)))"
+    @Shared userAdminWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=2000)(rsWeight=2500)))"
+    @Shared specialWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
+    @Shared adminWeightFilterString =  "(&(objectClass=clientRole)(|(rsWeight=500)(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
+    @Shared serviceAdminWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=100)(rsWeight=500)(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
 
     def setupSpec() {
         repo = new LdapApplicationRoleRepository()
@@ -33,12 +33,6 @@ class LdapApplicationRoleRepositoryTest extends Specification {
     def setup() {
         config = Mock()
         repo.config = config
-
-        config.getInt("cloudAuth.defaultUser.rsWeight") >> 2000
-        config.getInt("cloudAuth.userAdmin.rsWeight") >> 1000
-        config.getInt("cloudAuth.special.rsWeight") >> 500
-        config.getInt("cloudAuth.admin.rsWeight") >> 100
-        config.getInt("cloudAuth.serviceAdmin.rsWeight") >> 0
     }
 
     def "searchFilter_availableClientRoles returns appropriate search filter"() {
@@ -55,6 +49,22 @@ class LdapApplicationRoleRepositoryTest extends Specification {
         specialWeightFilter.toString().equals(specialWeightFilterString)
         adminWeightFilter.toString().equals(adminWeightFilterString)
         serviceAdminWeightFilter.toString().equals(serviceAdminWeightFilterString)
+    }
+
+    def "getting role weights or filter returns or filter"() {
+        when:
+        def listOne = repo.getRoleWeightsOrFilter(2000)
+        def listTwo = repo.getRoleWeightsOrFilter(1000)
+        def listThree = repo.getRoleWeightsOrFilter(500)
+        def listFour = repo.getRoleWeightsOrFilter(100)
+        def listFive = repo.getRoleWeightsOrFilter(0)
+
+        then:
+        listOne.size() == 1
+        listTwo.size() == 2
+        listThree.size() == 5
+        listFour.size() == 6
+        listFive.size() == 7
     }
 
     def "searchFilter by applicationId and available returns filter"() {

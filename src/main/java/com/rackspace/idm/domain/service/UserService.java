@@ -67,6 +67,8 @@ public interface UserService {
     
     User loadUser(String userId);
 
+    BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled);
+
     BaseUser getUserByScopeAccess(ScopeAccess scopeAccess);
 
     boolean isUsernameUnique(String username);

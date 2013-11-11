@@ -393,7 +393,14 @@ public class DefaultUserService implements UserService {
                 return clientRole.getRsWeight();
             }
         }
-        return config.getInt("cloudAuth.defaultUser.rsWeight");
+        return getDefaultUserWeight();
+    }
+
+    private int getDefaultUserWeight() {
+        String clientId = config.getString("cloudAuth.clientId");
+        String roleName = config.getString("cloudAuth.userRole");
+        ClientRole defaultUserRole = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        return defaultUserRole.getRsWeight();
     }
 
     @Override
@@ -637,15 +644,18 @@ public class DefaultUserService implements UserService {
         // Expire all User tokens if we are updating the password field
         User currentUser = userDao.getUserById(user.getId());
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
-        if(checkForPasswordUpdate(currentUser, user) || userIsBeingDisabled)  {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
-        }
 
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user, hasSelfUpdatedPassword);
+
+        if(checkForPasswordUpdate(currentUser, user)){
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
+        }
+
         if (userIsBeingDisabled) {
+            scopeAccessService.expireAllTokensForUser(user.getUsername());
             disableUserAdminSubUsers(currentUser);
         }
 
@@ -766,7 +776,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
+    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled) {
         BaseUser user;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
@@ -791,10 +801,15 @@ public class DefaultUserService implements UserService {
         if (user == null) {
             throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
         }
-        if (user.isDisabled()) {
+        if (checkUserDisabled && user.isDisabled()) {
             throw new NotFoundException("Token not found.");
         }
         return user;
+    }
+
+    @Override
+    public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess) {
+        return getUserByScopeAccess(scopeAccess, true);
     }
 
     @Override

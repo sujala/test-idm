@@ -4,12 +4,8 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.http.HttpStatus
-import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
-
-import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE
-import static com.rackspace.idm.RaxAuthConstants.QNAME_WEIGHT
 
 /**
  * Tests the functionality of propagating roles when assigned as global roles (non-tenant specific).
@@ -82,37 +78,28 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
         String roleName = ROLE_NAME_PREFIX + FEATURE_RANDOM
 
         when:
-        def role = v2Factory.createRole(propagate, weight).with {
+        def role = v2Factory.createRole(propagate).with {
             it.name = roleName
+            it.otherAttributes = null
             return it
         }
         def response = cloud20.createRole(specificationServiceAdminToken, role)
         def createdRole = response.getEntity(Role).value
 
         def propagateValue = null
-        def weightValue = null
-
         propagateValue = createdRole.propagate
-
-        weightValue = createdRole.weight
 
         then:
         propagateValue == expectedPropagate
-        weightValue == expectedWeight
 
         cleanup:
         deleteRoleQuietly(createdRole)
 
         where:
-        weight | propagate | expectedWeight | expectedPropagate
-        null   | null      | 1000           | false
-        500    | null      | 500            | false
-        500    | true      | 500            | true
-        500    | false     | 500            | false
-        100    | null      | 100            | false
-        null   | true      | 1000           | true
-        null   | false     | 1000           | false
-        2000   | true      | 2000           | true
+        propagate | expectedPropagate
+        null      | false
+        true      | true
+        false     | false
     }
 
     def "service admins can add a propagating role to a user admin"() {
@@ -472,8 +459,9 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
-        def role = v2Factory.createRole(propagate, weight).with {
+        def role = v2Factory.createRole(propagate).with {
             it.name = roleName
+            it.otherAttributes = null
             return it
         }
         def responsePropagateRole = cloud20.createRole(specificationServiceAdminToken, role)

@@ -27,29 +27,45 @@ public class Policy implements Auditable, UniqueId {
     private ReadOnlyEntry ldapEntry;
 
     @Mapping("id")
-    @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_ID,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            inRDN = true,
+            filterUsage = FilterUsage.ALWAYS_ALLOWED,
+            requiredForEncode = true)
     private String policyId;
 
     @Mapping("name")
-    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_NAME,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private String name;
 
     @Mapping("enabled")
-    @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_ENABLED,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private Boolean enabled;
 
     @Mapping("global")
-    @LDAPField(attribute = LdapRepository.ATTR_GLOBAL, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_GLOBAL,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private Boolean global;
 
     @Mapping("type")
-    @LDAPField(attribute = LdapRepository.ATTR_POLICYTYPE, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_POLICYTYPE,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private String policyType;
 
-    @LDAPField(attribute = LdapRepository.ATTR_BLOB, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
+    @LDAPField(attribute = LdapRepository.ATTR_BLOB,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private String blob;
 
-    @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION,
+            objectClass = LdapRepository.OBJECTCLASS_POLICY,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private String description;
 
     public String getUniqueId() {
