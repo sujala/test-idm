@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -244,6 +243,12 @@ public final class JsonWriterHelper {
             for (Role role : roleList.getRole()) {
                 roleInner.add(getRole(role));
             }
+        }
+
+        userInner.put(JSONConstants.RAX_AUTH_FEDERATED, user.isFederated());
+
+        if (!StringUtils.isEmpty(user.getFederatedIdp())) {
+            userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
         }
 
         String defaultRegion = user.getDefaultRegion();

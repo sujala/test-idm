@@ -35,7 +35,8 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
                 logger.info("failed initalize JSONJAXBContext: " + e.getMessage());
             }
     	}
-    	return context;
+
+        return context;
     }
     
     private static void init() throws JAXBException {

@@ -725,6 +725,21 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.98) = {
     description = "salt for encryption"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.99) = {
+    name = idpName
+    ldap-names = idpName
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "name of identity provider"
+};
+
+# attribute comes from rfc2703bis schema.
+schema set attribute (1.3.6.1.1.1.1.28) = {
+    name   = nisPublicKey
+    syntax = octetString
+    single-valued
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1195,4 +1210,31 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.33) = {
     may-contain
         encryptedValue,
         value
+};
+
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.34) = {
+    name = federatedUserScopeAccess
+    ldap-names = federatedUserScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        userRsId,
+        idpName
+    may-contain
+        accessToken,
+        accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
+    name = externalProvider
+    ldap-names = externalProvider
+    subclass-of organizationalUnit
+    kind = structural
+    must-contain
+        ou,
+        labeledUri
+    may-contain
+        description,
+        nisPublicKey
 };

@@ -1,13 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
-import com.unboundid.util.LDAPSDKUsageException;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 import com.unboundid.util.LDAPSDKUsageException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -27,25 +24,20 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
     public static final String OBJECTCLASS_CLIENT_ROLE = "clientRole";
     public static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
-    public static final String OBJECTCLASS_DEFINEDPERMISSION = "definedPermission";
-    public static final String OBJECTCLASS_DELEGATEDPERMISSION = "delegatedPermission";
-    public static final String OBJECTCLASS_GRANTEDPERMISSION = "grantedPermission";
     public static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     public static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
-    public static final String OBJECTCLASS_PERMISSION = "rsPermission";
     public static final String OBJECTCLASS_RACKER = "rsRacker";
     public static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
-    public static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
     public static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
     public static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
     public static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
     public static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
     public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
     public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
-    public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
     public static final String OBJECTCLASS_IMPERSONATEDSCOPEACCESS = "impersonatedScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
+    public static final String OBJECTCLASS_FEDERATEDUSERSCOPEACCESS = "federatedUserScopeAccess";
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
     public static final String OBJECTCLASS_TENANT = "tenant";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
@@ -56,7 +48,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_REGION = "rsCloudRegion";
     public static final String OBJECTCLASS_PATTERN = "rsPattern";
     public static final String OBJECTCLASS_PROPERTY = "rsProperty";
-
+    public static final String OBJECTCLASS_EXTERNALPROVIDER = "externalProvider";
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
     public static final String ATTR_ID = "rsId";
@@ -93,6 +85,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CLIENT_SECRET = "userPassword";
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
+    public static final String ATTR_PUBLIC_KEY = "nisPublicKey";
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
@@ -117,6 +110,7 @@ public abstract class LdapRepository {
     public static final String ATTR_NAST_ID = "rsNastId";
     public static final String ATTR_NO_ATTRIBUTES = "NO_ATTRIBUTES";
     public static final String ATTR_O = "o";
+    public static final String ATTR_URI = "labeledUri";
     public static final String ATTR_OBJECT_CLASS = "objectClass";
     public static final String ATTR_OU = "ou";
     public static final String ATTR_OWNER = "owner";
@@ -179,7 +173,7 @@ public abstract class LdapRepository {
     public static final String ATTR_VALUE = "value";
     public static final String ATTR_ENCRYPTION_SALT = "encryptionSalt";
     public static final String ATTR_ENCRYPTION_VERSION_ID = "encryptionVersionId";
-
+    public static final String ATTR_IDP_NAME = "idpName";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
@@ -189,7 +183,9 @@ public abstract class LdapRepository {
     public static final String ATTR_ERRMSG = "errMsg";
 
     // Definitions for LDAP DNs
+    protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
+    protected static final String SCOPE_ACCESS_BASE_DN = "dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";

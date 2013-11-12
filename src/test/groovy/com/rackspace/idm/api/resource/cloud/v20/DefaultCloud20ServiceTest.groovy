@@ -3,18 +3,13 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import com.rackspace.idm.domain.entity.PaginatorContext
-import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.exception.DuplicateException
-import com.rackspace.idm.exception.ExceptionHandler
-import com.rackspace.idm.exception.ForbiddenException
-import com.rackspace.idm.exception.NotAuthorizedException
-import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.exception.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -2252,7 +2247,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.description.equals(domain.getDescription())
         response.id.equals(domain.getId())
         response.name.equals(domain.getName())
-
     }
 
     def "method getAccessibleDomainsEndpointsForUser gets endpoints by user"() {
@@ -2375,46 +2369,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * tenantService.getTenantRolesForUser(user)
-    }
-
-    def "checkToken verifies accessLevel"() {
-        given:
-        def scopeAccessOne = createUserScopeAccess()
-        def scopeAccessTwo = createUserScopeAccess()
-        scopeAccessTwo.accessTokenString = "token2"
-        scopeAccessTwo.userRsId = "userRsId2"
-
-        scopeAccessService.getScopeAccessByAccessToken(authToken) >> scopeAccessOne
-        scopeAccessService.getScopeAccessByAccessToken("differentToken") >> scopeAccessTwo
-        scopeAccessService.getScopeAccessByAccessToken("tokenId") >> null
-
-        when:
-        def notAuthedResponse = service.checkToken(headers, "", "", "tenantId").build()
-        def forbiddenResponse = service.checkToken(headers, authToken, "tokenId", "tenantId").build()
-        def notFoundResponse = service.checkToken(headers, "differentToken", "tokenId", "tenantId").build()
-
-        then:
-        (1.._) * authorizationService.verifyIdentityAdminLevelAccess(scopeAccessOne) >> { throw new ForbiddenException() }
-
-        notAuthedResponse.status == 401
-        forbiddenResponse.status == 403
-        notFoundResponse.status == 404
-    }
-
-    def "checkToken gets user and TenantRoles from that user"() {
-        given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser()
-
-        when:
-        def response = service.checkToken(headers, authToken, "tokenId", "tenantId").build()
-
-        then:
-        1 * userService.getUserByAuthToken("tokenId") >> user
-        1 * tenantService.getTenantRolesForUser(user) >> [].asList()
-        1 * tenantService.isTenantIdContainedInTenantRoles(_, _)
-        response.status == 404
     }
 
     def "validateToken when caller token is racker token gets tenantRoles and rackerRoles by user"() {
@@ -3643,6 +3597,39 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         apiKey << [null, ""]
     }
 
+    def "Validate a saml response" () {
+        given:
+        def samlResponse = Mock(org.opensaml.saml2.core.Response)
+        def mockAuthData = Mock(AuthData)
+        def responseBuilder = Mock(javax.ws.rs.core.Response.ResponseBuilder)
+        AuthenticateResponse mockAuthenticateResponse = Mock()
+        AuthConverterCloudV20 authConverter = Mock()
+        service.authConverterCloudV20 = authConverter;
+
+        and:
+        defaultFederatedIdentityService.generateAuthenticationInfo() >> mockAuthData
+        authConverter.toAuthenticationResponse(_) >> mockAuthenticateResponse
+
+        when: "saml response is validated"
+        def result = service.validateSamlResponse(headers, samlResponse)
+
+        then:
+        result.build().status == 200
+    }
+
+    def "List tenants for federated token"() {
+        given:
+        allowFederatedTokenAccess()
+        mockTenantConverter(service)
+
+        when:
+        def result = service.listTenants(headers, authToken, null, null).build()
+
+        then:
+        1 * tenantService.getTenantsForFederatedTokenByTenantRoles(_)  >> [].asList()
+        result.status == 200
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
@@ -3659,6 +3646,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockQuestionService(service)
         mockSecretQAService(service)
         mockEndpointService(service)
+        mockFederatedIdentityService(service);
     }
 
     def mockMisc() {

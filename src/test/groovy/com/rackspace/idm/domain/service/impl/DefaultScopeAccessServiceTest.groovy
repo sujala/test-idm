@@ -817,6 +817,21 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         result == false
     }
 
+    def "delete expired tokens" () {
+        given:
+        def user = Mock(User)
+
+        and:
+        user.getId() >> "id"
+        scopeAccessDao.getScopeAccessesByUserId("id") >> [createScopeAccess(), createScopeAccess("tokenString", new DateTime().minusDays(1).toDate())].asList()
+
+        when:
+        service.deleteExpiredTokens(user)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(_)
+    }
+
     def getRange(seconds, entropy) {
         HashMap<String, Date> range = new HashMap<>()
         range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())

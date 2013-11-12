@@ -43,6 +43,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
+    public void addTenantRoleToFederatedToken(FederatedToken token, TenantRole tenantRole) {
+        addOrUpdateTenantRole(token.getUniqueId(), tenantRole);
+    }
+
+    @Override
     public Iterable<TenantRole> getTenantRolesForApplication(Application application) {
         return getObjects(searchFilterGetTenantRoles(), application.getUniqueId());
     }
@@ -60,6 +65,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public Iterable<TenantRole> getTenantRolesForUser(BaseUser user) {
         return getObjects(searchFilterGetTenantRoles(), user.getUniqueId());
+    }
+
+    @Override
+    public Iterable<TenantRole> getTenantRolesForFederatedToken(FederatedToken token) {
+        return getObjects(searchFilterGetTenantRoles(), token.getUniqueId());
     }
 
     @Override
@@ -223,6 +233,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
         return getTenantRole(user.getUniqueId(), roleId);
+    }
+
+    @Override
+    public TenantRole getTenantRoleForFederatedToken(FederatedToken token, String roleId) {
+        return getTenantRole(token.getUniqueId(), roleId);
     }
 
     @Override

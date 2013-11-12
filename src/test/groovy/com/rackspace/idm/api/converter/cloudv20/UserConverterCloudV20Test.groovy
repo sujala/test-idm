@@ -1,14 +1,12 @@
 package com.rackspace.idm.api.converter.cloudv20
-
+import com.rackspace.idm.domain.config.ExternalBeansConfiguration
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.User
-import org.dozer.DozerBeanMapper
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.xml.datatype.DatatypeFactory
-
 /**
  * Created with IntelliJ IDEA.
  * User: matt.kovacs
@@ -17,11 +15,15 @@ import javax.xml.datatype.DatatypeFactory
  * To change this template use File | Settings | File Templates.
  */
 class UserConverterCloudV20Test extends Specification {
-    @Shared UserConverterCloudV20 converterCloudV20
+    @Shared
+    UserConverterCloudV20 converterCloudV20
 
     def setupSpec() {
+        ExternalBeansConfiguration config = new ExternalBeansConfiguration()
+        def mapper = config.getMapper()
+
         converterCloudV20 = new UserConverterCloudV20().with {
-            it.mapper = new DozerBeanMapper()
+            it.mapper = mapper
             return it
         }
     }

@@ -39,6 +39,9 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false, inAdd = false, inModify = false)
     private Date createTimestamp;
 
+    //tokens can have roles that they are restricted to
+    private List<TenantRole> roles;
+
     public ScopeAccess() {}
 
     public List<String> getAuthenticatedBy() {

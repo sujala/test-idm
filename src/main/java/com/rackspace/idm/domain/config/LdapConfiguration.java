@@ -20,9 +20,9 @@ import java.security.GeneralSecurityException;
  */
 @org.springframework.context.annotation.Configuration
 public class LdapConfiguration {
+    public static final int SERVER_POOL_SIZE_INIT = 1;
+    public static final int SERVER_POOL_SIZE_MAX = 100;
     private static final int DEFAULT_SERVER_PORT = 636;
-    private static final int SERVER_POOL_SIZE_INIT = 1;
-    private static final int SERVER_POOL_SIZE_MAX = 100;
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
     public static final int PORT = 389;
 
