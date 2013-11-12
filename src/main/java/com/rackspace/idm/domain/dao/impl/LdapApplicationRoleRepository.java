@@ -65,6 +65,11 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     @Override
+    public ClientRole getRoleByName(String roleName) {
+        return getObject(searchFilterRoleName(roleName), getBaseDn(), SearchScope.SUB);
+    }
+
+    @Override
     public ClientRole getClientRoleByApplicationAndName(String applicationId, String roleName) {
         return getObject(searchFilter_applicationAndRoleName(applicationId, roleName), getBaseDn(), SearchScope.SUB);
     }
@@ -157,6 +162,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId)
+                .addEqualAttribute(ATTR_NAME, roleName).build();
+    }
+
+    private Filter searchFilterRoleName(String roleName) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addEqualAttribute(ATTR_NAME, roleName).build();
     }
 

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -9,6 +10,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
+import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -18,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.ws.rs.HEAD;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,6 +59,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private RackerDao rackerDao;
+
+    @Autowired
+    private FederatedUserDao federatedUserDao;
 
     @Autowired
     private TenantService tenantService;
@@ -777,11 +783,21 @@ public class DefaultUserService implements UserService {
 
     @Override
     public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled) {
-        BaseUser user;
+        BaseUser user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));
-        } else if (scopeAccess instanceof ImpersonatedScopeAccess) {
+        }
+        else if (scopeAccess instanceof FederatedToken) {
+            //whenever a caller makes a request with a token, the code
+            //attempts to get the user for the calling token, so it can
+            //apply authorization rules, policies, etc
+            //federated users are stored in a different space,
+            //TODO: investigate encapsulating this in UserDao
+            FederatedToken token = (FederatedToken) scopeAccess;
+            user = federatedUserDao.getUserByToken(token);
+        }
+        else if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             if (impersonatedScopeAccess.getRackerId() != null) {
                 Racker impersonatingRacker = getRackerByRackerId(impersonatedScopeAccess.getRackerId());

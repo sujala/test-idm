@@ -9,13 +9,13 @@ import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -25,6 +25,8 @@ import testHelpers.RootServiceTest
  */
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
+
+    @Shared FederatedUserDao mockFederatedUserDao
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -757,7 +759,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         notThrown(NotFoundException)
     }
 
-    def "callig getUsersByEmail returns the user"() {
+    def "calling getUsersByEmail returns the user"() {
         given:
         def user = entityFactory.createUser()
 
@@ -908,6 +910,23 @@ class DefaultUserServiceTest extends RootServiceTest {
         result == context
     }
 
+    def "get federated user from federated token"() {
+        given:
+        def user = entityFactory.createUser()
+        def federatedToken = createFederatedToken("239843lsdfsfd","http://test.com","john.doe")
+        mockFederatedUserDao(service)
+
+        and:
+        mockFederatedUserDao.getUserByToken(federatedToken) >> user
+
+        when:
+        def result = service.getUserByScopeAccess(federatedToken)
+
+        then:
+        result == user
+        notThrown(NotFoundException)
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25
@@ -917,6 +936,11 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.valueList = [].asList()
             return it
         }
+    }
+
+    def mockFederatedUserDao(service) {
+        mockFederatedUserDao = Mock()
+        service.federatedUserDao = mockFederatedUserDao
     }
 
     def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {

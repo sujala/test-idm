@@ -8,6 +8,7 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.SamlUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -46,6 +47,9 @@ public class Cloud20VersionResource {
     @Autowired
     private DefaultCloud20Service cloud20Service;
 
+    @Autowired
+    private SamlUnmarshaller samlUnmarshaller;
+
     public Cloud20VersionResource() {
     }
 
@@ -76,6 +80,14 @@ public class Cloud20VersionResource {
                                     @HeaderParam(X_AUTH_TOKEN) String authToken,
                                     @PathParam("tokenId") String tokenId) throws IOException, JAXBException {
         return cloud20Service.revokeToken(httpHeaders, authToken, tokenId).build();
+    }
+
+    @POST
+    @Path("RAX-AUTH/saml-tokens")
+    public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
+        org.opensaml.saml2.core.Response response = samlUnmarshaller.unmarshallResponse(samlResponse);
+
+        return cloud20Service.validateSamlResponse(httpHeaders, response).build();
     }
 
     @GET
@@ -129,6 +141,7 @@ public class Cloud20VersionResource {
             ImpersonationRequest impersonationRequest) {
         return cloud20Service.impersonate(httpHeaders, authToken, impersonationRequest).build();
     }
+
 
     @POST
     @Path("RAX-AUTH/domains")

@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
 import java.io.File;
-import java.util.Locale;
 
 /**
  * @author john.eo Tries to load the config file from system defined location, and if that
@@ -48,7 +47,7 @@ public class PropertyFileConfiguration {
             return readConfigFile(externalConfigFile);
         }
 
-        logger.debug(String.format("No config file found at %s. Loding from the classpath", externalConfigFile));
+        logger.debug(String.format("No config file found at %s. Loading from the classpath", externalConfigFile));
         
         return readConfigFile(CONFIG_FILE_NAME);
     }

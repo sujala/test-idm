@@ -147,6 +147,8 @@ public final class JSONConstants {
     public static final Object VERIFY_CURRENT_PASSWORD = "verifyCurrentPassword";
     public static final String OS_KSADM_PASSWORD = "OS-KSADM:password";
     public static final String RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion";
+    public static final String RAX_AUTH_FEDERATED = "RAX-AUTH:federated";
+    public static final String RAX_AUTH_FEDERATED_IDP = "RAX-AUTH:federatedIdp";
     public static final String RAX_AUTH_DEFAULT_REGION_SERVICES = "RAX-AUTH:defaultRegionServices";
     public static final Object RAX_AUTH_IMPERSONATION = "RAX-AUTH:impersonation";
     public static final Object RAX_AUTH_IMPERSONATOR = "RAX-AUTH:impersonator";

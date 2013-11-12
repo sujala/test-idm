@@ -44,6 +44,11 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
+    public Iterable<CloudBaseUrl> getBaseUrlsByOpenStackType(String openStackType) {
+        return getObjects(searchFilterGetBaseurlByOpenstackType(openStackType));
+    }
+
+    @Override
     public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
         return getObjects(searchFilterGetBaseUrlByPolicyId(policyId));
     }
@@ -83,6 +88,12 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     private Filter searchFilterGetBaseUrlByService(String service) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_SERVICE, service)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+    }
+
+    private Filter searchFilterGetBaseurlByOpenstackType(String openstackType) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OPENSTACK_TYPE, openstackType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
     }
 

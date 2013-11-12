@@ -17,7 +17,9 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.service.PropertiesService
+import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.validation.Validator
@@ -178,6 +180,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultCloud20Service defaultCloud20Service
     @Shared PropertiesService propertiesService
     @Shared CryptHelper cryptHelper
+    @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -391,6 +394,11 @@ class RootServiceTest extends Specification {
     def mockTenantService(service) {
         tenantService = Mock()
         service.tenantService = tenantService
+    }
+
+    def mockFederatedIdentityService(service) {
+        defaultFederatedIdentityService = Mock()
+        service.federatedIdentityService = defaultFederatedIdentityService
     }
 
     def mockTokenService(service) {
@@ -870,12 +878,31 @@ class RootServiceTest extends Specification {
         }
     }
 
+    def createFederatedToken() {
+        return createFederatedToken("tokenString", "dedicated", "username")
+    }
+
+    def createFederatedToken(String tokenString, String idpName, String username) {
+        new FederatedToken().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = new DateTime().plusDays(1).toDate()
+            it.idpName = idpName
+            it.username = username
+
+            return it
+        }
+    }
+
     def createLdapEntryWithDn(String dn) {
         return new ReadOnlyEntry(dn)
     }
 
     def allowUserAccess() {
         allowAccess(createUserScopeAccess())
+    }
+
+    def allowFederatedTokenAccess() {
+        allowAccess(createFederatedToken())
     }
 
     def allowRackerAccess() {

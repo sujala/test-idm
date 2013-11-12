@@ -1,0 +1,35 @@
+version: 1
+
+dn: o=externalProviders,dc=rackspace,dc=com
+objectClass: top
+objectClass: organization
+o: externalProviders
+description: Defines container of all external providers
+
+dn: ou=dedicated,o=externalProviders,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: externalProvider
+ou: dedicated
+labeledUri: http://my.rackspace.com
+description: Identity provider for dedicated
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI5VENDQVorZ0F3SUJBZ0lKQU
+ 1wdUw4cjNwZUNiTUEwR0NTcUdTSWIzRFFFQkJRVUFNRll4Q3pBSkJnTlYKQkFZVEFsVlRNUTR3REF
+ ZRFZRUUlEQVZVWlhoaGN6RVVNQklHQTFVRUJ3d0xVMkZ1SUVGdWRHOXVhVzh4SVRBZgpCZ05WQkFv
+ TUdFbHVkR1Z5Ym1WMElGZHBaR2RwZEhNZ1VIUjVJRXgwWkRBZUZ3MHhNekEzTURreU1qSTNORGxhC
+ kZ3MHhOREEzTURreU1qSTNORGxhTUZZeEN6QUpCZ05WQkFZVEFsVlRNUTR3REFZRFZRUUlEQVZVWl
+ hoaGN6RVUKTUJJR0ExVUVCd3dMVTJGdUlFRnVkRzl1YVc4eElUQWZCZ05WQkFvTUdFbHVkR1Z5Ym1
+ WMElGZHBaR2RwZEhNZwpVSFI1SUV4MFpEQmNNQTBHQ1NxR1NJYjNEUUVCQVFVQUEwc0FNRWdDUVFD
+ MHRMM1B5bFB4UGoxYXVNTjJDTldJCmFDc3FQY3k0TEs5T3VranhTZlVrZXdPaTZrS292OWFTMnBlM
+ EFzQzh1d2toUGo3UGwrdzBsVll5R1NyQWg1OFAKQWdNQkFBR2pVREJPTUIwR0ExVWREZ1FXQkJRST
+ hFemc5TTh2blhvN2l0MjhuVVc2eFk5NzRqQWZCZ05WSFNNRQpHREFXZ0JRSThFemc5TTh2blhvN2l
+ 0MjhuVVc2eFk5NzRqQU1CZ05WSFJNRUJUQURBUUgvTUEwR0NTcUdTSWIzCkRRRUJCUVVBQTBFQU9v
+ OFVwQStsRm1Gbi9EWDRsRWdTaFlwY29tMTFPK0tTM21mOE5KaGwyLzM0d0x3MElKMHQKMUJwNitVS
+ 2VFTFVWWFVhOGVwdGFRdUpuc2o2eE1iYXl4dz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+
+dn: ou=users,ou=dedicated,o=externalProviders,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+description: Container for users
+ 

@@ -340,7 +340,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
+        if (scopeAccess instanceof FederatedToken) {
+            //federated scope accesses has role / tenant information stored at the token level
+            FederatedToken token = (FederatedToken)scopeAccess;
+            return tenantService.doesFederatedTokenContainTenantRole(token, clientRole.getId());
+        }
+
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+
         return tenantService.doesUserContainTenantRole(user, clientRole.getId());
     }
 
