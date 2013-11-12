@@ -62,6 +62,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def productRole
     @Shared def propagatingRole
     @Shared def tenant
 
@@ -197,6 +198,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def responseRole2 = cloud20.createRole(serviceAdminToken, createRole2)
         sharedRoleTwo = responseRole2.getEntity(Role).value
 
+        //create product role
+        Role createProductRole = v2Factory.createRole()
+        createProductRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+        createProductRole.name = "productRole2$sharedRandom"
+        def responseProductRole = cloud20.createRole(serviceAdminToken, createProductRole)
+        productRole = responseProductRole.getEntity(Role).value
+
         def role = v2Factory.createRole(true).with {
             it.name = "propagatingRole$sharedRandom"
             it.propagate = true
@@ -254,6 +262,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cloud20.deleteRole(serviceAdminToken, sharedRole.getId())
         cloud20.deleteRole(serviceAdminToken, sharedRoleTwo.getId())
+        cloud20.deleteRole(serviceAdminToken, productRole.getId())
         cloud20.deleteRole(serviceAdminToken, propagatingRole.getId())
 
         cloud20.destroyUser(serviceAdminToken, userAdmin.getId())
@@ -265,6 +274,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, defaultUserForAdminTwo.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserWithManageRole2.getId())
+        cloud20.destroyUser(serviceAdminToken, defaultUserForProductRole.getId())
 
         cloud20.destroyUser(serviceAdminToken, defaultUserOtherDomain.getId())
 
@@ -1459,13 +1469,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def users = cloud20.listUsers(defaultUserManageRoleToken).getEntity(UserList).value.user
 
         then:
-        // TODO: Note when this test gets merged to master we the size should be increased to 6 since
-        //       there is another user added in the tests.
-        users.size() == 5
-        // Ensure that the list of users returned does not include the user admin
-        for (User user : users) {
-            !user.id.equals(userAdmin.id)
-        }
+        users.size() == 6
 
         cleanup:
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
@@ -2133,12 +2137,25 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         addRoleResponse.status == 200
         listRolesResponse.status == 200
         roleList.role.size() == 2
-        roleList.role.get(0).id == productRole.id
-        roleList.role.get(1).id == defaultUserRoleId
+
+        def roleId1 = roleList.role.get(0).id
+        def roleId2 = roleList.role.get(1).id
+
+        def success = false
+
+        if (roleId1.equals(productRole.id)) {
+            success = roleId2.equals(defaultUserRoleId)
+        } else if (roleId1.equals(defaultUserRoleId)) {
+            success = roleId2.equals(productRole.id)
+        }
+        success == true
         removeRolesResponse.status == 204
         relistRolesResponse.status == 200
+
+        def roleId3 = roleList2.role.get(0).id
+
         roleList2.role.size() == 1
-        roleList2.role.get(0).id == defaultUserRoleId
+        roleId3.equals(defaultUserRoleId)
     }
 
     def "validate returns password authentication type in response"() {
