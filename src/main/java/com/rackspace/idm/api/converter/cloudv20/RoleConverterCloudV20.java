@@ -3,7 +3,6 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
-import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.Role;
@@ -82,6 +81,7 @@ public class RoleConverterCloudV20 {
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getRoleRsId());
         jaxbRole.setPropagate(role.getPropagate());
+        jaxbRole.setServiceId(role.getClientId());
 
         return jaxbRole;
     }

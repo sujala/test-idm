@@ -134,7 +134,6 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         authInfo.token.roles == roles
         authInfo.endpoints == endpoints
         authInfo.user != user
-        authInfo.user.id != null
         authInfo.user.username == USERNAME
         authInfo.user.federated == true
         authInfo.user.federatedIdp == IDP_URI

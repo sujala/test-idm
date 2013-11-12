@@ -95,7 +95,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     private User createUser(String username, String domainId, IdentityProvider provider) {
         User user = new User();
-        user.setId(UUID.randomUUID().toString().replace("-", ""));
         user.setUsername(username);
         user.setFederated(true);
         user.setFederatedIdp(provider.getUri());

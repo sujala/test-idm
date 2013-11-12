@@ -470,7 +470,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user) {
+    public List<TenantRole> getTenantRolesForUser(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
         return getRoleDetails(roles);

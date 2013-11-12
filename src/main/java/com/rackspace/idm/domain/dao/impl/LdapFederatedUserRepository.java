@@ -17,6 +17,8 @@ public class LdapFederatedUserRepository extends LdapGenericRepository<User> imp
 
     @Override
     public void addUser(User user, String idpName) {
+        user.setId(getNextId());
+
         addObject(getBaseDn(idpName), user);
     }
 
@@ -28,6 +30,11 @@ public class LdapFederatedUserRepository extends LdapGenericRepository<User> imp
     @Override
     public User getUserByUsername(String username, String idpName) {
         return getObject(searchFilterGetUserByUsername(username), getBaseDn(idpName), SearchScope.ONE);
+    }
+
+    @Override
+    public String getNextId() {
+        return getUuid();
     }
 
     private String getBaseDn(String idpName) {
