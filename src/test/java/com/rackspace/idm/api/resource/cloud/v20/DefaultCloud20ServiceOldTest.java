@@ -2596,12 +2596,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void listRolesForUserOnTenant_responseOk_returns200() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void listServices_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
