@@ -1,5 +1,6 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.exception.SignatureValidationException;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.security.x509.BasicX509Credential;
 import org.opensaml.xml.signature.Signature;
@@ -21,13 +22,17 @@ public class SamlSignatureValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(SamlSignatureValidator.class);
 
-    public void validateSignature(Signature signature, String publicCertificate) throws Throwable {
-        Credential credential = getSignatureValidationCredential(publicCertificate);
-        SignatureValidator signatureValidator = new SignatureValidator(credential);
-        signatureValidator.validate(signature);
+    public void validateSignature(Signature signature, String publicCertificate) {
+        try {
+            Credential credential = getSignatureValidationCredential(publicCertificate);
+            SignatureValidator signatureValidator = new SignatureValidator(credential);
+            signatureValidator.validate(signature);
+        } catch (Throwable t) {
+            throw new SignatureValidationException("Signature is invalid", t);
+        }
     }
 
-    private Credential getSignatureValidationCredential(String certificateStr) throws Throwable {
+    private Credential getSignatureValidationCredential(String certificateStr) throws Throwable  {
         X509Certificate certificate = getPublicCertificate(certificateStr);
 
         //pull out the public key part of certificate into keyspec

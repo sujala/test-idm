@@ -1,5 +1,6 @@
 package com.rackspace.idm.util
 
+import com.rackspace.idm.exception.SignatureValidationException
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -99,7 +100,7 @@ class SamlSignatureValidatorTest extends Specification {
         samlSignatureValidator.validateSignature(response.getSignature(), publicCertificate)
 
         then:
-        thrown(Exception)
+        thrown(SignatureValidationException)
     }
 
     def cleanupSpec() {
