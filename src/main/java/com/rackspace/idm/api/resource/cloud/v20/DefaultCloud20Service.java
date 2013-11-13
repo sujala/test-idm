@@ -2827,12 +2827,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            List<User> filteredUsers = new ArrayList<User>();
+
+            // If role is identity:user-manage then we need to filter out the identity:user-admin
+            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
+                for (User user : userContext.getValueList()) {
+                    if (!authorizationService.hasUserAdminRole(user)) {
+                        filteredUsers.add(user);
+                    }
+                }
+            } else {
+                filteredUsers = userContext.getValueList();
+            }
+
             String linkHeader = userPaginator.createLinkHeader(uriInfo, userContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)
                     .entity(objFactories.getOpenStackIdentityV2Factory()
-                            .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
+                            .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
