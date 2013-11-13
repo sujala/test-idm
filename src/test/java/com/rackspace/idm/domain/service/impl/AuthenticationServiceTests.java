@@ -32,7 +32,6 @@ public class AuthenticationServiceTests {
     ScopeAccessService mockScopeAccessService;
     TenantService mockTenantService;
     DefaultAuthenticationService authenticationService;
-    DefaultAuthenticationService authSpy;
     AuthDao mockAuthDao;
     List<TenantRole> tenantRoles;
 
@@ -81,8 +80,6 @@ public class AuthenticationServiceTests {
         authenticationService.setConfig(appConfig);
         authenticationService.setUserService(mockUserService);
         authenticationService.setInputValidator(inputValidator);
-
-        authSpy = PowerMockito.spy(authenticationService);
     }
 
     @Test

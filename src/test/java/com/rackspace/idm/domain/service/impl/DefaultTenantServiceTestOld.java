@@ -59,11 +59,9 @@ public class DefaultTenantServiceTestOld {
     @Mock
     TenantRoleDao tenantRoleDao;
 
-    DefaultTenantService spy;
-
     @Before
     public void setUp() throws Exception {
-        spy = spy(defaultTenantService);
+
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -76,24 +74,6 @@ public class DefaultTenantServiceTestOld {
     public void addTenant_tenantExists_throwDuplicateException() throws Exception {
         when(tenantDao.getTenant(null)).thenReturn(new Tenant());
         defaultTenantService.addTenant(new Tenant());
-    }
-
-    @Test
-    public void checkAndGetTenant_TenantIsNull_throwsNotFoundException() throws Exception {
-        try{
-            doReturn(null).when(spy).getTenant("tenantId");
-            spy.checkAndGetTenant("tenantId");
-            assertTrue("should throw exception",false);
-        } catch (NotFoundException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Tenant with id/name: 'tenantId' was not found."));
-        }
-    }
-
-    @Test
-    public void checkAndGetTenant_TenantIsNotNull_returnsTenant() throws Exception {
-        Tenant tenant = new Tenant();
-        doReturn(tenant).when(spy).getTenant("tenantId");
-        assertThat("tenant", spy.checkAndGetTenant("tenantId"),equalTo(tenant));
     }
 
     @Test
@@ -203,29 +183,9 @@ public class DefaultTenantServiceTestOld {
         defaultTenantService.getGlobalRolesForUser(null);
     }
 
-    @Test
-    public void getGlobalRolesForUser_userParameter_returnsList() throws Exception {
-        User user = new User();
-        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
-        assertThat("tenant role list", spy.getGlobalRolesForUser(user), instanceOf(ArrayList.class));
-
-    }
-
-    @Test
-    public void getGlobalRolesForUser_userAndFilterParameters_returnsList() throws Exception {
-        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
-        assertThat("tenant role list", spy.getGlobalRolesForUser(null, null), instanceOf(ArrayList.class));
-    }
-
     @Test (expected = IllegalArgumentException.class)
     public void getGlobalRolesForApplication_nullApplication_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.getGlobalRolesForApplication(null, null);
-    }
-
-    @Test
-    public void getGlobalRolesForApplication_returnsList() throws Exception {
-        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
-        assertThat("tenant role list", spy.getGlobalRolesForApplication(new Application(), null), instanceOf(ArrayList.class));
     }
 
     @Test

@@ -28,7 +28,6 @@ import org.junit.Test;
 public class NastXmlRpcClientWrapperTest {
     private NastXmlRpcClientWrapper nastXmlRpcClientWrapper;
     private NastConfiguration nastConfiguration;
-    private NastXmlRpcClientWrapper spy;
     private URL url;
 
     @Before
@@ -37,11 +36,7 @@ public class NastXmlRpcClientWrapperTest {
 
         //mocks
         nastConfiguration = mock(NastConfiguration.class);
-
         nastXmlRpcClientWrapper.setAuthConfiguration(nastConfiguration);
-
-        spy = spy(nastXmlRpcClientWrapper);
-
         url = new URL("http://localhost");
     }
 
@@ -49,39 +44,6 @@ public class NastXmlRpcClientWrapperTest {
     public void getClient_returnsNewClient() throws Exception {
         XmlRpcClient rpcClient = nastXmlRpcClientWrapper.getClient(url);
         assertThat("rpc client", ((XmlRpcClientConfigImpl)rpcClient.getClientConfig()).getServerURL(), equalTo(url));
-    }
-
-    @Test
-    public void addResellerStorageAccount_returnsResponse() throws Exception {
-        XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient(url);
-        when(xmlRpcClient.execute("reseller.add_storage_account", new String[]{"1", "2", "3"})).thenReturn("response");
-        List<URL> urllist = new ArrayList<URL>();
-        urllist.add(new URL("http://localhost"));
-        when(nastConfiguration.getNastXmlRpcUrl()).thenReturn(urllist);
-        String response = spy.addResellerStorageAccount(new String[]{"1", "2", "3"});
-        assertThat("response string", response, equalTo("response"));
-    }
-
-    @Test
-    public void removeResellerStorageAccount_returnsFalse() throws Exception {
-        XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient(url);
-        when(xmlRpcClient.execute(anyString(), any(Object[].class))).thenReturn(false);
-        List<URL> urllist = new ArrayList<URL>();
-        urllist.add(new URL("http://localhost"));
-        when(nastConfiguration.getNastXmlRpcUrl()).thenReturn(urllist);
-        Boolean response = spy.removeResellerStorageAccount("");
-        assertThat("boolean", response, equalTo(false));
-    }
-
-    @Test
-    public void removeResellerStorageAccount_returnsTrue() throws Exception {
-        XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient(url);
-        when(xmlRpcClient.execute(anyString(), any(String[].class))).thenReturn(true);
-        Boolean response = spy.removeResellerStorageAccount("");
-        assertThat("boolean", response, equalTo(true));
     }
 
     @Test

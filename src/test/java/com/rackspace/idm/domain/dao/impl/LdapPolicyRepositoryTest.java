@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LdapPolicyRepositoryTest{
+public class LdapPolicyRepositoryTest {
     @InjectMocks
     LdapPolicyRepository ldapPolicyRepository = new LdapPolicyRepository();
     @Mock
@@ -43,13 +43,9 @@ public class LdapPolicyRepositoryTest{
     LDAPInterface ldapInterface;
 
     Policy policy;
-    LdapPolicyRepository spy;
-
 
     @Before
     public void setUp() throws Exception {
-        spy = spy(ldapPolicyRepository);
-        doReturn(ldapInterface).when(spy).getAppInterface();
         policy = new Policy();
         policy.setLdapEntry(new ReadOnlyEntry("dn:rsId=id,ou=rackspace", "policy:policyId"));
         policy.setPolicyType("someType");
@@ -66,20 +62,4 @@ public class LdapPolicyRepositoryTest{
         ldapPolicyRepository.addPolicy(null);
     }
 
-    @Test
-    public void addPolicy_validPolicy_created() throws Exception {
-        spy.addPolicy(policy);
-        verify(spy, times(2)).getLogger();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addPolicy_callsLDAPPersister_throwsIllegalStateException()  throws Exception {
-        spy.addPolicy(new Policy());
-    }
-
-   @Test
-    public void getPolicy_emptyPolicyId_returnsNull() throws Exception {
-        Policy policy = spy.getPolicy("");
-        assertThat("policy",policy,equalTo(null));
-    }
 }

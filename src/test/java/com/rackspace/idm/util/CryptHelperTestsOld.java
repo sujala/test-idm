@@ -16,13 +16,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class CryptHelperTestsOld {
     Configuration configuration;
     CryptHelper cryptHelper;
-    CryptHelper spy;
     DefaultEncryptionPasswordSource encryptionPasswordSource;
 
     @Before
@@ -32,7 +30,6 @@ public class CryptHelperTestsOld {
         cryptHelper = new CryptHelper();
         cryptHelper.setConfiguration(configuration);
         cryptHelper.setEncryptionPasswordSource(encryptionPasswordSource);
-        spy = spy(cryptHelper);
 
         when(encryptionPasswordSource.getPassword(anyString())).thenReturn("password");
     }

@@ -35,7 +35,6 @@ public class Cloud20VersionResourceTestOld {
     ServiceDescriptionTemplateUtil serviceDescriptionTemplateUtil;
     HttpHeaders httpHeaders;
     AuthenticationRequest authenticationRequest;
-    Cloud20VersionResource spy;
     DefaultCloud20Service defaultCloud20Service;
     UriInfo uriInfo;
 
@@ -59,8 +58,6 @@ public class Cloud20VersionResourceTestOld {
 
         // setter
         cloud20VersionResource.setCloud20Service(defaultCloud20Service);
-
-        spy = spy(cloud20VersionResource);
     }
 
     @Test
@@ -83,55 +80,6 @@ public class Cloud20VersionResourceTestOld {
         Response response = cloud20VersionResource.getCloud20VersionInfo();
         VersionChoice object =  (VersionChoice)response.getEntity();
         assertThat("version", object.getId(), equalTo("v2.0"));
-    }
-
-    @Test
-    public void impersonate_callsCloud20Service_callsImpersonate() throws Exception {
-        when(defaultCloud20Service.impersonate(httpHeaders, null, null)).thenReturn(Response.ok());
-        spy.impersonate(httpHeaders, null, null);
-        verify(defaultCloud20Service).impersonate(httpHeaders, null, null);
-    }
-
-    @Test
-    public void impersonate_responseOk_returns200() throws Exception {
-        when(defaultCloud20Service.impersonate(httpHeaders, null, null)).thenReturn(Response.ok());
-        Response result = spy.impersonate(httpHeaders, null, null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void deleteSOftDeletedUser_softDeleteNotAllowed_thrwosNotFoundException() throws Exception {
-        spy.deleteSoftDeletedUser(httpHeaders, null, null);
-    }
-
-    @Test
-    public void listUsersWithRole_responseOk_returns200() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0)).thenReturn(Response.ok());
-        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
-        assertThat("response code", response.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listUsersWithRole_callsDefaultCloud20Service_listUsersWithRole() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0)).thenReturn(Response.ok());
-        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
-        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 0);
-    }
-
-    @Test
-    public void revokeToken_callsDefaultCloud20Service() throws Exception {
-        String token = "1234567890";
-        when(defaultCloud20Service.revokeToken(httpHeaders, token)).thenReturn(Response.ok());
-        spy.revokeToken(httpHeaders, token);
-        verify(defaultCloud20Service).revokeToken(httpHeaders, token);
-    }
-
-    @Test
-    public void revokeUserToken_callsDefaultCloud20Service() throws Exception {
-        String token = "1234567890";
-        when(defaultCloud20Service.revokeToken(httpHeaders, token, token)).thenReturn(Response.ok());
-        spy.revokeUserToken(httpHeaders, token, token);
-        verify(defaultCloud20Service).revokeToken(httpHeaders, token, token);
     }
 
 }

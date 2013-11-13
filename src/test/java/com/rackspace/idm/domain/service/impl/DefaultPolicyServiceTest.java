@@ -36,12 +36,10 @@ public class DefaultPolicyServiceTest{
     @InjectMocks
     DefaultPolicyService defaultPolicyService = new DefaultPolicyService();
     EndpointService endpointService = mock(EndpointService.class);
-    DefaultPolicyService spy;
 
     @Before
     public void setUp() throws Exception {
         defaultPolicyService.setEndpointService(endpointService);
-        spy = spy(defaultPolicyService);
     }
 
     @Test

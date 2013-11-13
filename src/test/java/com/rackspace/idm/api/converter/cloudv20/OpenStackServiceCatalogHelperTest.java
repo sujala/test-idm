@@ -24,14 +24,11 @@ import static org.mockito.Mockito.*;
 public class OpenStackServiceCatalogHelperTest {
     ServiceCatalog serviceCatalog;
     OpenStackServiceCatalogHelper openStackServiceCatalogHelper;
-    OpenStackServiceCatalogHelper spy;
 
     @Before
     public void setUp() throws Exception {
         serviceCatalog = mock(ServiceCatalog.class);
         openStackServiceCatalogHelper = new OpenStackServiceCatalogHelper(serviceCatalog);
-
-        spy = spy(openStackServiceCatalogHelper);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -114,10 +111,4 @@ public class OpenStackServiceCatalogHelperTest {
         assertThat("boolean", result, equalTo(false));
     }
 
-    @Test
-    public void contains_returnsTrue() throws Exception {
-        doReturn(new ServiceForCatalog()).when(spy).getService("test");
-        Boolean result = spy.contains("test");
-        assertThat("boolean", result, equalTo(true));
-    }
 }

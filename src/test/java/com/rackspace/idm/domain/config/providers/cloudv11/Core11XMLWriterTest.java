@@ -31,7 +31,6 @@ public class Core11XMLWriterTest {
     @Before
     public void setUp() throws Exception {
         core11XMLWriter = new Core11XMLWriter();
-        core11XMLWriter = spy(core11XMLWriter);
     }
 
     @Test

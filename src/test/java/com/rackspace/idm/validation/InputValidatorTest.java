@@ -29,19 +29,10 @@ import static org.mockito.Mockito.*;
  */
 public class InputValidatorTest {
     InputValidator inputValidator;
-    InputValidator spy;
 
     @Before
     public void setUp() throws Exception {
         inputValidator = new InputValidator();
-        spy = spy(inputValidator);
-    }
-
-    @Test
-    public void validate_callsValidate_with400Status() throws Exception {
-        Object paramObj = new Object();
-        spy.validate(paramObj);
-        verify(spy).validate(paramObj, 400);
     }
 
     @Test

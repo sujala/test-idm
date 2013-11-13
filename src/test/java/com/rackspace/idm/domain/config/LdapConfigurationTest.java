@@ -12,13 +12,11 @@ import static org.mockito.Mockito.*;
 public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
-    LdapConfiguration spy;
 
     @Before
     public void setUp() throws Exception {
         configuration = mock(Configuration.class);
         ldapConfiguration = new LdapConfiguration(configuration);
-        spy = spy(ldapConfiguration);
     }
 
     @Test
@@ -205,15 +203,4 @@ public class LdapConfigurationTest {
         }
     }
 
-    @Test
-    public void connectionPools_callsConnectionTwice() throws Exception {
-        try{
-            doReturn(null).when(spy).connection();
-            spy.connectionPools();
-            fail("should throw exception");
-        } catch (IllegalArgumentException ex){
-            verify(spy,times(2)).connection();
-        }
-
-    }
 }

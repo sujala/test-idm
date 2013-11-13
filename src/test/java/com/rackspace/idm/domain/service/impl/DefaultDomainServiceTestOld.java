@@ -37,13 +37,9 @@ public class DefaultDomainServiceTestOld {
     @Mock
     private TenantService tenantService;
 
-    DefaultDomainService spy;
-
     @Before
     public void setUp() throws Exception {
         tenantService = mock(TenantService.class);
-        spy = spy(defaultDomainService);
-        spy.setTenantService(tenantService);
     }
 
     @Test(expected = BadRequestException.class)
@@ -135,33 +131,9 @@ public class DefaultDomainServiceTestOld {
     }
 
     @Test
-    public void removeTenantFromDomain_validDomain() throws Exception{
-        Domain domain = new Domain();
-        domain.setDomainId("1");
-        domain.setName("domain");
-        List<String> tenantIds = new ArrayList<String>();
-        when(spy.getDomain("1")).thenReturn(domain);
-        when(spy.setTenantIdList(domain, "tenant1")).thenReturn(tenantIds);
-        defaultDomainService.removeTenantFromDomain("tenant1", "1");
-        verify(domainDao).updateDomain(domain);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void checkAndGetDomain_invalidDomain_throwsNotFoundException() throws Exception{
-        when(spy.getDomain("1")).thenReturn(null);
-        defaultDomainService.checkAndGetDomain("1");
-    }
-
-    @Test
     public void createNewDoamin_validDomainId_returnsDomainId() throws Exception{
         String domainId = defaultDomainService.createNewDomain("1");
         assertThat("verify DomainId",domainId,equalTo("1"));
-    }
-
-    @Test
-    public void deleteDomain_verifyDelete() throws Exception{
-        spy.deleteDomain("1");
-        verify(domainDao).deleteDomain("1");
     }
 
     @Test(expected = BadRequestException.class)

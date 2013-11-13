@@ -43,14 +43,11 @@ public class LdapDomainRepositoryTest {
     @Mock
     Configuration configuration;
 
-    LdapDomainRepository spy;
     LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapInterface = mock(LDAPInterface.class);
-        spy = spy(ldapDomainRepository);
-        doReturn(ldapInterface).when(spy).getAppInterface();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -58,33 +55,15 @@ public class LdapDomainRepositoryTest {
         ldapDomainRepository.addDomain(null);
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void addDomain_callsLDAPPersister_throwsIllegalStateException() throws Exception {
-        spy.addDomain(new Domain());
-    }
-
     @Test (expected = IllegalArgumentException.class)
     public void deleteDomain_domainIdIsBlank_throwsIllegalArgument() throws Exception {
         ldapDomainRepository.deleteDomain("");
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void deleteDomain_domainNotFound_throwsNotFoundException() throws Exception {
-        doReturn(null).when(spy).getDomain("domainId");
-        spy.deleteDomain("domainId");
     }
 
     @Test
     public void getDomain_domainIdIsBlank_returnsNull() throws Exception {
         Domain result = ldapDomainRepository.getDomain("");
         assertThat("domain", result, equalTo(null));
-    }
-
-    @Test
-    public void getDomain_foundDomain_returnsDomain() throws Exception {
-        Domain domain = new Domain();
-        spy.getDomain("domainId");
-        verify(spy).getObject(any(Filter.class));
     }
 
 }
