@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
@@ -3559,7 +3558,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUser(_) >> entityUser
         1 * tenantService.getGlobalRolesForUser(_) >> [tenantRole].asList()
-        1 * scopeAccessService.createNewUserScopeAccess(_, _, _)
+        1 * scopeAccessService.createInstanceOfUserScopeAccess(_, _, _)
     }
 
     def mockServices() {

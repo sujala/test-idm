@@ -605,7 +605,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess createNewUserScopeAccess(User user, String clientId, String clientRCN) {
+    public UserScopeAccess createInstanceOfUserScopeAccess(User user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUsername(user.getUsername());
         usa.setUserRsId(user.getId());

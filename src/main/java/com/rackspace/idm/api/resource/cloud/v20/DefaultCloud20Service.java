@@ -1947,7 +1947,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(user, getCloudAuthClientId());
 
             if(impAccess == null){
-                impAccess = scopeAccessService.createNewUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
+                impAccess = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
                 scopeAccessService.addUserScopeAccess(user, impAccess);
             }
 
