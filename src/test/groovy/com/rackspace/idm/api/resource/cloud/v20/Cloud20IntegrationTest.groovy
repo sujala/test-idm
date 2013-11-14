@@ -1361,7 +1361,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def users = cloud20.listUsers(defaultUserManageRoleToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 6
+        // TODO: Note when this test gets merged to master we the size should be increased to 6 since
+        //       there is another user added in the tests.
+        users.size() == 5
+        // Ensure that the list of users returned does not include the user admin
+        for (User user : users) {
+            !user.id.equals(userAdmin.id)
+        }
 
         cleanup:
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
