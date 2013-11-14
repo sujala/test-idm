@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.api.common.fault.v1.ItemNotFoundFault
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
@@ -3534,6 +3533,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         apiKey << [null, ""]
+    }
+
+    def "Impersonate should create a new token if user does not have a scopeAccess"() {
+        given:
+        allowUserAccess()
+        def username = "impersonatingUser"
+        def v20user = v2Factory.createUser()
+        v20user.username = username
+        def impersonate = v1Factory.createImpersonationRequest(v20user)
+        def entityUser = entityFactory.createUser(username, null, null, "region").with {
+            it.enabled = false
+            return it
+        }
+        def tenantRole = new TenantRole().with {
+            it.name = "identity:default"
+            it
+        }
+
+
+        when:
+        service.impersonate(headers, authToken, impersonate)
+
+        then:
+        1 * userService.getUser(_) >> entityUser
+        1 * tenantService.getGlobalRolesForUser(_) >> [tenantRole].asList()
+        1 * scopeAccessService.createInstanceOfUserScopeAccess(_, _, _)
     }
 
     def mockServices() {
