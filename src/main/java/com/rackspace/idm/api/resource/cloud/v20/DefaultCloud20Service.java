@@ -1947,7 +1947,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(user, getCloudAuthClientId());
 
             if(impAccess == null){
-                impAccess = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
+                impAccess = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
                 scopeAccessService.addUserScopeAccess(user, impAccess);
             }
 
@@ -3361,10 +3361,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
-    }
-
-    private String getIdmClientId() {
-        return config.getString("idm.clientId");
     }
 
     JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
