@@ -605,6 +605,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public UserScopeAccess createNewUserScopeAccess(User user, String clientId, String clientRCN) {
+        UserScopeAccess usa = new UserScopeAccess();
+        usa.setUsername(user.getUsername());
+        usa.setUserRsId(user.getId());
+        usa.setUserRCN(user.getCustomerId());
+        usa.setClientId(clientId);
+        usa.setClientRCN(clientRCN);
+        usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+        usa.setAccessTokenExp(new DateTime().toDate());
+        return usa;
+    }
+
+    @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
