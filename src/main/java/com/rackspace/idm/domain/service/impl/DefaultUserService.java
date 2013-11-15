@@ -13,7 +13,6 @@ import com.rackspace.idm.validation.Validator;
 import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import javax.ws.rs.HEAD;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -135,29 +133,14 @@ public class DefaultUserService implements UserService {
         userDao.addUser(user);
         logger.info("Added User: {}", user);
 
-        Date accessTokenExp = new DateTime().toDate();
         //Every user by default has the idm application provisioned for them
         logger.info("Adding User Scope Access for Idm to user {}", user);
-        UserScopeAccess usa = new UserScopeAccess();
-        usa.setUsername(user.getUsername());
-        usa.setUserRsId(user.getId());
-        usa.setUserRCN(user.getCustomerId());
-        usa.setClientId(getIdmClientId());
-        usa.setClientRCN(getRackspaceCustomerId());
-        usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
-        usa.setAccessTokenExp(accessTokenExp);
+        UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
 
         this.scopeAccessService.addUserScopeAccess(user, usa);
 
         //Every user by default has the cloud auth application provisioned for them
-        UserScopeAccess cloudUsa = new UserScopeAccess();
-        cloudUsa.setUsername(user.getUsername());
-        cloudUsa.setUserRsId(user.getId());
-        cloudUsa.setUserRCN(user.getCustomerId());
-        cloudUsa.setClientId(getCloudAuthClientId());
-        cloudUsa.setClientRCN(getRackspaceCustomerId());
-        cloudUsa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
-        cloudUsa.setAccessTokenExp(accessTokenExp);
+        UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
 
         this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
 

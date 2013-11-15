@@ -92,4 +92,6 @@ public interface ScopeAccessService {
     String getClientIdForParent(ScopeAccess scopeAccess);
 
     String getUserIdForParent(ScopeAccess scopeAccessByAccessToken);
+
+    UserScopeAccess createInstanceOfUserScopeAccess(User user, String clientId, String clientRCN);
 }

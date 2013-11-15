@@ -45,7 +45,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         encryptionService.decryptUser(user);
 
         then:
-        password == user.password
+        user.password == ""
         secretQuestion == user.secretQuestion
         secretAnwser == user.secretAnswer
         secretQuestionId == user.secretQuestionId
