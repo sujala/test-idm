@@ -46,7 +46,6 @@ public class DefaultScopeAccessServiceTestOld {
 
     @InjectMocks
     DefaultScopeAccessService defaultScopeAccessService = new DefaultScopeAccessService();
-    DefaultScopeAccessService spy;
     @Mock
     ScopeAccessDao scopeAccessDao;
     @Mock
@@ -73,9 +72,6 @@ public class DefaultScopeAccessServiceTestOld {
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
-
-        spy = spy(defaultScopeAccessService);
-
     }
 
     @Test
@@ -285,19 +281,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setImpersonatingToken("token");
-        User user = new User();
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForUser(null)).thenReturn(new ArrayList<ScopeAccess>());
-
-        when(scopeAccessDao.getAllImpersonatedScopeAccessForUser(any(User.class))).thenReturn(new ArrayList<ScopeAccess>());
-
-        spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
     public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
         defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
     }
@@ -460,67 +443,12 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void loadScopeAccessByAccessToken_scopeAccessNull_throwsNotFoundException() throws Exception {
-        try{
-            doReturn(null).when(spy).getScopeAccessByAccessToken(null);
-            spy.loadScopeAccessByAccessToken(null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Token not found : null"));
-        }
-    }
-
-    @Test
-    public void loadScopeAccessByAccessToken_scopeAccessInstanceOfHasAccessTokenAndIsExpired_throwsNotFoundException() throws Exception {
-        try{
-            UserScopeAccess userScopeAccess = new UserScopeAccess();
-            userScopeAccess.setAccessTokenExpired();
-            doReturn(userScopeAccess).when(spy).getScopeAccessByAccessToken(null);
-            spy.loadScopeAccessByAccessToken(null);
-            assertTrue("should throw exception", false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Token expired : null"));
-        }
-    }
-
-    @Test
-    public void loadScopeAccessByAccessToken_scopeAccessInstanceOfHasAccessTokenAndNotExpired_returnsScopeAccess() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(5).toDate());
-        userScopeAccess.setAccessTokenString("token");
-        doReturn(userScopeAccess).when(spy).getScopeAccessByAccessToken(null);
-        assertThat("scope access", spy.loadScopeAccessByAccessToken(null), equalTo((ScopeAccess) userScopeAccess));
-    }
-
-    @Test
     public void getScopeAccessesForParentByClientId_returnsScopeAccessList() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByClientId(null, null)).thenReturn(list);
         assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null), notNullValue());
-    }
-
-    @Test
-    public void deleteScopeAccessesForApplication_listPopulated_callsDeleteScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        list.add(scopeAccess);
-        doReturn(list).when(spy).getScopeAccessesForApplicationByClientId(null, null);
-        doNothing().when(spy).deleteScopeAccess(scopeAccess);
-        spy.deleteScopeAccessesForApplication(null, null);
-        verify(spy).deleteScopeAccess(scopeAccess);
-    }
-
-    @Test
-    public void deleteScopeAccessesForParentByApplicationId_listEmpty_doesNotCallDeleteScopeAccess() throws Exception {
-        List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        doReturn(list).when(spy).getScopeAccessesForUserByClientId(null, null);
-        when(scopeAccessDao.getScopeAccessesByClientId(any(Application.class), anyString())).thenReturn(new ArrayList<ScopeAccess>());
-        spy.deleteScopeAccessesForApplication(null, null);
-        verify(spy,never()).deleteScopeAccess(any(ScopeAccess.class));
     }
 
     @Test (expected = NotAuthenticatedException.class)

@@ -16,9 +16,6 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,15 +27,12 @@ import static org.mockito.Mockito.spy;
 public class TokenConverterCloudV20TestOld {
     private TokenConverterCloudV20 tokenConverterCloudV20;
     private JAXBObjectFactories jaxbObjectFactories;
-    private TokenConverterCloudV20 spy;
 
     @Before
     public void setUp() throws Exception {
         tokenConverterCloudV20 = new TokenConverterCloudV20();
         jaxbObjectFactories = new JAXBObjectFactories();
         tokenConverterCloudV20.setObjFactories(jaxbObjectFactories);
-
-        spy = spy(tokenConverterCloudV20);
     }
 
     @Test
@@ -57,19 +51,6 @@ public class TokenConverterCloudV20TestOld {
         scopeAccess.setAccessTokenString("accessToken");
         scopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         Token token = tokenConverterCloudV20.toToken(scopeAccess, null);
-        assertThat("id", token.getId(), equalTo("accessToken"));
-    }
-
-    @Test
-    public void toToken_rolesNotNull_returnsToken() throws Exception {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        TenantRole tenantRole = new TenantRole();
-        roles.add(tenantRole);
-        RackerScopeAccess scopeAccess = new RackerScopeAccess();
-        scopeAccess.setAccessTokenString("accessToken");
-        scopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        doReturn(new TenantForAuthenticateResponse()).when(spy).toTenantForAuthenticateResponse(roles);
-        Token token = spy.toToken(scopeAccess, roles);
         assertThat("id", token.getId(), equalTo("accessToken"));
     }
 

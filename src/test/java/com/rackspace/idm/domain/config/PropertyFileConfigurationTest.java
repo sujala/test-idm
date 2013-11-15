@@ -21,40 +21,11 @@ import static org.mockito.Mockito.*;
 public class PropertyFileConfigurationTest {
 
     PropertyFileConfiguration propertyFileConfiguration;
-    PropertyFileConfiguration spy;
     Configuration configuration = mock(Configuration.class);
 
     @Before
     public void setUp() throws Exception {
         propertyFileConfiguration = new PropertyFileConfiguration();
-        spy = spy(propertyFileConfiguration);
-    }
-
-    @Test
-    public void getConfig_callsReadConfigFile() throws Exception {
-        doReturn(configuration).when(spy).readConfigFile(anyString());
-        spy.getConfig();
-        verify(spy).readConfigFile(anyString());
-    }
-
-    @Test
-    public void getConfig_returnsConfiguration() throws Exception {
-        doReturn(configuration).when(spy).readConfigFile(anyString());
-        assertThat("configuration", spy.getConfig(), instanceOf(Configuration.class));
-    }
-
-    @Test
-    public void getConfigurationFromClasspath_callsReadConfigFile() throws Exception {
-        Configuration configuration = mock(Configuration.class);
-        doReturn(configuration).when(spy).readConfigFile("idm.properties");
-        spy.getConfigFromClasspath();
-        verify(spy).readConfigFile("idm.properties");
-    }
-
-    @Test
-    public void getConfigurationFormClasspath_returnsConfiguration() throws Exception {
-        doReturn(configuration).when(spy).readConfigFile("idm.properties");
-        assertThat("configuration", spy.getConfigFromClasspath(), instanceOf(Configuration.class));
     }
 
     @Test
@@ -67,4 +38,5 @@ public class PropertyFileConfigurationTest {
             assertThat("exception message", ex.getMessage(),equalTo("Could not load configuration file foo"));
         }
     }
+
 }

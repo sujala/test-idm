@@ -5,7 +5,6 @@ import com.rackspace.idm.api.converter.TenantConverter;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,92 +30,11 @@ public class TenantsResourceTest {
     DefaultScopeAccessService scopeAccessService = mock(DefaultScopeAccessService.class);
     DefaultTenantService tenantService = mock(DefaultTenantService.class);
     TenantConverter tenantConverter = mock(TenantConverter.class);
-    TenantsResource spy;
 
     @Before
     public void setUp() throws Exception {
         tenantsResource = new TenantsResource(new InputValidator(),authorizationService,scopeAccessService,tenantService,
                 tenantConverter);
-        spy = spy(tenantsResource);
-    }
-
-    @Test
-    public void createTenant_callsScopeAccessMethod() throws Exception {
-        Tenant tenant = new Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant, null);
-        when(tenantService.getTenant(null)).thenReturn(new com.rackspace.idm.domain.entity.Tenant());
-        spy.createTenant(null, null, null, tenant);
-        verify(scopeAccessService).getAccessTokenByAuthHeader(null);
-
-    }
-
-    @Test
-    public void createTenant_callsAuthorizationServiceMethod() throws Exception {
-        Tenant tenant = new Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant, null);
-        when(tenantService.getTenant(null)).thenReturn(new com.rackspace.idm.domain.entity.Tenant());
-        spy.createTenant(null, null, null, tenant);
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(null);
-
-    }
-
-    @Test
-    public void createTenant_callsTenantConverterMethod() throws Exception {
-        Tenant tenant = new Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant, null);
-        when(tenantService.getTenant(null)).thenReturn(new com.rackspace.idm.domain.entity.Tenant());
-        spy.createTenant(null, null, null, tenant);
-        verify(tenantConverter).toTenantDO(tenant);
-
-    }
-
-    @Test
-    public void createTenant_callsTenantServiceMethodAdd() throws Exception {
-        Tenant tenant1 = new Tenant();
-        com.rackspace.idm.domain.entity.Tenant tenant2 = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant1, null);
-        when(tenantService.getTenant(null)).thenReturn(tenant2);
-        spy.createTenant(null, null, null, tenant1);
-        verify(tenantService).addTenant(null);
-
-    }
-
-    @Test
-    public void createTenant_callsTenantServiceMethodGet() throws Exception {
-        Tenant tenant1 = new Tenant();
-        com.rackspace.idm.domain.entity.Tenant tenant2 = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant1, null);
-        when(tenantService.getTenant(null)).thenReturn(tenant2);
-        spy.createTenant(null, null, null, tenant1);
-        verify(tenantService).getTenant(null);
-
-    }
-
-    @Test
-    public void createTenant_callsTenantConverterMethodTo() throws Exception {
-        Tenant tenant1 = new Tenant();
-        com.rackspace.idm.domain.entity.Tenant tenant2 = new com.rackspace.idm.domain.entity.Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant1, null);
-        when(tenantService.getTenant(null)).thenReturn(tenant2);
-        spy.createTenant(null, null, null, tenant1);
-        verify(tenantConverter).toTenant(tenant2);
-
-    }
-
-    @Test
-    public void createTenant_returns201Status() throws Exception {
-        Tenant tenant = new Tenant();
-        doNothing().when(spy).validateTenantId(null);
-        doNothing().when(spy).updateTenantFields(tenant, null);
-        when(tenantService.getTenant(null)).thenReturn(new com.rackspace.idm.domain.entity.Tenant());
-        assertThat("response status", spy.createTenant(null, null, null, tenant).getStatus(),equalTo(201));
-
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -263,4 +181,5 @@ public class TenantsResourceTest {
         assertThat("tenantDescription",tenant.getDescription(),nullValue());
         assertThat("tenantDisplayName",tenant.getDisplayName(),equalTo("john"));
     }
+
 }

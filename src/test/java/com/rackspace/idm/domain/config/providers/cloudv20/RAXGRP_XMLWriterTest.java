@@ -13,7 +13,6 @@ import java.util.HashMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,7 +29,6 @@ public class RAXGRP_XMLWriterTest {
     @Before
     public void setUp() throws Exception {
         raxgrp_xmlWriter = new RAXGRP_XMLWriter();
-        raxgrp_xmlWriter = spy(raxgrp_xmlWriter);
     }
 
     @Test

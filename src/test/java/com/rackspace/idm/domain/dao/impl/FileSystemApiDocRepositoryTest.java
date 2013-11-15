@@ -4,14 +4,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,12 +18,10 @@ import static org.mockito.Mockito.when;
 public class FileSystemApiDocRepositoryTest {
 
     FileSystemApiDocRepository fileSystemApiDocRepository;
-    FileSystemApiDocRepository spy;
 
     @Before
     public void setUp() throws Exception {
         fileSystemApiDocRepository = new FileSystemApiDocRepository();
-        spy = spy(fileSystemApiDocRepository);
     }
 
     @Test
@@ -63,9 +56,4 @@ public class FileSystemApiDocRepositoryTest {
         assertThat("returns string",fileSystemApiDocRepository.convertStreamToString(new ByteArrayInputStream(body.getBytes())),equalTo("test"));
     }
 
-    @Test
-    public void getContent_withIoExceptionReturnsBlankString() throws Exception {
-        when(spy.convertStreamToString(any(InputStream.class))).thenThrow(new IOException());
-        assertThat("returns blank string", spy.getContent("somePath"), equalTo(""));
-    }
 }

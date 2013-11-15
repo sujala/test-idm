@@ -11,13 +11,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,12 +26,10 @@ import static org.mockito.Mockito.verify;
 public class JSONReaderForTenantTestOld {
 
     JSONReaderForTenant jsonReaderForTenant;
-    JSONReaderForTenant spy;
 
     @Before
     public void setUp() throws Exception {
         jsonReaderForTenant = new JSONReaderForTenant();
-        spy = spy(jsonReaderForTenant);
     }
     @Test
     public void isReadable_NotReadable_returnsFalse() throws Exception {

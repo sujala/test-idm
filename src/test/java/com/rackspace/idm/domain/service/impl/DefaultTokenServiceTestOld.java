@@ -42,13 +42,6 @@ public class DefaultTokenServiceTestOld {
     @Mock
     TenantService tenantService;
 
-    DefaultTokenService spy;
-
-    @Before
-    public void setUp() throws Exception {
-        spy = spy(defaultTokenService);
-    }
-
     @Test
     public void getAccessTokenByAuthHeader_returnsScopeAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -152,56 +145,6 @@ public class DefaultTokenServiceTestOld {
         when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
         defaultTokenService.revokeAccessToken(null,null);
-    }
-
-    @Test
-    public void revokeAllTokensForCustomer_usersExist_callScopeServiceMethod() throws Exception {
-        List<User> usersList = new ArrayList<User>();
-        usersList.add(new User());
-        doReturn(usersList).when(spy).getAllUsersForCustomerId(null);
-        doReturn(new ArrayList<Application>()).when(spy).getAllClientsForCustomerId(null);
-        spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService).expireAllTokensForUser(null);
-    }
-
-    @Test
-    public void revokeAllTokensForCustomer_usersDoNotExist_doesNotCallScopeServiceMethod() throws Exception {
-        List<User> usersList = new ArrayList<User>();
-        doReturn(usersList).when(spy).getAllUsersForCustomerId(null);
-        doReturn(new ArrayList<Application>()).when(spy).getAllClientsForCustomerId(null);
-        spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService,never()).expireAllTokensForUser(anyString());
-    }
-
-    @Test
-    public void revokeAllTokensForCustomer_clientsExist_callScopeServiceMethod() throws Exception {
-        List<Application> clientList = new ArrayList<Application>();
-        clientList.add(new Application());
-        doReturn(new ArrayList<User>()).when(spy).getAllUsersForCustomerId(null);
-        doReturn(clientList).when(spy).getAllClientsForCustomerId(null);
-        spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService).expireAllTokensForClient(null);
-    }
-
-    @Test
-    public void revokeAllTokensForCustomer_clientsDoNotExist_callScopeServiceMethod() throws Exception {
-        doReturn(new ArrayList<User>()).when(spy).getAllUsersForCustomerId(null);
-        doReturn(new ArrayList<Application>()).when(spy).getAllClientsForCustomerId(null);
-        spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService,never()).expireAllTokensForClient(anyString());
-    }
-
-    @Test
-    public void getAllClientsForCustomerId_returnsPopulatedApplicationList() throws Exception {
-        List<Application> list = new ArrayList<Application>();
-        list.add(new Application());
-        Applications clientsObj = new Applications();
-        clientsObj.setClients(list);
-        clientsObj.setTotalRecords(0);
-        doReturn(5).when(spy).getPagingLimit();
-        when(clientService.getByCustomerId(null, 0, 5)).thenReturn(clientsObj);
-        List<Application> clientsList = spy.getAllClientsForCustomerId(null);
-        assertThat("size",clientsList.size(),equalTo(1));
     }
 
     @Test

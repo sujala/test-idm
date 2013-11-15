@@ -14,7 +14,6 @@ import java.io.InputStream;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.spy;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +24,6 @@ import static org.mockito.Mockito.spy;
  */
 public class JSONReaderForDomainTest {
     JSONReaderRaxAuthForDomain jsonReaderForDomain;
-    JSONReaderRaxAuthForDomain spy;
 
     String jsonBody = "{\n" +
                 "  \"domain\": {\n" +
@@ -39,7 +37,6 @@ public class JSONReaderForDomainTest {
     @Before
     public void setUp() throws Exception {
         jsonReaderForDomain = new JSONReaderRaxAuthForDomain();
-        spy = spy(jsonReaderForDomain);
     }
 
     @Test

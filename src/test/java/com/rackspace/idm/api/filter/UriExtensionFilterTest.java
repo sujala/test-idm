@@ -28,60 +28,10 @@ import static org.mockito.Mockito.*;
 public class UriExtensionFilterTest {
 
     UriExtensionFilter uriExtensionFilter;
-    UriExtensionFilter spy;
 
     @Before
     public void setUp() throws Exception {
         uriExtensionFilter = new UriExtensionFilter();
-        spy = spy(uriExtensionFilter);
-    }
-
-    @Test
-    public void filter_shouldFilter_altersRequestAltersHeaders() throws Exception {
-        MultivaluedMap<String,String> headers = new MultivaluedMapImpl();
-        ContainerRequest request = mock(ContainerRequest.class);
-        URI uri = URI.create("test");
-
-        when(request.getAbsolutePath()).thenReturn(URI.create("absolutePath.com"));
-        when(request.getBaseUri()).thenReturn(URI.create(""));
-        when(request.getRequestHeaders()).thenReturn(headers);
-        doReturn(uri).when(spy).getRequestUri("absolutePath", null);
-        doNothing().when(request).setUris(null, uri);
-        doReturn(true).when(spy).shouldFilter("/absolutePath.com", "com");
-
-        spy.filter(request);
-        assertThat("has correct headers",headers.size(),equalTo(1));
-        assertThat("has correct values",headers.get("Accept").get(0),equalTo(""));
-    }
-
-    @Test
-    public void filter_shouldFilter_setsRequestUrisProperly() throws Exception {
-        MultivaluedMap<String,String> headers = new MultivaluedMapImpl();
-        ContainerRequest request = mock(ContainerRequest.class);
-        URI uri = URI.create("test");
-
-        when(request.getAbsolutePath()).thenReturn(URI.create("absolutePath.com"));
-        when(request.getBaseUri()).thenReturn(uri);
-        when(request.getRequestHeaders()).thenReturn(headers);
-        doReturn(uri).when(spy).getRequestUri("absolutePath", null);
-        doNothing().when(request).setUris(null, uri);
-        doReturn(true).when(spy).shouldFilter("/absolutePath.com", "com");
-
-        spy.filter(request);
-        verify(spy).getRequestUri("absolutePath", null);
-        verify(request,times(2)).getBaseUri();
-        verify(request).setUris(uri,uri);
-    }
-
-    @Test
-    public void filter_shouldNotFilter_returnsUnalteredRequest() throws Exception {
-        ContainerRequest request = mock(ContainerRequest.class);
-        when(request.getAbsolutePath()).thenReturn(URI.create("absolutePath.com"));
-        when(request.getBaseUri()).thenReturn(URI.create(""));
-        doReturn(false).when(spy).shouldFilter("/absolutePath.com","com");
-        spy.filter(request);
-        verify(request,never()).getRequestHeaders();
-        verify(request,never()).setUris(any(URI.class),any(URI.class));
     }
 
     @Test
@@ -121,4 +71,5 @@ public class UriExtensionFilterTest {
         Map<String, List<String>> queryParams = new HashMap<String, List<String>>();
         assertThat("request", uriExtensionFilter.getRequestUri("absolutePathWithoutExtension", queryParams).getQuery(), equalTo(null));
     }
+
 }

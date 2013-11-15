@@ -414,12 +414,4 @@ public class ApplicationConverterTest {
         verify(rolesConverter).toRoleJaxbFromTenantRole(anyList());
     }
 
-    @Test
-    public void toClientJaxbWithPermissionsAndCredentials_callsTotoClientJaxb() throws Exception {
-        ApplicationConverter spy = spy(applicationConverter);
-        com.rackspace.idm.domain.entity.Application client = new com.rackspace.idm.domain.entity.Application();
-        doReturn(null).when(spy).toClientJaxb(client, true);
-        spy.toClientJaxbWithPermissionsAndCredentials(client);
-        verify(spy).toClientJaxb(client, true);
-    }
 }

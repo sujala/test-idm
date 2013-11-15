@@ -26,7 +26,6 @@ import static org.mockito.Mockito.*;
 public class ExceptionHandlerTest {
 
     ExceptionHandler exceptionHandler;
-    ExceptionHandler spy;
     JAXBObjectFactories jaxbObjectFactories = mock(JAXBObjectFactories.class);
     ObjectFactory objectFactory = mock(ObjectFactory.class);
 
@@ -34,7 +33,6 @@ public class ExceptionHandlerTest {
     public void setUp() throws Exception {
         exceptionHandler = new ExceptionHandler();
         exceptionHandler.setObjFactories(jaxbObjectFactories);
-        spy = spy(exceptionHandler);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
     }
 
@@ -578,146 +576,4 @@ public class ExceptionHandlerTest {
         verify(identityFault,never()).setDetails(anyString());
     }
 
-    @Test
-    public void exceptionResponse_whenBadRequestException_callsBadRequestExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).badRequestExceptionResponse("bad request");
-        spy.exceptionResponse(new BadRequestException("bad request"));
-        verify(spy).badRequestExceptionResponse("bad request");
-    }
-
-    @Test
-    public void exceptionResponse_whenBadRequestException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).badRequestExceptionResponse("bad request");
-        assertThat("response builder", spy.exceptionResponse(new BadRequestException("bad request")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenStalePasswordException_callsBadRequestExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).badRequestExceptionResponse("Wrong Password");
-        spy.exceptionResponse(new StalePasswordException("Wrong Password"));
-        verify(spy).badRequestExceptionResponse("Wrong Password");
-    }
-
-    @Test
-    public void exceptionResponse_whenStalePasswordException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).badRequestExceptionResponse("Wrong Password");
-        assertThat("response builder", spy.exceptionResponse(new StalePasswordException("Wrong Password")),instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenNotAuthorizedException_callsNotAuthenticatedExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notAuthenticatedExceptionResponse("not authorized");
-        spy.exceptionResponse(new NotAuthorizedException("not authorized"));
-        verify(spy).notAuthenticatedExceptionResponse("not authorized");
-    }
-
-    @Test
-    public void exceptionResponse_whenNotAuthorizedException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notAuthenticatedExceptionResponse("not authorized");
-        assertThat("response builder", spy.exceptionResponse(new NotAuthorizedException("not authorized")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenNotAuthenticatedException_callsNotAuthenticatedExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notAuthenticatedExceptionResponse("not authenticated");
-        spy.exceptionResponse(new NotAuthenticatedException("not authenticated"));
-        verify(spy).notAuthenticatedExceptionResponse("not authenticated");
-    }
-
-    @Test
-    public void exceptionResponse_whenNotAuthenticatedException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notAuthenticatedExceptionResponse("not authenticated");
-        assertThat("response builder", spy.exceptionResponse(new NotAuthenticatedException("not authenticated")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenForbiddenException_callsForbiddenExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).forbiddenExceptionResponse("forbidden");
-        spy.exceptionResponse(new ForbiddenException("forbidden"));
-        verify(spy).forbiddenExceptionResponse("forbidden");
-    }
-
-    @Test
-    public void exceptionResponse_whenForbiddenException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).forbiddenExceptionResponse("forbidden");
-        assertThat("response builder", spy.exceptionResponse(new ForbiddenException("forbidden")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenNotFoundException_callsNotFoundExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notFoundExceptionResponse("not found");
-        spy.exceptionResponse(new NotFoundException("not found"));
-        verify(spy).notFoundExceptionResponse("not found");
-    }
-
-    @Test
-    public void exceptionResponse_whenNotFoundException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).notFoundExceptionResponse("not found");
-        assertThat("response builder", spy.exceptionResponse(new NotFoundException("not found")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenClientConflictException_callsTenantConflictExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).tenantConflictExceptionResponse("tenant conflict");
-        spy.exceptionResponse(new ClientConflictException("tenant conflict"));
-        verify(spy).tenantConflictExceptionResponse("tenant conflict");
-    }
-
-    @Test
-    public void exceptionResponse_whenClientConflictException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).tenantConflictExceptionResponse("tenant conflict");
-        assertThat("response builder", spy.exceptionResponse(new ClientConflictException("tenant conflict")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenUserDisabledException_callsUserDisabledExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).userDisabledExceptionResponse("user disabled");
-        spy.exceptionResponse(new UserDisabledException("user disabled"));
-        verify(spy).userDisabledExceptionResponse("user disabled");
-    }
-
-    @Test
-    public void exceptionResponse_whenUserDisabledException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).userDisabledExceptionResponse("user disabled");
-        assertThat("response builder", spy.exceptionResponse(new UserDisabledException("user disabled")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenDuplicateUsernameException_callsConflictExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).conflictExceptionResponse("duplicate username");
-        spy.exceptionResponse(new DuplicateUsernameException("duplicate username"));
-        verify(spy).conflictExceptionResponse("duplicate username");
-    }
-
-    @Test
-    public void exceptionResponse_whenDuplicateUsernameException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).conflictExceptionResponse("duplicate username");
-        assertThat("response builder", spy.exceptionResponse(new DuplicateUsernameException("duplicate username")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenBaseUrlConflictException_callsConflictExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).conflictExceptionResponse("base url conflict");
-        spy.exceptionResponse(new BaseUrlConflictException("base url conflict"));
-        verify(spy).conflictExceptionResponse("base url conflict");
-    }
-
-    @Test
-    public void exceptionResponse_whenBaseUrlConflictException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).conflictExceptionResponse("base url conflict");
-        assertThat("response builder", spy.exceptionResponse(new BaseUrlConflictException("base url conflict")), instanceOf(ResponseBuilderImpl.class));
-    }
-
-    @Test
-    public void exceptionResponse_whenUnspecifiedException_callsServiceExceptionResponse() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).serviceExceptionResponse();
-        spy.exceptionResponse(new NullPointerException());
-        verify(spy).serviceExceptionResponse();
-    }
-
-    @Test
-    public void exceptionResponse_whenUnspecifiedException_returnsResponseBuilder() throws Exception {
-        doReturn(new ResponseBuilderImpl()).when(spy).serviceExceptionResponse();
-        assertThat("response builder", spy.exceptionResponse(new NullPointerException()), instanceOf(ResponseBuilderImpl.class));
-    }
 }

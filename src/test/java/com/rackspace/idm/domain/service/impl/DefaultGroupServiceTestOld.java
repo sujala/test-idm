@@ -47,8 +47,6 @@ public class DefaultGroupServiceTestOld {
     @Mock
     Configuration config;
 
-    DefaultGroupService spy;
-
     @Before
     public void setup(){
         user1.setDisplayName("user1");
@@ -63,7 +61,6 @@ public class DefaultGroupServiceTestOld {
         listUser.add(user1);
         listUser.add(user2);
         listUsers.setUsers(listUser);
-        spy = spy(defaultGroupService);
     }
 
     @Test
@@ -100,46 +97,6 @@ public class DefaultGroupServiceTestOld {
     @Test (expected = IllegalArgumentException.class)
     public void addGroup_nullGroup_throwsIllegalArgumentException() throws Exception {
         defaultGroupService.addGroup(null);
-    }
-
-    @Test
-    public void addGroup_callsVerifyDuplicateGroup() throws Exception {
-        com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        doNothing().when(spy).verifyDuplicateGroup(group);
-        when(groupDao.getNextGroupId()).thenReturn("0");
-        doNothing().when(groupDao).addGroup(group);
-        spy.addGroup(group);
-        verify(spy).verifyDuplicateGroup(group);
-    }
-
-    @Test
-    public void addGroup_callsGroupDaoMethodGet() throws Exception {
-        com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        doNothing().when(spy).verifyDuplicateGroup(group);
-        when(groupDao.getNextGroupId()).thenReturn("0");
-        doNothing().when(groupDao).addGroup(group);
-        spy.addGroup(group);
-        verify(groupDao).getNextGroupId();
-    }
-
-    @Test
-    public void addGroup_setsGroupID() throws Exception {
-        com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        doNothing().when(spy).verifyDuplicateGroup(group);
-        when(groupDao.getNextGroupId()).thenReturn("12");
-        doNothing().when(groupDao).addGroup(group);
-        spy.addGroup(group);
-        assertThat("groupID",group.getGroupId(),equalTo("12"));
-    }
-
-    @Test
-    public void addGroup_callsGroupDaoMethodAdd() throws Exception {
-        com.rackspace.idm.domain.entity.Group group = new com.rackspace.idm.domain.entity.Group();
-        doNothing().when(spy).verifyDuplicateGroup(group);
-        when(groupDao.getNextGroupId()).thenReturn("0");
-        doNothing().when(groupDao).addGroup(group);
-        spy.addGroup(group);
-        verify(groupDao).addGroup(group);
     }
 
     @Test
@@ -180,25 +137,6 @@ public class DefaultGroupServiceTestOld {
         defaultGroupService.updateGroup(group);
 
         verify(groupDao).getGroupById("123");
-
-    }
-
-    @Test
-    public void updateGroup_groupNamesNotEqual_callsVerifiyDuplicateGroup() throws Exception {
-        com.rackspace.idm.domain.entity.Group group1 = new com.rackspace.idm.domain.entity.Group();
-        com.rackspace.idm.domain.entity.Group group2 = new com.rackspace.idm.domain.entity.Group();
-        group1.setGroupId("123");
-        group1.setName("John Smith");
-        group2.setName("Adam Smith");
-        when(config.getString("defaultGroupId")).thenReturn("0");
-        when(groupDao.getGroupById("123")).thenReturn(group2);
-        doNothing().when(groupDao).updateGroup(group1);
-        doNothing().when(spy).verifyDuplicateGroup(group1);
-
-        spy.updateGroup(group1);
-
-        verify(spy).verifyDuplicateGroup(group1);
-
     }
 
     @Test
@@ -212,7 +150,6 @@ public class DefaultGroupServiceTestOld {
         defaultGroupService.updateGroup(group);
 
         verify(groupDao).updateGroup(group);
-
     }
 
     @Test (expected = IllegalArgumentException.class)

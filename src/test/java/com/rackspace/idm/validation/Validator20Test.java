@@ -32,13 +32,11 @@ public class Validator20Test {
 
     TenantService tenantService = mock(TenantService.class);
     Validator20 validator20;
-    Validator20 spy;
 
     @Before
     public void setUp() throws Exception {
         validator20 = new Validator20();
         validator20.setTenantService(tenantService);
-        spy = spy(validator20);
     }
 
     @Test
@@ -228,65 +226,6 @@ public class Validator20Test {
     }
 
     @Test
-    public void validateUserForCreate_callsValidateUsername() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        user.setEmail("email");
-        doNothing().when(spy).validateUsername("username");
-        doNothing().when(spy).validateUsernameForUpdateOrCreate("username");
-        doNothing().when(spy).validateEmail("email");
-        spy.validateUserForCreate(user);
-        verify(spy).validateUsername("username");
-    }
-
-    @Test
-    public void validateUserForCreate_callsValidateUsernameForUpdateOrCreate() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        user.setEmail("email");
-        doNothing().when(spy).validateUsername("username");
-        doNothing().when(spy).validateUsernameForUpdateOrCreate("username");
-        doNothing().when(spy).validateEmail("email");
-        spy.validateUserForCreate(user);
-        verify(spy).validateUsernameForUpdateOrCreate("username");
-    }
-
-    @Test
-    public void validateUserForCreate_callsValidateEmail() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        user.setEmail("email");
-        doNothing().when(spy).validateUsername("username");
-        doNothing().when(spy).validateUsernameForUpdateOrCreate("username");
-        doNothing().when(spy).validateEmail("email");
-        spy.validateUserForCreate(user);
-        verify(spy).validateEmail("email");
-    }
-
-    @Test
-    public void validatePasswordCredentials_passwordIsBlank_throwsBadRequest() throws Exception {
-        try{
-            PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
-            passwordCredentialsRequiredUsername.setUsername("username");
-            passwordCredentialsRequiredUsername.setPassword(" ");
-            doNothing().when(spy).validateUsername("username");
-            validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
-            assertTrue("should throw exception",false);
-        } catch (BadRequestException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Expecting Password"));
-        }
-    }
-
-    @Test
-    public void validatePasswordCredentials_passwordIsNotBlank_throwsBadRequest() throws Exception {
-        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
-        passwordCredentialsRequiredUsername.setUsername("username");
-        passwordCredentialsRequiredUsername.setPassword("password");
-        doNothing().when(spy).validateUsername("username");
-        validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
-    }
-
-    @Test
     public void validatePasswordForCreateOrUpdate_ValidPassword_succeeds() throws Exception {
         validator20.validatePasswordForCreateOrUpdate("Ab345678");
     }
@@ -332,58 +271,6 @@ public class Validator20Test {
         } catch (BadRequestException ex)
         {
             assertThat("exception message", ex.getMessage(), equalTo("Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character."));
-        }
-    }
-
-    @Test
-    public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordCredentials() throws Exception {
-        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
-        passwordCredentialsRequiredUsername.setPassword("password");
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
-        doNothing().when(spy).validatePasswordForCreateOrUpdate("password");
-        spy.validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
-        verify(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
-    }
-    @Test
-    public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordForCreateOrUpdate() throws Exception {
-        PasswordCredentialsBase passwordCredentialsRequiredUsername = new PasswordCredentialsBase();
-        passwordCredentialsRequiredUsername.setPassword("password");
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
-        doNothing().when(spy).validatePasswordForCreateOrUpdate("password");
-        spy.validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
-        verify(spy).validatePasswordForCreateOrUpdate("password");
-    }
-
-    @Test
-    public void validateApiKeyCredentials_callsValidateUsername() throws Exception {
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        apiKeyCredentials.setApiKey("1234568790");
-        apiKeyCredentials.setUsername("test");
-        doNothing().when(spy).validateUsername("test");
-        spy.validateApiKeyCredentials(apiKeyCredentials);
-        verify(spy).validateUsername("test");
-    }
-
-    @Test
-    public void validateApiKeyCredentials_validApiKey_noException() throws Exception {
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        apiKeyCredentials.setApiKey("1234568790");
-        apiKeyCredentials.setUsername("test");
-        doNothing().when(spy).validateUsername("test");
-        spy.validateApiKeyCredentials(apiKeyCredentials);
-    }
-
-    @Test
-    public void validateApiKeyCredentials_validApiKey_BadRequestException() throws Exception {
-        try{
-            ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-            apiKeyCredentials.setApiKey("");
-            apiKeyCredentials.setUsername("test");
-            doNothing().when(spy).validateUsername("test");
-            spy.validateApiKeyCredentials(apiKeyCredentials);
-            assertTrue("should throw exception",false);
-        } catch (BadRequestException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Expecting apiKey"));
         }
     }
 

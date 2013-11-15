@@ -32,12 +32,10 @@ import static org.mockito.Mockito.*;
 public class XMLReaderTestOld {
 
     XMLReader xmlReader;
-    XMLReader spy;
 
     @Before
     public void setUp() throws Exception {
         xmlReader = new XMLReader();
-        spy = spy(xmlReader);
     }
 
     @Test
@@ -58,40 +56,6 @@ public class XMLReaderTestOld {
     @Test
     public void isReadable_typeIsNotEntityHolderAndNotContainedInClasses_returnsFalse() throws Exception {
         assertThat("returns boolean",xmlReader.isReadable(Object.class,Object.class,null,null),equalTo(false));
-    }
-
-    @Test
-    public void readFrom_callsGetContext() throws Exception {
-        String xml = "<user xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
-                "      enabled=\"true\" email=\"john.smith@example.org\"\n" +
-                "      username=\"jqsmith\" id=\"123456\"/>";
-        InputStream entityStream = new ASN1InputStream(xml.getBytes());
-        spy.readFrom(null, User.class, null, null, null, entityStream);
-        verify(spy).getContext();
-    }
-
-    @Test
-    public void readFrom_createsUnMarshaller() throws Exception {
-        JAXBContext jaxbContext = mock(JAXBContext.class);
-        String xml = "<user xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
-                "      enabled=\"true\" email=\"john.smith@example.org\"\n" +
-                "      username=\"jqsmith\" id=\"123456\"/>";
-        InputStream entityStream = new ASN1InputStream(xml.getBytes());
-
-        doReturn(spy.getContext().createUnmarshaller()).when(jaxbContext).createUnmarshaller();
-        doReturn(jaxbContext).when(spy).getContext();
-
-        spy.readFrom(null, User.class, null, null, null, entityStream);
-        verify(jaxbContext).createUnmarshaller();
-    }
-
-    @Test
-    public void readFrom_validInputStream_returnsCorrectObject() throws Exception {
-        String xml = "<user xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
-                "      enabled=\"true\" email=\"john.smith@example.org\"\n" +
-                "      username=\"jqsmith\" id=\"123456\"/>";
-        InputStream entityStream = new ASN1InputStream(xml.getBytes());
-        assertThat("returns user", xmlReader.readFrom(null, User.class, null, null, null, entityStream), instanceOf(User.class));
     }
 
     @Test (expected = BadRequestException.class)

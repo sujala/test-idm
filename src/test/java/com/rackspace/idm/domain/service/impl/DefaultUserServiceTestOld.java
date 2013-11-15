@@ -72,14 +72,11 @@ public class DefaultUserServiceTestOld {
 
     private Validator validator;
 
-    private DefaultUserService spy;
-
     @Before
     public void setUp() throws Exception {
         validator = new Validator();
         validator.setLdapPatternRepository(patternDao);
         defaultUserService.setValidator(validator);
-        spy = spy(defaultUserService);
     }
 
     @Test
@@ -107,24 +104,6 @@ public class DefaultUserServiceTestOld {
     public void hasSubUsers_invalidUserId_returnsFalse() throws Exception {
         boolean hasUsers = defaultUserService.hasSubUsers("bad");
         assertThat("User has subusers", hasUsers, equalTo(false));
-    }
-
-    @Test
-    public void checkAndGetUserById_userExists_returnsUser() throws Exception {
-        User user = new User();
-        doReturn(user).when(spy).getUserById("id");
-        assertThat("user",spy.checkAndGetUserById("id"),equalTo(user));
-    }
-
-    @Test
-    public void checkAndGetUserById_userNull_throwsNotFoundException() throws Exception {
-        try{
-            doReturn(null).when(spy).getUserById("id");
-            spy.checkAndGetUserById("id");
-            assertTrue("should throw exception",false);
-        } catch (NotFoundException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("User id not found"));
-        }
     }
 
     @Test

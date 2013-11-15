@@ -19,26 +19,11 @@ public class UserPasswordCredentialsValidatorTest {
     User user;
 
     UserPasswordCredentialsValidator userPasswordCredentialsValidator;
-    UserPasswordCredentialsValidator spy;
 
     @Before
     public void setUp() throws Exception {
         userPasswordCredentialsValidator = new UserPasswordCredentialsValidator();
         user = mock(User.class);
-
-        spy = spy(userPasswordCredentialsValidator);
-    }
-
-    @Test
-    public void validateUserPasswordCredentials_callsValidateNewPassword() throws Exception {
-        UserPassword userPassword = new UserPassword();
-        userPassword.setPassword("wrongPassword");
-        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
-        userPasswordCredentials.setVerifyCurrentPassword(false);
-        userPasswordCredentials.setCurrentPassword(userPassword);
-        doNothing().when(spy).validateNewPassword(userPasswordCredentials);
-        spy.validateUserPasswordCredentials(userPasswordCredentials, user);
-        verify(spy).validateNewPassword(userPasswordCredentials);
     }
 
     @Test (expected = BadRequestException.class)
@@ -206,4 +191,5 @@ public class UserPasswordCredentialsValidatorTest {
         userPasswordCredentials.setNewPassword(userPassword);
         userPasswordCredentialsValidator.validateNewPassword(userPasswordCredentials);
     }
+
 }

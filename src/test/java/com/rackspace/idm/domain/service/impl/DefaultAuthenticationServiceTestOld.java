@@ -59,8 +59,6 @@ public class DefaultAuthenticationServiceTestOld {
     @InjectMocks
     DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService();
 
-    DefaultAuthenticationService spy;
-
     @Before
     public void setUp() throws Exception {
         ClientAuthenticationResult value = new ClientAuthenticationResult(new Application(), true);
@@ -69,54 +67,6 @@ public class DefaultAuthenticationServiceTestOld {
         when(rsaClient.authenticate(anyString(),anyString())).thenReturn(true);
         when(config.getBoolean(anyString(),anyBoolean())).thenReturn(true);
         defaultAuthenticationService.setRsaClient(rsaClient);
-        spy = spy(defaultAuthenticationService);
-    }
-
-    @Test
-    public void getAuthDataWithClientRoles_authDataHasNoUserApplicationOrRacker_returnsAuthDataWithSuccess() throws Exception {
-        AuthData authData = new AuthData();
-        doReturn(authData).when(spy).getAuthData(null);
-        assertThat("auth data", spy.getAuthDataWithClientRoles(null),equalTo(authData));
-    }
-
-    @Test
-    public void getAuthData_scopeAccessNotInstanceOfHasAccessTokenHasRefreshTokenAndPasswordResetScopeAccess_callsSetClient() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doNothing().when(spy).setClient(eq(scopeAccess), any(AuthData.class));
-        spy.getAuthData(scopeAccess);
-        verify(spy).setClient(eq(scopeAccess),any(AuthData.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void authenticateDomainUsernamePassword_notTrustedServer() throws Exception {
-        doReturn(false).when(spy).isTrustedServer();
-        spy.authenticateDomainUsernamePassword(null,null,null);
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void authenticateDomainRSA_notTrustedServer() throws Exception {
-        doReturn(false).when(spy).isTrustedServer();
-        spy.authenticateDomainRSA(null,null,null);
-    }
-
-    @Test
-    public void authenticateDomainUsernamePassword_TrustedServer_callsAuthRacker() throws Exception {
-        Racker racker = mock(Racker.class);
-        doReturn(true).when(spy).isTrustedServer();
-        when(authDao.authenticate(null,null)).thenReturn(true);
-        when(userService.getRackerByRackerId(null)).thenReturn(racker);
-        spy.authenticateDomainUsernamePassword(null,null,null);
-        verify(spy).authenticateRacker(null,null,false);
-    }
-
-    @Test
-    public void authenticateDomainRSA_TrustedServer_callsAuthRacker() throws Exception {
-        Racker racker = mock(Racker.class);
-        doReturn(true).when(spy).isTrustedServer();
-        when(authDao.authenticate(null,null)).thenReturn(true);
-        when(userService.getRackerByRackerId(null)).thenReturn(racker);
-        spy.authenticateDomainRSA(null,null,null);
-        verify(spy).authenticateRacker(null,null,true);
     }
 
     @Test
@@ -174,191 +124,6 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void getTokens_trParamInstanceOfRackerCredentialsAndUserNotAuthenticated_throwsNotAuthenticatedException() throws Exception {
-        try{
-            Credentials trParam = new RackerCredentials();
-            trParam.setGrantType("password");
-            trParam.setClientId("123");
-            trParam.setUsername("jsmith");
-            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
-            doReturn(new UserAuthenticationResult(new User(), false)).when(spy).authenticateRacker("jsmith",null,false);
-            spy.getTokens(trParam, new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Bad User credentials for jsmith"));
-        }
-    }
-
-    @Test
-    public void getTokens_trParamInstanceOfRSACredentialsAndUserNotAuthenticated_throwsNotAuthenticatedException() throws Exception {
-        try{
-            Credentials trParam = new RSACredentials();
-            trParam.setGrantType("password");
-            trParam.setClientId("123");
-            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
-            doReturn(new UserAuthenticationResult(new User(), false)).when(spy).authenticateRacker(null, null, true);
-            spy.getTokens(trParam, new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Bad RSA credentials for null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsPasswordAndUsernameBlank_throwsBadRequestException() throws Exception {
-        try{
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("password");
-            trParam.setClientId("123");
-            when(applicationService.authenticate("123",null)).thenReturn(new ClientAuthenticationResult(new Application(), true));
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.BadRequestException"));
-            assertThat("exception message",ex.getMessage(),equalTo("username cannot be blank"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenExpiredAndClientIdsNotEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            ScopeAccess scopeAccess =  new UserScopeAccess();
-            ((HasRefreshToken) scopeAccess).setRefreshTokenExpired();
-            scopeAccess.setClientId("123");
-            Application client = new Application();
-            client.setClientId("456");
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("refresh_token");
-            trParam.setClientId("123");
-            when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Refresh Token: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenExpiredAndClientIdsEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            ScopeAccess scopeAccess =  new UserScopeAccess();
-            ((HasRefreshToken) scopeAccess).setRefreshTokenExpired();
-            scopeAccess.setClientId("123");
-            Application client = new Application();
-            client.setClientId("123");
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("refresh_token");
-            trParam.setClientId("123");
-            when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Refresh Token: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenNotExpiredAndClientIdsNotEqual_throwsNotAuthenticatedException() throws Exception {
-        try{
-            ScopeAccess scopeAccess =  new UserScopeAccess();
-            ((HasRefreshToken) scopeAccess).setRefreshTokenExp(new DateTime().plusMinutes(5).toDate());
-            ((HasRefreshToken) scopeAccess).setRefreshTokenString("token");
-            scopeAccess.setClientId("123");
-            Application client = new Application();
-            client.setClientId("456");
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("refresh_token");
-            trParam.setClientId("123");
-            when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Refresh Token: null"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenNotExpiredAndClientIdsEqualAndScopeAccessInstanceOfUserScopeAccessAndNullUser_throwsUserDisabledException() throws Exception {
-        try{
-            ScopeAccess scopeAccess =  new UserScopeAccess();
-            ((HasRefreshToken) scopeAccess).setRefreshTokenExp(new DateTime().plusMinutes(5).toDate());
-            ((HasRefreshToken) scopeAccess).setRefreshTokenString("string");
-            scopeAccess.setClientId("123");
-            Application client = new Application();
-            client.setClientId("123");
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("refresh_token");
-            trParam.setClientId("123");
-            when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(userService.getUserById(null)).thenReturn(null);
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.UserDisabledException"));
-            assertThat("exception message",ex.getMessage(),equalTo("User NULL is disabled"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenNotExpiredAndClientIdsEqualAndScopeAccessInstanceOfUserScopeAccessAndUserDisabled_throwsUserDisabledException() throws Exception {
-        try{
-            User user = new User();
-            user.setEnabled(false);
-
-            ScopeAccess scopeAccess =  new UserScopeAccess();
-            ((HasRefreshToken) scopeAccess).setRefreshTokenExp(new DateTime().plusMinutes(5).toDate());
-            ((HasRefreshToken) scopeAccess).setRefreshTokenString("string");
-            scopeAccess.setClientId("123");
-
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("refresh_token");
-            trParam.setClientId("123");
-
-            when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-            when(userService.getUserById(null)).thenReturn(user);
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.UserDisabledException"));
-            assertThat("exception message",ex.getMessage(),equalTo("User NULL is disabled"));
-        }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAssertion_throwsNotAuthenticatedException() throws Exception {
-        try{
-            Application client = new Application();
-            client.setClientId("123");
-
-            Credentials trParam = new Credentials();
-            trParam.setGrantType("assertion");
-            trParam.setClientId("123");
-
-            when(applicationService.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-
-            spy.getTokens(trParam,new DateTime());
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
-            assertThat("exception message",ex.getMessage(),equalTo("Unsupported GrantType: ASSERTION"));
-        }
-    }
-
-    @Test
     public void getAndUpdateUserScopeAccessForClientId_nullUserAndNullClient_throwsIllegalArgumentException() throws Exception {
         try{
             defaultAuthenticationService.getAndUpdateUserScopeAccessForClientId(null,null);
@@ -403,16 +168,6 @@ public class DefaultAuthenticationServiceTestOld {
     }
 
     @Test
-    public void getAndUpdateClientScopeAccessForClientId_accessTokenExpNull_setsAccessTokenString() throws Exception {
-        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
-        when(scopeAccessService.getApplicationScopeAccess(null)).thenReturn(clientScopeAccess);
-        doReturn("generatedToken").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        ScopeAccess scopeAccess = spy.getAndUpdateClientScopeAccessForClientId(new Application());
-        assertThat("access token", ((HasAccessToken) scopeAccess).getAccessTokenString(), equalTo("generatedToken"));
-    }
-
-    @Test
     public void getAndUpdateRackerScopeAccessForClientId_nullRackerAndNullClient_throwsIllegalArgumentException() throws Exception {
         try{
             defaultAuthenticationService.getAndUpdateRackerScopeAccessForClientId(null, null);
@@ -443,50 +198,6 @@ public class DefaultAuthenticationServiceTestOld {
             assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
             assertThat("exception type",ex.getMessage(),equalTo("Argument(s) cannot be null."));
         }
-    }
-
-    @Test
-    public void getAndUpdateRackerScopeAccessForClientId_nullAccessTokenExp_setsAccessToken() throws Exception {
-        Racker racker = new Racker();
-        Application client = new Application();
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
-        doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("generatedToken").when(spy).generateToken();
-        when(applicationService.getClientRolesByClientId(anyString())).thenReturn(new ArrayList<ClientRole>());
-        ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
-        assertThat("access token", ((HasAccessToken) scopeAccess).getAccessTokenString(), equalTo("generatedToken"));
-    }
-
-    @Test
-    public void getAndUpdateRackerScopeAccessForClientId_nullRefreshTokenExp_setsRefreshTokenExp() throws Exception {
-        Racker racker = new Racker();
-        Application client = new Application();
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
-        doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("generatedToken").when(spy).generateToken();
-        ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
-        assertThat("refresh token exp", ((HasRefreshToken) scopeAccess).getRefreshTokenExp(),lessThan(new DateTime().plusYears(100).plusSeconds(1).toDate()));
-        assertThat("refresh token exp", ((HasRefreshToken) scopeAccess).getRefreshTokenExp(),greaterThan(new DateTime().plusYears(100).minusSeconds(1).toDate()));
-    }
-
-    @Test
-    public void getAndUpdateRackerScopeAccessForClientId_nullRefreshTokenExp_setsRefreshToken() throws Exception {
-        Racker racker = new Racker();
-        Application client = new Application();
-        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
-        rackerScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        when(scopeAccessService.getRackerScopeAccessByClientId(null, null)).thenReturn(rackerScopeAccess);
-        doNothing().when(spy).validateRackerHasRackerRole(racker, rackerScopeAccess, client);
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-        doReturn("generatedToken").when(spy).generateToken();
-        ScopeAccess scopeAccess = spy.getAndUpdateRackerScopeAccessForClientId(racker, client);
-        assertThat("access token ", ((HasRefreshToken) scopeAccess).getRefreshTokenString(), equalTo("generatedToken"));
     }
 
     @Test
@@ -592,32 +303,6 @@ public class DefaultAuthenticationServiceTestOld {
 
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
         verify(tenantService,never()).addTenantRoleToUser(any(Racker.class), any(TenantRole.class));
-    }
-
-    @Test
-    public void authenticate_withRSACredentials_callsAuthenticateRacker() throws Exception {
-        RSACredentials rsaCredentials = new RSACredentials();
-        rsaCredentials.setUsername("u");
-        rsaCredentials.setPassword("p");
-        rsaCredentials.setGrantType("password");
-        rsaCredentials.setClientId("id");
-        when(authDao.getRackerRoles(anyString())).thenReturn(new ArrayList<String>());
-        doNothing().when(spy).validateCredentials(rsaCredentials);
-        doReturn(new RackerScopeAccess()).when(spy).getAndUpdateRackerScopeAccessForClientId(any(Racker.class), any(Application.class));
-        spy.authenticate(rsaCredentials);
-        verify(spy).authenticateRacker("u", "p", true);
-    }
-
-    @Test (expected = ForbiddenException.class)
-    public void authenticateRacker_isTrustedServerFalse_throwsForbiddenException() throws Exception {
-        doReturn(false).when(spy).isTrustedServer();
-        spy.authenticateRacker(null,null,false);
-    }
-
-    @Test
-    public void authenticateRacker_withFlagSetToTrue_callsClient() throws Exception {
-        spy.authenticateRacker("foo", "bar", true);
-        verify(rsaClient).authenticate("foo", "bar");
     }
 
     @Test

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,7 +29,6 @@ public class AuthXMLCommonWriterTest {
     @Before
     public void setUp() throws Exception {
         authXMLCommonWriter = new AuthXMLCommonWriter();
-        authXMLCommonWriter = spy(authXMLCommonWriter);
     }
 
     @Test
