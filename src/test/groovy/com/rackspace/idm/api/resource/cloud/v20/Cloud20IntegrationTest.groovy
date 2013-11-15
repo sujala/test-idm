@@ -2607,6 +2607,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(identityAdminToken, createUser.id)
     }
 
+    def "List credentials should not return allow an identity admin to list service admin credentials"() {
+        when:
+        def listCredResponse = cloud20.listCredentials(identityAdminToken, serviceAdmin.id)
+
+        then:
+        listCredResponse != null
+        listCredResponse.status == 403
+
+    }
+
     def "List Groups with invalid name - returns 404" () {
         when:
         def listGroupsResponse = cloud20.listGroupsForUser(serviceAdminToken, "badUserId")
