@@ -44,7 +44,6 @@ dn: rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace,
  dc=com
 objectClass: rsPerson
 rsId: 3a4407a6b3e349998478409c5b7eda14
-clearPassword:: gjQdoGHTuOXPH4fECvMnsg==
 enabled: TRUE
 encryptionSalt: e3 1b 06 4c 50 3f 7e ed 91 2f f7 91 47 ae 93
 encryptionVersionId: 0
