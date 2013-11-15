@@ -2555,9 +2555,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         result.status == 200
         1 * user.getApiKey() >> ""
-        2 * user.getPassword() >> "Password"
-        1 * user.getUsername() >> "username"
-        1 * authorizationService.authorizeCloudServiceAdmin(_) >> true
+        0 * user.getPassword()
+        0 * authorizationService.authorizeCloudServiceAdmin(_)
     }
 
     def "listCredentials checks for apikey"() {

@@ -2,7 +2,6 @@ dn: rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10071819
-clearPassword:: AkUqqmsCEcwhuggKAFi7Ew==
 enabled: TRUE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20130322145056.559Z
@@ -11,7 +10,7 @@ rsDomainId: -543569094
 rsNastId: StagingUS_e99825fd-b069-4987-bf46-42766bf79fd3
 rsRegion: ORD
 uid: cloud10User_DoNotDelete
-userPassword: Password1 
+userPassword: Password1
 
 dn: cn=TOKENS,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -44,7 +43,6 @@ dn: rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 10046995
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
@@ -70,7 +68,6 @@ dn: rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10044551
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
@@ -92,7 +89,6 @@ dn: rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10044550
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: testuser@example.org
 passwordSelfUpdated: FALSE
@@ -119,7 +115,6 @@ dn: rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 10044477
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
@@ -144,7 +139,6 @@ dn: rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10043490
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: FALSE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
@@ -166,7 +160,6 @@ dn: rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10043250
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
@@ -192,7 +185,6 @@ dn: rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10022837
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: john.smith@example.org
 passwordSelfUpdated: FALSE
@@ -217,7 +209,6 @@ dn: rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 rsId: 10022623
-clearPassword:: snnmOckJY2mx+8HetOWQww==
 enabled: TRUE
 mail: k@example.com
 passwordSelfUpdated: FALSE
@@ -245,7 +236,6 @@ dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 173190
-clearPassword:: Iwqe972q5TqX1FfDfy7tvg==
 enabled: TRUE
 mail: auth@rackspace.com
 passwordSelfUpdated: FALSE
@@ -280,7 +270,6 @@ dn: rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 173189
-clearPassword:: OcPrTT5Rvnz5rxpPc1Z8yw==
 enabled: TRUE
 mail: auth@rackspace.com
 passwordSelfUpdated: FALSE
@@ -2274,8 +2263,6 @@ objectClass: rsApplication
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
 cn: cloudFiles
 userPassword: Password1
-clearPassword:: +Pwnxg/ymo/5umBy6DRzaXbIrOypvqc+Atn22Oy5e+gFAFBhveRYqBJLab7E
- /n2q
 enabled: TRUE
 openStackType: object-store
 RCN: RACKSPACE
@@ -2304,8 +2291,6 @@ objectClass: top
 clientId: 6ae999552a0d2dca14d62e2bc8b764d377b1dd6c
 cn: Identity Global Roles
 userPassword: Password1
-clearPassword:: tpxHGegPTD7X5tZrxVSy8cLBTN7GtQyXQT/XFvIZoHQBaMgZz7WUOjOjQGfw
- 1NN7
 description: Identity Global Roles
 openStackType: identity
 RCN: RACKSPACE
@@ -2378,8 +2363,6 @@ objectClass: top
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 cn: cloudServers
 userPassword: Password1
-clearPassword:: 9DgkWIIRcS8Bz3+UDkLNokL2aoeIdXZiMOcGg43gv44qnQNKa3TWXgJqz7Mv
- +mcg
 enabled: TRUE
 openStackType: compute
 RCN: RACKSPACE
