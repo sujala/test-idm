@@ -2588,7 +2588,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.user.roles.role.name.contains(rackerRoleName)
     }
 
-    def "List credentials returns de correct type for passwordCredentials"() {
+    def "List credentials should not return passwordCredentials"() {
         given:
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -2601,7 +2601,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         createUser != null
         listCredResponse != null
-        ((CredentialListType) listCredResponse).credential.get(0).name.localPart == "passwordCredentials"
+        ((CredentialListType) listCredResponse).credential.size() == 0
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)

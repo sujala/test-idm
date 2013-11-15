@@ -242,7 +242,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.secretQuestion == user.secretQuestion
         retrievedUser.secretQuestionId == user.secretQuestionId
         retrievedUser.lastname == user.lastname
-        retrievedUser.passwordObj.value == user.passwordObj.value
     }
 
     def "updateUserEncryption with no salt or encryptionversion updates user encryption"() {
@@ -264,7 +263,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.secretQuestion == user.secretQuestion
         retrievedUser.secretQuestionId == user.secretQuestionId
         retrievedUser.lastname == user.lastname
-        retrievedUser.passwordObj.value == user.passwordObj.value
     }
 
     def "calling getUsersToReEncrypt gets the users that need to be re-encrypted"() {

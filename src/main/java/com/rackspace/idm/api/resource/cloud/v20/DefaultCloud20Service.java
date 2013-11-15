@@ -1589,19 +1589,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = (User) userService.getUserByScopeAccess(callerScopeAccess);
 
+            if(authorizationService.hasServiceAdminRole(user)){
+                throw new ForbiddenException("Not Authorized");
+            }
+
             if (isUserAdmin(caller) || isDefaultUser(caller)) {
                 authorizationService.verifySelf(caller, user);
             }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
-
-            if (authorizationService.authorizeCloudServiceAdmin(callerScopeAccess)) {
-                if (!StringUtils.isBlank(user.getPassword())) {
-                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                    userCreds.setPassword(user.getPassword());
-                    userCreds.setUsername(user.getUsername());
-                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
-                }
-            }
 
             if (!StringUtils.isBlank(user.getApiKey())) {
                 ApiKeyCredentials userCreds = new ApiKeyCredentials();
