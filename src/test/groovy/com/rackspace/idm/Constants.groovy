@@ -9,6 +9,8 @@ class Constants {
 
     static def DEFAULT_PASSWORD = "Password1"
 
+    static def NAST_ROLE_ID = "5"
+    static def MOSSO_ROLE_ID = "6"
     static def USER_MANAGE_ROLE_ID = "7"
 
 }

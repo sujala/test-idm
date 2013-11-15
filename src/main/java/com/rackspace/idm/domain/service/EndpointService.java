@@ -37,6 +37,8 @@ public interface EndpointService {
 
     OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant);
 
+    OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, String openStackType, String region);
+
     void updateBaseUrl(CloudBaseUrl baseUrl);
 
 	void addPolicyToEndpoint(String baseUrlId, String policyId);

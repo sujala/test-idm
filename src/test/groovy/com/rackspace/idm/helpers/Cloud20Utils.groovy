@@ -2,9 +2,11 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
+import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -33,8 +35,11 @@ class Cloud20Utils {
     @Shared
     def serviceAdminToken
 
+    private Random random
+
     @PostConstruct
     def init() {
+        random = new Random()
         methods.init()
     }
 
@@ -44,6 +49,12 @@ class Cloud20Utils {
         def entity = response.getEntity(AuthenticateResponse).value
         assert (entity != null)
         entity.token.id
+    }
+
+    def authenticate(User user, password=DEFAULT_PASSWORD) {
+        def response = methods.authenticatePassword(user.username, password)
+        assert (response.status == SC_OK)
+        return response.getEntity(AuthenticateResponse).value
     }
 
     def createUser(token, username=getRandomUUID(), domainId=null) {
@@ -109,6 +120,10 @@ class Cloud20Utils {
 
     def getRandomUUID(prefix='') {
         String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
+    }
+
+    def getRandomIntegerString() {
+        String.valueOf((Integer)(100000 + random.nextFloat() * 900000))
     }
 
     //delete users order matters.  pass default users first followed by user-managed, etc...
@@ -177,13 +192,46 @@ class Cloud20Utils {
         if(service != null){
             role.serviceId = service.id
         }
-        def respones = methods.createRole(getServiceAdminToken(), role)
-        assert (respones.status == SC_CREATED)
-        respones.getEntity(Role).value
+        def response = methods.createRole(getServiceAdminToken(), role)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Role).value
     }
 
     def deleteRole(role) {
         def response = methods.deleteRole(getServiceAdminToken(), role.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def createTenant(name=getRandomUUID("tenant"), enabled=true, displayName=getRandomUUID("tenant")) {
+        def tenant = factory.createTenant(name, displayName, enabled)
+        def response = methods.addTenant(getServiceAdminToken(), tenant)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Tenant).value
+    }
+
+    def deleteTenant(def tenant) {
+        def response = methods.deleteTenant(getServiceAdminToken(), tenant.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def addRoleToUserOnTenant(user, tenant, roleId=MOSSO_ROLE_ID) {
+        def response = methods.addRoleToUserOnTenant(getServiceAdminToken(), tenant.id, user.id, roleId)
+        assert (response.status == SC_OK)
+    }
+
+    def createEndpointTemplate(global=false, type="compute", region="ORD", id=getRandomIntegerString(), publicUrl=getRandomUUID("http://"), name=getRandomUUID("name")) {
+        def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
+            it.global = global
+            it.region = region
+            it
+        }
+        def response = methods.addEndpointTemplate(getServiceAdminToken(), endpointTemplate)
+        assert (response.status == SC_CREATED)
+        response.getEntity(EndpointTemplate).value
+    }
+
+    def deleteEndpointTemplate(endpointTemplate) {
+        def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
         assert (response.status == SC_NO_CONTENT)
     }
 }

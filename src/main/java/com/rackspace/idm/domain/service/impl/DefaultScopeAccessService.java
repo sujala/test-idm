@@ -63,11 +63,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        List<Tenant> tenants = getTenants(roles);
+        HashMap<Tenant, String> tenants = getTenants(roles);
 
         // Third get the endppoints for each tenant
-        for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
+        for (Tenant tenant : tenants.keySet()) {
+            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), user.getRegion());
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -78,7 +78,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
-
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
         // First get the tenantRoles for the token
@@ -88,11 +87,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        List<Tenant> tenants = getTenants(roles);
+        HashMap<Tenant, String> tenants = getTenants(roles);
 
         // Third get the endpoints for each tenant
-        for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant);
+        for (Tenant tenant : tenants.keySet()) {
+            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), getRegion(token));
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -101,8 +100,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return endpoints;
     }
 
-    private List<Tenant> getTenants(List<TenantRole> roles) {
-        List<Tenant> tenants = new ArrayList<Tenant>();
+    private HashMap<Tenant, String> getTenants(List<TenantRole> roles) {
+        HashMap<Tenant, String> tenants = new HashMap<Tenant, String>();
         List<String> tenantIdList = new ArrayList<String>();
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
@@ -111,13 +110,40 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                         tenantIdList.add(tenantId);
                         Tenant tenant = this.tenantService.getTenant(tenantId);
                         if (tenant != null) {
-                            tenants.add(tenant);
+                            tenants.put(tenant, getOpenStackType(role));
                         }
                     }
                 }
             }
         }
         return tenants;
+    }
+
+    private String getOpenStackType(TenantRole role) {
+        String type = null;
+
+        Application client = applicationService.getById(role.getClientId());
+        if (client != null) {
+            type = client.getOpenStackType();
+            if (type != null) {
+                if (type.equalsIgnoreCase("object-store")) {
+                    type = "NAST";
+                } else if (type.equalsIgnoreCase("compute")) {
+                    type = "MOSSO";
+                }
+            }
+        }
+        return type;
+    }
+
+    private String getRegion(ScopeAccess token) {
+        String region = null;
+        BaseUser baseUser = userService.getUserByScopeAccess(token);
+        if (baseUser != null && baseUser instanceof User) {
+            User user = (User) baseUser;
+            region = user.getRegion();
+        }
+        return region;
     }
 
     @Override

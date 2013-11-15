@@ -524,6 +524,13 @@ public abstract class LdapRepository {
             return this;
         }
 
+        public LdapSearchBuilder addNotEqualAttribute(String attribute,
+            String value) {
+            Filter filter = Filter.createNOTFilter(Filter.createEqualityFilter(attribute, value));
+            filters.add(filter);
+            return this;
+        }
+
         public LdapSearchBuilder addEqualAttribute(String attribute,
             byte[] value) {
             Filter filter = Filter.createEqualityFilter(attribute, value);

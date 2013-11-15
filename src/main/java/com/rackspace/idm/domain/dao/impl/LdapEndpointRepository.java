@@ -49,6 +49,16 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
+    public Iterable<CloudBaseUrl> getGlobalUSBaseUrlsByBaseUrlType(String baseUrlType) {
+        return getObjects(searchFilterGetGlobalUSBaseurlsByBaseUrlType(baseUrlType));
+    }
+
+    @Override
+    public Iterable<CloudBaseUrl> getGlobalUKBaseUrlsByBaseUrlType(String baseUrlType) {
+        return getObjects(searchFilterGetGlobalUKBaseurlsByBaseUrlType(baseUrlType));
+    }
+
+    @Override
     public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
         return getObjects(searchFilterGetBaseUrlByPolicyId(policyId));
     }
@@ -95,6 +105,22 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OPENSTACK_TYPE, openstackType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+    }
+
+    private Filter searchFilterGetGlobalUSBaseurlsByBaseUrlType(String baseUrlType) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
+                .addEqualAttribute(ATTR_GLOBAL, Boolean.toString(true).toUpperCase())
+                .addNotEqualAttribute(ATTR_REGION, "LON").build();
+    }
+
+    private Filter searchFilterGetGlobalUKBaseurlsByBaseUrlType(String baseUrlType) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
+                .addEqualAttribute(ATTR_GLOBAL, Boolean.toString(true).toUpperCase())
+                .addEqualAttribute(ATTR_REGION, "LON").build();
     }
 
     private Filter searchFilterGetBaseUrlByPolicyId(String policyId) {

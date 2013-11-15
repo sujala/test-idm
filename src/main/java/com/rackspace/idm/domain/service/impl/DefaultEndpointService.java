@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -152,7 +153,7 @@ public class DefaultEndpointService implements EndpointService {
     public List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenantList) {
-            OpenstackEndpoint endpoint = this.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.getOpenStackEndpointForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -160,8 +161,9 @@ public class DefaultEndpointService implements EndpointService {
         return endpoints;
     }
 
-    private OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant) {
-        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+    @Override
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, String baseUrlType, String region) {
+        HashMap<String, CloudBaseUrl> baseUrls = new HashMap<String, CloudBaseUrl>();
 
         HashSet<String> tenantBaseUrlIds = new HashSet<String>();
 
@@ -173,23 +175,49 @@ public class DefaultEndpointService implements EndpointService {
             tenantBaseUrlIds.addAll(tenant.getV1Defaults());
         }
 
-        for (String baseUrlId : tenantBaseUrlIds) {
-            CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
-            if (baseUrl != null) {
-                baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrlId));
-                baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName()));
-                baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName()));
-                baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName()));
-                baseUrls.add(baseUrl);
-            }
+        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrlsById(new ArrayList<String>(tenantBaseUrlIds))) {
+            processBaseUrl(baseUrl, tenant);
+            baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
+        }
+
+        if (baseUrlType != null && region != null) {
+            addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region);
         }
 
         OpenstackEndpoint point = new OpenstackEndpoint();
         point.setTenantId(tenant.getTenantId());
         point.setTenantName(tenant.getName());
-        point.setBaseUrls(baseUrls);
+        point.setBaseUrls(new ArrayList<CloudBaseUrl>(baseUrls.values()));
 
         return point;
+    }
+
+    @Override
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
+        return this.getOpenStackEndpointForTenant(tenant, null, null);
+    }
+
+    private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, String baseUrlType, String region) {
+        Iterable<CloudBaseUrl> cloudBaseUrls = null;
+        if (region.equalsIgnoreCase("LON")) {
+            cloudBaseUrls = endpointDao.getGlobalUKBaseUrlsByBaseUrlType(baseUrlType);
+        } else {
+            cloudBaseUrls = endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType);
+        }
+        for (CloudBaseUrl baseUrl : cloudBaseUrls) {
+            if (!baseUrls.containsKey(baseUrl.getBaseUrlId())) {
+                processBaseUrl(baseUrl, tenant);
+                baseUrl.setV1Default(false);
+                baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
+            }
+        }
+    }
+
+    private void processBaseUrl(CloudBaseUrl baseUrl, Tenant tenant) {
+        baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrl.getBaseUrlId()));
+        baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName()));
+        baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName()));
+        baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName()));
     }
 
     String appendTenantToBaseUrl(String url, String tenantId) {
@@ -201,11 +229,6 @@ public class DefaultEndpointService implements EndpointService {
         } else {
             return url + "/" + tenantId;
         }
-    }
-
-    @Override
-    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
-        return this.getOpenstackEndpointsForTenant(tenant);
     }
 
     @Override
