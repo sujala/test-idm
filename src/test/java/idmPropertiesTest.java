@@ -79,7 +79,8 @@ public class idmPropertiesTest {
                 !idmPropertyLocation.getName().contains("JENKINS") &&
                 !idmPropertyLocation.getName().contains("TEST") &&
                 !idmPropertyLocation.getName().contains("OPENLDAP") &&
-                !idmPropertyLocation.getName().contains("VAGRANT")
+                !idmPropertyLocation.getName().contains("VAGRANT") &&
+                !idmPropertyLocation.getName().contains("GENERIC")
                 ) {
 
             for (File file : idmPropertyLocation.listFiles()) {
