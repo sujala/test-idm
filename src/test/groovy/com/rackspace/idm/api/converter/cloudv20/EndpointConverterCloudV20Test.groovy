@@ -297,6 +297,27 @@ class EndpointConverterCloudV20Test extends Specification {
         catalog.getService().size() == 0
     }
 
+    def "convert EndpointTemplate to CloudBaseUrl sets the baseUrlType"() {
+        given:
+        EndpointTemplate endpointTemplate = endpointTemplate().with {
+            it.type = type
+            it
+        }
+
+        when:
+        CloudBaseUrl baseUrl = converterCloudV20.toCloudBaseUrl(endpointTemplate)
+
+        then:
+        baseUrl.baseUrlType == expectedBaseUrlType
+
+        where:
+        type            | expectedBaseUrlType
+        "object-store"  | "NAST"
+        "compute"       | "MOSSO"
+        "monitoring"    | "MOSSO"
+        null            | null
+    }
+
     def baseurl() {
         new CloudBaseUrl().with {
             it.adminUrl = "http://admin.com"

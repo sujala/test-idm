@@ -118,23 +118,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void getOpenStackEndpointsForScopeAccess_roleHasTenantIdAndIdValid_addsTenantToList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
-        ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        TenantRole role = new TenantRole();
-        role.getTenantIds().add("123");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        Tenant tenant = new Tenant();
-        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(null);
-        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(endpointService).getOpenStackEndpointForTenant(tenant);
-    }
-
-    @Test
     public void getOpenStackEndpointsForScopeAccess_roleHasTenantIdAndIdNotValid_doesNotAddTenantToList() throws Exception {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
@@ -185,32 +168,6 @@ public class DefaultScopeAccessServiceTestOld {
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantService,never()).getTenant(anyString());
-    }
-
-    @Test
-    public void getOpenStackEndpointsForScopeAccess_endPointsExist_returnsListWithEndpoint() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
-        ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
-
-        TenantRole role = new TenantRole();
-        role.getTenantIds().add("123");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-
-        Tenant tenant = new Tenant();
-
-        OpenstackEndpoint endpoint = new OpenstackEndpoint();
-        endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
-        endpoint.getBaseUrls().add(new CloudBaseUrl());
-
-        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
-        when(tenantService.getTenant("123")).thenReturn(tenant);
-        when(endpointService.getOpenStackEndpointForTenant(tenant)).thenReturn(endpoint);
-
-        List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        assertThat("size",endpointList.size(),equalTo(1));
-        assertThat("endpoint",endpointList.get(0),equalTo(endpoint));
     }
 
     @Test

@@ -481,7 +481,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         endpoints.size() == 1
         tenantService.getTenantRolesForUser(user) >> tenantRoles
         tenantService.getTenant(_) >> tenant
-        endpointService.getOpenStackEndpointForTenant(_) >> endpoint
+        endpointService.getOpenStackEndpointForTenant(_, _, _) >> endpoint
     }
 
     def "isScopeAccessExpired returns true when scopeAccess is null"() {
@@ -639,7 +639,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             tenantService.getTenant(_)>>>[tenant, tenant2];
             role.getTenantIds() >> ["1"].asList()
             endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
-            endpointService.getOpenStackEndpointForTenant(_) >> endPoint
+            endpointService.getOpenStackEndpointForTenant(_, _, _) >> endPoint
         when:
             def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
         then:
@@ -830,6 +830,47 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(_)
+    }
+
+    def "calling getOpenStackType returns the correct value"() {
+        given:
+        def role = entityFactory.createTenantRole()
+        def application = entityFactory.createApplication().with {
+            it.openStackType = applicationType
+            it
+        }
+
+        when:
+        def result = service.getOpenStackType(role)
+
+        then:
+        1 * applicationService.getById(_) >> application
+        result == expectedResult
+
+        where:
+        applicationType | expectedResult
+        "object-store"  | "NAST"
+        "compute"       | "MOSSO"
+        null            | null
+    }
+
+    def "calling getRegion returns correct value"() {
+        given:
+        def token = entityFactory.createScopeAccess()
+
+        when:
+        def result = service.getRegion(token)
+
+        then:
+        1 * userService.getUserByScopeAccess(token) >> user
+        result == expectedRegion
+
+        where:
+        expectedRegion  | user
+        "ORD"           | entityFactory.createUser().with {it.region="ORD";it}
+        null            | entityFactory.createRacker()
+        null            | null
+
     }
 
     def getRange(seconds, entropy) {

@@ -138,6 +138,16 @@ public class EndpointConverterCloudV20 {
             baseUrl.setVersionInfo(template.getVersion().getInfo());
             baseUrl.setVersionList(template.getVersion().getList());
         }
+        String type = template.getType();
+
+        if (type != null) {
+            if(type.equalsIgnoreCase("object-store")){
+                baseUrl.setBaseUrlType("NAST");
+            }else{
+                baseUrl.setBaseUrlType("MOSSO");
+            }
+        }
+
         return baseUrl;
     }
 }

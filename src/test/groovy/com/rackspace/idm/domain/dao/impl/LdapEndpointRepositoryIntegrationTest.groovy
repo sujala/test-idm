@@ -2,31 +2,23 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.helpers.Cloud20Utils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
 import spock.lang.Specification
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapEndpointRepositoryIntegrationTest extends Specification {
 
-    @Shared def randomness = UUID.randomUUID()
-    @Shared def random
-    @Shared def baseUrlId
-
     @Autowired
     private EndpointDao endpointDao
 
-    def setupSpec() {
-        random = ("$randomness").replace('-',"")
-        baseUrlId = "baseUrlId${random}"
-    }
-
-    def cleanupSpec() {
-    }
+    @Autowired
+    private Cloud20Utils utils
 
     def "endpoint crud"() {
         given:
+        def baseUrlId = utils.getRandomUUID("baseUrlId")
         def baseUrlToCreate = getCreateBaseUrl(baseUrlId)
         def baseUrlToUpdate = getUpdateBaseUrl(baseUrlId)
 
@@ -45,6 +37,54 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
         baseUrlToCreate == createdBaseUrl
         baseUrlToUpdate == updatedBaseUrl
         deletedBaseUrl == null
+    }
+
+    def "calling get global endpoints for us and uk returns correct endpoints"() {
+        given:
+        def baseUrl1 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+            it.region = "ORD"
+            it.baseUrlType = "MOSSO"
+            it
+        }
+        def baseUrl2 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+            it.region = "ORD"
+            it.baseUrlType = "NAST"
+            it
+        }
+        def baseUrl3 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+            it.region = "LON"
+            it.baseUrlType = "MOSSO"
+            it
+        }
+        def baseUrl4 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+            it.region = "LON"
+            it.baseUrlType = "NAST"
+            it
+        }
+        endpointDao.addBaseUrl(baseUrl1)
+        endpointDao.addBaseUrl(baseUrl2)
+        endpointDao.addBaseUrl(baseUrl3)
+        endpointDao.addBaseUrl(baseUrl4)
+
+        when:
+        List<CloudBaseUrl> usGlobalMossoBaseUrls = endpointDao.getGlobalUSBaseUrlsByBaseUrlType("MOSSO").collect()
+        List<CloudBaseUrl> ukGlobalMossoBaseUrls = endpointDao.getGlobalUKBaseUrlsByBaseUrlType("MOSSO").collect()
+
+        then:
+        for (CloudBaseUrl baseUrl : usGlobalMossoBaseUrls) {
+            assert (baseUrl.baseUrlType == "MOSSO")
+            assert (baseUrl.region == "ORD")
+        }
+        for (CloudBaseUrl baseUrl : ukGlobalMossoBaseUrls) {
+            assert (baseUrl.baseUrlType == "MOSSO")
+            assert (baseUrl.region == "LON")
+        }
+
+        cleanup:
+        endpointDao.deleteBaseUrl(baseUrl1.baseUrlId)
+        endpointDao.deleteBaseUrl(baseUrl2.baseUrlId)
+        endpointDao.deleteBaseUrl(baseUrl3.baseUrlId)
+        endpointDao.deleteBaseUrl(baseUrl4.baseUrlId)
     }
 
     def getCreateBaseUrl(baseUrlId) {
