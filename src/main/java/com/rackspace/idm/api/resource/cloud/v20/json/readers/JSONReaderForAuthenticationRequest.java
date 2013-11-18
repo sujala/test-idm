@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
@@ -95,16 +96,19 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
 
             if(auth.containsKey(API_KEY_CREDENTIALS)){
                 innerObject.put(API_KEY_CREDENTIALS, auth.get(API_KEY_CREDENTIALS));
+                removeExtraCredentialAttributes((JSONObject)innerObject.get(API_KEY_CREDENTIALS));
                 String string = innerObject.toString();
                 credentialType = om.readValue(string.getBytes(), ApiKeyCredentials.class);
                 ((JSONObject)jsonObject.get(AUTH)).remove(API_KEY_CREDENTIALS);
             } else if(auth.containsKey(PASSWORD_CREDENTIALS)){
                 innerObject.put(PASSWORD_CREDENTIALS, auth.get(PASSWORD_CREDENTIALS));
+                removeExtraCredentialAttributes((JSONObject)innerObject.get(PASSWORD_CREDENTIALS));
                 String string = innerObject.toString();
                 credentialType = om.readValue(string.getBytes(), PasswordCredentialsBase.class);
                 ((JSONObject)jsonObject.get(AUTH)).remove(PASSWORD_CREDENTIALS);
             } else if(auth.containsKey(RSA_CREDENTIALS)){
                 innerObject.put(RSA_CREDENTIALS, auth.get(RSA_CREDENTIALS));
+                removeExtraCredentialAttributes((JSONObject)innerObject.get(RSA_CREDENTIALS));
                 String string = innerObject.toString();
                 credentialType = om.readValue(string.getBytes(), RsaCredentials.class);
                 ((JSONObject)jsonObject.get(AUTH)).remove(RSA_CREDENTIALS);
@@ -124,5 +128,14 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         } catch (IOException e) {
             throw new BadRequestException("Invalid json request body");
         }
+    }
+
+
+    /*
+     * HACK - remove once auth plugin is fixed
+     */
+    private void removeExtraCredentialAttributes(JSONObject object){
+        object.remove(JSONConstants.TENANT_ID);
+        object.remove(JSONConstants.TENANT_NAME);
     }
 }

@@ -34,9 +34,6 @@ public class DefaultEncryptionService implements EncryptionService {
         user.setSalt(encryptionSalt);
 
         try {
-            if (user.getPassword() != null) {
-                user.setEncryptedPassword(cryptHelper.encrypt(user.getPassword(), encryptionVersionId, encryptionSalt));
-            }
             if (user.getSecretQuestion() != null) {
                 user.setEncryptedSecretQuestion(cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, encryptionSalt));
             }
@@ -121,9 +118,6 @@ public class DefaultEncryptionService implements EncryptionService {
         String encryptionSalt = getDecryptionSalt(user);
 
         try {
-            if (user.getEncryptedPassword() != null) {
-                user.setPassword(cryptHelper.decrypt(user.getEncryptedPassword(), encryptionVersionId, encryptionSalt));
-            }
             if (user.getEncryptedSecretQuestion() != null) {
                 user.setSecretQuestion(cryptHelper.decrypt(user.getEncryptedSecretQuestion(), encryptionVersionId, encryptionSalt));
             }

@@ -12,9 +12,11 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 
+import static com.rackspace.idm.Constants.getDEFAULT_PASSWORD
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,6 +46,18 @@ class Cloud20Methods {
     def authenticate(username, password) {
         def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
         resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+    }
+
+    //TODO: remove once auth plugin is fixed
+    def invalidAuthenticatePassword(username, password) {
+        def body = String.format('{"auth":{"passwordCredentials":{"username":"%s","password":"%s", "tenantId":"blah", "tenantName": "blah"}}}', username, password)
+        resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_JSON).entity(body).post(ClientResponse)
+    }
+
+    //TODO: remove once auth plugin is fixed
+    def invalidAuthenticateApiKey(username, key) {
+        def body = String.format('{"auth":{"RAX-KSKEY:apiKeyCredentials":{"username":"%s","apiKey":"%s", "tenantId":"blah", "tenantName": "blah"}}}', username, key)
+        resource.path(path20).path("tokens").accept(APPLICATION_XML).type(APPLICATION_JSON).entity(body).post(ClientResponse)
     }
 
     def authenticateRacker(username, password){

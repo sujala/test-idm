@@ -55,10 +55,6 @@ public class User  extends BaseUser implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String email;
 
-    @LDAPField(attribute=LdapRepository.ATTR_CLEAR_PASSWORD,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private byte[] encryptedPassword;
     private String password;
 
     private boolean passwordIsNew = true;

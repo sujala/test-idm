@@ -1455,7 +1455,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def users = cloud20.listUsers(defaultUserManageRoleToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 6
+        // TODO: Note when this test gets merged to master we the size should be increased to 6 since
+        //       there is another user added in the tests.
+        users.size() == 5
+        // Ensure that the list of users returned does not include the user admin
+        for (User user : users) {
+            !user.id.equals(userAdmin.id)
+        }
 
         cleanup:
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
@@ -2670,7 +2676,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.user.roles.role.name.contains(rackerRoleName)
     }
 
-    def "List credentials returns de correct type for passwordCredentials"() {
+    def "List credentials should not return passwordCredentials"() {
         given:
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -2683,7 +2689,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         createUser != null
         listCredResponse != null
-        ((CredentialListType) listCredResponse).credential.get(0).name.localPart == "passwordCredentials"
+        ((CredentialListType) listCredResponse).credential.size() == 0
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)
@@ -2716,6 +2722,16 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)
+
+    }
+
+    def "List credentials should not return allow an identity admin to list service admin credentials"() {
+        when:
+        def listCredResponse = cloud20.listCredentials(identityAdminToken, serviceAdmin.id)
+
+        then:
+        listCredResponse != null
+        listCredResponse.status == 403
     }
 
     def "List Groups with invalid name - returns 404" () {

@@ -76,6 +76,10 @@
             <value>rax-auth</value>
         </entry>
 
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
     </util:map>
 
     <util:map id="osksadmNsPrefixMap"
