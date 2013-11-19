@@ -93,6 +93,23 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
+    def "update expired user scope access handles error in DAO"() {
+        given:
+        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
+        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
+        def user =  entityFactory.createUser()
+        user.setUniqueId(dn)
+
+        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new Exception()}
+    }
+
     def "update (different parameters) deletes expired"() {
         given:
         def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)

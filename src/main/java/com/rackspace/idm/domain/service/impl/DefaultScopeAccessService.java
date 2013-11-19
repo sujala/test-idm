@@ -31,6 +31,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String ADDING_SCOPE_ACCESS = "Adding scopeAccess {}";
     public static final String ADDED_SCOPE_ACCESS = "Added scopeAccess {}";
     public static final String NULL_SCOPE_ACCESS_OBJECT_INSTANCE = "Null scope access object instance.";
+    public static final String ERROR_DELETING_SCOPE_ACCESS = "Error deleting scope access %s - %s";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -569,7 +570,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
                 if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                    try {
+                        scopeAccessDao.deleteScopeAccess(scopeAccess);
+                    } catch (Exception ex) {
+                        // no-op
+                        // This error is thrown when an orphaned scope access is present
+                        // in slave CA Directory, but not present in the master CA Directory.
+                        // So what we need to do is log the error, but allow the
+                        // authentication to continue.
+                        logger.error(String.format(ERROR_DELETING_SCOPE_ACCESS, scopeAccess.getAccessTokenString(), ex.getMessage()));
+                    }
+
                 }
             }
         }
