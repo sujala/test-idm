@@ -11,7 +11,9 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.dozer.DozerBeanMapper
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
@@ -66,6 +68,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         headers = Mock()
         jaxbMock = Mock(JAXBElement)
+    }
+
+    def "addEndpoint validates endpoint to prevent adding global endpoint to tenant"() {
+        given:
+        def authToken = "authToken"
+        def tenantId = "tenantId"
+        def endpointTemplate = Mock(EndpointTemplate)
+        def mockedTenant = Mock(Tenant)
+        def mockedCloudBaseUrl = new CloudBaseUrl()
+        mockedCloudBaseUrl.setGlobal(true)
+        def mockedScopeAccess = Mock(ScopeAccess)
+        tenantService.checkAndGetTenant(tenantId) >> mockedTenant
+        endpointService.checkAndGetEndpointTemplate(_) >> mockedCloudBaseUrl
+        scopeAccessService.getScopeAccessByAccessToken(authToken) >> mockedScopeAccess
+
+        when:
+        def response = service.addEndpoint(null, authToken, tenantId, endpointTemplate)
+
+        then:
+        response.build().getStatus() == 400
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
@@ -1370,6 +1392,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 400
     }
 
+    def "addRole handles DuplicateException being trown"() {
+        given:
+        mockRoleConverter(service)
+        allowUserAccess()
+        def role = v2Factory.createRole("role", "serviceId", "tenantId")
+        applicationService.addClientRole(_) >> {throw new DuplicateException()}
+        def app = new Application()
+        app.setClientId("clientId")
+        applicationService.checkAndGetApplication(_) >> app
+        def clientRole = new ClientRole()
+        roleConverter.fromRole(role, app.getClientId()) >> clientRole
+
+        when:
+        def response = service.addRole(headers, uriInfo(), authToken, role).build()
+
+        then:
+        response.status == 409
+    }
+
     def "deleteRole verifies admin level access"() {
         given:
         allowUserAccess()
@@ -2370,6 +2411,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.getTenantRolesForUser(user)
     }
 
+    def "buildAuthResponse gets converted token for impersonated users"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        mockTokenConverter(service)
+
+        def impersonatedScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
+
+        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+
+        when:
+        service.buildAuthResponse(null, impersonatedScopeAccess, user, authRequest)
+
+        then:
+        1 * tokenConverter.toToken(impersonatedScopeAccess)
+    }
+
     def "validateToken when caller token is racker token gets tenantRoles and rackerRoles by user"() {
         given:
         mockTokenConverter(service)
@@ -2598,6 +2657,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess("token", "1", "clientid", new Date().minus(1))
         result.status == 401
+    }
+
+    def "addService checks for null values"() {
+        given:
+        allowUserAccess()
+
+        expect:
+        if(serviceName != null) serviceToAdd.setName(serviceName)
+        if(serviceType != null) serviceToAdd.setType(serviceType)
+        def result = service.addService(headers, uriInfo(), authToken, serviceToAdd).build()
+        result.status == status
+
+        where:
+        serviceToAdd    | serviceName   | serviceType   | status
+        null            | null          | null          | 400
+        new Service()   | null          | null          | 400
+        new Service()   | "name"        | null          | 400
+        new Service()   | "name"        | "serviceType" | 201
     }
 
      def "deleteUserFromSoftDeleted checks if caller is service admin"() {
@@ -2925,6 +3002,58 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "updateUser validates that user ID in URL matches user ID in updated user"() {
+        given:
+        allowUserAccess()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "1"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            it
+        }
+        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+
+        when:
+        def response = service.updateUser(headers, authToken, "2", user).build()
+
+        then:
+        response.status == 400
+    }
+
+    def "updateUser validates that sub users who are not user-managers can only update their own accounts"() {
+        given:
+        allowUserAccess()
+        def converter = new UserConverterCloudV20()
+        converter.mapper = new DozerBeanMapper()
+        service.userConverterCloudV20 = converter
+        def username = "name"
+        def userId = 2
+        def updateUserId = userId + 1
+        UserForCreate user = new UserForCreate().with {
+            it.username = username
+            it.id = "${updateUserId}"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            it
+        }
+        User updateUser = entityFactory.createUser()
+        updateUser.username = username
+        updateUser.enabled = true
+        updateUser.id = userId
+        userService.checkAndGetUserById(_) >> updateUser
+        def caller = entityFactory.createUser()
+        caller.id = userId
+        userService.getUserByAuthToken(_) >> caller
+        authorizationService.authorizeCloudUser(_) >> true
+
+        when:
+        def response = service.updateUser(headers, authToken, "${updateUserId}", user).build()
+
+        then:
+        response.status == 403
     }
 
     def "validate role for create - throws BadRequestException"(){
