@@ -1,0 +1,12 @@
+# data dsas
+source "a-ldap1-virt.dxc";
+
+# router dsas
+source "router-a-ldap1-virt.dxc";
+
+set precedence = a-ldap1-virt;
+<<<<<<< HEAD
+set write-precedence = a-ldap1-virt;
+=======
+set write-precedence = a-ldap1-virt;
+>>>>>>> Re-Adding ldap files that got deleted during merge
