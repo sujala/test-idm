@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
