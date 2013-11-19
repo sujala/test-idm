@@ -38,4 +38,30 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
+
+    def "endpoints created with tenantAlias = '' do not display tenant in the url"() {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def tenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(defaultUser, tenant, MOSSO_ROLE_ID)
+
+        defaultUser.defaultRegion = "ORD"
+        utils.updateUser(defaultUser)
+
+        def endpointTemplate = utils.createEndpointTemplate(true, "")
+
+        when:
+        AuthenticateResponse response = utils.authenticate(defaultUser)
+
+        then:
+        assert response.serviceCatalog.service.endpoint.publicURL.get(0).contains(endpointTemplate.publicURL)
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+        utils.deleteEndpointTemplate(endpointTemplate)
+    }
 }

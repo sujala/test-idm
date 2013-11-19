@@ -2,6 +2,7 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.idm.GlobalConstants
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -19,6 +20,7 @@ import testHelpers.V2Factory
 import javax.annotation.PostConstruct
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.GlobalConstants.*
 import static org.apache.http.HttpStatus.*
 
 @Component
@@ -126,8 +128,12 @@ class Cloud20Utils {
         String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
     }
 
+    def getRandomInteger() {
+        ((Integer)(100000 + random.nextFloat() * 900000))
+    }
+
     def getRandomIntegerString() {
-        String.valueOf((Integer)(100000 + random.nextFloat() * 900000))
+        String.valueOf(getRandomInteger())
     }
 
     //delete users order matters.  pass default users first followed by user-managed, etc...
@@ -229,15 +235,20 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
-    def createEndpointTemplate(global=false, type="compute", region="ORD", id=getRandomIntegerString(), publicUrl=getRandomUUID("http://"), name=getRandomUUID("name")) {
-        def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
-            it.global = global
-            it.region = region
-            it
-        }
+    def createEndpointTemplate(EndpointTemplate endpointTemplate) {
         def response = methods.addEndpointTemplate(getServiceAdminToken(), endpointTemplate)
         assert (response.status == SC_CREATED)
         response.getEntity(EndpointTemplate).value
+    }
+
+    def createEndpointTemplate(global=false, tenantAlias=null, type="compute", region="ORD", id=getRandomIntegerString(), publicUrl=getRandomUUID("http://"), name=getRandomUUID("name")) {
+        def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
+            it.global = global
+            it.region = region
+            it.tenantAlias = tenantAlias
+            it
+        }
+        createEndpointTemplate(endpointTemplate)
     }
 
     def deleteEndpointTemplate(endpointTemplate) {

@@ -3,13 +3,17 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.unboundid.ldap.sdk.Filter;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
+import sun.swing.StringUIClientPropertyKey;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> implements EndpointDao {
+
+    private static final String ENCODED_BLANK_SPACE = "<blank>";
 
     public String getBaseDn(){
         return BASEURL_BASE_DN;
@@ -21,6 +25,28 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
 
     public String getSortAttribute() {
         return ATTR_ID;
+    }
+
+    /*
+     * directoryString cannot be of size zero.  Encode empty string '' to a '<blank>'
+     */
+    @Override
+    public void doPreEncode(CloudBaseUrl baseUrl) {
+        String tenantAlias = baseUrl.getTenantAlias();
+        if (StringUtils.isWhitespace(tenantAlias)) {
+            baseUrl.setTenantAlias(ENCODED_BLANK_SPACE);
+        }
+    }
+
+    /*
+     * directoryString cannot be of size zero.  Decode '<blank>' to a empty string ''
+     */
+    @Override
+    public void doPostEncode(CloudBaseUrl baseUrl) {
+        String tenantAlias = baseUrl.getTenantAlias();
+        if (ENCODED_BLANK_SPACE.equals(tenantAlias)) {
+            baseUrl.setTenantAlias("");
+        }
     }
 
     @Override

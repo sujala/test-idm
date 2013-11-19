@@ -1,9 +1,12 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
+
+import static com.rackspace.idm.GlobalConstants.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -137,5 +140,30 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         then:
         1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType) >> [baseUrl].asList()
         addedBaseUrl.v1Default == false
+    }
+
+    def "processBaseUrl only concatenates tenant when tenantAlias is enabled"() {
+        given:
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.publicUrl = "http://public.url"
+            it.adminUrl = "http://admin.url"
+            it.internalUrl = "http://internal.url"
+            it
+        }
+        def tenant = entityFactory.createTenant()
+
+        when:
+        baseUrl.tenantAlias = tenantAlias
+        service.processBaseUrl(baseUrl, tenant)
+
+        then:
+        baseUrl.publicUrl.contains(tenant.name) == expectedResult
+        baseUrl.adminUrl.contains(tenant.name) == expectedResult
+        baseUrl.internalUrl.contains(tenant.name) == expectedResult
+
+        where:
+        tenantAlias             | expectedResult
+        TENANT_ALIAS_PATTERN    | true
+        ""                      | false
     }
 }

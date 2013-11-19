@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
@@ -12,6 +13,8 @@ import org.openstack.docs.identity.api.v2.ServiceCatalog
 import org.openstack.docs.identity.api.v2.VersionForService
 import spock.lang.Shared
 import spock.lang.Specification
+
+import static com.rackspace.idm.GlobalConstants.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,7 +40,10 @@ class EndpointConverterCloudV20Test extends Specification {
 
     def "convert CloudBaseUrl from ldap to EndpointTemplate jersey object"() {
         given:
-        CloudBaseUrl baseUrl = baseurl()
+        CloudBaseUrl baseUrl = baseurl().with {
+            it.tenantAlias = "prefix${TENANT_ALIAS_PATTERN}"
+            it
+        }
 
         when:
         EndpointTemplate endpointTemplate = converterCloudV20.toEndpointTemplate(baseUrl)
@@ -55,6 +61,7 @@ class EndpointConverterCloudV20Test extends Specification {
         baseUrl.versionId == version.id
         baseUrl.versionInfo == version.info
         baseUrl.versionList == version.list
+        baseUrl.tenantAlias == endpointTemplate.tenantAlias
     }
 
     def "convert CloudBaseUrl from ldap to Endpoint jersey object"() {
@@ -79,7 +86,10 @@ class EndpointConverterCloudV20Test extends Specification {
 
     def "convert EndpointTemplate jersey object to ldap CloudBaseurl"() {
         given:
-        EndpointTemplate endpointTemplate = endpointTemplate()
+        EndpointTemplate endpointTemplate = endpointTemplate().with {
+            it.tenantAlias = "prefix${TENANT_ALIAS_PATTERN}"
+            it
+        }
 
         when:
         CloudBaseUrl baseUrl = converterCloudV20.toCloudBaseUrl(endpointTemplate)
@@ -97,6 +107,7 @@ class EndpointConverterCloudV20Test extends Specification {
         baseUrl.versionId == version.id
         baseUrl.versionInfo == version.info
         baseUrl.versionList == version.list
+        baseUrl.tenantAlias == endpointTemplate.tenantAlias
     }
 
     def "convert EndpointTemplate jersey object to ldap CloudBaseurl - no version"() {

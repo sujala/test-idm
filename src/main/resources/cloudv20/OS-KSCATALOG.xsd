@@ -163,6 +163,17 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="tenantAlias" type="xsd:string" default="{tenant}" use="optional">
+            <annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Tenant alias to be concatenated to endpoint.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
