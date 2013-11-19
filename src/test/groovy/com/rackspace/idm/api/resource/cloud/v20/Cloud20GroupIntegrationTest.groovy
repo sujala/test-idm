@@ -27,7 +27,7 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
         def group = v1Factory.createGroup(getRandomUUID('group'), "description")
 
         when:
-        def updateResponse = cloud20.updateGroup(utils.getServiceAdminToken(), utils.getRandomIntegerString(), group)
+        def updateResponse = cloud20.updateGroup(utils.getServiceAdminToken(), testUtils.getRandomIntegerString(), group)
 
         then:
         updateResponse.status == 404

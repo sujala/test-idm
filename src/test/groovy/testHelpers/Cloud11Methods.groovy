@@ -3,6 +3,7 @@ package testHelpers
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.Base64
+import org.springframework.stereotype.Component
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -16,6 +17,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
  * Time: 12:55 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 class Cloud11Methods {
     @Shared WebResource resource
 
@@ -88,8 +90,8 @@ class Cloud11Methods {
         resource.path(path11).path("token").path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    private String getBasicAuth() {
-        "Basic " + new String(baseEncoding(authUser, authPassword))
+    def String getBasicAuth(username=authUser, password=authPassword) {
+        "Basic " + new String(baseEncoding(username, password))
     }
 
     def baseEncoding(String username, String password) {

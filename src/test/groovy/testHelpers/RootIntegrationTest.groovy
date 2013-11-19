@@ -1,6 +1,8 @@
 package testHelpers
 
+import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
+import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.WebResource
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +21,9 @@ import spock.lang.Specification
 class RootIntegrationTest extends Specification {
 
     @Autowired Cloud20Utils utils
+    @Autowired Cloud11Utils utils11
+
+    @Autowired CloudTestUtils testUtils
 
     @Shared double entropy
     @Shared int defaultExpirationSeconds

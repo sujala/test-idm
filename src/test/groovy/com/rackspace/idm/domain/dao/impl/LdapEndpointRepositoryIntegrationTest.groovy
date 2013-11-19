@@ -1,9 +1,8 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.rackspace.idm.helpers.Cloud20Utils
+import com.rackspace.idm.helpers.CloudTestUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
@@ -17,11 +16,11 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
     private EndpointDao endpointDao
 
     @Autowired
-    private Cloud20Utils utils
+    private CloudTestUtils testUtils
 
     def "endpoint crud"() {
         given:
-        def baseUrlId = utils.getRandomUUID("baseUrlId")
+        def baseUrlId = testUtils.getRandomUUID("baseUrlId")
         def baseUrlToCreate = getCreateBaseUrl(baseUrlId)
         def baseUrlToUpdate = getUpdateBaseUrl(baseUrlId)
 
@@ -44,22 +43,22 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
 
     def "calling get global endpoints for us and uk returns correct endpoints"() {
         given:
-        def baseUrl1 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+        def baseUrl1 = getCreateBaseUrl(testUtils.getRandomUUID("baseUrlId")).with {
             it.region = "ORD"
             it.baseUrlType = "MOSSO"
             it
         }
-        def baseUrl2 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+        def baseUrl2 = getCreateBaseUrl(testUtils.getRandomUUID("baseUrlId")).with {
             it.region = "ORD"
             it.baseUrlType = "NAST"
             it
         }
-        def baseUrl3 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+        def baseUrl3 = getCreateBaseUrl(testUtils.getRandomUUID("baseUrlId")).with {
             it.region = "LON"
             it.baseUrlType = "MOSSO"
             it
         }
-        def baseUrl4 = getCreateBaseUrl(utils.getRandomUUID("baseUrlId")).with {
+        def baseUrl4 = getCreateBaseUrl(testUtils.getRandomUUID("baseUrlId")).with {
             it.region = "LON"
             it.baseUrlType = "NAST"
             it
@@ -92,7 +91,7 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
 
     def "tenantAlias defaults to the value of 'TENANT_ALIAS_PATTERN'"() {
         given:
-        def baseUrlId = utils.getRandomUUID("baseUrlId")
+        def baseUrlId = testUtils.getRandomUUID("baseUrlId")
         def baseUrl = getCreateBaseUrl(baseUrlId).with {
             it.tenantAlias = null
             it

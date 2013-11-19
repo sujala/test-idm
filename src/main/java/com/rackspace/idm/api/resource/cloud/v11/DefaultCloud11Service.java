@@ -1176,36 +1176,32 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = null;
 
         credentialValidator.validateCredential(cred.getValue(), userService);
-        try {
-            if (cred.getValue() instanceof MossoCredentials || cred.getValue() instanceof  NastCredentials) {
-                String tenantId = null;
-                String apiKey;
-                if(cred.getValue() instanceof MossoCredentials){
-                    MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
-                    tenantId = String.valueOf(mossoCreds.getMossoId());
-                    apiKey = mossoCreds.getKey();
-                }else{
-                    NastCredentials nastCreds = (NastCredentials) cred.getValue();
-                    tenantId = nastCreds.getNastId();
-                    apiKey = nastCreds.getKey();
-                }
-                user = this.userService.getUserByTenantId(tenantId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
+        if (cred.getValue() instanceof MossoCredentials || cred.getValue() instanceof  NastCredentials) {
+            String tenantId = null;
+            String apiKey;
+            if(cred.getValue() instanceof MossoCredentials) {
+                MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
+                tenantId = String.valueOf(mossoCreds.getMossoId());
+                apiKey = mossoCreds.getKey();
             } else {
-                PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
-                String username = passCreds.getUsername();
-                String password = passCreds.getPassword();
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
+                NastCredentials nastCreds = (NastCredentials) cred.getValue();
+                tenantId = nastCreds.getNastId();
+                apiKey = nastCreds.getKey();
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-            //TODO Hiding admin urls to keep old functionality - Need to revisit
-            hideAdminUrls(endpoints);
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
-        } catch (NotAuthenticatedException nae) {
-            return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
-        } catch (Exception ex) {
-            return cloudExceptionResponse.exceptionResponse(ex);
+
+            user = this.userService.getUserByTenantId(tenantId);
+            usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
+        } else {
+            PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
+            String username = passCreds.getUsername();
+            String password = passCreds.getPassword();
+            usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
         }
+
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+        //TODO Hiding admin urls to keep old functionality - Need to revisit
+        hideAdminUrls(endpoints);
+        return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
     }
 
     Response.ResponseBuilder authenticateJSON(UriInfo uriInfo, String body,

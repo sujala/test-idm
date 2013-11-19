@@ -4,6 +4,7 @@ import com.rackspace.idm.JSONConstants
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
+import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
@@ -314,6 +315,46 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.mossoId.toString())
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+    }
+
+    def "auth-admin call should specify password authentication failed in error message if password is used"() {
+        when:
+        def createdUser = utils11.createUser()
+        utils.addCredentialToUser(createdUser.id)
+        def cred = v1Factory.createPasswordCredentials(createdUser.id, "invalid")
+        def response = cloud11.adminAuthenticate(cred)
+
+        then:
+        response != null
+        response.getStatus() == 401
+        def authFault = response.getEntity(UnauthorizedFault)
+        authFault != null
+        !authFault.message.contains("api key")
+        authFault.message.contains("credentials")
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+    }
+
+    def "auth-admin call should specify api key authentication failed in error message if api key is used" () {
+        given:
+        def mossoId = testUtils.getRandomInteger()
+
+        when:
+        def createdUser = utils11.createUser()
+        def cred = v1Factory.createMossoCredentials(mossoId, "invalidKey")
+        def response = cloud11.adminAuthenticate(cred)
+
+        then:
+        response != null
+        response.getStatus() == 401
+        def authFault = response.getEntity(UnauthorizedFault)
+        authFault != null
+        authFault.message.contains("api key")
+        !authFault.message.contains("credentials")
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
     }
 
     def "auth call should not display admin urls in service catalog - passwordCred" () {
