@@ -275,24 +275,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         users.valueList != null
     }
 
-    @Ignore
-    def "updateUserPassword thows a StalePasswordException"() {
-        given:
-        def rsId = random
-        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
-        User updateUser = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
-
-        when:
-        ldapUserRepository.addUser(user);
-        def existingUser = ldapUserRepository.getUserById(rsId)
-        updateUser.ldapEntry = existingUser.ldapEntry
-        ldapUserRepository.updateUser(updateUser, false)
-
-        then:
-        thrown(StalePasswordException.class)
-        ldapUserRepository.deleteUser(user)
-    }
-
     def "modified and created timestamps should not be considered by the persister" () {
         given:
         def rsId = "testTimeStamps$random"

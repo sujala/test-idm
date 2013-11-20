@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -17,17 +18,13 @@ class Cloud20UserCredentialsIntegrationTest extends RootIntegrationTest{
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
     @Shared def domainId
 
-    @Shared def serviceAdminToken, identityAdminToken, userAdminToken, userManageToken, defaultUserToken
+    @Shared def serviceAdminToken
 
     def setup(){
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        //Tokens
+
         serviceAdminToken = utils.getServiceAdminToken()
-        identityAdminToken = utils.getToken(identityAdmin.username)
-        userAdminToken = utils.getToken(userAdmin.username)
-        userManageToken = utils.getToken(userManage.username)
-        defaultUserToken = utils.getToken(defaultUser.username)
     }
 
     def cleanup(){
@@ -36,18 +33,18 @@ class Cloud20UserCredentialsIntegrationTest extends RootIntegrationTest{
     }
 
     def "No one should be allowed retrieve user's password" () {
+        given:
+        def users = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
         when:
+        for(User user : users) {
+            String token = utils.getToken(user.username)
+            def response = cloud20.getPasswordCredentials(token, defaultUser.id)
+            assert (response.status == 403)
+        }
         def serviceAdminResponse = cloud20.getPasswordCredentials(serviceAdminToken, defaultUser.id)
-        def identityAdminResponse = cloud20.getPasswordCredentials(identityAdminToken, defaultUser.id)
-        def userAdminResponse = cloud20.getPasswordCredentials(userAdminToken, defaultUser.id)
-        def userManageResponse = cloud20.getPasswordCredentials(userManageToken, defaultUser.id)
-        def defaultUserResponse = cloud20.getPasswordCredentials(defaultUserToken, defaultUser.id)
 
         then:
         serviceAdminResponse.status == 403
-        identityAdminResponse.status == 403
-        userAdminResponse.status == 403
-        userManageResponse.status == 403
-        defaultUserResponse.status == 403
     }
 }

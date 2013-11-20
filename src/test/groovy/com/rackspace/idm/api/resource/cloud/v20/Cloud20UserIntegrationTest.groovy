@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -21,8 +22,11 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def user = v2Factory.createUserForCreate(userAdmin.username, null, null, true, null, null, DEFAULT_PASSWORD)
-        user.id = userAdmin.id
+        def user = new UserForCreate().with {
+            it.id = userAdmin.id
+            it.password = DEFAULT_PASSWORD
+            it
+        }
 
         when:
         def token = utils.getToken(userAdmin.username)
