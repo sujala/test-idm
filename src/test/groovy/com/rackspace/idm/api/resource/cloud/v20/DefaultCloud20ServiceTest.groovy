@@ -1840,31 +1840,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "identity:admin should not get other users password credentials"() {
         given:
         allowUserAccess()
-        def user = entityFactory.createUser("user", "userId", "123456", "DFW")
-        def caller = entityFactory.createUser("caller", "callerId", null, "DFW")
-
-        userService.getUserById("userId") >> user
-        userService.getUser(_) >> caller
 
         when:
         def response = service.getUserPasswordCredentials(headers, authToken, "userId").build()
 
         then:
-        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> {throw new ForbiddenException()}
-
-        then:
         response.status == 403
-    }
-
-    def "getUserCredential gets user"() {
-        given:
-        allowUserAccess()
-
-        when:
-        service.getUserPasswordCredentials(headers, authToken, "userId")
-
-        then:
-        1 * userService.getUserById("userId")
     }
 
     def "getUserCredential verifies user is in callers domain when caller is user-admin"() {
@@ -1916,27 +1897,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.build().status == 404
-    }
-
-    def "service-admin can get user password credential"() {
-        given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser().with {
-            it.password = "Password1"
-            return it
-        }
-        def caller = entityFactory.createUser()
-
-        userService.getUserById(_) >> user
-        userService.getUser(_) >> caller
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
-
-        when:
-        def response2 = service.getUserPasswordCredentials(headers, authToken, "userId")
-
-        then:
-        response2.build().status == 200
     }
 
     def "service-admin can get user apikey credentials"() {
@@ -3375,23 +3335,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * endpointService.checkAndGetEndpointTemplate(_) >> cloudBaseUrl
         1 * tenantService.updateTenant(_)
         tenant.baseUrlIds.size() == 2
-    }
-
-    def "Only service-admin are allow" () {
-        given:
-        allowUserAccess()
-        def user = entityFactory.createUser()
-        user.password = "Password1"
-
-        when:
-        def response = service.getUserPasswordCredentials(headers, authToken, "1")
-
-        then:
-        1 * authorizationService.verifyServiceAdminLevelAccess(_)
-        1 * userService.getUserById(_) >> user
-
-        then:
-        response.build().status == 200
     }
 
     def "user admin can add user-managed role to a default user"() {

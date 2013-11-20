@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.Constants
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 /**
  * Created with IntelliJ IDEA.
