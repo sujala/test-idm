@@ -2303,27 +2303,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getUserCredential_passwordCredentialUserPasswordIsBlank_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        when(userService.getUserById(userId)).thenReturn(new User());
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.getUserPasswordCredentials(null, authToken, userId), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
-    }
-
-    @Test
-    public void getUserCredential_passwordCredentialResponseOk_returns200() throws Exception {
-        user.setPassword("123");
-        when(userService.getUserById(userId)).thenReturn(user);
-        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        Response.ResponseBuilder responseBuilder = spy.getUserPasswordCredentials(httpHeaders, authToken, userId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void getUserCredential_apiKeyCredentialResponseOk_returns200() throws Exception {
         user.setApiKey("123");
         when(userService.getUserById(userId)).thenReturn(user);

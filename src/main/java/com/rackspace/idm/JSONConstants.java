@@ -87,6 +87,7 @@ public final class JSONConstants {
     public static final String TENANT_ID = "tenantId";
     public static final String TENANT_NAME = "tenantName";
     public static final String TOKEN = "token";
+    public static final String TOKENS = "tokens";
     public static final String TYPE = "type";
     public static final String UPDATED = "updated";
     public static final String USER = "user";

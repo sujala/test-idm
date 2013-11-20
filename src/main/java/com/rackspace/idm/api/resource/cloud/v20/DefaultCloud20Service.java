@@ -1475,26 +1475,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyServiceAdminLevelAccess(scopeAccessByAccessToken);
+            getScopeAccessForValidToken(authToken);
 
-            User user = this.userService.getUserById(userId);
-
-            if (user == null) {
-                String errMsg = String.format("User with id: %s does not exist", userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
-            }
-
-            if (StringUtils.isBlank(user.getPassword())) {
-                throw new NotFoundException("User doesn't have password credentials");
-            }
-            PasswordCredentialsBase userCreds = new PasswordCredentialsBase();
-            userCreds.setPassword(user.getPassword());
-            userCreds.setUsername(user.getUsername());
-            JAXBElement<? extends CredentialType> creds = objFactories.getOpenStackIdentityV2Factory().createCredential(userCreds);
-
-            return Response.ok(creds.getValue());
+            throw new ForbiddenException(NOT_AUTHORIZED);
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
