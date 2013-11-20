@@ -17,10 +17,11 @@ class cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
         when:
         utils.disableUser(defaultUser)
         def token = utils.getImpersonatedToken(identityAdmin, defaultUser)
-        def statusCode = utils.validateToken(token)
+        def response = utils.validateToken(token)
 
         then:
-        assert (statusCode == HttpStatus.OK.value())
+        response != null
+        response.token.id != null
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

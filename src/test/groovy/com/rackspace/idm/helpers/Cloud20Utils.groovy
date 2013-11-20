@@ -167,7 +167,13 @@ class Cloud20Utils {
 
     def validateToken(token) {
         def response = methods.validateToken(getServiceAdminToken(), token)
-        response.status
+        assert (response.status == SC_OK)
+        response.getEntity(AuthenticateResponse).value
+    }
+
+    def revokeToken(token) {
+        def response = methods.revokeUserToken(getServiceAdminToken(), token)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def listRoles(token, serviceId, marker, limit) {
@@ -238,4 +244,9 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def authenticateRacker(racker, password) {
+        def response = methods.authenticateRacker(racker, password)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthenticateResponse).value
+    }
 }
