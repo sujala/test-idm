@@ -2968,6 +2968,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteGroup(identityAdminToken, groupId)
     }
 
+    //Changed password policies
+    @Ignore
     def "Update user's password with its previous password - returns 400" () {
         given:
         def username = "updatePasswordUser$sharedRandom"
@@ -2998,6 +3000,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteDomain(serviceAdminToken, domainId)
     }
 
+    @Ignore
     def "Update user's password with its previous password does not expire valid tokens" () {
         given:
         def username = "updatePasswordUser$sharedRandom"

@@ -13,7 +13,7 @@ set allow-binds = true;
 set ssl-auth-bypass-entry-check = false;
 
 # password policy
-set password-policy = true;
+set password-policy = false;
 set password-retries = 6;
 set password-max-suspension = 1800;
 set password-history = 10;

@@ -575,6 +575,27 @@ class DefaultUserServiceTest extends RootServiceTest {
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
 
+    def "updateUser expires tokens if password attribute is populated"() {
+        given:
+        def currentUser = entityFactory.createUser().with {
+            it.enabled = true
+            return it
+        }
+        def user = entityFactory.createUser().with {
+            it.enabled = true
+            it.password = "password"
+            return it
+        }
+
+        when:
+        service.updateUser(user, false)
+
+        then:
+        1 * scopeAccessService.expireAllTokensForUser(_)
+        userDao.getUserById(_) >> currentUser
+        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
+    }
+
     def "checkIfUserIsBeingDisabled test"() {
         when:
         def currentUser = entityFactory.createUser().with {

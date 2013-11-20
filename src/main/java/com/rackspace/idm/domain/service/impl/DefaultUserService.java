@@ -605,11 +605,9 @@ public class DefaultUserService implements UserService {
         return newPassword.toExisting();
     }
 
-    boolean checkForPasswordUpdate(User currentUser, User user) {
+    boolean checkForPasswordUpdate(User user) {
         if(user != null && !StringUtils.isEmpty(user.getPassword())) {
-            if(currentUser != null && !StringUtils.isEmpty(currentUser.getPassword()) && !currentUser.getPassword().equals(user.getPassword())){
-                return true;
-            }
+            return true;
         }
         return false;
     }
@@ -629,7 +627,7 @@ public class DefaultUserService implements UserService {
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user, hasSelfUpdatedPassword);
 
-        if(checkForPasswordUpdate(currentUser, user)){
+        if(checkForPasswordUpdate(user)){
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
 
