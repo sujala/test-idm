@@ -251,9 +251,15 @@ class Cloud20Utils {
         response.getEntity(AuthenticateResponse).value
     }
 
-    def createGroup(group) {
+    def createGroup() {
+        def group = v1Factory.createGroup(getRandomUUID('group'), "description")
         def response = methods.createGroup(getServiceAdminToken(), group)
         assert (response.status == SC_CREATED)
         response.getEntity(Group).value
+    }
+
+    def deleteGroup(group) {
+        def response = methods.deleteGroup(getServiceAdminToken(), group.id)
+        assert (response.status == SC_NO_CONTENT)
     }
 }
