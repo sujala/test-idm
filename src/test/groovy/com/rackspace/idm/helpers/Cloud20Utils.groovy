@@ -43,7 +43,7 @@ class Cloud20Utils {
         methods.init()
     }
 
-    def getToken(username, password) {
+    def getToken(username, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)
         def entity = response.getEntity(AuthenticateResponse).value
