@@ -102,7 +102,7 @@ public class DefaultGroupService implements GroupService {
             throw new BadRequestException("Default Group can not be updated.");
         }
         String groupId = group.getGroupId();
-        Group groupDo = groupDao.getGroupById(groupId);
+        Group groupDo = checkAndGetGroupById(groupId);
 
         if(groupDo.getName() == null){
             throw new BadRequestException();

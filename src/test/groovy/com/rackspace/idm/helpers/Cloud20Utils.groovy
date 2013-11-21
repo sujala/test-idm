@@ -1,6 +1,7 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -248,5 +249,11 @@ class Cloud20Utils {
         def response = methods.authenticateRacker(racker, password)
         assert (response.status == SC_OK)
         response.getEntity(AuthenticateResponse).value
+    }
+
+    def createGroup(group) {
+        def response = methods.createGroup(getServiceAdminToken(), group)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Group).value
     }
 }
