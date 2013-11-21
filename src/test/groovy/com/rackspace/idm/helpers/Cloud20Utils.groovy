@@ -32,6 +32,9 @@ class Cloud20Utils {
     @Autowired
     V1Factory v1Factory
 
+    @Autowired
+    V2Factory v2Factory
+
     @Shared
     def serviceAdminToken
 
@@ -234,4 +237,5 @@ class Cloud20Utils {
         def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
         assert (response.status == SC_NO_CONTENT)
     }
+
 }

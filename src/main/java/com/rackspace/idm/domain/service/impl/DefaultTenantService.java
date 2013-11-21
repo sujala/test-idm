@@ -145,6 +145,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public TenantRole checkAndGetTenantRoleForUserById(User user, String roleId) {
+        TenantRole tenantRole = getTenantRoleForUserById(user, roleId);
+        if(tenantRole == null) {
+            String errMsg = String.format("Tenant Role %s not found", roleId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return tenantRole;
+    }
+
+    @Override
     public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
         TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
         return tenantRole != null;

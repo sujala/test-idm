@@ -1071,13 +1071,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
 
-            TenantRole tenantrole = new TenantRole();
-            tenantrole.setClientId(role.getClientId());
-            tenantrole.setRoleRsId(role.getId());
-            tenantrole.setUserId(user.getId());
-            tenantrole.getTenantIds().add(tenant.getTenantId());
+            TenantRole tenantRole = tenantService.checkAndGetTenantRoleForUserById(user, roleId);
 
-            this.tenantService.deleteTenantRoleForUser(user, tenantrole);
+            this.tenantService.deleteTenantRoleForUser(user, tenantRole);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

@@ -210,7 +210,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         assertUserDoesNotHaveRoleOnTenant(defaultUser, tenant, propagatingRole)
 
         expect: "try to remove role from sub user"
-        assertRemoveTenantRoleFromUserReturnsStatus(specificationServiceAdminToken, tenant, defaultUser, propagatingRole, HttpStatus.NO_CONTENT)
+        assertRemoveTenantRoleFromUserReturnsStatus(specificationServiceAdminToken, tenant, defaultUser, propagatingRole, HttpStatus.NOT_FOUND)
 
         cleanup:
         deleteRoleQuietly(propagatingRole)
