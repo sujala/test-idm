@@ -143,3 +143,10 @@ description: Role for testing
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 rsId: 10053956
 rsWeight: 2000
+
+dn: roleRsId=5,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: 983452
+userRsId: 173189
