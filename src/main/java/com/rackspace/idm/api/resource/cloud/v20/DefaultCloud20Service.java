@@ -78,6 +78,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String NOT_AUTHORIZED = "Not Authorized";
+    public static final String ID_MISMATCH = "Id in url does not match id in body.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
@@ -627,7 +628,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isDisabled = retrievedUser.isDisabled();
 
             if (!userId.equals(user.getId()) && user.getId() != null) {
-                throw new BadRequestException("Id in url does not match id in body.");
+                throw new BadRequestException(ID_MISMATCH);
             }
 
             if (user.getUsername() != null) {
@@ -2777,6 +2778,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateKsGroup(group);
+
+            if(group.getId() != null && !groupId.equals(group.getId())){
+                throw new BadRequestException(ID_MISMATCH);
+            }
 
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
