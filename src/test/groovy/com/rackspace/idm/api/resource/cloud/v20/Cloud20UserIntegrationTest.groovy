@@ -30,12 +30,12 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         when:
         def token = utils.getToken(userAdmin.username)
-        assert (utils.validateToken(token) == 200)
+        utils.validateToken(token)
         utils.updateUser(user)
-        def status = utils.validateToken(token)
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token)
 
         then:
-        status == 404
+        response.status == 404
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

@@ -449,7 +449,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", expiredDate)
 
         when:
-        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
+        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess, ["PASSWORD"].asList())
 
         then:
         newScopeAccess != oldScopeAccess
@@ -465,7 +465,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", refreshDate)
 
         when:
-        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess)
+        def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess, ["PASSWORD"].asList())
 
         then:
         newScopeAccess != oldScopeAccess
@@ -798,7 +798,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
 
         when:
-        def sa = service.updateExpiredRackerScopeAccess(scopeAccess)
+        def sa = service.updateExpiredRackerScopeAccess(scopeAccess, ["PASSWORD"].asList())
 
         then:
         1 * config.getDouble("token.entropy") >> entropy

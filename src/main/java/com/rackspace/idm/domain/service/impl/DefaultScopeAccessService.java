@@ -504,7 +504,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessDao.addScopeAccess(racker, scopeAccess);
         }
         //if expired update with new token
-        scopeAccess = updateExpiredRackerScopeAccess(scopeAccess);
+        scopeAccess = updateExpiredRackerScopeAccess(scopeAccess, authenticatedBy);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -764,13 +764,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
     }
 
-    private RackerScopeAccess updateExpiredRackerScopeAccess(RackerScopeAccess scopeAccess) {
+    private RackerScopeAccess updateExpiredRackerScopeAccess(RackerScopeAccess scopeAccess, List<String> authenticatedBy) {
         RackerScopeAccess scopeAccessToAdd = new RackerScopeAccess();
         scopeAccessToAdd.setRackerId(scopeAccess.getRackerId());
         scopeAccessToAdd.setRefreshTokenString(scopeAccess.getRefreshTokenString());
         scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+        scopeAccessToAdd.setAuthenticatedBy(authenticatedBy);
 
         int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         Racker racker = (Racker) userService.getUserByScopeAccess(scopeAccess);
