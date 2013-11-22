@@ -148,7 +148,7 @@ public class DefaultTenantService implements TenantService {
     public TenantRole checkAndGetTenantRoleForUserById(User user, String roleId) {
         TenantRole tenantRole = getTenantRoleForUserById(user, roleId);
         if(tenantRole == null) {
-            String errMsg = String.format("Tenant Role %s not found", roleId);
+            String errMsg = String.format("Tenant Role %s not found for user %s", roleId, user.getId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }

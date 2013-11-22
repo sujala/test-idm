@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -55,6 +56,25 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 404
+
+        cleanup:
+        utils.deleteRole(role)
+    }
+
+    def "delete role for user on tenant that does not exist returns error message about role not being found for the given user"() {
+        given:
+        def role = utils.createRole(service)
+
+        when:
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == 404
+        def message = response.getEntity(String).toLowerCase()
+        message.contains("user")
+        message.contains(defaultUser.id)
+        message.contains("role")
+        message.contains(role.id)
 
         cleanup:
         utils.deleteRole(role)
