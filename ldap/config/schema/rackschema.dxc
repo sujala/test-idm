@@ -733,6 +733,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.99) = {
     description = "name of identity provider"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.100) = {
+    name = tenantAlias
+    ldap-names = tenantAlias
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "tenant alias to be concatenated to baseurl"
+};
+
 # attribute comes from rfc2703bis schema.
 schema set attribute (1.3.6.1.1.1.1.28) = {
     name   = nisPublicKey
@@ -868,7 +876,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
         versionId,
         versionInfo,
         versionList,
-        policyId
+        policyId,
+        tenantAlias
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {

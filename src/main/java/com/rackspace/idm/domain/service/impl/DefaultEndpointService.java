@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -7,6 +8,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.cxf.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+
+import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
 @Component
 public class DefaultEndpointService implements EndpointService {
@@ -215,20 +219,32 @@ public class DefaultEndpointService implements EndpointService {
 
     private void processBaseUrl(CloudBaseUrl baseUrl, Tenant tenant) {
         baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrl.getBaseUrlId()));
-        baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName()));
-        baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName()));
-        baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName()));
+        baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName(), baseUrl.getTenantAlias()));
+        baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName(), baseUrl.getTenantAlias()));
+        baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName(), baseUrl.getTenantAlias()));
     }
 
-    String appendTenantToBaseUrl(String url, String tenantId) {
+    String appendTenantToBaseUrl(String url, String tenantId, String tenantAlias) {
         if (url == null) {
             return null;
         }
-        else if (url.endsWith("/")) {
-            return url + tenantId;
+
+        String stringToAppend = getTenantAlias(tenantAlias, tenantId);
+
+        if (StringUtils.isEmpty(stringToAppend)) {
+            return url;
+        } else if (url.endsWith("/")) {
+            return url + stringToAppend;
         } else {
-            return url + "/" + tenantId;
+            return url + "/" + stringToAppend;
         }
+    }
+
+    private String getTenantAlias(String tenantAlias, String tenantId) {
+        if (tenantAlias != null) {
+            return tenantAlias.replace(TENANT_ALIAS_PATTERN, tenantId);
+        }
+        return tenantId;
     }
 
     @Override

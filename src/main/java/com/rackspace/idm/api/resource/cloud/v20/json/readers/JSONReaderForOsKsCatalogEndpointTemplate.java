@@ -48,6 +48,7 @@ public class JSONReaderForOsKsCatalogEndpointTemplate implements MessageBodyRead
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(OS_KSCATALOG_ENDPOINT_TEMPLATE, ENDPOINT_TEMPLATE);
+        prefixValues.put(ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH, TENANT_ALIAS);
 
         return read(inputStream, OS_KSCATALOG_ENDPOINT_TEMPLATE, prefixValues);
     }

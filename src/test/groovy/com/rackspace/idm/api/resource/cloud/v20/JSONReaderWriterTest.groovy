@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForAuthData
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
@@ -38,6 +39,7 @@ import testHelpers.RootServiceTest
 
 import javax.xml.datatype.DatatypeFactory
 
+import static com.rackspace.idm.GlobalConstants.*
 import static com.rackspace.idm.JSONConstants.*
 
 class JSONReaderWriterTest extends RootServiceTest {
@@ -715,7 +717,10 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     def "create read/writer for endpointTemplate" () {
         given:
-        def endpointTemplate = v1Factory.createEndpointTemplate("1", "type", "publicUrl", "name")
+        def endpointTemplate = v1Factory.createEndpointTemplate("1", "type", "publicUrl", "name").with {
+            it.tenantAlias = "prefix${TENANT_ALIAS_PATTERN}"
+            it
+        }
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()

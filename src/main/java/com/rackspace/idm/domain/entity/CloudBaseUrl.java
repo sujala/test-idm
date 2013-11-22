@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -15,6 +16,8 @@ import org.dozer.Mapping;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.HashSet;
+
+import static com.rackspace.idm.GlobalConstants.*;
 
 @Data
 @EqualsAndHashCode(exclude={"ldapEntry"})
@@ -118,6 +121,11 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
     private String versionList;
 
+    @LDAPField(attribute=LdapRepository.ATTR_TENANT_ALIAS,
+            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
+            filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
+    private String tenantAlias;
+
     @Override
     public String getAuditContext() {
         return String.format("baseUrl=%s", baseUrlId);
@@ -143,6 +151,14 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             return false;
         }
         return global;
+    }
+
+    public String getTenantAlias() {
+        if (tenantAlias == null) {
+            return TENANT_ALIAS_PATTERN;
+        } else {
+            return tenantAlias;
+        }
     }
 
     private void doPostEncode(final Entry entry) throws LDAPPersistException {

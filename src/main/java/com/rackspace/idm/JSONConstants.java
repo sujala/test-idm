@@ -168,6 +168,8 @@ public final class JSONConstants {
     public static final String RAX_AUTH_WEIGHT = "RAX-AUTH:weight";
     public static final String WEIGHT = "weight";
     public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
+    public static final String RAX_AUTH_TENANT_ALIAS = "RAX-AUTH:tenantAlias";
+    public static final String TENANT_ALIAS = "tenantAlias";
 
     //Object path
     public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
@@ -178,6 +180,8 @@ public final class JSONConstants {
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
+    public static final String ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH = "endpointTemplate.tenantAlias";
+    public static final String ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH = "endpointTemplate.RAX-AUTH:tenantAlias";
     public static final String GROUPS_LIST_PATH = "groups.group";
     public static final String GROUPS_VALUES_PATH = "groups.values";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";

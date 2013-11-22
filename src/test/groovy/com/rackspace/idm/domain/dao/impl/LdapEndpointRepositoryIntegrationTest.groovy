@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.helpers.Cloud20Utils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
+
+import static com.rackspace.idm.GlobalConstants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapEndpointRepositoryIntegrationTest extends Specification {
@@ -87,6 +90,25 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
         endpointDao.deleteBaseUrl(baseUrl4.baseUrlId)
     }
 
+    def "tenantAlias defaults to the value of 'TENANT_ALIAS_PATTERN'"() {
+        given:
+        def baseUrlId = utils.getRandomUUID("baseUrlId")
+        def baseUrl = getCreateBaseUrl(baseUrlId).with {
+            it.tenantAlias = null
+            it
+        }
+
+        when:
+        endpointDao.addBaseUrl(baseUrl)
+        def createdBaseUrl = endpointDao.getBaseUrlById(baseUrlId)
+
+        then:
+        createdBaseUrl.tenantAlias == TENANT_ALIAS_PATTERN
+
+        cleanup:
+        endpointDao.deleteBaseUrl(baseUrlId)
+    }
+
     def getCreateBaseUrl(baseUrlId) {
         return new CloudBaseUrl().with {
             it.baseUrlId = baseUrlId
@@ -105,6 +127,7 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
             it.versionId = "versionId"
             it.versionInfo = "versionInfo"
             it.versionList = "versionList"
+            it.tenantAlias = "prefix${TENANT_ALIAS_PATTERN}"
             return it
         }
     }
@@ -127,6 +150,7 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
             it.versionId = "versionId2"
             it.versionInfo = "versionInfo2"
             it.versionList = "versionList2"
+            it.tenantAlias = TENANT_ALIAS_PATTERN
             return it
         }
     }
