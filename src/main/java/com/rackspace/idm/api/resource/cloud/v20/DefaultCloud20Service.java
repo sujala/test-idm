@@ -75,9 +75,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String NOT_AUTHORIZED = "Not Authorized";
     public static final String ID_MISMATCH = "Id in url does not match id in body.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
-    public static final int MAX_GROUP_NAME = 200;
-    public static final int MAX_GROUP_DESC = 1000;
     public static final String RBAC = "rbac";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -279,11 +278,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (!authorizationService.authorizeCloudServiceAdmin(tokenScopeAccess)) {
-                /*if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
-                        || role.getServiceId().equals(config.getString("idm.clientId"))) {
-                    String errMsg = "Cannot add roles to identity/Foundation service accounts";
-                    throw new ForbiddenException(errMsg);
-                }*/
                 if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
@@ -478,124 +472,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-//    @Override
-//    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate userForCreate) {
-//        try {
-//            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-//            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
-//            validator.validate20User(userForCreate);
-//
-//            String password = userForCreate.getPassword();
-//            boolean emptyPassword = StringUtils.isBlank(password);
-//
-//            User userDO = this.userConverterCloudV20.fromUser(userForCreate);
-//            if (password != null) {
-//                validator.validatePasswordForCreateOrUpdate(userForCreate.getPassword());
-//            } else {
-//                password = Password.generateRandom(false, userDO).getValue();
-//            }
-//
-//            if(getGenerateApiKeyUserForCreate()){
-//                userDO.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
-//            }
-//
-//            User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
-//
-//            //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
-//            boolean callerIsUserAdminOrHasUserManageRole = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
-//                    authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
-//            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
-//            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
-//
-//            if (callerIsUserAdminOrHasUserManageRole) {
-//                //TODO pagination index and offset
-//                String domainId = caller.getDomainId();
-//                if (domainId == null) {
-//                    throw new BadRequestException("User-Admin does not have a Domain");
-//                }
-//                Iterable<User> users = userService.getUsersWithDomain(domainId);
-//
-//                checkMaxNumberOfUsersInDomain(users);
-//
-//                userDO.setMossoId(caller.getMossoId());
-//                userDO.setNastId(caller.getNastId());
-//
-//                // When creating sub-user, set the default region to the
-//                // default region of the User Admin for the domain. If there
-//                // is more than one admin for the domain, then set the
-//                // default region to that of the caller
-//                List<User> admins = this.domainService.getDomainAdmins(domainId);
-//                if (admins.size() == 1) {
-//                    userDO.setRegion(admins.get(0).getRegion());
-//                } else {
-//                    userDO.setRegion(caller.getRegion());
-//                }
-//
-//                // If creating sub-user, set DomainId of caller
-//                assignUserToCallersDomain(caller, userDO);
-//            }
-//
-//            String domainId = userDO.getDomainId();
-//            if (domainId != null) {
-//                domainId = domainId.trim();
-//            }
-//
-//            if (StringUtils.isEmpty(domainId) && callerIsUserAdminOrHasUserManageRole) {
-//                throw new BadRequestException("A Domain ID must be specified.");
-//            } else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
-//                throw new BadRequestException("Identity-admin cannot be created with a domain");
-//            } else if (callerIsIdentityAdmin) {
-//                if (StringUtils.isEmpty(domainId)) {
-//                    throw new BadRequestException("User-admin cannot be created without a domain");
-//                }
-//                domainService.createNewDomain(userDO.getDomainId());
-//            }
-//
-//            if (callerIsIdentityAdmin || callerIsUserAdminOrHasUserManageRole) {
-//                if (userDO.getRegion() != null) {
-//                    defaultRegionService.validateDefaultRegion(userDO.getRegion());
-//                }
-//            }
-//            userService.addUser(userDO);
-//            assignProperRole(scopeAccessByAccessToken, userDO);
-//
-//            //after user is created and caller is a user admin, add tenant roles to default user
-//            if (callerIsUserAdminOrHasUserManageRole) {
-//                tenantService.addCallerTenantRolesToUser(caller, userDO);
-//
-//                if (caller != null) {
-//                    for (Group group : userService.getGroupsForUser(caller.getId())) {
-//                        userService.addGroupToUser(group.getGroupId(), userDO.getId());
-//                    }
-//                }
-//            }
-//
-//            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-//            String id = userDO.getId();
-//            URI build = requestUriBuilder.path(id).build();
-//
-//            org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = objFactories.getOpenStackIdentityV2Factory();
-//            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
-//
-//            //Will only print password if not provided
-//            if (emptyPassword) {
-//                value.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"),
-//                        password);
-//            }
-//            ResponseBuilder created = Response.created(build);
-//            return created.entity(openStackIdentityV2Factory.createUser(value).getValue());
-//        } catch (DuplicateException de) {
-//            return exceptionHandler.conflictExceptionResponse(de.getMessage());
-//        } catch (Exception ex) {
-//            return exceptionHandler.exceptionResponse(ex);
-//        }
-//    }
-
-    void assignDefaultRegionToDomainUser(User userDO) {
-        if (userDO.getRegion() == null) {
-            userDO.setRegion("default");
-        }
-    }
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {

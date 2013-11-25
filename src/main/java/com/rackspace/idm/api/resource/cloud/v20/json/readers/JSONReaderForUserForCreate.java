@@ -31,7 +31,6 @@ public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreat
         prefixValues.put(USER_RAX_AUTH_DEFAULT_REGION_PATH, DEFAULT_REGION);
         prefixValues.put(USER_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
         prefixValues.put(USER_RAX_KSQA_SECRET_QA_PATH, SECRET_QA);
-        prefixValues.put(USER_ROLES_PATH, ROLES);
         prefixValues.put(USER_RAX_KSGRP_GROUPS_PATH, GROUPS);
 
         return read(inputStream, JSONConstants.USER, prefixValues);

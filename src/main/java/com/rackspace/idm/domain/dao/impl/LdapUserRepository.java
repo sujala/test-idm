@@ -325,7 +325,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public String getNextUserId() {
-        return getNextId(NEXT_USER_ID);
+        return getUuid();
     }
 
     @Override

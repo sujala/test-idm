@@ -1,13 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
-import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
@@ -129,7 +126,6 @@ public class Cloud10VersionResource {
                     List<Endpoint> endpoints = service.getEndpoint();
                     addValuetoHeather(HEADER_SERVER_MANAGEMENT_URL, endpoints.get(0).getPublicURL(), builder);
                 }
-
             }
 
             long secondsLeft = (usa.getAccessTokenExp().getTime() - new Date().getTime()) / DateUtils.MILLIS_PER_SECOND;

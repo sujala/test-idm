@@ -410,19 +410,12 @@ public abstract class LdapRepository {
         return config.getBoolean("rsid.uuid.enabled", false);
     }
 
-    protected boolean useUuidForUserRsId() {
-        return config.getBoolean("user.uuid.enabled", false);
-    }
-
     protected String getUuid() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
     protected String getNextId(String type) {
         if (!type.equals(NEXT_USER_ID) && useUuidForRsId()) {
-            return getUuid();
-        }
-        else if (type.equals(NEXT_USER_ID) && useUuidForUserRsId()) {
             return getUuid();
         }
 

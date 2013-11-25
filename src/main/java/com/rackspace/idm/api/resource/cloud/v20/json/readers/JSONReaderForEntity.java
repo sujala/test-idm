@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
+    private JsonArrayTransformer arrayTransformer = new JsonArrayTransformer();
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -64,6 +66,8 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
                 jsonObject = outer;
             }
 
+            arrayTransformer.transform(jsonObject);
+
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();
             om.setAnnotationIntrospector(new JaxbAnnotationIntrospector(TypeFactory.defaultInstance()));
@@ -73,7 +77,6 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
         } catch (ParseException e) {
             throw new BadRequestException("Invalid json request body");
         } catch (IOException e) {
-            e.printStackTrace();
             throw new BadRequestException("Invalid json request body");
         }
     }
