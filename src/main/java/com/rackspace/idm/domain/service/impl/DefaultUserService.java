@@ -1,16 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.dao.RackerDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
-import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -18,11 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.ws.rs.HEAD;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +28,9 @@ public class DefaultUserService implements UserService {
     public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
+    private static final String MOSSO_TENANT_PREFIX = "MossoCloudFS_";
+    private static final String MOSSO_BASE_URL_TYPE = "MOSSO";
+    private static final String NAST_BASE_URL_TYPE = "NAST";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
@@ -85,12 +83,8 @@ public class DefaultUserService implements UserService {
     @Autowired
     private CryptHelper cryptHelper;
 
-    private boolean userUUIDEnabled = false;
-
-    @PostConstruct
-    public void initialize() {
-        userUUIDEnabled = config.getBoolean("user.uuid.enabled");
-    }
+    @Autowired
+    private ApplicationRoleDao roleDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -103,55 +97,132 @@ public class DefaultUserService implements UserService {
         logger.info("Added Racker {}", racker);
     }
 
+//    @Override
+//    public void addUser(User user) {
+//        logger.info("Adding User: {}", user);
+//        if(!validator.isEmpty(user.getEmail())){
+//            validator.isEmailValid(user.getEmail());
+//        }
+//        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+//        user.setSalt(cryptHelper.generateSalt());
+//
+//        validateUsername(user);
+//        setPasswordIfNecessary(user);
+//
+//        if (user.getRegion() == null) {
+//            Region region = cloudRegionService.getDefaultRegion(config.getString("cloud.region"));
+//            if (region == null) {
+//                throw new BadRequestException("default cloud region was not found");
+//            }
+//
+//            user.setRegion(region.getName());
+//        }
+//
+//        if (user.getEnabled() == null) {
+//            user.setEnabled(user.getEnabled());
+//        }
+//
+//        user.setId(generateUniqueId());
+//
+//        userDao.addUser(user);
+//        logger.info("Added User: {}", user);
+//
+//        //Every user by default has the idm application provisioned for them
+//        logger.info("Adding User Scope Access for Idm to user {}", user);
+//        UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
+//
+//        this.scopeAccessService.addUserScopeAccess(user, usa);
+//
+//        //Every user by default has the cloud auth application provisioned for them
+//        UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+//
+//        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
+//
+//        logger.info("Added User Scope Access for Idm to user {}", user);
+//    }
+
     @Override
     public void addUser(User user) {
         logger.info("Adding User: {}", user);
-        if(!validator.isEmpty(user.getEmail())){
-            validator.isEmailValid(user.getEmail());
-        }
+
+        validator.validateUser(user);
+
+        createDomainIfItDoesNotExist(user.getDomainId());
+        createDefaultDomainTenantsIfNecessary(user.getDomainId(), user.getRegion());
+        checkMaxNumberOfUsersInDomain(user.getDomainId());
+
+        setPasswordIfNotProvided(user);
+        setApiKeyIfNotProvided(user);
+        setRegionIfNotProvided(user);
+
+        //hack alert!! code requires the user object to have the nastid attribute set. this attribute
+        //should no longer be required as users have roles on a tenant instead. once this happens, remove
+        //TODO: figure this out
+        user.setNastId(getNastTenantId(user.getDomainId()));
+        user.setId(userDao.getNextUserId());
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
-
-        validateUsername(user);
-        setPasswordIfNecessary(user);
-
-        if (user.getRegion() == null) {
-            Region region = cloudRegionService.getDefaultRegion(config.getString("cloud.region"));
-            if (region == null) {
-                throw new BadRequestException("default cloud region was not found");
-            }
-
-            user.setRegion(region.getName());
-        }
-
-        if (user.getEnabled() == null) {
-            user.setEnabled(user.getEnabled());
-        }
-
-        user.setId(generateUniqueId());
+        user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
         userDao.addUser(user);
-        logger.info("Added User: {}", user);
 
-        //Every user by default has the idm application provisioned for them
-        logger.info("Adding User Scope Access for Idm to user {}", user);
-        UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
-
-        this.scopeAccessService.addUserScopeAccess(user, usa);
-
-        //Every user by default has the cloud auth application provisioned for them
-        UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
-
-        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
-
-        logger.info("Added User Scope Access for Idm to user {}", user);
+        assignUserRoles(user);
     }
 
-    private String generateUniqueId() {
-        if (userUUIDEnabled) {
-            return UUID.randomUUID().toString().replace("-", "");
-        } else {
-            return this.userDao.getNextUserId();
+    /**
+     * sets default parameters on the user e.g domain id, roles, etc based on
+     * characteristics of the calling user.
+     *
+     * @param user
+     * @param caller
+     */
+    @Override
+    public void setUserDefaultsBasedOnCaller(User user, User caller) {
+        //
+        // Based on the caller making the call, apply the following rules to the user being created.
+        // We will revisit these rules later on, so they are more simplified. Don't want to change for now.
+        // Also logic to determine the type of caller should be defined, when a user could have multiple conflicting roles.
+        // e.g if you have identity:admin and identity:user-admin, you automatically are an identity:admin.
+        // This doesn't happen today because there is business logic to ensure these cases don't happen.
+        // We want to eventually remove that. A user should be able to be assigned any role.
+        //
+        if (doesUserHaveRole(caller, getSuperUserAdminRole())) {
+            if (StringUtils.isNotBlank(user.getDomainId())) {
+                throw new BadRequestException("Identity-admin cannot be created with a domain");
+            }
+
+            attachRoleToUser(getIdentityAdminRole(), user);
+        }
+
+        if (doesUserHaveRole(caller, getIdentityAdminRole())) {
+            if (StringUtils.isBlank(user.getDomainId())) {
+                throw new BadRequestException("User-admin cannot be created without a domain");
+            }
+
+            attachRoleToUser(getUserAdminRole(), user);
+
+            //original code had this. this is in place to help ensure the user has access to their
+            //default tenants. currently the user-admin role is not tenant specific. don't want to
+            //change existing behavior. Need to have business discussion to determine if a user
+            //has a non tenant specific role, whether they have access to all tenants in domain.
+            //if this turns out to be the case, then we need to change validateToken logic.
+            attachRoleToUser(getComputeDefaultRole(), user, user.getDomainId());
+            attachRoleToUser(getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+        }
+
+        if (doesUserHaveRole(caller, getUserAdminRole()) || doesUserHaveRole(caller, getUserManageRole())) {
+            String callerDefaultRegion = getCallerRegion(caller);
+            List<ClientRole> callerRoles = getAssignableCallerRoles(caller);
+            Iterable<Group> callerGroups = getGroupsForUser(caller.getId());
+
+            user.setMossoId(caller.getMossoId());
+            user.setNastId(caller.getNastId());
+            user.setDomainId(caller.getDomainId());
+            user.setRegion(callerDefaultRegion);
+
+            attachRoleToUser(getDefaultRole(), user);
+            attachRolesToUser(callerRoles, user);
+            attachGroupsToUser(callerGroups, user);
         }
     }
 
@@ -201,14 +272,14 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
-    public void deleteRacker(String rackerId) {
-        logger.info("Deleting Racker: {}", rackerId);
-
-        this.rackerDao.deleteRacker(rackerId);
-
-        logger.info("Deleted Racker: {}", rackerId);
-    }
+//    @Override
+//    public void deleteRacker(String rackerId) {
+//        logger.info("Deleting Racker: {}", rackerId);
+//
+//        this.rackerDao.deleteRacker(rackerId);
+//
+//        logger.info("Deleted Racker: {}", rackerId);
+//    }
 
     @Override
     public void deleteUser(User user) {
@@ -609,7 +680,7 @@ public class DefaultUserService implements UserService {
         Password newPassword = Password.generateRandom(false, user); // Would the user
         // ever reset his
         // own password?
-        userDao.updateUser(user, false);
+        userDao.updateUser(user);
         logger.debug("Updated password for user: {}", user);
 
         return newPassword.toExisting();
@@ -623,7 +694,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException {
+    public void updateUser(User user) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
@@ -635,7 +706,7 @@ public class DefaultUserService implements UserService {
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
-        userDao.updateUser(user, hasSelfUpdatedPassword);
+        userDao.updateUser(user);
 
         if(checkForPasswordUpdate(user)){
             scopeAccessService.expireAllTokensForUser(user.getUsername());
@@ -664,7 +735,7 @@ public class DefaultUserService implements UserService {
             for (User subUser : subUsers) {
                 if (subUser.getEnabled()) {
                     subUser.setEnabled(false);
-                    userDao.updateUser(subUser, false);
+                    userDao.updateUser(subUser);
                     scopeAccessService.expireAllTokensForUser(subUser.getUsername());
                 }
             }
@@ -681,29 +752,21 @@ public class DefaultUserService implements UserService {
         return false;
     }
 
-    private String getIdmClientId() {
-        return config.getString("idm.clientId");
-    }
-
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
-    }
-
-    private String getRackspaceCustomerId() {
-        return config.getString("rackspace.customerId");
     }
 
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
     }
 
-    private void validateUsername(User user) {
-        boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
-        if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken", user);
-            throw new DuplicateUsernameException("Username unavailable within Rackspace system. Please try another.");
-        }
-    }
+//    private void validateUsername(User user) {
+//        boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
+//        if (!isUsernameUnique) {
+//            logger.warn("Couldn't add user {} because username already taken", user);
+//            throw new DuplicateUsernameException("Username unavailable within Rackspace system. Please try another.");
+//        }
+//    }
 
     @Override
     public User getUserById(String id) {
@@ -734,33 +797,33 @@ public class DefaultUserService implements UserService {
         logger.debug("SoftDeleted User: {}", user);
     }
 
-    private void setPasswordIfNecessary(User user) {
-        String password = user.getPassword();
-
-        if (!StringUtils.isEmpty(user.getPassword())) {
-            checkPasswordComplexity(password);
-        } else {
-            // False, since a user wouldn't add himself
-            Password newpassword = Password.generateRandom(false, user);
-        }
-
-        if (!user.isPasswordIsNew()) {
-            logger.error("Password of User is an existing instance");
-            throw new IllegalArgumentException(
-                    "The password appears to be an existing instance. It must be a new instance!");
-        }
-    }
-
-    private void checkPasswordComplexity(String password) {
-        if (isPasswordRulesEnforced()) {
-            PasswordComplexityResult result = passwordComplexityService.checkPassword(password);
-            if (!result.isValidPassword()) {
-                String errorMsg = String.format("Invalid password %s", password);
-                logger.warn(errorMsg);
-                throw new PasswordValidationException(errorMsg);
-            }
-        }
-    }
+//    private void setPasswordIfNecessary(User user) {
+//        String password = user.getPassword();
+//
+//        if (!StringUtils.isEmpty(user.getPassword())) {
+//            checkPasswordComplexity(password);
+//        } else {
+//            // False, since a user wouldn't add himself
+//            Password newpassword = Password.generateRandom(false, user);
+//        }
+//
+//        if (!user.isPasswordIsNew()) {
+//            logger.error("Password of User is an existing instance");
+//            throw new IllegalArgumentException(
+//                    "The password appears to be an existing instance. It must be a new instance!");
+//        }
+//    }
+//
+//    private void checkPasswordComplexity(String password) {
+//        if (isPasswordRulesEnforced()) {
+//            PasswordComplexityResult result = passwordComplexityService.checkPassword(password);
+//            if (!result.isValidPassword()) {
+//                String errorMsg = String.format("Invalid password %s", password);
+//                logger.warn(errorMsg);
+//                throw new PasswordValidationException(errorMsg);
+//            }
+//        }
+//    }
 
     @Override
     public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled) {
@@ -974,5 +1037,288 @@ public class DefaultUserService implements UserService {
             }
             logger.debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         }
+    }
+
+    private void setPasswordIfNotProvided(User user) {
+        if (StringUtils.isBlank(user.getPassword())) {
+            Password.generateRandom(false, user);
+        }
+    }
+
+    private void setApiKeyIfNotProvided(User user) {
+        if (StringUtils.isBlank(user.getApiKey()) && shouldGenerateApiKeyUserForCreate()) {
+            user.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
+        }
+    }
+
+    private void setRegionIfNotProvided(User user) {
+        if (StringUtils.isBlank(user.getRegion())) {
+            Region region = cloudRegionService.getDefaultRegion(getCloudRegion());
+            if (region == null) {
+                throw new IllegalStateException("default cloud region not found for: " + getCloudRegion());
+            }
+
+            user.setRegion(region.getName());
+        }
+    }
+
+    private void createDomainIfItDoesNotExist(String domainId) {
+        if (StringUtils.isNotBlank(domainId)) {
+            if (domainService.getDomain(domainId) == null) {
+                domainService.createNewDomain(domainId);
+            }
+        }
+    }
+
+    /**
+     * creates default tenants in thew new domain
+     *
+     * @param domainId
+     * @param defaultRegion - used to determine the appropriate v1 defaults for tenant
+     */
+    private void createDefaultDomainTenantsIfNecessary(String domainId, String defaultRegion) {
+        if (StringUtils.isNotBlank(domainId) && domainService.getDomainAdmins(domainId).size() == 0) {
+            //for now the default mosso tenant id will be the domain id
+            //for now we will create a nast tenant as well. This can be removed once tenant aliases is in place
+            //no longer need to call nast xml rpc service, as cloud files will lazy provision the cloud containers.
+            String mossoId = domainId;
+            String nastId = getNastTenantId(domainId);
+
+            createTenantForDomain(mossoId, domainId, getV1Defaults(MOSSO_BASE_URL_TYPE, defaultRegion));
+            createTenantForDomain(nastId, domainId, getV1Defaults(NAST_BASE_URL_TYPE, defaultRegion));
+        }
+    }
+
+    private void createTenantForDomain(String tenantId, String domainId, List<String> v1Defaults) {
+        Tenant tenant = new Tenant();
+        tenant.setTenantId(tenantId);
+        tenant.setName(tenantId);
+        tenant.setDisplayName(tenantId);
+        tenant.setEnabled(true);
+        tenant.getV1Defaults().addAll(v1Defaults);
+        tenantService.addTenant(tenant);
+        domainService.addTenantToDomain(tenantId, domainId);
+    }
+
+    private List<String> getV1Defaults(String baseUrlType, String defaultRegion){
+        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByBaseUrlType(baseUrlType);
+
+        if (defaultRegion == null) {
+            defaultRegion = config.getString("v1DefaultRegionDefault");
+        }
+
+        // replicating what the original code did. apparently it gets the v1 defaults (baseurl ids)
+        // from a property file. rather than adding those values directly, it verifies that those
+        // ids exist in the instance of identity running, before adding it
+        List<String> v1Defaults = new ArrayList<String> ();
+        for (CloudBaseUrl baseUrl : baseUrls) {
+            if(doesBaseUrlBelongToRegion(baseUrl)) {
+                System.out.println("baseUrl: " + baseUrl);
+                System.out.println("baseUrl def: " + baseUrl.getDef());
+                System.out.println("baseUrl region: " + baseUrl.getRegion());
+
+                if (baseUrl.getDef() && defaultRegion.equals(baseUrl.getRegion())) {
+                    System.out.println("baseurl id: " + baseUrl.getBaseUrlId());
+                    v1Defaults.add(baseUrl.getBaseUrlId());
+                }
+            }
+        }
+
+        return v1Defaults;
+    }
+
+//    private List<Object> getV1DefaultList(String baseUrlType) {
+//
+//        if(MOSSO_BASE_URL_TYPE.equals(baseUrlType)) {
+//           return config.getList("v1defaultMosso");
+//        }
+//
+//        if(NAST_BASE_URL_TYPE.equals(baseUrlType)) {
+//            return config.getList("v1defaultNast");
+//        }
+//
+//        return new ArrayList<Object>();
+//    }
+
+//    private boolean doesBaseUrlBelongToRegion(CloudBaseUrl baseUrl){
+//        //TODO: figure out why we are checking id number
+//        if (baseUrl.getBaseUrlId() != null){
+//            if(isUkCloudRegion() &&  Integer.parseInt(baseUrl.getBaseUrlId()) >= 1000){
+//                return true;
+//            }
+//            if(!isUkCloudRegion() && Integer.parseInt(baseUrl.getBaseUrlId()) < 1000){
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+
+    private boolean doesBaseUrlBelongToRegion(CloudBaseUrl baseUrl){
+        if (baseUrl.getBaseUrlId() != null){
+            if(isUkCloudRegion() &&  "LON".equals(baseUrl.getRegion())){
+                return true;
+            }
+
+            if(!isUkCloudRegion() && !"LON".equals(baseUrl.getRegion())){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isUkCloudRegion() {
+        return "UK".equalsIgnoreCase(config.getString("cloud.region"));
+    }
+
+    private void assignUserRoles(User user) {
+        for (TenantRole role : user.getRoles()) {
+            ClientRole roleObj = roleDao.getRoleByName(role.getName());
+
+            TenantRole tenantRole = new TenantRole();
+            tenantRole.setRoleRsId(roleObj.getId());
+            tenantRole.setClientId(roleObj.getClientId());
+            tenantRole.setName(roleObj.getName());
+            tenantRole.setUserId(user.getId());
+            tenantRole.getTenantIds().addAll(role.getTenantIds());
+
+            tenantService.addTenantRoleToUser(user, tenantRole);
+        }
+    }
+
+    private void checkMaxNumberOfUsersInDomain(String domainId) {
+        Iterable<User> users = getUsersWithDomain(domainId);
+        int numUsers = 0;
+        int maxNumberOfUsersInDomain = getMaxNumberOfUsersInDomain();
+
+        for (Iterator i = users.iterator(); i.hasNext();) {
+            i.next();
+            numUsers++;
+
+            if (numUsers >= maxNumberOfUsersInDomain) {
+                String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
+                throw new BadRequestException(errMsg);
+            }
+        }
+    }
+
+    private Boolean doesUserHaveRole(User user, ClientRole role) {
+        return tenantService.doesUserContainTenantRole(user, role.getId());
+    }
+
+    private String getNastTenantId(String domainId)  {
+        return StringUtils.isNotBlank(domainId) ? MOSSO_TENANT_PREFIX + domainId : null;
+    }
+
+    private int getMaxNumberOfUsersInDomain() {
+        return config.getInt("maxNumberOfUsersInDomain");
+    }
+
+    private Boolean shouldGenerateApiKeyUserForCreate(){
+        return config.getBoolean("generate.apiKey.userForCreate");
+    }
+
+    private String getCloudRegion() {
+        return config.getString("cloud.region");
+    }
+
+    private ClientRole getSuperUserAdminRole() {
+        String roleName = config.getString("cloudAuth.serviceAdminRole");
+        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+    }
+
+    private ClientRole getUserAdminRole() {
+        String roleName = config.getString("cloudAuth.userAdminRole");
+        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+    }
+
+    private ClientRole getUserManageRole() {
+        String roleName = config.getString("cloudAuth.userManagedRole");
+        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+    }
+
+    private ClientRole getIdentityAdminRole() {
+        String roleName = config.getString("cloudAuth.adminRole");
+        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+    }
+
+    private ClientRole getDefaultRole() {
+        String roleName = config.getString("cloudAuth.userRole");
+        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+    }
+
+    private ClientRole getComputeDefaultRole() {
+        String serviceName = config.getString("serviceName.cloudServers");
+        Application application = applicationService.getByName(serviceName);
+        String defaultRoleName = application.getOpenStackType().concat(":default");
+        return applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+    }
+
+    private ClientRole getObjectStoreDefaultRole() {
+        String serviceName = config.getString("serviceName.cloudFiles");
+        Application application = applicationService.getByName(serviceName);
+        String defaultRoleName = application.getOpenStackType().concat(":default");
+        return applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+    }
+
+    private void attachRolesToUser(List<ClientRole> roles, User user) {
+        for (ClientRole role : roles) {
+            attachRoleToUser(role, user);
+        }
+    }
+
+    private void attachGroupsToUser(Iterable<Group> groups, User user) {
+        for (Group group : groups) {
+            user.getRsGroupId().add(group.getGroupId());
+        }
+    }
+
+    private void attachRoleToUser(ClientRole role, User user) {
+        attachRoleToUser(role, user, null);
+    }
+
+    private void attachRoleToUser(ClientRole role, User user, String tenantId) {
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName(role.getName());
+        tenantRole.getTenantIds().add(tenantId);
+        user.getRoles().add(tenantRole);
+    }
+
+    /**
+     * Gets all the roles from the caller that can be assignable to users that the caller creates.
+     * This is temporary. Roles that a user gets by default should not be based on the caller. It
+     * will be based on some sort of domain template.
+     */
+    private List<ClientRole> getAssignableCallerRoles(User caller) {
+        List<ClientRole> clientRoles = new ArrayList<ClientRole> ();
+
+        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(caller);
+        for (TenantRole tenantRole : tenantRoles) {
+            if (isExcludedAssignableCallerRole(tenantRole) && tenantRole.getPropagate()) {
+                ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), tenantRole.getName());
+                clientRoles.add(role);
+            }
+        }
+
+        return clientRoles;
+    }
+
+    private String getCallerRegion(User caller) {
+        // this should never happen. we should never have two admins for a domain. when we do support this,
+        // this information should be at the domain level.
+        List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
+        if (admins.size() > 0) {
+            throw new IllegalStateException("Domain " + caller.getDomainId() + " has more than one user admin.");
+        }
+
+        return admins.get(0).getRegion();
+    }
+
+    private boolean isExcludedAssignableCallerRole(TenantRole tenantRole) {
+       return !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
+               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
+               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
+               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))
+               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"));
     }
 }

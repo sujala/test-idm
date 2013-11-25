@@ -16,10 +16,10 @@ import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
-import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -96,6 +96,7 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     private byte[] encryptedSecretQuestionId;
     private String secretQuestionId;
 
+    @Mapping("password")
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
@@ -279,5 +280,13 @@ public class User  extends BaseUser implements Auditable, UniqueId {
             rsGroupId = new HashSet<String>();
         }
         return rsGroupId;
+    }
+
+    public List<TenantRole> getRoles() {
+        if (roles == null) {
+            roles = new ArrayList<TenantRole>();
+        }
+
+        return roles;
     }
 }

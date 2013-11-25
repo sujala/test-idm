@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
@@ -63,6 +62,10 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void doPreEncode(User user) {
+        if (user.getRsGroupId().size() == 0) {
+            user.setRsGroupId(null);  //directly will fail if empty list
+        }
+
         encryptionService.encryptUser(user);
     }
 
@@ -203,7 +206,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword){
+    public void updateUser(User user){
         updateObject(user);
     }
 

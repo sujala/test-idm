@@ -12,7 +12,6 @@ import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -74,6 +73,7 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
         } catch (ParseException e) {
             throw new BadRequestException("Invalid json request body");
         } catch (IOException e) {
+            e.printStackTrace();
             throw new BadRequestException("Invalid json request body");
         }
     }

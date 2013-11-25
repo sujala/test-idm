@@ -58,7 +58,7 @@ public interface UserDao {
      * @param user User instance with update changes
      * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
-    void updateUser(User user, boolean hasSelfUpdatedPassword);
+    void updateUser(User user);
 
     void updateUserEncryption(String userId);
 

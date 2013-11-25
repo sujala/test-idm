@@ -1,16 +1,26 @@
 package com.rackspace.idm.validation;
 
 
+import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
+import com.rackspace.idm.domain.dao.ApplicationRoleDao;
+import com.rackspace.idm.domain.dao.GroupDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import org.apache.commons.lang.StringUtils;
-import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -22,10 +32,25 @@ import java.util.regex.Pattern;
  */
 @Component
 public class Validator {
-    @Autowired
-    private LdapPatternRepository ldapPatternRepository;
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    LdapPatternRepository ldapPatternRepository;
+
+    @Autowired
+    DefaultRegionService defaultRegionService;
+
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    ApplicationRoleDao roleDao;
+
+    @Autowired
+    GroupDao groupDao;
+
+    @Autowired
+    UserDao userDao;
 
     static final String USERNAME="username";
     static final String PHONE="phone";
@@ -65,26 +90,33 @@ public class Validator {
         return checkPattern(EMAIL, email);
     }
 
-    public void validate11User(User user) {
-        if (user == null) {
-            logger.warn(USER_NULL_MSG);
-            throw new BadRequestException(USER_NULL_MSG);
-        } else if (StringUtils.isBlank(user.getId())) {
-            logger.warn(USER_ID_EMPTY_MSG);
-            throw new BadRequestException(USER_ID_EMPTY_MSG);
-        }
+    public void validate11User(com.rackspacecloud.docs.auth.api.v1.User user) {
+        validateMossoId(user.getMossoId());
     }
 
-    public void validate20User(org.openstack.docs.identity.api.v2.User user){
-        if (StringUtils.isBlank(user.getUsername())) {
-            String errorMsg = "Expecting username";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-        checkPattern(USERNAME, user.getUsername());
-        if(!isEmpty(user.getEmail())){
-            isEmailValid(user.getEmail());
-        }
+//    public void validate20User(org.openstack.docs.identity.api.v2.User user){
+//        if (StringUtils.isBlank(user.getUsername())) {
+//            String errorMsg = "Expecting username";
+//            logger.warn(errorMsg);
+//            throw new BadRequestException(errorMsg);
+//        }
+//        checkPattern(USERNAME, user.getUsername());
+//        if(!isEmpty(user.getEmail())){
+//            isEmailValid(user.getEmail());
+//        }
+//    }
+//
+//    public void validate20UserNew(org.openstack.docs.identity.api.v2.User user) {
+//        validate20User(user);
+//    }
+
+    public void validateUser(com.rackspace.idm.domain.entity.User user) {
+        validateUsername(user.getUsername());
+        validatePassword(user.getPassword());
+        validateEmail(user.getEmail());
+        validateDefaultRegion(user.getRegion());
+        validateRoles(user.getRoles());
+        validateGroups(user.getRsGroupId());
     }
 
     public boolean validatePasswordForCreateOrUpdate(String password){
@@ -109,10 +141,77 @@ public class Validator {
         return true;
     }
 
-    public void setLdapPatternRepository(LdapPatternRepository ldapPatternRepository){
-        this.ldapPatternRepository = ldapPatternRepository;
+    private void validateUsername(String username) {
+        if (StringUtils.isBlank(username)) {
+            throw new BadRequestException("Username is not specified");
+        }
 
+        if (!userDao.isUsernameUnique(username)) {
+            logger.warn("Couldn't add user {} because username already taken", username);
+            throw new DuplicateUsernameException("Username unavailable within Rackspace system. Please try another.");
+        }
+
+        checkPattern(USERNAME, username);
     }
 
+    private void validateEmail(String email) {
+        if (!isEmpty(email)) {
+            checkPattern(EMAIL, email);
+        }
+    }
+
+    private void validateDefaultRegion(String defaultRegion) {
+        if (!isEmpty(defaultRegion)) {
+            defaultRegionService.validateDefaultRegion(defaultRegion);
+        }
+    }
+
+    private void validatePassword(String password) {
+        if (!isEmpty(password)) {
+            checkPattern(PASSWORD, password);
+        }
+    }
+
+    private void validateRoles(List<TenantRole> roles) {
+        if (roles != null && roles.size() > 0) {
+            Set<String> roleNames = new HashSet<String>();
+
+            for (TenantRole tenantRole : roles) {
+                if (roleDao.getRoleByName(tenantRole.getName()) == null) {
+                    throw new BadRequestException("role '" + tenantRole.getName() + "' does not exist");
+                }
+
+                if (roleNames.contains(tenantRole.getName())) {
+                    throw new BadRequestException("role '" + tenantRole.getName() + "' specified more than once");
+                }
+
+                roleNames.add(tenantRole.getName());
+            }
+        }
+    }
+
+    private void validateGroups(HashSet<String> groupIds) {
+        if (groupIds != null && !groupIds.isEmpty()) {
+            for (Iterator<String> i = groupIds.iterator(); i.hasNext();) {
+                String groupId = i.next();
+                if (groupDao.getGroupById(groupId) == null) {
+                    throw new BadRequestException("group '" + groupId + "' does not exist");
+                }
+            }
+        }
+    }
+
+    private void validateMossoId(Integer mossoId) {
+        if (mossoId == null || mossoId.equals(0)) {
+            String errorMsg = "Expecting mossoId";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+
+        User user = userService.getUserByTenantId(String.valueOf(mossoId));
+        if (user != null) {
+            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+        }
+    }
 
 }

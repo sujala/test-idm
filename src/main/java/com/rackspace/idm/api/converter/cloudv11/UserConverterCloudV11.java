@@ -29,6 +29,10 @@ public class UserConverterCloudV11 {
         userDO.setNastId(user.getNastId());
         userDO.setApiKey(user.getKey());
         userDO.setEnabled(user.isEnabled());
+
+        //for now the domain id via a v1.1 call, is actually the mosso id
+        userDO.setDomainId(user.getMossoId().toString().trim());
+
         return userDO;
     }
     

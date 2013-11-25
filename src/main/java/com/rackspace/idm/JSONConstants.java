@@ -185,7 +185,6 @@ public final class JSONConstants {
     public static final String ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH = "endpointTemplate.tenantAlias";
     public static final String ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH = "endpointTemplate.RAX-AUTH:tenantAlias";
     public static final String GROUPS_LIST_PATH = "groups.group";
-    public static final String GROUPS_VALUES_PATH = "groups.values";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";
     public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
     public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
@@ -197,4 +196,7 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_DEFAULT_REGION_PATH = "user.RAX-AUTH:defaultRegion";
     public static final String USER_RAX_AUTH_DOMAIN_ID_PATH = "user.RAX-AUTH:domainId";
     public static final String USER_PASSWORD_PATH = "user.password";
+    public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
+    public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX_KSGRP_GROUPS:groups";
+    public static final String USER_ROLES_PATH = "user.roles";
 }

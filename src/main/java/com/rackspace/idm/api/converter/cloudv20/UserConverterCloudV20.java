@@ -1,15 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.User;
-import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
-import org.openstack.docs.identity.api.v2.UserList;
+import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +16,17 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class UserConverterCloudV20 {
     @Autowired
     private Mapper mapper;
-    
+
+    @Autowired
+    private GroupDao groupDao;
+
     private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
@@ -34,13 +37,34 @@ public class UserConverterCloudV20 {
         this.mapper = mapper;
     }
 
-    public com.rackspace.idm.domain.entity.User fromUser(User user) {
+    public com.rackspace.idm.domain.entity.User fromUser(org.openstack.docs.identity.api.v2.User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
-        userEntity.setEnabled(user.isEnabled());
-        if (user instanceof UserForCreate) {
-            userEntity.setPassword(((UserForCreate)user).getPassword());
+        userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
+        userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
+
+        if (user.getRoles() != null && user.getRoles().getRole() != null) {
+            List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+            for (Role role : user.getRoles().getRole()) {
+                TenantRole tenantRole = new TenantRole();
+                tenantRole.setName(role.getName());
+                tenantRoles.add(tenantRole);
+            }
+
+            userEntity.setRoles(tenantRoles);
         }
-        userEntity.setUserPassword(userEntity.getPassword());
+
+        if (user.getGroups() != null && user.getGroups().getGroup() != null) {
+            for (Group group : user.getGroups().getGroup()) {
+                com.rackspace.idm.domain.entity.Group groupEntity = groupDao.getGroupByName(group.getName());
+                if (groupEntity !=  null) {
+                    userEntity.getRsGroupId().add(groupEntity.getGroupId());
+                }
+                else {
+                    userEntity.getRsGroupId().add(group.getName());  //group validation will catch later on
+                }
+            }
+        }
+
         return userEntity;
     }
 
@@ -123,7 +147,7 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
-        User jaxbUser = mapper.map(user, User.class);
+        org.openstack.docs.identity.api.v2.User jaxbUser = mapper.map(user, org.openstack.docs.identity.api.v2.User.class);
 
         try {
             if (user.getCreated() != null) {
