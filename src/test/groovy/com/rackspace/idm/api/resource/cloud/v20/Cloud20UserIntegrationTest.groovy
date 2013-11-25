@@ -41,4 +41,24 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
+
+    def "Adding group to default/manage user should return 400" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        def group = utils.createGroup()
+        def responseDefaultUser = cloud20.addUserToGroup(utils.getServiceAdminToken(), group.id, defaultUser.id)
+        def responseManageUser = cloud20.addUserToGroup(utils.getServiceAdminToken(), group.id, userManage.id)
+
+        then:
+        responseDefaultUser.status == 400
+        responseManageUser.status == 400
+
+        cleanup:
+        utils.deleteGroup(group)
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
 }
