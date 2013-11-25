@@ -172,6 +172,15 @@ public final class JSONConstants {
     public static final String RAX_AUTH_TENANT_ALIAS = "RAX-AUTH:tenantAlias";
     public static final String TENANT_ALIAS = "tenantAlias";
 
+    public static final String RAX_AUTH_MOBILE_PHONE = "RAX-AUTH:mobilePhone";
+    public static final String MOBILE_PHONE = "mobilePhone";
+
+    //faults
+    public static final String OPENSTACK_BAD_REQUEST = "badRequest";
+    public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";
+    public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
+    public static final String RAX_COMMON_FORBIDDEN_REQUEST = "ForbiddenFault";
+
     //Object path
     public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
     public static final String AUTH_RSA_CREDENTIALS_PATH = "auth.rsaCredentials";

@@ -748,6 +748,59 @@ schema set attribute (1.3.6.1.1.1.1.28) = {
     single-valued
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.101) = {
+	name = multiFactorDevicePin
+	ldap-names = multiFactorDevicePin
+	equality = caseExactMatch
+	syntax = directoryString
+	description = "A single value case sensitive string representing an authorization code."
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.102) = {
+	name = multiFactorDevicePinExpiration
+	ldap-names = multiFactorDevicePinExpiration
+	syntax = generalizedTime
+	description = "When an associated pin expires"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.103) = {
+	name = externalMultiFactorPhoneId
+	ldap-names = externalMultiFactorPhoneId
+	equality = caseExactMatch
+    syntax = directoryString
+	description = "Represents a phone id in an external system"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.104) = {
+	name = externalMultiFactorUserId
+	ldap-names = externalMultiFactorUserId
+    equality = caseExactMatch
+    syntax = directoryString
+	description = "Represents a user id in an external system"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.105) = {
+	name = multiFactorEnabled
+	ldap-names = multiFactorEnabled
+	syntax = boolean
+	description = "Whether multi-factor is enabled on the account"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.106) = {
+	name = multiFactorDeviceVerified
+	ldap-names = multiFactorDeviceVerified
+	syntax = boolean
+	description = "Whether the mobile phone associated with the account has been verified"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.107) = {
+	name = multiFactorMobilePhoneRsId
+	ldap-names = multiFactorMobilePhoneRsId
+    equality = caseExactMatch
+    syntax = directoryString
+	description = "Links the user to a specific mobile phone rsId"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -788,11 +841,16 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsGroupId,
         inMigration,
         migrationDate,
-        useMultiFactorAuthentication,
         telephoneNumber,
         mail,
         encryptionVersionId,
-        encryptionSalt
+        encryptionSalt,
+        multiFactorDevicePin,
+        multiFactorDevicePinExpiration,
+        multiFactorMobilePhoneRsId,
+        multiFactorDeviceVerified,
+        externalMultiFactorUserId,
+        multiFactorEnabled
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -1245,4 +1303,16 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
     may-contain
         description,
         nisPublicKey
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
+        name = multiFactorMobilePhone
+        ldap-names = multiFactorMobilePhone
+        subclass-of top
+        kind = structural
+        must-contain
+                rsId,
+                telephoneNumber
+        may-contain
+                externalMultiFactorPhoneId
 };

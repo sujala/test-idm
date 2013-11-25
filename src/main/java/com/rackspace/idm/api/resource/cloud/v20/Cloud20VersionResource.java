@@ -50,6 +50,9 @@ public class Cloud20VersionResource {
     @Autowired
     private SamlUnmarshaller samlUnmarshaller;
 
+    @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
+
     public Cloud20VersionResource() {
     }
 
@@ -1075,6 +1078,25 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
         return cloud20Service.deleteQuestion(authToken, questionId).build();
+    }
+
+    /**
+     * The multifactor service to associate a phone with a given user.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param mobilePhone
+     * @return
+     */
+    @POST
+    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones")
+    public Response addMultiFactorMobilePhone(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            MobilePhone mobilePhone) {
+        return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
     }
 
     protected int validateMarker(Integer offset) {

@@ -15,7 +15,6 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
-import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -226,6 +225,9 @@ public class User  extends BaseUser implements Auditable, UniqueId {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private DN rsGroupDN;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private String multiFactorMobilePhoneRsId;
 
     private List<TenantRole> roles;
 

@@ -50,6 +50,8 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_PROPERTY = "rsProperty";
     public static final String OBJECTCLASS_EXTERNALPROVIDER = "externalProvider";
 
+    public static final String OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE = "multiFactorMobilePhone";
+
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
     public static final String ATTR_ID = "rsId";
 
@@ -183,6 +185,16 @@ public abstract class LdapRepository {
     public static final String ATTR_REGEX = "pattern";
     public static final String ATTR_ERRMSG = "errMsg";
 
+    //multifactor attributes
+    public static final String ATTR_TELEPHONE_NUMBER = "telephoneNumber";
+    public static final String ATTR_EXTERNAL_MULTIFACTOR_PHONE_ID = "externalMultiFactorPhoneId";
+    public static final String ATTR_EXTERNAL_MULTIFACTOR_USER_ID = "externalMultiFactorUserId";
+    public static final String ATTR_MULTIFACTOR_MOBILE_PHONE_RSID = "multiFactorMobilePhoneRsId";
+    public static final String ATTR_MULTIFACTOR_DEVICE_PIN = "multiFactorDevicePin";
+    public static final String ATTR_MULTIFACTOR_DEVICE_PIN_EXPIRATION = "multiFactorDevicePinExpiration";
+    public static final String ATTR_MULTIFACTOR_DEVICE_VERIFIED = "multiFactorDeviceVerified";
+    public static final String ATTR_MULTI_FACTOR_ENABLED = "multiFactorEnabled";
+
     // Definitions for LDAP DNs
     protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
@@ -208,6 +220,8 @@ public abstract class LdapRepository {
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=multiFactorMobilePhones,o=rackspace,dc=rackspace,dc=com";
+
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";
@@ -393,7 +407,7 @@ public abstract class LdapRepository {
 
         return this.getSingleEntry(parentUniqueId, SearchScope.ONE, filter);
     }
-    
+
     protected static final String NEXT_USER_ID = "nextUserId";
     protected static final String NEXT_TENANT_ID = "nextTenantId";
     protected static final String NEXT_ROLE_ID = "nextRoleId";

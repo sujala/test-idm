@@ -20,7 +20,7 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '2.1.0'
+featureVersion = '2.2.0-SNAPSHOT'
 buildVersion = System.currentTimeMillis()
 gitRevision = "git rev-parse HEAD".execute().text.trim()
 
@@ -160,6 +160,9 @@ dependencies {
     compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
     compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.2.2'
     compile 'org.eclipse.persistence:eclipselink:2.5.0'
+
+    compile group: 'com.google.guava', name: 'guava', version: '15.0'
+    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.8'
 }
 
 def resourceDirs = [

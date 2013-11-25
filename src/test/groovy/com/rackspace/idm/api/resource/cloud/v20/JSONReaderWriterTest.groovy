@@ -72,8 +72,11 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderRaxAuthForDomain readerForDomain = new JSONReaderRaxAuthForDomain()
 
-    @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
+    @Shared JSONReaderForRaxAuthMobilePhone readerForRaxAuthMobilePhone = new JSONReaderForRaxAuthMobilePhone()
+    @Shared JSONWriterForRaxAuthMobilePhone writerForRaxAuthMobilePhone = new JSONWriterForRaxAuthMobilePhone()
 
+
+    @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
     @Shared JSONReaderForRaxKsQaSecretQA readerForRaxKsQaSecretQA = new JSONReaderForRaxKsQaSecretQA()
     @Shared JSONWriterForRaxKsQaSecretQA writerForRaxKsQaSecretQA = new JSONWriterForRaxKsQaSecretQA()
 
@@ -369,6 +372,24 @@ class JSONReaderWriterTest extends RootServiceTest {
         then:
         json != null
         readDomain.name == "name"
+    }
+
+    def "can read/write mobile phone as json"() {
+        given:
+        String phoneNumber = "aphone"
+        def mobilePhone = getMobilePhone(phoneNumber)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForRaxAuthMobilePhone.writeTo(mobilePhone, MobilePhone, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json);
+
+        MobilePhone readMobilePhone = readerForRaxAuthMobilePhone.readFrom(MobilePhone, null, null, null, null, inputStream);
+
+        then:
+        json != null
+        readMobilePhone.number == phoneNumber
     }
 
     def "should be able to write empty list of policies"() {
@@ -1675,6 +1696,13 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.name = name
             it.enabled = enabled
             it.description = description
+            return it
+        }
+    }
+
+    def getMobilePhone(String phoneNumber) {
+        new MobilePhone().with {
+            it.number = phoneNumber
             return it
         }
     }

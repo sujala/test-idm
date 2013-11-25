@@ -1,0 +1,7 @@
+version: 1
+
+dn: ou=multiFactorMobilePhones,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: multiFactorMobilePhones
+description: Defines container for mobile phones used for multifactor capability

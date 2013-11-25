@@ -1,7 +1,9 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
@@ -411,4 +413,19 @@ class V2Factory {
             return it
         }
     }
+
+    def createMobilePhone(String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        new MobilePhone().with {
+            it.number = telephoneNumber
+            return it
+        }
+    }
+
+    def createMobilePhoneWithId(String id = Cloud20Utils.createRandomString(), String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        createMobilePhone(telephoneNumber).with {
+            it.id = id
+            return it
+        }
+    }
+
 }

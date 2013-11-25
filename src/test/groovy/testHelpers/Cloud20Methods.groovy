@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -10,6 +11,8 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
 import spock.lang.Shared
+
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
@@ -270,6 +273,12 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId)
                 .path(ROLES).path(OS_KSADM).path(roleId)
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def addPhoneToUser(String token, String userId, MobilePhone requestMobilePhone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path("users").path(userId)
+                .path("RAX-AUTH").path("multi-factor").path("mobile-phones")
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
     }
 
     def addUserRole(String token, String userId, String roleId) {
