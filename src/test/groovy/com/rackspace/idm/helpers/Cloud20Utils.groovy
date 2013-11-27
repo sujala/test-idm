@@ -36,16 +36,13 @@ class Cloud20Utils {
     V1Factory v1Factory
 
     @Autowired
-    V2Factory v2Factory
+    CloudTestUtils testUtils
 
     @Shared
     def serviceAdminToken
 
-    private Random random
-
     @PostConstruct
     def init() {
-        random = new Random()
         methods.init()
     }
 
@@ -63,7 +60,7 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
-    def createUser(token, username=getRandomUUID(), domainId=null) {
+    def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
@@ -85,7 +82,7 @@ class Cloud20Utils {
     }
 
     def createDomain() {
-        getRandomUUID("domain")
+        testUtils.getRandomUUID("domain")
     }
 
     def deleteDomain(domainId) {
@@ -109,31 +106,19 @@ class Cloud20Utils {
 
     def createUsers(domainId) {
         def serviceAdminToken = getServiceAdminToken()
-        def identityAdmin = createUser(serviceAdminToken, getRandomUUID("identityAdmin"))
+        def identityAdmin = createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
 
         def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
 
-        def userAdmin = createUser(identityAdminToken, getRandomUUID("userAdmin"), domainId)
+        def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
         def userAdminToken = getToken(userAdmin.username, DEFAULT_PASSWORD)
 
-        def userManage = createUser(userAdminToken, getRandomUUID("userManage"), domainId)
+        def userManage = createUser(userAdminToken, testUtils.getRandomUUID("userManage"), domainId)
         addRoleToUser(userManage, USER_MANAGE_ROLE_ID)
 
-        def defaultUser = createUser(userAdminToken, getRandomUUID("defaultUser"), domainId)
+        def defaultUser = createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
 
         return [identityAdmin, userAdmin, userManage, defaultUser]
-    }
-
-    def getRandomUUID(prefix='') {
-        String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
-    }
-
-    def getRandomInteger() {
-        ((Integer)(100000 + random.nextFloat() * 900000))
-    }
-
-    def getRandomIntegerString() {
-        String.valueOf(getRandomInteger())
     }
 
     //delete users order matters.  pass default users first followed by user-managed, etc...
@@ -190,7 +175,7 @@ class Cloud20Utils {
     }
 
     def createService() {
-        def serviceName = getRandomUUID("service")
+        def serviceName = testUtils.getRandomUUID("service")
         def service = v1Factory.createService(serviceName, serviceName)
         def response = methods.createService(getServiceAdminToken(), service)
         assert (response.status == SC_CREATED)
@@ -203,7 +188,7 @@ class Cloud20Utils {
     }
 
     def createRole(service=null) {
-        def roleName = getRandomUUID("role")
+        def roleName = testUtils.getRandomUUID("role")
         def role = factory.createRole(roleName)
         if(service != null){
             role.serviceId = service.id
@@ -218,7 +203,7 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def createTenant(name=getRandomUUID("tenant"), enabled=true, displayName=getRandomUUID("tenant")) {
+    def createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant")) {
         def tenant = factory.createTenant(name, displayName, enabled)
         def response = methods.addTenant(getServiceAdminToken(), tenant)
         assert (response.status == SC_CREATED)
@@ -241,7 +226,7 @@ class Cloud20Utils {
         response.getEntity(EndpointTemplate).value
     }
 
-    def createEndpointTemplate(global=false, tenantAlias=null, type="compute", region="ORD", id=getRandomIntegerString(), publicUrl=getRandomUUID("http://"), name=getRandomUUID("name")) {
+    def createEndpointTemplate(global=false, tenantAlias=null, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name=testUtils.getRandomUUID("name")) {
         def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
             it.global = global
             it.region = region
@@ -263,7 +248,7 @@ class Cloud20Utils {
     }
 
     def createGroup() {
-        def group = v1Factory.createGroup(getRandomUUID('group'), "description")
+        def group = v1Factory.createGroup(testUtils.getRandomUUID('group'), "description")
         def response = methods.createGroup(getServiceAdminToken(), group)
         assert (response.status == SC_CREATED)
         response.getEntity(Group).value
@@ -273,4 +258,10 @@ class Cloud20Utils {
         def response = methods.deleteGroup(getServiceAdminToken(), group.id)
         assert (response.status == SC_NO_CONTENT)
     }
+
+    def addCredentialToUser(userId, password=testUtils.getRandomUUID()) {
+        def passwordCred = factory.createPasswordCredentialsBase(userId, password)
+        methods.addCredential(serviceAdminToken, userId, passwordCred)
+    }
+
 }

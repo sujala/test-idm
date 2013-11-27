@@ -189,23 +189,11 @@ public class DefaultCloud11ServiceTestOld {
     @Test
     public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setUsername("name");
+        when(userService.getUserByTenantId(anyString())).thenReturn(user);
         defaultCloud11Service.adminAuthenticateResponse(null,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
         verify(credentialValidator).validateCredential(nastCredentials, userService);
-    }
-
-    @Test
-    public void adminAuthenticateResponse_notAuthenticatedExceptionthrown_throws401WithCorrectMessage() throws Exception {
-        MossoCredentials mossoCredentials = new MossoCredentials();
-        mossoCredentials.setKey("key");
-        mossoCredentials.setMossoId(123);
-        JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
-        when(userService.getUserByTenantId("123")).thenThrow(new NotAuthenticatedException());
-
-        Response response = defaultCloud11Service.adminAuthenticateResponse(null, jaxbElement).build();
-        assertThat("response status", response.getStatus(), equalTo(401));
-        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
-        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
-
     }
 
     @Test
@@ -293,7 +281,10 @@ public class DefaultCloud11ServiceTestOld {
     @Test
     public void adminAuthenticateResponse_withNastCredentials_callsUserService_getUserByNastId() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setUsername("name");
         when(credentials.getValue()).thenReturn(new NastCredentials());
+        when(userService.getUserByTenantId(anyString())).thenReturn(user);
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByTenantId(null);
     }
@@ -311,6 +302,9 @@ public class DefaultCloud11ServiceTestOld {
     @Test
     public void adminAuthenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setUsername("name");
+        when(userService.getUserByTenantId(anyString())).thenReturn(user);
         MossoCredentials mossoCredentials = mock(MossoCredentials.class);
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
