@@ -158,6 +158,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean isSelf(User requester, User requestedUser) {
+        return requester.getUsername().equals(requestedUser.getUsername()) && requester.getUniqueId().equals(requestedUser.getUniqueId());
+    }
+
+    @Override
     public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 

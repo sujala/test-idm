@@ -63,15 +63,15 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "Only User admin within the same domain should be allowed to retrieve other user admin's apiKey" () {
+    def "User admin within the same domain should not be allowed to retrieve other user admin's apiKey" () {
         given:
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when:
-        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), utils.getRandomUUID("userAdmin2"), domainId2)
-        def userAdminThree = utils.createUser(utils.getIdentityAdminToken(), utils.getRandomUUID("userAdmin3"), domainId2)
+        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin2"), domainId2)
+        def userAdminThree = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin3"), domainId2)
         String token = utils.getToken(userAdmin.username)
         String userAdminThreeToken = utils.getToken(userAdminThree.username)
         def credentials = utils.addApiKeyToUser(userAdminTwo)
@@ -80,7 +80,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         then:
         credentials.username == userAdminTwo.username
-        userAdminThreeResponse.status == 200
+        userAdminThreeResponse.status == 403
         response.status == 403
 
 
@@ -90,17 +90,18 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId2)
     }
 
-    def "Only user manage within the same domain should be allowed to retrieve other user manage's apiKey" () {
+    def "User manage within the same domain should not be allowed to retrieve other user manage's apiKey" () {
         given:
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when:
-        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), utils.getRandomUUID("userAdmin2"), domainId2)
+        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin2"), domainId2)
         def userAdminTwoToken = utils.getToken(userAdminTwo.username)
-        def userManageTwo = utils.createUser(userAdminTwoToken, utils.getRandomUUID("userManage2"), domainId2)
-        def userManageThree = utils.createUser(userAdminTwoToken, utils.getRandomUUID("userManage3"), domainId2)
+        def userManageTwo = utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage2"), domainId2)
+        def userManageThree = utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage3"), domainId2)
+        utils.addRoleToUser(userManageTwo, USER_MANAGE_ROLE_ID)
         utils.addRoleToUser(userManageThree, USER_MANAGE_ROLE_ID)
         String userManageThreeToken = utils.getToken(userManageThree.username)
         String token = utils.getToken(userManage.username)
@@ -110,12 +111,56 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         then:
         credentials.username == userManageTwo.username
-        userManageThreeResponse.status == 200
+        userManageThreeResponse.status == 403
         response.status == 403
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, userManageTwo, userManageThree, userAdminTwo)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
+    }
+
+    def "Valid requests for get user's apiKey" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        for(def user : users){
+            utils.addApiKeyToUser(user)
+        }
+        def identityAdminToken = utils.getToken(identityAdmin.username);
+        for(def user : users){
+            def response = cloud20.getUserApiKey(identityAdminToken, user.id)
+            assert (response.status == 200)
+        }
+
+        def userAdminToken = utils.getToken(userAdmin.username);
+        for(def user : users){
+            if(!user.username.equals(identityAdmin.username)){
+                def response = cloud20.getUserApiKey(userAdminToken, user.id)
+                assert (response.status == 200)
+            }
+        }
+
+        def userManageToken = utils.getToken(userManage.username);
+        for(def user : users){
+            if(!user.username.equals(identityAdmin.username)
+            && !user.username.equals(userAdmin.username) ){
+                def response = cloud20.getUserApiKey(userManageToken, user.id)
+                assert (response.status == 200)
+            }
+        }
+
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def response = cloud20.getUserApiKey(defaultUserToken, defaultUser.id)
+
+        then:
+        response.status == 200
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
     }
 }

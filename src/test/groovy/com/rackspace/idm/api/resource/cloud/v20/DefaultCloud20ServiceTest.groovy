@@ -2790,6 +2790,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 403
         userService.getUserById(_) >> user
         userService.getUser(_) >> caller
+        precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
         authorizationService.authorizeCloudUser(_) >> true
         authorizationService.authorizeCloudUserAdmin(_) >> false
     }
@@ -3760,8 +3761,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUserById(_) >> user
         1 * userService.getUser(_) >> caller
-        1 * authorizationService.authorizeCloudUser(_) >> false
-        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        1 * authorizationService.isSelf(_, _) >> false
         result.build().status == 200
     }
 
@@ -3778,8 +3779,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * userService.getUserById(_) >> user
         1 * userService.getUser(_) >> caller
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * authorizationService.hasUserAdminRole(_) >> true
+        1 * authorizationService.isSelf(_, _) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
         result.build().status == 403
     }
 

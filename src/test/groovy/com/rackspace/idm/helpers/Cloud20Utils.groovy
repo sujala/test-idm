@@ -260,7 +260,7 @@ class Cloud20Utils {
     }
 
     def addApiKeyToUser(User user) {
-        def credentials = v1Factory.createApiKeyCredentials(user.username, getRandomIntegerString())
+        def credentials = v1Factory.createApiKeyCredentials(user.username, testUtils.getRandomIntegerString())
         def response = methods.addApiKeyToUser(getServiceAdminToken(), user.id, credentials)
         assert (response.status == SC_OK)
         response.getEntity(ApiKeyCredentials)
