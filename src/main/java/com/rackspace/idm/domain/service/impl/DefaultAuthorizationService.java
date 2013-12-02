@@ -159,7 +159,24 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean isSelf(User requester, User requestedUser) {
-        return requester.getUsername().equals(requestedUser.getUsername()) && requester.getUniqueId().equals(requestedUser.getUniqueId());
+        if(requester.getUsername() != null && requester.getUsername().equals(requestedUser.getUsername())){
+            return true;
+        }
+
+        if(requester.getUniqueId() != null && requester.getUniqueId().equals(requestedUser.getUniqueId())){
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean hasNullvalues(String... values){
+        for(String value : values){
+            if(value == null){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
