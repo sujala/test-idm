@@ -256,7 +256,7 @@ class Cloud20Utils {
 
     def addCredentialToUser(userId, password=testUtils.getRandomUUID()) {
         def passwordCred = factory.createPasswordCredentialsBase(userId, password)
-        methods.addCredential(serviceAdminToken, userId, passwordCred)
+        methods.addCredential(getServiceAdminToken(), userId, passwordCred)
     }
 
     def addApiKeyToUser(User user) {
@@ -266,19 +266,19 @@ class Cloud20Utils {
         response.getEntity(ApiKeyCredentials)
     }
 
-    def getUserApiKey(User user, String token=serviceAdminToken){
+    def getUserApiKey(User user, String token=getServiceAdminToken()){
         def response = methods.getUserApiKey(token, user.id)
         assert (response.status == SC_OK)
         response.getEntity(ApiKeyCredentials)
     }
 
-     def listUserCredentials(User user, String token=serviceAdminToken){
+     def listUserCredentials(User user, String token=getServiceAdminToken()){
         def response = methods.listCredentials(token, user.id)
         assert (response.status == SC_OK)
         response.getEntity(CredentialListType)
     }
 
-    def getUserByName(String username, String token=serviceAdminToken){
+    def getUserByName(String username, String token=getServiceAdminToken()){
         def reponse = methods.getUserByName(token, username)
         assert (reponse.status == SC_OK)
         reponse.getEntity(User)

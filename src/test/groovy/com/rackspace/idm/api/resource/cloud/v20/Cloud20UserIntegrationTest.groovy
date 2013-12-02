@@ -17,6 +17,8 @@ import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
+    @Shared def identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo
+    @Shared def identityAdminThree, userAdminThree, userManageThree, defaultUserThree
     @Shared def domainId
 
 
@@ -69,10 +71,10 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
+        (identityAdminThree, userAdminThree, userManageThree, defaultUserThree) = utils.createUsers(domainId2)
 
         when:
-        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin2"), domainId2)
-        def userAdminThree = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin3"), domainId2)
         String token = utils.getToken(userAdmin.username)
         String userAdminThreeToken = utils.getToken(userAdminThree.username)
         def credentials = utils.addApiKeyToUser(userAdminTwo)
@@ -86,7 +88,8 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
 
         cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, userAdminTwo, userAdminThree)
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(defaultUserTwo, defaultUserThree, userManageTwo, userManageThree, userAdminTwo, userAdminThree, identityAdminTwo, identityAdminThree)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
     }
@@ -96,12 +99,10 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
+        (identityAdminThree, userAdminThree, userManageThree, defaultUserThree) = utils.createUsers(domainId2)
 
         when:
-        def userAdminTwo = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin2"), domainId2)
-        def userAdminTwoToken = utils.getToken(userAdminTwo.username)
-        def userManageTwo = utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage2"), domainId2)
-        def userManageThree = utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage3"), domainId2)
         utils.addRoleToUser(userManageTwo, USER_MANAGE_ROLE_ID)
         utils.addRoleToUser(userManageThree, USER_MANAGE_ROLE_ID)
         String userManageThreeToken = utils.getToken(userManageThree.username)
@@ -116,7 +117,8 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         response.status == 403
 
         cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, userManageTwo, userManageThree, userAdminTwo)
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(defaultUserTwo, defaultUserThree, userManageTwo, userManageThree, userAdminTwo, userAdminThree, identityAdminTwo, identityAdminThree)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
     }
