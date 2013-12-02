@@ -265,4 +265,22 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         response.getEntity(ApiKeyCredentials)
     }
+
+    def getUserApiKey(User user, String token=serviceAdminToken){
+        def response = methods.getUserApiKey(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(ApiKeyCredentials)
+    }
+
+     def listUserCredentials(User user, String token=serviceAdminToken){
+        def response = methods.listCredentials(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(CredentialListType)
+    }
+
+    def getUserByName(String username, String token=serviceAdminToken){
+        def reponse = methods.getUserByName(token, username)
+        assert (reponse.status == SC_OK)
+        reponse.getEntity(User)
+    }
 }

@@ -2485,7 +2485,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.checkAndGetUserById("userId") >> user
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.verifySelf(caller, user) >> { throw new NotAuthorizedException() }
+        1 * authorizationService.isSelf(caller, user) >> false
     }
 
     def "listCredentials verifies self when caller is default user"() {
@@ -2512,7 +2512,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.checkAndGetUserById("userId") >> user
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.verifySelf(caller, user) >> { throw new NotAuthorizedException() }
+        1 * authorizationService.isSelf(caller, user) >>  false
     }
 
     def "listCredentials authorizes service admin and checks for password"() {

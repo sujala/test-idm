@@ -4,6 +4,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 
 /**
@@ -130,17 +131,16 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         for(def user : users){
             utils.addApiKeyToUser(user)
         }
+
         def identityAdminToken = utils.getToken(identityAdmin.username);
         for(def user : users){
-            def response = cloud20.getUserApiKey(identityAdminToken, user.id)
-            assert (response.status == 200)
+            utils.getUserApiKey(user, identityAdminToken)
         }
 
         def userAdminToken = utils.getToken(userAdmin.username);
         for(def user : users){
             if(!user.username.equals(identityAdmin.username)){
-                def response = cloud20.getUserApiKey(userAdminToken, user.id)
-                assert (response.status == 200)
+                utils.getUserApiKey(user, userAdminToken)
             }
         }
 
@@ -148,19 +148,184 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         for(def user : users){
             if(!user.username.equals(identityAdmin.username)
             && !user.username.equals(userAdmin.username) ){
-                def response = cloud20.getUserApiKey(userManageToken, user.id)
-                assert (response.status == 200)
+                utils.getUserApiKey(user, userManageToken)
             }
         }
 
         def defaultUserToken = utils.getToken(defaultUser.username)
-        def response = cloud20.getUserApiKey(defaultUserToken, defaultUser.id)
+        def response = utils.getUserApiKey(defaultUser, defaultUserToken)
 
         then:
-        response.status == 200
+        response != null
+        response.apiKey != null
+        response.username == defaultUser.username
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
+
+    def "Invalid requests for get user's apiKey" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        for(def user : users){
+            utils.addApiKeyToUser(user)
+        }
+
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)){
+                def response = cloud20.getUserApiKey(defaultUserToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def userManageToken = utils.getToken(userManage.username);
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)
+                    && !user.username.equals(userManage.username) ){
+                def response = cloud20.getUserApiKey(userManageToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def userAdminToken = utils.getToken(userAdmin.username);
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)
+                    && !user.username.equals(userManage.username)
+                    && !user.username.equals(userAdmin.username)){
+                def response = cloud20.getUserApiKey(userAdminToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def identityAdminToken = utils.getToken(identityAdmin.username);
+        def serviceAdmin = utils.getUserByName(SERVICE_ADMIN_USERNAME)
+        def response = cloud20.getUserApiKey(identityAdminToken, serviceAdmin.id)
+
+
+        then:
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Valid requests for list user's credentials" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        for(def user : users){
+            utils.addApiKeyToUser(user)
+        }
+
+        def identityAdminToken = utils.getToken(identityAdmin.username);
+        for(def user : users){
+            def cred = utils.listUserCredentials(user, identityAdminToken)
+            assert (cred != null)
+        }
+
+        def userAdminToken = utils.getToken(userAdmin.username);
+        for(def user : users){
+            if(!user.username.equals(identityAdmin.username)){
+                utils.listUserCredentials(user, userAdminToken)
+            }
+        }
+
+        def userManageToken = utils.getToken(userManage.username);
+        for(def user : users){
+            if(!user.username.equals(identityAdmin.username)
+                    && !user.username.equals(userAdmin.username) ){
+                utils.listUserCredentials(user, userManageToken)
+            }
+        }
+
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def response = utils.listUserCredentials(defaultUser, defaultUserToken)
+
+        then:
+        response != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Invalid requests for list user's credentials" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        for(def user : users){
+            utils.addApiKeyToUser(user)
+        }
+
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)){
+                def response = cloud20.listCredentials(defaultUserToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def userManageToken = utils.getToken(userManage.username);
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)
+                    && !user.username.equals(userManage.username) ){
+                def response = cloud20.listCredentials(userManageToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def userAdminToken = utils.getToken(userAdmin.username);
+        for(def user : users){
+            if(!user.username.equals(defaultUser.username)
+                    && !user.username.equals(userManage.username)
+                    && !user.username.equals(userAdmin.username)){
+                def response = cloud20.listCredentials(userAdminToken, user.id)
+                assert (response.status == 403)
+            }
+        }
+
+        def identityAdminToken = utils.getToken(identityAdmin.username);
+        def serviceAdmin = utils.getUserByName(SERVICE_ADMIN_USERNAME)
+        def response = cloud20.listCredentials(identityAdminToken, serviceAdmin.id)
+
+        then:
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Listing credentials - verify domain" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def username = testUtils.getRandomUUID("listCredentialsUser")
+
+        when:
+        def user = utils.createUser(utils.identityAdminToken, username, utils.createDomain())
+        def token = utils.getToken(username)
+        def response = cloud20.listCredentials(token, defaultUser.id)
+
+        then:
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, user)
+        utils.deleteDomain(domainId)
+    }
+
 }
