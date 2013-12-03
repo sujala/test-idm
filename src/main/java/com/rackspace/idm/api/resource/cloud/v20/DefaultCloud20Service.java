@@ -1902,6 +1902,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = getUser(callersScopeAccess);
 
+            if(authorizationService.hasServiceAdminRole(user) && !user.getId().equals(caller.getId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
             if (!(authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
                     || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
                     //user is requesting self
