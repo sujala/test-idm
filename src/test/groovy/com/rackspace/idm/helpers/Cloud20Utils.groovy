@@ -2,14 +2,10 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
-import com.rackspace.idm.GlobalConstants
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.RoleList
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
@@ -20,7 +16,6 @@ import testHelpers.V2Factory
 import javax.annotation.PostConstruct
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.GlobalConstants.*
 import static org.apache.http.HttpStatus.*
 
 @Component
@@ -261,7 +256,31 @@ class Cloud20Utils {
 
     def addCredentialToUser(userId, password=testUtils.getRandomUUID()) {
         def passwordCred = factory.createPasswordCredentialsBase(userId, password)
-        methods.addCredential(serviceAdminToken, userId, passwordCred)
+        methods.addCredential(getServiceAdminToken(), userId, passwordCred)
     }
 
+    def addApiKeyToUser(User user) {
+        def credentials = v1Factory.createApiKeyCredentials(user.username, testUtils.getRandomIntegerString())
+        def response = methods.addApiKeyToUser(getServiceAdminToken(), user.id, credentials)
+        assert (response.status == SC_OK)
+        response.getEntity(ApiKeyCredentials)
+    }
+
+    def getUserApiKey(User user, String token=getServiceAdminToken()){
+        def response = methods.getUserApiKey(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(ApiKeyCredentials)
+    }
+
+     def listUserCredentials(User user, String token=getServiceAdminToken()){
+        def response = methods.listCredentials(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(CredentialListType)
+    }
+
+    def getUserByName(String username, String token=getServiceAdminToken()){
+        def reponse = methods.getUserByName(token, username)
+        assert (reponse.status == SC_OK)
+        reponse.getEntity(User)
+    }
 }

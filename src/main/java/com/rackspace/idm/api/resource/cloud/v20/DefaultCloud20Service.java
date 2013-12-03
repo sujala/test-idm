@@ -1563,17 +1563,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
-            boolean callerHasUserManage = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            if(!authorizationService.isSelf(caller, user)){
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
-            if (callerHasUserManage || callerIsUserAdmin) {
-                if (callerHasUserManage && authorizationService.hasUserAdminRole(user)) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
+                if(!(authorizationService.hasIdentityAdminRole(caller) || authorizationService.hasServiceAdminRole(caller))){
+                    authorizationService.verifyDomain(caller, user);
                 }
-                authorizationService.verifyDomain(caller, user);
-            } else if (callerIsDefaultUser && !caller.getId().equals(userId)) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             if (StringUtils.isBlank(user.getApiKey())) {
@@ -1636,13 +1631,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = (User) userService.getUserByScopeAccess(callerScopeAccess);
 
-            if(authorizationService.hasServiceAdminRole(user)){
-                throw new ForbiddenException("Not Authorized");
+            if(!authorizationService.isSelf(caller, user)){
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
+                if(!(authorizationService.hasIdentityAdminRole(caller) || authorizationService.hasServiceAdminRole(caller))){
+                    authorizationService.verifyDomain(caller, user);
+                }
             }
 
-            if (isUserAdmin(caller) || isDefaultUser(caller)) {
-                authorizationService.verifySelf(caller, user);
-            }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
 
             if (!StringUtils.isBlank(user.getApiKey())) {

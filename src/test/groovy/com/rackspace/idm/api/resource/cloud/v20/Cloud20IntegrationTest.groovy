@@ -2762,8 +2762,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         if(flag){
             createUser != null
             listCredResponse != null
-            listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS)
-            listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS)
+            assert (listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS))
+            assert (!listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS))
             apiKey != null
             authenticate.status == 200
         } else {
@@ -2819,7 +2819,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, user.id)
     }
 
-    def "List credentials for subUser using userAdmin within same domain returns 403"() {
+    def "List credentials for subUser using userAdmin within same domain returns 200"() {
         given:
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -2837,7 +2837,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         userAdminToken != null
         createSubUser != null
         listCredResponse != null
-        listCredResponse.status == 403
+        listCredResponse.status == 200
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)
