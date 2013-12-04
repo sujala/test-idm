@@ -283,4 +283,9 @@ class Cloud20Utils {
         assert (reponse.status == SC_OK)
         reponse.getEntity(User)
     }
+
+    def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
+        def response = methods.addUserToGroup(token, group.id, user.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
 }

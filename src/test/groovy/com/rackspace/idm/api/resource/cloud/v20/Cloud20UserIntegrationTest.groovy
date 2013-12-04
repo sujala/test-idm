@@ -66,6 +66,119 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    def "Adding group to default/manage user after adding it to user admin should return 400" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        def group = utils.createGroup()
+        def responseUserAdmin = cloud20.addUserToGroup(utils.getServiceAdminToken(), group.id, userAdmin.id)
+        def responseManageUser = cloud20.addUserToGroup(utils.getServiceAdminToken(), group.id, userManage.id)
+        def responseDefaultUser = cloud20.addUserToGroup(utils.getServiceAdminToken(), group.id, defaultUser.id)
+
+        then:
+        responseUserAdmin.status == 204
+        responseManageUser.status == 400
+        responseDefaultUser.status == 400
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteGroup(group)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Not Authorized request for adding a user to a group" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userList = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        def group = utils.createGroup()
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        for(def user : userList) {
+            def response = cloud20.addUserToGroup(defaultUserToken, group.id, user.id)
+            assert (response.status == 403)
+        }
+        def userManageToken = utils.getToken(userManage.username)
+        for(def user : userList) {
+            def response = cloud20.addUserToGroup(userManageToken, group.id, user.id)
+            assert (response.status == 403)
+        }
+        def userAdminToken = utils.getToken(userAdmin.username)
+        for(def user : userList) {
+            def response = cloud20.addUserToGroup(userAdminToken, group.id, user.id)
+            assert (response.status == 403)
+        }
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def serviceAdmin = utils.getUserByName(SERVICE_ADMIN_USERNAME)
+        def response = cloud20.addUserToGroup(identityAdminToken, group.id, serviceAdmin.id)
+
+        then:
+        true
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteGroup(group)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Verify users at same level cannot assign groups" () {
+        given:
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
+
+        when:
+        def group = utils.createGroup()
+        def adminToken = utils.getToken(identityAdmin.username)
+        def responseOne = cloud20.addUserToGroup(adminToken, group.id, identityAdminTwo.id)
+
+        then:
+        responseOne.status == 403
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(defaultUserTwo, userManageTwo, userAdminTwo, identityAdminTwo)
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(domainId2)
+
+    }
+
+    def "Valid request for adding a user to a group" () {
+        given:
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
+        def userList = [identityAdmin, userAdmin, userManage, defaultUser].asList()
+
+        when:
+        def group = utils.createGroup()
+        for(def user: userList) {
+            if(!user.username.equals(userManage.username)
+               && !user.username.equals(defaultUser.username)){
+                utils.addUserToGroup(group, user)
+            }
+        }
+        def groupTwo = utils.createGroup()
+        utils.addUserToGroup(groupTwo, userAdmin, utils.getIdentityAdminToken())
+
+        then:
+        true
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(defaultUserTwo, userManageTwo, userAdminTwo, identityAdminTwo)
+        utils.deleteGroup(group)
+        utils.deleteGroup(groupTwo)
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(domainId2)
+    }
+
     def "User admin within the same domain should not be allowed to retrieve other user admin's apiKey" () {
         given:
         def domainId = utils.createDomain()

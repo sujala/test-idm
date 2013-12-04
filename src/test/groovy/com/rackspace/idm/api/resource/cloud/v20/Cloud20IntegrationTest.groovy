@@ -1959,11 +1959,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "user$sharedRandom"
         def password = "Password1"
 
-        def adminUsername1 = "userAdmin3$sharedRandom"
+        def adminUsername1 = "userAdminThree$sharedRandom"
         def userAdminForCreate1 = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername1, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin1 = userAdminForCreate1.getEntity(User)
 
-        def adminUsername2 = "userAdmin4$sharedRandom"
+        def adminUsername2 = "userAdminFour$sharedRandom"
         def userAdminForCreate2 = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername2, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin2 = userAdminForCreate2.getEntity(User)
 

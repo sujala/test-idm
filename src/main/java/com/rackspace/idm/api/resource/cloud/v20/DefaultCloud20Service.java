@@ -2814,14 +2814,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             Group group = groupService.checkAndGetGroupById(groupId);
 
+            User caller = userService.getUserByAuthToken(authToken);
             User user = userService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
+
+            if (authorizationService.hasDefaultUserRole(user)) {
+                throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
+            }
 
             if (!userService.isUserInGroup(userId, group.getGroupId())) {
-                if (isDefaultUser) {
-                    throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
-                } else if (isUserAdmin) {
+
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
+                if (authorizationService.hasUserAdminRole(user)) {
                     List<User> subUsers = userService.getSubUsers(user);
 
                     for (User subUser : subUsers) {
