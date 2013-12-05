@@ -66,7 +66,7 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
                 jsonObject = outer;
             }
 
-            arrayTransformer.transform(jsonObject);
+            arrayTransformer.transformIncludeWrapper(jsonObject);
 
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();

@@ -14,8 +14,6 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
-import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
@@ -59,9 +57,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -450,20 +445,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User userForCreate) {
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User usr) {
         try {
-            //TODO: should use aspects for api access
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
-            User user = this.userConverterCloudV20.fromUser(userForCreate);
+            User user = this.userConverterCloudV20.fromUser(usr);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
             userService.setUserDefaultsBasedOnCaller(user, caller);
             userService.addUser(user);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user);
 
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getId()).build());
+
 
             return builder.entity(userTO);
 
@@ -731,11 +727,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 roleList.add(t);
             }
         }
-        List tenantEndpoints = new ArrayList();
-        auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, tenantEndpoints);
 
-        // removing serviceId from response for now
-        return removeServiceIdFromAuthResponse(auth);
+        return auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, new ArrayList());
     }
 
     @Override
@@ -832,8 +825,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
         }
 
-        // removing serviceId from response for now
-        auth = removeServiceIdFromAuthResponse(auth);
         return auth;
     }
 
@@ -3374,13 +3365,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         return null;
     }
 
-    private AuthenticateResponse removeServiceIdFromAuthResponse(AuthenticateResponse auth) {
-        if (auth.getUser() != null && auth.getUser().getRoles() != null) {
-            for (Role r : auth.getUser().getRoles().getRole()) {
-                r.setServiceId(null);
+    private List<String> getRoleNames(List<TenantRole> tenantRoles) {
+        List<String> roleNames = new ArrayList<String> ();
+        if (tenantRoles != null) {
+            for (TenantRole tenantRole : tenantRoles) {
+                roleNames.add(tenantRole.getName());
             }
         }
-        return auth;
+
+        return roleNames;
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {

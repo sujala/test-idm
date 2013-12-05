@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -14,7 +13,6 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.User;
@@ -23,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,11 +49,9 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static String roleId = "10010967";
     static String invalidTenant = "999999";
     static String testDomainId = "135792468";
-    static String invalidDomainId = "999999";
     static String disabledDomainId = "888888";
     static String email = "testEmail@rackspace.com";
     static String password = "Password1";
-    static String endpointTemplateId = "105009002";
 
     static User testIdentityAdminUser;
     static User testUserAdmin;
@@ -424,6 +419,55 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                         "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" />");
 
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
+    }
+
+
+    @Test
+    public void addUserAdminWithCompletePayload() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/users");
+        ClientResponse xmlClientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,
+                "<user OS-KSADM:password=\"securePassword\" RAX-AUTH:defaultRegion=\"DFW\"\n" +
+                        "     RAX-AUTH:domainId=\"222336\" email=\"john.smith@example.org\"\n" +
+                        "     enabled=\"true\" username=\"jqsmith235\"\n" +
+                        "     xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
+                        "     xmlns:OS-KSADM=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
+                        "     xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
+                        "     xmlns:RAX-KSGRP=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\"\n" +
+                        "     xmlns:RAX-KSQA=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n" +
+                        "     <roles>\n" +
+                        "          <role name=\"managed\"/>\n" +
+                        "     </roles>\n" +
+                        "     <RAX-KSGRP:groups>\n" +
+                        "          <RAX-KSGRP:group name=\"restricted\"/>\n" +
+                        "     </RAX-KSGRP:groups>\n" +
+                        "     <RAX-KSQA:secretQA answer=\"There is no meaning\" question=\"What is the meaning of it all\"/>\n" +
+                        "</user>");
+
+        assertThat("response code", xmlClientResponse.getStatus(), equalTo(200));
+
+        ClientResponse jsonClientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class,
+                "{\n" +
+                        "   \"user\":{\n" +
+                        "      \"RAX-AUTH:domainId\":\"5473387\",\n" +
+                        "      \"enabled\":true,\n" +
+                        "      \"username\":\"jqsmith\",\n" +
+                        "      \"OS-KSADM:password\":\"securePassword\",\n" +
+                        "      \"email\":\"john.smith@example.org\",\n" +
+                        "      \"roles\":[\n" +
+                        "         {\n" +
+                        "            \"name\":\"managed\"\n" +
+                        "         }\n" +
+                        "      ],\n" +
+                        "\n" +
+                        "      \"RAX-AUTH:defaultRegion\":\"SYD\",\n" +
+                        "      \"RAX-KSQA:secretQA\":{\n" +
+                        "         \"answer\":\"There is no meaning\",\n" +
+                        "         \"question\":\"What is the meaning of it all\"\n" +
+                        "      }\n" +
+                        "   }\n" +
+                        "}");
+
+        assertThat("response code", jsonClientResponse.getStatus(), equalTo(200));
     }
 
     @Test

@@ -23,8 +23,6 @@ public interface UserService {
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
 
-//    void deleteRacker(String rackerId);
-    
     void deleteUser(User user);
     
     void deleteUser(String username);
@@ -97,11 +95,7 @@ public interface UserService {
 
     void setConfig(Configuration config);
 
-    void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
-
     void setCloudRegionService(CloudRegionService cloudRegionService);
-    
-    PaginatorContext<User> getAllUsersPaged(int offset, int limit);
 
     PaginatorContext<User> getAllEnabledUsersPaged(int offset, int limit);
 

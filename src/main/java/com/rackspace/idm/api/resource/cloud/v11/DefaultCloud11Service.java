@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.util.NastFacade;
 import com.rackspace.idm.validation.Validator;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -52,7 +51,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     public static final String USER_S_NOT_FOUND = "User %s not found";
-    public static final String EXPECTING_USERNAME = "Expecting username";
     public static final String USER_NOT_FOUND = "User not found: ";
 
     @Autowired
@@ -81,9 +79,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
     @Autowired
-    private NastFacade nastFacade;
-
-    @Autowired
     private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
@@ -93,13 +88,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private CloudExceptionResponse cloudExceptionResponse;
 
     @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
     private TenantService tenantService;
-
-    @Autowired
-    private DomainService domainService;
 
     @Autowired
     private GroupService cloudGroupService;
@@ -126,7 +115,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
@@ -233,7 +222,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(uriInfo, body, true);
             } else {
@@ -265,7 +254,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User user = userService.getUser(userId);
             if (user == null) {
@@ -340,8 +329,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                com.rackspacecloud.docs.auth.api.v1.User userTO) throws IOException {
 
         try {
-            ScopeAccess adminToken = authenticateCloudAdminUser(request);
-            authorizationService.verifyIdentityAdminLevelAccess(adminToken);
+            ScopeAccess adminToken = authenticateAndAuthorizeCloudAdminUser(request);
             User caller = (User) userService.getUserByScopeAccess(adminToken);
 
             validator.validate11User(userTO);
@@ -368,7 +356,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                      HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User user = userService.getUser(userId);
 
@@ -426,7 +414,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User retrievedUser = userService.getUser(userId);
 
@@ -716,7 +704,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
 
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User gaUser = userService.getUser(userId);
 
@@ -745,7 +733,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User gaUser = userService.getUser(userId);
 
@@ -768,7 +756,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             validator.validate11User(user);
             validator.isUsernameValid(user.getId());
@@ -905,7 +893,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
             this.endpointService.addBaseUrl(this.endpointConverterCloudV11.toBaseUrlDO(baseUrl));
             return Response.status(HttpServletResponse.SC_CREATED).header("Location", request.getContextPath() + "/baseUrls/" + baseUrl.getId());
         } catch (Exception ex) {
@@ -1088,10 +1076,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private boolean isNastEnabled() {
-        return config.getBoolean("nast.xmlrpc.enabled");
-    }
-
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
@@ -1104,10 +1088,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    public void setNastFacade(NastFacade nastFacade) {
-        this.nastFacade = nastFacade;
     }
 
     void authenticateCloudAdminUserForGetRequests(HttpServletRequest request) {
@@ -1137,7 +1117,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authorizationService = authorizationService;
     }
 
-    ScopeAccess authenticateCloudAdminUser(HttpServletRequest request) {
+    ScopeAccess authenticateAndAuthorizeCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
@@ -1147,6 +1127,11 @@ public class DefaultCloud11Service implements Cloud11Service {
         String adminUsername = stringStringMap.get("username");
         String adminPassword = stringStringMap.get("password");
         UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(adminUsername, adminPassword, getCloudAuthClientId());
+
+        boolean authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
+        if (!authorized) {
+            throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
+        }
 
         return usa;
     }
@@ -1223,15 +1208,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.cloudExceptionResponse = cloudExceptionResponse;
     }
 
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-
-    public void setDomainService(DomainService domainService) {
-        this.domainService = domainService;
     }
 }

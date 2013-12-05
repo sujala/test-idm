@@ -1,25 +1,24 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.RackerDao;
-import com.rackspace.idm.util.CryptHelper;
-import com.rackspace.idm.validation.Validator;
-import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.CryptHelper;
+import com.rackspace.idm.validation.Validator;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -75,7 +73,7 @@ public class DefaultUserServiceTestOld {
     @Before
     public void setUp() throws Exception {
         validator = new Validator();
-        validator.setLdapPatternRepository(patternDao);
+        //validator.setLdapPatternRepository(patternDao);
         defaultUserService.setValidator(validator);
     }
 
@@ -258,7 +256,7 @@ public class DefaultUserServiceTestOld {
     public void resetUserPassword_callsUserDao_updateUser() throws Exception {
         User user = new User();
         defaultUserService.resetUserPassword(user);
-        verify(userDao).updateUser(user, false);
+        verify(userDao).updateUser(user);
     }
 
     @Test
@@ -340,5 +338,4 @@ public class DefaultUserServiceTestOld {
         int result = defaultUserService.getLdapPagingLimitDefault();
         assertThat("ldap limit default", result, equalTo(25));
     }
-
 }

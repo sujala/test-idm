@@ -1,9 +1,11 @@
 package com.rackspace.idm.helpers
-
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
+
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*

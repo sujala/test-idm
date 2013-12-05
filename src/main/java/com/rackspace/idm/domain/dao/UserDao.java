@@ -16,7 +16,7 @@ public interface UserDao {
 
     void deleteUser(String username);
 
-    void removeUsersFromClientGroup(ClientGroup group);
+    //void removeUsersFromClientGroup(ClientGroup group);
 
     Iterable<User> getUsers();
 
@@ -32,7 +32,7 @@ public interface UserDao {
 
     Iterable<User> getUsersByUsername(String username);
 
-    String[] getGroupIdsForUser(String username);
+    //String[] getGroupIdsForUser(String username);
 
     User getUserByCustomerIdAndUsername(String customerId, String username);
 
@@ -40,9 +40,9 @@ public interface UserDao {
 
     Iterable<User> getUsersByDomain(String domainId);
 
-    User getUserByRPN(String rpn);
+    //User getUserByRPN(String rpn);
 
-    User getUserBySecureId(String secureId);
+    //User getUserBySecureId(String secureId);
 
     User getUserByUsername(String username);
 
@@ -67,9 +67,9 @@ public interface UserDao {
 
     User getSoftDeletedUserById(String id);
 
-    User getSoftDeletedUserByUsername(String username);
+    //User getSoftDeletedUserByUsername(String username);
 
-    void unSoftDeleteUser(User user);
+    //void unSoftDeleteUser(User user);
 
     Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
 

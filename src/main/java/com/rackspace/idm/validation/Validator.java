@@ -4,7 +4,6 @@ package com.rackspace.idm.validation;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.GroupDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
@@ -49,18 +48,10 @@ public class Validator {
     @Autowired
     GroupDao groupDao;
 
-    @Autowired
-    UserDao userDao;
-
     static final String USERNAME="username";
-    static final String PHONE="phone";
     static final String ALPHANUMERIC="alphanumeric";
     static final String PASSWORD="password";
-    static final String TOKEN = "token";
     static final String EMAIL = "email";
-
-    static final String USER_ID_EMPTY_MSG = "User cannot be empty.";
-    static final String USER_NULL_MSG = "User can not be null.";
 
     public boolean isEmpty(String str){
         return StringUtils.isEmpty(str);
@@ -74,16 +65,8 @@ public class Validator {
         return checkPattern(USERNAME, username);
     }
 
-    public boolean isPhoneValid(String phone){
-         return checkPattern(PHONE, phone);
-    }
-
     public boolean isAlphaNumeric(String value){
         return checkPattern(ALPHANUMERIC, value);
-    }
-
-    public boolean isTokenValid(String token){
-        return checkPattern(TOKEN, token);
     }
 
     public boolean isEmailValid(String email) {
@@ -93,22 +76,6 @@ public class Validator {
     public void validate11User(com.rackspacecloud.docs.auth.api.v1.User user) {
         validateMossoId(user.getMossoId());
     }
-
-//    public void validate20User(org.openstack.docs.identity.api.v2.User user){
-//        if (StringUtils.isBlank(user.getUsername())) {
-//            String errorMsg = "Expecting username";
-//            logger.warn(errorMsg);
-//            throw new BadRequestException(errorMsg);
-//        }
-//        checkPattern(USERNAME, user.getUsername());
-//        if(!isEmpty(user.getEmail())){
-//            isEmailValid(user.getEmail());
-//        }
-//    }
-//
-//    public void validate20UserNew(org.openstack.docs.identity.api.v2.User user) {
-//        validate20User(user);
-//    }
 
     public void validateUser(com.rackspace.idm.domain.entity.User user) {
         validateUsername(user.getUsername());
@@ -146,7 +113,7 @@ public class Validator {
             throw new BadRequestException("Username is not specified");
         }
 
-        if (!userDao.isUsernameUnique(username)) {
+        if (!userService.isUsernameUnique(username)) {
             logger.warn("Couldn't add user {} because username already taken", username);
             throw new DuplicateUsernameException("Username unavailable within Rackspace system. Please try another.");
         }

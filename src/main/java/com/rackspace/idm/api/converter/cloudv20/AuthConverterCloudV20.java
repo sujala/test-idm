@@ -3,7 +3,6 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
-import com.rsa.cryptoj.c.B;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +52,7 @@ public class AuthConverterCloudV20 {
         }
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
         
-        return auth;
+        return getAuthResponseWithoutServiceId(auth);
     }
 
     public ImpersonationResponse toImpersonationResponse(ScopeAccess scopeAccess) {

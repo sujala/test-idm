@@ -25,18 +25,15 @@ import java.util.UUID;
 public class DefaultUserService implements UserService {
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
-    public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
+    static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
-    private static final String MOSSO_TENANT_PREFIX = "MossoCloudFS_";
-    private static final String MOSSO_BASE_URL_TYPE = "MOSSO";
-    private static final String NAST_BASE_URL_TYPE = "NAST";
+    static final String NAST_TENANT_PREFIX = "MossoCloudFS_";
+    static final String MOSSO_BASE_URL_TYPE = "MOSSO";
+    static final String NAST_BASE_URL_TYPE = "NAST";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
-
-    @Autowired
-    private PasswordComplexityService passwordComplexityService;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -114,7 +111,6 @@ public class DefaultUserService implements UserService {
         //hack alert!! code requires the user object to have the nastid attribute set. this attribute
         //should no longer be required as users have roles on a tenant instead. once this happens, remove
         user.setNastId(getNastTenantId(user.getDomainId()));
-        user.setId(userDao.getNextUserId());
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
@@ -154,6 +150,10 @@ public class DefaultUserService implements UserService {
                 throw new BadRequestException("User-admin cannot be created without a domain");
             }
 
+            if (domainService.getDomainAdmins(user.getDomainId()).size() != 0) {
+                throw new BadRequestException("User-admin already exists for domain");
+            }
+
             attachRoleToUser(getUserAdminRole(), user);
 
             //original code had this. this is in place to help ensure the user has access to their
@@ -166,7 +166,11 @@ public class DefaultUserService implements UserService {
         }
 
         if (doesUserHaveRole(caller, getUserAdminRole()) || doesUserHaveRole(caller, getUserManageRole())) {
-            String callerDefaultRegion = getCallerRegion(caller);
+            if (StringUtils.isBlank(caller.getDomainId())) {
+                throw new BadRequestException("Default user cannot be created if caller does not have a domain");
+            }
+
+            String callerDefaultRegion = getRegionBasedOnCaller(caller);
             List<ClientRole> callerRoles = getAssignableCallerRoles(caller);
             Iterable<Group> callerGroups = getGroupsForUser(caller.getId());
 
@@ -509,24 +513,8 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void setPasswordComplexityService(PasswordComplexityService passwordComplexityService) {
-        this.passwordComplexityService = passwordComplexityService;
-    }
-
-    @Override
     public void setCloudRegionService(CloudRegionService cloudRegionService) {
         this.cloudRegionService = cloudRegionService;
-    }
-
-    @Override
-    public PaginatorContext<User> getAllUsersPaged(int offset, int limit) {
-        logger.debug("Getting All Users paged");
-
-        PaginatorContext<User> users = this.userDao.getUsers(offset, limit);
-
-        logger.debug("Got All Users paged");
-
-        return users;
     }
 
     @Override
@@ -857,18 +845,6 @@ public class DefaultUserService implements UserService {
         return result;
     }
 
-    private boolean isPasswordRulesEnforced() {
-        return config.getBoolean("password.rules.enforced", true);
-    }
-
-    protected int getLdapPagingOffsetDefault() {
-        return config.getInt("ldap.paging.offset.default");
-    }
-
-    protected int getLdapPagingLimitDefault() {
-        return config.getInt("ldap.paging.limit.default");
-    }
-
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
     }
@@ -966,19 +942,19 @@ public class DefaultUserService implements UserService {
 
     private void createDomainIfItDoesNotExist(String domainId) {
         if (StringUtils.isNotBlank(domainId)) {
-            if (domainService.getDomain(domainId) == null) {
+            if (domainService.getDomain(domainId) == null ) {
                 domainService.createNewDomain(domainId);
             }
         }
     }
 
     /**
-     * creates default tenants in thew new domain
+     * creates default tenants in the new domain
      *
      * @param domainId
      */
     private void createDefaultDomainTenantsIfNecessary(String domainId) {
-        if (StringUtils.isNotBlank(domainId) && domainService.getDomainAdmins(domainId).size() == 0) {
+        if (domainService.getDomain(domainId) != null && domainService.getDomainAdmins(domainId).size() == 0) {
             //for now the default mosso tenant id will be the domain id
             //for now we will create a nast tenant as well. This can be removed once tenant aliases is in place
             //no longer need to call nast xml rpc service, as cloud files will lazy provision the cloud containers.
@@ -1002,7 +978,7 @@ public class DefaultUserService implements UserService {
         domainService.addTenantToDomain(tenantId, domainId);
     }
 
-    void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
+    private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
         for (CloudBaseUrl baseUrl : baseUrls) {
             if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef()){
                 tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
@@ -1064,46 +1040,46 @@ public class DefaultUserService implements UserService {
     }
 
     private String getNastTenantId(String domainId)  {
-        return StringUtils.isNotBlank(domainId) ? MOSSO_TENANT_PREFIX + domainId : null;
+        return StringUtils.isNotBlank(domainId) ? NAST_TENANT_PREFIX + domainId : null;
     }
 
     private ClientRole getSuperUserAdminRole() {
         String roleName = config.getString("cloudAuth.serviceAdminRole");
-        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+        return roleDao.getRoleByName(roleName);
     }
 
     private ClientRole getUserAdminRole() {
         String roleName = config.getString("cloudAuth.userAdminRole");
-        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+        return roleDao.getRoleByName(roleName);
     }
 
     private ClientRole getUserManageRole() {
         String roleName = config.getString("cloudAuth.userManagedRole");
-        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+        return roleDao.getRoleByName(roleName);
     }
 
     private ClientRole getIdentityAdminRole() {
         String roleName = config.getString("cloudAuth.adminRole");
-        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+        return roleDao.getRoleByName(roleName);
     }
 
     private ClientRole getDefaultRole() {
         String roleName = config.getString("cloudAuth.userRole");
-        return applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+        return roleDao.getRoleByName(roleName);
     }
 
     private ClientRole getComputeDefaultRole() {
         String serviceName = config.getString("serviceName.cloudServers");
         Application application = applicationService.getByName(serviceName);
         String defaultRoleName = application.getOpenStackType().concat(":default");
-        return applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+        return roleDao.getRoleByName(defaultRoleName);
     }
 
     private ClientRole getObjectStoreDefaultRole() {
         String serviceName = config.getString("serviceName.cloudFiles");
         Application application = applicationService.getByName(serviceName);
         String defaultRoleName = application.getOpenStackType().concat(":default");
-        return applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+        return roleDao.getRoleByName(defaultRoleName);
     }
 
     private void attachRolesToUser(List<ClientRole> roles, User user) {
@@ -1143,7 +1119,7 @@ public class DefaultUserService implements UserService {
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(caller);
         for (TenantRole tenantRole : tenantRoles) {
             if (isExcludedAssignableCallerRole(tenantRole) && tenantRole.getPropagate()) {
-                ClientRole role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), tenantRole.getName());
+                ClientRole role = roleDao.getRoleByName(tenantRole.getName());
                 clientRoles.add(role);
             }
         }
@@ -1151,12 +1127,12 @@ public class DefaultUserService implements UserService {
         return clientRoles;
     }
 
-    private String getCallerRegion(User caller) {
+    private String getRegionBasedOnCaller(User caller) {
         // this should never happen. we should never have two admins for a domain. when we do support this,
         // this information should be at the domain level.
         List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
-        if (admins.size() > 0) {
-            throw new IllegalStateException("Domain " + caller.getDomainId() + " has more than one user admin.");
+        if (admins.size() != 1) {
+            throw new IllegalStateException("Can't retrieve single user-admin for domain " + caller.getDomainId());
         }
 
         return admins.get(0).getRegion();
@@ -1170,37 +1146,27 @@ public class DefaultUserService implements UserService {
                && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"));
     }
 
-    private List<String> getEndpointIds(String baseUrlType) {
-        List<String> endpointIds = new ArrayList<String> ();
-        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByBaseUrlType(baseUrlType);
-        for (CloudBaseUrl baseUrl : baseUrls) {
-            if(doesBaseUrlBelongToRegion(baseUrl)){
-                if (baseUrl.getDef()) {
-                    endpointIds.add(baseUrl.getBaseUrlId().toString());
-                }
-            }
-        }
-
-        return endpointIds;
-    }
-
-    private int getMaxNumberOfUsersInDomain() {
+    int getMaxNumberOfUsersInDomain() {
         return config.getInt("maxNumberOfUsersInDomain");
     }
 
-    private Boolean shouldGenerateApiKeyUserForCreate(){
+    Boolean shouldGenerateApiKeyUserForCreate(){
         return config.getBoolean("generate.apiKey.userForCreate");
     }
 
-    private String getCloudRegion() {
+    String getCloudRegion() {
         return config.getString("cloud.region");
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
+    boolean isTrustedServer() {
+        return config.getBoolean("ldap.server.trusted", false);
     }
 
-    private boolean isTrustedServer() {
-        return config.getBoolean("ldap.server.trusted", false);
+    int getLdapPagingOffsetDefault() {
+        return config.getInt("ldap.paging.offset.default");
+    }
+
+    int getLdapPagingLimitDefault() {
+        return config.getInt("ldap.paging.limit.default");
     }
 }

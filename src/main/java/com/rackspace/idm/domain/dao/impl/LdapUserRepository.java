@@ -76,6 +76,10 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void addUser(User user) {
+        if (user.getId() == null) {
+            user.setId(getNextUserId());
+        }
+
         addObject(user);
     }
 
@@ -117,11 +121,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         deleteObject(searchFilterGetUserByUsername(username));
     }
 
-    @Override
-    public String[] getGroupIdsForUser(String username) {
-        User user = getObject(searchFilterGetUserByUsername(username));
-        return user.getRsGroupId().toArray(new String[0]);
-    }
+//    @Override
+//    public String[] getGroupIdsForUser(String username) {
+//        User user = getObject(searchFilterGetUserByUsername(username));
+//        return user.getRsGroupId().toArray(new String[0]);
+//    }
 
     @Override
     public User getUserByCustomerIdAndUsername(String customerId, String username) {
@@ -138,15 +142,15 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         return getObjects(searchFilterGetUserByDomainId(domainId));
     }
 
-    @Override
-    public User getUserByRPN(String rpn) {
-        return getObject(searchFilterGetUserByRPN(rpn));
-    }
-
-    @Override
-    public User getUserBySecureId(String secureId) {
-        return getObject(searchFilterGetUserBySecureId(secureId));
-    }
+//    @Override
+//    public User getUserByRPN(String rpn) {
+//        return getObject(searchFilterGetUserByRPN(rpn));
+//    }
+//
+//    @Override
+//    public User getUserBySecureId(String secureId) {
+//        return getObject(searchFilterGetUserBySecureId(secureId));
+//    }
 
     @Override
     public User getUserByUsername(String username) {
@@ -228,17 +232,17 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         getLogger().info("Updated user encryption to {}", user.getUsername());
     }
 
-    @Override
-    public void removeUsersFromClientGroup(ClientGroup group) {
-        getLogger().debug("Doing search for users that belong to group {}", group);
-
-        for (User user : getObjects(searchFilterGetUserByGroupDn(group))) {
-            user.setRsGroupDN(null);
-            updateObject(user);
-        }
-
-        getLogger().info("Removed users from clientGroup {}", group);
-    }
+//    @Override
+//    public void removeUsersFromClientGroup(ClientGroup group) {
+//        getLogger().debug("Doing search for users that belong to group {}", group);
+//
+//        for (User user : getObjects(searchFilterGetUserByGroupDn(group))) {
+//            user.setRsGroupDN(null);
+//            updateObject(user);
+//        }
+//
+//        getLogger().info("Removed users from clientGroup {}", group);
+//    }
 
     void addAuditLogForAuthentication(User user, boolean authenticated) {
 
@@ -338,15 +342,15 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         return getObject(searchFilterGetUserById(id), getSoftDeletedBaseDn());
     }
 
-    @Override
-    public User getSoftDeletedUserByUsername(String username) {
-        return getObject(searchFilterGetUserByUsername(username), getSoftDeletedBaseDn());
-    }
-
-    @Override
-    public void unSoftDeleteUser(User user) {
-        unSoftDeleteObject(user);
-    }
+//    @Override
+//    public User getSoftDeletedUserByUsername(String username) {
+//        return getObject(searchFilterGetUserByUsername(username), getSoftDeletedBaseDn());
+//    }
+//
+//    @Override
+//    public void unSoftDeleteUser(User user) {
+//        unSoftDeleteObject(user);
+//    }
 
     @Override
     public Iterable<User> getUsers() {

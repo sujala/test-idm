@@ -1,14 +1,15 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
+import org.openstack.docs.identity.api.v2.UserList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,22 +17,25 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class UserConverterCloudV20 {
-    @Autowired
-    private Mapper mapper;
-
-    @Autowired
-    private GroupDao groupDao;
+    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
 
     private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
-    private RoleConverterCloudV20 roleConverterCloudV20;
-    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
+    private Mapper mapper;
+
+    @Autowired
+    RoleConverterCloudV20 roleConverterCloudV20;
+
+    @Autowired
+    SecretQAConverterCloudV20 secretQAConverterCloudV20;
+
+    @Autowired
+    GroupConverterCloudV20 groupConverterCloudV20;
 
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
@@ -39,31 +43,14 @@ public class UserConverterCloudV20 {
 
     public com.rackspace.idm.domain.entity.User fromUser(org.openstack.docs.identity.api.v2.User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
-        userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
-        userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
 
-        if (user.getRoles() != null && user.getRoles().getRole() != null) {
-            List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-            for (Role role : user.getRoles().getRole()) {
-                TenantRole tenantRole = new TenantRole();
-                tenantRole.setName(role.getName());
-                tenantRoles.add(tenantRole);
-            }
-
-            userEntity.setRoles(tenantRoles);
+        if (user.getSecretQA() != null) {
+            userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
+            userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
         }
 
-        if (user.getGroups() != null && user.getGroups().getGroup() != null) {
-            for (Group group : user.getGroups().getGroup()) {
-                com.rackspace.idm.domain.entity.Group groupEntity = groupDao.getGroupByName(group.getName());
-                if (groupEntity !=  null) {
-                    userEntity.getRsGroupId().add(groupEntity.getGroupId());
-                }
-                else {
-                    userEntity.getRsGroupId().add(group.getName());  //group validation will catch later on
-                }
-            }
-        }
+        userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
+        userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
 
         return userEntity;
     }
@@ -147,7 +134,7 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
-        org.openstack.docs.identity.api.v2.User jaxbUser = mapper.map(user, org.openstack.docs.identity.api.v2.User.class);
+        User jaxbUser = mapper.map(user, User.class);
 
         try {
             if (user.getCreated() != null) {
@@ -158,6 +145,18 @@ public class UserConverterCloudV20 {
             if (user.getUpdated() != null) {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
+            }
+
+            if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
+                jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
+            }
+
+            if (user.getRoles() != null) {
+                jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(user.getRoles()));
+            }
+
+            if (user.getRsGroupId() != null) {
+                jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
             }
 
         } catch (DatatypeConfigurationException e) {

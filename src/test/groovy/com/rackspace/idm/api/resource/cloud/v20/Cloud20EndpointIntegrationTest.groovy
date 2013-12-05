@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.Constants
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.getMOSSO_ROLE_ID
 
 class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 

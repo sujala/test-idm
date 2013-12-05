@@ -5,7 +5,8 @@ import org.json.simple.JSONObject;
 
 /**
  * Our Json representation for arrays does not map one to one to the underlying jaxb object.
- * This class is responsible for transforming our representation to match with underlying jaxb object represenation..
+ * This class is responsible for transforming our representation to match with underlying jaxb
+ * object represenation and vice versa
  *
  * For example,
  *
@@ -37,16 +38,14 @@ import org.json.simple.JSONObject;
  *         }
  *     }
  * }
- *
- *
  */
 public class JsonArrayTransformer {
 
-    public JSONObject transform(JSONObject object){
+    public JSONObject transformIncludeWrapper(JSONObject object){
         for(Object key : object.keySet()){
             Object value = object.get(key);
             if (value instanceof JSONObject) {
-                value = transform((JSONObject) value);
+                value = transformIncludeWrapper((JSONObject) value);
             }
 
             if (value instanceof JSONArray) {
@@ -61,6 +60,27 @@ public class JsonArrayTransformer {
                 wrapper.put(elementName, array);
 
                 object.put(key, wrapper);
+            }
+        }
+
+        return object;
+    }
+
+    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent){
+        for(Object key : object.keySet()){
+            Object value = object.get(key);
+            if (value instanceof JSONObject) {
+                value = transformRemoveWrapper((JSONObject) value, object);
+            }
+
+            if (value instanceof JSONArray) {
+
+                //remove the wrapper element. following convention
+                //e.g roles.role
+                JSONArray array = (JSONArray) value;
+                String elementName = key.toString() + "s";
+                //object.put(elementName, array);
+                parent.put(elementName, array);
             }
         }
 
