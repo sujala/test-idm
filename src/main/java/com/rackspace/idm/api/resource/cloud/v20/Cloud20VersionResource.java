@@ -85,6 +85,9 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/saml-tokens")
     public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
+        if(!isSamlEnabled()){
+           throw new NotFoundException("Not Found");
+        }
         org.opensaml.saml2.core.Response response = samlUnmarshaller.unmarshallResponse(samlResponse);
 
         return cloud20Service.validateSamlResponse(httpHeaders, response).build();
@@ -1101,6 +1104,10 @@ public class Cloud20VersionResource {
 
     public void setCloud20Service(DefaultCloud20Service cloud20Service) {
         this.cloud20Service = cloud20Service;
+    }
+
+    private boolean isSamlEnabled(){
+       return config.getBoolean("saml.enabled");
     }
 }
 

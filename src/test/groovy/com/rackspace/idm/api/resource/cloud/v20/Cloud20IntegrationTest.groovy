@@ -3135,6 +3135,17 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteGroup(identityAdminToken, groupId)
     }
 
+    def "saml-tokens should return a 404"() {
+        given:
+        org.opensaml.saml2.core.Response res = null;
+
+        when:
+        def response = cloud20.samlAuthenticate(res)
+
+        then:
+        response.status == 404
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)
