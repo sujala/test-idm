@@ -4,12 +4,14 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -23,6 +25,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
+import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.xml.bind.JAXBElement
 
@@ -89,6 +92,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.build().getStatus() == 400
+    }
+
+    def "addEndpointTemplate handles DuplicateException"() {
+        given:
+        allowUserAccess()
+        def endpointConverter = Mock(EndpointConverterCloudV20)
+        service.endpointConverterCloudV20 = endpointConverter
+        endpointService.addBaseUrl(_) >> {throw new DuplicateException()}
+
+        when:
+        def response = service.addEndpointTemplate(null, null, authToken, null)
+
+        then:
+        response.build().getStatus() == 409
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
@@ -621,6 +638,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 400
+    }
+
+    def "addUser handles DuplicateException"() {
+        given:
+        allowUserAccess()
+        def converter = Mock(UserConverterCloudV20)
+        def mockedUser = Mock(User)
+        def caller = entityFactory.createUser()
+
+        mockedUser.getDomainId() >> "domainId"
+        converter.fromUser(_) >> mockedUser
+        service.userConverterCloudV20 = converter
+
+        userService.getUserByScopeAccess(_) >> caller
+        authorizationService.authorizeCloudIdentityAdmin(_) >> true
+
+        def userToCreate = v1Factory.createUserForCreate()
+        userToCreate.domainId = "domainId"
+
+        userService.addUser(_) >> {throw new DuplicateException()}
+
+        when:
+        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
+
+        then:
+        response.status == 409
     }
 
     def "addUser when caller is user-admin adds callers tenantRoles to user being added"() {
@@ -2372,6 +2415,63 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.getTenantRolesForUser(user)
     }
 
+    def "buildAuthResponse adds tenant to response if tenant ID is specified in request"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        mockTokenConverter(service)
+
+        def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def tenantId = "tenantId"
+        def tenant = new Tenant().with {
+            it.tenantId = tenantId
+            it
+        }
+        tenantService.getTenant(tenantId) >> tenant
+        def authRequest = v2Factory.createAuthenticationRequest("token", "$tenantId", "")
+
+        def endpoint1 = new OpenstackEndpoint().with({
+            it.tenantId = tenantId
+            it.baseUrls = [].asList()
+            it
+        })
+        def endpoint2 = new OpenstackEndpoint().with({
+            it.tenantId = tenantId
+            it.baseUrls = [].asList()
+            it
+        })
+        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [endpoint1, endpoint2].asList()
+
+        when:
+        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
+
+        then:
+        response.token.tenant.id == tenantId
+    }
+
+    def "buildAuthResponse does not add tenant to response if tenant ID is not specified in request"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        mockTokenConverter(service)
+
+        def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def tenantId = "tenantId"
+        def tenant = new Tenant().with {
+            it.tenantId = tenantId
+            it
+        }
+        tenantService.getTenant(tenantId) >> tenant
+        def authRequest = v2Factory.createAuthenticationRequest("token", null, "")
+        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+
+        when:
+        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
+
+        then:
+        StringUtils.isEmpty(response.token.tenant.id)
+    }
+
     def "buildAuthResponse gets converted token for impersonated users"() {
         given:
         mockAuthConverterCloudV20(service)
@@ -2636,6 +2736,53 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         new Service()   | null          | null          | 400
         new Service()   | "name"        | null          | 400
         new Service()   | "name"        | "serviceType" | 201
+    }
+
+    def "addService handles DuplicateException"() {
+        given:
+        allowUserAccess()
+        def serviceToAdd = new Service()
+        serviceToAdd.name = "name"
+        serviceToAdd.type = "type"
+        applicationService.add(_) >> {throw new DuplicateException()}
+
+        when:
+        def result = service.addService(headers, uriInfo(), authToken, serviceToAdd).build()
+
+        then:
+        result.status == 409
+    }
+
+    def "addTenant checks for null or empty tenant name"() {
+        given:
+        allowUserAccess()
+        def tenant = new org.openstack.docs.identity.api.v2.Tenant()
+
+        expect:
+        if(name != null) tenant.name = name
+        def result = service.addTenant(headers, uriInfo(), authToken, tenant)
+        result.status == 400
+
+        where:
+        name | _
+        ""   | _
+        null | _
+
+    }
+
+    def "addTenant handles DuplicateException"() {
+        given:
+        allowUserAccess()
+        def tenant = new org.openstack.docs.identity.api.v2.Tenant()
+        tenant.name = "name"
+        tenantService.addTenant(_) >> {throw new DuplicateException()}
+        mockTenantConverter(service)
+
+        when:
+        def result = service.addTenant(headers, uriInfo(), authToken, tenant)
+
+        then:
+        result.status == 409
     }
 
      def "deleteUserFromSoftDeleted checks if caller is service admin"() {
@@ -2966,6 +3113,57 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * atomHopperClient.asyncPost(_,_)
     }
 
+    def "updateUser does not allow a user to enable their own account"() {
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "updateUser does not allow a user to disable their own account"() {
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+        def caller = entityFactory.createUser()
+        caller.id = "2"
+        userService.getUserByAuthToken(_) >> caller
+
+        when:
+        def result = service.updateUser(headers, authToken, "2", user)
+
+        then:
+        result.status == 400
+    }
+
     def "updateUser validates that user ID in URL matches user ID in updated user"() {
         given:
         allowUserAccess()
@@ -3016,6 +3214,67 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 403
+    }
+
+    def "addUserCredential validates that user to update matches credentials for passwordCredentials"() {
+        given:
+        allowUserAccess()
+        def mediaType = Mock(MediaType)
+        mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE) >> true
+        headers.getMediaType() >> mediaType
+        def user = new User().with({
+            it.username = "otherUser"
+            it
+        })
+        userService.checkAndGetUserById(_) >> user
+        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><passwordCredentials xmlns="http://docs.openstack.org/identity/api/v2.0" xmlns:ns2="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns6="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" password="SomePassword1" username="someUser"/>'
+
+        when:
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+
+        then:
+        result.status == 400
+    }
+
+    def "addUserCredential validates that user to update matches credentials for apiKeyCredentials"() {
+        given:
+        allowUserAccess()
+        def mediaType = Mock(MediaType)
+        mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE) >> true
+        headers.getMediaType() >> mediaType
+        def user = new User().with({
+            it.username = "otherUser"
+            it
+        })
+        userService.checkAndGetUserById(_) >> user
+        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
+
+        when:
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+
+        then:
+        result.status == 400
+    }
+
+    def "addUserCredential with api key calls updateUser with new api key set"() {
+        given:
+        allowUserAccess()
+        def mediaType = Mock(MediaType)
+        mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE) >> true
+        headers.getMediaType() >> mediaType
+        def user = new User().with({
+            it.username = "someUser"
+            it
+        })
+        userService.checkAndGetUserById(_) >> user
+        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
+
+        when:
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+
+        then:
+        userService.updateUser(_) >> { args -> args[0].apiKey == "someApiKey1" }
+        result.status == 201
     }
 
     def "validate role for create - throws BadRequestException"(){

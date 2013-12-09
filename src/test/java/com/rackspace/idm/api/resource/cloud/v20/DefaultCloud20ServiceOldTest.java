@@ -585,12 +585,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void getUserByIdForAuthentication_succeeds_returnsUser() throws Exception {
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        assertThat("user", defaultCloud20Service.getUserByIdForAuthentication(userId), equalTo(user));
-    }
-
-    @Test
     public void addDomain_valid_SuccessRequest() throws Exception {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain newDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
         newDomain.setId("1");

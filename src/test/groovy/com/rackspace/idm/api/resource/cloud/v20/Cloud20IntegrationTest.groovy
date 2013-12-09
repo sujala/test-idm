@@ -932,7 +932,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.getUserByName(serviceAdminToken, "badName"),
                 cloud20.updateUser(serviceAdminToken, "badId", new User()),
                 cloud20.deleteUser(serviceAdminToken, "badId"),
-                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsBase("someUser", "SomePassword1"))
+                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsBase("someUser", "SomePassword1")),
+                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createApiKeyCredentials("someUser", "someApiKey1"))
         ]
     }
 

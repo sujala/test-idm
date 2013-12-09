@@ -18,7 +18,6 @@ import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCreden
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
@@ -31,9 +30,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
-import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
-import com.rsa.cryptoj.c.B;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -290,7 +287,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new ForbiddenException(errMsg);
                 }*/
                 if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                    throw new ForbiddenException("Not Authorized");
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
 
@@ -981,19 +978,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         // removing serviceId from response for now
         auth = removeServiceIdFromAuthResponse(auth);
         return auth;
-    }
-
-    User getUserByIdForAuthentication(String id) {
-        User user = null;
-
-        try {
-            user = userService.checkAndGetUserById(id);
-        } catch (NotFoundException e) {
-            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
-            logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage, e);
-        }
-        return user;
     }
 
     @Override
@@ -1914,9 +1898,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if(caller.getDomainId() == null) {
                     //caller is a user admin, user manage, or default user but with a null domain ID
                     //this is bad data, but protecting against it anyways
-                    throw new ForbiddenException("Not Authorized");
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 } else if(!caller.getDomainId().equals(user.getDomainId())) {
-                    throw new ForbiddenException("Not Authorized");
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
 
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
