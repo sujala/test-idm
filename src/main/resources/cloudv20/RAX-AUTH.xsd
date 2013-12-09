@@ -53,6 +53,13 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="verificationCode" type="RAX-AUTH:VerificationCode" >
+        <annotation>
+            <xsd:documentation>
+                <p>A verification code represents a code used for verification of something.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <element name="domains" type="RAX-AUTH:Domains" />
     <element name="policy" type="RAX-AUTH:Policy"/>
@@ -117,6 +124,17 @@
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         The telephone number in international format (preceded with '+' and country code). If not preceded with '+', US number is assumed.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+    <complexType name="VerificationCode">
+        <attribute name="code" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The code used for verification.
                     </p>
                 </xsd:documentation>
             </annotation>

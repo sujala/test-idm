@@ -41,10 +41,16 @@ class RootIntegrationTest extends Specification {
 
 
     public setupSpec(){
+        doSetupSpec()
         cloud10.init()
         cloud11.init()
         cloud20.init()
     }
+
+    /**
+     * Hook to allow subclasses to perform actions prior to the setupSpec in this base class. Spock will call the super class setupSpec method first, followed by subclasses.
+     */
+    def void doSetupSpec() {};
 
     def getRange(seconds) {
         HashMap<String, Date> range = new HashMap<>()

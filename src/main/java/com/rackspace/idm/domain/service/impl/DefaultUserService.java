@@ -33,6 +33,7 @@ public class DefaultUserService implements UserService {
     public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
+    private static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
@@ -652,6 +653,14 @@ public class DefaultUserService implements UserService {
         }
         logger.info("Updated User: {}", user);
     }
+
+    @Override
+    public void updateUserForMultiFactor(User user) {
+        logger.info("Updating User: {}", user);
+        userDao.updateUserAsIs(user);
+        logger.info("Updated User: {}", user);
+    }
+
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
         if (authorizationService.hasUserAdminRole(user)) {

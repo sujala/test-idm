@@ -77,6 +77,13 @@ public interface UserService {
     
     void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
 
+    /**
+     * Updates a user for multifactor. Assumes the passed in user was only modified for multifactor changes.
+     *
+     * @param user
+     */
+    void updateUserForMultiFactor(User user);
+
     Password resetUserPassword(User user);
 
     void softDeleteUser(User user) throws IOException, JAXBException;

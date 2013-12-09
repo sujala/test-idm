@@ -66,7 +66,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
 
         cleanup:
         deleteUserQuietly(userAdmin)
-        mobilePhoneRepository.deleteObject(ldapPhone)
+        deletePhoneQuietly(ldapPhone)
 
         where:
         requestContentMediaType | acceptMediaType
@@ -98,7 +98,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
 
         cleanup:
         deleteUserQuietly(userAdmin)
-        mobilePhoneRepository.deleteObject(ldapPhone)
+        deletePhoneQuietly(ldapPhone)
 
         where:
         requestContentMediaType | acceptMediaType
@@ -149,7 +149,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         cleanup:
         deleteUserQuietly(userAdmin)
         deleteUserQuietly(userAdmin2)
-        mobilePhoneRepository.deleteObject(ldapPhone)
+        deletePhoneQuietly(ldapPhone)
 
         where:
         requestContentMediaType | acceptMediaType
@@ -295,5 +295,11 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE
+    }
+
+    def deletePhoneQuietly(MobilePhone mobilePhone) {
+        if (mobilePhone != null && mobilePhone.id != null) {
+            mobilePhoneRepository.deleteObject(mobilePhone)
+        }
     }
 }

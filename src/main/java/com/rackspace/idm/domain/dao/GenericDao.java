@@ -29,6 +29,14 @@ public interface GenericDao<T> {
     void updateObject(T object);
 
     /**
+     * Updates the object in LDAP. The passed in object should fully reflect the state that should be saved in LDAP. Properties that are null will be removed from
+     * LDAP.
+     *
+     * @param object
+     */
+    void updateObjectAsIs(T object);
+
+    /**
      * Deletes the single object found by executing the search filter. The children of the object are also deleted.
      *
      * @throws com.rackspace.idm.exception.NotFoundException If no object is found by executing the search filter

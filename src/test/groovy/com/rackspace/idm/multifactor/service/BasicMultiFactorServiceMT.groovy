@@ -9,8 +9,10 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
+import com.rackspace.idm.multifactor.domain.BasicPin
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 
 /**
@@ -18,11 +20,17 @@ import spock.lang.Shared
  * via the standard PropertyFileConfiguration. This method of loading the configuration information is used to allow the sensitive integration keys to
  * be encrypted via the standard mechanism in the idm.secrets file.
  *
- * The test is a Manual Test (MT) because it causes a REAL SMS message to be sent to a REAL phone which costs REAL money for rackspace.
+ * <b>The test is a Manual Test (MT) with the @Ignore annotation because it causes a REAL SMS message to be sent to a REAL phone which costs REAL money for rackspace.</b>
  */
+@Ignore
 class BasicMultiFactorServiceMT extends RootConcurrentIntegrationTest {
 
-    @Shared Phonenumber.PhoneNumber phoneToText = PhoneNumberUtil.getInstance().parse("5127759583", "US")
+    /**
+     * This property must be populated with a valid telephone number (e.g. 5126667777) before running this test.
+     */
+    private static final String TEST_PHONE = "5127759583";
+
+    @Shared Phonenumber.PhoneNumber phoneToText = PhoneNumberUtil.getInstance().parse(TEST_PHONE, "US")
 
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -53,6 +61,16 @@ class BasicMultiFactorServiceMT extends RootConcurrentIntegrationTest {
         //STEP 1: Add phone to user
         MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
 
+        //STEP 2: Send PIN
+        multiFactorService.sendVerificationPin(userAdminOpenStack.getId(), phone.getId())
+
+        //STEP 3: Verify PIN
+        //need to get the user to get the pin
+        User tempUser = userRepository.getUserById(userAdminOpenStack.getId())
+        assert tempUser.getMultiFactorDevicePin() != null
+
+        multiFactorService.verifyPhoneForUser(userAdminOpenStack.getId(), phone.getId(), new BasicPin(tempUser.getMultiFactorDevicePin()))
+
         MobilePhone finalPhone = mobilePhoneRepository.getById(phone.getId())  //retrieve the phone from ldap
         User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
@@ -63,10 +81,14 @@ class BasicMultiFactorServiceMT extends RootConcurrentIntegrationTest {
 
         //verify user state
         finalUserAdmin.getMultiFactorMobilePhoneRsId() == finalPhone.getId()
+        finalUserAdmin.getMultiFactorDevicePin() == null
+        finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        finalUserAdmin.getMultiFactorDeviceVerified()
+        !finalUserAdmin.getMultifactorEnabled()
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(phone)
+        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
 }

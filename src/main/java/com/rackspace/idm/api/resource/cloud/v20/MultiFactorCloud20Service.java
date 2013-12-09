@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -26,4 +28,25 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone mobilePhone);
+
+    /**
+     * Sends a verification code (PIN) to the specified device.
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @return
+     */
+    Response.ResponseBuilder sendVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId);
+
+    /**
+     * Verify the code against that sent to the device via the {@link #sendVerificationCode(javax.ws.rs.core.UriInfo, String, String, String)} request
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @param verificationCode
+     * @return
+     */
+    Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode);
 }

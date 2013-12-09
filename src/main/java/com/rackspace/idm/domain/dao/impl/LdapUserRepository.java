@@ -208,6 +208,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
+    public void updateUserAsIs(User user){
+        updateObjectAsIs(user);
+    }
+
+    @Override
     public void updateUserEncryption(String userId) {
         User user = getUserById(userId);
 

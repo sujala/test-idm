@@ -229,6 +229,21 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorMobilePhoneRsId;
 
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DEVICE_PIN, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
+    private String multiFactorDevicePin;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DEVICE_PIN_EXPIRATION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
+    private Date multiFactorDevicePinExpiration;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DEVICE_VERIFIED, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
+    private Boolean multiFactorDeviceVerified;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private Boolean multifactorEnabled;
+
+    @LDAPField(attribute = LdapRepository.ATTR_EXTERNAL_MULTIFACTOR_USER_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private String externalMultiFactorUserId;
+
     private List<TenantRole> roles;
 
     public User() {

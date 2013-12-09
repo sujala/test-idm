@@ -1099,6 +1099,36 @@ public class Cloud20VersionResource {
         return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
     }
 
+    /**
+     * The multifactor service to send a verification code to a device.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @return
+     */
+    @POST
+    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones/{deviceId}/verificationcode")
+    public Response sendVerificationCode(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId) {
+        return multiFactorCloud20Service.sendVerificationCode(uriInfo, authToken, userId, deviceId).build();
+    }
+
+    @POST
+    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones/{deviceId}/verify")
+    public Response verifyVerificationCode(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId,
+            VerificationCode verificationCode) {
+        return multiFactorCloud20Service.verifyVerificationCode(uriInfo, authToken, userId, deviceId, verificationCode).build();
+    }
+
     protected int validateMarker(Integer offset) {
         if (offset == null) {
             return 0;

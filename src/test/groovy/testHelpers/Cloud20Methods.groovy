@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -279,6 +280,18 @@ class Cloud20Methods {
         resource.path(path20).path("users").path(userId)
                 .path("RAX-AUTH").path("multi-factor").path("mobile-phones")
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
+    }
+
+    def sendVerificationCode(String token, String userId, String mobilePhoneId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path("users").path(userId)
+                .path("RAX-AUTH").path("multi-factor").path("mobile-phones").path(mobilePhoneId).path("verificationcode")
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).post(ClientResponse)
+    }
+
+    def verifyVerificationCode(String token, String userId, String mobilePhoneId, VerificationCode verificationCode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path("users").path(userId)
+                .path("RAX-AUTH").path("multi-factor").path("mobile-phones").path(mobilePhoneId).path("verify")
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(verificationCode).post(ClientResponse)
     }
 
     def addUserRole(String token, String userId, String roleId) {
