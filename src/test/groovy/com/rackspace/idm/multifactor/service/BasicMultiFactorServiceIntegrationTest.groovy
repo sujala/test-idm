@@ -221,8 +221,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
     }
 
     /**
-     * Verifies can enable multi-factor on an account. Ultimately this goes through whole set of services to add a phone,
-     * send verification pin, verify, and finally enable.
+     * Verifies can disable multi-factor on an account. Ultimately this goes through whole set of services to add a phone,
+     * send verification pin, verify, enable, and finally disable.
      *
      * @return
      */
