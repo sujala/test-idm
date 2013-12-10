@@ -4,6 +4,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 
@@ -440,6 +441,23 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, user)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Assigning user 'compute:default' global role should allow authentication" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        utils.addRoleToUser(userAdmin, MOSSO_ROLE_ID)
+        def token = utils.getToken(userAdmin.username)
+
+        then:
+        token != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
 
