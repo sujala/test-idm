@@ -184,7 +184,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePin(null);
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
-        userService.updateUserAsIs(user);
+        userService.updateUserForMultiFactor(user);
 
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.
@@ -204,7 +204,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         mobilePhoneRepository.updateObjectAsIs(phone);
 
         user.setMultifactorEnabled(true);
-        userService.updateUserAsIs(user);
+        userService.updateUserForMultiFactor(user);
     }
 
     private void disableMultiFactorForUser(User user) {
@@ -212,7 +212,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         user.setMultifactorEnabled(false);
         user.setExternalMultiFactorUserId(null);
-        userService.updateUserAsIs(user);
+        userService.updateUserForMultiFactor(user);
 
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.
