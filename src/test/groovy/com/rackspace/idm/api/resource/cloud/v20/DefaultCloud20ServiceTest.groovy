@@ -2765,7 +2765,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         def converter = new UserConverterCloudV20()
         converter.mapper = new DozerBeanMapper()
+        converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
+        converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
         service.userConverterCloudV20 = converter
+
         UserForCreate user = new UserForCreate().with {
             it.username = "name"
             it.id = "2"

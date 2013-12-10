@@ -758,7 +758,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateAndAuthorizeCloudAdminUser(request);
 
-            validator.validate11User(user);
             validator.isUsernameValid(user.getId());
 
             if (!StringUtils.equals(user.getId(), userId)) { //ToDO: Move to user validator?

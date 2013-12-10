@@ -44,6 +44,11 @@ public class UserConverterCloudV20 {
     public com.rackspace.idm.domain.entity.User fromUser(org.openstack.docs.identity.api.v2.User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
 
+        //This is being set manually, and not relying on dozer to do this,
+        //if not the password that is saved will not work.
+        userEntity.setPassword(user.getPassword());
+        userEntity.setUserPassword(user.getPassword());
+
         if (user.getSecretQA() != null) {
             userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
             userEntity.setSecretAnswer(user.getSecretQA().getAnswer());

@@ -1,24 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
-
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.exception.ForbiddenException
-import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.User
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import spock.lang.Ignore
-import spock.lang.Shared
-import testHelpers.ConcurrentStageTaskRunner
-import testHelpers.MultiStageTaskFactory
-import testHelpers.RootIntegrationTest
-
 /**
  * Verify the operations that users can perform to update users (own account + others). Other test classes, in particular Cloud20IntegrationTest, perform some of these operations as well.
  * The goal is to migrate all integration tests regarding updating a user into this class.
@@ -29,7 +15,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
 
     def "identity admin can retrieve service admin user"() {
         when:
-        def final serviceAdminUser = cloud20.getUserByName(specificationIdentityAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User)
+        def final serviceAdminUser = cloud20.getUserByName(specificationIdentityAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         serviceAdminUser instanceof User
@@ -41,7 +27,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
      */
     def "identity admin can not update service admin information"() {
         setup:
-        User serviceAdminUser = cloud20.getUserByName(specificationIdentityAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User)
+        User serviceAdminUser = cloud20.getUserByName(specificationIdentityAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User).value
         def originalName = serviceAdminUser.getEmail()
 
         serviceAdminUser.setEmail("$FEATURE_RANDOM@test.com")

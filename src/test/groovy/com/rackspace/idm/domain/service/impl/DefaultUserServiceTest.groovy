@@ -311,6 +311,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         config.getInt("maxNumberOfUsersInDomain") >> 2
         userDao.getUsersByDomain(_) >> [ new User(), new User(), new User()].asList()
         def user = createUser("region", true, "id", "email@email.com", 1, "nast")
+        user.domainId = "domainId"
 
         when:
         service.addUser(user)
@@ -416,13 +417,13 @@ class DefaultUserServiceTest extends RootServiceTest {
             }
         }
 
-        assert(userAdminRoleFound == true)
-        assert(computeDefaultRoleFound == true)
-        assert(objectStoreRoleFound == true)
+        userAdminRoleFound == true
+        computeDefaultRoleFound == true
+        objectStoreRoleFound == true
     }
 
 
-    def "Set user defaults based on caller throws exception if caller is identity:admin user does not have domainId"() {
+    def "Set user defaults based on caller throws exception if caller is identity:admin and user does not have domainId"() {
         given:
         def caller = this.createUser(null, true, null)
         def user = this.createUser(null, true, null)
@@ -455,10 +456,8 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "Set user defaults based on caller if caller is identity:user-admin or identity:user-manage"() {
         given:
-        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId").with {
-            it.domainId = null
-            return it
-        }
+        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId")
+        caller.domainId = domainId
         def user = this.createUser(null, true, null)
         mockRoles()
 

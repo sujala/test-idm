@@ -337,10 +337,8 @@ class V2Factory {
             it.enabled = (enabled != null) ? enabled : null
             it.defaultRegion = defaultRegion
             it.domainId = domainId
+            it.password = password;
 
-            if (password != null) {
-                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
-            }
             return it
         }
     }

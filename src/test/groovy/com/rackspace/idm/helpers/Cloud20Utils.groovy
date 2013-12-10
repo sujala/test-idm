@@ -69,7 +69,7 @@ class Cloud20Utils {
 
         assert (response.status == SC_CREATED)
 
-        def entity = response.getEntity(User)
+        def entity = response.getEntity(User).value
         assert (entity != null)
         return entity
     }
@@ -274,8 +274,10 @@ class Cloud20Utils {
     }
 
     def deleteEndpointTemplate(endpointTemplate) {
-        def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
-        assert (response.status == SC_NO_CONTENT)
+        if (endpointTemplate != null) {
+            def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
+            assert (response.status == SC_NO_CONTENT)
+        }
     }
 
     def authenticateRacker(racker, password) {

@@ -42,7 +42,7 @@ class DefaultSecretQAServiceTest extends Specification{
         secretQAService.addSecretQA("1",createSecretQA("1","My question?","My answer"))
 
         then:
-        1 * defaultUserService.updateUser(_,_)
+        1 * defaultUserService.updateUser(_)
 
     }
 

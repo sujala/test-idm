@@ -96,7 +96,6 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     private byte[] encryptedSecretQuestionId;
     private String secretQuestionId;
 
-    @Mapping("password")
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)

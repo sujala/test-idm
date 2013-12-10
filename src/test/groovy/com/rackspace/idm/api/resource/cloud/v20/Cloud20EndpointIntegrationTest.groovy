@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
-
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.getMOSSO_ROLE_ID
+import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
+
 
 class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
@@ -24,12 +24,20 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         def endpointTemplate = utils.createEndpointTemplate(true)
 
+        def foundEndpoint = false
+
         when:
         AuthenticateResponse response = utils.authenticate(defaultUser)
 
         then:
         String tenantEndpoint = String.format("%s/%s", endpointTemplate.publicURL, tenant.id)
-        assert response.serviceCatalog.service.endpoint.publicURL.get(0).contains(tenantEndpoint)
+        for (List publicUrls : response.serviceCatalog.service.endpoint.publicURL) {
+             if (publicUrls.contains(tenantEndpoint)) {
+                 foundEndpoint = true
+             }
+        }
+
+        assert foundEndpoint
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
@@ -51,11 +59,19 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         def endpointTemplate = utils.createEndpointTemplate(true, "")
 
+        def foundEndpoint = false
+
         when:
         AuthenticateResponse response = utils.authenticate(defaultUser)
 
         then:
-        assert response.serviceCatalog.service.endpoint.publicURL.get(0).contains(endpointTemplate.publicURL)
+        for (List publicUrls : response.serviceCatalog.service.endpoint.publicURL) {
+            if (publicUrls.contains(endpointTemplate.publicURL)) {
+                foundEndpoint = true
+            }
+        }
+
+        assert foundEndpoint
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

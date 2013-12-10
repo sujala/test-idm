@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
@@ -52,6 +53,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static String disabledDomainId = "888888";
     static String email = "testEmail@rackspace.com";
     static String password = "Password1";
+    static String groupName = "groupName";
 
     static User testIdentityAdminUser;
     static User testUserAdmin;
@@ -59,6 +61,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static User testUserNoRoles;
     static Domain disabledDomain;
     static Domain testDomain;
+    static Group testGroup;
     static String identityToken;
     static String userAdminToken;
     static String defaultUserToken;
@@ -105,6 +108,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
             testUserNoRoles = getUserByName(uberToken, noRolesName);
             if (testUserNoRoles == null) {
                 testUserNoRoles = createUserAdminUser(identityToken, noRolesName, email, password, testDomainId, MediaType.APPLICATION_XML);
+            }
+
+            testGroup = getGroupByName(uberToken, groupName);
+            if (testGroup == null) {
+                testGroup = createGroup(uberToken, "groupName", "groupDescription", MediaType.APPLICATION_XML);
             }
         }
     }
@@ -424,50 +432,60 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void addUserAdminWithCompletePayload() throws Exception {
+        String domainId1 = "domainId" + (long)(Math.random() * 100000);
+        String domainId2 = "domainId" + (long)(Math.random() * 100000);
+        String username1 = "username" + (long)(Math.random() * 100000);
+        String username2 = "username" + (long)(Math.random() * 100000);
+
         WebResource resource = resource().path("cloud/v2.0/users");
         ClientResponse xmlClientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,
-                "<user OS-KSADM:password=\"securePassword\" RAX-AUTH:defaultRegion=\"DFW\"\n" +
-                        "     RAX-AUTH:domainId=\"222336\" email=\"john.smith@example.org\"\n" +
-                        "     enabled=\"true\" username=\"jqsmith235\"\n" +
+                "<user OS-KSADM:password=\"securePassword2\" RAX-AUTH:defaultRegion=\"DFW\"\n" +
+                        "     RAX-AUTH:domainId=\"" + domainId1 + "\" email=\"john.smith@example.org\"\n" +
+                        "     enabled=\"true\" username=\"" + username1 + "\"\n" +
                         "     xmlns=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
                         "     xmlns:OS-KSADM=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
                         "     xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                         "     xmlns:RAX-KSGRP=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\"\n" +
                         "     xmlns:RAX-KSQA=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n" +
                         "     <roles>\n" +
-                        "          <role name=\"managed\"/>\n" +
+                        "          <role name=\"identity:user-manage\"/>\n" +
                         "     </roles>\n" +
                         "     <RAX-KSGRP:groups>\n" +
-                        "          <RAX-KSGRP:group name=\"restricted\"/>\n" +
+                        "          <RAX-KSGRP:group name=\"" + groupName + "\"/>\n" +
                         "     </RAX-KSGRP:groups>\n" +
                         "     <RAX-KSQA:secretQA answer=\"There is no meaning\" question=\"What is the meaning of it all\"/>\n" +
                         "</user>");
 
-        assertThat("response code", xmlClientResponse.getStatus(), equalTo(200));
+        assertThat("response code", xmlClientResponse.getStatus(), equalTo(201));
+
 
         ClientResponse jsonClientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class,
                 "{\n" +
-                        "   \"user\":{\n" +
-                        "      \"RAX-AUTH:domainId\":\"5473387\",\n" +
-                        "      \"enabled\":true,\n" +
-                        "      \"username\":\"jqsmith\",\n" +
-                        "      \"OS-KSADM:password\":\"securePassword\",\n" +
-                        "      \"email\":\"john.smith@example.org\",\n" +
-                        "      \"roles\":[\n" +
-                        "         {\n" +
-                        "            \"name\":\"managed\"\n" +
-                        "         }\n" +
-                        "      ],\n" +
-                        "\n" +
-                        "      \"RAX-AUTH:defaultRegion\":\"SYD\",\n" +
-                        "      \"RAX-KSQA:secretQA\":{\n" +
-                        "         \"answer\":\"There is no meaning\",\n" +
-                        "         \"question\":\"What is the meaning of it all\"\n" +
+                        "  \"user\": {\n" +
+                        "    \"enabled\": true,\n" +
+                        "    \"RAX-KSGRP:groups\": [\n" +
+                        "      {\n" +
+                        "        \"name\": \"" + groupName + "\"\n" +
                         "      }\n" +
-                        "   }\n" +
+                        "    ],\n" +
+                        "    \"RAX-KSQA:secretQA\": {\n" +
+                        "      \"answer\": \"There is no meaning\",\n" +
+                        "      \"question\": \"What is the meaning of it all\"\n" +
+                        "    },\n" +
+                        "    \"RAX-AUTH:domainId\": \"" + domainId2 + "\",\n" +
+                        "    \"username\": \"" + username2 + "\",\n" +
+                        "    \"OS-KSADM:password\": \"securePassword3\",\n" +
+                        "    \"email\": \"john.smith@example.org\",\n" +
+                        "    \"roles\": [\n" +
+                        "      {\n" +
+                        "        \"name\": \"identity:user-manage\"\n" +
+                        "      }\n" +
+                        "    ],\n" +
+                        "    \"RAX-AUTH:defaultRegion\": \"DFW\"\n" +
+                        "  }\n" +
                         "}");
 
-        assertThat("response code", jsonClientResponse.getStatus(), equalTo(200));
+        assertThat("response code", jsonClientResponse.getStatus(), equalTo(201));
     }
 
     @Test
@@ -916,7 +934,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .get(ClientResponse.class);
         if (clientResponse.getStatus() == 200) {
             Object response = clientResponse.getEntity(User.class);
-            return (User) response;
+            return (User) ((JAXBElement)response).getValue();
         }
         return null;
     }
@@ -940,5 +958,27 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .post(String.class, request);
 
         return cloud20TestHelper.getDomain(response);
+    }
+
+
+    private Group getGroupByName(String token, String groupName) {
+        WebResource resource = resource().path("cloud/v2.0/RAX-GRPADM/groups").queryParam("name",groupName);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        if (clientResponse.getStatus() == 200) {
+            Object response = clientResponse.getEntity(Group.class);
+            return (Group) ((JAXBElement)response).getValue();
+        }
+
+        return null;
+    }
+
+    private Group createGroup(String token, String groupName, String description, String mediaType) throws JAXBException {
+        String request = cloud20TestHelper.createGroup(groupName, description);
+        String response = getWebResourceBuilder("cloud/v2.0/RAX-GRPADM/groups", mediaType)
+                .header(X_AUTH_TOKEN, token)
+                .post(String.class, request);
+
+        return cloud20TestHelper.getGroup(response);
     }
 }

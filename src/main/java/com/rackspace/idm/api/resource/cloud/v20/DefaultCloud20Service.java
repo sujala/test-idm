@@ -460,7 +460,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getId()).build());
 
-
             return builder.entity(userTO);
 
         } catch (Exception ex) {

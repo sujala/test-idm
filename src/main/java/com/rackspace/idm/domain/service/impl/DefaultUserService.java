@@ -171,7 +171,7 @@ public class DefaultUserService implements UserService {
             }
 
             String callerDefaultRegion = getRegionBasedOnCaller(caller);
-            List<ClientRole> callerRoles = getAssignableCallerRoles(caller);
+            List<TenantRole> callerRoles = getAssignableCallerRoles(caller);
             Iterable<Group> callerGroups = getGroupsForUser(caller.getId());
 
             user.setMossoId(caller.getMossoId());
@@ -980,7 +980,7 @@ public class DefaultUserService implements UserService {
 
     private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
         for (CloudBaseUrl baseUrl : baseUrls) {
-            if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef()){
+            if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
                 tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
             }
         }
@@ -1020,17 +1020,19 @@ public class DefaultUserService implements UserService {
     }
 
     private void checkMaxNumberOfUsersInDomain(String domainId) {
-        Iterable<User> users = getUsersWithDomain(domainId);
-        int numUsers = 0;
-        int maxNumberOfUsersInDomain = getMaxNumberOfUsersInDomain();
+        if (StringUtils.isNotBlank(domainId)) {
+            Iterable<User> users = getUsersWithDomain(domainId);
+            int numUsers = 0;
+            int maxNumberOfUsersInDomain = getMaxNumberOfUsersInDomain();
 
-        for (Iterator i = users.iterator(); i.hasNext();) {
-            i.next();
-            numUsers++;
+            for (Iterator i = users.iterator(); i.hasNext();) {
+                i.next();
+                numUsers++;
 
-            if (numUsers >= maxNumberOfUsersInDomain) {
-                String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
-                throw new BadRequestException(errMsg);
+                if (numUsers >= maxNumberOfUsersInDomain) {
+                    String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
+                    throw new BadRequestException(errMsg);
+                }
             }
         }
     }
@@ -1082,15 +1084,11 @@ public class DefaultUserService implements UserService {
         return roleDao.getRoleByName(defaultRoleName);
     }
 
-    private void attachRolesToUser(List<ClientRole> roles, User user) {
-        for (ClientRole role : roles) {
-            attachRoleToUser(role, user);
-        }
-    }
-
-    private void attachGroupsToUser(Iterable<Group> groups, User user) {
-        for (Group group : groups) {
-            user.getRsGroupId().add(group.getGroupId());
+    private void attachRolesToUser(List<TenantRole> tenantRoles, User user) {
+        for (TenantRole tenantRole : tenantRoles) {
+            if (!user.getRoles().contains(tenantRole)) {
+                user.getRoles().add(tenantRole);
+            }
         }
     }
 
@@ -1105,7 +1103,15 @@ public class DefaultUserService implements UserService {
             tenantRole.getTenantIds().add(tenantId);
         }
 
-        user.getRoles().add(tenantRole);
+        if (!user.getRoles().contains(tenantRole)) {
+            user.getRoles().add(tenantRole);
+        }
+    }
+
+    private void attachGroupsToUser(Iterable<Group> groups, User user) {
+        for (Group group : groups) {
+            user.getRsGroupId().add(group.getGroupId());
+        }
     }
 
     /**
@@ -1113,18 +1119,23 @@ public class DefaultUserService implements UserService {
      * This is temporary. Roles that a user gets by default should not be based on the caller. It
      * will be based on some sort of domain template.
      */
-    private List<ClientRole> getAssignableCallerRoles(User caller) {
-        List<ClientRole> clientRoles = new ArrayList<ClientRole> ();
+    private List<TenantRole> getAssignableCallerRoles(User caller) {
+        List<TenantRole> assignableTenantRoles = new ArrayList<TenantRole> ();
 
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(caller);
         for (TenantRole tenantRole : tenantRoles) {
             if (isExcludedAssignableCallerRole(tenantRole) && tenantRole.getPropagate()) {
-                ClientRole role = roleDao.getRoleByName(tenantRole.getName());
-                clientRoles.add(role);
+                TenantRole assignableTenantRole = new TenantRole();
+                assignableTenantRole.setClientId(tenantRole.getClientId());
+                assignableTenantRole.setDescription(tenantRole.getDescription());
+                assignableTenantRole.setName(tenantRole.getName());
+                assignableTenantRole.setRoleRsId(tenantRole.getRoleRsId());
+                assignableTenantRole.setTenantIds(tenantRole.getTenantIds());
+                assignableTenantRoles.add(assignableTenantRole);
             }
         }
 
-        return clientRoles;
+        return assignableTenantRoles;
     }
 
     private String getRegionBasedOnCaller(User caller) {

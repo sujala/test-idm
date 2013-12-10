@@ -79,7 +79,7 @@ class UserConverterCloudV20Test extends Specification {
         jaxbUser.secretQA == secretQA
         jaxbUser.roles == roles
         jaxbUser.groups == groups
-        jaxbUser.password == null
+        jaxbUser.password == user.password
     }
 
     def "convert user from entity to UserForCreate jaxb object"() {
