@@ -1,9 +1,8 @@
 package com.rackspace.idm.helpers
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
-
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
-
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -274,10 +273,8 @@ class Cloud20Utils {
     }
 
     def deleteEndpointTemplate(endpointTemplate) {
-        if (endpointTemplate != null) {
-            def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
-            assert (response.status == SC_NO_CONTENT)
-        }
+        def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def authenticateRacker(racker, password) {
@@ -316,7 +313,7 @@ class Cloud20Utils {
         response.getEntity(ApiKeyCredentials)
     }
 
-     def listUserCredentials(User user, String token=getServiceAdminToken()){
+    def listUserCredentials(User user, String token=getServiceAdminToken()){
         def response = methods.listCredentials(token, user.id)
         assert (response.status == SC_OK)
         response.getEntity(CredentialListType).value
@@ -325,7 +322,7 @@ class Cloud20Utils {
     def getUserByName(String username, String token=getServiceAdminToken()){
         def reponse = methods.getUserByName(token, username)
         assert (reponse.status == SC_OK)
-        reponse.getEntity(User)
+        reponse.getEntity(User).value
     }
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {

@@ -9,7 +9,6 @@ import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.Validator;
@@ -38,7 +37,6 @@ import java.io.IOException;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -176,20 +174,6 @@ public class DefaultCloud11ServiceTestOld {
         when(userService.getUserByTenantId(anyString())).thenReturn(user);
         defaultCloud11Service.adminAuthenticateResponse(null,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
         verify(credentialValidator).validateCredential(nastCredentials, userService);
-    }
-
-    @Test
-    public void adminAuthenticateResponse_notAuthenticatedExceptionthrown_throws401WithCorrectMessage() throws Exception {
-        MossoCredentials mossoCredentials = new MossoCredentials();
-        mossoCredentials.setKey("key");
-        mossoCredentials.setMossoId(123);
-        JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
-        when(userService.getUserByTenantId("123")).thenThrow(new NotAuthenticatedException());
-
-        Response response = defaultCloud11Service.adminAuthenticateResponse(null, jaxbElement).build();
-        assertThat("response status", response.getStatus(), equalTo(401));
-        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
-        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
     }
 
     @Test

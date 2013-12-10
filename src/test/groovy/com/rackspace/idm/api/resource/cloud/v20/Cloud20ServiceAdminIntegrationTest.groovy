@@ -24,8 +24,8 @@ class Cloud20ServiceAdminIntegrationTest extends RootIntegrationTest {
         given:
         serviceAdminToken1 = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
         serviceAdminToken2 = utils.getToken(Constants.SERVICE_ADMIN_2_USERNAME, Constants.SERVICE_ADMIN_2_PASSWORD)
-        serviceAdmin1 = cloud20.getUserByName(serviceAdminToken1, Constants.SERVICE_ADMIN_USERNAME).getEntity(User)
-        serviceAdmin2 = cloud20.getUserByName(serviceAdminToken2, Constants.SERVICE_ADMIN_2_USERNAME).getEntity(User)
+        serviceAdmin1 = cloud20.getUserByName(serviceAdminToken1, Constants.SERVICE_ADMIN_USERNAME).getEntity(User).value
+        serviceAdmin2 = cloud20.getUserByName(serviceAdminToken2, Constants.SERVICE_ADMIN_2_USERNAME).getEntity(User).value
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(utils.createDomain())
         identityAdminToken = utils.getToken(identityAdmin.username, Constants.DEFAULT_PASSWORD)
         userAdminToken = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
@@ -48,7 +48,7 @@ class Cloud20ServiceAdminIntegrationTest extends RootIntegrationTest {
     def "service admin should be able to list roles on self"() {
         given:
         serviceAdminToken1 = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
-        serviceAdmin1 = cloud20.getUserByName(serviceAdminToken1, Constants.SERVICE_ADMIN_USERNAME).getEntity(User)
+        serviceAdmin1 = cloud20.getUserByName(serviceAdminToken1, Constants.SERVICE_ADMIN_USERNAME).getEntity(User).value
 
         when:
         def status = cloud20.listUserGlobalRoles(serviceAdminToken1, serviceAdmin1.id).status
