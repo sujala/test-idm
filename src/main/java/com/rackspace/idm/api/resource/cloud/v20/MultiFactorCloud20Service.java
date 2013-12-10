@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorSettings;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 
 import javax.ws.rs.core.Response;
@@ -49,4 +50,15 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode);
+
+    /**
+     * Updates multifactor settings on the specified user account.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param multiFactorSettings
+     * @return
+     */
+    Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactorSettings multiFactorSettings);
 }

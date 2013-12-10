@@ -178,6 +178,9 @@ public final class JSONConstants {
     public static final String RAX_AUTH_VERIFICATION_CODE = "RAX-AUTH:verificationCode";
     public static final String VERIFICATION_CODE = "verificationCode";
 
+    public static final String RAX_AUTH_MULTIFACTOR_SETTINGS = "RAX-AUTH:multiFactorSettings";
+    public static final String MULTIFACTOR_SETTINGS = "multiFactorSettings";
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";

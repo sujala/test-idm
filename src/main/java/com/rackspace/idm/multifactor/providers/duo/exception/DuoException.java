@@ -1,4 +1,4 @@
-package com.rackspace.idm.multifactor.providers.duo.service;
+package com.rackspace.idm.multifactor.providers.duo.exception;
 
 import com.rackspace.idm.multifactor.providers.duo.domain.FailureResult;
 

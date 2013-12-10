@@ -60,7 +60,13 @@
             </xsd:documentation>
         </annotation>
     </element>
-
+    <element name="multiFactorSettings" type="RAX-AUTH:MultiFactorSettings" >
+        <annotation>
+            <xsd:documentation>
+                <p>Settings for multifactor authentication.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
     <element name="domains" type="RAX-AUTH:Domains" />
     <element name="policy" type="RAX-AUTH:Policy"/>
     <element name="policies" type="RAX-AUTH:Policies" />
@@ -135,6 +141,17 @@
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         The code used for verification.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+    <complexType name="MultiFactorSettings">
+        <attribute name="enabled" type="xsd:boolean" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether to enable or disable multi-factor
                     </p>
                 </xsd:documentation>
             </annotation>

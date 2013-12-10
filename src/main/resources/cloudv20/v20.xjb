@@ -170,6 +170,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="verificationCode"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='MultiFactorSettings']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="multiFactorSettings"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='Domain']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domain"/>

@@ -3,12 +3,13 @@ package com.rackspace.idm.multifactor.providers.duo.service;
 import com.google.common.collect.ImmutableMap;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.idm.multifactor.domain.BasicPin;
 import com.rackspace.idm.multifactor.domain.Pin;
 import com.rackspace.idm.multifactor.providers.MobilePhoneVerification;
 import com.rackspace.idm.multifactor.providers.duo.config.VerifyApiConfig;
+import com.rackspace.idm.multifactor.providers.duo.domain.DuoPin;
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoResponse;
 import com.rackspace.idm.multifactor.providers.duo.domain.FailureResult;
+import com.rackspace.idm.multifactor.providers.duo.exception.DuoSendPinException;
 import com.rackspace.idm.multifactor.providers.duo.util.DuoJsonResponseReader;
 import com.rackspace.idm.multifactor.providers.duo.util.InMemoryDuoJsonResponseReader;
 import com.sun.jersey.api.client.ClientResponse;
@@ -88,14 +89,14 @@ public class DuoMobilePhoneVerification implements MobilePhoneVerification {
      * @param message must contain '<pin>' in it somewhere or duo security will return an error.
      * @return The pin that was sent to the phone
      */
-    private BasicPin sendSmsToPhone(Phonenumber.PhoneNumber phoneNumber, String message) {
+    private DuoPin sendSmsToPhone(Phonenumber.PhoneNumber phoneNumber, String message) {
         Map<String, String> map = ImmutableMap.<String, String>builder()
                 .put("phone", phoneNumberUtil.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.E164)) //Duo Security requires this format
                 .put("message", message)
                 .build();
 
         ClientResponse clientResponse = duoRequestHelper.makePostRequest(SMS_ENDPOINT_RESOURCE, map, ClientResponse.class);
-        DuoResponse<BasicPin> response = duoJsonResponseReader.fromDuoResponse(clientResponse, BasicPin.class);
+        DuoResponse<DuoPin> response = duoJsonResponseReader.fromDuoResponse(clientResponse, DuoPin.class);
 
         if (response.isFailure()) {
             FailureResult failedResult = response.getFailureResult();

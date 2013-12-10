@@ -1,4 +1,4 @@
-package com.rackspace.idm.multifactor.providers;
+package com.rackspace.idm.multifactor.providers.exceptions;
 
 import com.rackspace.idm.exception.IdmException;
 

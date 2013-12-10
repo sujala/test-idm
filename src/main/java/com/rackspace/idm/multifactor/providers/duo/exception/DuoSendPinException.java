@@ -1,6 +1,6 @@
-package com.rackspace.idm.multifactor.providers.duo.service;
+package com.rackspace.idm.multifactor.providers.duo.exception;
 
-import com.rackspace.idm.multifactor.providers.SendPinException;
+import com.rackspace.idm.multifactor.providers.exceptions.SendPinException;
 import com.rackspace.idm.multifactor.providers.duo.domain.FailureResult;
 
 /**
