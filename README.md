@@ -1,16 +1,18 @@
 Cloud-Identity
 --------------
 
-The Rackspace Cloud Customer and Racker Identity System
+The Rackspace Cloud Customer and Racker Identity System.
+
+More info: [Cloud Identity One Rack Home](https://one.rackspace.com/display/auth/Home)
 
 Team
 -------------
-Ken Savich
-Werner Mendizabal
-Jorge Munoz
-Timothy Cline
-Robert Jacoby
-Matt Kovacs
+* Ken Savich
+* Werner Mendizabal
+* Jorge Munoz
+* Timothy Cline
+* Robert Jacoby
+* Matt Kovacs
 
 Documentation
 --------------
