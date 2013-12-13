@@ -1,13 +1,12 @@
 package com.rackspace.idm.api.converter.cloudv20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import com.rackspace.idm.domain.dao.GroupDao
-import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.domain.service.GroupService
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
 class GroupConverterCloudV20Test extends RootServiceTest {
     @Shared GroupConverterCloudV20 converter
-    @Shared GroupDao mockGroupDao
+    @Shared GroupService mockGroupService
 
     def setupSpec() {
         converter = new GroupConverterCloudV20()
@@ -15,7 +14,7 @@ class GroupConverterCloudV20Test extends RootServiceTest {
     }
 
     def setup() {
-        mockGroupDao(converter)
+        mockGroupService(converter)
     }
 
     def "convert groupIds to jaxb Groups"() {
@@ -26,7 +25,7 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         def group = entityFactory.createGroup("groupId", "groupName", "groupDescription");
 
         and:
-        mockGroupDao.getGroupById("groupId") >> group
+        mockGroupService.getGroupById("groupId") >> group
 
         when:
         def result = converter.toGroupListJaxb(groupIds)
@@ -40,19 +39,20 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         jaxbGroup.description == group.description
     }
 
-    def "convert groupIds to jaxb Groups throws exception when group id does not exist"() {
+    def "convert groupIds to jaxb Groups adds null entry to returned list"() {
         given:
         HashSet<String> groupIds = new HashSet<String>()
         groupIds.add("groupId");
 
         and:
-        mockGroupDao.getGroupById("groupId") >> null
+        mockGroupService.getGroupById("groupId") >> null
 
         when:
-        converter.toGroupListJaxb(groupIds)
+        def groups = converter.toGroupListJaxb(groupIds)
 
         then:
-        thrown(BadRequestException)
+        groups.getGroup().size() == 1
+        groups.getGroup().get(0) == null
     }
 
     def "convert jaxbGroups to groupIds"() {
@@ -64,7 +64,7 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         groups.getGroup().add(group)
 
         and:
-        mockGroupDao.getGroupByName(group.name) >> entityFactory.createGroup("groupId", group.name, "groupDescription");
+        mockGroupService.getGroupByName(group.name) >> entityFactory.createGroup("groupId", group.name, "groupDescription");
 
         when:
         def result = converter.toSetOfGroupIds(groups)
@@ -74,7 +74,7 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         result.contains("groupId")
     }
 
-    def "convert jaxbGroups to groupIds throws exception when group does not exist"() {
+    def "convert jaxbGroups to groupIds adds group name to list"() {
         given:
         def group = converter.objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup()
         def groups = converter.objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroups()
@@ -83,13 +83,14 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         groups.getGroup().add(group)
 
         and:
-        mockGroupDao.getGroupByName(group.name) >> null
+        mockGroupService.getGroupByName(group.name) >> null
 
         when:
-        converter.toSetOfGroupIds(groups)
+        def groupIds = converter.toSetOfGroupIds(groups)
 
         then:
-        thrown(BadRequestException)
+        groupIds.size() == 1
+        groupIds.contains(group.name)
     }
 
     def "convert jaxbGroups to groupIds when jaxbGroups is null"() {
@@ -100,8 +101,8 @@ class GroupConverterCloudV20Test extends RootServiceTest {
         result == null
     }
 
-    def mockGroupDao(service) {
-        mockGroupDao = Mock()
-        service.groupDao = mockGroupDao
+    def mockGroupService(service) {
+        mockGroupService = Mock()
+        service.groupService = mockGroupService
     }
 }

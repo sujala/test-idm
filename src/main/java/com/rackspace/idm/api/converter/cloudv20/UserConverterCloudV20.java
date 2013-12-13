@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
@@ -37,6 +38,9 @@ public class UserConverterCloudV20 {
     @Autowired
     GroupConverterCloudV20 groupConverterCloudV20;
 
+    @Autowired
+    private Configuration config;
+
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
     }
@@ -49,13 +53,15 @@ public class UserConverterCloudV20 {
         userEntity.setPassword(user.getPassword());
         userEntity.setUserPassword(user.getPassword());
 
-        if (user.getSecretQA() != null) {
-            userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
-            userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
-        }
+        if (config.getBoolean("createUser.fullPayload.enabled") == true) {
+            if (user.getSecretQA() != null) {
+                userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
+                userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
+            }
 
-        userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
-        userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
+            userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
+            userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
+        }
 
         return userEntity;
     }

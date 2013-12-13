@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.RoleList
+import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -25,6 +26,8 @@ class UserConverterCloudV20Test extends Specification {
     @Shared SecretQAConverterCloudV20 mockSecretQAConverterCloudV20
     @Shared GroupConverterCloudV20 mockGroupConverterCloudV20
 
+    @Shared Configuration mockConfig;
+
     def setupSpec() {
         ExternalBeansConfiguration config = new ExternalBeansConfiguration()
         def mapper = config.getMapper()
@@ -39,6 +42,7 @@ class UserConverterCloudV20Test extends Specification {
         mockRoleConverterCloudV20()
         mockSecretQAConverterCloudV20()
         mockGroupConverterCloudV20()
+        mockConfig()
     }
 
     def mockRoleConverterCloudV20() {
@@ -54,6 +58,11 @@ class UserConverterCloudV20Test extends Specification {
     def mockGroupConverterCloudV20() {
         mockGroupConverterCloudV20 = Mock()
         converterCloudV20.groupConverterCloudV20 = mockGroupConverterCloudV20
+    }
+
+    def mockConfig() {
+        mockConfig = Mock()
+        converterCloudV20.config = mockConfig
     }
 
     def "convert user from domain entity to jaxb object"() {
@@ -121,11 +130,12 @@ class UserConverterCloudV20Test extends Specification {
         racker.rackerId == userEntity.id
     }
 
-    def "convert user from jaxb to domain entity"() {
+    def "convert user from jaxb to domain entity with flag enabled"() {
         given:
         org.openstack.docs.identity.api.v2.User userJaxb = userJaxb(false)
         def tenantRoles = [ new TenantRole() ].asList()
         def rsGroupsIds = new HashSet<String>()
+        mockConfig.getBoolean("createUser.fullPayload.enabled") >> true
 
         when:
         User user = converterCloudV20.fromUser(userJaxb)
@@ -143,6 +153,32 @@ class UserConverterCloudV20Test extends Specification {
         user.secretAnswer == userJaxb.getSecretQA().answer
         user.getRsGroupId() == rsGroupsIds
         user.getRoles() == tenantRoles
+        user.userPassword == userJaxb.password
+    }
+
+    def "convert user from jaxb to domain entity with flag disabled"() {
+        given:
+        org.openstack.docs.identity.api.v2.User userJaxb = userJaxb(false)
+        def tenantRoles = [ new TenantRole() ].asList()
+        def rsGroupsIds = new HashSet<String>()
+        mockConfig.getBoolean("createUser.fullPayload.enabled") >> false
+
+        when:
+        User user = converterCloudV20.fromUser(userJaxb)
+
+        then:
+        0 * mockRoleConverterCloudV20.toTenantRoles(_) >> tenantRoles
+        0 * mockGroupConverterCloudV20.toSetOfGroupIds(_) >> rsGroupsIds
+
+        user.username == userJaxb.username
+        user.displayName == userJaxb.displayName
+        user.email == userJaxb.email
+        user.enabled == userJaxb.enabled
+        user.region == userJaxb.defaultRegion
+        user.secretQuestion == null
+        user.secretAnswer == null
+        user.getRsGroupId().size() == 0
+        user.getRoles().size() == 0
         user.userPassword == userJaxb.password
     }
 

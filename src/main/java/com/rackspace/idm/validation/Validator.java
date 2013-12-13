@@ -2,11 +2,11 @@ package com.rackspace.idm.validation;
 
 
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
-import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
@@ -43,10 +43,10 @@ public class Validator {
     UserService userService;
 
     @Autowired
-    ApplicationRoleDao roleDao;
+    RoleService roleService;
 
     @Autowired
-    GroupDao groupDao;
+    GroupService groupService;
 
     static final String USERNAME="username";
     static final String ALPHANUMERIC="alphanumeric";
@@ -144,7 +144,7 @@ public class Validator {
             Set<String> roleNames = new HashSet<String>();
 
             for (TenantRole tenantRole : roles) {
-                if (roleDao.getRoleByName(tenantRole.getName()) == null) {
+                if (roleService.getRoleByName(tenantRole.getName()) == null) {
                     throw new BadRequestException("role '" + tenantRole.getName() + "' does not exist");
                 }
 
@@ -161,7 +161,7 @@ public class Validator {
         if (groupIds != null && !groupIds.isEmpty()) {
             for (Iterator<String> i = groupIds.iterator(); i.hasNext();) {
                 String groupId = i.next();
-                if (groupDao.getGroupById(groupId) == null) {
+                if (groupService.getGroupById(groupId) == null) {
                     throw new BadRequestException("group '" + groupId + "' does not exist");
                 }
             }
@@ -180,5 +180,4 @@ public class Validator {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
-
 }

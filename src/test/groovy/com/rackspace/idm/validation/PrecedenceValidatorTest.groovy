@@ -1,5 +1,6 @@
 package com.rackspace.idm.validation
 
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.ForbiddenException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -8,6 +9,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
     @Shared PrecedenceValidator service
 
+    @Shared RoleService mockRoleService
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
 
@@ -19,9 +21,9 @@ class PrecedenceValidatorTest extends RootServiceTest {
     def setup() {
         mockApplicationService(service)
         mockConfiguration(service)
-        mockApplicationRoleDao(service)
+        mockRoleService(service)
     }
-    
+
     def "compareWeights throws forbidden exception if caller weight is greater than role weight"() {
         when:
         service.compareWeights(100, 500)
@@ -143,7 +145,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         and:
         applicationService.getUserIdentityRole(caller) >> callerRole
-        applicationRoleDao.getRoleByName("roleName") >> role
+        mockRoleService.getRoleByName("roleName") >> role
 
         when:
         service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
@@ -159,7 +161,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         and:
         applicationService.getUserIdentityRole(caller) >> null
-        applicationRoleDao.getRoleByName("roleName") >> role
+        mockRoleService.getRoleByName("roleName") >> role
 
         when:
         service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
@@ -176,7 +178,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         and:
         applicationService.getUserIdentityRole(caller) >> callerRole
-        applicationRoleDao.getRoleByName("roleName") >> role
+        mockRoleService.getRoleByName("roleName") >> role
 
         when:
         service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
@@ -191,7 +193,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
         def role = entityFactory.createClientRole(200)
 
         and:
-        applicationRoleDao.getRoleByName("roleName") >> role
+        mockRoleService.getRoleByName("roleName") >> role
 
         when:
         service.verifyRolePrecedenceForAssignment(clientRole, ["roleName"])
@@ -206,12 +208,17 @@ class PrecedenceValidatorTest extends RootServiceTest {
         def role = entityFactory.createClientRole(100)
 
         and:
-        applicationRoleDao.getRoleByName("roleName") >> role
+        mockRoleService.getRoleByName("roleName") >> role
 
         when:
         service.verifyRolePrecedenceForAssignment(clientRole, ["roleName"])
 
         then:
         thrown(ForbiddenException)
+    }
+
+    def mockRoleService(service) {
+        mockRoleService = Mock()
+        service.roleService = mockRoleService;
     }
 }

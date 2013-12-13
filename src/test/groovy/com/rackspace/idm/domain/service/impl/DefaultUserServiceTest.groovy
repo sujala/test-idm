@@ -1,7 +1,8 @@
 package com.rackspace.idm.domain.service.impl
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
+
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
@@ -9,6 +10,7 @@ import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
 import spock.lang.Shared
 import testHelpers.RootServiceTest
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -20,7 +22,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
     @Shared FederatedUserDao mockFederatedUserDao
     @Shared Validator mockValidator
-    @Shared ApplicationRoleDao mockRoleDao
+    @Shared RoleService mockRoleService
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -118,7 +120,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockPropertiesService(service)
         mockCryptHelper(service)
         mockValidator(service)
-        mockRoleDao(service);
+        mockRoleService(service);
     }
 
     def "Add BaseUrl to user"() {
@@ -219,7 +221,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         config.getBoolean("generate.apiKey.userForCreate") >> true
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
-        mockRoleDao.getRoleByName(_) >> entityFactory.createClientRole("role")
+        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
         cryptHelper.generateSalt() >> salt
 
         when:
@@ -461,7 +463,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, null)
         mockRoles()
 
-        def tenantRole1 = entityFactory.createTenantRole("identity:user-admin", true)
+        def tenantRole1 = entityFactory.createTenantRole("identity:user-admin", false)
         def tenantRole2 = entityFactory.createTenantRole("observer", true)
         def tenantRole3 = entityFactory.createTenantRole("anotherOne", false)
         def group = entityFactory.createGroup("thegroup", "thegroup", "the good group")
@@ -470,7 +472,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [ caller ].asList()
         tenantService.getTenantRolesForUser(caller) >> [ tenantRole1, tenantRole2, tenantRole3 ].asList()
         userDao.getGroupsForUser(caller.id) >> [ group ].asList()
-        mockRoleDao.getRoleByName("observer") >> entityFactory.createClientRole("observer")
+        mockRoleService.getRoleByName("observer") >> entityFactory.createClientRole("observer")
 
         when:
         service.setUserDefaultsBasedOnCaller(user, caller)
@@ -1285,9 +1287,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.validator = mockValidator
     }
 
-    def mockRoleDao(service) {
-        mockRoleDao = Mock()
-        service.roleDao = mockRoleDao
+    def mockRoleService(service) {
+        mockRoleService = Mock()
+        service.roleService = mockRoleService
     }
 
     def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {
@@ -1337,30 +1339,12 @@ class DefaultUserServiceTest extends RootServiceTest {
     }
 
     def mockRoles() {
-        config.getString("cloudAuth.serviceAdminRole") >> "identity:service-admin"
-        mockRoleDao.getRoleByName("identity:service-admin") >> serviceAdminRole
-
-        config.getString("cloudAuth.adminRole") >> "identity:admin"
-        mockRoleDao.getRoleByName("identity:admin") >> identityAdminRole
-
-        config.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
-        mockRoleDao.getRoleByName("identity:user-admin") >> userAdminRole
-
-        config.getString("cloudAuth.userManagedRole") >> "identity:user-manage"
-        mockRoleDao.getRoleByName("identity:user-manage") >> userManageRole
-
-        config.getString("cloudAuth.userRole") >> "identity:default"
-        mockRoleDao.getRoleByName("identity:default") >> defaultRole
-
-        def mockApplication = Mock(Application)
-        mockApplication.getOpenStackType() >>> ["compute", "object-store"]
-
-        config.getString("serviceName.cloudServers") >> "compute"
-        applicationService.getByName("compute") >> mockApplication
-        mockRoleDao.getRoleByName("compute:default") >> computeDefaultRole
-
-        config.getString("serviceName.cloudFiles") >> "object-store"
-        applicationService.getByName("object-store") >> mockApplication
-        mockRoleDao.getRoleByName("object-store:default") >> objectStoreRole
+        mockRoleService.getSuperUserAdminRole() >> serviceAdminRole
+        mockRoleService.getIdentityAdminRole() >> identityAdminRole
+        mockRoleService.getUserAdminRole() >> userAdminRole
+        mockRoleService.getUserManageRole() >> userManageRole
+        mockRoleService.getDefaultRole() >> defaultRole
+        mockRoleService.getComputeDefaultRole() >> computeDefaultRole
+        mockRoleService.getObjectStoreDefaultRole() >> objectStoreRole
     }
 }

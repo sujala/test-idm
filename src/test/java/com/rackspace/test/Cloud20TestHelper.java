@@ -120,7 +120,7 @@ public class Cloud20TestHelper {
     }
 
     public String createGroup(String name, String description) throws JAXBException {
-        ObjectMarshaller<Domain> marshaller = new ObjectMarshaller<Domain>();
+        ObjectMarshaller<Group> marshaller = new ObjectMarshaller<Group>();
         Group group = new Group();
         group.setName(name);
         group.setDescription(description);

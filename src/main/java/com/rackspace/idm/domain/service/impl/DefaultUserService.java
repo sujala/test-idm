@@ -81,7 +81,7 @@ public class DefaultUserService implements UserService {
     private CryptHelper cryptHelper;
 
     @Autowired
-    private ApplicationRoleDao roleDao;
+    private RoleService roleService;
 
     @Override
     public void addRacker(Racker racker) {
@@ -137,15 +137,15 @@ public class DefaultUserService implements UserService {
         // This doesn't happen today because there is business logic to ensure these cases don't happen.
         // We want to eventually remove that. A user should be able to be assigned any role.
         //
-        if (doesUserHaveRole(caller, getSuperUserAdminRole())) {
+        if (doesUserHaveRole(caller, roleService.getSuperUserAdminRole())) {
             if (StringUtils.isNotBlank(user.getDomainId())) {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
 
-            attachRoleToUser(getIdentityAdminRole(), user);
+            attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
 
-        if (doesUserHaveRole(caller, getIdentityAdminRole())) {
+        if (doesUserHaveRole(caller, roleService.getIdentityAdminRole())) {
             if (StringUtils.isBlank(user.getDomainId())) {
                 throw new BadRequestException("User-admin cannot be created without a domain");
             }
@@ -154,18 +154,18 @@ public class DefaultUserService implements UserService {
                 throw new BadRequestException("User-admin already exists for domain");
             }
 
-            attachRoleToUser(getUserAdminRole(), user);
+            attachRoleToUser(roleService.getUserAdminRole(), user);
 
             //original code had this. this is in place to help ensure the user has access to their
             //default tenants. currently the user-admin role is not tenant specific. don't want to
             //change existing behavior. Need to have business discussion to determine if a user
             //has a non tenant specific role, whether they have access to all tenants in domain.
             //if this turns out to be the case, then we need to change validateToken logic.
-            attachRoleToUser(getComputeDefaultRole(), user, user.getDomainId());
-            attachRoleToUser(getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
+            attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
         }
 
-        if (doesUserHaveRole(caller, getUserAdminRole()) || doesUserHaveRole(caller, getUserManageRole())) {
+        if (doesUserHaveRole(caller, roleService.getUserAdminRole()) || doesUserHaveRole(caller, roleService.getUserManageRole())) {
             if (StringUtils.isBlank(caller.getDomainId())) {
                 throw new BadRequestException("Default user cannot be created if caller does not have a domain");
             }
@@ -179,7 +179,7 @@ public class DefaultUserService implements UserService {
             user.setDomainId(caller.getDomainId());
             user.setRegion(callerDefaultRegion);
 
-            attachRoleToUser(getDefaultRole(), user);
+            attachRoleToUser(roleService.getDefaultRole(), user);
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
@@ -1006,7 +1006,7 @@ public class DefaultUserService implements UserService {
 
     private void assignUserRoles(User user) {
         for (TenantRole role : user.getRoles()) {
-            ClientRole roleObj = roleDao.getRoleByName(role.getName());
+            ClientRole roleObj = roleService.getRoleByName(role.getName());
 
             TenantRole tenantRole = new TenantRole();
             tenantRole.setRoleRsId(roleObj.getId());
@@ -1043,45 +1043,6 @@ public class DefaultUserService implements UserService {
 
     private String getNastTenantId(String domainId)  {
         return StringUtils.isNotBlank(domainId) ? NAST_TENANT_PREFIX + domainId : null;
-    }
-
-    private ClientRole getSuperUserAdminRole() {
-        String roleName = config.getString("cloudAuth.serviceAdminRole");
-        return roleDao.getRoleByName(roleName);
-    }
-
-    private ClientRole getUserAdminRole() {
-        String roleName = config.getString("cloudAuth.userAdminRole");
-        return roleDao.getRoleByName(roleName);
-    }
-
-    private ClientRole getUserManageRole() {
-        String roleName = config.getString("cloudAuth.userManagedRole");
-        return roleDao.getRoleByName(roleName);
-    }
-
-    private ClientRole getIdentityAdminRole() {
-        String roleName = config.getString("cloudAuth.adminRole");
-        return roleDao.getRoleByName(roleName);
-    }
-
-    private ClientRole getDefaultRole() {
-        String roleName = config.getString("cloudAuth.userRole");
-        return roleDao.getRoleByName(roleName);
-    }
-
-    private ClientRole getComputeDefaultRole() {
-        String serviceName = config.getString("serviceName.cloudServers");
-        Application application = applicationService.getByName(serviceName);
-        String defaultRoleName = application.getOpenStackType().concat(":default");
-        return roleDao.getRoleByName(defaultRoleName);
-    }
-
-    private ClientRole getObjectStoreDefaultRole() {
-        String serviceName = config.getString("serviceName.cloudFiles");
-        Application application = applicationService.getByName(serviceName);
-        String defaultRoleName = application.getOpenStackType().concat(":default");
-        return roleDao.getRoleByName(defaultRoleName);
     }
 
     private void attachRolesToUser(List<TenantRole> tenantRoles, User user) {

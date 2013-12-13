@@ -2750,6 +2750,27 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     }
 
+    def "Create admin user with complete payload" () {
+        given:
+        def domainId1 = "domainId" + (long)(Math.random() * 100000)
+        def username1 = "username" + (long)(Math.random() * 100000)
+        def groupName = "groupName"
+
+        if (cloud20.getGroupByName(identityAdminToken, groupName).getEntity(Group.class) == null) {
+            cloud20.createGroup(identityAdminToken, groupName)
+        }
+
+        def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domainId1,
+                                                 "securePassword2", ["identity:user-manage"].asList(), [groupName].asList(), "What is the meaning?", "That is the wrong question")
+
+        when:
+        def result = cloud20.createUser(identityAdminToken, user)
+
+        then:
+        result.status == 201
+
+    }
+
     def "List credentials should not return allow an identity admin to list service admin credentials"() {
         when:
         def listCredResponse = cloud20.listCredentials(identityAdminToken, serviceAdmin.id)

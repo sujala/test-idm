@@ -16,6 +16,7 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
@@ -28,6 +29,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -57,6 +59,9 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -3457,10 +3462,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setServiceConverterCloudV20(ServiceConverterCloudV20 serviceConverterCloudV20) {
         this.serviceConverterCloudV20 = serviceConverterCloudV20;
-    }
-
-    public void setGroupService(GroupService groupService) {
-        this.groupService = groupService;
     }
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {

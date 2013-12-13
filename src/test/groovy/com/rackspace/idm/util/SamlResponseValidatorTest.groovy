@@ -1,11 +1,12 @@
 package com.rackspace.idm.util
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
+
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.IdentityProvider
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
@@ -29,7 +30,7 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def samlResponseDecorator
 
     @Shared IdentityProviderDao mockIdentityProviderDao
-    @Shared def mockRoleDao
+    @Shared def mockRoleService
     @Shared def mockSamlSignatureValidator
     @Shared def mockDomainDao
     @Shared def mockPrecedenceValidator
@@ -45,7 +46,7 @@ class SamlResponseValidatorTest extends Specification {
 
     def setup() {
         mockIdentityProviderDao(samlResponseValidator)
-        mockRoleDao(samlResponseValidator)
+        mockRoleService(samlResponseValidator)
         mockSamlSignatureValidator(samlResponseValidator)
         mockDomainDao(samlResponseValidator)
         mockPrecedenceValidator(samlResponseValidator)
@@ -106,10 +107,10 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
         mockDomainDao.getDomain(DOMAIN) >> Mock(Domain)
         mockConfig.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
-        mockRoleDao.getRoleByName("identity:user-admin") >> mockUserAdminRole
+        mockRoleService.getUserAdminRole() >> mockUserAdminRole
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -328,7 +329,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -392,7 +393,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -455,7 +456,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -577,7 +578,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> null
+        mockRoleService.getRoleByName(ROLE_NAME) >> null
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -641,7 +642,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleDao.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -655,9 +656,9 @@ class SamlResponseValidatorTest extends Specification {
         validator.identityProviderDao = mockIdentityProviderDao
     }
 
-    def mockRoleDao(validator) {
-        mockRoleDao = Mock(ApplicationRoleDao)
-        validator.roleDao = mockRoleDao
+    def mockRoleService(validator) {
+        mockRoleService = Mock(RoleService)
+        validator.roleService = mockRoleService
     }
 
     def mockDomainDao(validator) {

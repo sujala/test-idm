@@ -188,10 +188,11 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         given:
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
-        def domainId3 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
-        (identityAdminThree, userAdminThree, userManageThree, defaultUserThree) = utils.createUsers(domainId3)
+
+        def userAdminTwoToken = utils.getToken(userManageTwo.username)
+        def userManageThree =  utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage"), domainId2)
 
         when:
         utils.addRoleToUser(userManageTwo, USER_MANAGE_ROLE_ID)
@@ -209,7 +210,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteUsers(defaultUserTwo, defaultUserThree, userManageTwo, userManageThree, userAdminTwo, userAdminThree, identityAdminTwo, identityAdminThree)
+        utils.deleteUsers(defaultUserTwo, userManageTwo, userManageThree, userAdminTwo, identityAdminTwo)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
     }

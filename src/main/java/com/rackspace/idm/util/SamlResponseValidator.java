@@ -1,12 +1,11 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.SAMLConstants;
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
-import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
@@ -26,7 +25,7 @@ public class SamlResponseValidator {
     SamlSignatureValidator samlSignatureValidator;
 
     @Autowired
-    ApplicationRoleDao roleDao;
+    RoleService roleService;
 
     @Autowired
     DomainDao domainDao;
@@ -146,7 +145,7 @@ public class SamlResponseValidator {
         Set<String> roleNames = new HashSet<String>();
 
         for (String role : roles) {
-            if (roleDao.getRoleByName(role) == null) {
+            if (roleService.getRoleByName(role) == null) {
                 throw new BadRequestException("role '" + role + "' does not exist");
             }
 
@@ -158,11 +157,6 @@ public class SamlResponseValidator {
         }
 
         //don't allow saml response to include role with more power than an identity:user-admin
-        precedenceValidator.verifyRolePrecedenceForAssignment(getUserAdminRole(), roles);
-    }
-
-    private ClientRole getUserAdminRole() {
-        String roleName = config.getString("cloudAuth.userAdminRole");
-        return roleDao.getRoleByName(roleName);
+        precedenceValidator.verifyRolePrecedenceForAssignment(roleService.getUserAdminRole(), roles);
     }
 }

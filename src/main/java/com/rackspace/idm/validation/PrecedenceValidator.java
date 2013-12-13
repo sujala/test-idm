@@ -1,10 +1,10 @@
 package com.rackspace.idm.validation;
 
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class PrecedenceValidator {
     private ApplicationService applicationService;
 
     @Autowired
-    ApplicationRoleDao applicationRoleDao;
+    RoleService roleService;
 
     @Autowired
     private Configuration config;
@@ -90,7 +90,7 @@ public class PrecedenceValidator {
         if (clientRole != null && roleNames != null) {
             int roleWeight = clientRole.getRsWeight();
             for (String roleName : roleNames) {
-                ClientRole role = applicationRoleDao.getRoleByName(roleName);
+                ClientRole role = roleService.getRoleByName(roleName);
                 if (role != null) {
                     compareWeights(roleWeight, role.getRsWeight());
                 }

@@ -1,12 +1,13 @@
 package com.rackspace.idm.api.resource.cloud
+
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.GroupService
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateUsernameException
@@ -14,6 +15,7 @@ import com.rackspace.idm.validation.Validator
 import com.rackspacecloud.docs.auth.api.v1.User
 import spock.lang.Shared
 import spock.lang.Specification
+
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -27,8 +29,8 @@ class ValidatorTest extends Specification {
     @Shared LdapPatternRepository ldapPatternRepository
     @Shared UserService userService
     @Shared DefaultRegionService defaultRegionService
-    @Shared ApplicationRoleDao roleDao
-    @Shared GroupDao groupDao
+    @Shared RoleService roleService
+    @Shared GroupService groupService
     @Shared Pattern passwordPattern
     @Shared Pattern usernamePattern
     @Shared Pattern emailPattern
@@ -201,8 +203,8 @@ class ValidatorTest extends Specification {
 
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> new ClientRole()
-        groupDao.getGroupById(_) >> new Group()
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
 
         when:
         validator.validateUser(userEntity)
@@ -221,8 +223,8 @@ class ValidatorTest extends Specification {
 
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> new ClientRole()
-        groupDao.getGroupById(_) >> new Group()
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
 
         when:
         validator.validateUser(userEntity)
@@ -241,8 +243,8 @@ class ValidatorTest extends Specification {
 
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> new ClientRole()
-        groupDao.getGroupById(_) >> new Group()
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
 
         when:
         validator.validateUser(userEntity)
@@ -261,8 +263,8 @@ class ValidatorTest extends Specification {
 
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> new ClientRole()
-        groupDao.getGroupById(_) >> new Group()
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
 
         when:
         validator.validateUser(userEntity)
@@ -340,7 +342,7 @@ class ValidatorTest extends Specification {
         def userEntity = createUser()
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> null
+        roleService.getRoleByName(_) >> null
 
         when:
         validator.validateUser(userEntity)
@@ -355,8 +357,8 @@ class ValidatorTest extends Specification {
         def userEntity = createUser()
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
-        roleDao.getRoleByName(_) >> new ClientRole()
-        groupDao.getGroupById(_) >> null
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> null
 
         when:
         validator.validateUser(userEntity)
@@ -369,13 +371,13 @@ class ValidatorTest extends Specification {
         ldapPatternRepository = Mock()
         userService = Mock()
         defaultRegionService = Mock()
-        roleDao = Mock()
-        groupDao = Mock()
+        roleService = Mock()
+        groupService = Mock()
 
         validator.ldapPatternRepository = ldapPatternRepository
         validator.userService = userService
-        validator.roleDao = roleDao
-        validator.groupDao = groupDao
+        validator.roleService = roleService
+        validator.groupService = groupService
         validator.defaultRegionService = defaultRegionService
     }
 
