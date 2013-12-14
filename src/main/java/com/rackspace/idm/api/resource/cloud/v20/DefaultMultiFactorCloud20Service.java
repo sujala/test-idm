@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -235,8 +236,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
      * @return
      */
     private Phonenumber.PhoneNumber parseRequestPhoneNumber(String rawPhoneNumber) {
+        Assert.notNull(rawPhoneNumber);
         try {
-            Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.parsePhoneNumber(rawPhoneNumber);
+            Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(rawPhoneNumber);
             return phoneNumber;
         } catch (InvalidPhoneNumberException ex) {
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_PHONE_NUMBER, ex);

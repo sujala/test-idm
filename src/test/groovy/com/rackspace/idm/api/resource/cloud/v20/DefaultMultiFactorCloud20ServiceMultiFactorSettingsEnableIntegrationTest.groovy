@@ -235,15 +235,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorSettingsEnableIntegrationTest e
     }
 
     def void addPhone() {
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
-        def responseAddPhoneToUser = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, requestMobilePhone)
-        responsePhone = responseAddPhoneToUser.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
-        cloud20.sendVerificationCode(userAdminToken, userAdmin.id, responsePhone.id)
+        responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
+        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
         constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
     }
 
     def void verifyPhone() {
-        def verifyVerificationCodeResponse = cloud20.verifyVerificationCode(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
-        assert verifyVerificationCodeResponse.status == HttpStatus.SC_NO_CONTENT
+        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
     }
 }

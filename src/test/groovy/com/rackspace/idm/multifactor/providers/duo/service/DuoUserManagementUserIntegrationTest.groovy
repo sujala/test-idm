@@ -2,6 +2,7 @@ package com.rackspace.idm.multifactor.providers.duo.service
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.multifactor.providers.duo.config.ApacheConfigAdminApiConfig
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoUser
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
@@ -21,7 +22,9 @@ class DuoUserManagementUserIntegrationTest extends Specification {
     def setupSpec() {
         PropertyFileConfiguration pfConfig = new PropertyFileConfiguration();
         Configuration devConfiguration = pfConfig.getConfig();
-        duoUserManagement = new DuoUserManagement(devConfiguration)
+        duoUserManagement = new DuoUserManagement();
+        duoUserManagement.setAdminApiConfig(new ApacheConfigAdminApiConfig(devConfiguration))
+        duoUserManagement.init()
     }
 
     def "successfully create duo user"() {

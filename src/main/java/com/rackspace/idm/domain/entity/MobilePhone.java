@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -22,8 +21,6 @@ import org.dozer.Mapping;
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE)
 public class MobilePhone implements Auditable, UniqueId {
-    public static final String TELEPHONE_DEFAULT_REGION = "US";
-
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
@@ -54,6 +51,6 @@ public class MobilePhone implements Auditable, UniqueId {
         if (StringUtils.isBlank(telephoneNumber)) {
             return null;
         }
-        return IdmPhoneNumberUtil.parsePhoneNumber(telephoneNumber);
+        return IdmPhoneNumberUtil.getInstance().parsePhoneNumber(telephoneNumber);
     }
 }

@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.idm.multifactor.providers.ProviderPhone
 import com.rackspace.idm.multifactor.providers.ProviderUser
+import com.rackspace.idm.multifactor.providers.duo.config.ApacheConfigAdminApiConfig
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoPhone
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoUser
 import org.apache.commons.configuration.Configuration
@@ -28,7 +29,9 @@ class DuoUserManagementUserPhoneIntegrationTest extends Specification {
     def setupSpec() {
         PropertyFileConfiguration pfConfig = new PropertyFileConfiguration();
         Configuration devConfiguration = pfConfig.getConfig();
-        duoUserManagement = new DuoUserManagement(devConfiguration)
+        duoUserManagement = new DuoUserManagement()
+        duoUserManagement.setAdminApiConfig(new ApacheConfigAdminApiConfig(devConfiguration))
+        duoUserManagement.init()
     }
 
     /**

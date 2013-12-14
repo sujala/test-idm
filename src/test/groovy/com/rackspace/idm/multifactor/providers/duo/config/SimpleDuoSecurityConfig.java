@@ -35,4 +35,9 @@ public class SimpleDuoSecurityConfig implements DuoSecurityConfig {
     public int getDefaultTimeout() {
         return defaultTimeout;
     }
+
+    @Override
+    public boolean allowServicesThatCostMoney() {
+        return true;
+    }
 }

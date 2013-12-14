@@ -14,10 +14,12 @@ import com.rackspace.idm.multifactor.providers.duo.util.DuoJsonResponseReader;
 import com.rackspace.idm.multifactor.providers.duo.util.InMemoryDuoJsonResponseReader;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import org.apache.commons.configuration.Configuration;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 /**
@@ -26,6 +28,7 @@ import java.util.Map;
  */
 @Component
 public class DuoMobilePhoneVerification implements MobilePhoneVerification {
+    private static final String VERIFY_ENDPOINT_BASE_PATH = "/verify/v1";
 
     /*
      * Wire in a reader if a bean exists. If not, use the default in-memory implementation
@@ -33,40 +36,29 @@ public class DuoMobilePhoneVerification implements MobilePhoneVerification {
     @Autowired(required = false)
     private DuoJsonResponseReader duoJsonResponseReader = new InMemoryDuoJsonResponseReader();
 
-    private Configuration globalConfig;
+    @Autowired(required = false)
+    DuoRequestHelperFactory duoRequestHelperFactory = new SingletonDuoRequestHelperFactory();
+
+    @Autowired
+    @Getter
+    @Setter
+    private VerifyApiConfig verifyApiConfig;
 
     private DuoRequestHelper duoRequestHelper;
-
-    private final String VERIFY_ENDPOINT_BASE_PATH = "/verify/v1";
-    private final WebResource VERIFY_ENDPOINT_BASE_RESOURCE;
-    private final WebResource SMS_ENDPOINT_RESOURCE;
-
-    private final WebResource STATUS_ENDPOINT_RESOURCE;
+    private WebResource VERIFY_ENDPOINT_BASE_RESOURCE;
+    private WebResource SMS_ENDPOINT_RESOURCE;
 
     private PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
-    public static final String PHONE_VERIFICATION_MESSAGE_PROP_NAME = "duo.security.verify.verification.message";
-
-    public static final String PROP_NAME_DUO_TELEPHONY_ENABLED = "duo.telephony.enabled";
-
     /**
-     * This is the default implementation that will be autowired by spring to use the global property file to configure the class
-     * based on the AdminApiConfig which uses the global config.
-     *
-     * @param globalConfig
+     * Must be called after dependencies are injected and before the services are used.
      */
-    @Autowired
-    public DuoMobilePhoneVerification(Configuration globalConfig) {
-        this(new DuoRequestHelper(new VerifyApiConfig(globalConfig)), globalConfig);
-    }
-
-    public DuoMobilePhoneVerification(DuoRequestHelper duoRequestHelper, Configuration globalConfig) {
-        this.duoRequestHelper = duoRequestHelper;
-        this.globalConfig = globalConfig;
+    @PostConstruct
+    protected void init() {
+        this.duoRequestHelper = duoRequestHelperFactory.getInstance(verifyApiConfig);
 
         VERIFY_ENDPOINT_BASE_RESOURCE = duoRequestHelper.createWebResource(VERIFY_ENDPOINT_BASE_PATH);
         SMS_ENDPOINT_RESOURCE = VERIFY_ENDPOINT_BASE_RESOURCE.path("sms");
-        STATUS_ENDPOINT_RESOURCE = VERIFY_ENDPOINT_BASE_RESOURCE.path("status");
     }
 
     /**
@@ -76,10 +68,10 @@ public class DuoMobilePhoneVerification implements MobilePhoneVerification {
      */
     @Override
     public Pin sendPin(Phonenumber.PhoneNumber phoneNumber) {
-        if (!globalConfig.getBoolean(PROP_NAME_DUO_TELEPHONY_ENABLED, false)) {
-            throw new RuntimeException("Attempting to send SMS message that would incur cost when property '" + PROP_NAME_DUO_TELEPHONY_ENABLED + "' has this disabled (default)! Set this property to true if SMS messages should be sent!");
+        if (!verifyApiConfig.allowServicesThatCostMoney()) {
+            throw new RuntimeException("Consumption of services that cost money has been disabled. Attempting to send SMS message that would incur cost");
         }
-        return sendSmsToPhone(phoneNumber, getPhoneVerificationMessage());
+        return sendSmsToPhone(phoneNumber, verifyApiConfig.getPhoneVerificationMessage());
     }
 
     /**
@@ -104,9 +96,5 @@ public class DuoMobilePhoneVerification implements MobilePhoneVerification {
         }
 
         return response.getSuccessResult();
-    }
-
-    private String getPhoneVerificationMessage() {
-        return globalConfig.getString(PHONE_VERIFICATION_MESSAGE_PROP_NAME);
     }
 }

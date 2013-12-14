@@ -82,7 +82,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             mobilePhone = createMobilePhone(phoneNumber);
         } catch (DuplicateException e) {
             //phone number exists already, retrieve it to link user to it
-            mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.canonicalizePhoneNumberToString(phoneNumber));
+            mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
             if (mobilePhone == null) {
                 throw new IllegalStateException("Mobile phone exists but could not be found");
             }
@@ -114,7 +114,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new MultiFactorDeviceAlreadyVerifiedException("Device already verified");
         }
 
-        Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.parsePhoneNumber(phone.getTelephoneNumber());
+        Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(phone.getTelephoneNumber());
         Pin pinSent = mobilePhoneVerification.sendPin(phoneNumber);
 
         //expiration date
@@ -231,7 +231,7 @@ public class BasicMultiFactorService implements MultiFactorService {
      */
     private MobilePhone createMobilePhone(Phonenumber.PhoneNumber phoneNumber) {
         Assert.notNull(phoneNumber);
-        String canonicalizedPhone = IdmPhoneNumberUtil.canonicalizePhoneNumberToString(phoneNumber);
+        String canonicalizedPhone = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber);
 
         MobilePhone mobilePhone = new MobilePhone();
         mobilePhone.setTelephoneNumber(canonicalizedPhone);

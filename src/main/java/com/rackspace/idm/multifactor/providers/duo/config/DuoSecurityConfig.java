@@ -27,4 +27,12 @@ public interface DuoSecurityConfig {
      * Connection timeout to use for service calls used for this integration.
      */
     int getDefaultTimeout();
+
+    /**
+     * This provides a safety valve for implementation to prevent the unintended consumption of Duo services that
+     * cost additional money (e.g. - SMS texts).
+     *
+     * @return
+     */
+    boolean allowServicesThatCostMoney();
 }

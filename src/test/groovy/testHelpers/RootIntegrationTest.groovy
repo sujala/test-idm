@@ -38,8 +38,6 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
 
-
-
     public setupSpec(){
         doSetupSpec()
         cloud10.init()

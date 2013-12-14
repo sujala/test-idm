@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.providers.duo.service;
 
 import com.rackspace.idm.multifactor.providers.ProviderAvailability;
+import com.rackspace.idm.multifactor.providers.duo.config.ApacheConfigAuthApiConfig;
 import com.rackspace.idm.multifactor.providers.duo.config.AuthApiConfig;
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoPing;
 import com.rackspace.idm.multifactor.providers.duo.domain.DuoResponse;
@@ -12,35 +13,56 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Collections;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Duo Security ProviderAvailability implementation
  */
 @Component
 public class DuoAvailability implements ProviderAvailability {
+    private static final String AUTH_ENDPOINT_BASE_PATH = "/auth/v2";
 
     @Autowired(required = false)
     private DuoJsonResponseReader duoJsonResponseReader = new InMemoryDuoJsonResponseReader();
 
-    private Configuration globalConfig;
+    @Autowired
+    @Getter
+    @Setter
+    private AuthApiConfig authApiConfig;
+
+    @Autowired(required = false)
+    DuoRequestHelperFactory duoRequestHelperFactory = new SingletonDuoRequestHelperFactory();
 
     private DuoRequestHelper duoRequestHelper;
 
-    private final String AUTH_ENDPOINT_BASE_PATH = "/auth/v2";
-    private final WebResource AUTH_ENDPOINT_BASE_RESOURCE;
+    private WebResource AUTH_ENDPOINT_BASE_RESOURCE;
+    private WebResource PING_ENDPOINT_RESOURCE;
 
-    private final WebResource PING_ENDPOINT_RESOURCE;
 
-    @Autowired
-    public DuoAvailability(Configuration globalConfig) {
-        this(new DuoRequestHelper(new AuthApiConfig(globalConfig)), globalConfig);
+    /**
+     * Default constructor to allow setter dependency injection. Must call init() once completed.
+     */
+    public DuoAvailability() {}
+
+    /**
+     * Regular constructor for non-injection based construction. Must call init() before use.
+     *
+     * @param authApiConfig
+     */
+    public DuoAvailability(AuthApiConfig authApiConfig) {
+        this.authApiConfig = authApiConfig;
     }
 
-    public DuoAvailability(DuoRequestHelper duoRequestHelper, Configuration globalConfig) {
-        this.duoRequestHelper = duoRequestHelper;
-        this.globalConfig = globalConfig;
 
+    /**
+     * Must be called after dependencies are injected and before the services are used.
+     */
+    @PostConstruct
+    protected synchronized void init() {
+        this.duoRequestHelper = duoRequestHelperFactory.getInstance(authApiConfig);
         AUTH_ENDPOINT_BASE_RESOURCE = duoRequestHelper.createWebResource(AUTH_ENDPOINT_BASE_PATH);
         PING_ENDPOINT_RESOURCE = AUTH_ENDPOINT_BASE_RESOURCE.path("ping");
     }

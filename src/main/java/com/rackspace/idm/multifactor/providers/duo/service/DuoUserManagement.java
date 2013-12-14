@@ -18,19 +18,24 @@ import com.rackspace.idm.multifactor.providers.duo.util.DuoJsonResponseReader;
 import com.rackspace.idm.multifactor.providers.duo.util.InMemoryDuoJsonResponseReader;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import org.apache.commons.configuration.Configuration;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- */
 @Component
 public class DuoUserManagement implements UserManagement {
-    private Configuration globalConfig;
+    private static final String ADMIN_ENDPOINT_BASE_PATH = "/admin/v1";
+
+    @Autowired
+    @Getter
+    @Setter
+    private AdminApiConfig adminApiConfig;
 
     /*
      * Wire in a reader if a bean exists. If not, use the default in-memory implementation
@@ -38,33 +43,25 @@ public class DuoUserManagement implements UserManagement {
     @Autowired(required = false)
     private DuoJsonResponseReader duoJsonResponseReader = new InMemoryDuoJsonResponseReader();
 
+    @Autowired(required = false)
+    DuoRequestHelperFactory duoRequestHelperFactory = new SingletonDuoRequestHelperFactory();
+
     private DuoRequestHelper duoRequestHelper;
 
-    private final String ADMIN_ENDPOINT_BASE_PATH = "/admin/v1";
+    private WebResource ADMIN_ENDPOINT_BASE_RESOURCE;
 
-    private final WebResource ADMIN_ENDPOINT_BASE_RESOURCE;
+    private WebResource USER_ENDPOINT_RESOURCE;
 
-    private final WebResource USER_ENDPOINT_RESOURCE;
-
-    private final WebResource PHONE_ENDPOINT_RESOURCE;
+    private WebResource PHONE_ENDPOINT_RESOURCE;
 
     private PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
     /**
-     * This is the default implementation that will be autowired by spring to use the global property file to configure
-     * the class
-     * based on the AdminApiConfig which uses the global config.
-     *
-     * @param globalConfig
+     * Must be called after dependencies are injected and before the services are used.
      */
-    @Autowired
-    public DuoUserManagement(Configuration globalConfig) {
-        this(new DuoRequestHelper(new AdminApiConfig(globalConfig)), globalConfig);
-    }
-
-    public DuoUserManagement(DuoRequestHelper duoRequestHelper, Configuration globalConfig) {
-        this.duoRequestHelper = duoRequestHelper;
-        this.globalConfig = globalConfig;
+    @PostConstruct
+    protected void init() {
+        this.duoRequestHelper = duoRequestHelperFactory.getInstance(adminApiConfig);
 
         ADMIN_ENDPOINT_BASE_RESOURCE = duoRequestHelper.createWebResource(ADMIN_ENDPOINT_BASE_PATH);
         USER_ENDPOINT_RESOURCE = ADMIN_ENDPOINT_BASE_RESOURCE.path("users");
