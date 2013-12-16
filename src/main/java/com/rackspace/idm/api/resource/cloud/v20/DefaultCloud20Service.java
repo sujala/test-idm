@@ -456,6 +456,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
+            if (config.getBoolean("createUser.fullPayload.enabled") == false) {
+                if (usr.getSecretQA() != null ||
+                    usr.getGroups()  != null ||
+                    usr.getRoles() != null) {
+                    throw new BadRequestException("Can't specify secret qa, groups, or roles in body");
+                }
+            }
+
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
             userService.setUserDefaultsBasedOnCaller(user, caller);

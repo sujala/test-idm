@@ -2767,7 +2767,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def result = cloud20.createUser(identityAdminToken, user)
 
         then:
-        result.status == 201
+        result.status == 400
 
     }
 

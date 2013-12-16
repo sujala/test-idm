@@ -53,15 +53,13 @@ public class UserConverterCloudV20 {
         userEntity.setPassword(user.getPassword());
         userEntity.setUserPassword(user.getPassword());
 
-        if (config.getBoolean("createUser.fullPayload.enabled") == true) {
-            if (user.getSecretQA() != null) {
-                userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
-                userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
-            }
-
-            userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
-            userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
+        if (user.getSecretQA() != null) {
+            userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
+            userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
         }
+
+        userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
+        userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
 
         return userEntity;
     }

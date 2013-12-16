@@ -130,7 +130,7 @@ class UserConverterCloudV20Test extends Specification {
         racker.rackerId == userEntity.id
     }
 
-    def "convert user from jaxb to domain entity with flag enabled"() {
+    def "convert user from jaxb to domain entity"() {
         given:
         org.openstack.docs.identity.api.v2.User userJaxb = userJaxb(false)
         def tenantRoles = [ new TenantRole() ].asList()
@@ -153,32 +153,6 @@ class UserConverterCloudV20Test extends Specification {
         user.secretAnswer == userJaxb.getSecretQA().answer
         user.getRsGroupId() == rsGroupsIds
         user.getRoles() == tenantRoles
-        user.userPassword == userJaxb.password
-    }
-
-    def "convert user from jaxb to domain entity with flag disabled"() {
-        given:
-        org.openstack.docs.identity.api.v2.User userJaxb = userJaxb(false)
-        def tenantRoles = [ new TenantRole() ].asList()
-        def rsGroupsIds = new HashSet<String>()
-        mockConfig.getBoolean("createUser.fullPayload.enabled") >> false
-
-        when:
-        User user = converterCloudV20.fromUser(userJaxb)
-
-        then:
-        0 * mockRoleConverterCloudV20.toTenantRoles(_) >> tenantRoles
-        0 * mockGroupConverterCloudV20.toSetOfGroupIds(_) >> rsGroupsIds
-
-        user.username == userJaxb.username
-        user.displayName == userJaxb.displayName
-        user.email == userJaxb.email
-        user.enabled == userJaxb.enabled
-        user.region == userJaxb.defaultRegion
-        user.secretQuestion == null
-        user.secretAnswer == null
-        user.getRsGroupId().size() == 0
-        user.getRoles().size() == 0
         user.userPassword == userJaxb.password
     }
 
