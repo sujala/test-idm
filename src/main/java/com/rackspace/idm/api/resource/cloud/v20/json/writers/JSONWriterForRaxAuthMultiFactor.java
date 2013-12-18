@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthMultiFactorSettings extends JSONWriterForEntity<MultiFactor> {
+public class JSONWriterForRaxAuthMultiFactor extends JSONWriterForEntity<MultiFactor> {
 
     @Override
     public void writeTo(MultiFactor multiFactor, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
