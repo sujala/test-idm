@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorSettings;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.domain.entity.MobilePhone;
@@ -136,14 +136,14 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
-    public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactorSettings multiFactorSettings) {
+    public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor) {
         verifyMultifactorServicesEnabled();
 
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            validateUpdateMultiFactorSettingsRequest(requester, userId, multiFactorSettings);
-            multiFactorService.updateMultiFactorSettings(userId, multiFactorSettings);
+            validateUpdateMultiFactorSettingsRequest(requester, userId, multiFactor);
+            multiFactorService.updateMultiFactorSettings(userId, multiFactor);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (IllegalStateException ex) {
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
@@ -154,8 +154,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     }
 
-    private void validateUpdateMultiFactorSettingsRequest(User requester, String userId, MultiFactorSettings multiFactorSettings) {
-        if (multiFactorSettings == null) {
+    private void validateUpdateMultiFactorSettingsRequest(User requester, String userId, MultiFactor multiFactor) {
+        if (multiFactor == null) {
             LOG.debug(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS);
         }
@@ -163,7 +163,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
             throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
         }
-        else if (!multiFactorSettings.isEnabled()) {
+        else if (!multiFactor.isEnabled()) {
             LOG.debug(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY);
         }

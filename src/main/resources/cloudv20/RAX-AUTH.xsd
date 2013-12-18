@@ -60,7 +60,7 @@
             </xsd:documentation>
         </annotation>
     </element>
-    <element name="multiFactorSettings" type="RAX-AUTH:MultiFactorSettings" >
+    <element name="multiFactor" type="RAX-AUTH:MultiFactor" >
         <annotation>
             <xsd:documentation>
                 <p>Settings for multifactor authentication.</p>
@@ -146,7 +146,7 @@
             </annotation>
         </attribute>
     </complexType>
-    <complexType name="MultiFactorSettings">
+    <complexType name="MultiFactor">
         <attribute name="enabled" type="xsd:boolean" use="required">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

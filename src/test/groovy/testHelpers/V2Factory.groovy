@@ -1,7 +1,7 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorSettings
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -438,7 +438,7 @@ class V2Factory {
     }
 
     def createMultiFactorSettings(boolean enabled = true) {
-        new MultiFactorSettings().with {
+        new MultiFactor().with {
             it.enabled = enabled
             return it
         }

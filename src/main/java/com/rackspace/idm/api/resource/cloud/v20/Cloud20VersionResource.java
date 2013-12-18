@@ -1135,8 +1135,8 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            MultiFactorSettings multiFactorSettings) {
-        return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactorSettings).build();
+            MultiFactor multiFactor) {
+        return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactor).build();
     }
 
 

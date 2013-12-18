@@ -1,7 +1,7 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorSettings;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
@@ -154,10 +154,10 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     @Override
-    public void updateMultiFactorSettings(String userId, MultiFactorSettings multiFactorSettings) {
+    public void updateMultiFactorSettings(String userId, MultiFactor multiFactor) {
         User user = userService.checkAndGetUserById(userId);
 
-        if (user.isMultiFactorEnabled() == multiFactorSettings.isEnabled()) {
+        if (user.isMultiFactorEnabled() == multiFactor.isEnabled()) {
             return; //no-op
         } else if (!StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
             throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
@@ -165,7 +165,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
         }
 
-        if (multiFactorSettings.isEnabled()) {
+        if (multiFactor.isEnabled()) {
             enableMultiFactorForUser(user);
         } else {
             disableMultiFactorForUser(user);

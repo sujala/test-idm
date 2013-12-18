@@ -1,9 +1,8 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorSettings;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exception.InvalidPhoneNumberException;
 import com.rackspace.idm.multifactor.domain.Pin;
 
@@ -83,7 +82,7 @@ public interface MultiFactorService {
      *
      * @throws IllegalStateException if the account is not in a valid state to enable multi-factor
      */
-    void updateMultiFactorSettings(String userId, MultiFactorSettings multiFactorSettings);
+    void updateMultiFactorSettings(String userId, MultiFactor multiFactor);
 
 
     /**
