@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -20,6 +23,9 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
     @Shared def identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo
     @Shared def identityAdminThree, userAdminThree, userManageThree, defaultUserThree
     @Shared def domainId
+
+    @Autowired
+    UserDao userDao
 
 
     def "Update user with password populated in request will expire all tokens" () {
@@ -443,4 +449,58 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    def "Multi-factor status is exposed for get user calls"() {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def daoUser = userDao.getUserByUsername(defaultUser.username)
+        daoUser.multifactorEnabled = multiFactorEnabled
+        userDao.updateUser(daoUser, false)
+
+        when:
+        def userById = utils.getUserById(defaultUser.id)
+        def userByUsername = utils.getUserByName(defaultUser.username)
+        def userByEmail = utils.getUserByEmail(defaultUser.email)
+        def users = utils.listUsers()
+
+        then:
+        userById.multiFactorEnabled == expectedResult
+        userByUsername.multiFactorEnabled == expectedResult
+        userByEmail.multiFactorEnabled == expectedResult
+        for (def user : users) {
+            if (user.id == defaultUser.id) {
+                assert (user.multiFactorEnabled == expectedResult)
+            }
+        }
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        multiFactorEnabled  | expectedResult
+        true                | true
+        false               | false
+    }
+
+    def "update user does not set multiFactor enabled flag"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when:
+        userAdmin.multiFactorEnabled = true
+        utils.updateUser(userAdmin)
+        def retrievedUser = utils.getUserById(userAdmin.id)
+
+        then:
+        retrievedUser.multiFactorEnabled == false
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
 }

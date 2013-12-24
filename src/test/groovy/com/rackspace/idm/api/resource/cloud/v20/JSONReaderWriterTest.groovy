@@ -489,6 +489,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         def email = "no@rackspace.com"
         def enabled = true
         def displayName = "displayName"
+        def multiFactorEnabled = true
 
         User userObject = v2Factory.createUser().with {
             it.displayName = displayName
@@ -496,6 +497,7 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.username = username
             it.email = email
             it.enabled = enabled
+            it.multiFactorEnabled = multiFactorEnabled
             it
         }
 
@@ -513,6 +515,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         user.email == email
         user.enabled == enabled
         user.displayName == displayName
+        user.multiFactorEnabled == multiFactorEnabled
     }
 
     def "can read/write apiKeyCreds as json" () {

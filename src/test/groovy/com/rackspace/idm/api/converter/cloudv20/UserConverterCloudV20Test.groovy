@@ -44,6 +44,7 @@ class UserConverterCloudV20Test extends Specification {
         user.email == userEntity.email
         user.enabled == userEntity.enabled
         user.region == userEntity.defaultRegion
+        user.multifactorEnabled == userEntity.multiFactorEnabled
     }
 
     def "convert user from ldap to UserForCreate jersey object"() {
@@ -150,6 +151,7 @@ class UserConverterCloudV20Test extends Specification {
             it.enabled = enabled
             it.region = "region"
             it.created = created()
+            it.multifactorEnabled = true
             return it
         }
     }
