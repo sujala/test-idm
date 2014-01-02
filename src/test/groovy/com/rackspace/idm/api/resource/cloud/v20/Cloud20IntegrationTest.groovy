@@ -2451,7 +2451,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "user$sharedRandom"
         def mossoId = getRandomNumber(1000000,2000000)
 
-        def adminUsername1 = "userAdmin$sharedRandom"
+        def adminUsername1 = "someUserAdmin$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", mossoId, null, true)
         cloud11.createUser(cloud11User)
         User userAdmin = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)
