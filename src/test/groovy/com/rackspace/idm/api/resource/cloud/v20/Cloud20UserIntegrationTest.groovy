@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.CredentialListType
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -455,6 +456,58 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         then:
         token != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Update user's apikey - validate encryption" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        utils.addApiKeyToUser(defaultUser)
+        def cred = utils.getUserApiKey(defaultUser)
+        utils.authenticateApiKey(defaultUser, cred.apiKey)
+        utils.resetApiKey(defaultUser)
+        utils.addApiKeyToUser(defaultUser)
+        def cred2 = utils.getUserApiKey(defaultUser)
+        utils.authenticateApiKey(defaultUser, cred2.apiKey)
+        def user = utils11.getUserByName(defaultUser.username)
+
+        then:
+        cred != null
+        cred.apiKey != null
+        cred2 != null
+        cred2.apiKey != null
+        user.key != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Update user's secretQA - validate encryption" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        utils.createSecretQA(defaultUser)
+        def secretQA = utils.getSecretQA(defaultUser)
+        utils.authenticate(defaultUser)
+        utils.updateSecretQA(defaultUser)
+        def secretQA2 = utils.getSecretQA(defaultUser)
+        utils.authenticate(defaultUser)
+
+        then:
+        secretQA != null
+        secretQA.answer == "home"
+        secretQA2 != null
+        secretQA2.question == "question"
+        secretQA2.answer == "answer"
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

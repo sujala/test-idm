@@ -49,6 +49,7 @@ class Cloud11Utils {
     def getUserByName(String username) {
         def response = methods.getUserByName(username)
         assert (response.status == SC_OK)
+        response.getEntity(User)
     }
 
     def getUserEnabled(User user) {
@@ -79,5 +80,12 @@ class Cloud11Utils {
         def response = methods.getUserBaseURLRef(user.id, baseUrlRefId)
         assert (response.status == SC_OK)
         response.getEntity(BaseURLRef)
+    }
+
+    def setUserKey(User user, String key=testUtils.getRandomUUID()) {
+        def userWithKey = v1Factory.createUserWithOnlyKey(key)
+        def response = methods.setUserKey(user.id, userWithKey)
+        assert (response.status == SC_OK)
+        response.getEntity(User)
     }
 }
