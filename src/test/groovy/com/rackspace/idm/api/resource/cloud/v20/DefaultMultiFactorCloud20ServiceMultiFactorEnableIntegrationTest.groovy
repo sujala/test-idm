@@ -112,7 +112,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         setup:
         addPhone()
         verifyPhone()
-        MultiFactorSettings settings = v2Factory.createMultiFactorSettings(true)
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User intialUserAdmin = userRepository.getUserById(userAdmin.getId())
         assert intialUserAdmin.isMultiFactorEnabled()
@@ -141,7 +141,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         setup:
         addPhone()
         verifyPhone()
-        MultiFactorSettings settings = v2Factory.createMultiFactorSettings(false)
+        MultiFactor settings = v2Factory.createMultiFactorSettings(false)
 
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
@@ -166,7 +166,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         addPhone()
         verifyPhone()
 
-        MultiFactorSettings settings = v2Factory.createMultiFactorSettings(true)
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         settings.setEnabled(false)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
