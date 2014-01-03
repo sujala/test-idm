@@ -38,7 +38,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
     def "Update user's apiKey - validate encryption" () {
         given:
-        User user = utils11.createUser(testUtils.getRandomUUID('test@test'))
+        User user = utils11.createUser(testUtils.getRandomUUID('testApiKey'))
         String key = "key"
 
         when:
@@ -53,6 +53,29 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         then:
         true
+
+        cleanup:
+        utils11.deleteUser(user)
+    }
+
+    def "Add/Update user's secretQA - validate encryption" () {
+        given:
+        User user = utils11.createUser(testUtils.getRandomUUID('testSecretQA'))
+        String key = "key"
+
+        when:
+        utils11.setUserKey(user, key)
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
+        utils.createSecretQA(user20)
+        def secretQA = utils.getSecretQA(user20)
+        utils.updateSecretQA(user20)
+        def updatedSecretQA = utils.getSecretQA(user20)
+        utils.authenticateApiKey(user20, key)
+
+        then:
+        secretQA.answer == "home"
+        updatedSecretQA.question == "question"
+        updatedSecretQA.answer == "answer"
 
         cleanup:
         utils11.deleteUser(user)
