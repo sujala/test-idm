@@ -109,7 +109,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Sending second pin overwrites initial"() {
         setup:
-
+        Pin initialPin = simulatorMobilePhoneVerification.constantPin
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
@@ -123,7 +123,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         //send first pin
         multiFactorService.sendVerificationPin(userAdmin.getId(), retrievedPhone.getId())
         userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
-        assert userAdmin.getMultiFactorDevicePin() == simulatorMobilePhoneVerification.constantPin.getPin()
+        assert userAdmin.getMultiFactorDevicePin() == initialPin.getPin()
 
         Pin updatedPin = new BasicPin("9999")
         simulatorMobilePhoneVerification.setConstantPin(updatedPin)
@@ -139,6 +139,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         !userAdmin.getMultifactorEnabled()
 
         cleanup:
+        simulatorMobilePhoneVerification.setConstantPin(initialPin)
         userRepository.deleteObject(userAdmin)
         mobilePhoneRepository.deleteObject(phone)
     }
