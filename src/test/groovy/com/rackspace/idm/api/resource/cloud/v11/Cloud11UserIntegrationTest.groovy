@@ -50,6 +50,10 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         userKey = utils11.getUserKey(user)
         assert (userKey.key == key)
         utils.authenticateApiKey(user20, userKey.key)
+        utils.resetApiKey(user20)
+        utils.addApiKeyToUser(user20)
+        def cred = utils.getUserApiKey(user20)
+        utils.authenticateApiKey(user20, cred.apiKey)
 
         then:
         true
