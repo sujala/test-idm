@@ -1139,6 +1139,14 @@ public class Cloud20VersionResource {
         return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactor).build();
     }
 
+    @DELETE
+    @Path("/users/{userId}/RAX-AUTH/multi-factor")
+    public Response deleteMultiFactor(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return multiFactorCloud20Service.deleteMultiFactor(uriInfo, authToken, userId).build();
+    }
 
     protected int validateMarker(Integer offset) {
         if (offset == null) {

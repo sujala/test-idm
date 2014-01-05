@@ -12,6 +12,7 @@ import com.rackspace.idm.multifactor.providers.UserManagement;
 import com.rackspace.idm.multifactor.providers.duo.config.AdminApiConfig;
 import com.rackspace.idm.multifactor.providers.duo.domain.*;
 import com.rackspace.idm.multifactor.providers.duo.exception.DuoCreateUserException;
+import com.rackspace.idm.multifactor.providers.duo.exception.DuoDeleteUserException;
 import com.rackspace.idm.multifactor.providers.duo.exception.DuoErrorCodes;
 import com.rackspace.idm.multifactor.providers.duo.exception.GenericDuoException;
 import com.rackspace.idm.multifactor.providers.duo.util.DuoJsonResponseReader;
@@ -109,7 +110,7 @@ public class DuoUserManagement implements UserManagement {
 
         if (response.isFailure()) {
             FailureResult failedResult = response.getFailureResult();
-            throw new GenericDuoException(failedResult);
+            throw new DuoDeleteUserException(failedResult, String.format("Error deleting user with external provider id '%s'. %s", providerId, failedResult.getMessage()));
         }
     }
 

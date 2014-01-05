@@ -1,6 +1,7 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.apache.http.HttpStatus
@@ -303,6 +304,11 @@ class Cloud20Utils {
 
     def verifyPhone(token, userId, mobilePhoneId, com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode verificationCode) {
         def response = methods.verifyVerificationCode(token, userId, mobilePhoneId, verificationCode)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+    def updateMultiFactor(token, userId, MultiFactor settings) {
+        def response = methods.updateMultiFactorSettings(token, userId, settings)
         assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 

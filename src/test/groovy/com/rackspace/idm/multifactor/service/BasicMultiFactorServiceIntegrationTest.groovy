@@ -300,5 +300,41 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
+    /**
+     * Verifies can remove multi-factor on an account. Ultimately this goes through whole set of services to add a phone,
+     * send verification pin, verify, enable, and finally remove.
+     *
+     * @return
+     */
+    def "Successfully remove multi-factor"() {
+        setup:
+        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
+
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
+        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
+        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+
+        when:
+        multiFactorService.removeMultiFactorForUser(userAdmin.getId())
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        StringUtils.isBlank(userAdmin.getExternalMultiFactorUserId())
+        userAdmin.getMultiFactorMobilePhoneRsId() == null
+        userAdmin.getMultiFactorDevicePinExpiration() == null
+        userAdmin.getMultiFactorDevicePin() == null
+        !userAdmin.isMultiFactorDeviceVerified()
+        !userAdmin.isMultiFactorEnabled()
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
+    }
 
 }
