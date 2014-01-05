@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.idm.multifactor.domain.BasicPin
 import com.rackspace.idm.multifactor.domain.Pin
+import com.rackspace.idm.multifactor.providers.UserManagement
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
@@ -37,6 +38,9 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
     @Autowired
     private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
+
+    @Autowired
+    private UserManagement duoUserManagement
 
     /**
      * This tests linking a phone number to a user
@@ -319,6 +323,55 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
         multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
         multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+
+        when:
+        multiFactorService.removeMultiFactorForUser(userAdmin.getId())
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        StringUtils.isBlank(userAdmin.getExternalMultiFactorUserId())
+        userAdmin.getMultiFactorMobilePhoneRsId() == null
+        userAdmin.getMultiFactorDevicePinExpiration() == null
+        userAdmin.getMultiFactorDevicePin() == null
+        !userAdmin.isMultiFactorDeviceVerified()
+        !userAdmin.isMultiFactorEnabled()
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
+    }
+
+    /**
+     * Verify removing multi-factor when duo returns error is still successful.
+     *
+     * @return
+     */
+    def "Successfully remove multi-factor when duo user does not exist"() {
+        setup:
+        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
+
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
+        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
+        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        //remove the duo profile
+        duoUserManagement.deleteUserById(userAdmin.getExternalMultiFactorUserId())
+
+        /*
+        change the profile to one that never existed. If you just delete a
+        real duo profile two times in a row, the second attempt succeeds just like the first (returns 200 status).
+        Setting the external id that never existed within Duo will result in a 404 being returned.
+         */
+        userAdmin.setExternalMultiFactorUserId(UUID.randomUUID().toString().replaceAll("-", ""))
+        userRepository.updateUserAsIs(userAdmin)
 
         when:
         multiFactorService.removeMultiFactorForUser(userAdmin.getId())
