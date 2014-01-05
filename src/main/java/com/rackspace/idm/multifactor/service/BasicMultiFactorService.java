@@ -38,6 +38,13 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
     public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
 
+    private static final String EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME = "externalMultifactorProvider";
+    private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger externalMultiFactorLogger = LoggerFactory.getLogger(EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME);
+
+
     @Autowired
     private UserService userService;
 
@@ -185,7 +192,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
 
-        deleteExternalUser(user.getUsername(), providerUserId);
+        deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
     }
 
     private void enableMultiFactorForUser(User user) {
@@ -209,10 +216,10 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setExternalMultiFactorUserId(null);
         userService.updateUserForMultiFactor(user);
 
-        deleteExternalUser(user.getUsername(), providerUserId);
+        deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
     }
 
-    private void deleteExternalUser(String username, String externalProviderUserId) {
+    private void deleteExternalUser(String userId, String username, String externalProviderUserId) {
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.
         if (StringUtils.hasText(externalProviderUserId)) {
@@ -225,6 +232,10 @@ public class BasicMultiFactorService implements MultiFactorService {
 
                 //TODO: Implement distinct log to track failures to delete from 3rd party system
                 LOG.error(String.format("Error encountered removing user's multifactor profile from third party. username: '%s'; external providerId: '%s'. Encountered error '%s'", username, externalProviderUserId, e.getMessage()));
+
+                externalMultiFactorLogger.error(EXTERNAL_PROVIDER_ERROR_FORMAT,
+                        new Object[] {"DELETE USER", userId, username, externalProviderUserId, e.getMessage()});
+
             }
         }
     }
