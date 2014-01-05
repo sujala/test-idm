@@ -312,6 +312,12 @@ class Cloud20Utils {
         assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 
+    def deleteMultiFactor(token, userId) {
+        def response = methods.deleteMultiFactor(token, userId)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+
     def deleteUserQuietly(user, String token=getServiceAdminToken()) {
         if (user != null) {
             try {

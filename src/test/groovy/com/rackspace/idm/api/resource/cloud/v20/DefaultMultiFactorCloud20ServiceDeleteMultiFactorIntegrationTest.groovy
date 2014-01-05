@@ -153,6 +153,74 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    /**
+     * This tests removing multifactor from an account that was set up for it, then setting it back up again
+     * @return
+     */
+    @Unroll("Successfully reset up multifactor after removing it wth same phone number: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Successfully reset up multifactor after removing it wth same phone number"() {
+        setup:
+        setUpAndEnableMultiFactor()
+        User retrievedUserAdmin = userRepository.getUserById(userAdmin.getId())
+        MobilePhone originalPhone = mobilePhoneRepository.getById(retrievedUserAdmin.getMultiFactorMobilePhoneRsId())
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone newXmlPhone = v2Factory.createMobilePhone(originalPhone.getTelephoneNumber())
+        utils.deleteMultiFactor(userAdminToken, userAdmin.id)
+
+        when:
+        //setup multifactor again using same phone as before
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone returnedXmlPhone = utils.addPhone(userAdminToken, userAdmin.id, newXmlPhone)
+        MobilePhone newPhone = mobilePhoneRepository.getById(returnedXmlPhone.getId())
+
+        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
+        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+        utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        then:
+        newPhone.externalMultiFactorPhoneId == originalPhone.externalMultiFactorPhoneId //the phones are not deleted in duo
+        newPhone.id == originalPhone.id //the phones are not deleted in ldap
+
+        finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        finalUserAdmin.getMultiFactorDevicePin() == null
+        finalUserAdmin.isMultiFactorDeviceVerified()
+        finalUserAdmin.isMultiFactorEnabled()
+
+        cleanup:
+        utils.deleteMultiFactor(userAdminToken, userAdmin.id)
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    /**
+     * This tests removing multifactor from an account that was set up for it, then setting it back up again
+     * @return
+     */
+    @Unroll("Successfully reset up multifactor after removing it: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Successfully reset up multifactor after removing it"() {
+        setup:
+        setUpAndEnableMultiFactor()
+        utils.deleteMultiFactor(userAdminToken, userAdmin.id)
+
+        expect:
+        setUpAndEnableMultiFactor() //"test" is that no errors reported from assertions made while enabling multi-factor again
+
+        cleanup:
+        utils.deleteMultiFactor(userAdminToken, userAdmin.id)
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
     def void verifyFinalUserState(User finalUserAdmin) {
         assert finalUserAdmin.getMultiFactorDevicePinExpiration() == null
         assert finalUserAdmin.getMultiFactorDevicePin() == null
