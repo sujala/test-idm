@@ -15,7 +15,6 @@ buildscript {
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
-        classpath 'com.rackspace.api.clients:veracode-client:1.3'
     }
 }
 
@@ -44,7 +43,6 @@ configurations {
     delombokJava
     delombokTestJava
     jaxb
-    veracode
     appRevision
     wadl.extendsFrom compile
 }
@@ -312,11 +310,6 @@ def getWarArtifacts(){
        result.add(file)
     }
     return result
-}
-
-task veracode() << {
-    def client = new com.rackspace.api.clients.veracode.DefaultVeracodeApiClient("https://analysiscenter.veracode.com/api/", veracodeUsername, veracodePassword, System.out)
-    client.scanArtifacts(getWarArtifacts(), buildVersion as int, "GlobalAuth", "Linux")
 }
 
 task appRevision() << {
