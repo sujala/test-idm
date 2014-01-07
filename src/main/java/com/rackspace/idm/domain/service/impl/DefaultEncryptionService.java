@@ -55,6 +55,9 @@ public class DefaultEncryptionService implements EncryptionService {
             if (user.getApiKey() != null) {
                 user.setEncryptedApiKey(cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, encryptionSalt));
             }
+            if (user.getPassword() != null) {
+                user.setEncryptedClearPassword(cryptHelper.encrypt(user.getPassword(), encryptionVersionId, encryptionSalt));
+            }
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
         } catch (InvalidCipherTextException e) {
