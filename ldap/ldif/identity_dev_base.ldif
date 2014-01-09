@@ -1,0 +1,2447 @@
+dn: rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10071819
+enabled: TRUE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20130322145056.559Z
+rsApiKey:: Is2/L0NNUM3svnnjOcEqVg==
+rsDomainId: -543569094
+rsNastId: StagingUS_e99825fd-b069-4987-bf46-42766bf79fd3
+rsRegion: ORD
+uid: cloud10User_DoNotDelete
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=6,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: -543569094
+userRsId: 10071819
+
+dn: roleRsId=5,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: StagingUS_e99825fd-b069-4987-bf46-42766bf79fd3
+userRsId: 10071819
+
+dn: roleRsId=3,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+
+dn: rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10046995
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20121012202521.754Z
+rsDomainId: 135792468
+uid: testDefaultUser_doNotDelete
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 2
+
+dn: rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10044551
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120924211957.825Z
+rsDomainId: 135792468
+uid: testUserNoRoles_doNotDelete
+userPassword: Password1
+
+dn: cn=ROLES,rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+
+dn: rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10044550
+enabled: TRUE
+mail: testuser@example.org
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120924211954.976Z
+rsDomainId: 135792468
+uid: testUserAdmin_doNotDelete
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=c
+ om
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+
+dn: rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10044477
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120920181026.587Z
+uid: testIdentityAdmin_doNotDelete
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 1
+
+dn: rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10043490
+enabled: FALSE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120918154508.749Z
+uid: testDisabledUser_doNotDelete
+userPassword: Password1
+
+dn: cn=ROLES,rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10043250
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120914232353.407Z
+uid: testServiceAdmin_doNotDelete
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10022837
+enabled: TRUE
+mail: john.smith@example.org
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120628153616.334Z
+uid: hectorUserAdmin
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+
+dn: rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10022623
+enabled: TRUE
+mail: k@example.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120627230933.121Z
+rsApiKey:: 0p5Hq3v9YYI4c2yPHmegVg==
+rsNastId: asdfgh1234
+rsRegion: US
+uid: kurtDefaultUser
+userPassword: Password1
+
+dn: cn=TOKENS,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 2
+
+dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 173190
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120312182051.512Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsNastId: MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: authQE
+userPassword: Auth1234
+
+dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+objectClass: top
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 173189
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120919153931.472Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsApiKey:: cBoF/yUr7bFU8DrFOGNiEw==
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsNastId: MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: auth
+userPassword: auth123
+
+dn: cn=TOKENS,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 1
+
+dn: rsId=1,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage101.dfw1.stg.swift.racklabs.com/v1/v1
+rsId: 1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com/v1/v1
+openStackType: object-store
+policyId: 3043
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=10,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 10
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=11,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 11
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=12,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 12
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=13,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 13
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=2,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.clouddrive.com/v1
+rsId: 2
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=3,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 3
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=4,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage4.clouddrive.com/v1
+rsId: 4
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage4.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=5,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage5.clouddrive.com/v1
+rsId: 5
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage5.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=6,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1/
+rsId: 6
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=8,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1/
+rsId: 8
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=9,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 9
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=113,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://cmstaging.api.rackspacecloud.com/v1.0
+rsId: 113
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=114,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://ord.servers.preview.api.rackspacecloud.com/v2
+rsId: 114
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudServersPreview
+
+dn: rsId=115,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://ord.cbs.preview.api.rackspacecloud.com/v1
+rsId: 115
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudBlockStoragePreview
+
+dn: rsId=17,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://staging.dnsaas.rackspace.net/v1.0
+rsId: 17
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:dns
+rsGlobal: FALSE
+service: cloudDNS
+
+dn: rsId=31,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 31
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:load-balancer
+rsAdminUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=32,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 32
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:load-balancer
+rsAdminUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=33,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://lon.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 33
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudLoadBalancers
+
+dn: rsId=34,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: http://alpha.ord.servers.api.rackspacecloud.com:8774/v1.1
+rsId: 34
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=58,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 58
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=59,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://public/
+rsId: 59
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=62,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+rsId: 62
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://lon.servers.api.rackspacecloud.com/v2
+versionList: https://lon.servers.api.rackspacecloud.com/
+
+dn: rsId=63,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 63
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=64,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 64
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=65,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 65
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=66,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+rsId: 66
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=67,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 67
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://staging.preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=74,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 74
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
+ unts/CLOUD
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=75,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 75
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+service: BillingService
+
+dn: rsId=76,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 76
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: UsageService
+
+dn: rsId=77,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 77
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: IncidentService
+
+dn: rsId=78,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://api:8774/v2
+rsId: 78
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=79,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 79
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesHuddle48
+
+dn: rsId=82,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://volume-api:8774/v1
+rsId: 82
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=83,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 83
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudLoadBalancers
+
+dn: rsId=85,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+rsId: 85
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPublicPreprod
+
+dn: rsId=104,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsId: 104
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:database
+rsAdminUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudDatabases
+
+dn: rsId=105,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsId: 105
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:database
+rsAdminUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudDatabases
+
+dn: rsId=106,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://monitoring.api.rackspacecloud.com/v1.0
+rsId: 106
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+service: cloudMonitoring
+
+dn: rsId=107,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://api.cbsbeta.ord1.ohthree.com/v2
+rsId: 107
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: CBSPreview-ORD
+service: cloudServersCBSPreview
+
+dn: rsId=108,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://volume-api.cbsbeta.ord1.ohthree.com/v1
+rsId: 108
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: CBSPreview-ORD
+service: cloudVolumeCBSPreview
+
+dn: rsId=109,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsId: 109
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudDatabases
+
+dn: rsId=110,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://api:8774/v2
+rsId: 110
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: CBSDev-ORD
+service: openstackHuddle48
+
+dn: rsId=111,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 111
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+
+dn: rsId=112,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://volume-api:8774/v1
+rsId: 112
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: CBSDev-ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=15,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+rsId: 15
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServers
+versionId: 1.0
+versionInfo: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+versionList: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+
+dn: rsId=16,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://ord.servers.api.rackspacecloud.com/v1.0
+rsId: 16
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=35,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: http://alpha-test.ord.servers.api.rackspacecloud.com:8774/v1.1
+rsId: 35
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+rsRegion: ORD-Test
+service: cloudServersOpenStack
+
+dn: rsId=36,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: http://alpha.lon.servers.api.rackspacecloud.com:8774/v1.1
+rsId: 36
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=37,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: http://alpha-test.lon.servers.api.rackspacecloud.com:8774/v1.1
+rsId: 37
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON-Test
+service: cloudServersOpenStack
+
+dn: rsId=1221,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://otherstorage.clouddrive.com/v1
+rsId: 1221
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: cloudFiles
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=1000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://otherstorage.clouddrive.com/v1
+rsId: 1000
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: cloudServers
+policyId: 1041
+policyId: 1039
+rsRegion: ORD
+service: TestService
+
+dn: rsId=14,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://cdn.stg.clouddrive.com
+rsId: 14
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+
+dn: rsId=18,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 18
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=19,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://public/
+rsId: 19
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=116,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://preview-ord.servers.api.rackspacecloud.com/v2
+rsId: 116
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudServersOpenStackPreview
+
+dn: rsId=117,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preview-ord.blockstorage.api.rackspacecloud.com/v1
+rsId: 117
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudBlockStoragePreview
+
+dn: rsId=20,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://public-all-urls/
+rsId: 20
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://internal-all-urls/
+openStackType: undefined
+rsAdminUrl: https://admin-all-urls/
+rsGlobal: FALSE
+service: all-urls
+
+dn: rsId=21,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://dfw.servers.api.rackspacecloud.com/v2
+rsId: 21
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+
+dn: rsId=22,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://ord.servers.api.rackspacecloud.com/v2
+rsId: 22
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=23,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+rsId: 23
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=24,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 24
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=25,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 25
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=26,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 26
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=27,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+rsId: 27
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=28,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 28
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=38,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 38
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
+ unts
+rsGlobal: FALSE
+rsRegion: STAGING
+service: CustomerService
+
+dn: rsId=39,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 39
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+rsRegion: STAGING
+service: BillingService
+
+dn: rsId=40,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 40
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: STAGING
+service: UsageService
+
+dn: rsId=41,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 41
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: STAGING
+service: IncidentService
+
+dn: rsId=42,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 42
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=43,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://api:8774/v2
+rsId: 43
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=44,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 44
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesHuddle48
+
+dn: rsId=45,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://staging.dnsaas.rackspace.net/v1.0
+rsId: 45
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:dns
+rsGlobal: FALSE
+service: cloudDNS
+
+dn: rsId=46,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 46
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=47,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://dfw.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 47
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=54,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://dfw.databases.api.rackspacecloud.com/v1.0
+rsId: 54
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudDatabases
+
+dn: rsId=55,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://ord.databases.api.rackspacecloud.com/v1.0
+rsId: 55
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudDatabases
+
+dn: rsId=56,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://monitoring.api.rackspacecloud.com/v1.0
+rsId: 56
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+service: cloudMonitoring
+
+dn: rsId=118,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://admin.dfw.servers.api.rackspacecloud.com/v2
+rsId: 118
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServersPreprodAdmin
+
+dn: rsId=126,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://volume-api1.a0001.h48.ohthree.com:8774/v1
+rsId: 126
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=120,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://preprod.ord.servers.api.rackspacecloud.com/v2
+rsId: 120
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersPreprod
+
+dn: rsId=122,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.ord.blockstorage.api.rackspacecloud.com/v1
+rsId: 122
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStoragePreprod
+
+dn: rsId=140,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://10.127.7.19/pods/
+rsId: 140
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: http://10.127.7.19/pods/
+openStackType: rax:whales
+rsGlobal: FALSE
+rsRegion: CASTLE
+service: rax:whales
+versionId: 1
+versionInfo:: IA==
+versionList:: IA==
+
+dn: rsId=127,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://nova-api1.a0001.h48.ohthree.com:8774/v2
+rsId: 127
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: openstackHuddle48
+
+dn: rsId=130,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://admin.ord.servers.api.rackspacecloud.com/v2
+rsId: 130
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=131,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://admin.lon.servers.api.rackspacecloud.com/v2
+rsId: 131
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=132,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 132
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://10.24.31.26:9292/v1/images
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPublicPreprod
+
+dn: rsId=133,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.ord.servers.api.rackspacecloud.com/v2
+rsId: 133
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=124,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://dfw.blockstorage.api.rackspacecloud.com/v1
+rsId: 124
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudBlockStorage
+
+dn: rsId=135,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://staging.monitoring.api.rackspacecloud.com/v1.0
+rsId: 135
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=134,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+rsId: 134
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+
+dn: rsId=1001,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1001
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+
+dn: rsId=1002,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1002
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1003,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1003
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=103,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 103
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=125,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://nova-api1.a0001.h48.ohthree.com:8774/v2
+rsId: 125
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=1041,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://staging.lon3.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 1041
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudLoadBalancers
+
+dn: rsId=1042,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://staging.monitoring.api.rackspacecloud.com/v1.0
+rsId: 1042
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=1004,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1004
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage4.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1005,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1005
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage5.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1006,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1006
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFiles
+
+dn: rsId=1007,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1007
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+
+dn: rsId=1008,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+rsId: 1008
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFiles
+
+dn: rsId=2000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://otherstorage.clouddrive.com/v1
+rsId: 2000
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: object-store
+policyId: 1039
+policyId: 1041
+rsAdminUrl: http://someadmin.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: TestService
+
+dn: rsId=1009,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 1009
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+
+dn: rsId=1010,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 1010
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+
+dn: rsId=1011,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 1011
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+
+dn: rsId=1012,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 1012
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFilesCDN
+
+dn: rsId=1013,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://cdn.stg.clouddrive.com/v1
+rsId: 1013
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+
+dn: rsId=1014,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+rsId: 1014
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServers
+versionId: 1.0
+versionInfo: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+versionList: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+
+dn: rsId=1015,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://servers.staging.ord1.uk.ccp.rackspace.net/v1.0
+rsId: 1015
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=1016,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://ord.servers.api.rackspacecloud.com/v1.0/
+rsId: 1016
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=1019,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1019
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=1020,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://public/
+rsId: 1020
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=1021,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://public-all-urls/
+rsId: 1021
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://internal-all-urls/
+openStackType: undefined
+rsAdminUrl: https://admin-all-urls/
+rsGlobal: FALSE
+service: all-urls
+
+dn: rsId=1026,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://dfw.servers.api.rackspacecloud.com/v2
+rsId: 1026
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://dfw.servers.api.rackspacecloud.com/v2
+versionList: https://dfw.servers.api.rackspacecloud.com/
+
+dn: rsId=1027,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://ord.servers.api.rackspacecloud.com/v2
+rsId: 1027
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://ord.servers.api.rackspacecloud.com/v2
+versionList: https://ord.servers.api.rackspacecloud.com/
+
+dn: rsId=1028,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+rsId: 1028
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://lon.servers.api.rackspacecloud.com/v2
+versionList: https://lon.servers.api.rackspacecloud.com/
+
+dn: rsId=1029,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: https://
+rsId: 1029
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=1030,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1030
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=1031,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1031
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=1032,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+rsId: 1032
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=1033,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1033
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=1034,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 1034
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=1035,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://dfw.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 1035
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=1036,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://lon.loadbalancers.api.rackspacecloud.com/v1.0
+rsId: 1036
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudLoadBalancers
+
+dn: rsId=1037,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1037
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=1038,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1038
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+service: BillingService
+
+dn: rsId=1039,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1039
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: UsageService
+
+dn: rsId=1040,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://
+rsId: 1040
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: IncidentService
+
+dn: rsId=136,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+rsId: 136
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD-Test
+service: cloudServers
+versionId: 1.0
+versionInfo: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+versionList: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+
+dn: rsId=137,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: https://qe.ord.lunr.racklabs.com/v1
+rsId: 137
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageQE
+
+dn: rsId=138,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl: http://qe.ord.lunr.racklabs.com/v1
+rsId: 138
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageQE
+
+dn: rsId=888,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+publicUrl:: aHR0cHM6Ly9zZXJ2aWNlLXB1YmxpYy5jb20vdjEg
+rsId: 888
+enabled: TRUE
+internalUrl:: aHR0cHM6Ly9zZXJ2aWNlLWludGVybmFsLmNvbS92MSA=
+openStackType: compute
+rsAdminUrl: https://service-admin.com/v1
+rsGlobal: FALSE
+rsRegion: North
+service: Compute
+versionId: 1
+versionInfo:: aHR0cHM6Ly9jb21wdXRlLm5vcnRoLnB1YmxpYy5jb20vdjEvIA==
+versionList: https://compute.north.public.com/
+
+dn: rsId=887,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl:: aHR0cHM6Ly9zZXJ2aWNlLXB1YmxpYy5jb20vdjEg
+rsId: 887
+enabled: FALSE
+internalUrl:: aHR0cHM6Ly9zZXJ2aWNlLWludGVybmFsLmNvbS92MSA=
+openStackType: compute
+rsAdminUrl: https://service-admin.com/v1
+rsGlobal: FALSE
+rsRegion: North
+service: Compute
+versionId: 1
+versionInfo:: aHR0cHM6Ly9jb21wdXRlLm5vcnRoLnB1YmxpYy5jb20vdjEvIA==
+versionList: https://compute.north.public.com/
+
+dn: rsId=100000000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: test
+rsId: 100000000
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: cloudServers
+policyId: 100000000
+rsGlobal: FALSE
+service: test
+
+dn: rsId=1010110110,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: test
+rsId: 1010110110
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: cloudServers
+policyId: 100000000
+rsGlobal: FALSE
+service: test
+
+dn: rsId=100001,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+publicUrl: http://public.url
+rsId: 100001
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+
+dn: cn=LON,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: LON
+enabled: TRUE
+rsCloud: UK
+useForDefaultRegion: TRUE
+
+dn: cn=IAD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: IAD
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: FALSE
+
+dn: cn=DFW,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: DFW
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: FALSE
+
+dn: cn=ORD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: ORD
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: TRUE
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: cloudFiles
+userPassword: Password1
+enabled: TRUE
+openStackType: object-store
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=app
+ lications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1
+ ,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: object-store:default
+rsId: 5
+description: A Role that allows a user access to keystone Service methods
+rsWeight: 500
+
+dn: clientId=6ae999552a0d2dca14d62e2bc8b764d377b1dd6c,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: rsApplication
+objectClass: top
+clientId: 6ae999552a0d2dca14d62e2bc8b764d377b1dd6c
+cn: Identity Global Roles
+userPassword: Password1
+description: Identity Global Roles
+openStackType: identity
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=6ae999552a0d2dca14d62e2bc8b764d377b1dd6c,ou=app
+ lications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: rsApplication
+objectClass: top
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Customer Idm
+userPassword: Password1
+description: Our description here ...
+enabled: TRUE
+RCN: RACKSPACE
+title: Rackspace User Management
+tokenScope: user_mgmt
+
+dn: cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=app
+ lications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: rsId=11,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d22
+ 1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Customer Admin
+rsId: 11
+description: A Role that allows a user to Admin other users in his customer
+rsWeight: 1000
+
+dn: rsId=9,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221
+ ,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Racker
+rsId: 9
+description: Defines a user as being a Racker
+rsWeight: 100
+
+dn: rsId=10,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d22
+ 1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Super Admin
+rsId: 10
+description: A role that allows a user/application full access to Global Aut
+ h
+rsWeight: 0
+
+dn: cn=TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applicati
+ ons,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: rsApplication
+objectClass: top
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: cloudServers
+userPassword: Password1
+enabled: TRUE
+openStackType: compute
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+objectClass: top
+cn: CLIENT ROLES
+
+dn: rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: compute:default
+rsId: 6
+description: A Role that allows a user access to keystone Service methods
+rsWeight: 500
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsApplication
+objectClass: top
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: Cloud Auth Service
+userPassword: Password1
+enabled: TRUE
+openStackType: identity
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+objectClass: top
+cn: CLIENT ROLES
+
+dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:user-manage
+rsId: 7
+description: User manage role
+rsWeight: 1500
+
+dn: rsId=1,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:admin
+rsId: 1
+description: Admin Role.
+rsWeight: 100
+
+dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:default
+rsId: 2
+description: Default Role.
+rsWeight: 2000
+
+dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:user-admin
+rsId: 3
+description: User Admin Role.
+rsWeight: 1000
+
+dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:service-admin
+rsId: 4
+description: Super Admin Role.
+rsWeight: 0
+
+dn: cn=TOKENS,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
