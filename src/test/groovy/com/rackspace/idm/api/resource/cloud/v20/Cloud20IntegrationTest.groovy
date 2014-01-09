@@ -2756,7 +2756,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username1 = "username" + (long)(Math.random() * 100000)
         def groupName = "groupName"
 
-        if (cloud20.getGroupByName(identityAdminToken, groupName).getEntity(Group.class) == null) {
+        if (cloud20.getGroupByName(identityAdminToken, groupName).status == 404) {
             cloud20.createGroup(identityAdminToken, groupName)
         }
 
