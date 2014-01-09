@@ -253,6 +253,14 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     	return this.enabled == null || !this.enabled;
     }
 
+    public boolean isMultiFactorEnabled() {
+        return !(multifactorEnabled == null) && multifactorEnabled;
+    }
+
+    public boolean isMultiFactorDeviceVerified() {
+        return !(multiFactorDeviceVerified == null) && multiFactorDeviceVerified;
+    }
+
     public Password getPasswordObj() {
         return new Password(password, passwordIsNew, passwordLastUpdated, passwordWasSelfUpdated);
     }

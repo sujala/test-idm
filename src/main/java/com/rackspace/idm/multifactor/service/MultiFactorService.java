@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.exception.InvalidPhoneNumberException;
 import com.rackspace.idm.multifactor.domain.Pin;
@@ -32,28 +33,6 @@ public interface MultiFactorService {
     MobilePhone addPhoneToUser(String userId, Phonenumber.PhoneNumber phoneNumber);
 
     /**
-     * Returns the standard string representation used by the multiFactor
-     * service (E.123) for the provided phone number (e.g. "+1 512-444-0000" for US numbers).
-     *
-     * @param phoneNumber
-     * @return
-     */
-    String canonicalizePhoneNumberToString(Phonenumber.PhoneNumber phoneNumber);
-
-    /**
-     * Parses the provided string representation into the standard phone number object required for use of the
-     * multiFactor service. The country code is assumed to be for United States (1), unless the phone number is
-     * provided
-     * in international format and starts with a '+' (e.g. 41 44 668 1800' for Switzerland country code (41)).
-     *
-     * @param phoneNumber
-     * @return
-     * @throws com.rackspace.idm.exception.InvalidPhoneNumberException
-     *
-     */
-    Phonenumber.PhoneNumber parsePhoneNumber(String phoneNumber) throws InvalidPhoneNumberException;
-
-    /**
      * Sends the verification pin to the specified mobile phone and stores the information in some manner in which
      * the {@link #verifyPhoneForUser} can be used to verify the user received the pin. If this method is called
      * repeatedly for the same mobilePhone and user, it is up to implementations to determine whether previous PIN
@@ -66,7 +45,7 @@ public interface MultiFactorService {
      * @throws com.rackspace.idm.exception.MultiFactorDeviceNotAssociatedWithUserException If specified device not associated with user
      * @throws com.rackspace.idm.exception.MultiFactorDeviceAlreadyVerifiedException if the specified phone is already verified for this user
      * @throws InvalidPhoneNumberException if the phone number associated with the mobilePhoneId is invalid for some reason
-     * @throws com.rackspace.idm.multifactor.providers.SendPinException if there was a problem sending the pin to the phone
+     * @throws com.rackspace.idm.multifactor.providers.exceptions.SendPinException if there was a problem sending the pin to the phone
      * @throws com.rackspace.idm.exception.SaveOrUpdateException if there was a problem storing the information
      */
     void sendVerificationPin(String userId, String mobilePhoneId);
@@ -94,4 +73,22 @@ public interface MultiFactorService {
      * @return
      */
     MobilePhone getMobilePhoneById(String mobilePhoneId);
+
+    /**
+     * Updates the account's multifactor settings. Must verify that the account is properly configured to enable
+     * multi-factor (e.g. - has a verified device).
+     *
+     * @param userId
+     *
+     * @throws IllegalStateException if the account is not in a valid state to enable multi-factor
+     */
+    void updateMultiFactorSettings(String userId, MultiFactor multiFactor);
+
+
+    /**
+     * Removes multifactor from the user's account. Does not need to clean up phones at this time.
+     *
+     * @param userId
+     */
+    void removeMultiFactorForUser(String userId);
 }

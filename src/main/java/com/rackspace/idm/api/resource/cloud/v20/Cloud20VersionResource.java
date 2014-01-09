@@ -1129,6 +1129,17 @@ public class Cloud20VersionResource {
         return multiFactorCloud20Service.verifyVerificationCode(uriInfo, authToken, userId, deviceId, verificationCode).build();
     }
 
+    @PUT
+    @Path("/users/{userId}/RAX-AUTH/multi-factor")
+    public Response updateMultiFactorSettings(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            MultiFactor multiFactor) {
+        return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactor).build();
+    }
+
+
     protected int validateMarker(Integer offset) {
         if (offset == null) {
             return 0;

@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -47,6 +48,12 @@ class Cloud20Methods {
 
     //Constants
     static def X_AUTH_TOKEN = "X-Auth-Token"
+
+    //path constants
+    static def SERVICE_PATH_MOBILE_PHONES = "mobile-phones"
+    static def SERVICE_PATH_MULTI_FACTOR = "multi-factor"
+    static def SERVICE_PATH_VERIFY = "verify"
+    static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
 
 
     def init(){
@@ -277,26 +284,32 @@ class Cloud20Methods {
     }
 
     def addPhoneToUser(String token, String userId, MobilePhone requestMobilePhone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
-        resource.path(path20).path("users").path(userId)
-                .path("RAX-AUTH").path("multi-factor").path("mobile-phones")
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
     }
 
     def sendVerificationCode(String token, String userId, String mobilePhoneId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
-        resource.path(path20).path("users").path(userId)
-                .path("RAX-AUTH").path("multi-factor").path("mobile-phones").path(mobilePhoneId).path("verificationcode")
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES).path(mobilePhoneId).path(SERVICE_PATH_VERIFICATION_CODE)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).post(ClientResponse)
     }
 
     def verifyVerificationCode(String token, String userId, String mobilePhoneId, VerificationCode verificationCode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
-        resource.path(path20).path("users").path(userId)
-                .path("RAX-AUTH").path("multi-factor").path("mobile-phones").path(mobilePhoneId).path("verify")
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES).path(mobilePhoneId).path(SERVICE_PATH_VERIFY)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(verificationCode).post(ClientResponse)
     }
 
+    def updateMultiFactorSettings(String token, String userId, MultiFactor multiFactorSettings, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorSettings).put(ClientResponse)
+    }
+
     def addUserRole(String token, String userId, String roleId) {
-        resource.path(path20).path("users").path(userId)
-                .path("roles").path("OS-KSADM").path(roleId)
+        resource.path(path20).path(USERS).path(userId)
+                .path(ROLES).path(OS_KSADM).path(roleId)
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
@@ -490,6 +503,5 @@ class Cloud20Methods {
             return it
         }
     }
-
 
 }

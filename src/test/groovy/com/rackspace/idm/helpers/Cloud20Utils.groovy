@@ -3,6 +3,7 @@ package com.rackspace.idm.helpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -287,5 +288,21 @@ class Cloud20Utils {
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.addUserToGroup(token, group.id, user.id)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def addPhone(token, userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone mobilePhone = factory.createMobilePhone()) {
+        def response = methods.addPhoneToUser(token, userId, mobilePhone)
+        assert(response.status == SC_CREATED)
+        response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
+    }
+
+    def sendVerificationCodeToPhone(token, userId, mobilePhoneId) {
+        def response = methods.sendVerificationCode(token, userId, mobilePhoneId)
+        assert (response.status == SC_ACCEPTED)
+    }
+
+    def verifyPhone(token, userId, mobilePhoneId, com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode verificationCode) {
+        def response = methods.verifyVerificationCode(token, userId, mobilePhoneId, verificationCode)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 }

@@ -1,8 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
@@ -10,6 +11,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 
 /**
@@ -19,10 +21,6 @@ import org.dozer.Mapping;
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE)
 public class MobilePhone implements Auditable, UniqueId {
-    public static final String TELEPHONE_DEFAULT_REGION = "US";
-
-    private PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
-
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
@@ -49,5 +47,10 @@ public class MobilePhone implements Auditable, UniqueId {
         }
     }
 
-
+    public Phonenumber.PhoneNumber getStandardizedTelephoneNumber() {
+        if (StringUtils.isBlank(telephoneNumber)) {
+            return null;
+        }
+        return IdmPhoneNumberUtil.getInstance().parsePhoneNumber(telephoneNumber);
+    }
 }

@@ -2,6 +2,7 @@ package com.rackspace.idm.multifactor.providers.duo.service
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration
 import com.rackspace.idm.multifactor.providers.ProviderAvailability
+import com.rackspace.idm.multifactor.providers.duo.config.ApacheConfigAuthApiConfig
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -20,7 +21,9 @@ class DuoAvailabilityIntegrationTest extends Specification {
     def setupSpec() {
         PropertyFileConfiguration pfConfig = new PropertyFileConfiguration();
         Configuration devConfiguration = pfConfig.getConfig();
-        duoAvailability = new DuoAvailability(devConfiguration)
+        duoAvailability = new DuoAvailability()
+        duoAvailability.setAuthApiConfig(new ApacheConfigAuthApiConfig(devConfiguration))
+        duoAvailability.init();
     }
 
     def "get duo availability"() {

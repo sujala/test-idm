@@ -9,14 +9,11 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.idm.multifactor.domain.BasicPin
 import com.rackspace.idm.multifactor.domain.Pin
-import com.rackspace.idm.multifactor.providers.MobilePhoneVerification
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
-import com.rackspace.test.SingleTestConfiguration
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 import org.springframework.test.context.ContextConfiguration
 
 /**
@@ -24,7 +21,7 @@ import org.springframework.test.context.ContextConfiguration
  * costs money per text. This is NOT desirable for a regression test that will continually run. Instead a simulated service is injected that will return a constant
  * PIN. Actually testing SMS texts should be performed via some other mechanism - in a manual fashion.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/service/BasicMultiFactorServiceIntegrationTest-context.xml"])
+@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -112,7 +109,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Sending second pin overwrites initial"() {
         setup:
-
+        Pin initialPin = simulatorMobilePhoneVerification.constantPin
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
@@ -126,7 +123,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         //send first pin
         multiFactorService.sendVerificationPin(userAdmin.getId(), retrievedPhone.getId())
         userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
-        assert userAdmin.getMultiFactorDevicePin() == simulatorMobilePhoneVerification.constantPin.getPin()
+        assert userAdmin.getMultiFactorDevicePin() == initialPin.getPin()
 
         Pin updatedPin = new BasicPin("9999")
         simulatorMobilePhoneVerification.setConstantPin(updatedPin)
@@ -142,6 +139,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         !userAdmin.getMultifactorEnabled()
 
         cleanup:
+        simulatorMobilePhoneVerification.setConstantPin(initialPin)
         userRepository.deleteObject(userAdmin)
         mobilePhoneRepository.deleteObject(phone)
     }
@@ -184,68 +182,123 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
     }
 
     /**
-     * TODO: This test performs the entire golden use case of adding a mobile phone to a user-admin, sending sms, and verifying the code. The
-     * end state of the user is verified for appropriate behavior.
+     * Verifies can enable multi-factor on an account. Ultimately this goes through whole set of services to add a phone,
+     * send verification pin, verify, and finally enable.
      *
      * @return
      */
-    def "Golden use case of adding phone, send pin, verify pin works in harmony"() {
+    def "Successfully enable multi-factor"() {
         setup:
+        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
         Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
-        String canonTelephoneNumber = PhoneNumberGenerator.canonicalizePhoneNumberToString(telephoneNumber)
+
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
+        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
+        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
 
         when:
-        //STEP 1: Add phone to user
-        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
-
-        //STEP 2: Send PIN
-        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
-
-        //STEP 3: Verify PIN
-        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), simulatorMobilePhoneVerification.getConstantPin())
-
-        MobilePhone finalPhone = mobilePhoneRepository.getById(phone.getId())  //retrieve the phone from ldap
-        User finalUser = userRepository.getUserById(userAdminOpenStack.getId())
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
         then:
-        //verify phone
-        finalPhone.getId() != null
-        finalPhone.getTelephoneNumber() == canonTelephoneNumber
-
-        //verify user state
-        finalUser.getMultiFactorMobilePhoneRsId() == finalPhone.getId()
-        finalUser.getMultiFactorDevicePin() == null
-        finalUser.getMultiFactorDevicePinExpiration() == null
-        finalUser.getMultiFactorDeviceVerified()
-        !finalUser.getMultifactorEnabled()
+        userAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
+        userAdmin.getMultiFactorDevicePinExpiration() == null
+        userAdmin.getMultiFactorDevicePin() == null
+        userAdmin.getMultiFactorDeviceVerified()
+        userAdmin.getMultifactorEnabled()
+        StringUtils.isNotBlank(userAdmin.getExternalMultiFactorUserId())
 
         cleanup:
-        userRepository.deleteObject(userAdmin)
-        mobilePhoneRepository.deleteObject(phone)
+        if (userAdmin != null) {
+            multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
+            userRepository.deleteObject(userAdmin)
+        }
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
-     * This bean configuration is used to substitute the DuoMobilePhoneVerification with a simulator so an SMS message is not actually sent and instead
-     * a given pin is returned. The context file BasicMultiFactorServiceIntegrationTest-context.xml
-     * loads this file.
+     * Verifies can enable multi-factor on an account. Ultimately this goes through whole set of services to add a phone,
+     * send verification pin, verify, and finally enable.
+     *
+     * @return
      */
-    @SingleTestConfiguration
-    public static class Config {
-        public static final DEFAULT_CONSTANT_PIN = new BasicPin("1234");
+    def "Successfully disable multi-factor"() {
+        setup:
+        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
 
-        /**
-         * Create a simulator mobile phone verification so sms messages are not sent. Add the @Primary annotation so autowiring will choose this
-         * bean over the standard mobilePhoneVerification bean that will be created as part of loading the main config. Without this the bean wiring
-         * will fail due to 2 beans of type MobilePhoneVerification
-         * @return
-         */
-        @Primary
-        @Bean
-        MobilePhoneVerification simulatorMobilePhoneVerification() {
-            return new SimulatorMobilePhoneVerification(DEFAULT_CONSTANT_PIN);
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
+
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
+        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
+        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+
+        when:
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(false))
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        userAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
+        userAdmin.getMultiFactorDevicePinExpiration() == null
+        userAdmin.getMultiFactorDevicePin() == null
+        userAdmin.isMultiFactorDeviceVerified()
+        !userAdmin.isMultiFactorEnabled()
+        StringUtils.isBlank(userAdmin.getExternalMultiFactorUserId())
+
+        cleanup:
+        if (userAdmin != null) {
+            multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
+            userRepository.deleteObject(userAdmin)
         }
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
+
+    /**
+     * Verifies can re-enable multi-factor on an account after disabling.
+     *
+     * @return
+     */
+    def "Successfully re-enable multi-factor after disabling"() {
+        setup:
+        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
+
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
+        multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
+        multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), verificationCode)
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(false))
+
+        when:
+        multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
+        userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        userAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
+        userAdmin.getMultiFactorDevicePinExpiration() == null
+        userAdmin.getMultiFactorDevicePin() == null
+        userAdmin.isMultiFactorDeviceVerified()
+        userAdmin.isMultiFactorEnabled()
+        StringUtils.isNotBlank(userAdmin.getExternalMultiFactorUserId())
+
+        cleanup:
+        if (userAdmin != null) {
+            multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
+            userRepository.deleteObject(userAdmin)
+        }
+        if (phone != null) mobilePhoneRepository.deleteObject(phone)
+    }
+
+
 }

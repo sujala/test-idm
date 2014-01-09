@@ -14,7 +14,7 @@ import javax.ws.rs.core.MultivaluedMap
 
 class DuoRequestHelperTest extends Specification {
 
-    @Shared DuoRequestHelper duoRequestHelper;
+    @Shared DefaultDuoRequestHelper duoRequestHelper;
 
     /**
      * A test config. Should not be real. This is set to the values specified in the duo documentation as an example to verify expectations.
@@ -22,7 +22,7 @@ class DuoRequestHelperTest extends Specification {
     private static final DuoSecurityConfig testConfig = new SimpleDuoSecurityConfig("DIWJ8X6AEYOR5OMC6TQ1", "Zh5eGmUq9zpfQnyUIu5OL9iWoMMv5ZNmk3zLJ4Ep", "api-XXXXXXXX.duosecurity.com", 30000);
 
     def setupSpec() {
-        duoRequestHelper = new DuoRequestHelper(testConfig);
+        duoRequestHelper = new DefaultDuoRequestHelper(testConfig);
     }
 
     def "Can get base web resource with empty path and host passed in config"() {
@@ -153,7 +153,7 @@ class DuoRequestHelperTest extends Specification {
                 .build()
 
         TreeMap<String, String> sortedMap = new TreeMap<String, String>(map)
-        DateTime testedDateTime = DuoRequestHelper.RFC822DATEFORMAT.parseDateTime("Tue, 21 Aug 2012 17:29:18 -0000")
+        DateTime testedDateTime = DefaultDuoRequestHelper.RFC822DATEFORMAT.parseDateTime("Tue, 21 Aug 2012 17:29:18 -0000")
 
         WebResource baseResource = duoRequestHelper.createWebResource("/verify/v1/status")
         String formattedParameters = duoRequestHelper.urlEncodeParameters(sortedMap)

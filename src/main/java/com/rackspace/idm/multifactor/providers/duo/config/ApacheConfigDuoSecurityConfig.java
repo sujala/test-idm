@@ -3,15 +3,16 @@ package com.rackspace.idm.multifactor.providers.duo.config;
 import org.apache.commons.configuration.Configuration;
 
 /**
- * A base class for retrieving the required configuration properties for a Duo Security 'integration' from the standard external IDM configuration file. Subclasses
+ * A base class for retrieving the required configuration properties for a Duo Security 'integration' from an Apache commons configuration. Subclasses
  * will need to specify the names of the properties that should be read.
  */
-public abstract class IdmDuoSecurityConfig implements DuoSecurityConfig {
+public abstract class ApacheConfigDuoSecurityConfig implements DuoSecurityConfig {
     private Configuration globalConfig;
 
     public static final int DEFAULT_CONNECTION_TIMEOUT = 30000;
+    public static final String PROP_NAME_DUO_TELEPHONY_ENABLED = "duo.telephony.enabled";
 
-    public IdmDuoSecurityConfig(Configuration globalConfig) {
+    public ApacheConfigDuoSecurityConfig(Configuration globalConfig) {
         this.globalConfig = globalConfig;
     }
 
@@ -33,6 +34,19 @@ public abstract class IdmDuoSecurityConfig implements DuoSecurityConfig {
     @Override
     public int getDefaultTimeout() {
         return globalConfig.getInt(getApiConnectionTimeoutPropertyName(), DEFAULT_CONNECTION_TIMEOUT);
+    }
+
+    @Override
+    public boolean allowServicesThatCostMoney() {
+        return getGlobalConfig().getBoolean(PROP_NAME_DUO_TELEPHONY_ENABLED, false);
+    }
+
+    /**
+     * Allow subclasses to access the config object.
+     * @return
+     */
+    protected Configuration getGlobalConfig() {
+        return globalConfig;
     }
 
     /**

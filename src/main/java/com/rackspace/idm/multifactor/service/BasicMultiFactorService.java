@@ -1,19 +1,18 @@
 package com.rackspace.idm.multifactor.service;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.InvalidPhoneNumberException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.SaveOrUpdateException;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.domain.Pin;
 import com.rackspace.idm.multifactor.providers.MobilePhoneVerification;
+import com.rackspace.idm.multifactor.providers.ProviderPhone;
+import com.rackspace.idm.multifactor.providers.ProviderUser;
+import com.rackspace.idm.multifactor.providers.UserManagement;
+import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -36,6 +35,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     public static final String ERROR_MSG_PHONE_NOT_ASSOCIATED_WITH_USER = "Specified phone is not associated with user";
 
+    public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
+    public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
+
     @Autowired
     private UserService userService;
 
@@ -44,6 +46,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private MobilePhoneVerification mobilePhoneVerification;
+
+    @Autowired
+    private UserManagement userManagement;
 
     @Autowired
     private Configuration globalConfig;
@@ -59,10 +64,6 @@ public class BasicMultiFactorService implements MultiFactorService {
      */
     public static final int PIN_VALIDITY_LENGTH_DEFAULT_VALUE = 10;
 
-    /**
-     * Singleton instance to parse and format phone numbers
-     */
-    private PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
     @Override
     public MobilePhone addPhoneToUser(String userId, Phonenumber.PhoneNumber phoneNumber) {
@@ -81,7 +82,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             mobilePhone = createMobilePhone(phoneNumber);
         } catch (DuplicateException e) {
             //phone number exists already, retrieve it to link user to it
-            mobilePhone = mobilePhoneRepository.getByTelephoneNumber(canonicalizePhoneNumberToString(phoneNumber));
+            mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
             if (mobilePhone == null) {
                 throw new IllegalStateException("Mobile phone exists but could not be found");
             }
@@ -94,20 +95,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         return mobilePhone;
-    }
-
-    @Override
-    public String canonicalizePhoneNumberToString(Phonenumber.PhoneNumber phoneNumber) {
-        return phoneNumberUtil.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-    }
-
-    @Override
-    public Phonenumber.PhoneNumber parsePhoneNumber(String phoneNumber) {
-        try {
-            return phoneNumberUtil.parse(phoneNumber, MobilePhone.TELEPHONE_DEFAULT_REGION);
-        } catch (NumberParseException e) {
-            throw new InvalidPhoneNumberException("The phone number '" + phoneNumber + "' does not appear to be a valid phone number", e);
-        }
     }
 
     @Override
@@ -127,7 +114,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new MultiFactorDeviceAlreadyVerifiedException("Device already verified");
         }
 
-        Phonenumber.PhoneNumber phoneNumber = parsePhoneNumber(phone.getTelephoneNumber());
+        Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(phone.getTelephoneNumber());
         Pin pinSent = mobilePhoneVerification.sendPin(phoneNumber);
 
         //expiration date
@@ -166,6 +153,75 @@ public class BasicMultiFactorService implements MultiFactorService {
         return mobilePhoneRepository.getById(mobilePhoneId);
     }
 
+    @Override
+    public void updateMultiFactorSettings(String userId, MultiFactor multiFactor) {
+        User user = userService.checkAndGetUserById(userId);
+
+        if (user.isMultiFactorEnabled() == multiFactor.isEnabled()) {
+            return; //no-op
+        } else if (!StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
+            throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
+        } else if (!user.isMultiFactorDeviceVerified()) {
+            throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
+        }
+
+        if (multiFactor.isEnabled()) {
+            enableMultiFactorForUser(user);
+        } else {
+            disableMultiFactorForUser(user);
+        }
+    }
+
+    @Override
+    public void removeMultiFactorForUser(String userId) {
+        User user = userService.checkAndGetUserById(userId);
+
+        String providerUserId = user.getExternalMultiFactorUserId();
+
+        user.setMultifactorEnabled(null);
+        user.setExternalMultiFactorUserId(null);
+        user.setMultiFactorMobilePhoneRsId(null);
+        user.setMultiFactorDevicePin(null);
+        user.setMultiFactorDeviceVerified(null);
+        user.setMultiFactorDevicePinExpiration(null);
+        userService.updateUserForMultiFactor(user);
+
+        //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
+        //the info in ldap has been removed.
+        if (StringUtils.hasText(providerUserId)) {
+            userManagement.deleteUserById(providerUserId);
+        }
+    }
+
+    private void enableMultiFactorForUser(User user) {
+        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+
+        ProviderUser providerUser = userManagement.createUser(user);
+        user.setExternalMultiFactorUserId(providerUser.getProviderId());
+
+        ProviderPhone providerPhone = userManagement.linkMobilePhoneToUser(providerUser.getProviderId(), phone);
+        phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
+        mobilePhoneRepository.updateObjectAsIs(phone);
+
+        user.setMultifactorEnabled(true);
+        userService.updateUserForMultiFactor(user);
+    }
+
+    private void disableMultiFactorForUser(User user) {
+        String providerUserId = user.getExternalMultiFactorUserId();
+
+        user.setMultifactorEnabled(false);
+        user.setExternalMultiFactorUserId(null);
+        userService.updateUserForMultiFactor(user);
+
+        //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
+        //the info in ldap has been removed.
+        if (StringUtils.hasText(providerUserId)) {
+            //remove the account from duo
+            userManagement.deleteUserById(providerUserId);
+        }
+    }
+
     /**
      * Creates a new mobilePhone entry in CA
      *
@@ -175,7 +231,7 @@ public class BasicMultiFactorService implements MultiFactorService {
      */
     private MobilePhone createMobilePhone(Phonenumber.PhoneNumber phoneNumber) {
         Assert.notNull(phoneNumber);
-        String canonicalizedPhone = canonicalizePhoneNumberToString(phoneNumber);
+        String canonicalizedPhone = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber);
 
         MobilePhone mobilePhone = new MobilePhone();
         mobilePhone.setTelephoneNumber(canonicalizedPhone);

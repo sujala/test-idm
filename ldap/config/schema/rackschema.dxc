@@ -749,53 +749,53 @@ schema set attribute (1.3.6.1.1.1.1.28) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.101) = {
-	name = multiFactorDevicePin
-	ldap-names = multiFactorDevicePin
+	name = rsMultiFactorDevicePin
+	ldap-names = rsMultiFactorDevicePin
 	equality = caseExactMatch
 	syntax = directoryString
 	description = "A single value case sensitive string representing an authorization code."
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.102) = {
-	name = multiFactorDevicePinExpiration
-	ldap-names = multiFactorDevicePinExpiration
+	name = rsMultiFactorDevicePinExpiration
+	ldap-names = rsMultiFactorDevicePinExpiration
 	syntax = generalizedTime
 	description = "When an associated pin expires"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.103) = {
-	name = externalMultiFactorPhoneId
-	ldap-names = externalMultiFactorPhoneId
+	name = rsExternalMultiFactorPhoneId
+	ldap-names = rsExternalMultiFactorPhoneId
 	equality = caseExactMatch
     syntax = directoryString
 	description = "Represents a phone id in an external system"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.104) = {
-	name = externalMultiFactorUserId
-	ldap-names = externalMultiFactorUserId
+	name = rsExternalMultiFactorUserId
+	ldap-names = rsExternalMultiFactorUserId
     equality = caseExactMatch
     syntax = directoryString
 	description = "Represents a user id in an external system"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.105) = {
-	name = multiFactorEnabled
-	ldap-names = multiFactorEnabled
+	name = rsMultiFactorEnabled
+	ldap-names = rsMultiFactorEnabled
 	syntax = boolean
 	description = "Whether multi-factor is enabled on the account"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.106) = {
-	name = multiFactorDeviceVerified
-	ldap-names = multiFactorDeviceVerified
+	name = rsMultiFactorDeviceVerified
+	ldap-names = rsMultiFactorDeviceVerified
 	syntax = boolean
 	description = "Whether the mobile phone associated with the account has been verified"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.107) = {
-	name = multiFactorMobilePhoneRsId
-	ldap-names = multiFactorMobilePhoneRsId
+	name = rsMultiFactorMobilePhoneRsId
+	ldap-names = rsMultiFactorMobilePhoneRsId
     equality = caseExactMatch
     syntax = directoryString
 	description = "Links the user to a specific mobile phone rsId"
@@ -845,12 +845,12 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         mail,
         encryptionVersionId,
         encryptionSalt,
-        multiFactorDevicePin,
-        multiFactorDevicePinExpiration,
-        multiFactorMobilePhoneRsId,
-        multiFactorDeviceVerified,
-        externalMultiFactorUserId,
-        multiFactorEnabled
+        rsMultiFactorDevicePin,
+        rsMultiFactorDevicePinExpiration,
+        rsMultiFactorMobilePhoneRsId,
+        rsMultiFactorDeviceVerified,
+        rsExternalMultiFactorUserId,
+        rsMultiFactorEnabled
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -1306,13 +1306,13 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
-        name = multiFactorMobilePhone
-        ldap-names = multiFactorMobilePhone
+        name = rsMultiFactorMobilePhone
+        ldap-names = rsMultiFactorMobilePhone
         subclass-of top
         kind = structural
         must-contain
                 rsId,
                 telephoneNumber
         may-contain
-                externalMultiFactorPhoneId
+                rsExternalMultiFactorPhoneId
 };

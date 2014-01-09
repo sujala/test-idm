@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.domain.entity.MobilePhone;
@@ -10,12 +11,14 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.domain.BasicPin;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -36,6 +39,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_ALREADY_VERIFIED = "The specified device has already been verified";
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
+    static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
+    static final String BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY = "Can only enable multi-factor";
+
+
+
 
     /*
     Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
@@ -122,8 +130,42 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         } catch (NotFoundException ex) {
             return exceptionHandler.notFoundExceptionResponse(ex.getMessage());
         } catch (Exception ex) {
-           LOG.error(String.format("Error sending verification code to device '%s'", deviceId), ex);
+           LOG.error(String.format("Error verifying code for device '%s'", deviceId), ex);
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor) {
+        verifyMultifactorServicesEnabled();
+
+        try {
+            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            User requester = (User) userService.getUserByScopeAccess(token);
+            validateUpdateMultiFactorSettingsRequest(requester, userId, multiFactor);
+            multiFactorService.updateMultiFactorSettings(userId, multiFactor);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error updating multifactor settings on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+
+    }
+
+    private void validateUpdateMultiFactorSettingsRequest(User requester, String userId, MultiFactor multiFactor) {
+        if (multiFactor == null) {
+            LOG.debug(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS); //logged as debug because this is a bad request, not an error in app
+            throw new BadRequestException(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS);
+        }
+        else if (requester == null || !(requester.getId().equals(userId))) {
+            LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+            throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+        }
+        else if (!multiFactor.isEnabled()) {
+            LOG.debug(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY); //logged as debug because this is a bad request, not an error in app
+            throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY);
         }
     }
 
@@ -194,8 +236,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
      * @return
      */
     private Phonenumber.PhoneNumber parseRequestPhoneNumber(String rawPhoneNumber) {
+        Assert.notNull(rawPhoneNumber);
         try {
-            Phonenumber.PhoneNumber phoneNumber = multiFactorService.parsePhoneNumber(rawPhoneNumber);
+            Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(rawPhoneNumber);
             return phoneNumber;
         } catch (InvalidPhoneNumberException ex) {
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_PHONE_NUMBER, ex);
