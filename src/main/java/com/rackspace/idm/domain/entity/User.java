@@ -58,6 +58,10 @@ public class User  extends BaseUser implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String email;
 
+    @LDAPField(attribute=LdapRepository.ATTR_CLEAR_PASSWORD,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private byte[] encryptedClearPassword;
     private String password;
 
     private boolean passwordIsNew = true;
@@ -245,6 +249,13 @@ public class User  extends BaseUser implements Auditable, UniqueId {
 
     public Password getPasswordObj() {
         return new Password(password, passwordIsNew, passwordLastUpdated, passwordWasSelfUpdated);
+    }
+
+    public void setUserPassword(String password) {
+        if (StringUtils.isNotBlank(password)) {
+            this.userPassword = password;
+            this.password = password;
+        }
     }
 
     @Override

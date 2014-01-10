@@ -302,6 +302,21 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.deleteUser(user)
     }
 
+    def "Password is not populated on get user call"() {
+        given:
+        def rsId = "testPassword$random"
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+        ldapUserRepository.addUser(user)
+
+        when:
+        User getUser = ldapUserRepository.getUserByUsername(username)
+
+        then:
+        getUser.password == null
+
+        cleanup:
+        ldapUserRepository.deleteUser(user)
+    }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
