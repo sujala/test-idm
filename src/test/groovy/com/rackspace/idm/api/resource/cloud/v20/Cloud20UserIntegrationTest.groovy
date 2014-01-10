@@ -5,6 +5,9 @@ import org.openstack.docs.identity.api.v2.CredentialListType
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_ANWSER
+import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_QUESTION
+import static com.rackspace.idm.Constants.DEFAULT_SECRET_ANWSER
 import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
@@ -492,7 +495,8 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
     def "Update user's secretQA - validate encryption" () {
         given:
         def domainId = utils.createDomain()
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users
+        (defaultUser, users) = utils.createDefaultUser(domainId)
 
         when:
         utils.createSecretQA(defaultUser)
@@ -504,13 +508,13 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         then:
         secretQA != null
-        secretQA.answer == "home"
+        secretQA.answer == DEFAULT_SECRET_ANWSER
         secretQA2 != null
-        secretQA2.question == "question"
-        secretQA2.answer == "answer"
+        secretQA2.question == DEFAULT_RAX_KSQA_SECRET_QUESTION
+        secretQA2.answer == DEFAULT_RAX_KSQA_SECRET_ANWSER
 
         cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 

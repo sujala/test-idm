@@ -53,10 +53,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.resetApiKey(user20)
         utils.addApiKeyToUser(user20)
         def cred = utils.getUserApiKey(user20)
-        utils.authenticateApiKey(user20, cred.apiKey)
 
         then:
-        true
+        utils.authenticateApiKey(user20, cred.apiKey)
 
         cleanup:
         utils11.deleteUser(user)
@@ -77,9 +76,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.authenticateApiKey(user20, key)
 
         then:
-        secretQA.answer == "home"
-        updatedSecretQA.question == "question"
-        updatedSecretQA.answer == "answer"
+        secretQA.answer == DEFAULT_SECRET_ANWSER
+        updatedSecretQA.question == DEFAULT_RAX_KSQA_SECRET_QUESTION
+        updatedSecretQA.answer == DEFAULT_RAX_KSQA_SECRET_ANWSER
 
         cleanup:
         utils11.deleteUser(user)
