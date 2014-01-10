@@ -73,6 +73,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void addUser(User user) {
+        encryptionService.setUserEncryptionSaltAndVersion(user);
         addObject(user);
     }
 

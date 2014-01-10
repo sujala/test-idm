@@ -27,6 +27,12 @@ public class DefaultEncryptionService implements EncryptionService {
     PropertiesService propertiesService;
 
     @Override
+    public void setUserEncryptionSaltAndVersion(User user) {
+        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+        user.setSalt(cryptHelper.generateSalt());
+    }
+
+    @Override
     public void encryptUser(User user) {
         String encryptionVersionId = getEncryptionVersionId(user);
         String encryptionSalt = getEncryptionSalt(user);
@@ -82,7 +88,7 @@ public class DefaultEncryptionService implements EncryptionService {
 
     private String getEncryptionSalt(User user) {
         if (user.getSalt() == null) {
-            return cryptHelper.generateSalt();
+            return config.getString("crypto.salt");
         } else {
             return user.getSalt();
         }
