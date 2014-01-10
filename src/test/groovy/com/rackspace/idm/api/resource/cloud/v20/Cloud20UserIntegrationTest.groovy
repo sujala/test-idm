@@ -468,7 +468,8 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
     def "Update user's apikey - validate encryption" () {
         given:
         def domainId = utils.createDomain()
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users
+        (defaultUser, users) = utils.createDefaultUser(domainId)
 
         when:
         utils.addApiKeyToUser(defaultUser)
@@ -488,7 +489,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         user.key != null
 
         cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 
