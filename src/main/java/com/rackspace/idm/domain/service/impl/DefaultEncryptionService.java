@@ -55,11 +55,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedSecretQuestion(cryptHelper.encrypt(user.getSecretQuestion(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()), e);
         }
 
         try {
@@ -67,11 +65,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedSecretAnswer(cryptHelper.encrypt(user.getSecretAnswer(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()), e);
         }
 
         try {
@@ -79,11 +75,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedSecretQuestionId(cryptHelper.encrypt(user.getSecretQuestionId(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()), e);
         }
 
         try {
@@ -91,11 +85,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedFirstName(cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
         }
 
         try {
@@ -103,11 +95,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedLastname(cryptHelper.encrypt(user.getLastname(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
         }
 
         try {
@@ -115,26 +105,19 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedDisplayName(cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()), e);
         }
 
         try {
             if (user.getApiKey() != null) {
                 user.setEncryptedApiKey(cryptHelper.encrypt(user.getApiKey(), encryptionVersionId, encryptionSalt));
             }
-            if (user.getPassword() != null) {
-                user.setEncryptedClearPassword(cryptHelper.encrypt(user.getPassword(), encryptionVersionId, encryptionSalt));
-            }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, API_KEY, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, API_KEY, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, API_KEY, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, API_KEY, user.getId()), e);
         }
 
         try {
@@ -142,11 +125,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setEncryptedClearPassword(cryptHelper.encrypt(user.getPassword(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()), e);
         }
     }
 
@@ -162,11 +143,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 application.setClearPasswordBytes(cryptHelper.encrypt(application.getClearPassword(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()));
-            e.printStackTrace();
+            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()));
-            e.printStackTrace();
+            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
         }
     }
 
@@ -212,11 +191,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setSecretQuestion(cryptHelper.decrypt(user.getEncryptedSecretQuestion(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION, user.getId()), e);
         }
 
         try {
@@ -224,11 +201,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setSecretAnswer(cryptHelper.decrypt(user.getEncryptedSecretAnswer(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_ANSWER, user.getId()), e);
         }
 
         try {
@@ -236,11 +211,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setSecretQuestionId(cryptHelper.decrypt(user.getEncryptedSecretQuestionId(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, SECRET_QUESTION_ID, user.getId()), e);
         }
 
         try {
@@ -248,11 +221,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setFirstname(cryptHelper.decrypt(user.getEncryptedFirstName(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
         }
 
         try {
@@ -260,11 +231,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setLastname(cryptHelper.decrypt(user.getEncryptedLastname(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
         }
 
         try {
@@ -272,11 +241,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setDisplayName(cryptHelper.decrypt(user.getEncryptedDisplayName(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, DISPLAY_NAME, user.getId()), e);
         }
 
         try {
@@ -284,11 +251,9 @@ public class DefaultEncryptionService implements EncryptionService {
                 user.setApiKey(cryptHelper.decrypt(user.getEncryptedApiKey(), encryptionVersionId, encryptionSalt));
             }
         } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, API_KEY, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, API_KEY, user.getId()), e);
         } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, API_KEY, user.getId()));
-            e.printStackTrace();
+            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, API_KEY, user.getId()), e);
         }
     }
 
