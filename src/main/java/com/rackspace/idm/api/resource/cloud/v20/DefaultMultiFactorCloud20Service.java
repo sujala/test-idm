@@ -40,10 +40,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
-    static final String BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY = "Can only enable multi-factor";
-
-
-
 
     /*
     Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
@@ -162,10 +158,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         else if (requester == null || !(requester.getId().equals(userId))) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
             throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
-        }
-        else if (!multiFactor.isEnabled()) {
-            LOG.debug(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY); //logged as debug because this is a bad request, not an error in app
-            throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_SETTINGS_ENABLE_ONLY);
         }
     }
 

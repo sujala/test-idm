@@ -107,6 +107,92 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    @Unroll("Successfully disable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Successfully disable multifactor after it was enabled"() {
+        setup:
+        addPhone()
+        verifyPhone()
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
+        cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        User intialUserAdmin = userRepository.getUserById(userAdmin.getId())
+        assert intialUserAdmin.isMultiFactorEnabled()
+        assert intialUserAdmin.getExternalMultiFactorUserId() != null
+
+        when:
+        settings.setEnabled(false)
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        then:
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        !finalUserAdmin.isMultiFactorEnabled()
+        finalUserAdmin.getExternalMultiFactorUserId() == null
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll("Disable multifactor when not enable is no-op: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Disable multifactor when not enable is no-op"() {
+        setup:
+        addPhone()
+        verifyPhone()
+        MultiFactor settings = v2Factory.createMultiFactorSettings(false)
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        then:
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        !finalUserAdmin.isMultiFactorEnabled()
+        finalUserAdmin.getExternalMultiFactorUserId() == null
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll("Can re-enable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Can re-enable multifactor"() {
+        setup:
+        addPhone()
+        verifyPhone()
+
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
+        cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        settings.setEnabled(false)
+        cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        User initialUserAdmin = userRepository.getUserById(userAdmin.getId())
+        assert !initialUserAdmin.isMultiFactorEnabled()
+
+        when:
+        settings.setEnabled(true)
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        then:
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        finalUserAdmin.getMultiFactorDevicePin() == null
+        finalUserAdmin.isMultiFactorDeviceVerified()
+        finalUserAdmin.isMultiFactorEnabled()
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
     @Unroll("Fail with 400 when multifactor phone not verified: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Fail with 400 when multifactor phone not verified"() {
         setup:

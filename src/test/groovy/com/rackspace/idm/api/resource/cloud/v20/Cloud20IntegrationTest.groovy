@@ -1931,8 +1931,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     def "Disable a userAdmin disables his subUsers"() {
         given:
         def domain = "someDomain$sharedRandom"
-        def adminUsername = "userAdmin$sharedRandom"
-        def username = "user$sharedRandom"
+        def adminUsername = "userAdminDisableSub$sharedRandom"
+        def username = "userSub$sharedRandom"
         def password = "Password1"
         def userAdminForCreate = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin = userAdminForCreate.getEntity(User)
@@ -1945,18 +1945,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateUserResponse = cloud20.updateUser(identityAdminToken, userAdmin.id, userAdmin)
         def getUserResponse = cloud20.getUser(serviceAdminToken, createUserForCreate.location)
         User user = getUserResponse.getEntity(User)
-        cloud20.destroyUser(serviceAdminToken, user.id)
-        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
 
         then:
         updateUserResponse.status == 200
         user.enabled == false
+
+        cleanup:
+        utils.deleteUserQuietly(user, serviceAdminToken)
+        utils.deleteUserQuietly(userAdmin, serviceAdminToken)
     }
 
     def "Disable one of two user admins in domain does not disable subUsers"() {
         given:
         def domain = "someDomain$sharedRandom"
-        def username = "user$sharedRandom"
+        def username = "userDisableOneUserAdmin$sharedRandom"
         def password = "Password1"
 
         def adminUsername1 = "userAdminThree$sharedRandom"
@@ -2414,7 +2416,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "When user admin creates sub-user both should be returned in list users by tenant call"() {
         given:
-        def username = "user$sharedRandom"
+        def username = "usernsdfg43$sharedRandom"
 
         def adminUsername1 = "userAdmin3$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", randomMosso, null, true)
@@ -2447,10 +2449,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Get user by domainId"() {
         given:
-        def username = "user$sharedRandom"
+        def username = "userkljk$sharedRandom"
         def mossoId = getRandomNumber(1000000,2000000)
 
-        def adminUsername1 = "userAdmin$sharedRandom"
+        def adminUsername1 = "userAdminByDomain$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", mossoId, null, true)
         cloud11.createUser(cloud11User)
         User userAdmin = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)
@@ -2474,8 +2476,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUsersByDomainId.user.username.contains(subUser.username)
 
         cleanup:
-        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
-        cloud20.destroyUser(serviceAdminToken, subUser.id)
+        utils.deleteUserQuietly(subUser, serviceAdminToken)
+        utils.deleteUserQuietly(userAdmin, serviceAdminToken)
         cloud20.deleteTenant(serviceAdminToken, userAdminTenant)
         cloud20.deleteTenant(serviceAdminToken, userEntity.nastId)
     }

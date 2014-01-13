@@ -305,4 +305,14 @@ class Cloud20Utils {
         def response = methods.verifyVerificationCode(token, userId, mobilePhoneId, verificationCode)
         assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
+
+    def deleteUserQuietly(user, String token=getServiceAdminToken()) {
+        if (user != null) {
+            try {
+                methods.destroyUser(token, user.getId())
+            } catch (all) {
+                //ignore
+            }
+        }
+    }
 }
