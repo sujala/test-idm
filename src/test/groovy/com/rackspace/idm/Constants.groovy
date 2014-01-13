@@ -18,4 +18,9 @@ class Constants {
 
 
     static def DEFAULT_GROUP = "Default"
+
+    static def DEFAULT_SECRET_ANWSER = "home"
+    static def DEFAULT_SECRET_QUESTION_ID = "1"
+    static def DEFAULT_RAX_KSQA_SECRET_QUESTION = "question"
+    static def DEFAULT_RAX_KSQA_SECRET_ANWSER = "anwser"
 }
