@@ -248,6 +248,7 @@ test {
     // set JVM arguments for the test JVM(s)
     jvmArgs '-XX:MaxPermSize=1024m'
     systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/OPENLDAP')
+    systemProperties['jersey.test.port']  = System.getProperty('jersey.test.port', '9998')
 
     jacoco {
         append = false
