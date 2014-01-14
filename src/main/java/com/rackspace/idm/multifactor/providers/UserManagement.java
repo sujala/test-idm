@@ -31,7 +31,8 @@ public interface UserManagement {
     /**
      * Deletes the user with the given provider-specific identifier from the provider system. If the user does not exist, this is a no-op. If
      * the user is also associated to a device, these associates should be removed. At this time, devices are NOT removed.
-     * re
+     *
+     * @throws com.rackspace.idm.multifactor.providers.exceptions.DeleteUserException if there was a problem deleting the user from the provider
      */
     void deleteUserById(String providerUserId);
 

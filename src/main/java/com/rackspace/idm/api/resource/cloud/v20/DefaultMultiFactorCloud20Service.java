@@ -32,7 +32,7 @@ import java.net.URI;
 public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Service {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMultiFactorCloud20Service.class);
     static final String BAD_REQUEST_MSG_MISSING_PHONE_NUMBER = "Must provide a telephone number";
-    static final String BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT = "Can only associate a mobile phone with own account";
+    static final String BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT = "Can only configure multifactor on own account";
     static final String BAD_REQUEST_MSG_ALREADY_LINKED = "Already associated with a mobile phone";
     static final String BAD_REQUEST_MSG_INVALID_PHONE_NUMBER = "The provided phone number is invalid.";
     static final String BAD_REQUEST_MSG_INVALID_DEVICE = "The specified device is invalid";
@@ -148,6 +148,31 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return exceptionHandler.exceptionResponse(ex);
         }
 
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId) {
+        verifyMultifactorServicesEnabled();
+
+        try {
+            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            User requester = (User) userService.getUserByScopeAccess(token);
+            validateRemoveMultiFactorRequest(requester, userId);
+            multiFactorService.removeMultiFactorForUser(userId);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error updating multifactor settings on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void validateRemoveMultiFactorRequest(User requester, String userId) {
+        if (requester == null || !(requester.getId().equals(userId))) {
+            LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+            throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+        }
     }
 
     private void validateUpdateMultiFactorSettingsRequest(User requester, String userId, MultiFactor multiFactor) {

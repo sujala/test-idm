@@ -61,4 +61,17 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor);
+
+    /**
+     * Removes all traces of multifactor configuration for the user's account. This includes unlinking all associated devices,
+     * removing any profiles from 3rd party providers, and resetting the user's account to the state it would be had s/he
+     * never configured multi-factor in the first place. If multi-factor has never been set up for the account, this is, in effect,
+     * a no-op
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId);
 }

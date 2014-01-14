@@ -38,6 +38,13 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
     public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
 
+    private static final String EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME = "externalMultifactorProvider";
+    private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger externalMultiFactorLogger = LoggerFactory.getLogger(EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME);
+
+
     @Autowired
     private UserService userService;
 
@@ -175,7 +182,6 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Override
     public void removeMultiFactorForUser(String userId) {
         User user = userService.checkAndGetUserById(userId);
-
         String providerUserId = user.getExternalMultiFactorUserId();
 
         user.setMultifactorEnabled(null);
@@ -186,11 +192,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
 
-        //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
-        //the info in ldap has been removed.
-        if (StringUtils.hasText(providerUserId)) {
-            userManagement.deleteUserById(providerUserId);
-        }
+        deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
     }
 
     private void enableMultiFactorForUser(User user) {
@@ -214,11 +216,27 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setExternalMultiFactorUserId(null);
         userService.updateUserForMultiFactor(user);
 
+        deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+    }
+
+    private void deleteExternalUser(String userId, String username, String externalProviderUserId) {
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.
-        if (StringUtils.hasText(providerUserId)) {
-            //remove the account from duo
-            userManagement.deleteUserById(providerUserId);
+        if (StringUtils.hasText(externalProviderUserId)) {
+            try {
+                userManagement.deleteUserById(externalProviderUserId);
+            } catch (Exception e) {
+                //if there was ANY exception raised delete the user from the 3rd party provider, we must log it as the
+                //user's info _may_ be left in the 3rd party, but we will not link to it from ldap. Manual cleanup will
+                //be required
+
+                //TODO: Implement distinct log to track failures to delete from 3rd party system
+                LOG.error(String.format("Error encountered removing user's multifactor profile from third party. username: '%s'; external providerId: '%s'. Encountered error '%s'", username, externalProviderUserId, e.getMessage()));
+
+                externalMultiFactorLogger.error(EXTERNAL_PROVIDER_ERROR_FORMAT,
+                        new Object[] {"DELETE USER", userId, username, externalProviderUserId, e.getMessage()});
+
+            }
         }
     }
 
