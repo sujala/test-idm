@@ -633,6 +633,8 @@ public class DefaultUserService implements UserService {
         User currentUser = userDao.getUserById(user.getId());
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
+        user.setMultifactorEnabled(null);
+
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());

@@ -238,6 +238,7 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DEVICE_VERIFIED, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private Boolean multiFactorDeviceVerified;
 
+    @Mapping("multiFactorEnabled")
     @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private Boolean multifactorEnabled;
 

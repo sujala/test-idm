@@ -26,6 +26,7 @@ public final class JSONConstants {
     public static final String DEFAULT_REGION = "defaultRegion";
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_ID = "domainId";
+    public static final String MULTI_FACTOR_ENABLED = "multiFactorEnabled";
     public static final String DOMAINS = "domains";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
@@ -158,6 +159,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
     public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
     public static final String RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
+    public static final String RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled";
     public static final String RAX_AUTH_POLICY = "RAX-AUTH:policy";
     public static final String RAX_AUTH_POLICIES = "RAX-AUTH:policies";
     public static final Object POLICIES_ALGORITHM = "algorithm";
@@ -208,8 +210,11 @@ public final class JSONConstants {
     public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";
     public static final String USER_DEFAULT_REGION_PATH = "user.defaultRegion";
     public static final String USER_DOMAIN_ID_PATH = "user.domainId";
+    public static final String USER_MULTI_FACTOR_ENABLED_PATH = "user.multiFactorEnabled";
     public static final String USER_OS_KSADM_PASSWORD_PATH = "user.OS-KSADM:password";
     public static final String USER_RAX_AUTH_DEFAULT_REGION_PATH = "user.RAX-AUTH:defaultRegion";
     public static final String USER_RAX_AUTH_DOMAIN_ID_PATH = "user.RAX-AUTH:domainId";
+    public static final String USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH = "user.RAX-AUTH:multiFactorEnabled";
+
     public static final String USER_PASSWORD_PATH = "user.password";
 }

@@ -122,6 +122,17 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="multiFactorEnabled" type="xsd:boolean" default="false" use="optional">
+            <annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        True if multi-factor is enabled (active).
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <anyAttribute namespace="##other" processContents="lax"/>        
     </complexType>
 

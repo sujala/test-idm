@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.apache.http.HttpStatus
+import org.apache.xml.resolver.apps.resolver
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -57,7 +58,7 @@ class Cloud20Utils {
     }
 
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
-        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD))
+        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@email.com", true, null, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
 
@@ -100,9 +101,23 @@ class Cloud20Utils {
         getToken(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
     }
 
-    def createUsers(domainId) {
+    def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
-        def identityAdmin = createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+        return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+    }
+
+    def createUserAdmin(domainId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
+
+        def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
+
+        return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    def createUsers(domainId) {
+        def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
 
@@ -117,8 +132,12 @@ class Cloud20Utils {
         return [identityAdmin, userAdmin, userManage, defaultUser]
     }
 
-    //delete users order matters.  pass default users first followed by user-managed, etc...
     def deleteUsers(... users) {
+        deleteUsers(users as List)
+    }
+
+    //delete users order matters.  pass default users first followed by user-managed, etc...
+    def deleteUsers(List users) {
         for (User user : users) {
             if (user == null) {
                 continue
@@ -279,10 +298,36 @@ class Cloud20Utils {
         response.getEntity(CredentialListType)
     }
 
+    def getUserById(String id, String token=getServiceAdminToken()){
+        def response = methods.getUserById(token, id)
+        assert (response.status == SC_OK)
+        response.getEntity(User)
+    }
+
     def getUserByName(String username, String token=getServiceAdminToken()){
-        def reponse = methods.getUserByName(token, username)
-        assert (reponse.status == SC_OK)
-        reponse.getEntity(User)
+        def response = methods.getUserByName(token, username)
+        assert (response.status == SC_OK)
+        response.getEntity(User)
+    }
+
+    def getUsersByEmail(String email, String token=getServiceAdminToken()){
+        def response = methods.getUsersByEmail(token, email)
+        assert (response.status == SC_OK)
+        List<User> users = response.getEntity(UserList).value.user
+        users
+    }
+
+    def getUserByEmail(String email, String token=getServiceAdminToken()){
+        def users = getUsersByEmail(email, token)
+        assert (users.size() == 1)
+        users.get(0)
+    }
+
+    def listUsers(String token=getServiceAdminToken()){
+        def response = methods.listUsers(token)
+        assert (response.status == SC_OK)
+        List<User> users = response.getEntity(UserList).value.user
+        users
     }
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
