@@ -932,7 +932,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.getUserByName(serviceAdminToken, "badName"),
                 cloud20.updateUser(serviceAdminToken, "badId", new User()),
                 cloud20.deleteUser(serviceAdminToken, "badId"),
-                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsBase("someUser", "SomePassword1"))
+                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createPasswordCredentialsBase("someUser", "SomePassword1")),
+                cloud20.addCredential(serviceAdminToken, "badId", v2Factory.createApiKeyCredentials("someUser", "someApiKey1"))
         ]
     }
 
@@ -2452,7 +2453,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "userkljk$sharedRandom"
         def mossoId = getRandomNumber(1000000,2000000)
 
-        def adminUsername1 = "userAdminByDomain$sharedRandom"
+        def adminUsername1 = "someUserAdmin$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", mossoId, null, true)
         cloud11.createUser(cloud11User)
         User userAdmin = cloud20.getUserByName(identityAdminToken, adminUsername1).getEntity(User)

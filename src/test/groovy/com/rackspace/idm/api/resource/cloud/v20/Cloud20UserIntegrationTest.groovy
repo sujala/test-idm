@@ -1,12 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.springframework.beans.factory.annotation.Autowired
+import org.openstack.docs.identity.api.v2.CredentialListType
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_ANWSER
+import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_QUESTION
+import static com.rackspace.idm.Constants.DEFAULT_SECRET_ANWSER
+import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 
@@ -483,6 +487,23 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         false               | false
     }
 
+        def "Assigning user 'compute:default' global role should allow authentication" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when:
+        utils.addRoleToUser(userAdmin, MOSSO_ROLE_ID)
+        def token = utils.getToken(userAdmin.username)
+
+        then:
+        token != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
     def "update user does not set multiFactor enabled flag"() {
         given:
         def domainId = utils.createDomain()
@@ -498,6 +519,60 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         then:
         retrievedUser.multiFactorEnabled == false
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Update user's apikey - validate encryption" () {
+        given:
+        def domainId = utils.createDomain()
+        def users
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+
+        when:
+        utils.addApiKeyToUser(defaultUser)
+        def cred = utils.getUserApiKey(defaultUser)
+        utils.authenticateApiKey(defaultUser, cred.apiKey)
+        utils.resetApiKey(defaultUser)
+        utils.addApiKeyToUser(defaultUser)
+        def cred2 = utils.getUserApiKey(defaultUser)
+        utils.authenticateApiKey(defaultUser, cred2.apiKey)
+        def user = utils11.getUserByName(defaultUser.username)
+
+        then:
+        cred != null
+        cred.apiKey != null
+        cred2 != null
+        cred2.apiKey != null
+        user.key != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Update user's secretQA - validate encryption" () {
+        given:
+        def domainId = utils.createDomain()
+        def users
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+
+        when:
+        utils.createSecretQA(defaultUser)
+        def secretQA = utils.getSecretQA(defaultUser)
+        utils.authenticate(defaultUser)
+        utils.updateSecretQA(defaultUser)
+        def secretQA2 = utils.getSecretQA(defaultUser)
+        utils.authenticate(defaultUser)
+
+        then:
+        secretQA != null
+        secretQA.answer == DEFAULT_SECRET_ANWSER
+        secretQA2 != null
+        secretQA2.question == DEFAULT_RAX_KSQA_SECRET_QUESTION
+        secretQA2.answer == DEFAULT_RAX_KSQA_SECRET_ANWSER
 
         cleanup:
         utils.deleteUsers(users)

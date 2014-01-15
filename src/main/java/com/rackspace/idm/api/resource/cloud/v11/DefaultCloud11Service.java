@@ -680,7 +680,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", baseURLId, userId));
             }
 
-            return Response.ok(OBJ_FACTORY.createBaseURLRef(baseURLRef));
+            return Response.ok(OBJ_FACTORY.createBaseURLRef(baseURLRef).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -744,7 +744,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = "User not found :" + userId;
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
