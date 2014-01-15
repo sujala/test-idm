@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.idm.JSONConstants
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.Base64
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
@@ -31,63 +33,83 @@ class Cloud11Methods {
     }
 
     def adminAuthenticate(credentials) {
-        resource.path(path11).path("auth-admin").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path11).path(AUTH_ADMIN).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
     def authenticate(credentials) {
-        resource.path(path11).path("auth").accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path11).path(AUTH).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
     def validateToken(String token) {
-        resource.path(path11).path("token").path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def revokeToken(String token) {
-        resource.path(path11).path("token").path(token).header("Authorization", getBasicAuth()).delete(ClientResponse)
+        resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).delete(ClientResponse)
     }
 
     def getUserByName(String username) {
-        resource.path(path11).path("users").path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getServiceCatalog(String username) {
-        resource.path(path11).path("users").path(username).path("serviceCatalog").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(SERVICECATALOG).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createUser(user) {
-        resource.path(path11).path("users").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
+        resource.path(path11).path(USERS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
     }
 
     def updateUser(String username, user) {
-        resource.path(path11).path("users").path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
+        resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
     def deleteUser(String username) {
-        resource.path(path11).path("users").path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def setUserEnabled(String username, user) {
-        resource.path(path11).path("users").path(username).path("enabled").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(ENABLED).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
     def setUserKey(String username, user) {
-        resource.path(path11).path("users").path(username).path("key").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(KEY).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
     def addBaseUrl(baseUrl) {
-        resource.path(path11).path("baseURLs").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
+        resource.path(path11).path(BASE_URLS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
     }
 
     def addBaseUrlRefs(String username, baseUrlRefs) {
-        resource.path(path11).path("users").path(username).path("baseURLRefs").header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrlRefs).post(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrlRefs).post(ClientResponse)
     }
 
     def deleteBaseUrlRefs(String username, String baseUrlRefsId) {
-        resource.path(path11).path("users").path(username).path("baseURLRefs").path(baseUrlRefsId).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).path(baseUrlRefsId).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def getToken(token) {
-        resource.path(path11).path("token").path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getUserEnabled(String username) {
+        resource.path(path11).path(USERS).path(username).path(ENABLED).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getUserKey(String username) {
+        resource.path(path11).path(USERS).path(username).path(KEY).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getBaseURLRefs(String username) {
+        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getGroups(String username) {
+        resource.path(path11).path(USERS).path(username).path(GROUPS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getUserBaseURLRef(String username, String baseUrlRefId) {
+        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).path(baseUrlRefId).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def String getBasicAuth(username=authUser, password=authPassword) {
@@ -97,4 +119,5 @@ class Cloud11Methods {
     def baseEncoding(String username, String password) {
         return Base64.encode(username + ":" + password);
     }
+
 }

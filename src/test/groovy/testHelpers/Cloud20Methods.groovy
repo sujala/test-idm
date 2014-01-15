@@ -102,6 +102,10 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post(ClientResponse)
     }
 
+    def resetUserApiKey(String token, String userId) {
+        resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).path(RAX_AUTH).path("reset").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).post(ClientResponse)
+    }
+
     def getPasswordCredentials(String token, String userId) {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }

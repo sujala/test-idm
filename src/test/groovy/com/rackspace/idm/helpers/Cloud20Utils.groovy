@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.apache.http.HttpStatus
 import org.apache.xml.resolver.apps.resolver
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -54,6 +55,12 @@ class Cloud20Utils {
 
     def authenticate(User user, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(user.username, password)
+        assert (response.status == SC_OK)
+        return response.getEntity(AuthenticateResponse).value
+    }
+
+    def authenticateApiKey(User user, String apikey) {
+        def response = methods.authenticateApiKey(user.username, apikey)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
     }
@@ -115,6 +122,20 @@ class Cloud20Utils {
         def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
 
         return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    def createDefaultUser(domainId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username)
+
+        def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
+
+        def userAdminToken  = getToken(userAdmin.username)
+
+        def defaultUser = createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+
+        return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
     }
 
     def createUsers(domainId) {
@@ -296,7 +317,7 @@ class Cloud20Utils {
      def listUserCredentials(User user, String token=getServiceAdminToken()){
         def response = methods.listCredentials(token, user.id)
         assert (response.status == SC_OK)
-        response.getEntity(CredentialListType)
+        response.getEntity(CredentialListType).value
     }
 
     def getUserById(String id, String token=getServiceAdminToken()){
@@ -334,6 +355,29 @@ class Cloud20Utils {
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.addUserToGroup(token, group.id, user.id)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def resetApiKey(User user, String token=getServiceAdminToken()) {
+        def response = methods.resetUserApiKey(token, user.id)
+        assert (response.status == SC_OK)
+    }
+
+    def createSecretQA(User user, String token=getServiceAdminToken()) {
+        def secretqa = v1Factory.createSecretQA(DEFAULT_SECRET_QUESTION_ID, DEFAULT_SECRET_ANWSER)
+        def response = methods.createSecretQA(token, user.id, secretqa)
+        assert (response.status == SC_OK)
+    }
+
+    def getSecretQA(User user, String token=getServiceAdminToken()) {
+        def response = methods.getSecretQA(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(SecretQA)
+    }
+
+    def updateSecretQA(User user, String token=getServiceAdminToken()) {
+        def secretqa = v1Factory.createRaxKsQaSecretQA(user.username, DEFAULT_RAX_KSQA_SECRET_ANWSER, DEFAULT_RAX_KSQA_SECRET_QUESTION)
+        def response = methods.updateSecretQA(token, user.id, secretqa)
+        assert (response.status == SC_OK)
     }
 
     def addPhone(token, userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone mobilePhone = factory.createMobilePhone()) {
