@@ -13,6 +13,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
