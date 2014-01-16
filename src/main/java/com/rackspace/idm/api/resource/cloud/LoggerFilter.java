@@ -139,23 +139,24 @@ public class LoggerFilter implements Filter {
             String responseBody = responseWrapper.getBody();
             String responseType = ((HttpServletRequestWrapper) requestWrapper).getHeader("Accept");
 
-            // TODO: make async
-            analyticsLogger.log
-                    (
-                            startTime,
-                            authToken,
-                            basicAuth,
-                            host,
-                            remoteHost,
-                            userAgent,
-                            method,
-                            path,
-                            status,
-                            requestBody,
-                            requestType,
-                            responseBody,
-                            responseType
-                    );
+            if(config.getBoolean("analytic.logger.enabled")) {
+                analyticsLogger.log
+                        (
+                                startTime,
+                                authToken,
+                                basicAuth,
+                                host,
+                                remoteHost,
+                                userAgent,
+                                method,
+                                path,
+                                status,
+                                requestBody,
+                                requestType,
+                                responseBody,
+                                responseType
+                        );
+            }
         } finally {
             if (unboundIdLoggingEnabled) {
                 unboundLogger.fine(String.format("** END %s %s **", method, path));
