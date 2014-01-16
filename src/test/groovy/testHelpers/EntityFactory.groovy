@@ -401,6 +401,7 @@ class EntityFactory extends Specification {
     def createMobilePhone(String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
         new MobilePhone().with {
             it.telephoneNumber = telephoneNumber
+            it.cn = telephoneNumber
             return it
         }
     }

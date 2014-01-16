@@ -1308,7 +1308,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
         name = rsMultiFactorMobilePhone
         ldap-names = rsMultiFactorMobilePhone
-        subclass-of top
+        subclass-of groupofnames
         kind = structural
         must-contain
                 rsId,

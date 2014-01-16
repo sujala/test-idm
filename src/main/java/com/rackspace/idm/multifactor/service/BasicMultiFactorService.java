@@ -2,6 +2,7 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
@@ -13,6 +14,7 @@ import com.rackspace.idm.multifactor.providers.ProviderPhone;
 import com.rackspace.idm.multifactor.providers.ProviderUser;
 import com.rackspace.idm.multifactor.providers.UserManagement;
 import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
+import com.unboundid.util.Debug;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -23,6 +25,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 
 /**
  * Simple multi-factor implementation that stores mobile phones in the ldap directory, and integrates with a single
@@ -38,12 +42,12 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
     public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
 
-    private static final String EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME = "externalMultifactorProvider";
     private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Logger externalMultiFactorLogger = LoggerFactory.getLogger(EXTERNAL_MULTIFACTOR_PROVIDER_LOG_NAME);
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    private final Logger multiFactorConsistencyLogger = LoggerFactory.getLogger(GlobalConstants.MULTIFACTOR_CONSISTENCY_LOG_NAME);
 
+    public static final String CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED = "feature.multifactor.phone.membership.enabled";
 
     @Autowired
     private UserService userService;
@@ -74,6 +78,15 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Override
     public MobilePhone addPhoneToUser(String userId, Phonenumber.PhoneNumber phoneNumber) {
+        Debug.setEnabled(true);
+        Debug.setIncludeStackTrace(true);
+        java.util.logging.Logger logger = Debug.getLogger();
+        logger.setLevel(Level.FINEST);
+        for (final Handler handler : logger.getHandlers()) {
+            handler.setLevel(Level.FINEST);
+        }
+
+
         Assert.notNull(phoneNumber);
         Assert.notNull(userId);
 
@@ -86,13 +99,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         MobilePhone mobilePhone = null;
         try {
-            mobilePhone = createMobilePhone(phoneNumber);
+            mobilePhone = createAndLinkMobilePhone(phoneNumber, user);
         } catch (DuplicateException e) {
-            //phone number exists already, retrieve it to link user to it
-            mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
-            if (mobilePhone == null) {
-                throw new IllegalStateException("Mobile phone exists but could not be found");
-            }
+            mobilePhone = getAndLinkMobilePhone(phoneNumber, user);
         } catch (Exception ex) {
             throw new SaveOrUpdateException("Error creating mobile phone", ex);
         }
@@ -183,7 +192,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     public void removeMultiFactorForUser(String userId) {
         User user = userService.checkAndGetUserById(userId);
         String providerUserId = user.getExternalMultiFactorUserId();
+        String phoneRsId = user.getMultiFactorMobilePhoneRsId();
 
+        //reset user
         user.setMultifactorEnabled(null);
         user.setExternalMultiFactorUserId(null);
         user.setMultiFactorMobilePhoneRsId(null);
@@ -192,7 +203,28 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
 
-        deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+        //unlink phone from user.
+        try {
+            if (isPhoneUserMembershipEnabled()) {
+                //get and unlink phone (if exists)
+                MobilePhone phone = null;
+                if (StringUtils.hasText(phoneRsId)) {
+                    phone = mobilePhoneRepository.getById(phoneRsId);
+                    phone.removeMember(user);
+                    mobilePhoneRepository.updateObjectAsIs(phone);
+                }
+            }
+        } catch (Exception e) {
+            //eat the exception, but log it. This is a consistency issue where the phone will think some people are using it that are not, but will not cause an error in operation.
+            multiFactorConsistencyLogger.error(String.format("Error removing user '%s' from phone '%s' membership. The phone membership will" +
+                    "be inconsistent unless this is corrected. The user's DN should be removed from the phone's 'member' attribute.", userId, phoneRsId), e);
+        }
+
+        //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
+        //the info in ldap has been removed.
+        if (StringUtils.hasText(providerUserId)) {
+            deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+        }
     }
 
     private void enableMultiFactorForUser(User user) {
@@ -229,12 +261,9 @@ public class BasicMultiFactorService implements MultiFactorService {
                 //if there was ANY exception raised delete the user from the 3rd party provider, we must log it as the
                 //user's info _may_ be left in the 3rd party, but we will not link to it from ldap. Manual cleanup will
                 //be required
-
-                //TODO: Implement distinct log to track failures to delete from 3rd party system
                 LOG.error(String.format("Error encountered removing user's multifactor profile from third party. username: '%s'; external providerId: '%s'. Encountered error '%s'", username, externalProviderUserId, e.getMessage()));
-
-                externalMultiFactorLogger.error(EXTERNAL_PROVIDER_ERROR_FORMAT,
-                        new Object[] {"DELETE USER", userId, username, externalProviderUserId, e.getMessage()});
+                multiFactorConsistencyLogger.error(EXTERNAL_PROVIDER_ERROR_FORMAT,
+                        new Object[]{"DELETE USER", userId, username, externalProviderUserId, e.getMessage()});
 
             }
         }
@@ -247,15 +276,46 @@ public class BasicMultiFactorService implements MultiFactorService {
      * @return
      * @throws DuplicateException If the phone already exists
      */
-    private MobilePhone createMobilePhone(Phonenumber.PhoneNumber phoneNumber) {
+    private MobilePhone createAndLinkMobilePhone(Phonenumber.PhoneNumber phoneNumber, User user) {
         Assert.notNull(phoneNumber);
         String canonicalizedPhone = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber);
 
         MobilePhone mobilePhone = new MobilePhone();
-        mobilePhone.setTelephoneNumber(canonicalizedPhone);
+        mobilePhone.setTelephoneNumberAndCn(canonicalizedPhone);
         mobilePhone.setId(mobilePhoneRepository.getNextId());
 
+        if (isPhoneUserMembershipEnabled()) {
+            try {
+                mobilePhone.addMember(user);
+            } catch (Exception e) {
+                multiFactorConsistencyLogger.error(String.format("Error adding user '%s' to phone '%s' membership. The phone membership will" +
+                        "be inconsistent unless this is corrected. The user's DN should be added to the phone's 'member' attribute.", user.getId(), mobilePhone.getId()), e);
+            }
+        }
+
         mobilePhoneRepository.addObject(mobilePhone);
+        return mobilePhone;
+    }
+
+    private MobilePhone getAndLinkMobilePhone(Phonenumber.PhoneNumber phoneNumber, User user) {
+        Assert.notNull(phoneNumber);
+        String canonicalizedPhone = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber);
+
+        MobilePhone mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
+        if (mobilePhone == null) {
+            throw new IllegalStateException(String.format("Mobile phone '%s' could not be found", canonicalizedPhone));
+        }
+
+        if (isPhoneUserMembershipEnabled()) {
+            try {
+                mobilePhone.addMember(user);
+                mobilePhoneRepository.updateObjectAsIs(mobilePhone);
+            } catch (Exception e) {
+                multiFactorConsistencyLogger.error(String.format("Error adding user '%s' to phone '%s' membership. The phone membership will" +
+                        "be inconsistent unless this is corrected. The user's DN should be added to the phone's 'member' attribute.", user.getId(), mobilePhone.getId()), e);
+            }
+        }
+
         return mobilePhone;
     }
 
@@ -265,5 +325,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     private DateTime generatePinExpirationDateFromNow() {
         return new DateTime().plusMinutes(getPinValidityInMinutes());
+    }
+
+    public boolean isPhoneUserMembershipEnabled() {
+        return globalConfig.getBoolean(CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
     }
 }

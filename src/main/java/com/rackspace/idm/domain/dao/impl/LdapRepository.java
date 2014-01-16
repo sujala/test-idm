@@ -194,6 +194,8 @@ public abstract class LdapRepository {
     public static final String ATTR_MULTIFACTOR_DEVICE_PIN_EXPIRATION = "rsMultiFactorDevicePinExpiration";
     public static final String ATTR_MULTIFACTOR_DEVICE_VERIFIED = "rsMultiFactorDeviceVerified";
     public static final String ATTR_MULTI_FACTOR_ENABLED = "rsMultiFactorEnabled";
+    public static final String ATTR_MEMBER = "member";
+    public static final String ATTR_COMMON_NAME = "cn";
 
     // Definitions for LDAP DNs
     protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";

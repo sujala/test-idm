@@ -18,6 +18,16 @@
 		</layout>
 	</appender>
 
+    <appender name="multifactorConsistencyLogger" class="org.apache.log4j.rolling.RollingFileAppender">
+        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
+            <param name="fileNamePattern" value="/var/log/idm/multifactorConsistency.log.%d.zip"/>
+            <param name="activeFileName" value="/var/log/idm/multifactorConsistency.log"/>
+        </rollingPolicy>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
+        </layout>
+    </appender>
+
 	<!-- Application Loggers -->
 	<logger name="com.rackspace.idm">
 		<level value="info" />
@@ -32,7 +42,11 @@
 		<appender-ref ref="audit" />
 	</logger>
 
-	<!-- 3rdparty Loggers -->
+    <logger name="multifactorConsistencyLogger" additivity="false">
+        <appender-ref ref="multifactorConsistencyLogger" />
+    </logger>
+
+    <!-- 3rdparty Loggers -->
 	<logger name="org.springframework.core">
 		<level value="info" />
 	</logger>
