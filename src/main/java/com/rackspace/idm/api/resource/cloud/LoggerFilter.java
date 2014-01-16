@@ -139,7 +139,7 @@ public class LoggerFilter implements Filter {
             String responseBody = responseWrapper.getBody();
             String responseType = ((HttpServletRequestWrapper) requestWrapper).getHeader("Accept");
 
-            if(config.getBoolean("analytic.logger.enabled")) {
+            if(config.getBoolean("analytics.logger.enabled", false)) {
                 analyticsLogger.log
                         (
                                 startTime,

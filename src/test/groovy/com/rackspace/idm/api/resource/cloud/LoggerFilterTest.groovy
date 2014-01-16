@@ -42,7 +42,7 @@ class LoggerFilterTest extends Specification {
         filter.doFilter(request, response, filterChain)
 
         then:
-        1 * filter.config.getBoolean("analytic.logger.enabled") >> true
+        1 * filter.config.getBoolean("analytics.logger.enabled", false) >> true
         1 * request.getInputStream() >> inputStream
         inputStream.read(_) >> -1
         1 * filter.analyticsLogger.log(_,_,_,_,_,_,_,_,_,_,_,_,_)
@@ -53,7 +53,7 @@ class LoggerFilterTest extends Specification {
         filter.doFilter(request, response, filterChain)
 
         then:
-        1 * filter.config.getBoolean("analytic.logger.enabled") >> false
+        1 * filter.config.getBoolean("analytics.logger.enabled", false) >> false
         1 * request.getInputStream() >> inputStream
         inputStream.read(_) >> -1
         0 * filter.analyticsLogger.log(_,_,_,_,_,_,_,_,_,_,_,_,_)
