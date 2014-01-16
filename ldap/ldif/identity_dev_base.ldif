@@ -2445,3 +2445,43 @@ cn: TOKENS
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
 cn: ROLES
+
+dn: rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 173195
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120312182051.512Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou
+ =applications,o=rackspace,dc=rackspace,dc=com
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: authQE2
+userPassword: Auth1234
+
+dn: cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: cn=TOKENS,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: roleRsId=10053955,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 10053955
