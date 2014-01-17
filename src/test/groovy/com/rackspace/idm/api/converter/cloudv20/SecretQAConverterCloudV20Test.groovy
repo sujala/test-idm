@@ -70,6 +70,19 @@ class SecretQAConverterCloudV20Test extends Specification {
         secretQA.question == secretQAEntity.question
     }
 
+    def "convert secret qa from question and answer attributes to jaxb object"() {
+        given:
+        def secretQuestion = "secret question"
+        def secretAnswer = "secret answer"
+
+        when:
+        def result = converterCloudV20.toSecretQA(secretQuestion, secretAnswer)
+
+        then:
+        result.question == secretQuestion
+        result.answer == secretAnswer
+    }
+
     def secretQA(String id, String question, String answer) {
         new SecretQA().with {
             it.id = id

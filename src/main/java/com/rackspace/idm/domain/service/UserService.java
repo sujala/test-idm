@@ -13,16 +13,16 @@ import java.util.List;
 
 public interface UserService {
 
+    void setUserDefaultsBasedOnCaller(User user, User caller);
+
     void addUser(User user);
-    
+
     void addRacker(Racker racker);
 
     UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
 
-    void deleteRacker(String rackerId);
-    
     void deleteUser(User user);
     
     void deleteUser(String username);
@@ -75,7 +75,7 @@ public interface UserService {
 
     boolean hasSubUsers(String userId);
     
-    void updateUser(User user, boolean hasSelfUpdatedPassword) throws IOException, JAXBException;
+    void updateUser(User user) throws IOException, JAXBException;
 
     Password resetUserPassword(User user);
 
@@ -95,11 +95,7 @@ public interface UserService {
 
     void setConfig(Configuration config);
 
-    void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
-
     void setCloudRegionService(CloudRegionService cloudRegionService);
-    
-    PaginatorContext<User> getAllUsersPaged(int offset, int limit);
 
     PaginatorContext<User> getAllEnabledUsersPaged(int offset, int limit);
 

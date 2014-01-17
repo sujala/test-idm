@@ -1,16 +1,10 @@
 package com.rackspace.idm.domain.dao.impl
-
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.Users
 import com.rackspace.idm.domain.service.EncryptionService
-import com.rackspace.idm.exception.StalePasswordException
-import com.unboundid.ldap.sdk.Filter
-import org.apache.commons.configuration.Configuration
-import org.joda.time.DateTime
 import com.unboundid.ldap.sdk.LDAPException
+import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -34,14 +28,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     }
 
     def "getNextId returns UUID"() {
-        given:
-        def success = false
-        ldapUserRepository.config = config
-        def originalVal = config.getBoolean("user.uuid.enabled", false)
-        config.setProperty("user.uuid.enabled",true)
-
         when:
-        def id = ldapUserRepository.getNextId(LdapRepository.NEXT_USER_ID)
+        def success = false
+        def id = ldapUserRepository.getNextId()
         try {
             Long.parseLong(id)
         } catch (Exception) {
@@ -50,32 +39,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         success == true
-
-        cleanup:
-        config.setProperty("user.uuid.enabled",originalVal)
-    }
-
-    def "getNextId returns Long"() {
-        given:
-        def success = false
-        ldapUserRepository.config = config
-        def originalVal = config.getBoolean("user.uuid.enabled", false)
-        config.setProperty("user.uuid.enabled",false)
-
-        when:
-        def id = ldapUserRepository.getNextId(LdapRepository.NEXT_USER_ID)
-        try {
-            Long.parseLong(id)
-            success = true
-        } catch (Exception) {
-            //no-op
-        }
-
-        then:
-        success == true
-
-        cleanup:
-        config.setProperty("user.uuid.enabled",originalVal)
     }
 
     def "user crud"() {
@@ -352,7 +315,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         user.updated = updated
         def email = "someOtherEmail@rackspace.com"
         user.email = email
-        ldapUserRepository.updateUser(user, false)
+        ldapUserRepository.updateUser(user)
         User getUser = ldapUserRepository.getUserByUsername(username)
 
         then:

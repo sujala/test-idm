@@ -4,11 +4,13 @@ import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,6 +25,9 @@ public class PrecedenceValidator {
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    RoleService roleService;
 
     @Autowired
     private Configuration config;
@@ -70,7 +75,27 @@ public class PrecedenceValidator {
         }
         int callerWeight = callerIdentityRole.getRsWeight();
         compareWeights(callerWeight, role.getRsWeight());
+    }
 
+    public void verifyCallerRolePrecedenceForAssignment(User user, List<String> roleNames) {
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user);
+        if (callerIdentityRole == null) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
+        verifyRolePrecedenceForAssignment(callerIdentityRole, roleNames);
+    }
+
+    public void verifyRolePrecedenceForAssignment(ClientRole clientRole, List<String> roleNames) {
+        if (clientRole != null && roleNames != null) {
+            int roleWeight = clientRole.getRsWeight();
+            for (String roleName : roleNames) {
+                ClientRole role = roleService.getRoleByName(roleName);
+                if (role != null) {
+                    compareWeights(roleWeight, role.getRsWeight());
+                }
+            }
+        }
     }
 
     private void compareWeights(int callerWeight, int roleWeight) {

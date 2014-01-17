@@ -2,9 +2,11 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import org.springframework.stereotype.Component
 
 import javax.xml.datatype.DatatypeFactory
@@ -81,11 +83,6 @@ class V2Factory {
         }
     }
 
-    def createJAXBAuthenticateResponse() {
-        def authenticateResponse = createAuthenticateResponse()
-        return objFactory.createAccess(authenticateResponse)
-    }
-
     def createAuthenticateResponse() {
         return createAuthenticateResponse(createToken(), null, null)
     }
@@ -142,10 +139,6 @@ class V2Factory {
         return objFactory.createCredential(credential)
     }
 
-    def createPasswordCredentialsRequiredUsername() {
-        return createPasswordCredentialsRequiredUsername("username", "Password1")
-    }
-
     def createPasswordCredentialsRequiredUsername(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
             it.username = username
@@ -153,12 +146,6 @@ class V2Factory {
             return it
         }
     }
-
-    def createJAXBPasswordCredentialsRequiredUsername(String username, String password) {
-        def credential = createPasswordCredentialsRequiredUsername(username, password)
-        return objFactory.createPasswordCredentials(credential)
-    }
-
 
     def createJAXBApiKeyCredentials(String username, String apiKey){
         def credential = createApiKeyCredentials(username, apiKey)
@@ -182,6 +169,21 @@ class V2Factory {
         return new RsaCredentials().with {
             it.tokenKey = tokenKey
             it.username = username
+            return it
+        }
+    }
+
+    def createGroup(String name) {
+        new Group().with {
+            it.name = name
+            return it
+        }
+    }
+
+    def createGroups(List<Group> groups) {
+        def list = groups ? groups : [].asList()
+        new Groups().with {
+            it.getGroup().addAll(groups)
             return it
         }
     }
@@ -280,10 +282,6 @@ class V2Factory {
         }
     }
 
-    def createTenants() {
-        return createTenants(null)
-    }
-
     def createTenants(List<Tenant> tenantList) {
         def list = tenantList ? tenantList : [].asList
         new Tenants().with {
@@ -329,6 +327,42 @@ class V2Factory {
         }
     }
 
+    def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion,
+                            String domainId, String password, List<String> roleNames, List<String> groupNames, String secretQuestion, String secretAnswer ) {
+        new User().with {
+            it.username = (username != null) ? username : null
+            it.displayName = (displayName != null) ? displayName : null
+            it.email = (email != null) ? email : null
+            it.enabled = (enabled != null) ? enabled : null
+            it.defaultRegion = defaultRegion
+            it.domainId = domainId
+            it.password = password;
+            if (roleNames != null) {
+                def list = []
+                for (roleName in roleNames) {
+                   list.add(createRole(roleName))
+                }
+
+                it.roles = createRoleList(list.asList())
+            }
+
+            if (groupNames != null) {
+                def list = []
+                for (groupName in groupNames) {
+                    list.add(createGroup(groupName))
+                }
+
+                it.groups = createGroups(list.asList())
+            }
+
+            if (secretQuestion != null || secretAnswer != null) {
+                it.secretQA = createSecretQA(secretQuestion, secretAnswer)
+            }
+
+            return it
+        }
+    }
+
     def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
         new User().with {
             it.username = (username != null) ? username : null
@@ -337,10 +371,8 @@ class V2Factory {
             it.enabled = (enabled != null) ? enabled : null
             it.defaultRegion = defaultRegion
             it.domainId = domainId
+            it.password = password;
 
-            if (password != null) {
-                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
-            }
             return it
         }
     }
@@ -408,6 +440,14 @@ class V2Factory {
             it.id = id
             it.info = info
             it.list = list
+            return it
+        }
+    }
+
+    def createSecretQA(String secretQuestion, String secretAnswer) {
+        new SecretQA().with {
+            it.question = secretQuestion
+            it.answer = secretAnswer
             return it
         }
     }

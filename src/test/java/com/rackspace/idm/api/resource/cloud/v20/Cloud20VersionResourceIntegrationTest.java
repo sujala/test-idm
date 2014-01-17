@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -14,7 +14,6 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.User;
@@ -23,7 +22,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,11 +50,9 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static String roleId = "10010967";
     static String invalidTenant = "999999";
     static String testDomainId = "135792468";
-    static String invalidDomainId = "999999";
     static String disabledDomainId = "888888";
     static String email = "testEmail@rackspace.com";
     static String password = "Password1";
-    static String endpointTemplateId = "105009002";
 
     static User testIdentityAdminUser;
     static User testUserAdmin;
@@ -872,7 +868,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .get(ClientResponse.class);
         if (clientResponse.getStatus() == 200) {
             Object response = clientResponse.getEntity(User.class);
-            return (User) response;
+            return (User) ((JAXBElement)response).getValue();
         }
         return null;
     }
@@ -896,5 +892,27 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .post(String.class, request);
 
         return cloud20TestHelper.getDomain(response);
+    }
+
+
+    private Group getGroupByName(String token, String groupName) {
+        WebResource resource = resource().path("cloud/v2.0/RAX-GRPADM/groups").queryParam("name",groupName);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        if (clientResponse.getStatus() == 200) {
+            Object response = clientResponse.getEntity(Group.class);
+            return (Group) ((JAXBElement)response).getValue();
+        }
+
+        return null;
+    }
+
+    private Group createGroup(String token, String groupName, String description, String mediaType) throws JAXBException {
+        String request = cloud20TestHelper.createGroup(groupName, description);
+        String response = getWebResourceBuilder("cloud/v2.0/RAX-GRPADM/groups", mediaType)
+                .header(X_AUTH_TOKEN, token)
+                .post(String.class, request);
+
+        return cloud20TestHelper.getGroup(response);
     }
 }

@@ -16,8 +16,6 @@ public interface UserDao {
 
     void deleteUser(String username);
 
-    void removeUsersFromClientGroup(ClientGroup group);
-
     Iterable<User> getUsers();
 
     PaginatorContext<User> getUsers(int offset, int limit);
@@ -32,17 +30,11 @@ public interface UserDao {
 
     Iterable<User> getUsersByUsername(String username);
 
-    String[] getGroupIdsForUser(String username);
-
     User getUserByCustomerIdAndUsername(String customerId, String username);
 
     User getUserById(String id);
 
     Iterable<User> getUsersByDomain(String domainId);
-
-    User getUserByRPN(String rpn);
-
-    User getUserBySecureId(String secureId);
 
     User getUserByUsername(String username);
 
@@ -56,9 +48,8 @@ public interface UserDao {
 
     /**
      * @param user User instance with update changes
-     * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
-    void updateUser(User user, boolean hasSelfUpdatedPassword);
+    void updateUser(User user);
 
     void updateUserEncryption(String userId);
 
@@ -67,10 +58,6 @@ public interface UserDao {
     void softDeleteUser(User user);
 
     User getSoftDeletedUserById(String id);
-
-    User getSoftDeletedUserByUsername(String username);
-
-    void unSoftDeleteUser(User user);
 
     Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
 

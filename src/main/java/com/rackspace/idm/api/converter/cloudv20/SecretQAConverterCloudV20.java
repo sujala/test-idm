@@ -32,6 +32,13 @@ public class SecretQAConverterCloudV20 {
         return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createSecretqa(secretQAEntity);
     }
 
+    public com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA toSecretQA(String secretQuestion, String secretAnswer) {
+        com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA secretQA = objFactories.getRackspaceIdentityExtKsqaV1Factory().createSecretQA();
+        secretQA.setQuestion(secretQuestion);
+        secretQA.setAnswer(secretAnswer);
+        return secretQA;
+    }
+
     public SecretQA fromSecretQA(com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQAEntity) {
         return mapper.map(secretQAEntity, SecretQA.class);
     }

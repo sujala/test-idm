@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.exception.BadRequestException;
@@ -25,6 +26,8 @@ import java.util.HashMap;
 public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
+
+    private JsonArrayTransformer arrayTransformer = new JsonArrayTransformer();
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -58,6 +61,8 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
             }else{
                 jsonObject = outer;
             }
+
+            arrayTransformer.transformRemoveWrapper(jsonObject, null);
 
             String newJsonString = jsonObject.toString();
             entityStream.write(newJsonString.getBytes(JSONConstants.UTF_8));

@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
-
 import com.rackspace.idm.JSONConstants
 import com.rackspacecloud.docs.auth.api.v1.AuthData
-import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import com.rackspacecloud.docs.auth.api.v1.User
@@ -15,7 +13,6 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -41,11 +38,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         sharedRandom = ("$randomness").replace('-',"")
 
         serviceAdminToken = cloud20.authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
-        serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User)
+        serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User).value
 
         String adminUsername = "identityAdmin" + sharedRandom
         cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
-        identityAdmin = cloud20.getUserByName(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
+        identityAdmin = cloud20.getUserByName(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
         identityAdminToken = cloud20.authenticate(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
     }
 
@@ -57,14 +54,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         entropy = config.getDouble("token.entropy")
         defaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds")
-
     }
 
     def cleanupSpec() {
         cloud11.deleteUser(identityAdmin.username)
     }
-
-
 
     def "Authenticate with password credentials returns 200"() {
         given:
@@ -78,7 +72,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def authResponse = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(username, password))
 
         def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
-        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         authResponse.status == 200
@@ -98,7 +92,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def userCreateResponse = cloud11.createUser(user)
         def getUserResponse = cloud11.getUserByName(username)
         def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
-        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User).value
         def updateUserResponse = cloud11.updateUser(username, userForUpdate)
 
 
@@ -139,7 +133,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         when:
         def userCreateResponse = cloud11.createUser(user)
         def getUser20Response = cloud20.getUserByName(serviceAdminToken, username)
-        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = getUser20Response.getEntity(org.openstack.docs.identity.api.v2.User).value
         user.id = "userExistingMosso2"
         def userCreateNewNameResponse = cloud11.createUser(user)
 
@@ -193,7 +187,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def credential = v1Factory.createApiKeyCredentials(username, key)
 
         def user = v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", sharedRandom, "Password1")
-        def userId = cloud20.createUser(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).id
+        def userId = cloud20.createUser(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).value.id
         cloud20.addApiKeyToUser(serviceAdminToken, userId, credential)
 
         when:
@@ -231,7 +225,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def createdUser = cloud11.createUser(user).getEntity(User)
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
         def baseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
-        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         createdUser != null
@@ -263,7 +257,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
         def deleteBaseUrlRefResponse = cloud11.deleteBaseUrlRefs(username, baseUrlRef.id.toString())
 
-        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         createdUser != null
@@ -296,7 +290,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def createdUser = cloud11.createUser(user).getEntity(User)
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
         def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
-        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User).value
         def passwordCred = v2Factory.createPasswordCredentialsBase(username, password)
         cloud20.addCredential(serviceAdminToken, getUser.id, passwordCred)
         def cred = v1Factory.createPasswordCredentials(username, password)
@@ -373,7 +367,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def createdUser = cloud11.createUser(user).getEntity(User)
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
         def addBaseUrlRefResponse = cloud11.addBaseUrlRefs(username, baseUrlRef)
-        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User)
+        def getUser = cloud20.getUserByName(serviceAdminToken, username).getEntity(org.openstack.docs.identity.api.v2.User).value
         def passwordCred = v2Factory.createPasswordCredentialsBase(username, password)
         cloud20.addCredential(serviceAdminToken, getUser.id, passwordCred)
         def cred = v1Factory.createPasswordCredentials(username, password)
@@ -575,7 +569,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         when:
         def createdUser = cloud11.createUser(user).getEntity(User)
         def getUserResponse = cloud20.getUserByName(identityAdminToken, createdUser.id)
-        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value
         def listCred = cloud20.listCredentials(serviceAdminToken, userEntity.id).getEntity(String)
         def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
 
@@ -607,7 +601,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         when:
         def createdUser = cloud11.createUser(user).getEntity(User)
         def getUserResponse = cloud20.getUserByName(identityAdminToken, createdUser.id)
-        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = getUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value
         def listCred = cloud20.listCredentials(serviceAdminToken, userEntity.id).getEntity(String)
         def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
 
@@ -670,7 +664,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         when:
         def createdUserResponse = cloud11.createUser(user)
         def createdUser = createdUserResponse.getEntity(User)
-        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         createdUserResponse.status  == status
@@ -700,7 +694,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         user.nastId = nastId
         def updateUserResponse = cloud11.updateUser(username, user)
         def updateUser = updateUserResponse.getEntity(User)
-        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User)
+        def userEntity = cloud20.getUserByName(serviceAdminToken, createdUser.id).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         then:
         createdUserResponse.status  == 201
