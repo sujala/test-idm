@@ -86,7 +86,8 @@ public interface MultiFactorService {
 
 
     /**
-     * Removes multifactor from the user's account. Does not need to clean up phones at this time.
+     * Removes multifactor from the user's account. Does not need to delete unused phones at this time, but must remove any
+     * link between the user and phone.
      *
      * @param userId
      */

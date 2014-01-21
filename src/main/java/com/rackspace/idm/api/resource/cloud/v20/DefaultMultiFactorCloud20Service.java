@@ -81,6 +81,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             response.entity(mobilePhoneConverterCloudV20.toMobilePhoneWeb(mobilePhone));
             return response;
         } catch (Exception ex) {
+            LOG.error(String.format("Error adding a phone to user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
