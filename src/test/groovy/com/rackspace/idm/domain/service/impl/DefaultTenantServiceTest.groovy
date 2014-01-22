@@ -212,7 +212,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         roleList.get(0).name == clientRoles.get(0).name
         roleList.get(0).roleRsId == clientRoles.get(0).id
         roleList.get(0).description == clientRoles.get(0).description
-x        roleList.get(0).tenantIds.contains("123")
+        roleList.get(0).tenantIds.contains("123")
     }
 
     def "doesUserContainTenantRole returns false if user does not contain the role"() {
