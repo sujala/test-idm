@@ -206,7 +206,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.deleteUser(request, "userId", httpHeaders);
-        verify(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
+        verify(authorizationService).authorizeCloudUser(any(AuthorizationContext.class));
     }
 
     @Test
@@ -966,7 +966,7 @@ public class DefaultCloud11ServiceTestOld {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudUser(any(AuthorizationContext.class))).thenReturn(true);
         doNothing().when(atomHopperClient).asyncPost(eq(userDO), eq("deleted"));
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
@@ -1014,23 +1014,23 @@ public class DefaultCloud11ServiceTestOld {
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withService() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withServiceAdmin() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
@@ -1231,14 +1231,14 @@ public class DefaultCloud11ServiceTestOld {
 
     @Test
     public void updateUser_callsValidateUser() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<AuthorizationContext>anyObject())).thenReturn(true);
         spy.updateUser(request, null, null, null);
         verify(validator).validate11User(null);
     }
 
     @Test
     public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<AuthorizationContext>anyObject())).thenReturn(true);
         doThrow(new BadRequestException("test exception")).when(validator).validate11User(null);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -1721,7 +1721,7 @@ public class DefaultCloud11ServiceTestOld {
     public void createUser_validMossoId_callValidateMossoId() throws Exception{
         user.setId("1");
         user.setMossoId(123456);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<AuthorizationContext>anyObject())).thenReturn(true);
         spy.createUser(request,httpHeaders,uriInfo,user);
         verify(spy).validateMossoId(123456);
     }
@@ -1881,30 +1881,30 @@ public class DefaultCloud11ServiceTestOld {
 
     @Test
     public void authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)
     public void authenticateCloudAdminUser_withServiceAndServiceAdminFalse() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 
     @Test
     public void authenticateCloudAdminUser_withService() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
     public void authenticateCloudAdminUser_withServiceAdmin() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }
