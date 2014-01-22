@@ -149,6 +149,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         1 * tenantRoleDao.getTenantRolesForUser(caller) >> [].asList()
+        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
     }
 
     def "addCallerTenantRolesToUser verifies that role to be added is not an identity:* role"() {
@@ -167,6 +168,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
+        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
         config.getString("cloudAuth.adminRole") >> ""
         config.getString("cloudAuth.serviceAdminRole") >> ""
         config.getString("cloudAuth.userAdminRole") >> ""
@@ -181,7 +183,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getRoleDetails(roles)
 
         then:
-        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
     }
 
     def "doesUserContainTenantRole returns false if user does not contain the role"() {

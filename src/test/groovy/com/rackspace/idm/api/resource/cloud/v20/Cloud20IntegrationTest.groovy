@@ -1855,8 +1855,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Disable one of two user admins in domain does not disable subUsers"() {
         given:
-        def domain = "someDomain$sharedRandom"
-        def username = "user$sharedRandom"
+        def domain = "someUserDomain$sharedRandom"
+        def username = "userone$sharedRandom"
         def password = "Password1"
 
         def adminUsername1 = "userAdmin3$sharedRandom"
