@@ -173,10 +173,9 @@ public class DefaultEndpointService implements EndpointService {
             tenantBaseUrlIds.addAll(tenant.getV1Defaults());
         }
 
-        for (String baseUrlId : tenantBaseUrlIds) {
-            CloudBaseUrl baseUrl = endpointDao.getBaseUrlById(baseUrlId);
+        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrlsById(new ArrayList<String>(tenantBaseUrlIds))){
             if (baseUrl != null) {
-                baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrlId));
+                baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrl.getBaseUrlId()));
                 baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName()));
                 baseUrl.setAdminUrl(appendTenantToBaseUrl(baseUrl.getAdminUrl(), tenant.getName()));
                 baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName()));
