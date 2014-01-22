@@ -186,6 +186,35 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
     }
 
+    def "getRoleDetails - verify that roles get populated correctly"() {
+        given:
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.name = "name"
+            it.roleRsId = "1"
+            it.tenantIds = ["123"].asList()
+            it
+        }
+        def roles = [ tenantRole ].asList()
+        def clientRole = entityFactory.createClientRole().with {
+            it.name = "name"
+            it.id = "1"
+            it.description = "desc"
+            it.propagate = false
+            it
+        }
+        def clientRoles = [ clientRole ].asList()
+
+        when:
+        List<TenantRole> roleList = service.getRoleDetails(roles)
+
+        then:
+        1 * applicationService.getClientRolesByIds(_) >> clientRoles
+        roleList.get(0).name == clientRoles.get(0).name
+        roleList.get(0).roleRsId == clientRoles.get(0).id
+        roleList.get(0).description == clientRoles.get(0).description
+        roleList.get(0).tenantIds.contains("123")
+    }
+
     def "doesUserContainTenantRole returns false if user does not contain the role"() {
         given:
         def user = entityFactory.createUser()

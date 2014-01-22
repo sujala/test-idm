@@ -481,7 +481,6 @@ public class DefaultTenantService implements TenantService {
         for (ClientRole clientRole : applicationService.getClientRolesByIds(roleIds)){
             if(clientRole != null) {
                 TenantRole tenantRole = map.get(clientRole.getId());
-                tenantRole.setRoleRsId(clientRole.getId());
                 tenantRole.setName(clientRole.getName());
                 tenantRole.setDescription(clientRole.getDescription());
                 tenantRole.setPropagate(clientRole.getPropagate());
