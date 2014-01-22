@@ -73,7 +73,7 @@ public class TokenConverterCloudV20 {
     TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
         for (TenantRole tenant : tenantRoleList) {
             // TODO: Check for other names? This is to match the Mosso Type
-            if (tenant.getName().equals("compute:default")) {
+            if (tenant.getName().equals("compute:default") && !tenant.getTenantIds().isEmpty()) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tenant.getTenantIds().iterator().next());
                 tenantForAuthenticateResponse.setName(tenant.getTenantIds().iterator().next());
