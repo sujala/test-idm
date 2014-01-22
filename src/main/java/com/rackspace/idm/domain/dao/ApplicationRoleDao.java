@@ -33,4 +33,6 @@ public interface ApplicationRoleDao {
     String getNextRoleId();
 
     Iterable<ClientRole> getIdentityRoles(Application application, List<String> roleNames);
+
+    Iterable<ClientRole> getClientRoles(List<String> roleIds);
 }

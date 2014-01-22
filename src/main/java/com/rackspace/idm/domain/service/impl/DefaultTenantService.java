@@ -469,16 +469,25 @@ public class DefaultTenantService implements TenantService {
     }
 
     private List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
+        HashMap<String, TenantRole> map = new HashMap<String, TenantRole>();
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        List<String> roleIds = new ArrayList<String>();
+
         for (TenantRole role : roles) {
-            if (role != null) {
-                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
-                role.setName(cRole.getName());
-                role.setDescription(cRole.getDescription());
-                role.setPropagate(cRole.getPropagate());
-                tenantRoles.add(role);
+            roleIds.add(role.getRoleRsId());
+            map.put(role.getRoleRsId(), role);
+        }
+
+        for (ClientRole clientRole : applicationService.getClientRolesByIds(roleIds)){
+            if(clientRole != null) {
+                TenantRole tenantRole = map.get(clientRole.getId());
+                tenantRole.setName(clientRole.getName());
+                tenantRole.setDescription(clientRole.getDescription());
+                tenantRole.setPropagate(clientRole.getPropagate());
+                tenantRoles.add(tenantRole);
             }
         }
+
         return tenantRoles;
     }
 

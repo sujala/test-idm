@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -159,5 +160,37 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
         then:
         createdClientRole.propagate == false
+    }
+
+    def "get clientRoles from ids"() {
+        given:
+        List<String> roleIds = ["5", "6"].asList()
+        List<ClientRole> clientRoles = new ArrayList<>()
+
+        when:
+        for(ClientRole role : applicationRoleDao.getClientRoles(roleIds)) {
+            clientRoles.add(role)
+        }
+
+        then:
+        clientRoles != null
+        clientRoles.size() == 2
+        clientRoles.id.contains("5")
+        clientRoles.id.contains("6")
+    }
+
+    def "get clientRoles from emtpy list"() {
+        given:
+        List<String> roleIds = [].asList()
+        List<ClientRole> clientRoles = new ArrayList<>()
+
+        when:
+        for(ClientRole role : applicationRoleDao.getClientRoles(roleIds)) {
+            clientRoles.add(role)
+        }
+
+        then:
+        clientRoles != null
+        clientRoles.size() == 0
     }
 }

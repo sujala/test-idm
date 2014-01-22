@@ -19,9 +19,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -130,8 +133,11 @@ public class DefaultTenantServiceTestOld {
         Entry entry = new Entry(dn);
         Entry readOnlyEntry = new ReadOnlyEntry(entry);
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
+
+        Iterator i = Mockito.mock(Iterator.class);
         when(scopeAccess.getLDAPEntry()).thenReturn((ReadOnlyEntry) readOnlyEntry);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(new ArrayList<TenantRole>());
+        when(applicationService.getClientRolesByIds(new ArrayList<String>())).thenReturn(new ArrayList<ClientRole>());
 
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
         verify(tenantRoleDao).getTenantRolesForScopeAccess(scopeAccess);
@@ -272,6 +278,7 @@ public class DefaultTenantServiceTestOld {
         tenantRoleList.add(null);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoleList);
         when(tenantRoleDao.getTenantRolesForUser(any(User.class))).thenReturn(new ArrayList<TenantRole>());
+        when(applicationService.getClientRolesByIds(new ArrayList<String>())).thenReturn(new ArrayList<ClientRole>());
         defaultTenantService.getTenantRolesForUser(getUser());
         verify(applicationService, times(0)).getClientRoleById(anyString());
     }
