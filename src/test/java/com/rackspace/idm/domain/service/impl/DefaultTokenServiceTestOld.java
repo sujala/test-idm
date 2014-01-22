@@ -129,7 +129,7 @@ public class DefaultTokenServiceTestOld {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCustomerIdm(any(AuthorizationContext.class))).thenReturn(true);
         when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
         defaultTokenService.revokeAccessToken(null,null);
     }
@@ -139,7 +139,7 @@ public class DefaultTokenServiceTestOld {
             ScopeAccess scopeAccess = new ScopeAccess();
             when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
             when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-            when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(true);
+            when(authorizationService.authorizeCustomerIdm(any(AuthorizationContext.class))).thenReturn(true);
             when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(false);
             defaultTokenService.revokeAccessToken(null,null);
     }
@@ -149,7 +149,7 @@ public class DefaultTokenServiceTestOld {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCustomerIdm(any(AuthorizationContext.class))).thenReturn(false);
         when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
         defaultTokenService.revokeAccessToken(null,null);
     }

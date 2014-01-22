@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.entity.*;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
@@ -10,11 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -105,7 +101,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -126,7 +122,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -147,7 +143,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(null);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -168,7 +164,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
         .andReturn(false);
         EasyMock.expect(mockAuthorizationService.authorizeAsRequestorOrOwner(usa, csa))
         .andReturn(false);

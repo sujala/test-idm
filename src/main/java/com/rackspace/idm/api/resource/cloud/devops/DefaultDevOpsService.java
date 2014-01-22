@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -33,7 +34,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     @Async
     public void encryptUsers(String authToken) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
+        authorizationService.verifyServiceAdminLevelAccess(context);
         userService.reEncryptUsers();
     }
 

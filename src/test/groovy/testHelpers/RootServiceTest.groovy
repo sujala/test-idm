@@ -17,6 +17,7 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.entity.AuthorizationContext
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.util.CryptHelper
@@ -824,6 +825,14 @@ class RootServiceTest extends Specification {
             it.clientId = clientId
             it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
+        }
+    }
+
+    def createAuthContext(scopeAccess, roles=[].asList()) {
+        return new AuthorizationContext().with {
+            it.scopeAccess = scopeAccess
+            it.roles = roles
+            it
         }
     }
 

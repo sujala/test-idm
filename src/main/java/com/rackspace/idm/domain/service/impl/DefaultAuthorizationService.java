@@ -50,32 +50,52 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
 	@Override
-    public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
-        return authorizeRoleAccess(scopeAccess, Arrays.asList(cloudServiceAdminRole));
+    public boolean authorizeCloudServiceAdmin(AuthorizationContext context) {
+        return authorizeRoleAccess(context, Arrays.asList(cloudServiceAdminRole));
     }
 
-    public boolean authorizeRacker(ScopeAccess scopeAccess){
-        logger.debug("Authorizing {} as a Racker", scopeAccess);
-        if (!(scopeAccess instanceof RackerScopeAccess)){
+    @Override
+    public AuthorizationContext getAuthorizationContext(ScopeAccess scopeAccess) {
+        AuthorizationContext context = new AuthorizationContext();
+        context.setScopeAccess(scopeAccess);
+        context.setRoles(new HashSet<String>());
+
+        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
+            return context;
+        }
+
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
+
+        for (TenantRole tenantRole : tenantRoles) {
+            context.getRoles().add(tenantRole.getRoleRsId());
+        }
+
+        return context;
+    }
+
+    public boolean authorizeRacker(AuthorizationContext context){
+        logger.debug("Authorizing {} as a Racker", context.getScopeAccess());
+        if (!(context.getScopeAccess() instanceof RackerScopeAccess)){
             return false;
         }
-        boolean authorized = authorize(scopeAccess, Arrays.asList(rackerRole));
-        logger.debug("Authorized {} as Racker - {}", scopeAccess, authorized);
+        boolean authorized = authorize(context, Arrays.asList(rackerRole));
+        logger.debug("Authorized {} as Racker - {}", context.getScopeAccess(), authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
-        return authorizeRoleAccess(scopeAccess, Arrays.asList(cloudIdentityAdminRole));
+    public boolean authorizeCloudIdentityAdmin(AuthorizationContext context) {
+        return authorizeRoleAccess(context, Arrays.asList(cloudIdentityAdminRole));
     }
 
     @Override
-    public boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess) {
-        boolean isRackspaceClient = authorizeRackspaceClient(scopeAccess);
+    public boolean authorizeIdmSuperAdminOrRackspaceClient(AuthorizationContext context) {
+        boolean isRackspaceClient = authorizeRackspaceClient(context);
         boolean isIdmSuperAdmin = false;
         //verify if caller is a rackspace client, idm client or super admin
         if(!isRackspaceClient){
-            isIdmSuperAdmin = authorizeIdmSuperAdmin(scopeAccess);
+            isIdmSuperAdmin = authorizeIdmSuperAdmin(context);
         }
 
         if(!isRackspaceClient && ! isIdmSuperAdmin) {
@@ -83,20 +103,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
         return true;
     }
- 
+
     @Override
-    public boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess) {
-        return authorizeRoleAccess(scopeAccess, Arrays.asList(cloudUserAdminRole));
+    public boolean authorizeCloudUserAdmin(AuthorizationContext context) {
+        return authorizeRoleAccess(context, Arrays.asList(cloudUserAdminRole));
     }
 
     @Override
-    public boolean authorizeUserManageRole(ScopeAccess scopeAccess) {
-        return authorizeRoleAccess(scopeAccess, Arrays.asList(cloudUserManagedRole));
+    public boolean authorizeUserManageRole(AuthorizationContext context) {
+        return authorizeRoleAccess(context, Arrays.asList(cloudUserManagedRole));
     }
 
     @Override
-    public boolean authorizeCloudUser(ScopeAccess scopeAccess) {
-        return authorizeRoleAccess(scopeAccess, Arrays.asList(cloudUserRole));
+    public boolean authorizeCloudUser(AuthorizationContext context) {
+        return authorizeRoleAccess(context, Arrays.asList(cloudUserRole));
     }
 
     @Override
@@ -145,21 +165,23 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
+    public boolean authorizeIdmSuperAdmin(AuthorizationContext context) {
+        ScopeAccess scopeAccess = context.getScopeAccess();
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 
-        if (this.authorizeCustomerIdm(scopeAccess)) {
+        if (this.authorizeCustomerIdm(context)) {
             return true;
         }
 
-        boolean authorized = authorize(scopeAccess, Arrays.asList(idmSuperAdminRole));
+        boolean authorized = authorize(context, Arrays.asList(idmSuperAdminRole));
 
         logger.debug("Authorized {} as idm super admin - {}", scopeAccess, authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
+    public boolean authorizeRackspaceClient(AuthorizationContext context) {
+        ScopeAccess scopeAccess = context.getScopeAccess();
         logger.debug("Authorizing {} as rackspace client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             return false;
@@ -170,7 +192,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
+    public boolean authorizeCustomerIdm(AuthorizationContext context) {
+        ScopeAccess scopeAccess = context.getScopeAccess();
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             return false;
@@ -210,39 +233,39 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     public void verifyIdmSuperAdminAccess(String authHeader) {
-        if(!this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
+        if(!this.authorizeIdmSuperAdmin(getAuthorizationContext(scopeAccessService.getScopeAccessByAccessToken(authHeader)))){
             throw new ForbiddenException("Access denied");
         }
     }
 
     @Override
-    public void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole));
+    public void verifyServiceAdminLevelAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole));
     }
 
     @Override
-    public void verifyRackerOrIdentityAdminAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(rackerRole, cloudIdentityAdminRole));
+    public void verifyRackerOrIdentityAdminAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(rackerRole, cloudIdentityAdminRole));
     }
 
     @Override
-    public void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
+    public void verifyIdentityAdminLevelAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
     }
 
     @Override
-    public void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
+    public void verifyUserAdminLevelAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
     }
 
     @Override
-    public void verifyUserManagedLevelAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
+    public void verifyUserManagedLevelAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
     }
 
     @Override
-    public void verifyUserLevelAccess(ScopeAccess authScopeAccess) {
-        verifyRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
+    public void verifyUserLevelAccess(AuthorizationContext context) {
+        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
     }
 
     @Override
@@ -256,7 +279,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
-        if (authorizeRoleAccess(authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
+        if (authorizeRoleAccess(getAuthorizationContext(authScopeAccess), Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
             return;
         }
 
@@ -283,30 +306,27 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
+    public void checkAuthAndHandleFailure(boolean authorized, AuthorizationContext context) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                    token.getAccessTokenString());
+                    context.getScopeAccess().getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
     }
 
-    private boolean authorize(ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
-        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
+    private boolean authorize(AuthorizationContext context, List<ClientRole> clientRoles) {
+        if (scopeAccessService.isScopeAccessExpired(context.getScopeAccess())) {
             return false;
         }
-
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
 
         HashSet<String> clientRoleIds = new HashSet<String>();
         for (ClientRole role : clientRoles) {
             clientRoleIds.add(role.getId());
         }
 
-        for (TenantRole tenantRole : tenantRoles) {
-            if (clientRoleIds.contains(tenantRole.getRoleRsId())) {
+        for (String tenantRoleId : context.getRoles()) {
+            if (clientRoleIds.contains(tenantRoleId)) {
                 return true;
             }
         }
@@ -314,20 +334,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return false;
     }
 
-    private void verifyRoleAccess(ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
-        if (!authorizeRoleAccess(scopeAccess, clientRoles)) {
+    private void verifyRoleAccess(AuthorizationContext context, List<ClientRole> clientRoles) {
+        if (!authorizeRoleAccess(context, clientRoles)) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
     }
 
-    private boolean authorizeRoleAccess(ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
+    private boolean authorizeRoleAccess(AuthorizationContext context, List<ClientRole> clientRoles) {
         String rolesString = getRoleString(clientRoles);
 
-        logger.debug("Authorizing {} as {}", scopeAccess, rolesString);
-        boolean authorized = authorize(scopeAccess, clientRoles);
-        logger.debug(String.format("Authorized %s as %s - %s", scopeAccess, rolesString, authorized));
+        logger.debug("Authorizing {} as {}", context.getScopeAccess(), rolesString);
+        boolean authorized = authorize(context, clientRoles);
+        logger.debug(String.format("Authorized %s as %s - %s", context.getScopeAccess(), rolesString, authorized));
         return authorized;
     }
 

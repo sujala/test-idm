@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -57,7 +58,8 @@ public class UserPasswordCredentialsResource extends ParentResource {
 
 
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
+        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
 
         User user = this.userService.loadUser(userId);
 

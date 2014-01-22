@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import com.rackspace.idm.domain.entity.AuthorizationContext
+import com.rackspace.idm.domain.entity.ScopeAccess
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -22,16 +23,11 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def "authorizeRacker verifies the scopeAccess"() {
         when:
-        def result = service.authorizeRacker(scopeAccess)
+        def result = service.authorizeRacker(createAuthContext(scopeAccess, [roleId]))
 
         then:
         result == expectedResult
         scopeAccessService.isScopeAccessExpired(scopeAccess) >> expired
-        userService.getUserByScopeAccess(scopeAccess) >> entityFactory.createUser()
-        tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = roleId
-            it
-        }].asList()
 
         where:
         expectedResult  | expired   | roleId    | scopeAccess
@@ -46,7 +42,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createRackerScopeAcccss())
 
         when:
-        def result = service.authorizeRacker(expiredScopeAccess)
+        def result = service.authorizeRacker(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -58,29 +54,10 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        def result = service.authorizeRacker(userScopeAccess)
+        def result = service.authorizeRacker(createAuthContext(userScopeAccess))
 
         then:
         result == false
-    }
-
-    def "authorizeRacker allows access with valid role and non expired token"() {
-        given:
-        def scopeAccess = createRackerScopeAcccss()
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.authorizeRacker(scopeAccess)
-
-        then:
-        result == true
-        1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
-
     }
 
     def "authorizeCloudIdentityAdmin verifies the scopeAccess is not expired"() {
@@ -88,7 +65,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
 
         when:
-        def result = service.authorizeCloudIdentityAdmin(expiredScopeAccess)
+        def result = service.authorizeCloudIdentityAdmin(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -100,8 +77,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
-        def nonIdentityAdminResult = service.authorizeCloudIdentityAdmin(userScopeAccess)
+        def nonIdentityAdminResult = service.authorizeCloudIdentityAdmin(createAuthContext(userScopeAccess))
 
 
         then:
@@ -111,20 +87,13 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     def "authorizeCloudIdentityAdmin allows access with valid role and non expired token"() {
         given:
         def scopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
 
         when:
-        def result = service.authorizeCloudIdentityAdmin(scopeAccess)
+        def result = service.authorizeCloudIdentityAdmin(createAuthContext(scopeAccess, ["1"]))
 
         then:
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
-
     }
 
     def "authorizeCloudServiceAdmin verifies the scopeAccess is not expired"() {
@@ -132,7 +101,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
 
         when:
-        def result = service.authorizeCloudServiceAdmin(expiredScopeAccess)
+        def result = service.authorizeCloudServiceAdmin(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -144,11 +113,10 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        def nonServiceAdminResult = service.authorizeCloudServiceAdmin(userScopeAccess)
+        def nonServiceAdminResult = service.authorizeCloudServiceAdmin(createAuthContext(userScopeAccess))
 
         then:
         nonServiceAdminResult == false
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
     }
 
     def "authorizeCloudServiceAdmin allows access with valid role and non expired token"() {
@@ -157,16 +125,11 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.authorizeCloudServiceAdmin(scopeAccess)
+        def result = service.authorizeCloudServiceAdmin(createAuthContext(scopeAccess, ["1"]))
 
         then:
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
     }
 
     def "authorizeCloudUserAdmin verifies the scopeAccess is not expired"() {
@@ -174,7 +137,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
 
         when:
-        def result = service.authorizeCloudUserAdmin(expiredScopeAccess)
+        def result = service.authorizeCloudUserAdmin(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -186,11 +149,9 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        def result = service.authorizeCloudUserAdmin(userScopeAccess)
+        def result = service.authorizeCloudUserAdmin(createAuthContext(userScopeAccess))
 
         then:
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
-
         result == false
     }
 
@@ -200,16 +161,11 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.authorizeCloudUserAdmin(scopeAccess)
+        def result = service.authorizeCloudUserAdmin(createAuthContext(scopeAccess, ["1"]))
 
         then:
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
     }
 
     def "authorizeCloudUser verifies the scopeAccess is not expired"() {
@@ -217,7 +173,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
 
         when:
-        def result = service.authorizeCloudUser(expiredScopeAccess)
+        def result = service.authorizeCloudUser(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -229,10 +185,9 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        def result = service.authorizeCloudUser(userScopeAccess)
+        def result = service.authorizeCloudUser(createAuthContext(userScopeAccess))
 
         then:
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
         result == false
     }
 
@@ -242,16 +197,11 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.authorizeCloudUser(scopeAccess)
+        def result = service.authorizeCloudUser(createAuthContext(scopeAccess, ["1"]))
 
         then:
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
     }
 
     def "authorizeIdmSuperAdmin verifies the scopeAccess is not expired"() {
@@ -259,7 +209,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
 
         when:
-        def result = service.authorizeIdmSuperAdmin(expiredScopeAccess)
+        def result = service.authorizeIdmSuperAdmin(createAuthContext(expiredScopeAccess))
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
@@ -271,10 +221,9 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def userScopeAccess = createUserScopeAccess()
 
         when:
-        def result = service.authorizeIdmSuperAdmin(userScopeAccess)
+        def result = service.authorizeIdmSuperAdmin(createAuthContext(userScopeAccess))
 
         then:
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
         result == false
     }
 
@@ -284,16 +233,11 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.authorizeIdmSuperAdmin(scopeAccess)
+        def result = service.authorizeIdmSuperAdmin(createAuthContext(scopeAccess, ["1"]))
 
         then:
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole().with {
-            it.roleRsId = "1"
-            it
-        }].asList()
     }
 
     def "hasDefaultUserRole calls tenantService to user is not null" () {
@@ -470,6 +414,98 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         false           | null      | "domain2"
         false           | "domain1" | null
         false           | null      | null
+    }
+
+    def "authorizeScopeAccess gets users roles if not expired"() {
+        given:
+        def scopeAccess = createScopeAccess()
+
+        when:
+        def result = service.getAuthorizationContext(scopeAccess)
+
+        then:
+        1 * userService.getUserByScopeAccess(_)
+        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
+
+        result.roles != null
+        result.scopeAccess != null
+    }
+
+    def "authorizeScopeAccess does not get users roles if expired"() {
+        given:
+        def scopeAccess = expireScopeAccess(createScopeAccess())
+
+        when:
+        def result = service.getAuthorizationContext(scopeAccess)
+
+        then:
+        1 * scopeAccessService.isScopeAccessExpired(_) >> true
+        0 * userService.getUserByScopeAccess(_)
+        0 * tenantService.getTenantRolesForUser(_) >> [].asList()
+
+        result.roles != null
+        result.scopeAccess != null
+    }
+
+    def "authorizeScopeAccess returns list of roles in context"() {
+        given:
+        def scopeAccess = createScopeAccess()
+
+        when:
+        def result = service.getAuthorizationContext(scopeAccess)
+
+        then:
+        1 * userService.getUserByScopeAccess(_)
+        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole()].asList()
+
+        result.roles.contains("1")
+    }
+
+    def "authorize verifies scopeAccess and user roles"() {
+        given:
+        def context = new AuthorizationContext().with {
+            it.scopeAccess = scopeAccess
+            it.roles = roles
+            it
+        }
+
+        when:
+        def result = service.authorize(context, clientRoles)
+
+        then:
+        result == expectedResult
+
+        where:
+        expectedResult  | scopeAccess                               | roles     | clientRoles
+        false           | expireScopeAccess(createScopeAccess())    | []        | []
+        false           | createScopeAccess()                       | ["notId"] | [entityFactory.createClientRole()]
+        true            | createScopeAccess()                       | ["id"]    | [entityFactory.createClientRole()]
+    }
+
+    def "verifyRoleAccess validates scopeAccess and user roles"() {
+        given:
+        def context = new AuthorizationContext().with {
+            it.scopeAccess = scopeAccess
+            it.roles = roles
+            it
+        }
+
+        when:
+        def exceptionThrown = false
+        try {
+            service.verifyRoleAccess(context, clientRoles)
+        } catch (Exception e) {
+            exceptionThrown = true
+        }
+
+        then:
+        exceptionThrown == expectedResult
+
+        where:
+        expectedResult  | scopeAccess                               | roles     | clientRoles
+        true            | expireScopeAccess(createScopeAccess())    | []        | []
+        true            | createScopeAccess()                       | ["notId"] | [entityFactory.createClientRole()]
+        false           | createScopeAccess()                       | ["id"]    | [entityFactory.createClientRole()]
     }
 
     def retrieveAccessControlRoles() {

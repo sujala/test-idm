@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.UserConverter;
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -64,7 +65,7 @@ public class UserResourceTest {
     @Test
     public void getUserById_callsAuthService_authorizeRackspaceClient() throws Exception {
         userResource.getUserById("authHeader", "userId");
-        verify(authorizationService).authorizeRackspaceClient(any(ScopeAccess.class));
+        verify(authorizationService).authorizeRackspaceClient(any(AuthorizationContext.class));
     }
 
     @Test
@@ -75,7 +76,7 @@ public class UserResourceTest {
 
     @Test
     public void getUserById_callsUserService_loadUser() throws Exception {
-        when(authorizationService.authorizeRackspaceClient(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeRackspaceClient(any(AuthorizationContext.class))).thenReturn(true);
         userResource.getUserById("authHeader", "userId");
         verify(userService).loadUser("userId");
     }

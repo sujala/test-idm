@@ -4,6 +4,7 @@ import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Tenant;
 import com.rackspace.idm.api.converter.TenantConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -60,7 +61,8 @@ public class TenantsResource extends ParentResource {
         }
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
+        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
 
         validateTenantId(tenant.getId());
         updateTenantFields(tenant, tenant.getId());
@@ -84,7 +86,8 @@ public class TenantsResource extends ParentResource {
 
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
+        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
 
         com.rackspace.idm.domain.entity.Tenant tenant;
 
