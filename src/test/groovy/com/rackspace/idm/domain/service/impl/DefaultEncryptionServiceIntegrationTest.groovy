@@ -13,10 +13,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
 
     def defaultSalt = "c7 73 21 8c 7e c8 ee 99"
 
-    def setup() {
-        mockConfiguration(encryptionService)
-    }
-
     def "Set user encryption salt and version populates both values"() {
         given:
         def user = entityFactory.createUser()
@@ -54,7 +50,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         encryptionService.encryptUser(user);
 
         then:
-        1 * config.getString("crypto.salt") >> defaultSalt
         user.salt == defaultSalt
     }
 
@@ -92,7 +87,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         encryptionService.decryptUser(user);
 
         then:
-        1 * config.getString("crypto.salt") >> defaultSalt
         user.password == ""
         secretQuestion == user.secretQuestion
         secretAnwser == user.secretAnswer
