@@ -375,8 +375,19 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def addDomain(String token, Domain domain) {
+        resource.path(path20).path(RAX_AUTH).path("domains").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).post(ClientResponse)
+    }
+
     def deleteDomain(String token, String domainId) {
         resource.path(path20).path(RAX_AUTH).path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addTenantToDomain(String token, String domainId, String tenantId) {
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+    def getEndpointsByDomain(String token, String domainId) {
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listCredentials(String token, String userId){
@@ -454,6 +465,4 @@ class Cloud20Methods {
             return it
         }
     }
-
-
 }
