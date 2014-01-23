@@ -606,6 +606,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
             User retrievedUser = userService.checkAndGetUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(retrievedUser);
             User caller = userService.getUserByAuthToken(authToken);
 
             boolean isSelfUpdate = caller.getId().equals(retrievedUser.getId());
@@ -643,8 +644,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
 
-            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser) && !isSelfUpdate) ||
-                    (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
+            if((callerHasUserManageRole && authorizationService.hasUserManageRole(userContext) && !isSelfUpdate) ||
+                    (callerHasUserManageRole && authorizationService.hasUserAdminRole(userContext))) {
                 throw new ForbiddenException("Cannot update user with same or higher access level");
             }
 
@@ -757,6 +758,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole cRole = checkAndGetClientRole(roleId);
 
             User user = userService.checkAndGetUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
             User caller = userService.getUserByAuthToken(authToken);
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
@@ -775,7 +777,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            if(!authorizationService.hasDefaultUserRole(user) &&  cRole.getName().equalsIgnoreCase("identity:user-manage")) {
+            if(!authorizationService.hasDefaultUserRole(userContext) &&  cRole.getName().equalsIgnoreCase("identity:user-manage")) {
                 throw new BadRequestException("Cannot add user-manage role to non default-user");
             }
 
@@ -1117,6 +1119,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
             authorizationService.verifyUserManagedLevelAccess(context);
             User user = userService.checkAndGetUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
             //is same domain?
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(context);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(context);
@@ -1125,10 +1128,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
-            if (authorizationService.hasUserAdminRole(user) && userService.hasSubUsers(userId)) {
+            if (authorizationService.hasUserAdminRole(userContext) && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
-            if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
+            if(callerHasUserManageRole && authorizationService.hasUserManageRole(userContext)) {
                 throw new NotAuthorizedException("Cannot delete user with same access level");
             }
             userService.softDeleteUser(user);
@@ -1403,7 +1406,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = getUser(scopeAccessByAccessToken);
             //if caller has default user role
             if (authorizationService.authorizeCloudUser(context) &&
-                    !authorizationService.hasUserManageRole(caller)) {
+                    !authorizationService.hasUserManageRole(context)) {
                 if (caller.getId().equals(userId)) {
                     return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)).getValue());
                 } else {
@@ -1524,6 +1527,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(context);
 
             User user = this.userService.getUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
             User caller = getUser(scopeAccessByAccessToken);
 
             if (user == null) {
@@ -1537,7 +1541,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(context);
 
             if (callerHasUserManage || callerIsUserAdmin) {
-                if (callerHasUserManage && authorizationService.hasUserAdminRole(user)) {
+                if (callerHasUserManage && authorizationService.hasUserAdminRole(userContext)) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
                 authorizationService.verifyDomain(caller, user);
@@ -1605,9 +1609,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(context);
 
             User user = userService.checkAndGetUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
             User caller = (User) userService.getUserByScopeAccess(callerScopeAccess);
 
-            if(authorizationService.hasServiceAdminRole(user)){
+            if(authorizationService.hasServiceAdminRole(userContext)){
                 throw new ForbiddenException("Not Authorized");
             }
 
@@ -2795,8 +2800,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = groupService.checkAndGetGroupById(groupId);
 
             User user = userService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(userContext);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(userContext);
 
             if (!userService.isUserInGroup(userId, group.getGroupId())) {
                 if (isDefaultUser) {
@@ -2831,8 +2837,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(userContext);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(userContext);
 
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
@@ -2890,14 +2897,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             authorizationService.verifyUserManagedLevelAccess(context);
 
-            PaginatorContext<User> userContext;
+            PaginatorContext<User> paginatorContext;
             if (authorizationService.authorizeCloudServiceAdmin(context) ||
                     authorizationService.authorizeCloudIdentityAdmin(context)) {
-                userContext = this.userService.getAllEnabledUsersPaged(marker, limit);
+                paginatorContext = this.userService.getAllEnabledUsersPaged(marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
-                    userContext = this.userService.getAllUsersPagedWithDomain(domainId, marker, limit);
+                    paginatorContext = this.userService.getAllUsersPagedWithDomain(domainId, marker, limit);
                 } else {
                     throw new BadRequestException("User-admin has no domain");
                 }
@@ -2907,16 +2914,16 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // If role is identity:user-manage then we need to filter out the identity:user-admin
             if (authorizationService.authorizeUserManageRole(context)) {
-                for (User user : userContext.getValueList()) {
-                    if (!authorizationService.hasUserAdminRole(user)) {
+                for (User user : paginatorContext.getValueList()) {
+                    if (!authorizationService.hasUserAdminRole(authorizationService.getAuthorizationContext(user))) {
                         users.add(user);
                     }
                 }
             } else {
-                users = userContext.getValueList();
+                users = paginatorContext.getValueList();
             }
 
-            String linkHeader = userPaginator.createLinkHeader(uriInfo, userContext);
+            String linkHeader = userPaginator.createLinkHeader(uriInfo, paginatorContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)
@@ -3126,12 +3133,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = userService.getUserByAuthToken(authToken);
             User credUser = this.userService.checkAndGetUserById(userId);
+            AuthorizationContext userContext = authorizationService.getAuthorizationContext(credUser);
             if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException("This user can only reset their own apiKey");
             } else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller, credUser);
             } else if (authorizationService.authorizeCloudIdentityAdmin(context)) {
-                if (authorizationService.hasServiceAdminRole(credUser)) {
+                if (authorizationService.hasServiceAdminRole(userContext)) {
                     throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
                 }
             }

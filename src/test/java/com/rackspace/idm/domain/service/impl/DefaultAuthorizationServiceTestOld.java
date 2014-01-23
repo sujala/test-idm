@@ -180,24 +180,4 @@ public class DefaultAuthorizationServiceTestOld {
         ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
         assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
     }
-
-    @Test
-    public void verifyIdmSuperAdminAccess_hasAccess_doesNothing() throws Exception {
-        ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        spy.setScopeAccessService(scopeAccessService);
-        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        doReturn(true).when(spy).authorizeIdmSuperAdmin(any(AuthorizationContext.class));
-        spy.verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test (expected = ForbiddenException.class)
-    public void verifyIdmSuperAdminAccess_doesNotHaveAccess_throwsForbiddenException() throws Exception {
-        ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        spy.setScopeAccessService(scopeAccessService);
-        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        doReturn(false).when(spy).authorizeIdmSuperAdmin(any(AuthorizationContext.class));
-        spy.verifyIdmSuperAdminAccess(null);
-    }
 }

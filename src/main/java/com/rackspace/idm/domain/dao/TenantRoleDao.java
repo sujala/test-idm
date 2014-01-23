@@ -18,13 +18,12 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
     Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
     TenantRole getTenantRoleForApplication(Application application, String roleId);
-    TenantRole getTenantRoleForUser(BaseUser user, String roleId);
     void updateTenantRole(TenantRole tenantRole);
     void deleteTenantRoleForUser(User user, TenantRole tenantRole);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
     List<String> getIdsForUsersWithTenantRole(String roleId);
 
-    TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
+    Iterable<TenantRole> getTenantRoleForUser(User user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
 }

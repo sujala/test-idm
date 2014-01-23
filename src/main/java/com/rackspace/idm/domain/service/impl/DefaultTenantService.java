@@ -140,17 +140,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForUserById(User user, String roleId) {
-        return tenantRoleDao.getTenantRoleForUser(user, roleId);
-    }
-
-    @Override
-    public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
-        TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
-        return tenantRole != null;
-    }
-
-    @Override
     public TenantRole getTenantRoleForApplicationById(Application application, String id) {
         return tenantRoleDao.getTenantRoleForApplication(application, id);
     }
@@ -462,6 +451,12 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
+        logger.debug(GETTING_TENANT_ROLES);
+        return this.tenantRoleDao.getTenantRolesForUser(user);
+    }
+
+    @Override
     public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId, tenantId);
@@ -666,7 +661,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForUser(User user, List<ClientRole> rolesForFilter) {
+    public Iterable<TenantRole> getTenantRolesForUserById(User user, List<ClientRole> rolesForFilter) {
         return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
     }
 

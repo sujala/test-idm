@@ -1,25 +1,13 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
-import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.ClientSecret
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
-import com.unboundid.ldap.sdk.Entry
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anyString
-import static org.mockito.Mockito.doNothing
-import static org.mockito.Mockito.never
-import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.when
-import static org.mockito.Mockito.when
 
 class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
@@ -215,33 +203,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         roleList.get(0).tenantIds.contains("123")
     }
 
-    def "doesUserContainTenantRole returns false if user does not contain the role"() {
-        given:
-        def user = entityFactory.createUser()
-        def roleId = "roleId"
-
-        when:
-        def result = service.doesUserContainTenantRole(user, roleId)
-
-        then:
-        result == false
-        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> null
-    }
-
-    def "doesUserContainTenantRole returns true if user does contain the role"() {
-        given:
-        def user = entityFactory.createUser()
-        def tenantRole = entityFactory.createTenantRole()
-        def roleId = "roleId"
-
-        when:
-        def result = service.doesUserContainTenantRole(user, roleId)
-
-        then:
-        result == true
-        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> tenantRole
-    }
-
     def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {
         when:
         service.getTenantRolesForScopeAccess(null)
@@ -325,7 +286,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        service.getTenantRoleForUser(user, list)
+        service.getTenantRolesForUserById(user, list)
 
         then:
         1 * tenantRoleDao.getTenantRoleForUser(user, list)

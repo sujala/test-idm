@@ -65,6 +65,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        Iterable<TenantRole> tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
+
+        for (TenantRole tenantRole : tenantRoles) {
+            context.getRoles().add(tenantRole.getRoleRsId());
+        }
+
+        return context;
+    }
+
+    @Override
+    public AuthorizationContext getAuthorizationContext(User user) {
+        AuthorizationContext context = new AuthorizationContext();
+        context.setRoles(new HashSet<String>());
+
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
 
         for (TenantRole tenantRole : tenantRoles) {
@@ -120,43 +134,43 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasDefaultUserRole(User user) {
-        if (user == null) {
+    public boolean hasDefaultUserRole(AuthorizationContext context) {
+        if (context == null) {
             return false;
         }
-        return tenantService.doesUserContainTenantRole(user, cloudUserRole.getId());
+        return containsRole(context, Arrays.asList(cloudUserRole));
     }
 
     @Override
-    public boolean hasUserAdminRole(User user) {
-        if (user == null) {
+    public boolean hasUserAdminRole(AuthorizationContext context) {
+        if (context == null) {
             return false;
         }
-        return tenantService.doesUserContainTenantRole(user, cloudUserAdminRole.getId());
+        return containsRole(context, Arrays.asList(cloudUserAdminRole));
     }
 
     @Override
-    public boolean hasUserManageRole(User user) {
-        if (user == null) {
+    public boolean hasUserManageRole(AuthorizationContext context) {
+        if (context == null) {
             return false;
         }
-        return tenantService.doesUserContainTenantRole(user, cloudUserManagedRole.getId());
+        return containsRole(context, Arrays.asList(cloudUserManagedRole));
     }
 
     @Override
-    public boolean hasIdentityAdminRole(User user) {
-        if (user == null) {
+    public boolean hasIdentityAdminRole(AuthorizationContext context) {
+        if (context == null) {
             return false;
         }
-        return tenantService.doesUserContainTenantRole(user, cloudIdentityAdminRole.getId());
+        return containsRole(context, Arrays.asList(cloudIdentityAdminRole));
     }
 
     @Override
-    public boolean hasServiceAdminRole(User user) {
-        if (user == null) {
+    public boolean hasServiceAdminRole(AuthorizationContext context) {
+        if (context == null) {
             return false;
         }
-        return tenantService.doesUserContainTenantRole(user, cloudServiceAdminRole.getId());
+        return containsRole(context, Arrays.asList(cloudServiceAdminRole));
     }
 
     @Override
@@ -320,6 +334,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
+        return containsRole(context, clientRoles);
+    }
+
+    private boolean containsRole(AuthorizationContext context, List<ClientRole> clientRoles) {
         HashSet<String> clientRoleIds = new HashSet<String>();
         for (ClientRole role : clientRoles) {
             clientRoleIds.add(role.getId());

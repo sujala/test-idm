@@ -8,6 +8,7 @@ import org.apache.commons.configuration.Configuration;
 public interface AuthorizationService {
 
     AuthorizationContext getAuthorizationContext(ScopeAccess scopeAccess);
+    AuthorizationContext getAuthorizationContext(User user);
 
     boolean authorizeRacker(AuthorizationContext context);
     boolean authorizeRackspaceClient(AuthorizationContext context);
@@ -24,10 +25,11 @@ public interface AuthorizationService {
 
     void checkAuthAndHandleFailure(boolean authorized, AuthorizationContext context);
 
-    boolean hasDefaultUserRole(User user);
-    boolean hasUserAdminRole(User user);
-    boolean hasUserManageRole(User user);
-    boolean hasServiceAdminRole(User user);
+    boolean hasDefaultUserRole(AuthorizationContext context);
+    boolean hasUserAdminRole(AuthorizationContext context);
+    boolean hasUserManageRole(AuthorizationContext context);
+    boolean hasServiceAdminRole(AuthorizationContext context);
+    boolean hasIdentityAdminRole(AuthorizationContext context);
     boolean hasSameDomain(User caller, User retrievedUser);
 
     void verifyIdmSuperAdminAccess(String authToken);
@@ -43,5 +45,4 @@ public interface AuthorizationService {
 
     void setConfig(Configuration config);
 
-    boolean hasIdentityAdminRole(User user);
 }

@@ -47,6 +47,8 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
     def "filterUserAdmins returns only users with user-admin role"() {
         given:
+        def context1 = createAuthContext()
+        def context2 = createAuthContext()
         def user1 = entityFactory.createUser().with {
             it.username = "userOne"
             return it
@@ -57,8 +59,10 @@ class DefaultDomainServiceTest extends RootServiceTest {
         }
         def userList = [ user1, user2 ].asList()
 
-        authorizationService.hasUserAdminRole(user1) >> false
-        authorizationService.hasUserAdminRole(user2) >> true
+        authorizationService.getAuthorizationContext(user1) >> context1
+        authorizationService.getAuthorizationContext(user2) >> context2
+        authorizationService.hasUserAdminRole(context1) >> false
+        authorizationService.hasUserAdminRole(context2) >> true
 
         when:
         def newList = service.filterUserAdmins(userList)
