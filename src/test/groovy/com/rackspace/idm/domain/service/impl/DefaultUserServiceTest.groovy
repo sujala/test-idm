@@ -653,7 +653,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
             assert (subUser1.enabled == false)
         }
@@ -694,7 +694,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
     }
 
@@ -719,7 +719,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         userDao.getUserById(_) >> currentUser
         userDao.getUsersByDomain(_) >> users
-        1 * authorizationService.hasUserAdminRole(currentUser) >> true
+        1 * authorizationService.hasUserAdminRole(_) >> true
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
         1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
             assert (subUser1.enabled == false)
@@ -742,7 +742,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.username = "userAdmin"
             return it
         }
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
 
         when:
         service.disableUserAdminSubUsers(userAdmin)
@@ -765,7 +765,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = [subUser].asList()
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:

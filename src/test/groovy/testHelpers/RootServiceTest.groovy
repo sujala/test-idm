@@ -836,6 +836,13 @@ class RootServiceTest extends Specification {
         }
     }
 
+    def createAuthContext(List<String> roles=[]) {
+        return new AuthorizationContext().with {
+            it.roles = roles
+            it
+        }
+    }
+
     def createRackerScopeAcccss() {
         return createRackerScopeAccess("tokenString", "rackerId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }

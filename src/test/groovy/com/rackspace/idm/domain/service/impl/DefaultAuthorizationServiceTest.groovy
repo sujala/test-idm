@@ -253,34 +253,32 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def "hasDefaultUserRole calls tenantService to verify role does not exist" () {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext()
 
         when:
-        def result = service.hasDefaultUserRole(user)
+        def result = service.hasDefaultUserRole(context)
 
         then:
         result == false
-        1 * tenantService.doesUserContainTenantRole(_, _) >> false
     }
 
     def "hasDefaultUserRole calls tenantService to verify role exist"() {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext(["1"])
 
         when:
-        def result = service.hasDefaultUserRole(user)
+        def result = service.hasDefaultUserRole(context)
 
         then:
         result == true
-        1 * tenantService.doesUserContainTenantRole(_, _) >> true
     }
 
     def "hasUserAdminRole calls tenantService to user is not null" () {
         given:
-        def user = null
+        def context = null
 
         when:
-        def result = service.hasUserAdminRole(user)
+        def result = service.hasUserAdminRole(context)
 
         then:
         result == false
@@ -288,45 +286,32 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def "hasUserAdminRole calls tenantService to verify role does not exist" () {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext()
 
         when:
-        def result = service.hasUserAdminRole(user)
+        def result = service.hasUserAdminRole(context)
 
         then:
         result == false
-        1 * tenantService.doesUserContainTenantRole(_, _) >> false
     }
 
     def "hasUserAdminRole calls tenantService to verify role exist"() {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext(["1"])
 
         when:
-        def result = service.hasUserAdminRole(user)
+        def result = service.hasUserAdminRole(context)
 
         then:
         result == true
-        1 * tenantService.doesUserContainTenantRole(_, _) >> true
-    }
-
-    def "hasUserManageRole call tenantService to verify role exists" () {
-        given:
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.hasUserManageRole(user)
-
-        then:
-        1 * tenantService.doesUserContainTenantRole(_, _)
     }
 
     def "hasIdentityAdminRole calls tenantService to user is not null" () {
         given:
-        def user = null
+        def context = null
 
         when:
-        def result = service.hasIdentityAdminRole(user)
+        def result = service.hasIdentityAdminRole(context)
 
         then:
         result == false
@@ -334,35 +319,33 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def "hasIdentityAdminRole calls tenantService to verify role does not exist" () {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext()
 
         when:
-        def result = service.hasIdentityAdminRole(user)
+        def result = service.hasIdentityAdminRole(context)
 
         then:
         result == false
-        1 * tenantService.doesUserContainTenantRole(_, _) >> false
     }
 
     def "hasIdentityAdminRole calls tenantService to verify role exist"() {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext(["1"])
 
         when:
-        def result = service.hasIdentityAdminRole(user)
+        def result = service.hasIdentityAdminRole(context)
 
         then:
         result == true
-        1 * tenantService.doesUserContainTenantRole(_, _) >> true
     }
 
 
     def "hasServiceAdminRole calls tenantService to user is not null" () {
         given:
-        def user = null
+        def context = null
 
         when:
-        def result = service.hasServiceAdminRole(user)
+        def result = service.hasServiceAdminRole(context)
 
         then:
         result == false
@@ -370,26 +353,24 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def "hasServiceAdminRole calls tenantService to verify role does not exist" () {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext()
 
         when:
-        def result = service.hasServiceAdminRole(user)
+        def result = service.hasServiceAdminRole(context)
 
         then:
         result == false
-        1 * tenantService.doesUserContainTenantRole(_, _) >> false
     }
 
     def "hasServiceAdminRole calls tenantService to verify role exist"() {
         given:
-        def user = entityFactory.createUser()
+        def context = createAuthContext(["1"])
 
         when:
-        def result = service.hasServiceAdminRole(user)
+        def result = service.hasServiceAdminRole(context)
 
         then:
         result == true
-        1 * tenantService.doesUserContainTenantRole(_, _) >> true
     }
 
     def "hasSameDomain checks if user is in domain"() {
@@ -425,7 +406,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         then:
         1 * userService.getUserByScopeAccess(_)
-        1 * tenantService.getTenantRolesForUser(_) >> [].asList()
+        1 * tenantService.getTenantRolesForUserNoDetail(_) >> [].asList()
 
         result.roles != null
         result.scopeAccess != null
@@ -456,7 +437,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         then:
         1 * userService.getUserByScopeAccess(_)
-        1 * tenantService.getTenantRolesForUser(_) >> [entityFactory.createTenantRole()].asList()
+        1 * tenantService.getTenantRolesForUserNoDetail(_) >> [entityFactory.createTenantRole()].asList()
 
         result.roles.contains("1")
     }

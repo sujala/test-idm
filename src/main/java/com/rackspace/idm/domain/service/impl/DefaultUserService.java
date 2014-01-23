@@ -346,7 +346,7 @@ public class DefaultUserService implements UserService {
             if (result == null) {
                 result = user;
             }
-            if (authorizationService.hasUserAdminRole(user)) {
+            if (authorizationService.hasUserAdminRole(authorizationService.getAuthorizationContext(user))) {
                 result = user;
                 break;
             }
@@ -586,7 +586,7 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users) {
-            if(authorizationService.hasDefaultUserRole(userInList)) {
+            if(authorizationService.hasDefaultUserRole(authorizationService.getAuthorizationContext(userInList))) {
                 return true;
             }
         }
@@ -644,7 +644,8 @@ public class DefaultUserService implements UserService {
     }
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
-        if (authorizationService.hasUserAdminRole(user)) {
+        AuthorizationContext context = authorizationService.getAuthorizationContext(user);
+        if (authorizationService.hasUserAdminRole(context)) {
             List<User> enabledUserAdmins = domainService.getEnabledDomainAdmins(user.getDomainId());
             if (enabledUserAdmins.size() != 0) {
                 return;
