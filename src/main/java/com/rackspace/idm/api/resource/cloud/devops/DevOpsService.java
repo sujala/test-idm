@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -9,4 +12,16 @@ package com.rackspace.idm.api.resource.cloud.devops;
  */
 public interface DevOpsService {
     void encryptUsers(String authToken);
+
+    /**
+     * Retrieves a log of ldap calls made while processing a previous request where the X-LOG-LDAP header (with a value of true) to the request
+     *
+     * Only callable by service admins and when the configuration property "allow.ldap.logging" is set to true in the configuration files
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param logName
+     * @return
+     */
+    Response.ResponseBuilder getLdapLog(UriInfo uriInfo, String authToken, String logName);
 }
