@@ -43,7 +43,7 @@ public class LdapLoggingFilter extends OncePerRequestFilter {
     public static final String UNBOUND_LOG_ALLOW_PROP_NAME = "allow.ldap.logging";
 
     public static final String UNBOUNDID_LOG_LOCATION_PROP_NAME = "unboundid.log.location";
-    public static final String UNBOUNDID_LOG_LOCATION_DEFAULT = "/var/log/idm";
+    public static final String UNBOUNDID_LOG_LOCATION_DEFAULT = System.getProperty("java.io.tmpdir");
 
     public static final boolean UNBOUND_LOG_ALLOW_DEFAULT = false;
 
