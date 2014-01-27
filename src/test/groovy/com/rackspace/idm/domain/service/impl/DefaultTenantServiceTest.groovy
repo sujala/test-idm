@@ -164,7 +164,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
 
-        tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
+        tenantRoleDao.getTenantRolesForUser(caller) >> tenantRoleList
         tenantRoleDao.getTenantRolesForUser(_) >> [].asList()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         applicationService.getById(_) >> entityFactory.createApplication()
@@ -174,6 +174,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
+        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
         config.getString("cloudAuth.adminRole") >> ""
         config.getString("cloudAuth.serviceAdminRole") >> ""
         config.getString("cloudAuth.userAdminRole") >> ""
@@ -188,34 +189,36 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getRoleDetails(roles)
 
         then:
-        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
     }
 
-    def "doesUserContainTenantRole returns false if user does not contain the role"() {
+    def "getRoleDetails - verify that roles get populated correctly"() {
         given:
-        def user = entityFactory.createUser()
-        def roleId = "roleId"
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.name = "name"
+            it.roleRsId = "1"
+            it.tenantIds = ["123"].asList()
+            it
+        }
+        def roles = [ tenantRole ].asList()
+        def clientRole = entityFactory.createClientRole().with {
+            it.name = "name"
+            it.id = "1"
+            it.description = "desc"
+            it.propagate = false
+            it
+        }
+        def clientRoles = [ clientRole ].asList()
 
         when:
-        def result = service.doesUserContainTenantRole(user, roleId)
+        List<TenantRole> roleList = service.getRoleDetails(roles)
 
         then:
-        result == false
-        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> null
-    }
-
-    def "doesUserContainTenantRole returns true if user does contain the role"() {
-        given:
-        def user = entityFactory.createUser()
-        def tenantRole = entityFactory.createTenantRole()
-        def roleId = "roleId"
-
-        when:
-        def result = service.doesUserContainTenantRole(user, roleId)
-
-        then:
-        result == true
-        1 * tenantRoleDao.getTenantRoleForUser(user, roleId) >> tenantRole
+        1 * applicationService.getClientRolesByIds(_) >> clientRoles
+        roleList.get(0).name == clientRoles.get(0).name
+        roleList.get(0).roleRsId == clientRoles.get(0).id
+        roleList.get(0).description == clientRoles.get(0).description
+        roleList.get(0).tenantIds.contains("123")
     }
 
     def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {
@@ -301,7 +304,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        service.getTenantRoleForUser(user, list)
+        service.getTenantRolesForUserById(user, list)
 
         then:
         1 * tenantRoleDao.getTenantRoleForUser(user, list)
@@ -742,33 +745,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         result == list
-    }
-
-    def "federated token contains tenant role"() {
-        given:
-        def federatedToken = entityFactory.createFederatedToken()
-        def tenantRole = entityFactory.createTenantRole()
-        def roleId = "roleId"
-
-        when:
-        def result = service.doesFederatedTokenContainTenantRole(federatedToken, roleId)
-
-        then:
-        result == true
-        1 * tenantRoleDao.getTenantRoleForFederatedToken(federatedToken, roleId) >> tenantRole
-    }
-
-    def "federated token does not contain tenant role"() {
-        given:
-        def federatedToken = entityFactory.createFederatedToken()
-        def roleId = "roleId"
-
-        when:
-        def result = service.doesFederatedTokenContainTenantRole(federatedToken, roleId)
-
-        then:
-        result == false
-        1 * tenantRoleDao.getTenantRoleForFederatedToken(federatedToken, roleId) >> null
     }
 
     def "get tenants for federated token"() {

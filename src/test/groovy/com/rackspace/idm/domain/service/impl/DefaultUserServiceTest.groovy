@@ -360,7 +360,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, null)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, "serviceAdminRoleId") >> true
+        authorizationService.hasServiceAdminRole(_) >> true
 
         when:
         service.setUserDefaultsBasedOnCaller(user, caller)
@@ -378,7 +378,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, domainId)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, "serviceAdminRoleId") >> true
+        authorizationService.hasServiceAdminRole(_) >> true
 
         when:
         service.setUserDefaultsBasedOnCaller(user, caller)
@@ -393,7 +393,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, domainId)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, "identityAdminRoleId") >> true
+        authorizationService.hasIdentityAdminRole(_) >> true
         domainService.getDomainAdmins(domainId) >> [].asList()
 
         when:
@@ -431,7 +431,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, null)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, "identityAdminRoleId") >> true
+        authorizationService.hasIdentityAdminRole(_) >> true
 
         when:
         service.setUserDefaultsBasedOnCaller(user, caller)
@@ -446,7 +446,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, domainId)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, "identityAdminRoleId") >> true
+        authorizationService.hasIdentityAdminRole(_) >> true
         domainService.getDomainAdmins(domainId) >> [user].asList()
 
         when:
@@ -468,7 +468,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def tenantRole3 = entityFactory.createTenantRole("anotherOne", false)
         def group = entityFactory.createGroup("thegroup", "thegroup", "the good group")
 
-        tenantService.doesUserContainTenantRole(caller, callerRole) >> true
+        authorizationService.hasUserAdminRole(_) >> userAdminRole
+        authorizationService.hasUserManageRole(_) >> userManageRole
         domainService.getDomainAdmins(domainId) >> [ caller ].asList()
         tenantService.getTenantRolesForUser(caller) >> [ tenantRole1, tenantRole2, tenantRole3 ].asList()
         userDao.getGroupsForUser(caller.id) >> [ group ].asList()
@@ -506,9 +507,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.region == "DFW"
 
         where:
-        callerRole          | result
-        "userAdminRoleId"   | true
-        "userManageRoleId"  | true
+        userAdminRole       | userManageRole    | result
+        true                | false             | true
+        false               | true              | true
     }
 
     def "Set user defaults based on caller throws Exception if caller is identity:user-admin or identity:user-manage and caller does not have a domain"() {
@@ -520,7 +521,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, null)
         mockRoles()
 
-        tenantService.doesUserContainTenantRole(caller, callerRole) >> true
+        authorizationService.hasUserAdminRole(_) >> userAdminRole
+        authorizationService.hasUserManageRole(_) >> userManageRole
 
         when:
         service.setUserDefaultsBasedOnCaller(user, caller)
@@ -529,9 +531,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         thrown(BadRequestException)
 
         where:
-        callerRole          | result
-        "userAdminRoleId"   | true
-        "userManageRoleId"  | true
+        userAdminRole       | userManageRole    | result
+        true                | false             | true
+        false               | true              | true
     }
 
     def "checkAndGetUserByName gets user"() {
@@ -976,7 +978,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
         }
@@ -1017,7 +1019,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
     }
 
@@ -1042,7 +1044,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         userDao.getUserById(_) >> currentUser
         userDao.getUsersByDomain(_) >> users
-        1 * authorizationService.hasUserAdminRole(currentUser) >> true
+        1 * authorizationService.hasUserAdminRole(_) >> true
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
         1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
@@ -1065,7 +1067,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.username = "userAdmin"
             return it
         }
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
 
         when:
         service.disableUserAdminSubUsers(userAdmin)
@@ -1088,7 +1090,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = [subUser].asList()
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:

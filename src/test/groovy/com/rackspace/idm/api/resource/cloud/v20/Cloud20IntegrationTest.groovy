@@ -1954,6 +1954,32 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         user.enabled == false
     }
 
+    def "Disable one of two user admins in domain does not disable subUsers"() {
+        given:
+        def domain = "someUserDomain$sharedRandom"
+        def username = "userone$sharedRandom"
+        def password = "Password1"
+
+        def adminUsername = "userAdmin3$sharedRandom"
+        def userAdminForCreate1 = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
+        User userAdmin = userAdminForCreate1.getEntity(User).value
+
+        def userAdminToken = cloud20.authenticatePassword(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
+        def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
+
+        when:
+        this.userAdmin.enabled = false;
+        def updateUserResponse = cloud20.updateUser(identityAdminToken, userAdmin.id, userAdmin)
+        def getUserResponse = cloud20.getUser(serviceAdminToken, subUserForCreate.location)
+        User user = getUserResponse.getEntity(User).value
+        cloud20.destroyUser(serviceAdminToken, user.id)
+        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
+
+        then:
+        updateUserResponse.status == 200
+        user.enabled == true
+    }
+
     def "default user one cannot get default user two's admins"() {
         when:
         def response = cloud20.getAdminsForUser(defaultUserToken, defaultUserTwo.id)

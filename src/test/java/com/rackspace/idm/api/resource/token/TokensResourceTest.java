@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.token;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.CredentialsConverter;
 import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -108,7 +109,7 @@ public class TokensResourceTest {
     @Test
     public void validateAccessToken_callsAuthorizationService_authorizeIdmSuperAdminOrRackspaceClient() throws Exception {
         tokensResource.validateAccessToken("authHeader", "tokenString");
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
+        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(AuthorizationContext.class));
     }
 
     @Test

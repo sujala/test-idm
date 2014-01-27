@@ -404,23 +404,23 @@ public class DefaultCloud11ServiceTestOld {
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withService() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withServiceAdmin() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
@@ -500,32 +500,31 @@ public class DefaultCloud11ServiceTestOld {
 
     @Test
     public void authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)
     public void authenticateCloudAdminUser_withServiceAndServiceAdminFalse() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
     }
 
     @Test
     public void authenticateCloudAdminUser_withService() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(false);
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
     public void authenticateCloudAdminUser_withServiceAdmin() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(AuthorizationContext.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }
-
 }
