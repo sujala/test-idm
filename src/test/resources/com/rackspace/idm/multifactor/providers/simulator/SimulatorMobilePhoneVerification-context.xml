@@ -10,7 +10,7 @@
     <bean class="com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification" id="simulatorMobilePhoneVerification" primary="true">
         <constructor-arg ref="simulatorConstantPin" />
     </bean>
-    <bean id="simulatorConstantPin" class="com.rackspace.idm.multifactor.domain.BasicPin">
+    <bean id="simulatorConstantPin" class="com.rackspace.identity.multifactor.domain.BasicPin">
         <constructor-arg value="1234" />
     </bean>
 </beans>

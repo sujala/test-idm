@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.entity;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
+import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;

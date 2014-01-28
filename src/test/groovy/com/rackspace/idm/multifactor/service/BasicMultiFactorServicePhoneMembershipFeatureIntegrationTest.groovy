@@ -7,8 +7,8 @@ import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import com.rackspace.idm.multifactor.domain.BasicPin
-import com.rackspace.idm.multifactor.domain.Pin
+import com.rackspace.identity.multifactor.domain.BasicPin
+import com.rackspace.identity.multifactor.domain.Pin
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils

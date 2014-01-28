@@ -2,9 +2,8 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.exception.InvalidPhoneNumberException;
-import com.rackspace.idm.multifactor.domain.Pin;
 
 /**
  * This is the main interface for interacting with the multi-factor service and abstracts the interaction with explicit providers of
@@ -44,8 +43,8 @@ public interface MultiFactorService {
      * @throws com.rackspace.idm.exception.NotFoundException if specified user or phone can not be found
      * @throws com.rackspace.idm.exception.MultiFactorDeviceNotAssociatedWithUserException If specified device not associated with user
      * @throws com.rackspace.idm.exception.MultiFactorDeviceAlreadyVerifiedException if the specified phone is already verified for this user
-     * @throws InvalidPhoneNumberException if the phone number associated with the mobilePhoneId is invalid for some reason
-     * @throws com.rackspace.idm.multifactor.providers.exceptions.SendPinException if there was a problem sending the pin to the phone
+     * @throws com.rackspace.identity.multifactor.exceptions.InvalidPhoneNumberException if the phone number associated with the mobilePhoneId is invalid for some reason
+     * @throws com.rackspace.identity.multifactor.exceptions.SendPinException if there was a problem sending the pin to the phone
      * @throws com.rackspace.idm.exception.SaveOrUpdateException if there was a problem storing the information
      */
     void sendVerificationPin(String userId, String mobilePhoneId);
