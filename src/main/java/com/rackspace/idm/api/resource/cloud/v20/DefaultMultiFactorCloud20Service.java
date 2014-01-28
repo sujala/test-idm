@@ -3,15 +3,17 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
+import com.rackspace.identity.multifactor.domain.BasicPin;
+import com.rackspace.identity.multifactor.exceptions.*;
+import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.multifactor.domain.BasicPin;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
-import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -258,7 +260,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             Phonenumber.PhoneNumber phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(rawPhoneNumber);
             return phoneNumber;
-        } catch (InvalidPhoneNumberException ex) {
+        } catch (com.rackspace.identity.multifactor.exceptions.InvalidPhoneNumberException ex) {
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_PHONE_NUMBER, ex);
         }
     }

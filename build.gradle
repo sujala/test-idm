@@ -51,6 +51,7 @@ repositories {
     mavenCentral()
     mavenRepo url: "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases"
     mavenRepo url: "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/"
+    mavenRepo url: "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/snapshots"
     mavenRepo url: "http://download.java.net/maven/2/"
     mavenRepo url: "http://repo1.maven.org/maven2"
     mavenRepo url: "http://repository.jboss.org/maven2"
@@ -73,6 +74,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.7.1'
     compile 'org.opensaml:opensaml:2.5.3'
 
+    compile group: 'joda-time', name: 'joda-time', version:'1.6'
     compile group: 'net.sf.dozer', name: 'dozer', version:'5.3.2'
     compile group: 'com.github.peichhorn', name: 'lombok-pg', version:'0.11.2'
     compile group: 'org.apache.cxf', name: 'cxf-api', version:'2.5.2'
@@ -105,7 +107,6 @@ dependencies {
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
     compile group: 'commons-lang', name: 'commons-lang', version:'2.4'
     compile group: 'cglib', name: 'cglib', version:'2.2'
-    compile group: 'joda-time', name: 'joda-time', version:'1.6'
     compile group: 'com.sun.jersey', name: 'jersey-client', version:'1.1.5'
     compile group: 'com.sun.jersey', name: 'jersey-server', version:'1.1.5'
     compile group: 'com.sun.jersey', name: 'jersey-json', version:'1.1.5'
@@ -161,6 +162,7 @@ dependencies {
 
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.8'
+    compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1390927665723-SNAPSHOT'
 }
 
 def resourceDirs = [

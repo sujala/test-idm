@@ -4,8 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.MobilePhoneVerification
-import com.rackspace.idm.multifactor.providers.UserManagement
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
+import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration

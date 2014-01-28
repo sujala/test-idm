@@ -1,8 +1,8 @@
 package com.rackspace.idm.multifactor.providers.simulator;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.idm.multifactor.domain.Pin;
-import com.rackspace.idm.multifactor.providers.MobilePhoneVerification;
+import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification;
 
 /**
  * A simple simulator to emulate a multi-factor provider's phone verification service by returning a constant pin without

@@ -2,19 +2,23 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.identity.multifactor.exceptions.*;
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification;
+import com.rackspace.identity.multifactor.providers.ProviderPhone;
+import com.rackspace.identity.multifactor.providers.ProviderUser;
+import com.rackspace.identity.multifactor.providers.UserManagement;
+import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
+import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
+import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.multifactor.domain.Pin;
-import com.rackspace.idm.multifactor.providers.MobilePhoneVerification;
-import com.rackspace.idm.multifactor.providers.ProviderPhone;
-import com.rackspace.idm.multifactor.providers.ProviderUser;
-import com.rackspace.idm.multifactor.providers.UserManagement;
-import com.rackspace.idm.multifactor.util.IdmPhoneNumberUtil;
-import com.unboundid.util.Debug;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -25,8 +29,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
-import java.util.logging.Handler;
-import java.util.logging.Level;
 
 /**
  * Simple multi-factor implementation that stores mobile phones in the ldap directory, and integrates with a single
@@ -59,7 +61,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     private MobilePhoneVerification mobilePhoneVerification;
 
     @Autowired
-    private UserManagement userManagement;
+    private UserManagement<DuoUser, DuoPhone> userManagement;
 
     @Autowired
     private Configuration globalConfig;
@@ -78,15 +80,6 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Override
     public MobilePhone addPhoneToUser(String userId, Phonenumber.PhoneNumber phoneNumber) {
-        Debug.setEnabled(true);
-        Debug.setIncludeStackTrace(true);
-        java.util.logging.Logger logger = Debug.getLogger();
-        logger.setLevel(Level.FINEST);
-        for (final Handler handler : logger.getHandlers()) {
-            handler.setLevel(Level.FINEST);
-        }
-
-
         Assert.notNull(phoneNumber);
         Assert.notNull(userId);
 
@@ -230,11 +223,24 @@ public class BasicMultiFactorService implements MultiFactorService {
     private void enableMultiFactorForUser(User user) {
         MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
 
-        ProviderUser providerUser = userManagement.createUser(user);
+        DuoPhone duoPhone = new DuoPhone();
+        duoPhone.setNumber(phone.getTelephoneNumber());
+
+        DuoUser duoUser = new DuoUser();
+        duoUser.setUsername(user.getId());
+
+        ProviderUser providerUser = userManagement.createUser(duoUser);
         user.setExternalMultiFactorUserId(providerUser.getProviderId());
 
-        ProviderPhone providerPhone = userManagement.linkMobilePhoneToUser(providerUser.getProviderId(), phone);
-        phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
+        try {
+            ProviderPhone providerPhone = userManagement.linkMobilePhoneToUser(providerUser.getProviderId(), duoPhone);
+            phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
+        } catch (com.rackspace.identity.multifactor.exceptions.NotFoundException e) {
+            //translate to IDM not found exception. Thrown if user does not exist in duo, though it should since was created
+            //above
+            multiFactorConsistencyLogger.error(String.format("An error occurred enabling multifactor for user '%s'. Duo returned a NotFoundException for the user's duo profile '%s'.", user.getId(), providerUser.getProviderId()), e);
+            throw new NotFoundException(e.getMessage(), e);
+        }
         mobilePhoneRepository.updateObjectAsIs(phone);
 
         user.setMultifactorEnabled(true);
