@@ -30,6 +30,6 @@ public interface TenantRoleDao {
     void deleteTenantRole(TenantRole tenantRole);
     List<String> getIdsForUsersWithTenantRole(String roleId);
 
-    TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
+    Iterable<TenantRole> getTenantRoleForUser(User user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
 }

@@ -84,7 +84,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         if (StringUtils.isBlank(user.getId())) {
             user.setId(getNextUserId());
         }
-
+        encryptionService.setUserEncryptionSaltAndVersion(user);
         addObject(user);
     }
 

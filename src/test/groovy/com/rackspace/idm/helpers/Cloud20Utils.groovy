@@ -1,5 +1,6 @@
 package com.rackspace.idm.helpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -8,6 +9,12 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.EndpointList
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
+import org.openstack.docs.identity.api.v2.Tenant
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
@@ -351,5 +358,28 @@ class Cloud20Utils {
         def secretqa = v1Factory.createRaxKsQaSecretQA(user.username, DEFAULT_RAX_KSQA_SECRET_ANWSER, DEFAULT_RAX_KSQA_SECRET_QUESTION)
         def response = methods.updateSecretQA(token, user.id, secretqa)
         assert (response.status == SC_OK)
+    }
+
+    def createDomain(Domain domain) {
+        def response = methods.addDomain(getServiceAdminToken(), domain)
+        assert (response.status == SC_OK)
+        response.getEntity(Domain).value
+    }
+
+    def createTenant(Tenant tenant) {
+        def response = methods.addTenant(getServiceAdminToken(), tenant)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Tenant).value
+    }
+
+    def addTenantToDomain(String domainId, String tenantId) {
+        def response = methods.addTenantToDomain(getServiceAdminToken(), domainId, tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def getEndpointsByDomain(String domainId) {
+        def response = methods.getEndpointsByDomain(getServiceAdminToken(), domainId)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointList).value
     }
 }

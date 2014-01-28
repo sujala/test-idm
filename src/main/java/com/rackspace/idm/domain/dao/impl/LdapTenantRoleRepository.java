@@ -241,8 +241,8 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
-        return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
+    public Iterable<TenantRole> getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
+        return getObjects(orFilter(clientRoles), user.getUniqueId());
     }
 
     @Override

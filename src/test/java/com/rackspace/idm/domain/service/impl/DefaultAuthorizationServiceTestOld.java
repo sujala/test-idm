@@ -52,174 +52,11 @@ public class DefaultAuthorizationServiceTestOld {
     }
 
     @Test
-    public void authorizeCloudServiceAdmin_scopeAccessIsNull_returnsFalse() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.authorizeCloudServiceAdmin(null),equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudServiceAdmin_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudServiceAdmin(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudServiceAdmin_cloudAdminRoleNotNull_doesNotResetCloudAdminRole() throws Exception {
-        ClientRole initialRole = defaultAuthorizationService.getCloudServiceAdminRole();
-        ClientRole clientRole = new ClientRole();
-        defaultAuthorizationService.setCloudServiceAdminRole(clientRole);
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
-        defaultAuthorizationService.authorizeCloudServiceAdmin(scopeAccess);
-        assertThat("client role", defaultAuthorizationService.getCloudServiceAdminRole(), equalTo(clientRole));
-        defaultAuthorizationService.setCloudServiceAdminRole(initialRole);
-    }
-
-    @Test
-    public void authorizeRacker_scopeAccessIsNull_returnsFalse() throws Exception {
-        boolean result = defaultAuthorizationService.authorizeRacker(null);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
-    public void authorizeRacker_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
-        assertThat("boolean", defaultAuthorizationService.authorizeRacker(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeRacker_rackerRoleNotNull_doesNotResetRackerRole() throws Exception {
-        ClientRole initialRole = defaultAuthorizationService.getRackerRole();
-        ClientRole clientRole = new ClientRole();
-        defaultAuthorizationService.setRackerRole(clientRole);
-        ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
-        defaultAuthorizationService.authorizeRacker(scopeAccess);
-        assertThat("client role", defaultAuthorizationService.getRackerRole(), equalTo(clientRole));
-        defaultAuthorizationService.setRackerRole(initialRole);
-    }
-
-    @Test
-    public void authorizeCloudIdentityAdmin_scopeAccessIsNull_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudIdentityAdmin(null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudIdentityAdmin_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudIdentityAdmin(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudIdentityAdmin_cloudIdentityAdminRoleNotNull_doesResetCloudIdentityAdminRole() throws Exception {
-        ClientRole initialRole = defaultAuthorizationService.getCloudIdentityAdminRole();
-        ClientRole clientRole = new ClientRole();
-        defaultAuthorizationService.setCloudIdentityAdminRole(clientRole);
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
-        defaultAuthorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-        assertThat("client role", defaultAuthorizationService.getCloudIdentityAdminRole(), equalTo(clientRole));
-        defaultAuthorizationService.setCloudIdentityAdminRole(initialRole);
-    }
-
-    @Test
-    public void authorizeCloudUserAdmin_scopeAccessIsNull_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudUserAdmin(null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudUserAdmin_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudUserAdmin_cloudUserAdminRoleNotNull_doesNotResetCloudUserAdminRole() throws Exception {
-        ClientRole initialRole = defaultAuthorizationService.getCloudUserAdminRole();
-        ClientRole clientRole = new ClientRole();
-        defaultAuthorizationService.setCloudUserAdminRole(clientRole);
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
-        defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess);
-        assertThat("client role", defaultAuthorizationService.getCloudUserAdminRole(), equalTo(clientRole));
-        defaultAuthorizationService.setCloudUserAdminRole(initialRole);
-    }
-
-    @Test
-    public void authorizeCloudUser_scopeAccessIsNull_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudUser(null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudUser_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
-        assertThat("boolean", defaultAuthorizationService.authorizeCloudUser(scopeAccess), equalTo(false));
-    }
-
-    @Test
-    public void authorizeCloudUser_cloudUserAdminRoleNotNull_doesNotResetCloudUserAdminRole() throws Exception {
-        ClientRole initialRole = defaultAuthorizationService.getCloudUserRole();
-        ClientRole clientRole = new ClientRole();
-        defaultAuthorizationService.setCloudUserRole(clientRole);
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
-        defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        assertThat("client role", defaultAuthorizationService.getCloudUserRole(), equalTo(clientRole));
-        defaultAuthorizationService.setCloudUserRole(initialRole);
-    }
-
-    @Test
-    public void authorizeRackspaceClient_scopeAccessNotInstanceOfClientScopeAccess() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.authorizeRackspaceClient(null),equalTo(false));
-    }
-
-    @Test
-    public void authorizeCustomerIdm_scopeAccessNotInstanceOfClientScopeAccess_returnsFalse() throws Exception {
-        assertThat("boolean", defaultAuthorizationService.authorizeCustomerIdm(null), equalTo(false));
-    }
-
-    @Test
-    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetInstanceOfClientScopeAccessAndClientIdMatches_returnsTrue() throws Exception {
-        ScopeAccess targetScopeAccess = new ClientScopeAccess();
-        targetScopeAccess.setClientId("123");
-        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
-        requestingScopeAccess.setClientId("123");
-        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
-    }
-
-    @Test
-    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetInstanceOfClientScopeAccessAndClientIdDoesNotMatch_returnsTrue() throws Exception {
-        ScopeAccess targetScopeAccess = new ClientScopeAccess();
-        targetScopeAccess.setClientId("abc");
-        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
-        requestingScopeAccess.setClientId("ABC");
-        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
-    }
-
-    @Test
     public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsTrue() throws Exception {
         ScopeAccess targetScopeAccess = new ScopeAccess();
         targetScopeAccess.setClientId("abc");
         ScopeAccess requestingScopeAccess = new ClientScopeAccess();
         requestingScopeAccess.setClientId("ABC");
-        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
-    }
-
-    @Test
-    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfClientScopeAccessAndClientIdsMatch_returnsTrue() throws Exception {
-        ScopeAccess targetScopeAccess = new ClientScopeAccess();
-        targetScopeAccess.setClientId("abc");
-        ScopeAccess requestingScopeAccess = new UserScopeAccess();
-        requestingScopeAccess.setClientId("abc");
         assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
     }
 
@@ -242,17 +79,6 @@ public class DefaultAuthorizationServiceTestOld {
         ScopeAccess requestingScopeAccess = new RackerScopeAccess();
         ((RackerScopeAccess)requestingScopeAccess).setRackerId("123");
         requestingScopeAccess.setClientId("456");
-        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
-    }
-
-    @Test
-    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfUserScopeAccessAndUsernamesMatch_returnsTrue() throws Exception {
-        ScopeAccess targetScopeAccess = new UserScopeAccess();
-        targetScopeAccess.setClientId("1");
-        ((UserScopeAccess) targetScopeAccess).setUsername("jsmith");
-        ScopeAccess requestingScopeAccess = new UserScopeAccess();
-        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
-        requestingScopeAccess.setClientId("123");
         assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
     }
 
@@ -286,31 +112,10 @@ public class DefaultAuthorizationServiceTestOld {
     }
 
     @Test
-    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfUserScopeAccessAndUsernamesDoNotMatch_returnsFalse() throws Exception {
-        ScopeAccess targetScopeAccess = new UserScopeAccess();
-        targetScopeAccess.setClientId("456");
-        ((UserScopeAccess) targetScopeAccess).setUsername("rclements");
-        ScopeAccess requestingScopeAccess = new UserScopeAccess();
-        requestingScopeAccess.setClientId("456");
-        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
-        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(false));
-    }
-
-    @Test
     public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfRackerScopeAccessAndRackerIdsDoNotMatch_returnsFalse() throws Exception {
         ScopeAccess targetScopeAccess = new RackerScopeAccess();
         targetScopeAccess.setClientId("456");
         ((RackerScopeAccess) targetScopeAccess).setRackerId("rclements");
-        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
-        requestingScopeAccess.setClientId("456");
-        ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
-        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
-    }
-
-    @Test
-    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsFalse() throws Exception {
-        ScopeAccess targetScopeAccess = new ScopeAccess();
-        targetScopeAccess.setClientId("456");
         ScopeAccess requestingScopeAccess = new RackerScopeAccess();
         requestingScopeAccess.setClientId("456");
         ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
@@ -483,18 +288,5 @@ public class DefaultAuthorizationServiceTestOld {
     @Test
     public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
         defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
-    }
-
-    @Test
-    public void checkAuthAndHandleFailure_notAuthorized_throwsForbiddenException() throws Exception {
-        try{
-            ScopeAccess token = new UserScopeAccess();
-            ((HasAccessToken) token).setAccessTokenString("cat");
-            defaultAuthorizationService.checkAuthAndHandleFailure(false,token);
-            assertTrue("expecting exception",false);
-        } catch (ForbiddenException ex){
-            String message = ex.getMessage();
-            assertThat("message",message,equalTo("Token cat Forbidden from this call"));
-        }
     }
 }

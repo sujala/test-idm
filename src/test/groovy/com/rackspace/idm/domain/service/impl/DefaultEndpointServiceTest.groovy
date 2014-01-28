@@ -2,6 +2,9 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.entity.OpenstackEndpoint
+import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -165,5 +168,30 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         tenantAlias             | expectedResult
         TENANT_ALIAS_PATTERN    | true
         ""                      | false
+    }
+
+    def "getOpenstackEndpointsForTenant - gets correct information" () {
+        given:
+        Tenant tenant = entityFactory.createTenant()
+        CloudBaseUrl baseUrl = entityFactory.createCloudBaseUrl()
+        baseUrl.adminUrl = "AdminUrl"
+        HashSet set = new HashSet()
+        set.add(baseUrl.baseUrlId)
+        tenant.baseUrlIds = set
+        tenant.v1Defaults = set
+
+        when:
+        OpenstackEndpoint endpoint = service.getOpenStackEndpointForTenant(tenant)
+
+        then:
+        endpoint != null
+        1 * endpointDao.getBaseUrlsById(_) >> [baseUrl].asList()
+        endpoint.tenantId == tenant.tenantId
+        endpoint.tenantName == tenant.name
+        endpoint.baseUrls.size() == 1
+        endpoint.baseUrls[0].v1Default == true
+        endpoint.baseUrls[0].enabled == true
+        endpoint.baseUrls[0].openstackType == baseUrl.openstackType
+        endpoint.baseUrls[0].adminUrl == baseUrl.adminUrl
     }
 }

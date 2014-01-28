@@ -94,12 +94,6 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
-        User user = this.userService.getUser(username);
-
-        if (user == null) {
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
-        }
-
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);

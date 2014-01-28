@@ -252,7 +252,7 @@ public class DefaultCloud20ServiceOldTest {
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(AuthorizationContext.class))).thenReturn(true);
         when(endpointService.getBaseUrlById("101")).thenReturn(cloudBaseUrl);
         when(clientService.getById(role.getServiceId())).thenReturn(application);
         when(clientService.getById("clientId")).thenReturn(application);
@@ -562,6 +562,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void getExtension_currentExtensionNotNullThrowsException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NullPointerException> argumentCaptor = ArgumentCaptor.forClass(NullPointerException.class);
+
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         JAXBContext jaxbContext = JAXBContextResolver.get();
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -651,5 +652,4 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("domain",user.getDomainId(),equalTo(""));
         assertThat("region",user.getRegion(),equalTo(""));
     }
-
 }

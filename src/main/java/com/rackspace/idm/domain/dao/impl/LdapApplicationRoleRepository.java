@@ -101,7 +101,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     @Override
     public Iterable<ClientRole> getIdentityRoles(Application application, List<String> roleNames) {
-        return getObjects(orFilter(roleNames), application.getUniqueId());
+        return getObjects(orFilter(roleNames, ATTR_NAME), application.getUniqueId());
+    }
+
+    @Override
+    public Iterable<ClientRole> getClientRoles(List<String> roleIds) {
+        return getObjects(orFilter(roleIds, ATTR_ID));
     }
 
     private ClientRole getRoleById(String roleId) {
@@ -176,10 +181,10 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE).build();
     }
 
-    private Filter orFilter(List<String> names) {
+    private Filter orFilter(List<String> list, String attribute) {
         List<Filter> orComponents = new ArrayList<Filter>();
-        for (String name : names) {
-            orComponents.add(Filter.createEqualityFilter(ATTR_NAME, name));
+        for (String value : list) {
+            orComponents.add(Filter.createEqualityFilter(attribute, value));
         }
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
