@@ -157,6 +157,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
+            userService.checkUserDisabledByScopeAccess(sa);
 
             if (sa instanceof ImpersonatedScopeAccess){
                 UserScopeAccess usa = getUserFromImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);

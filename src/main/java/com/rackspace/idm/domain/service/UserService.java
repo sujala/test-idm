@@ -134,4 +134,6 @@ public interface UserService {
     Iterable<Group> getGroupsForUser(String userId);
 
     boolean isUserInGroup(String userId, String groupId);
+
+    void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess);
 }

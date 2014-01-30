@@ -67,6 +67,8 @@ public class DefaultUserServiceTestOld {
     private CryptHelper cryptHelper;
     @Mock
     private PropertiesService propertiesService;
+    @Mock
+    private DomainService domainService;
 
     private Validator validator;
 
@@ -297,6 +299,7 @@ public class DefaultUserServiceTestOld {
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUsername()).thenReturn("username");
         when(userDao.getUserByUsername("username")).thenReturn(user);
+        when(domainService.getDomain(anyString())).thenReturn(null);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
         assertThat("user", (User)result, equalTo(user));
     }

@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -28,6 +29,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private TenantService tenantService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private DomainService domainService;
 
     private ClientRole idmSuperAdminRole = null;
     private ClientRole cloudServiceAdminRole = null;
@@ -70,8 +73,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
             FederatedToken token = (FederatedToken)scopeAccess;
             tenantRoles = tenantService.getTenantRolesForFederatedTokenNoDetail(token);
         } else {
-            BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+            BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
+            context.setUser(user);
             tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
+            if(user.getDomainId() != null){
+                context.setDomain(domainService.getDomain(user.getDomainId()));
+            }
         }
 
         for (TenantRole tenantRole : tenantRoles) {
@@ -127,17 +134,23 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeCloudUserAdmin(AuthorizationContext context) {
-        return authorizeRoleAccess(context, Arrays.asList(cloudUserAdminRole));
+        return authorizeUserAccess(context) &&
+               authorizeDomainAccess(context) &&
+               authorizeRoleAccess(context, Arrays.asList(cloudUserAdminRole));
     }
 
     @Override
     public boolean authorizeUserManageRole(AuthorizationContext context) {
-        return authorizeRoleAccess(context, Arrays.asList(cloudUserManagedRole));
+        return authorizeUserAccess(context) &&
+               authorizeDomainAccess(context) &&
+               authorizeRoleAccess(context, Arrays.asList(cloudUserManagedRole));
     }
 
     @Override
     public boolean authorizeCloudUser(AuthorizationContext context) {
-        return authorizeRoleAccess(context, Arrays.asList(cloudUserRole));
+        return authorizeUserAccess(context) &&
+               authorizeDomainAccess(context) &&
+               authorizeRoleAccess(context, Arrays.asList(cloudUserRole));
     }
 
     @Override
@@ -283,31 +296,40 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyServiceAdminLevelAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
         verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole));
     }
 
     @Override
     public void verifyRackerOrIdentityAdminAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
         verifyRoleAccess(context, Arrays.asList(rackerRole, cloudIdentityAdminRole));
     }
 
     @Override
     public void verifyIdentityAdminLevelAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
         verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
     }
 
     @Override
     public void verifyUserAdminLevelAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
+        verifyDomainAccess(context);
         verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
     }
 
     @Override
     public void verifyUserManagedLevelAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
+        verifyDomainAccess(context);
         verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
     }
 
     @Override
     public void verifyUserLevelAccess(AuthorizationContext context) {
+        verifyUserAccess(context);
+        verifyDomainAccess(context);
         verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
     }
 
@@ -396,6 +418,36 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = authorize(context, clientRoles);
         logger.debug(String.format("Authorized %s as %s - %s", context.getScopeAccess(), rolesString, authorized));
         return authorized;
+    }
+
+    private void verifyDomainAccess(AuthorizationContext context) {
+        Domain domain = context.getDomain();
+        if(domain != null && !domain.getEnabled()) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new NotAuthorizedException(errMsg);
+        }
+    }
+
+    private boolean authorizeDomainAccess(AuthorizationContext context) {
+        Domain domain = context.getDomain();
+        return domain == null || domain.getEnabled();
+
+    }
+
+    private void verifyUserAccess(AuthorizationContext context) {
+        BaseUser user = context.getUser();
+        if( user != null && user.isDisabled() ) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new NotAuthorizedException(errMsg);
+        }
+    }
+
+    private boolean authorizeUserAccess(AuthorizationContext context) {
+        BaseUser user = context.getUser();
+        return user == null || !user.isDisabled();
+
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {

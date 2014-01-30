@@ -397,6 +397,10 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path("domains").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).post(ClientResponse)
     }
 
+    def updateDomain(String token, String domainId, domain) {
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).put(ClientResponse)
+    }
+
     def deleteDomain(String token, String domainId) {
         resource.path(path20).path(RAX_AUTH).path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
@@ -439,6 +443,10 @@ class Cloud20Methods {
 
     def revokeUserToken(String token, String tokenToRevoke) {
         resource.path(path20).path(TOKENS).path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def revokeToken(String token) {
+        resource.path(path20).path(TOKENS).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def listRoles(String token, String serviceId, String masker, String limit) {
