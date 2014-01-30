@@ -192,6 +192,8 @@ public class BasicMultiFactorService implements MultiFactorService {
         String providerUserId = user.getExternalMultiFactorUserId();
         String phoneRsId = user.getMultiFactorMobilePhoneRsId();
 
+        boolean enabled = user.isMultiFactorEnabled();
+
         //reset user
         user.setMultifactorEnabled(null);
         user.setExternalMultiFactorUserId(null);
@@ -200,7 +202,10 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+
+        if (enabled) {
+            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+        }
 
         //unlink phone from user.
         try {
@@ -249,18 +254,28 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
         mobilePhoneRepository.updateObjectAsIs(phone);
 
+        boolean alreadyEnabled = user.isMultiFactorEnabled();
+
         user.setMultifactorEnabled(true);
         userService.updateUserForMultiFactor(user);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+
+        if (!alreadyEnabled) {
+            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+        }
     }
 
     private void disableMultiFactorForUser(User user) {
         String providerUserId = user.getExternalMultiFactorUserId();
 
+        boolean enabled = user.isMultiFactorEnabled();
+
         user.setMultifactorEnabled(false);
         user.setExternalMultiFactorUserId(null);
         userService.updateUserForMultiFactor(user);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+
+        if (enabled){
+            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+        }
 
         deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
     }
