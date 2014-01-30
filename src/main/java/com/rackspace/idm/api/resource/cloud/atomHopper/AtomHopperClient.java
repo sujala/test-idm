@@ -224,7 +224,7 @@ public class AtomHopperClient {
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
-        cloudIdentityType.setMultiFactorEnabled(user.getMultifactorEnabled());
+        cloudIdentityType.setMultiFactorEnabled(user.isMultiFactorEnabled());
         for(Group group : userService.getGroupsForUser(user.getId())){
             cloudIdentityType.getGroups().add(group.getGroupId());
         }

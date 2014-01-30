@@ -200,6 +200,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
+        atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
 
         //unlink phone from user.
         try {
