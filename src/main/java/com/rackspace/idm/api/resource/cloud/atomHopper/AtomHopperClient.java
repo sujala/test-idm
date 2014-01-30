@@ -153,6 +153,10 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
                 writer = marshalEntry(entry);
                 response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            } else if (userStatus.equals(AtomHopperConstants.MULTI_FACTOR)) {
+                entry = createEntryForUser(user, EventType.UPDATE, false);
+                writer = marshalEntry(entry);
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             }
 
             if(response != null){
@@ -220,6 +224,7 @@ public class AtomHopperClient {
         CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
+        cloudIdentityType.setMultiFactorEnabled(user.getMultifactorEnabled());
         for(Group group : userService.getGroupsForUser(user.getId())){
             cloudIdentityType.getGroups().add(group.getGroupId());
         }
