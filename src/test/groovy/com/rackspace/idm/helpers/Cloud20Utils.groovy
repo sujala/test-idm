@@ -331,7 +331,7 @@ class Cloud20Utils {
     def getUserById(String id, String token=getServiceAdminToken()){
         def response = methods.getUserById(token, id)
         assert (response.status == SC_OK)
-        response.getEntity(User)
+        response.getEntity(User).value
     }
 
     def getUserByName(String username, String token=getServiceAdminToken()){
@@ -358,6 +358,7 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         List<User> users = response.getEntity(UserList).value.user
         users
+    }
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.addUserToGroup(token, group.id, user.id)

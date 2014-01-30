@@ -433,7 +433,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         def daoUser = userDao.getUserByUsername(defaultUser.username)
         daoUser.multifactorEnabled = multiFactorEnabled
-        userDao.updateUser(daoUser, false)
+        userDao.updateUser(daoUser)
 
         when:
         def userById = utils.getUserById(defaultUser.id)
