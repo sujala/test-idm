@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
@@ -21,26 +22,45 @@ import java.util.List;
 
 @Component
 public class UserConverterCloudV20 {
-    @Autowired
-    private Mapper mapper;
-    
+    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
+
     private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
-    private RoleConverterCloudV20 roleConverterCloudV20;
-    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
+    private Mapper mapper;
+
+    @Autowired
+    RoleConverterCloudV20 roleConverterCloudV20;
+
+    @Autowired
+    SecretQAConverterCloudV20 secretQAConverterCloudV20;
+
+    @Autowired
+    GroupConverterCloudV20 groupConverterCloudV20;
+
+    @Autowired
+    private Configuration config;
 
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
     }
 
-    public com.rackspace.idm.domain.entity.User fromUser(User user) {
+    public com.rackspace.idm.domain.entity.User fromUser(org.openstack.docs.identity.api.v2.User user) {
         com.rackspace.idm.domain.entity.User userEntity = mapper.map(user, com.rackspace.idm.domain.entity.User.class);
-        userEntity.setEnabled(user.isEnabled());
-        if (user instanceof UserForCreate) {
-            userEntity.setPassword(((UserForCreate)user).getPassword());
+
+        //This is being set manually, and not relying on dozer to do this,
+        //if not the password that is saved will not work.
+        userEntity.setPassword(user.getPassword());
+        userEntity.setUserPassword(user.getPassword());
+
+        if (user.getSecretQA() != null) {
+            userEntity.setSecretQuestion(user.getSecretQA().getQuestion());
+            userEntity.setSecretAnswer(user.getSecretQA().getAnswer());
         }
-        userEntity.setUserPassword(userEntity.getPassword());
+
+        userEntity.setRoles(roleConverterCloudV20.toTenantRoles(user.getRoles()));
+        userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
+
         return userEntity;
     }
 
@@ -134,6 +154,18 @@ public class UserConverterCloudV20 {
             if (user.getUpdated() != null) {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
+            }
+
+            if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
+                jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
+            }
+
+            if (user.getRoles() != null) {
+                jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(user.getRoles()));
+            }
+
+            if (user.getRsGroupId() != null) {
+                jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
             }
 
         } catch (DatatypeConfigurationException e) {

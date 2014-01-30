@@ -1,21 +1,16 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.entity.Domain
-import com.rackspace.idm.domain.entity.PaginatorContext
-import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.rackspace.idm.domain.entity.FilterParam
-import com.rackspace.idm.domain.entity.Region
-import com.rackspace.idm.domain.entity.Tenant
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
+import com.rackspace.idm.validation.Validator
 import spock.lang.Shared
 import testHelpers.RootServiceTest
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -25,8 +20,9 @@ import testHelpers.RootServiceTest
  */
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
-
     @Shared FederatedUserDao mockFederatedUserDao
+    @Shared Validator mockValidator
+    @Shared RoleService mockRoleService
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
@@ -35,6 +31,15 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared def userList
     @Shared def userIdList
     @Shared def users
+    @Shared def domainId = "domainId"
+
+    @Shared serviceAdminRole
+    @Shared identityAdminRole
+    @Shared userAdminRole
+    @Shared userManageRole
+    @Shared defaultRole
+    @Shared computeDefaultRole
+    @Shared objectStoreRole
 
     def setupSpec(){
         service = new DefaultUserService()
@@ -55,10 +60,51 @@ class DefaultUserServiceTest extends RootServiceTest {
         roleFilter = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom)]
         domainAndRoleFilters = [new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRandom),
                                 new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, sharedRandom)]
+
+        serviceAdminRole = entityFactory.createClientRole().with{
+            it.id = "serviceAdminRoleId"
+            it.name = "identity:service-admin"
+            return it
+        }
+
+        identityAdminRole = entityFactory.createClientRole().with{
+            it.id = "identityAdminRoleId"
+            it.name = "identity:admin"
+            return it
+        }
+
+        userAdminRole = entityFactory.createClientRole().with{
+            it.id = "userAdminRoleId"
+            it.name = "identity:user-admin"
+            return it
+        }
+
+        userManageRole = entityFactory.createClientRole().with{
+            it.id = "userManageRoleId"
+            it.name = "identity:user-manage"
+            return it
+        }
+
+        defaultRole = entityFactory.createClientRole().with{
+            it.id = "defaultRoleId"
+            it.name = "identity:default"
+            return it
+        }
+
+        computeDefaultRole = entityFactory.createClientRole().with{
+            it.id = "computeDefaultRoleId"
+            it.name = "compute:default"
+            return it
+        }
+
+        objectStoreRole = entityFactory.createClientRole().with{
+            it.id = "objectStoreRoleId"
+            it.name = "object-store:default"
+            return it
+        }
     }
 
     def setup() {
-        mockPasswordComplexityService(service)
         mockScopeAccessService(service)
         mockAuthDao(service)
         mockApplicationService(service)
@@ -73,6 +119,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockDomainService(service)
         mockPropertiesService(service)
         mockCryptHelper(service)
+        mockValidator(service)
+        mockRoleService(service);
     }
 
     def "Add BaseUrl to user"() {
@@ -154,10 +202,69 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     }
 
-    def "addUser keeps specified region for user"() {
+    def "Add User"() {
         given:
-        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("notthesame", "cloud", true)
-        userDao.isUsernameUnique(_) >> true
+        def user = this.createUser(null, true, domainId)
+        user.setRoles([entityFactory.createTenantRole("roleName")].asList())
+        def mossoBaseUrl = entityFactory.createCloudBaseUrl("mossoBaseUrlId", true)
+        def nastBaseUrl = entityFactory.createCloudBaseUrl("nastBaseUrlId", true)
+        def encryptionVersion = "1"
+        def salt = "a1 b2"
+
+        domainService.getDomain(domainId) >>> [ null, entityFactory.createDomain() ]
+        domainService.getDomainAdmins(domainId) >> [].asList()
+        endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.MOSSO_BASE_URL_TYPE) >> [ mossoBaseUrl ].asList()
+        endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.NAST_BASE_URL_TYPE) >> [ nastBaseUrl ].asList()
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
+        propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
+        config.getInt("maxNumberOfUsersInDomain") >> 100
+        config.getBoolean("generate.apiKey.userForCreate") >> true
+        userDao.getUsersByDomain(domainId) >> [].asList()
+        userDao.nextUserId >> "nextId"
+        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
+        cryptHelper.generateSalt() >> salt
+
+        when:
+        service.addUser(user)
+
+        then:
+        1 * mockValidator.validateUser(user)
+        1 * domainService.createNewDomain(domainId)
+        1 * tenantService.addTenant({ it.tenantId == domainId; it.baseUrlIds.contains("mossoBaseUrlId")  })
+        1 * tenantService.addTenant({ it.tenantId == DefaultUserService.NAST_TENANT_PREFIX + domainId; it.baseUrlIds.contains("nastBaseUrlId")  })
+        1 * domainService.addTenantToDomain(domainId,domainId)
+        1 * domainService.addTenantToDomain(DefaultUserService.NAST_TENANT_PREFIX + domainId, domainId)
+        1 * userDao.addUser(user)
+        1 * tenantService.addTenantRoleToUser(user, _);
+
+        user.password != null
+        user.userPassword != null
+        user.apiKey != null
+        user.region != null
+        user.nastId == DefaultUserService.NAST_TENANT_PREFIX + domainId
+        user.encryptionVersion == encryptionVersion
+        user.salt == salt;
+        user.enabled == true
+    }
+
+    def "Add User does not set default password if specified"() {
+        given:
+        minimumMocksForAddUser()
+        def user = createUser(null, true, "id", "email@email.com", 1, "nast");
+        user.password = "mypassword"
+
+        when:
+        service.addUser(user)
+
+        then:
+        userDao.addUser(_) >> { arg1 ->
+            assert(arg1.password[0].equals("mypassword"))
+        }
+    }
+
+    def "Add User does not set default region if specified"() {
+        given:
+        minimumMocksForAddUser()
 
         when:
         service.addUser(createUser("region", true, "id", "email@email.com", 1, "nast"))
@@ -168,33 +275,265 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
-    def "addUser uses nextid to get the userid"() {
+    def "Add User does not set default api key if specified"() {
         given:
-        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("notthesame", "cloud", true)
-        userDao.isUsernameUnique(_) >> true
+        minimumMocksForAddUser()
+        def user = createUser("region", true, "id", "email@email.com", 1, "nast")
+        user.apiKey = "apiKey"
 
         when:
-        service.addUser(createUser("region", true, null, "email@email.com", 1, "nast"))
-
-        then:
-        1 * userDao.getNextUserId() >> "100"
-        1 * userDao.addUser(_) >> { User user ->
-            assert(user.id != null)
-        }
-    }
-
-    def "addUser adds region to user if not present"() {
-        given:
-        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
-        userDao.isUsernameUnique(_) >> true
-
-        when:
-        service.addUser(createUser(null, true, "id", "email@email.com", 1, "nast"))
+        service.addUser(user)
 
         then:
         userDao.addUser(_) >> { arg1 ->
-            assert(arg1.region[0].equals("region"))
+            assert(arg1.apiKey[0].equals("apiKey"))
         }
+    }
+
+    def "Add User does not set default api key if not specified and not configured to auto generate"() {
+        given:
+        minimumMocksForAddUser()
+        def user = createUser("region", true, "id", "email@email.com", 1, "nast")
+        user.apiKey = null
+
+        config.getBoolean("generate.apiKey.userForCreate") >> false
+
+        when:
+        service.addUser(user)
+
+        then:
+        userDao.addUser(_) >> { arg1 ->
+            assert(arg1.apiKey[0] == null)
+        }
+    }
+
+    def "Add User prohibited if max number of users in domain is exceeded"() {
+        given:
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
+        config.getInt("maxNumberOfUsersInDomain") >> 2
+        userDao.getUsersByDomain(_) >> [ new User(), new User(), new User()].asList()
+        def user = createUser("region", true, "id", "email@email.com", 1, "nast")
+        user.domainId = "domainId"
+
+        when:
+        service.addUser(user)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Add User does not create domain if it already exists"() {
+        given:
+        minimumMocksForAddUser()
+        def user = this.createUser(null, true, domainId)
+
+        config.getBoolean("generate.apiKey.userForCreate") >> false
+        domainService.getDomain(domainId) >> entityFactory.createDomain()
+
+        when:
+        service.addUser(user)
+
+        then:
+        0 * domainService.createNewDomain(domainId)
+    }
+
+    def "Add User does not create default domain tenants if domain already exists with admins"() {
+        given:
+        def user = this.createUser(null, true, domainId)
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
+        userDao.getUsersByDomain(_) >> [ new User(), new User(), new User()].asList()
+        config.getInt("maxNumberOfUsersInDomain") >> 100
+        domainService.getDomain(domainId) >> entityFactory.createDomain()
+        domainService.getDomainAdmins(domainId) >> [new User()].asList()
+
+        when:
+        service.addUser(user)
+
+        then:
+        0 * tenantService.addTenant(_)
+        0 * domainService.addTenantToDomain(_,_)
+    }
+
+    def "Set user defaults based on caller if caller is identity:service-admin (super-admin)"() {
+        given:
+        def caller = this.createUser(null, true, domainId)
+        def user = this.createUser(null, true, null)
+        mockRoles()
+
+        authorizationService.hasServiceAdminRole(_) >> true
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        assert(user.roles.size() == 1)
+        for (tenantRole in user.roles) {
+            assert(tenantRole.name == "identity:admin")
+        }
+    }
+
+    def "Set user defaults based on caller throws exception if caller is identity:service-admin and user has domain specified"() {
+        given:
+        def caller = this.createUser(null, true, domainId)
+        def user = this.createUser(null, true, domainId)
+        mockRoles()
+
+        authorizationService.hasServiceAdminRole(_) >> true
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Set user defaults based on caller if caller is identity:admin"() {
+        given:
+        def caller = this.createUser(null, true, null)
+        def user = this.createUser(null, true, domainId)
+        mockRoles()
+
+        authorizationService.hasIdentityAdminRole(_) >> true
+        domainService.getDomainAdmins(domainId) >> [].asList()
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        def userAdminRoleFound = false
+        def computeDefaultRoleFound = false
+        def objectStoreRoleFound = false
+
+        assert(user.roles.size() == 3)
+        for (tenantRole in user.roles) {
+            if (tenantRole.name == "identity:user-admin") {
+                userAdminRoleFound = true
+            }
+
+            if (tenantRole.name == "compute:default") {
+                computeDefaultRoleFound = true
+            }
+
+            if (tenantRole.name == "object-store:default") {
+                objectStoreRoleFound = true
+            }
+        }
+
+        userAdminRoleFound == true
+        computeDefaultRoleFound == true
+        objectStoreRoleFound == true
+    }
+
+
+    def "Set user defaults based on caller throws exception if caller is identity:admin and user does not have domainId"() {
+        given:
+        def caller = this.createUser(null, true, null)
+        def user = this.createUser(null, true, null)
+        mockRoles()
+
+        authorizationService.hasIdentityAdminRole(_) >> true
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Set user defaults based on caller throws exception if caller is identity:admin and user domain already has an identity:user-admin"() {
+        given:
+        def caller = this.createUser(null, true, null)
+        def user = this.createUser(null, true, domainId)
+        mockRoles()
+
+        authorizationService.hasIdentityAdminRole(_) >> true
+        domainService.getDomainAdmins(domainId) >> [user].asList()
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Set user defaults based on caller if caller is identity:user-admin or identity:user-manage"() {
+        given:
+        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId")
+        caller.domainId = domainId
+        def user = this.createUser(null, true, null)
+        mockRoles()
+
+        def tenantRole1 = entityFactory.createTenantRole("identity:user-admin", false)
+        def tenantRole2 = entityFactory.createTenantRole("observer", true)
+        def tenantRole3 = entityFactory.createTenantRole("anotherOne", false)
+        def group = entityFactory.createGroup("thegroup", "thegroup", "the good group")
+
+        authorizationService.hasUserAdminRole(_) >> userAdminRole
+        authorizationService.hasUserManageRole(_) >> userManageRole
+        domainService.getDomainAdmins(domainId) >> [ caller ].asList()
+        tenantService.getTenantRolesForUser(caller) >> [ tenantRole1, tenantRole2, tenantRole3 ].asList()
+        userDao.getGroupsForUser(caller.id) >> [ group ].asList()
+        mockRoleService.getRoleByName("observer") >> entityFactory.createClientRole("observer")
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        def defaultRoleFound = false
+        def observerRoleFound = false
+
+        assert(user.roles.size() == 2)
+        for (tenantRole in user.roles) {
+            if (tenantRole.name == "observer") {
+                observerRoleFound = true
+            }
+
+            if (tenantRole.name == "identity:default") {
+                defaultRoleFound = true
+            }
+        }
+
+        assert(user.rsGroupId.size() == 1)
+        for (groupId in user.rsGroupId) {
+            assert(groupId == "thegroup")
+        }
+
+        assert(defaultRoleFound == true)
+        assert(observerRoleFound == true)
+
+        user.mossoId == 12345
+        user.nastId == "nastId"
+        user.domainId == "domainId"
+        user.region == "DFW"
+
+        where:
+        userAdminRole       | userManageRole    | result
+        true                | false             | true
+        false               | true              | true
+    }
+
+    def "Set user defaults based on caller throws Exception if caller is identity:user-admin or identity:user-manage and caller does not have a domain"() {
+        given:
+        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId").with {
+            it.domainId = null
+            return it
+        }
+        def user = this.createUser(null, true, null)
+        mockRoles()
+
+        authorizationService.hasUserAdminRole(_) >> userAdminRole
+        authorizationService.hasUserManageRole(_) >> userManageRole
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller)
+
+        then:
+        thrown(BadRequestException)
+
+        where:
+        userAdminRole       | userManageRole    | result
+        true                | false             | true
+        false               | true              | true
     }
 
     def "checkAndGetUserByName gets user"() {
@@ -553,7 +892,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
 
         when:
-        service.updateUser(user, false)
+        service.updateUser(user)
 
         then:
         1 * scopeAccessService.expireAllTokensForUser(_)
@@ -574,7 +913,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
 
         when:
-        service.updateUser(user, false)
+        service.updateUser(user)
 
         then:
         1 * scopeAccessService.expireAllTokensForUser(_)
@@ -639,8 +978,8 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
-        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+        authorizationService.hasUserAdminRole(_) >> true
+        1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
         }
     }
@@ -680,7 +1019,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsersByDomain(_) >> users
-        authorizationService.hasUserAdminRole(user) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
     }
 
@@ -700,14 +1039,14 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
-        service.updateUser(user, false)
+        service.updateUser(user)
 
         then:
         userDao.getUserById(_) >> currentUser
         userDao.getUsersByDomain(_) >> users
-        1 * authorizationService.hasUserAdminRole(currentUser) >> true
+        1 * authorizationService.hasUserAdminRole(_) >> true
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
-        1 * userDao.updateUser(subUser, false) >> { User subUser1, boolean hasSelfUpdatePassword ->
+        1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
         }
         1 * scopeAccessService.expireAllTokensForUser(user.getUsername());
@@ -728,7 +1067,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.username = "userAdmin"
             return it
         }
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
 
         when:
         service.disableUserAdminSubUsers(userAdmin)
@@ -751,7 +1090,7 @@ class DefaultUserServiceTest extends RootServiceTest {
             return it
         }
         def users = [subUser].asList()
-        authorizationService.hasUserAdminRole(userAdmin) >> true
+        authorizationService.hasUserAdminRole(_) >> true
         domainService.getEnabledDomainAdmins(_) >> [].asList()
 
         when:
@@ -759,7 +1098,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * userDao.getUsersByDomain(_) >> users
-        1 * userDao.updateUser(_, _)
+        1 * userDao.updateUser(_)
     }
 
     def "when getting racker from scope access, return racker if enabled flag is missing"() {
@@ -815,25 +1154,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         2 * userDao.getUsersToReEncrypt(_, _) >>> [context1, context2]
         1 * userDao.updateUserEncryption(userId)
-    }
-
-    def "Create User sets salt and encryption version"(){
-        given:
-        def encryptionVersion = "1"
-        def salt = "a1 b2"
-
-        when:
-        service.addUser(entityFactory.createUser())
-
-        then:
-        1 * propertiesService.getValue(_) >> encryptionVersion
-        1 * cryptHelper.generateSalt() >> salt
-        1 * userDao.isUsernameUnique(_) >> true
-        1 * userDao.addUser(_) >> { User arg1 ->
-            assert(arg1.encryptionVersion == encryptionVersion)
-            assert(arg1.salt == salt)
-        }
-
     }
 
     def "authenticate validates user is enabled"() {
@@ -964,6 +1284,16 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.federatedUserDao = mockFederatedUserDao
     }
 
+    def mockValidator(service) {
+        mockValidator = Mock()
+        service.validator = mockValidator
+    }
+
+    def mockRoleService(service) {
+        mockRoleService = Mock()
+        service.roleService = mockRoleService
+    }
+
     def createUser(String region, boolean enabled, String id, String email, int mossoId, String nastId) {
         new User().with {
             it.region = region
@@ -972,6 +1302,15 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.email = email
             it.mossoId = mossoId
             it.nastId = nastId
+            return it
+        }
+    }
+
+    def createUser(String region, boolean enabled, String domainId) {
+        new User().with {
+            it.region = region
+            it.enabled = enabled
+            it.domainId = domainId
             return it
         }
     }
@@ -992,5 +1331,22 @@ class DefaultUserServiceTest extends RootServiceTest {
             it.tenantIds = tenantIds
             return it
         }
+    }
+
+    def minimumMocksForAddUser() {
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
+        domainService.getDomainAdmins(domainId) >> [].asList()
+        userDao.getUsersByDomain(_) >> [].asList()
+        endpointService.getBaseUrlsByBaseUrlType(_) >> [].asList()
+    }
+
+    def mockRoles() {
+        mockRoleService.getSuperUserAdminRole() >> serviceAdminRole
+        mockRoleService.getIdentityAdminRole() >> identityAdminRole
+        mockRoleService.getUserAdminRole() >> userAdminRole
+        mockRoleService.getUserManageRole() >> userManageRole
+        mockRoleService.getDefaultRole() >> defaultRole
+        mockRoleService.getComputeDefaultRole() >> computeDefaultRole
+        mockRoleService.getObjectStoreDefaultRole() >> objectStoreRole
     }
 }

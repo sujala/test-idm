@@ -74,7 +74,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(user) >> [sa].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa_2
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -93,23 +92,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
-    def "update expired user scope access handles error in DAO"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new Exception()}
-    }
-
     def "update (different parameters) deletes expired"() {
         given:
         def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
@@ -118,10 +100,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >>> [
-                [ expired_sa ].asList()
+                [ sa, expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
-
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
@@ -183,8 +163,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
         def mostRecentScopeAccess = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
 
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess, mostRecentScopeAccess].asList()
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
@@ -502,8 +481,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def "isScopeAccessExpired returns true when scopeAccess is null"() {
-        given:
-
         when:
         def result = service.isScopeAccessExpired(null)
 
@@ -580,8 +557,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess(), expireScopeAccess(createUserScopeAccess())].asList()
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
@@ -598,8 +574,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.getValidUserScopeAccessForClientId(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess(),expireScopeAccess(createUserScopeAccess())].asList()
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->

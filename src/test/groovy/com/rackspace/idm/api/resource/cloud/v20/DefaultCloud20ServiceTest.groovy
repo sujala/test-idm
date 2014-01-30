@@ -1,12 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
-
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
+
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
+
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
@@ -44,9 +47,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def roleId = "roleId"
     @Shared def userId = "userId"
 
-    @Shared def expiredDate
-    @Shared def futureDate
-    @Shared def refreshDate
+    @Shared def identityAdmin, userAdmin, userManage, defaultUser
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -127,9 +128,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
 
         questionService.addQuestion(_) >> { throw new BadRequestException() }
@@ -164,9 +165,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
         questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
 
         when:
@@ -211,10 +214,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
 
         questionService.updateQuestion(sharedRandom, _) >> { throw new BadRequestException() }
         questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
@@ -285,32 +289,42 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     }
 
-    def "question(s) get handles exceptions"() {
+    def "question get handles exceptions"() {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(authToken) >>> [ null, mock, Mock(ScopeAccess) ]
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
         questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
-
-        def secondMock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, secondMock ]
-        authorizationService.verifyUserLevelAccess(secondMock) >> { throw new ForbiddenException() }
 
         when:
         def questionResponse1 = service.getQuestion(authToken, questionId).build()
         def questionResponse2 = service.getQuestion(authToken, questionId).build()
         def questionResponse3 = service.getQuestion(authToken, "1$questionId").build()
 
-        def questionsResponse1 = service.getQuestions("1$authToken").build()
-        def questionsResponse2 = service.getQuestions("1$authToken").build()
-
         then:
         questionResponse1.status == 401
         questionResponse2.status == 403
         questionResponse3.status == 404
+    }
 
+    def "questions get handles exceptions"() {
+        given:
+        mockQuestionConverter(service)
+
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
+        questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
+
+        when:
+        def questionsResponse1 = service.getQuestions("1$authToken").build()
+        def questionsResponse2 = service.getQuestions("1$authToken").build()
+
+        then:
         questionsResponse1.status == 401
         questionsResponse2.status == 403
     }
@@ -343,9 +357,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
         capabilityService.updateCapabilities(_, _, _) >> { throw new BadRequestException() }
 
         when:
@@ -393,9 +409,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
         capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
 
         when:
@@ -438,9 +456,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+
         capabilityService.removeCapabilities(_, _) >> { throw new BadRequestException() }
 
         when:
@@ -452,293 +472,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.status == 401
         response2.status == 403
         response3.status == 400
-    }
-
-    def "addUser verifies user admin access level and validates user"() {
-        given:
-        mockUserConverter(service)
-        allowUserAccess()
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * validator.validate20User(_)
-        1 * validator.validatePasswordForCreateOrUpdate(_) >> { throw new BadRequestException() }
-        response.status == 400
-    }
-
-    def "addUser determines if caller is user-admin, admin, or service admin"() {
-        given:
-        mockUserConverter(service)
-        allowUserAccess()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate("username", null, null))
-
-        then:
-        2 * authorizationService.authorizeCloudUserAdmin(_)
-        2 * authorizationService.authorizeCloudIdentityAdmin(_)
-        2 * authorizationService.authorizeCloudServiceAdmin(_)
-    }
-
-    def "addUser creates domain"() {
-        given:
-        mockUserConverter(service)
-        allowUserAccess()
-
-        authorizationService.authorizeCloudUserAdmin(_) >>> [ false, false ]
-        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true, false ]
-        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false, false ]
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
-
-        then:
-        1 * defaultRegionService.validateDefaultRegion(_)
-        1 * domainService.createNewDomain(_)
-    }
-
-    def "addUser sets roles"() {
-        given:
-        mockUserConverter(service)
-        allowUserAccess()
-
-        authorizationService.authorizeCloudUserAdmin(_) >>> [ false, false ]
-        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true, true ]
-        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false, false ]
-
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
-        userService.checkAndGetUserById(_) >> entityFactory.createUser()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
-
-        then:
-        1 * tenantService.addTenantRoleToUser(_, _)
-
-    }
-
-    def "addUser caller is userAdmin without domain throws BadRequestException"() {
-        given:
-        allowUserAccess()
-        mockUserConverter(service)
-        def caller = entityFactory.createUser().with {
-            domainId = null
-            return it
-        }
-
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addUser caller is userAdmin with too many subUsers throws BadRequestException"() {
-        given:
-        allowUserAccess()
-        def converterMock = Mock(UserConverterCloudV20)
-        service.userConverterCloudV20 = converterMock
-
-        mockUserConverter(service)
-        def caller = entityFactory.createUser()
-        def users = [ entityFactory.createUser() ].asList()
-
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUsersWithDomain(_) >> users
-        config.getInt("maxNumberOfUsersInDomain") >> 0
-
-        userService.getUserByAuthToken(_) >>> [
-                entityFactory.createUser("username1", "id", null, "region"),
-                entityFactory.createUser("username2", "id", "one", "region"),
-                entityFactory.createUser("username3", "id", "two", "region"),
-                entityFactory.createUser("username4", "id", null, "region"),
-        ]
-
-        converterMock.fromUser(_) >>> [
-                entityFactory.createUser("userDO1", null, null, "region"),
-                entityFactory.createUser("userDO2", null, null, "region"),
-                entityFactory.createUser("userDO3", null, "domain", "region"),
-                entityFactory.createUser("userDO4", null, null, "region"),
-                entityFactory.createUser("userDO5", null, "domain", "region")
-        ]
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addUser caller is user admin and user being added does not have a domain throws BadRequestException"() {
-        given:
-        allowUserAccess()
-        mockUserConverter(service)
-        def caller = Mock(User)
-        def users = [ entityFactory.createUser() ].asList()
-
-        caller.getDomainId() >>> [ "domainId", "domainId", null]
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUsersWithDomain(_) >> users
-        config.getInt("maxNumberOfUsersInDomain") >> 5
-        domainService.getDomainAdmins(_) >> [].asList()
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addUser caller is service admin and created user has domain throws BadRequestException"() {
-        given:
-        allowUserAccess()
-        def converter = Mock(UserConverterCloudV20)
-        def mockedUser = Mock(User)
-        def caller = entityFactory.createUser()
-
-        mockedUser.getDomainId() >> "domainId"
-        converter.fromUser(_) >> mockedUser
-        service.userConverterCloudV20 = converter
-
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addUser caller is identity admin and created user has no domain throws BadRequestException"() {
-        given:
-        allowUserAccess()
-        def converter = Mock(UserConverterCloudV20)
-        def mockedUser = Mock(User)
-        def caller = entityFactory.createUser()
-
-        mockedUser.getDomainId() >> ""
-        converter.fromUser(_) >> mockedUser
-        service.userConverterCloudV20 = converter
-
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudIdentityAdmin(_) >> true
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addUser handles DuplicateException"() {
-        given:
-        allowUserAccess()
-        def converter = Mock(UserConverterCloudV20)
-        def mockedUser = Mock(User)
-        def caller = entityFactory.createUser()
-
-        mockedUser.getDomainId() >> "domainId"
-        converter.fromUser(_) >> mockedUser
-        service.userConverterCloudV20 = converter
-
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudIdentityAdmin(_) >> true
-
-        def userToCreate = v1Factory.createUserForCreate()
-        userToCreate.domainId = "domainId"
-
-        userService.addUser(_) >> {throw new DuplicateException()}
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate()).build()
-
-        then:
-        response.status == 409
-    }
-
-    def "addUser when caller is user-admin adds callers tenantRoles to user being added"() {
-        given:
-        mockUserConverter(service)
-
-        allowUserAccess()
-
-        def caller = entityFactory.createUser()
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUsersWithDomain(_) >> [].asList()
-        domainService.getDomainAdmins(_) >> [].asList()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
-
-        then:
-        1 * userService.getUserByScopeAccess(_) >> caller
-        1 * tenantService.addCallerTenantRolesToUser(caller, _)
-    }
-
-    def "addUser when caller is user-admin adds callers groups to user being added"() {
-        given:
-        mockUserConverter(service)
-
-        allowUserAccess()
-
-        def caller = entityFactory.createUser()
-        def groups = entityFactory.createGroups()
-        groups.add(entityFactory.createGroup("1","groupId1","group description"))
-        groups.add(entityFactory.createGroup("2","groupId2","group description"))
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUsersWithDomain(_) >> [].asList()
-        userService.getGroupsForUser(_) >> groups
-        domainService.getDomainAdmins(_) >> [].asList()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, v1Factory.createUserForCreate())
-
-        then:
-        1 * userService.getUserByScopeAccess(_) >> caller
-        1 * tenantService.addCallerTenantRolesToUser(caller, _)
-        2 * userService.addGroupToUser(_, _)
-    }
-
-    def "setDomainId sets users domain to callers domain"() {
-        given:
-        def caller = entityFactory.createUser().with {
-            it.domainId = "callersDomain"
-            it
-        }
-        def user = entityFactory.createUser()
-
-        when:
-        service.assignUserToCallersDomain(caller, user)
-
-        then:
-        user.getDomainId() == caller.getDomainId()
-    }
-
-    def "setDomainId throws BadRequestException if caller does not have a domain"() {
-        given:
-        def caller = entityFactory.createUser().with {
-            it.domainId = null
-            return it
-        }
-        def user = entityFactory.createUser()
-
-        when:
-        service.assignUserToCallersDomain(caller, user)
-
-        then:
-        thrown(BadRequestException)
     }
 
     def "assignRoleToUser provisions role and adds role to user"() {
@@ -876,12 +609,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockUserConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        mock.getLDAPEntry() >> createLdapEntry()
+        def mock = Mock(AuthorizationContext)
         scopeAccessMock = Mock()
         scopeAccessMock.getLDAPEntry() >> createLdapEntry()
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> scopeAccessMock
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
 
         userService.getUser(_) >>> [
@@ -980,16 +713,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
         mockUserPaginator(service)
 
-        def scopeAccessMock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
+        def mock = Mock(AuthorizationContext)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById(_) >>> [ null ] >> entityFactory.createClientRole()
 
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
 
         userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "region")
-
 
         when:
         def response1 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
@@ -1269,7 +1002,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteUserRole handles exceptions"() {
         given:
-        def mockedScopeAccess = Mock(ScopeAccess)
+        def mock = Mock(AuthorizationContext)
         def user1 = entityFactory.createUser()
         user1.id = "someotherid"
         def user2 = entityFactory.createUser("user2", null, "domain2", "region")
@@ -1283,8 +1016,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserManagedLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> Mock(ScopeAccess)
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
         userService.checkAndGetUserById("1$userId") >> { throw new NotFoundException() }
 
         userService.checkAndGetUserById(_) >>> [ user2, user1, user3 ]
@@ -1496,14 +1230,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole handles exceptions"() {
         given:
-        def scopeAccessMock = Mock(ScopeAccess)
+        def mock = Mock(AuthorizationContext)
         def role = entityFactory.createClientRole("identity:role").with {
             it.id = "unique"
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
-        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById("unique") >> role
 
@@ -1831,21 +1566,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess, true) >> userScopeAccess
         responseBuilder.build().status == 200
-    }
-
-    def "setDomainId throws bad request"() {
-        given:
-        def caller = entityFactory.createUser().with {
-            it.domainId = null
-            return it
-        }
-        def user = entityFactory.createUser()
-
-        when:
-        service.assignUserToCallersDomain(caller, user)
-
-        then:
-        thrown(BadRequestException)
     }
 
     def "authenticateFederatedDomain throws BadRequest if domain is invalid"() {
@@ -2442,6 +2162,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         })
         scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [endpoint1, endpoint2].asList()
 
+        def mock = Mock(AuthorizationContext)
+        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+
         when:
         def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
 
@@ -3029,8 +2752,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "userAdmin calling getUsersByEmail filters subUsers by domain"() {
         given:
         allowUserAccess()
+
         def converter = new UserConverterCloudV20()
         converter.mapper = new DozerBeanMapper()
+        converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
+        converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
         service.userConverterCloudV20 = converter
 
         def email = "email@gmail.com"
@@ -3065,7 +2791,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         def converter = new UserConverterCloudV20()
         converter.mapper = new DozerBeanMapper()
+        converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
+        converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
         service.userConverterCloudV20 = converter
+
         UserForCreate user = new UserForCreate().with {
             it.username = "name"
             it.id = "2"
@@ -3768,9 +3497,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.addTenantRoleToUser(_, _)
     }
 
-    def "User with user-manage role can create new user" () {
+    def "add new user" () {
         given:
         allowUserAccess()
+
         def user = v1Factory.createUserForCreate()
         def caller = entityFactory.createUser().with {
             it.username = "caller"
@@ -3782,14 +3512,46 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
-        2 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.getUsersWithDomain(_) >> [].asList()
-        1 * domainService.getDomainAdmins(_) >> [].asList()
-        notThrown(BadRequestException)
-        1 * defaultRegionService.validateDefaultRegion(_)
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
         1 * userService.addUser(_)
-        1 * userService.getGroupsForUser(_) >> [].asList()
+        notThrown(BadRequestException)
+    }
+
+    def "add new user when user is not authorized returns 403 response" () {
+        given:
+        allowUserAccess()
+
+        def user = v1Factory.createUserForCreate()
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_) >> { throw new ForbiddenException("You can't haz access")}
+        result.status == 403
+    }
+
+    def "add new user does not allow caller add user with higher level permissions" () {
+        given:
+        allowUserAccess()
+
+        def user = v1Factory.createUserForCreate()
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        userService.getUserByScopeAccess(_) >> caller
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _) >> { throw new ForbiddenException("naughty naughty")}
+        result.status == 403
     }
 
     def "User with user-manage role can delete user" () {
@@ -4041,66 +3803,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.isSelf(_, _) >> false
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
         result.build().status == 403
-    }
-
-    def "Create user will generate an apiKey - generate.apiKey.userForCreate=true" () {
-        given:
-        allowUserAccess()
-        def user = v1Factory.createUserForCreate()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
-        1 * userService.addUser(_) >> {User u ->
-            assert(u.apiKey != null)
-        }
-    }
-
-    def "Create user will not generate an apiKey - generate.apiKey.userForCreate=false" () {
-        given:
-        allowUserAccess()
-        def user = v1Factory.createUserForCreate()
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
-        1 * userService.addUser(_) >> {User u ->
-            assert(u.apiKey == null)
-        }
-    }
-
-    def "checkMaxNumberOfUsersInDomain does not allow creating more than maxNumberOfUsersInDomain"() {
-        given:
-        config.getInt("maxNumberOfUsersInDomain") >> maxNumberOfUsersInDomain
-
-        List<User> users = new ArrayList<>()
-        for (int i = 0; i < numberOfUsers; i++) {
-            def user = entityFactory.createUser().with {
-                it.username = "username$i"
-                it
-            }
-            users.add(user)
-        }
-
-        when:
-        boolean result = false
-        try {
-            service.checkMaxNumberOfUsersInDomain(users)
-        } catch (BadRequestException e) {
-            result = true
-        }
-
-        then:
-        result == badRequest
-
-        where:
-        maxNumberOfUsersInDomain | numberOfUsers | badRequest
-        2                        | 2             | true
-        2                        | 1             | false
     }
 
     def "deleteUserCredential returns 404 if the apiKeyCredentials are not found"() {

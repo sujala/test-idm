@@ -1,12 +1,14 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.SAMLConstants;
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.validation.PrecedenceValidator;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.opensaml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +25,19 @@ public class SamlResponseValidator {
     SamlSignatureValidator samlSignatureValidator;
 
     @Autowired
-    ApplicationRoleDao roleDao;
+    RoleService roleService;
 
     @Autowired
     DomainDao domainDao;
 
     @Autowired
     IdentityProviderDao identityProviderDao;
+
+    @Autowired
+    PrecedenceValidator precedenceValidator;
+
+    @Autowired
+    private Configuration config;
 
     public void validate(SamlResponseDecorator samlResponseDecorator) {
         validateIssuer(samlResponseDecorator);
@@ -137,7 +145,7 @@ public class SamlResponseValidator {
         Set<String> roleNames = new HashSet<String>();
 
         for (String role : roles) {
-            if (roleDao.getRoleByName(role) == null) {
+            if (roleService.getRoleByName(role) == null) {
                 throw new BadRequestException("role '" + role + "' does not exist");
             }
 
@@ -147,5 +155,8 @@ public class SamlResponseValidator {
 
             roleNames.add(role);
         }
+
+        //don't allow saml response to include role with more power than an identity:user-admin
+        precedenceValidator.verifyRolePrecedenceForAssignment(roleService.getUserAdminRole(), roles);
     }
 }

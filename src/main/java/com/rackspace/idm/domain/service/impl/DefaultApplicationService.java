@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Component
@@ -305,6 +307,11 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public Iterable<ClientRole> getClientRolesByIds(List<String> roleIds) {
+        return applicationRoleDao.getClientRoles(roleIds);
+    }
+
+    @Override
     public Iterable<Application> getOpenStackServices() {
         logger.debug("Getting Open Stack Services");
         return this.applicationDao.getOpenStackServices();
@@ -324,9 +331,18 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("getting identity:* role for user: {}", user);
         Application application = applicationDao.getApplicationByClientId(getCloudAuthClientId());
 
-        for (ClientRole role : applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames())) {
-            TenantRole match = tenantService.getTenantRoleForUserById(user, role.getId());
-            if (match != null) {
+        List<ClientRole> clientRoles = IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames()).iterator());
+
+        HashSet<String> tenantRoleIds = new HashSet<String>();
+
+        if (clientRoles.size() > 0) {
+            for (TenantRole tenantRole : tenantService.getTenantRolesForUserById(user, clientRoles)) {
+                tenantRoleIds.add(tenantRole.getRoleRsId());
+            }
+        }
+
+        for (ClientRole role : clientRoles) {
+            if (tenantRoleIds.contains(role.getId())) {
                 result.add(role);
             }
         }

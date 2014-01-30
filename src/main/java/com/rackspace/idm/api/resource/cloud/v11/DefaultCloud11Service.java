@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.util.NastFacade;
 import com.rackspace.idm.validation.Validator;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -45,7 +44,6 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.URI;
 import java.util.*;
 
 @Component
@@ -53,7 +51,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     public static final String USER_S_NOT_FOUND = "User %s not found";
-    public static final String EXPECTING_USERNAME = "Expecting username";
     public static final String USER_NOT_FOUND = "User not found: ";
 
     @Autowired
@@ -82,9 +79,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
     @Autowired
-    private NastFacade nastFacade;
-
-    @Autowired
     private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
@@ -94,13 +88,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private CloudExceptionResponse cloudExceptionResponse;
 
     @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
     private TenantService tenantService;
-
-    @Autowired
-    private DomainService domainService;
 
     @Autowired
     private GroupService cloudGroupService;
@@ -127,7 +115,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
@@ -234,7 +222,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(uriInfo, body, true);
             } else {
@@ -266,7 +254,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User user = userService.getUser(userId);
             if (user == null) {
@@ -338,208 +326,28 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo,
-                                               com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
+                                               com.rackspacecloud.docs.auth.api.v1.User userTO) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            ScopeAccess adminToken = authenticateAndAuthorizeCloudAdminUser(request);
+            User caller = (User) userService.getUserByScopeAccess(adminToken);
 
-            validator.validate11User(user);
+            validator.validate11User(userTO);
 
-            validator.isUsernameValid(user.getId());
+            User user = this.userConverterCloudV11.fromUser(userTO);
+            userService.setUserDefaultsBasedOnCaller(user, caller);
+            userService.addUser(user);
 
-            User existingUser = userService.getUser(user.getId());
-            if (existingUser != null) {
-                throw new DuplicateUsernameException("Username " + user.getId() + " already exists");
-            }
-            if (user.getMossoId() == null || user.getMossoId().equals(0)) {
-                String errorMsg = "Expecting mossoId";
-                logger.warn(errorMsg);
-                throw new BadRequestException(errorMsg);
-            }
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(user);
 
-            if(getGenerateApiKeyUserForCreate() && StringUtils.isBlank(user.getKey())){
-                user.setKey(UUID.randomUUID().toString().replaceAll("-", ""));
-            }
+            com.rackspacecloud.docs.auth.api.v1.User createdUserTO = userConverterCloudV11.toCloudV11User(user, endpointsForUser);
 
-            if(StringUtils.isBlank(user.getNastId())){
-                user.setNastId(null);
-            }
+            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getUsername()).build());
 
-            User userDO = this.userConverterCloudV11.fromUser(user);
-            userDO.setEnabled(true);
-            validateMossoId(user.getMossoId());
+            return builder.entity(createdUserTO);
 
-            // V1.1 Setting Domain ID as Mosso ID
-            userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
-
-            userService.addUser(userDO);
-            userDO = userService.getUserById(userDO.getId());
-            addMossoTenant(user, userDO.getId());
-            String nastId = addNastTenant(user, userDO.getId());
-            userDO.setNastId(nastId);
-            userService.updateUser(userDO, false);
-
-            // Add Tenants to Domains
-            domainService.addTenantToDomain(userDO.getMossoId().toString(), userDO.getDomainId());
-            if (nastId != null) {
-                domainService.addTenantToDomain(userDO.getNastId(), userDO.getDomainId());
-            }
-
-            //Add user-admin role
-            ClientRole roleId = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            ClientRole cRole = this.applicationService.getClientRoleById(roleId.getId());
-
-            TenantRole role = new TenantRole();
-            role.setClientId(cRole.getClientId());
-            role.setName(cRole.getName());
-            role.setRoleRsId(cRole.getId());
-            this.tenantService.addTenantRoleToUser(userDO, role);
-
-            if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
-                // If BaseUrlRefs were sent in then we're going to add the new list
-                // Add new list of baseUrls
-                for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                    CloudBaseUrl cloudBaseUrl = this.endpointService.getBaseUrlById(String.valueOf(ref.getId()));
-                    if (cloudBaseUrl == null) {
-                        userService.deleteUser(userDO.getUsername());
-                        throw new NotFoundException(String.format("No URLBase with matching id: %s", ref.getId()));
-                    }
-                    try {
-                        this.userService.addBaseUrlToUser(String.valueOf(ref.getId()), userDO);
-                    } catch (BadRequestException de) {
-                        // noop user already had that BaseURL
-                    }
-                }
-            }
-
-            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(userDO);
-
-            URI uri = uriInfo.getRequestUriBuilder().path(userDO.getUsername()).build();
-            com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpointsForUser);
-            return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
-        }
-    }
-
-    String addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user, String id) {
-        //cloudFiles
-        String nastId;
-        if (isNastEnabled()) {
-            nastId = nastFacade.addNastUser(user);
-        } else {
-            nastId = user.getNastId();
-        }
-        user.setNastId(nastId);
-        if (!StringUtils.isEmpty(nastId)) {
-            Tenant tenant = new Tenant();
-            tenant.setName(nastId);
-            tenant.setTenantId(nastId);
-            tenant.setDisplayName(nastId);
-            tenant.setEnabled(true);
-
-            addbaseUrlToTenant(tenant, "NAST");
-            try {
-                tenantService.addTenant(tenant);
-            } catch (DuplicateException e) {
-                logger.info("Tenant " + tenant.getName() + " already exists.");
-            }
-            String serviceName = config.getString("serviceName.cloudFiles");
-            Application application = applicationService.getByName(serviceName);
-            String defaultRoleName = application.getOpenStackType().concat(":default");
-            ClientRole clientRole = applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
-            TenantRole tenantRole = new TenantRole();
-            tenantRole.setClientId(clientRole.getClientId());
-            tenantRole.setName(clientRole.getName());
-            tenantRole.setRoleRsId(clientRole.getId());
-            tenantRole.getTenantIds().add(tenant.getTenantId());
-            tenantRole.setUserId(id);
-            User storedUser = userService.getUser(user.getId());
-            tenantService.addTenantRoleToUser(storedUser, tenantRole);
-        }
-        return nastId;
-    }
-
-    void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user, String id) {
-        //cloudServers
-        Integer mossoId = user.getMossoId();
-        if (mossoId != null) {
-            Tenant tenant = new Tenant();
-            tenant.setTenantId(mossoId.toString());
-            tenant.setName(mossoId.toString());
-            tenant.setDisplayName(mossoId.toString());
-            tenant.setEnabled(true);
-
-            addbaseUrlToTenant(tenant, "MOSSO");
-            try {
-                tenantService.addTenant(tenant);
-            } catch (DuplicateException e) {
-                logger.info("Tenant " + tenant.getName() + " already exists.");
-            }
-            String serviceName = config.getString("serviceName.cloudServers");
-            Application application = applicationService.getByName(serviceName);
-            String defaultRoleName = application.getOpenStackType().concat(":default");
-            ClientRole clientRole = applicationService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
-            TenantRole tenantRole = new TenantRole();
-            tenantRole.setClientId(clientRole.getClientId());
-            tenantRole.setName(clientRole.getName());
-            tenantRole.setRoleRsId(clientRole.getId());
-            tenantRole.getTenantIds().add(tenant.getTenantId());
-            tenantRole.setUserId(id);
-            User storedUser = userService.getUser(user.getId());
-            tenantService.addTenantRoleToUser(storedUser, tenantRole);
-        }
-    }
-
-    void addbaseUrlToTenant(Tenant tenant, String baseUrlType){
-        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByBaseUrlType(baseUrlType);
-        for (CloudBaseUrl baseUrl : baseUrls) {
-            if(doesBaseUrlBelongToRegion(baseUrl)){
-                addV1defaultToTenant(tenant, baseUrl, baseUrlType);
-                if (baseUrl.getDef()) {
-                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
-                }
-            }
-        }
-    }
-
-    private boolean doesBaseUrlBelongToRegion(CloudBaseUrl baseUrl){
-        if (baseUrl.getBaseUrlId() != null){
-            if(isUkCloudRegion() &&  Integer.parseInt(baseUrl.getBaseUrlId()) >= 1000){
-                return true;
-            }
-            if(!isUkCloudRegion() && Integer.parseInt(baseUrl.getBaseUrlId()) < 1000){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {
-        List<Object> v1defaultList = new ArrayList<Object>();
-        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
-
-        if(baseUrlType.equals("MOSSO")) {
-            v1defaultList = config.getList("v1defaultMosso");
-        } else if(baseUrlType.equals("NAST")) {
-            v1defaultList = config.getList("v1defaultNast");
-        }
-
-        for (Object v1defaultItem : v1defaultList) {
-            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
-                tenant.getV1Defaults().add(baseUrlId);
-            }
-        }
-    }
-
-    private boolean isUkCloudRegion() {
-        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
-    }
-
-    public void validateMossoId(Integer mossoId) {
-        User user = userService.getUserByTenantId(String.valueOf(mossoId));
-        if (user != null) {
-            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
 
@@ -548,7 +356,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                      HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User user = userService.getUser(userId);
 
@@ -606,7 +414,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User retrievedUser = userService.getUser(userId);
 
@@ -616,7 +424,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             ScopeAccess scopeAccess = scopeAccessService.getScopeAccessForUser(retrievedUser);
-            boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
+            AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
+            boolean isDefaultUser = authorizationService.authorizeCloudUser(context);
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
@@ -633,19 +442,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
-    }
-
-    /*
-    * This is used to get the token for AtomHopper
-    * This does not do any validation since there are methods before this one that does it.
-    * By the time this method is called it assumes everything is correct
-    */
-    UserScopeAccess getAuthtokenFromRequest(HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
-        UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
-                stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-        return usa;
     }
 
     @Override
@@ -909,7 +705,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
 
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User gaUser = userService.getUser(userId);
 
@@ -922,7 +718,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             gaUser.setEnabled(user.isEnabled());
 
-            this.userService.updateUser(gaUser, false);
+            this.userService.updateUser(gaUser);
             if (gaUser.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
             }
@@ -938,7 +734,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
             User gaUser = userService.getUser(userId);
 
@@ -948,7 +744,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             gaUser.setApiKey(user.getKey());
-            this.userService.updateUser(gaUser, false);
+            this.userService.updateUser(gaUser);
 
             return Response.ok(getJAXBElementUserKeyWithEndpoints(gaUser).getValue());
         } catch (Exception ex) {
@@ -961,9 +757,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                                                com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
 
-            validator.validate11User(user);
             validator.isUsernameValid(user.getId());
 
             if (!StringUtils.equals(user.getId(), userId)) { //ToDO: Move to user validator?
@@ -982,7 +777,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setNastId(user.getNastId());
             gaUser.setEnabled(user.isEnabled());
 
-            this.userService.updateUser(gaUser, false);
+            this.userService.updateUser(gaUser);
             gaUser = this.userService.getUser(gaUser.getUsername());
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
@@ -1098,7 +893,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) {
 
         try {
-            authenticateCloudAdminUser(request);
+            authenticateAndAuthorizeCloudAdminUser(request);
             this.endpointService.addBaseUrl(this.endpointConverterCloudV11.toBaseUrlDO(baseUrl));
             return Response.status(HttpServletResponse.SC_CREATED).header("Location", request.getContextPath() + "/baseUrls/" + baseUrl.getId());
         } catch (Exception ex) {
@@ -1281,10 +1076,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private boolean isNastEnabled() {
-        return config.getBoolean("nast.xmlrpc.enabled");
-    }
-
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
@@ -1297,10 +1088,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    public void setNastFacade(NastFacade nastFacade) {
-        this.nastFacade = nastFacade;
     }
 
     void authenticateCloudAdminUserForGetRequests(HttpServletRequest request) {
@@ -1317,9 +1104,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
+            AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(context);
             if (!authenticated) {
-                authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
+                authenticated = authorizationService.authorizeCloudServiceAdmin(context);
             } if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
             }
@@ -1330,7 +1118,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authorizationService = authorizationService;
     }
 
-    void authenticateCloudAdminUser(HttpServletRequest request) {
+    ScopeAccess authenticateAndAuthorizeCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
@@ -1338,11 +1126,24 @@ public class DefaultCloud11Service implements Cloud11Service {
         } else {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
+            AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(context) || authorizationService.authorizeCloudServiceAdmin(context);
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
         }
+
+        String adminUsername = stringStringMap.get("username");
+        String adminPassword = stringStringMap.get("password");
+        UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(adminUsername, adminPassword, getCloudAuthClientId());
+
+        AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
+        boolean authorized = authorizationService.authorizeCloudIdentityAdmin(context) || authorizationService.authorizeCloudServiceAdmin(context);
+        if (!authorized) {
+            throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
+        }
+
+        return usa;
     }
 
     public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {
@@ -1417,15 +1218,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.cloudExceptionResponse = cloudExceptionResponse;
     }
 
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-
-    public void setDomainService(DomainService domainService) {
-        this.domainService = domainService;
     }
 }

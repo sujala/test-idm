@@ -67,7 +67,7 @@ public interface Cloud20Service {
 
     ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) ;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user);
+	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user);
 
 	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
 

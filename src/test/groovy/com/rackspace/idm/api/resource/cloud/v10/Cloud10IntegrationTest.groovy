@@ -33,7 +33,7 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         username = "auth10Test$sharedRandom"
 
         def response = cloud20.createUser(adminToken, v2Factory.createUserForCreate(username, "displayName", "testemail@rackspace.com", true, "ORD", "auth10Domain$sharedRandom", "Password1"))
-        user = response.getEntity(User)
+        user = response.getEntity(User).value
         cloud20.addApiKeyToUser(adminToken, user.id, v1Factory.createApiKeyCredentials(username, "thisismykey"))
     }
 

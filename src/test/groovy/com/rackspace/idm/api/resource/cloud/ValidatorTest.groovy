@@ -1,12 +1,20 @@
 package com.rackspace.idm.api.resource.cloud
 
-import com.rackspace.idm.validation.Validator
-import spock.lang.Specification
-import spock.lang.Shared
+import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
+import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.Pattern
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.GroupService
+import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspace.idm.exception.DuplicateUsernameException
+import com.rackspace.idm.validation.Validator
+import com.rackspacecloud.docs.auth.api.v1.User
+import spock.lang.Shared
+import spock.lang.Specification
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,18 +25,30 @@ import com.rackspacecloud.docs.auth.api.v1.User;
  */
 class ValidatorTest extends Specification {
 
-    @Shared Validator validator;
+    @Shared Validator validator
     @Shared LdapPatternRepository ldapPatternRepository
+    @Shared UserService userService
+    @Shared DefaultRegionService defaultRegionService
+    @Shared RoleService roleService
+    @Shared GroupService groupService
+    @Shared Pattern passwordPattern
+    @Shared Pattern usernamePattern
+    @Shared Pattern emailPattern
 
     def setupSpec(){
         validator = new Validator();
+        passwordPattern = pattern("password", "[a-zA-Z0-9-_.@]*","Password has invalid characters.","pattern for invalid characters")
+        usernamePattern = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters")
+        emailPattern = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
+    }
+
+    def setup() {
+        setupMock()
     }
 
     def "Validate username"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         boolean result = validator.isUsernameValid("someUsername123-@._")
@@ -39,9 +59,7 @@ class ValidatorTest extends Specification {
 
     def "Invalidate username"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         validator.isUsernameValid("someUsername*")
@@ -52,9 +70,7 @@ class ValidatorTest extends Specification {
 
     def "Validate email"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> emailPattern
 
         when:
         boolean result = validator.isEmailValid("joe.racker@rackspace.com")
@@ -65,9 +81,7 @@ class ValidatorTest extends Specification {
 
     def "Invalid email"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> emailPattern
 
         when:
         validator.isEmailValid("joe racker@rackspace.com")
@@ -76,37 +90,9 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate phone"(){
-        given:
-        setupMock()
-        Pattern patterns = pattern("phone", "[0-9]*","Phone has invalid characters.","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
-
-        when:
-        boolean result = validator.isPhoneValid("8001234568")
-
-        then:
-        result
-    }
-
-    def "Invalid phone"(){
-        given:
-        setupMock()
-        Pattern patterns = pattern("phone", "[0-9]*","phone has invalid characters.","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
-
-        when:
-        validator.isPhoneValid("1235a123544")
-
-        then:
-        thrown(BadRequestException)
-    }
-
     def "Validate alphaNumeric"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         boolean result = validator.isAlphaNumeric("someName123")
@@ -117,9 +103,7 @@ class ValidatorTest extends Specification {
 
     def "Invalidate alphaNumeric"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters")
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         validator.isAlphaNumeric("someUsername*")
@@ -130,9 +114,9 @@ class ValidatorTest extends Specification {
 
     def "validate v11 user"(){
         given:
-        setupMock()
         User user = new User();
-        user.id = "somename"
+        user.mossoId = 98765
+        userService.getUserByTenantId(String.valueOf(user.mossoId)) >> null
 
         when:
         validator.validate11User(user)
@@ -141,10 +125,10 @@ class ValidatorTest extends Specification {
         true
     }
 
-    def "null username - v11 user"(){
+    def "validate v11 user when mossoId not specified"(){
         given:
-        setupMock()
         User user = new User();
+        user.mossoId = null
 
         when:
         validator.validate11User(user)
@@ -153,25 +137,14 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Empty username - v11 user"(){
+    def "validate v11 user when another user with same mossoId already exists"(){
         given:
-        setupMock()
         User user = new User();
-        user.id = ""
+        user.mossoId = 98765
+        userService.getUserByTenantId(String.valueOf(user.mossoId)) >>  new com.rackspace.idm.domain.entity.User()
 
         when:
         validator.validate11User(user)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "Null username - v11 user"(){
-        given:
-        setupMock()
-
-        when:
-        validator.validate11User(null)
 
         then:
         thrown(BadRequestException)
@@ -179,7 +152,6 @@ class ValidatorTest extends Specification {
 
     def "Validate username: bad pattern"(){
         given:
-        setupMock()
         Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@asdfsadf24232%^&*","Username has invalid characters.","pattern for invalid characters");
         ldapPatternRepository.getPattern(_) >> patterns
 
@@ -192,9 +164,7 @@ class ValidatorTest extends Specification {
 
     def "Validate username: null username"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         validator.isUsernameValid(null)
@@ -205,7 +175,6 @@ class ValidatorTest extends Specification {
 
     def "Validate username: empty username"(){
         given:
-        setupMock()
         Pattern patterns = pattern("username", "^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
         ldapPatternRepository.getPattern(_) >> patterns
 
@@ -218,9 +187,7 @@ class ValidatorTest extends Specification {
 
     def "Validate username: spaces username"(){
         given:
-        setupMock()
-        Pattern patterns = pattern("username", "^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
-        ldapPatternRepository.getPattern(_) >> patterns
+        ldapPatternRepository.getPattern(_) >> usernamePattern
 
         when:
         validator.isUsernameValid("           ")
@@ -229,10 +196,189 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "Validate user"(){
+        given:
+
+        def userEntity = createUser()
+
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        1 * defaultRegionService.validateDefaultRegion(userEntity.region)
+    }
+
+    def "Validate user when username is invalid"(){
+        given:
+
+        def userEntity = createUser().with {
+            it.username = "some#Username123@"
+            return it
+        }
+
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when username is empty string"(){
+        given:
+
+        def userEntity = createUser().with {
+            it.username = "   "
+            return it
+        }
+
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when username is null"(){
+        given:
+
+        def userEntity = createUser().with {
+            it.username = null
+            return it
+        }
+
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when username is not unique"(){
+        given:
+
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> false
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(DuplicateUsernameException)
+    }
+
+    def "Validate user when password is invalid"(){
+        given:
+
+        def userEntity = createUser().with {
+            it.password = "pass#`;"
+            return it
+        }
+        ldapPatternRepository.getPattern(_) >> passwordPattern
+        userService.isUsernameUnique(userEntity.username) >> true
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when email is invalid"(){
+        given:
+
+        def userEntity = createUser().with {
+            it.email = "joe joe@email.com"
+            return it
+        }
+        ldapPatternRepository.getPattern(_) >> emailPattern
+        userService.isUsernameUnique(userEntity.username) >> true
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when default region is invalid"(){
+        given:
+
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when role is invalid"(){
+        given:
+
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> null
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user when group is invalid"(){
+        given:
+
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> null
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
 
     def setupMock(){
-        ldapPatternRepository = Mock();
-        validator.ldapPatternRepository = ldapPatternRepository;
+        ldapPatternRepository = Mock()
+        userService = Mock()
+        defaultRegionService = Mock()
+        roleService = Mock()
+        groupService = Mock()
+
+        validator.ldapPatternRepository = ldapPatternRepository
+        validator.userService = userService
+        validator.roleService = roleService
+        validator.groupService = groupService
+        validator.defaultRegionService = defaultRegionService
     }
 
     def pattern (String name, String regex, String errMsg, String description){
@@ -241,6 +387,18 @@ class ValidatorTest extends Specification {
             it.regex = regex
             it.errMsg = errMsg
             it.description = description
+            return it
+        }
+    }
+
+    def createUser() {
+        com.rackspace.idm.domain.entity.User userEntity = new com.rackspace.idm.domain.entity.User().with {
+            it.username = "joe.racker"
+            it.password = "myPassword"
+            it.email = "joe@email.com"
+            it.region = "DFW"
+            it.roles = [ new TenantRole().with{it.name = "observer"; return it} ].asList()
+            it.rsGroupId = ["groupId"].asList()
             return it
         }
     }

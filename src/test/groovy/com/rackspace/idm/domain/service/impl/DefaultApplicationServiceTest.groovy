@@ -186,7 +186,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.getUserIdentityRole(user)
 
         then:
-        1 * tenantService.getTenantRoleForUserById(_, _) >> tenantRole
+        1 * tenantService.getTenantRolesForUserById(_, _) >> [tenantRole]
     }
 
     def "getUserIdentityRole returns null if user has no identityRole"() {
@@ -197,7 +197,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         applicationDao.getApplicationByClientId(_) >> application
         applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
-        tenantService.getTenantRoleForUserById(_, _) >> null
+        tenantService.getTenantRolesForUserById(_, _) >> [].asList()
 
         when:
         def result = service.getUserIdentityRole(user)

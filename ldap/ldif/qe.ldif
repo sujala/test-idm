@@ -150,3 +150,98 @@ clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
 roleRsId: 5
 tenantRsId: 983452
 userRsId: 173189
+
+dn: rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: d14b1195cbe045d9905c25317dd1f924
+enabled: TRUE
+encryptionSalt: e7 2d 3f 76 ec 8a c9 21 5e 99 15 40 83 76 f9
+encryptionVersionId: 0
+mail: new_email_1_614979@test.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131213200323.063Z
+preferredLanguage: en_US
+rsApiKey:: QTCMTLYLBEn2lBMluNU+cjRqk3NFT4l3k1Gk9Fx6B+xFe2lC0fzPyvINLufUhOQO
+rsDisplayName:: jKeMVeagD/fCkftKqz3iJq9mfnk3JxxXYwHNmcY8dPY=
+rsRegion: ORD
+timeZone: America/Chicago
+uid: cloudIdentitySA1
+userPassword:: e1NTSEE1MTJ9M2V6a1pmRXN4S2VSS3p0cFd2U3VFVS8xTUtFdjFEMG5OVm5jY
+ 0dTUXlZTFRKLzVidG5PWmY0Yk0xUjVlUWVXWU94SWcyam9pS1NsRTRtVUkydHNSRXkwY1BDWT0=
+
+dn: cn=ROLES,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: cn=TOKENS,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=62a97ef53dd44b4c9e7b5b9cfe8ef8ff,cn=TOKENS,rsId=d14b1195cbe0
+ 45d9905c25317dd1f924,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: d14b1195cbe045d9905c25317dd1f924
+accessToken: 62a97ef53dd44b4c9e7b5b9cfe8ef8ff
+accessTokenExp: 20131214200929.234Z
+clientRCN: RACKSPACE
+rsType: PASSWORD
+uid: cloudIdentitySA1
+
+dn: rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: e2655b97cfe848b796097c2073b174e7
+enabled: TRUE
+encryptionSalt: 1a 0b 8c 92 88 dd df 7c 4c 68 e8 00 77 7e 07 6d
+encryptionVersionId: 0
+mail: new_email_2_814159@example.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131213200325.170Z
+preferredLanguage: en_US
+rsApiKey:: s8GwNbai8iFtjP7M7K8LcBt4Tbl3ZtVd8Dj7YSffflHsMR74vx4uEfm2A2F+L9JM
+rsDisplayName:: F1z2ahKSquHcDr3Zid+LnULuVb50Z1o/+BSeTvrf/wo=
+rsRegion: ORD
+timeZone: America/Chicago
+uid: cloudIdentitySA2
+userPassword:: e1NTSEE1MTJ9azF4bXZkRnJmNVdSZ21ab2JldjVXWlh1RjN1R1J4MTVoRTVaS
+ 1lDWDNIVEVsdVAySmZIUUZtZFNJcTF3dUFmZ2QxUEU4RlorWCtwY2dJSEk1S3J3dEZ1enJ3UT0=
+
+dn: cn=ROLES,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: cn=TOKENS,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=bd837608d10f412296e3c954734764a4,cn=TOKENS,rsId=e2655b97cfe8
+ 48b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: e2655b97cfe848b796097c2073b174e7
+accessToken: bd837608d10f412296e3c954734764a4
+accessTokenExp: 20131214200510.338Z
+clientRCN: RACKSPACE
+rsType: PASSWORD
+uid: cloudIdentitySA2
+

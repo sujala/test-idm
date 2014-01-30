@@ -1,21 +1,12 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.ConcurrentStageTaskRunner
-import testHelpers.MultiStageTask
-import testHelpers.MultiStageTaskFactory
 import testHelpers.RootIntegrationTest
-
 /**
  */
 abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
@@ -70,7 +61,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
         }
         assert serviceAdminAuthResponse.value instanceof AuthenticateResponse
         specificationServiceAdminToken = serviceAdminAuthResponse.value.token.id
-        specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User)
+        specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(org.openstack.docs.identity.api.v2.User).value
 
         //create a new shared identity admin for these tests
         specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
@@ -92,7 +83,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
 
     def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
         def createResponse = cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
-        def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
+        def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
         return userAdmin;
     }
 
@@ -112,14 +103,14 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     }
 
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
-        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
-        def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User)
+        cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+        def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
         return userAdmin;
     }
 
     def createDefaultUser(String callerToken, String userName = DEFAULT_USER_USERNAME_PREFIX + getNormalizedRandomString()) {
-        def createResponse = cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
-        def user = cloud20.getUserByName(callerToken, userName).getEntity(org.openstack.docs.identity.api.v2.User)
+        cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        def user = cloud20.getUserByName(callerToken, userName).getEntity(org.openstack.docs.identity.api.v2.User).value
         return user
     }
 

@@ -12,7 +12,6 @@ import org.apache.cxf.common.util.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.openstack.docs.common.api.v1.Extension;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
 import org.w3._2005.atom.Link;
 
@@ -131,9 +130,10 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.EMAIL, user.getEmail());
         }
         outer.put(JSONConstants.ENABLED, user.isEnabled());
-        if (user instanceof UserForCreate && ((UserForCreate) user).getPassword() != null) {
-            outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
+        if (user.getPassword() != null) {
+            outer.put(JSONConstants.OS_KSADM_PASSWORD, user.getPassword());
         }
+
         if (user.getCreated() != null) {
             outer.put(JSONConstants.CREATED, user.getCreated().toString());
 

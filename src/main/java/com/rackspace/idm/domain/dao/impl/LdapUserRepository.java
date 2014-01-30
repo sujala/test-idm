@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
@@ -24,7 +23,6 @@ import java.util.List;
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
-    public static final String FOUND_USERS = "Found Users - {}";
 
     @Autowired
     CryptHelper cryptHelper;
@@ -63,6 +61,10 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void doPreEncode(User user) {
+        if (user.getRsGroupId().size() == 0) {
+            user.setRsGroupId(null);  //directly will fail if empty list
+        }
+
         encryptionService.encryptUser(user);
     }
 
@@ -71,8 +73,18 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         encryptionService.decryptUser(user);
     }
 
+
+    @Override
+    public String getNextId() {
+        return getUuid();
+    }
+
     @Override
     public void addUser(User user) {
+        if (StringUtils.isBlank(user.getId())) {
+            user.setId(getNextUserId());
+        }
+        encryptionService.setUserEncryptionSaltAndVersion(user);
         addObject(user);
     }
 
@@ -115,12 +127,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public String[] getGroupIdsForUser(String username) {
-        User user = getObject(searchFilterGetUserByUsername(username));
-        return user.getRsGroupId().toArray(new String[0]);
-    }
-
-    @Override
     public User getUserByCustomerIdAndUsername(String customerId, String username) {
         return getObject(searchFilterGetUserByCustomerIdAndUsername(customerId, username));
     }
@@ -133,16 +139,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     @Override
     public Iterable<User> getUsersByDomain(String domainId) {
         return getObjects(searchFilterGetUserByDomainId(domainId));
-    }
-
-    @Override
-    public User getUserByRPN(String rpn) {
-        return getObject(searchFilterGetUserByRPN(rpn));
-    }
-
-    @Override
-    public User getUserBySecureId(String secureId) {
-        return getObject(searchFilterGetUserBySecureId(secureId));
     }
 
     @Override
@@ -203,7 +199,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void updateUser(User user, boolean hasSelfUpdatedPassword){
+    public void updateUser(User user){
         updateObject(user);
     }
 
@@ -228,18 +224,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         updateObject(user);
 
         getLogger().info("Updated user encryption to {}", user.getUsername());
-    }
-
-    @Override
-    public void removeUsersFromClientGroup(ClientGroup group) {
-        getLogger().debug("Doing search for users that belong to group {}", group);
-
-        for (User user : getObjects(searchFilterGetUserByGroupDn(group))) {
-            user.setRsGroupDN(null);
-            updateObject(user);
-        }
-
-        getLogger().info("Removed users from clientGroup {}", group);
     }
 
     void addAuditLogForAuthentication(User user, boolean authenticated) {
@@ -327,7 +311,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public String getNextUserId() {
-        return getNextId(NEXT_USER_ID);
+        return getUuid();
     }
 
     @Override
@@ -338,16 +322,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     @Override
     public User getSoftDeletedUserById(String id) {
         return getObject(searchFilterGetUserById(id), getSoftDeletedBaseDn());
-    }
-
-    @Override
-    public User getSoftDeletedUserByUsername(String username) {
-        return getObject(searchFilterGetUserByUsername(username), getSoftDeletedBaseDn());
-    }
-
-    @Override
-    public void unSoftDeleteUser(User user) {
-        unSoftDeleteObject(user);
     }
 
     @Override

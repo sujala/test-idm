@@ -156,18 +156,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
-        TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
-        return tenantRole != null;
-    }
-
-    @Override
-    public boolean doesFederatedTokenContainTenantRole(FederatedToken token, String roleId) {
-        TenantRole tenantRole = tenantRoleDao.getTenantRoleForFederatedToken(token, roleId);
-        return tenantRole != null;
-    }
-
-    @Override
     public TenantRole getTenantRoleForApplicationById(Application application, String id) {
         return tenantRoleDao.getTenantRoleForApplication(application, id);
     }
@@ -516,6 +504,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public Iterable<TenantRole> getTenantRolesForFederatedTokenNoDetail(FederatedToken token) {
+        logger.debug(GETTING_TENANT_ROLES);
+        return this.tenantRoleDao.getTenantRolesForFederatedToken(token);
+    }
+
+    public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
+        logger.debug(GETTING_TENANT_ROLES);
+        return this.tenantRoleDao.getTenantRolesForUser(user);
+    }
+
+    @Override
     public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId, tenantId);
@@ -524,16 +523,29 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
+        HashMap<String, TenantRole> map = new HashMap<String, TenantRole>();
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        List<String> roleIds = new ArrayList<String>();
+
         for (TenantRole role : roles) {
-            if (role != null) {
-                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
-                role.setName(cRole.getName());
-                role.setDescription(cRole.getDescription());
-                role.setPropagate(cRole.getPropagate());
-                tenantRoles.add(role);
+            roleIds.add(role.getRoleRsId());
+            map.put(role.getRoleRsId(), role);
+        }
+
+        if (map.size() == 0) {
+            return tenantRoles;
+        }
+
+        for (ClientRole clientRole : applicationService.getClientRolesByIds(roleIds)){
+            if(clientRole != null) {
+                TenantRole tenantRole = map.get(clientRole.getId());
+                tenantRole.setName(clientRole.getName());
+                tenantRole.setDescription(clientRole.getDescription());
+                tenantRole.setPropagate(clientRole.getPropagate());
+                tenantRoles.add(tenantRole);
             }
         }
+
         return tenantRoles;
     }
 
@@ -713,7 +725,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForUser(User user, List<ClientRole> rolesForFilter) {
+    public Iterable<TenantRole> getTenantRolesForUserById(User user, List<ClientRole> rolesForFilter) {
         return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
     }
 

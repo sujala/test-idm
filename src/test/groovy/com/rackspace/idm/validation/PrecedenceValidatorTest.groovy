@@ -1,18 +1,15 @@
 package com.rackspace.idm.validation
 
-import spock.lang.Shared
-import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.ForbiddenException
+import spock.lang.Shared
 import testHelpers.RootServiceTest
 
 class PrecedenceValidatorTest extends RootServiceTest {
 
     @Shared PrecedenceValidator service
 
-    @Shared def userAdminRole
-    @Shared def adminRole
-    @Shared def serviceAdminRole
-    @Shared def List<ClientRole> identityRoles
+    @Shared RoleService mockRoleService
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
 
@@ -24,8 +21,9 @@ class PrecedenceValidatorTest extends RootServiceTest {
     def setup() {
         mockApplicationService(service)
         mockConfiguration(service)
+        mockRoleService(service)
     }
-    
+
     def "compareWeights throws forbidden exception if caller weight is greater than role weight"() {
         when:
         service.compareWeights(100, 500)
@@ -137,5 +135,90 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         then:
         thrown(ForbiddenException)
+    }
+
+    def "verifyCallerRolePrecedenceForAssignment"() {
+        given:
+        def caller = entityFactory.createUser("caller", "userId2", "domainId", "region")
+        def callerRole = entityFactory.createClientRole(100)
+        def role = entityFactory.createClientRole(200)
+
+        and:
+        applicationService.getUserIdentityRole(caller) >> callerRole
+        mockRoleService.getRoleByName("roleName") >> role
+
+        when:
+        service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "verifyCallerRolePrecedenceForAssignment throws exception when callers role can not be determined"() {
+        given:
+        def caller = entityFactory.createUser("caller", "userId2", "domainId", "region")
+        def role = entityFactory.createClientRole(200)
+
+        and:
+        applicationService.getUserIdentityRole(caller) >> null
+        mockRoleService.getRoleByName("roleName") >> role
+
+        when:
+        service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "verifyCallerRolePrecedenceForAssignment throws exception when callers weight is > role weight"() {
+        given:
+        def caller = entityFactory.createUser("caller", "userId2", "domainId", "region")
+        def callerRole = entityFactory.createClientRole(200)
+        def role = entityFactory.createClientRole(100)
+
+        and:
+        applicationService.getUserIdentityRole(caller) >> callerRole
+        mockRoleService.getRoleByName("roleName") >> role
+
+        when:
+        service.verifyCallerRolePrecedenceForAssignment(caller, ["roleName"])
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "verifyRolePrecedenceForAssignment"() {
+        given:
+        def clientRole = entityFactory.createClientRole(100)
+        def role = entityFactory.createClientRole(200)
+
+        and:
+        mockRoleService.getRoleByName("roleName") >> role
+
+        when:
+        service.verifyRolePrecedenceForAssignment(clientRole, ["roleName"])
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "verifyRolePrecedenceForAssignment throws exception when role weight > any role weight in list"() {
+        given:
+        def clientRole = entityFactory.createClientRole(200)
+        def role = entityFactory.createClientRole(100)
+
+        and:
+        mockRoleService.getRoleByName("roleName") >> role
+
+        when:
+        service.verifyRolePrecedenceForAssignment(clientRole, ["roleName"])
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def mockRoleService(service) {
+        mockRoleService = Mock()
+        service.roleService = mockRoleService;
     }
 }

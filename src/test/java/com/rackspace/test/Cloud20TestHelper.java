@@ -4,9 +4,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
@@ -14,9 +15,9 @@ import javax.xml.namespace.QName;
 public class Cloud20TestHelper {
 
     private static ObjectFactory objectFactory = new ObjectFactory();
-    private org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory catalogObjectFactory = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = new org.openstack.docs.identity.api.v2.ObjectFactory();
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory raxKsGrpObjectFactory = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
 
     public String getAuthenticationRequest(String username, String password) throws JAXBException {
         ObjectMarshaller<AuthenticationRequest> marshaller = new ObjectMarshaller<AuthenticationRequest>();
@@ -36,17 +37,6 @@ public class Cloud20TestHelper {
         return unmarshaller.unmarshal(response, AuthenticateResponse.class);
     }
 
-    public String getEndpointTemplateString(String endpointTemplateId) throws JAXBException {
-        ObjectMarshaller<EndpointTemplate> marshaller = new ObjectMarshaller<EndpointTemplate>();
-
-        EndpointTemplate endpoint = new EndpointTemplate();
-        endpoint.setId(Integer.valueOf(endpointTemplateId));
-        endpoint.setType("type");
-        endpoint.setPublicURL("http://public.url");
-
-        return marshaller.marshal(catalogObjectFactory.createEndpointTemplate(endpoint), EndpointTemplate.class);
-    }
-
     public String createIdentityAdmin(String username, String password, String email) throws JAXBException {
         ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
         User user = new User();
@@ -55,11 +45,6 @@ public class Cloud20TestHelper {
         user.setEmail(email);
 
         return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
-    }
-
-    public EndpointTemplate getEndpointTemplateObject(String endpointTemplate) throws JAXBException {
-        ObjectMarshaller<EndpointTemplate> unmarshaller = new ObjectMarshaller<EndpointTemplate>();
-        return unmarshaller.unmarshal(endpointTemplate, EndpointTemplate.class);
     }
 
     public Domains getDomainsObject(String domains) throws JAXBException {
@@ -97,11 +82,6 @@ public class Cloud20TestHelper {
         return unmarshaller.unmarshal(policies, Policies.class);
     }
 
-    public String getPolicies(Policies policies) throws JAXBException {
-        ObjectMarshaller<Policies> marshaller = new ObjectMarshaller<Policies>();
-        return marshaller.marshal(raxAuthObjectFactory.createPolicies(policies), Policies.class);
-    }
-
     public String createUserAdmin(String name, String password, String email, String domainId) throws JAXBException {
         ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
         User user = new User();
@@ -137,5 +117,19 @@ public class Cloud20TestHelper {
     public Domain getDomain(String response) throws JAXBException {
         ObjectMarshaller<Domain> unmarshaller = new ObjectMarshaller<Domain>();
         return unmarshaller.unmarshal(response, Domain.class);
+    }
+
+    public String createGroup(String name, String description) throws JAXBException {
+        ObjectMarshaller<Group> marshaller = new ObjectMarshaller<Group>();
+        Group group = new Group();
+        group.setName(name);
+        group.setDescription(description);
+
+        return marshaller.marshal(raxKsGrpObjectFactory.createGroup(group), Group.class);
+    }
+
+    public Group getGroup(String response) throws JAXBException {
+        ObjectMarshaller<Group> unmarshaller = new ObjectMarshaller<Group>();
+        return unmarshaller.unmarshal(response, Group.class);
     }
 }

@@ -154,7 +154,7 @@ public class EndpointConverterCloudV11 {
         return baseUrls;
     }
 
-    public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
+    public ServiceCatalog  toServiceCatalog(List<OpenstackEndpoint> endpoints) {
         ServiceCatalog catalog = of.createServiceCatalog();
 
         if (endpoints == null || endpoints.size() == 0) {
