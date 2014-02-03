@@ -101,7 +101,7 @@ dependencies {
     compile group: 'org.tuckey', name: 'urlrewritefilter', version:'3.1.0'
     compile group: 'org.apache.commons', name: 'commons-email', version:'1.2'
     compile group: 'javax.servlet', name: 'jstl', version:'1.2'
-    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'2.3.3'
+    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'2.3.5'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.4'
     compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
@@ -162,7 +162,7 @@ dependencies {
 
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.8'
-    compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1390927665723-SNAPSHOT'
+    compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1391201236773-SNAPSHOT'
 }
 
 def resourceDirs = [
@@ -267,6 +267,13 @@ test {
 
 jettyRun {
     httpPort = 8083
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
+
+    // set JVM arguments for the test JVM(s)
+    //jvmArgs '-XX:MaxPermSize=1024m'
 }
 
 

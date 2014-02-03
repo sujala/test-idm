@@ -1,20 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v11
-
-import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
-import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.OpenstackEndpoint
-import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.rackspace.idm.domain.entity.Pattern
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.domain.entity.*
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import spock.lang.Shared
@@ -22,7 +10,6 @@ import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.core.Response
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -54,140 +41,44 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockConfiguration(service)
         mockAuthorizationService(service)
         mockUserService(service)
-        mockDomainService(service)
         mockTenantService(service)
         mockEndpointService(service)
-        mockApplicationService(service)
         mockEndpointService(service)
         mockAtomHopperClient(service)
         mockValidator(service)
     }
 
-    def "Create User with valid username" () {
+    def "Create User" () {
         given:
         allowAccess()
-        User user = new User();
-        user.id = "someN@me"
-        user.mossoId = 9876543210
-        def user1 = entityFactory.createUser()
-        user1.mossoId = 1
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-        userService.getUser(_) >> null
-        userConverterCloudV11.fromUser(_) >> user1
-        domainService.createNewDomain(_) >> "1"
-        endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
-        Application application = new Application()
-        application.openStackType = "someType"
-        applicationService.getByName(_) >> application
-        ClientRole clientRole = new ClientRole()
-        clientRole.id = "1"
-        clientRole.name = "name"
-        clientRole.clientId = "1"
-        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
-        endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
-        applicationService.getClientRoleById(_) >> clientRole
-        userService.getUserById(_) >> user1
 
-        when:
-        Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
-
-        then:
-        1 * domainService.addTenantToDomain(_,_)
-        builder.build().status == 201
-    }
-
-    def "Create user should return userId in the location header and not username" () {
-        given:
-        allowAccess()
-        User user = new User();
-        user.id = "someN@me"
-        user.mossoId = 9876543210
-        def user1 = entityFactory.createUser().with {
+        def user = new User();
+        def userEntity = entityFactory.createUser().with( {
+            it.id = "userId"
             it.username = "my_username"
-            it.mossoId = 1
+            return it
+        })
+
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
             return it
         }
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-        userService.getUser(_) >> null
-        userConverterCloudV11.fromUser(_) >> user1
-        userConverterCloudV11.toCloudV11User(_, _) >> v1Factory.createUser()
-        domainService.createNewDomain(_) >> "1"
-        endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
-        Application application = new Application()
-        application.openStackType = "someType"
-        applicationService.getByName(_) >> application
-        ClientRole clientRole = new ClientRole()
-        clientRole.id = "1"
-        clientRole.name = "name"
-        clientRole.clientId = "1"
-        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
-        endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
-        applicationService.getClientRoleById(_) >> clientRole
-        userService.getUserById(_) >> user1
 
         when:
         def response = service.createUser(request, null, uriInfo(), user).build()
 
         then:
-        1 * userService.addUser(_) >> { com.rackspace.idm.domain.entity.User arg1 ->
-            arg1.id = "userId"
-        }
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * validator.validate11User(user)
+        1 * userConverterCloudV11.fromUser(user) >> userEntity
+        1 * userService.setUserDefaultsBasedOnCaller(userEntity, caller);
+        1 * userService.addUser(userEntity)
+        1 * scopeAccessService.getOpenstackEndpointsForUser(userEntity) >> []
+        1 * userConverterCloudV11.toCloudV11User(userEntity, []) >> user
         response.status == 201
+        response.entity == user
         !response.getMetadata().get("Location").toString().contains("userId")
         response.getMetadata().get("Location").toString().contains("my_username")
-    }
-
-    def "Create User with valid username: start with a number" () {
-        given:
-        allowAccess()
-        User user = new User();
-        user.id = "1someN@me"
-        user.mossoId = 9876543210
-        Pattern pattern = pattern("username","^[A-Za-z0-9][a-zA-Z0-9-_.@]*","Some error","desc")
-        ldapPatternRepository.getPattern(_) >> pattern
-        userService.getUser(_) >> null
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User()
-        user1.setId("1")
-        user1.setUsername("someN@me")
-        user1.setMossoId(1)
-        userConverterCloudV11.fromUser(_) >> user1
-        domainService.createNewDomain(_) >> "1"
-        endpointService.getBaseUrlsByBaseUrlType(_) >> new ArrayList<CloudBaseUrl>()
-        Application application = new Application()
-        application.openStackType = "someType"
-        applicationService.getByName(_) >> application
-        ClientRole clientRole = new ClientRole()
-        clientRole.id = "1"
-        clientRole.name = "name"
-        clientRole.clientId = "1"
-        applicationService.getClientRoleByClientIdAndRoleName(_,_) >> clientRole
-        endpointService.getBaseUrlById(_) >> new CloudBaseUrl()
-        applicationService.getClientRoleById(_) >> clientRole
-        userService.getUserById(_) >> user1
-
-
-        when:
-        Response.ResponseBuilder builder = service.createUser(request, null, uriInfo(), user)
-
-        then:
-        builder.build().status == 201
-    }
-
-    def "Create User - validates username" () {
-        given:
-        allowAccess()
-        User user = new User();
-        user.id = ""
-        user.mossoId = 9876543210
-
-        when:
-        Response.ResponseBuilder responseBuilder = service.createUser(request, null, uriInfo(), user)
-
-        then:
-        1 * validator.isUsernameValid(_) >> {throw new BadRequestException()}
-        responseBuilder.build().status == 400
     }
 
     def "Update user: valid username" (){
@@ -271,25 +162,6 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         response.metadata.get("Location")[0] == "/v1.1/users/someName"
     }
 
-    def "doesBaseUrlBelongToRegion returns true when id is within range"(){
-        when:
-        config.getString("cloud.region") >> region
-        def result = service.doesBaseUrlBelongToRegion(baseUrl)
-
-        then:
-        result == expected
-
-        where:
-        expected    | baseUrl           | region
-        false       | cloudBaseUrl(null)| "UK"
-        false       | cloudBaseUrl(1)   | "UK"
-        false       | cloudBaseUrl(999) | "UK"
-        true        | cloudBaseUrl(1000)| "UK"
-        false       | cloudBaseUrl(1001)| "US"
-        true        | cloudBaseUrl(999) | "US"
-        true        | cloudBaseUrl(1)   | "US"
-    }
-
     def "validateToken should not return a token when the token is expired"() {
         when:
         allowAccess()
@@ -306,91 +178,6 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         expected    | scopeAccess
         false       | expireScopeAccess(createUserScopeAccess())
         false       | expireScopeAccess(createImpersonatedScopeAccess())
-    }
-
-    def "add nast Tenant - set user id" (){
-        given:
-        def user = new com.rackspacecloud.docs.auth.api.v1.User().with {
-            it.id = "id"
-            it.nastId = "nast"
-            it.mossoId = 123
-            it.enabled = true
-            return it
-        }
-        def cloudBaseUrl = new CloudBaseUrl().with {
-            it.enabled = true
-            it.adminUrl = "admin"
-            it.baseUrlId = 1
-            it.def = false
-            return it
-        }
-        endpointService.getBaseUrlsByBaseUrlType(_) >> [cloudBaseUrl].asList()
-        config.getList("v1defaultMosso") >> ["15","17","83","109","113","120"].asList()
-        config.getList("v1defaultNast") >> ["3","9"].asList()
-        config.getString("serviceName.cloudFiles") >> "cloudFiles"
-        applicationService.getByName(_) >> new Application().with {
-            it.enabled = true
-            it.openStackType = "cloudFiles"
-            return it
-        }
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole().with {
-            it.id = "id"
-            it.clientId = "clientId"
-            it.name = "name"
-            return it
-        }
-
-        when:
-        service.addNastTenant(user, "1")
-
-        then:
-        1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
-            assert(tenantRole.getUserId() != null)
-        }
-
-    }
-
-
-    def "add mosso Tenant - set user id" (){
-        given:
-        def user = new com.rackspacecloud.docs.auth.api.v1.User().with {
-            it.id = "id"
-            it.nastId = "nast"
-            it.mossoId = 123
-            it.enabled = true
-            return it
-        }
-        def cloudBaseUrl = new CloudBaseUrl().with {
-            it.enabled = true
-            it.adminUrl = "admin"
-            it.baseUrlId = 1
-            it.def = false
-            return it
-        }
-        endpointService.getBaseUrlsByBaseUrlType(_) >> [cloudBaseUrl].asList()
-        config.getList("v1defaultMosso") >> ["15","17","83","109","113","120"].asList()
-        config.getList("v1defaultNast") >> ["3","9"].asList()
-        config.getString("serviceName.cloudFiles") >> "cloudFiles"
-        applicationService.getByName(_) >> new Application().with {
-            it.enabled = true
-            it.openStackType = "cloudFiles"
-            return it
-        }
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole().with {
-            it.id = "id"
-            it.clientId = "clientId"
-            it.name = "name"
-            return it
-        }
-
-        when:
-        service.addMossoTenant(user, "1")
-
-        then:
-        1 * tenantService.addTenantRoleToUser(_,_) >> { arg1, TenantRole tenantRole ->
-            assert(tenantRole.getUserId() != null)
-        }
-
     }
 
     def "Updating enabled user to disabled sends a feed to atomHopper"(){
@@ -610,86 +397,6 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         then:
         result.build().status == 204
         1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
-    }
-
-    def "Create user will have no api key if generate.apiKey.userForCreate=false" () {
-        given:
-        allowAccess()
-        def user = new User().with {
-            it.id = "id"
-            it.mossoId = 1
-            it.nastId = "nast"
-            it
-        }
-
-        when:
-        service.createUser(request, headers, uriInfo(), user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
-        1 * userConverterCloudV11.fromUser(_) >> { User u ->
-            assert(u.key == null)}
-    }
-
-    def "Create user will have api key if provided - generate.apiKey.userForCreate=false" () {
-        given:
-        allowAccess()
-        def key = "key"
-        def user = new User().with {
-            it.id = "id"
-            it.mossoId = 1
-            it.nastId = "nast"
-            it.key = key
-            it
-        }
-
-        when:
-        service.createUser(request, headers, uriInfo(), user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> false
-        1 * userConverterCloudV11.fromUser(_) >> { User u ->
-            assert(u.key == key)}
-    }
-
-    def "Create user will have an api key if generate.apiKey.userForCreate=true" () {
-        given:
-        allowAccess()
-        def user = new User().with {
-            it.id = "id"
-            it.mossoId = 1
-            it.nastId = "nast"
-            it
-        }
-
-        when:
-        service.createUser(request, headers, uriInfo(), user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
-        1 * userConverterCloudV11.fromUser(_) >> { User u ->
-            assert(u.key != null)}
-    }
-
-    def "Create user will use provided api key if generate.apiKey.userForCreate=true" () {
-        given:
-        allowAccess()
-        def key = "key"
-        def user = new User().with {
-            it.id = "id"
-            it.mossoId = 1
-            it.nastId = "nast"
-            it.key = key
-            it
-        }
-
-        when:
-        service.createUser(request, headers, uriInfo(), user)
-
-        then:
-        1 * config.getBoolean("generate.apiKey.userForCreate") >> true
-        1 * userConverterCloudV11.fromUser(_) >> { User u ->
-            assert(u.key == key)}
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

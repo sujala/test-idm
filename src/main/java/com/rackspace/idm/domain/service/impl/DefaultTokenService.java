@@ -83,8 +83,9 @@ public class DefaultTokenService implements TokenService {
             throw new IllegalStateException(error);
         }
 
+        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccessRequestor);
         final boolean isGoodAsIdm = authorizationService
-            .authorizeCustomerIdm(scopeAccessRequestor);
+            .authorizeCustomerIdm(context);
         // Only CustomerIdm Client and Client that got token or the user of
         // the token are authorized to revoke token
         final boolean isAuthorized = isGoodAsIdm

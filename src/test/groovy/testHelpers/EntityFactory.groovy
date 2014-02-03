@@ -132,6 +132,14 @@ class EntityFactory extends Specification {
         return createCloudBaseUrl("CloudServersOpenStack", "region")
     }
 
+    def createCloudBaseUrl(String baseUrlId, Boolean deff) {
+        new CloudBaseUrl().with( {
+            it.baseUrlId = baseUrlId
+            it.setDef(deff)
+            return it
+        })
+    }
+
     def createCloudBaseUrl(String openstackType, String region) {
         new CloudBaseUrl().with {
             it.v1Default = true
@@ -330,8 +338,13 @@ class EntityFactory extends Specification {
     }
 
     def createTenantRole(String name) {
+        createTenantRole(name, false)
+    }
+
+    def createTenantRole(String name, boolean propagate) {
         new TenantRole().with {
             it.name = name
+            it.propagate = propagate
             it.tenantIds = []
             it.userId = "1"
             it.roleRsId = "1"

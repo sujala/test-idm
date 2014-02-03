@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.api.idm.v1.User;
 import com.rackspace.idm.api.converter.UserConverter;
+import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -75,7 +76,7 @@ public class UsersResourceTest {
         User user = new User();
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
         usersResource.addUser("authHeader", user);
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
+        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(AuthorizationContext.class));
     }
 
     @Test

@@ -1,25 +1,21 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.util.CryptHelper;
-import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.unboundid.ldap.sdk.Filter;
+import com.rackspace.idm.util.CryptHelper;
+import com.rackspace.idm.validation.Validator;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class UserServiceTests {
 
@@ -92,7 +88,6 @@ public class UserServiceTests {
         userService.setScopeAccessService(mockScopeAccessService);
         userService.setApplicationService(mockClientService);
         userService.setConfig(appConfig);
-        userService.setPasswordComplexityService(mockPasswordComplexityService);
         userService.setCloudRegionService(cloudRegionService);
         userService.setValidator(validator);
         userService.setTenantService(tenantService);
@@ -110,7 +105,6 @@ public class UserServiceTests {
         trustedUserService.setScopeAccessService(mockScopeAccessService);
         trustedUserService.setApplicationService(mockClientService);
         trustedUserService.setConfig(appConfig2);
-        trustedUserService.setPasswordComplexityService(mockPasswordComplexityService);
     }
 
     @Test
@@ -121,11 +115,6 @@ public class UserServiceTests {
 
         d.toString();
         newD.toString();
-
-
-        //Assert.assertEquals(year, passwordExpirationDate.getYear());
-        //Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
-        //Assert.assertEquals(dayOfMonth + 10, passwordExpirationDate.getDayOfMonth());
     }
 
     @Test

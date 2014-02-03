@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -26,6 +26,7 @@ import java.util.HashMap;
 public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
     private JsonPrefixMapper prefixMapper = new JsonPrefixMapper();
+    private JsonArrayTransformer arrayTransformer = new JsonArrayTransformer();
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -64,6 +65,8 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
             }else {
                 jsonObject = outer;
             }
+
+            arrayTransformer.transformIncludeWrapper(jsonObject);
 
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();

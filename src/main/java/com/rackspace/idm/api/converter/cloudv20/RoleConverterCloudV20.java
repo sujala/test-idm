@@ -10,6 +10,7 @@ import org.openstack.docs.identity.api.v2.RoleList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -88,5 +89,20 @@ public class RoleConverterCloudV20 {
         roleEntity.setPropagate(role.getPropagate());
         roleEntity.setServiceId(role.getClientId());
         return roleEntity;
+    }
+
+    public List<TenantRole> toTenantRoles(org.openstack.docs.identity.api.v2.RoleList roleList) {
+        if (roleList == null) {
+            return null;
+        }
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        for (Role role : roleList.getRole()) {
+            TenantRole tenantRole = new TenantRole();
+            tenantRole.setName(role.getName());
+            tenantRoles.add(tenantRole);
+        }
+
+        return tenantRoles;
     }
 }

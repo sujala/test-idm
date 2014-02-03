@@ -1,10 +1,6 @@
 package testHelpers
-
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
-import spock.lang.Shared
 
 class Cloud20Utils {
 
@@ -19,7 +15,7 @@ class Cloud20Utils {
     }
 
     def createUser(kwargs = [displayName:"display", email:"email@email.com", enabled:true, defaultRegion:null, domainId:null], token, username, password) {
-        def user = cloud20.createUser(token, v2Factory.createUserForCreate(username, kwargs.displayName, kwargs.email, kwargs.enabled, kwargs.defaultRegion, kwargs.domainId, password)).getEntity(User)
+        def user = cloud20.createUser(token, v2Factory.createUserForCreate(username, kwargs.displayName, kwargs.email, kwargs.enabled, kwargs.defaultRegion, kwargs.domainId, password)).getEntity(User).value
         assert(user.id != null)
         user
     }

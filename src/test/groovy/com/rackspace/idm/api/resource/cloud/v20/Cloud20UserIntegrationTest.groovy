@@ -189,41 +189,15 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId2)
     }
 
-    def "User admin within the same domain should not be allowed to retrieve other user admin's apiKey" () {
-        given:
-        def domainId = utils.createDomain()
-        def domainId2 = utils.createDomain()
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
-        (identityAdminThree, userAdminThree, userManageThree, defaultUserThree) = utils.createUsers(domainId2)
-
-        when:
-        String token = utils.getToken(userAdmin.username)
-        String userAdminThreeToken = utils.getToken(userAdminThree.username)
-        def credentials = utils.addApiKeyToUser(userAdminTwo)
-        def userAdminThreeResponse = cloud20.getUserApiKey(userAdminThreeToken, userAdminTwo.id)
-        def response = cloud20.getUserApiKey(token, userAdminTwo.id)
-
-        then:
-        credentials.username == userAdminTwo.username
-        userAdminThreeResponse.status == 403
-        response.status == 403
-
-
-        cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteUsers(defaultUserTwo, defaultUserThree, userManageTwo, userManageThree, userAdminTwo, userAdminThree, identityAdminTwo, identityAdminThree)
-        utils.deleteDomain(domainId)
-        utils.deleteDomain(domainId2)
-    }
-
     def "User manage within the same domain should not be allowed to retrieve other user manage's apiKey" () {
         given:
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         (identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo) = utils.createUsers(domainId2)
-        (identityAdminThree, userAdminThree, userManageThree, defaultUserThree) = utils.createUsers(domainId2)
+
+        def userAdminTwoToken = utils.getToken(userManageTwo.username)
+        def userManageThree =  utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage"), domainId2)
 
         when:
         utils.addRoleToUser(userManageTwo, USER_MANAGE_ROLE_ID)
@@ -241,7 +215,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteUsers(defaultUserTwo, defaultUserThree, userManageTwo, userManageThree, userAdminTwo, userAdminThree, identityAdminTwo, identityAdminThree)
+        utils.deleteUsers(defaultUserTwo, userManageTwo, userManageThree, userAdminTwo, identityAdminTwo)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
     }
@@ -459,7 +433,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         def daoUser = userDao.getUserByUsername(defaultUser.username)
         daoUser.multifactorEnabled = multiFactorEnabled
-        userDao.updateUser(daoUser, false)
+        userDao.updateUser(daoUser)
 
         when:
         def userById = utils.getUserById(defaultUser.id)

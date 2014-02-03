@@ -1,5 +1,6 @@
 package com.rackspace.idm.helpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
@@ -7,9 +8,16 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import org.apache.http.HttpStatus
 import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
+
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.EndpointList
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
+import org.openstack.docs.identity.api.v2.Tenant
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
@@ -70,7 +78,7 @@ class Cloud20Utils {
 
         assert (response.status == SC_CREATED)
 
-        def entity = response.getEntity(User)
+        def entity = response.getEntity(User).value
         assert (entity != null)
         return entity
     }
@@ -314,7 +322,7 @@ class Cloud20Utils {
         response.getEntity(ApiKeyCredentials)
     }
 
-     def listUserCredentials(User user, String token=getServiceAdminToken()){
+    def listUserCredentials(User user, String token=getServiceAdminToken()){
         def response = methods.listCredentials(token, user.id)
         assert (response.status == SC_OK)
         response.getEntity(CredentialListType).value
@@ -323,13 +331,13 @@ class Cloud20Utils {
     def getUserById(String id, String token=getServiceAdminToken()){
         def response = methods.getUserById(token, id)
         assert (response.status == SC_OK)
-        response.getEntity(User)
+        response.getEntity(User).value
     }
 
     def getUserByName(String username, String token=getServiceAdminToken()){
         def response = methods.getUserByName(token, username)
         assert (response.status == SC_OK)
-        response.getEntity(User)
+        response.getEntity(User).value
     }
 
     def getUsersByEmail(String email, String token=getServiceAdminToken()){
@@ -406,7 +414,6 @@ class Cloud20Utils {
         assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 
-
     def deleteUserQuietly(user, String token=getServiceAdminToken()) {
         if (user != null) {
             try {
@@ -415,5 +422,29 @@ class Cloud20Utils {
                 //ignore
             }
         }
+    }
+
+    def createDomain(Domain domain) {
+        def response = methods.addDomain(getServiceAdminToken(), domain)
+        assert (response.status == SC_OK)
+        response.getEntity(Domain).value
+    }
+
+    def createTenant(Tenant tenant) {
+        def response = methods.addTenant(getServiceAdminToken(), tenant)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Tenant).value
+    }
+
+    def addTenantToDomain(String domainId, String tenantId) {
+        def response = methods.addTenantToDomain(getServiceAdminToken(), domainId, tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def getEndpointsByDomain(String domainId) {
+        def response = methods.getEndpointsByDomain(getServiceAdminToken(), domainId)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointList).value
+
     }
 }

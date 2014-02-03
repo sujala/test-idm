@@ -34,9 +34,6 @@ public interface TenantService {
     TenantRole getTenantRoleForUserById(User user, String roleId);
     TenantRole checkAndGetTenantRoleForUserById(User user, String roleId);
 
-    boolean doesUserContainTenantRole(BaseUser user, String roleId);
-    boolean doesFederatedTokenContainTenantRole(FederatedToken token, String roleId);
-
     TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
@@ -46,9 +43,11 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(User user, String applicationId);
     List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
+    Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
     List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     List<TenantRole> getTenantRolesForFederatedToken(FederatedToken token);
+    Iterable<TenantRole> getTenantRolesForFederatedTokenNoDetail(FederatedToken token);
     @Deprecated
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(User user);
@@ -63,7 +62,7 @@ public interface TenantService {
 
     List<Tenant> getTenantsFromNameList(String[] tenants);
 
-    TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRolesForFilter);
+    Iterable<TenantRole> getTenantRolesForUserById(User user, List<ClientRole> clientRolesForFilter);
     List<String> getIdsForUsersWithTenantRole(String roleId);
 	void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);

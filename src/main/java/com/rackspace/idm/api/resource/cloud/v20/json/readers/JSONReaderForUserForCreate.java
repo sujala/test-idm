@@ -6,7 +6,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,8 +15,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.JSONConstants.*;
-import static com.rackspace.idm.JSONConstants.DOMAIN_ID;
-import static com.rackspace.idm.JSONConstants.USER_RAX_AUTH_DOMAIN_ID_PATH;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -33,6 +30,8 @@ public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreat
         prefixValues.put(USER_OS_KSADM_PASSWORD_PATH, PASSWORD);
         prefixValues.put(USER_RAX_AUTH_DEFAULT_REGION_PATH, DEFAULT_REGION);
         prefixValues.put(USER_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
+        prefixValues.put(USER_RAX_KSQA_SECRET_QA_PATH, SECRET_QA);
+        prefixValues.put(USER_RAX_KSGRP_GROUPS_PATH, GROUPS);
 
         return read(inputStream, JSONConstants.USER, prefixValues);
     }

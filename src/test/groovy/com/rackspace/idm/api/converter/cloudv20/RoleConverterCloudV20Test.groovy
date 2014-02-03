@@ -1,11 +1,8 @@
 package com.rackspace.idm.api.converter.cloudv20
-
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
-import static com.rackspace.idm.RaxAuthConstants.*
 
 class RoleConverterCloudV20Test extends RootServiceTest {
     @Shared RoleConverterCloudV20 converter
@@ -89,5 +86,27 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
         then:
         result.rsWeight == configWeight
+    }
+
+    def "convert jaxb RoleList to TenantRoles"() {
+        given:
+        def jaxbRole = v2Factory.createRole("roleName")
+        def jaxbRoleList = v2Factory.createRoleList()
+        jaxbRoleList.getRole().add(jaxbRole)
+
+        when:
+        def result = converter.toTenantRoles(jaxbRoleList)
+
+        then:
+        result.size() == 1
+        result.get(0).getName() == "roleName"
+    }
+
+    def "convert jaxb RoleList to TenantRoles when RoleList is null"() {
+        when:
+        def result = converter.toTenantRoles(null)
+
+        then:
+        result == null
     }
 }
