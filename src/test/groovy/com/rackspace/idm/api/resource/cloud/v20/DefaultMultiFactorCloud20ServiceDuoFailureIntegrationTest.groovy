@@ -70,6 +70,11 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
     }
 
+    @Override
+    public void doCleanupSpec() {
+        startOrRestartGrizzly("classpath:app-config.xml")
+    }
+
     /**
      * Sets up a new user
      *

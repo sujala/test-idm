@@ -17,6 +17,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
+import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -29,6 +30,8 @@ import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
+    Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
+
     @Autowired LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultApplicationService applicationService
@@ -1958,13 +1961,18 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Disable one of two user admins in domain does not disable subUsers"() {
         given:
-        def domain = "someDomain$sharedRandom"
+        def domain = "someDomainDisableOneUserAdmin$sharedRandom"
         def username = "userDisableOneUserAdmin$sharedRandom"
         def password = "Password1"
 
-        def adminUsername = "userAdmin3$sharedRandom"
+        def adminUsername = "userAdminDisableOneUserAdmin$sharedRandom"
         def userAdminForCreate1 = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
-        User userAdmin = userAdminForCreate1.getEntity(User).value
+        Object result = userAdminForCreate1.getEntity(User).value
+        if (result instanceof BadRequestFault) {
+            BadRequestFault fault = (BadRequestFault) result
+            LOG.error(String.format("Message: '%s'; details: '%s'", fault.getMessage(), fault.getDetails()))
+        }
+        User userAdmin = (User) result
 
         def userAdminToken = cloud20.authenticatePassword(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
         def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))

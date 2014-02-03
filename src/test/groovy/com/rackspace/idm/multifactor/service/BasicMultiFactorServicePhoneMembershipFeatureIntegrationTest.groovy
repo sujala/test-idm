@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
+import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -77,8 +78,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         phone.getMembers() == null
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(retrievedPhone)
+        deleteObjectFromLdapQuietly(finalUserAdmin, retrievedPhone)
     }
 
     /**
@@ -110,8 +110,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         phone.getMembers().contains(finalUserAdmin.getLdapEntry().getParsedDN())
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(retrievedPhone)
+        deleteObjectFromLdapQuietly(finalUserAdmin, retrievedPhone)
     }
 
     /**
@@ -138,8 +137,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         finalPhone.getMembers() == null
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(finalPhone)
+        deleteObjectFromLdapQuietly(finalUserAdmin, finalPhone)
     }
 
     /**
@@ -174,8 +172,21 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         finalPhone.getMembers().contains(initialUserAdmin2.getLdapEntry().getParsedDN())
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(finalPhone)
+        deleteObjectFromLdapQuietly(finalUserAdmin, finalPhone)
+    }
+
+    def <T extends UniqueId> void deleteObjectFromLdapQuietly(T... objToDelete) {
+        for (obj in objToDelete) {
+            try {
+                if (obj != null) {
+                    if (obj instanceof User) userRepository.deleteObject(obj)
+                    else if (obj instanceof MobilePhone) mobilePhoneRepository.deleteObject(obj)
+                }
+            }
+            catch (Exception ex) {
+                //ignore. just cleanup
+            }
+        }
     }
 
 }
