@@ -35,7 +35,7 @@ class cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
         when:
         utils.disableUser(defaultUser)
         def token = utils.impersonateWithRacker(defaultUser)
-        def response = utils.validateToken(token)
+        def response = utils.validateToken(token.token.id)
 
         then:
         response != null
