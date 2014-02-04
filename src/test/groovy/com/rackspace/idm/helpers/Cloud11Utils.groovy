@@ -1,5 +1,6 @@
 package com.rackspace.idm.helpers
 
+import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
@@ -88,4 +89,12 @@ class Cloud11Utils {
         assert (response.status == SC_OK)
         response.getEntity(User)
     }
+
+    def authenticateWithKey(String id, String key) {
+        def cred = v1Factory.createUserKeyCredentials(id, key)
+        def response = methods.authenticate(cred)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthData)
+    }
+
 }

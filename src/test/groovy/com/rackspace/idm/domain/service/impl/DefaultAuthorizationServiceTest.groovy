@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.entity.AuthorizationContext
+import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.ScopeAccess
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -405,7 +406,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def result = service.getAuthorizationContext(scopeAccess)
 
         then:
-        1 * userService.getUserByScopeAccess(_)
+        1 * userService.getUserByScopeAccess(_, false) >> new BaseUser()
         1 * tenantService.getTenantRolesForUserNoDetail(_) >> [].asList()
 
         result.roles != null
@@ -436,7 +437,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def result = service.getAuthorizationContext(scopeAccess)
 
         then:
-        1 * userService.getUserByScopeAccess(_)
+        1 * userService.getUserByScopeAccess(_, false) >> new BaseUser()
         1 * tenantService.getTenantRolesForUserNoDetail(_) >> [entityFactory.createTenantRole()].asList()
 
         result.roles.contains("1")
