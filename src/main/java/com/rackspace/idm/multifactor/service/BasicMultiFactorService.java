@@ -17,6 +17,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.exception.DuplicateException;
@@ -70,6 +71,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private AtomHopperClient atomHopperClient;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -260,6 +264,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
+            scopeAccessService.expireAllTokensForUserById(user.getId());
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
         }
     }

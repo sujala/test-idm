@@ -3,9 +3,11 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -42,7 +44,10 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     @Autowired
     private BasicMultiFactorService multiFactorService;
 
+    @Autowired
+    private LdapScopeAccessRepository scopeAccessRepository;
 
+    UserScopeAccess userScopeAccess;
     org.openstack.docs.identity.api.v2.User userAdmin;
     String userAdminToken;
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
@@ -71,6 +76,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     def setup() {
         userAdmin = createUserAdmin()
         userAdminToken = authenticate(userAdmin.username)
+        userScopeAccess = (UserScopeAccess)scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
     }
 
     def cleanup() {
@@ -120,6 +126,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verifyPhone()
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        resetTokenExpiration()
         User intialUserAdmin = userRepository.getUserById(userAdmin.getId())
         assert intialUserAdmin.isMultiFactorEnabled()
         assert intialUserAdmin.getExternalMultiFactorUserId() != null
@@ -174,6 +181,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
+        resetTokenExpiration()
         settings.setEnabled(false)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User initialUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -256,6 +264,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+        resetTokenExpiration()
 
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
@@ -292,6 +301,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+        resetTokenExpiration()
 
         //here we're hacking ldap to get the data into an inconsistent state for testing purposes
         User userEntity = userRepository.getUserById(userAdmin.id)
@@ -334,5 +344,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
     def void verifyPhone() {
         utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+    }
+
+    def void resetTokenExpiration() {
+        Date now = new Date()
+        Date future = new Date(now.year + 1, now.month, now.day)
+        userScopeAccess.setAccessTokenExp(future)
+        scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
 }

@@ -3,14 +3,17 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -42,7 +45,10 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     @Autowired
     private BasicMultiFactorService multiFactorService;
 
+    @Autowired
+    private LdapScopeAccessRepository scopeAccessRepository;
 
+    UserScopeAccess userScopeAccess;
     org.openstack.docs.identity.api.v2.User userAdmin;
     String userAdminToken;
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
@@ -70,6 +76,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     def setup() {
         userAdmin = createUserAdmin()
         userAdminToken = authenticate(userAdmin.username)
+        userScopeAccess = (UserScopeAccess)scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
     }
 
     def cleanup() {
@@ -78,6 +85,23 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
             deleteUserQuietly(userAdmin)
         }
         if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
+    }
+
+    def "Verify that enabling multifactor expires existing token"() {
+        setup:
+        def token = scopeAccessRepository.getScopeAccessByAccessToken(userScopeAccess.accessTokenString)
+        assert(!token.isAccessTokenExpired(new DateTime()))
+
+        when:
+        setUpAndEnableMultiFactor()
+        def expiredToken = scopeAccessRepository.getScopeAccessByAccessToken(userScopeAccess.accessTokenString)
+
+        then:
+        expiredToken.isAccessTokenExpired(new DateTime())
+
+        cleanup:
+        resetTokenExpiration()
+        utils.deleteMultiFactor(userAdminToken, userAdmin.id)
     }
 
     /**
@@ -89,6 +113,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     def "Successfully delete multifactor"() {
         setup:
         setUpAndEnableMultiFactor()
+        resetTokenExpiration()
 
         when:
         def response = cloud20.deleteMultiFactor(userAdminToken, userAdmin.id, requestContentMediaType, acceptMediaType)
@@ -141,6 +166,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     def "Successfully delete multifactor when partially set up with just a phone"() {
         setup:
         setUpMultiFactorWithUnverifiedPhone()
+        resetTokenExpiration()
 
         when:
         def response = cloud20.deleteMultiFactor(userAdminToken, userAdmin.id, requestContentMediaType, acceptMediaType)
@@ -166,6 +192,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     def "Successfully reset up multifactor after removing it wth same phone number"() {
         setup:
         setUpAndEnableMultiFactor()
+        resetTokenExpiration()
         User retrievedUserAdmin = userRepository.getUserById(userAdmin.getId())
         MobilePhone originalPhone = mobilePhoneRepository.getById(retrievedUserAdmin.getMultiFactorMobilePhoneRsId())
         com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone newXmlPhone = v2Factory.createMobilePhone(originalPhone.getTelephoneNumber())
@@ -181,6 +208,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+        resetTokenExpiration()
 
         then:
         newPhone.externalMultiFactorPhoneId == originalPhone.externalMultiFactorPhoneId //the phones are not deleted in duo
@@ -210,10 +238,12 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     def "Successfully reset up multifactor after removing it"() {
         setup:
         setUpAndEnableMultiFactor()
+        resetTokenExpiration()
         utils.deleteMultiFactor(userAdminToken, userAdmin.id)
 
         expect:
         setUpAndEnableMultiFactor() //"test" is that no errors reported from assertions made while enabling multi-factor again
+        resetTokenExpiration()
 
         cleanup:
         utils.deleteMultiFactor(userAdminToken, userAdmin.id)
@@ -250,5 +280,12 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
 
     def void setUpMultiFactorWithUnverifiedPhone() {
         responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
+    }
+
+    def void resetTokenExpiration() {
+        Date now = new Date()
+        Date future = new Date(now.year + 1, now.month, now.day)
+        userScopeAccess.setAccessTokenExp(future)
+        scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
 }

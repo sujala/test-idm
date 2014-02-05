@@ -25,13 +25,13 @@ public interface ScopeAccessService {
 
     void deleteExpiredTokens(User user);
 
-    void expireAccessToken(String tokenString) throws IOException, JAXBException;
+    void expireAccessToken(String tokenString);
 
     void expireAllTokensForClient(String clientId);
 
-    void expireAllTokensForUser(String username) throws IOException, JAXBException;
+    void expireAllTokensForUser(String username);
 
-    void expireAllTokensForUserById(String userId) throws IOException, JAXBException;
+    void expireAllTokensForUserById(String userId);
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 

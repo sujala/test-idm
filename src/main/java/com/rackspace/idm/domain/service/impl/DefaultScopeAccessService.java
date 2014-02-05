@@ -20,8 +20,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
 import java.util.*;
 
 @Component
@@ -285,7 +283,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAccessToken(String tokenString) throws IOException, JAXBException {
+    public void expireAccessToken(String tokenString) {
         logger.debug("Expiring access token {}", tokenString);
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
@@ -320,7 +318,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAllTokensForUser(String username) throws IOException, JAXBException {
+    public void expireAllTokensForUser(String username) {
         logger.debug("Expiring all tokens for user {}", username);
         final User user = this.userService.getUser(username);
         if (user == null) {
@@ -348,7 +346,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAllTokensForUserById(String userId) throws IOException, JAXBException {
+    public void expireAllTokensForUserById(String userId) {
         logger.debug("Expiring all tokens for user {}", userId);
         final User user = this.userService.getUserById(userId);
         if (user == null) {
