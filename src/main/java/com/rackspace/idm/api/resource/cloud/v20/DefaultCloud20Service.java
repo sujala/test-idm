@@ -1526,7 +1526,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccessByAccessToken);
             authorizationService.verifyUserLevelAccess(context);
 
-            User user = this.userService.getUserById(userId);
+            User user = this.userService.checkAndGetUserById(userId);
             AuthorizationContext userContext = authorizationService.getAuthorizationContext(user);
             User caller = getUser(scopeAccessByAccessToken);
 

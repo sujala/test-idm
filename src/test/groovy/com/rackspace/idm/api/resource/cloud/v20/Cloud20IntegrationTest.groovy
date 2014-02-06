@@ -779,6 +779,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserAdminApi.status == 403
     }
 
+    def "getUserApiKey returns 404 when given invalid user Id"() {
+        when:
+        def getUserAdminApi = cloud20.getUserApiKey(defaultUserManageRoleToken, "invalidUserId")
+
+        then:
+        getUserAdminApi.status == 404
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = v2Factory.createUserForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")

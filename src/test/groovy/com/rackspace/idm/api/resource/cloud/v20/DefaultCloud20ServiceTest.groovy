@@ -1876,7 +1876,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = Mock(User)
         def caller = Mock(User)
 
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
@@ -1930,7 +1930,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
         def caller = entityFactory.createUser()
 
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
@@ -2754,7 +2754,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.status == 200
-        userService.getUserById(userId) >> user
+        userService.checkAndGetUserById(userId) >> user
         userService.getUser(_) >> caller
     }
 
@@ -2776,7 +2776,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.status == 403
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
         authorizationService.authorizeCloudUserAdmin(_) >> false
@@ -3402,7 +3402,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
 
         then:
-        1 * userService.getUserById(_) >> user
+        1 * userService.checkAndGetUserById(_) >> user
         1 * userService.getUser(_) >> caller
         1 * authorizationService.authorizeCloudUser(_) >> false
         1 * authorizationService.authorizeUserManageRole(_) >> true
@@ -3446,7 +3446,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
-        1 * userService.getUserById(_) >> user
+        1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.hasUserAdminRole(_) >> true
         result.build().status == 403
