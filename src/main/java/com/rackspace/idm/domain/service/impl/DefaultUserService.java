@@ -773,6 +773,8 @@ public class DefaultUserService implements UserService {
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
+        } else if (scopeAccess instanceof ClientScopeAccess) {
+            return null;
         } else {
             throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }

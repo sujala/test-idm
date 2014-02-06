@@ -65,10 +65,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        Iterable<TenantRole> tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
 
-        for (TenantRole tenantRole : tenantRoles) {
-            context.getRoles().add(tenantRole.getRoleRsId());
+        Iterable<TenantRole> tenantRoles;
+
+        if( user != null) {
+            tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
+
+            for (TenantRole tenantRole : tenantRoles) {
+                context.getRoles().add(tenantRole.getRoleRsId());
+            }
         }
 
         return context;
