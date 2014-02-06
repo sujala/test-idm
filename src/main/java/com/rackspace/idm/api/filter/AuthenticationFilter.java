@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
@@ -23,7 +26,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,6 +39,7 @@ import java.util.UUID;
 public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
     private static final String GET = "GET";
+    private static final String POST = "POST";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
@@ -44,6 +50,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
+    private Configuration config;
+
+    private UserService userService;
+
+    private TenantService tenantService;
 
     AuthenticationFilter() {
 
@@ -90,7 +102,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
             if (authToken != null) {
                 //check for impersonation
-                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
+                ScopeAccess sa = getScopeAccessService().getScopeAccessByAccessToken(authToken);
                 if(sa instanceof ImpersonatedScopeAccess){
                     // Check Expiration of impersonated token
                     if (sa.isAccessTokenExpired(new DateTime())) {
@@ -101,6 +113,27 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
                     logger.info("Impersonating token {} with token {} ", authToken, newToken);
                 }
+
+                if(path.contains("multi-factor")) {
+                    String multifactorStatus = getConfig().getString("multifactor.services.enabled");
+
+                    if("BETA".equalsIgnoreCase(multifactorStatus)) {
+                        if(userHasMultiFactorBetaRole(sa)) {
+                            return request;
+                        } else {
+                            throw new WebApplicationException(404);
+                        }
+                    } else if("FULL".equalsIgnoreCase(multifactorStatus)) {
+                        return request;
+                    } else if("OFF".equalsIgnoreCase(multifactorStatus)) {
+                        throw new WebApplicationException(404);
+                    } else {
+                        //This should not typically happen. If we get here, then the config is invalid or missing.
+                        throw new WebApplicationException(404);
+                    }
+
+                }
+
             }
             return request;
         }
@@ -129,7 +162,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        if ("POST".equals(method) && "tokens".equals(path)) {
+        if (POST.equals(method) && "tokens".equals(path)) {
             return request;
         }
         final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
@@ -163,7 +196,46 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         return scopeAccessService;
     }
 
+    private Configuration getConfig() {
+        if (config == null) {
+            config = springCtx.getBean(Configuration.class);
+        }
+
+        return config;
+    }
+
+    private UserService getUserService() {
+        if (userService == null) {
+            userService = springCtx.getBean(UserService.class);
+        }
+
+        return userService;
+    }
+
+    private TenantService getTenantService() {
+        if (tenantService == null) {
+            tenantService = springCtx.getBean(TenantService.class);
+        }
+
+        return tenantService;
+    }
+
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
         this.req = httpServletRequest;
+    }
+
+    private boolean userHasMultiFactorBetaRole(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
+
+        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
+            for(TenantRole role : userGlobalRoles) {
+                if(role.getRoleRsId().equals(config.getString("cloudAuth.multiFactorBetaRoleRsId"))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

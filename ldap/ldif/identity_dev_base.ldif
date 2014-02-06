@@ -2414,6 +2414,14 @@ rsId: 1
 description: Admin Role.
 rsWeight: 100
 
+dn: rsId=12,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity-feature:mfa
+rsId: 12
+description: Multi-Factor BETA
+rsWeight: 500
+
 dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
