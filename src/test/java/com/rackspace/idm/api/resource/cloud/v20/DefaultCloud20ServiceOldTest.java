@@ -2262,7 +2262,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void getUserCredential_apiKeyCredentialResponseOk_returns200() throws Exception {
         user.setApiKey("123");
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.getUserApiKeyCredentials(httpHeaders, authToken, userId);
