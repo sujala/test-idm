@@ -63,6 +63,9 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void doPreEncode(User user) {
+        if(user.getRsGroupId() != null && user.getRsGroupId().isEmpty()){
+            user.setRsGroupId(null);
+        }
         encryptionService.encryptUser(user);
     }
 
