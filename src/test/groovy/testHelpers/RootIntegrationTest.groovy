@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.idm.helpers.Cloud20Utils
+import com.rackspace.idm.helpers.FoundationApiUtils
 import com.sun.jersey.api.client.WebResource
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,6 +21,8 @@ class RootIntegrationTest extends Specification {
 
     @Autowired Cloud20Utils utils
 
+    @Autowired FoundationApiUtils foundationUtils
+
     @Shared double entropy
     @Shared int defaultExpirationSeconds
 
@@ -28,10 +31,12 @@ class RootIntegrationTest extends Specification {
     @Shared def v1Factory  = new V1Factory()
     @Shared def v2Factory = new V2Factory()
     @Shared def entityFactory = new EntityFactory()
+    @Shared def factory = new FoundationFactory()
 
     @Shared Cloud10Methods cloud10 = new Cloud10Methods()
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
+    @Shared FoundationApiMethods foundation = new FoundationApiMethods()
 
 
 
@@ -39,6 +44,7 @@ class RootIntegrationTest extends Specification {
         cloud10.init()
         cloud11.init()
         cloud20.init()
+        foundation.init()
     }
 
     def getRange(seconds) {

@@ -11,4 +11,7 @@ class Constants {
 
     static def USER_MANAGE_ROLE_ID = "7"
 
+    static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
+    static def CLIENT_SECRET = "Password1"
+
 }
