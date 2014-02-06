@@ -11,8 +11,4 @@ class FoundationFactory {
         //This should not be done, but foundation api is deprecated and will soon be removed
         return '{"authCredentials":{"grant_type": "CLIENT_CREDENTIALS","client_id": "'+ clientId + '","client_secret": "'+ clientSecret+'"}}'
     }
-
-    def createUser() {
-        return '{"user":{"customerId" : "RCN-999-999-999", "displayName" : "testUser", "email" : "test@example.com", "firstName" : "test", "lastName" : "test", "personId" : "RPN-999-999-999"}}'
-    }
 }
