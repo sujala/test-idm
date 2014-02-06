@@ -4,6 +4,7 @@ import com.rackspace.api.idm.v1.AuthData
 import com.rackspace.api.idm.v1.Tenant
 import com.rackspace.api.idm.v1.Token
 import com.rackspace.api.idm.v1.User
+import com.rackspace.api.idm.v1.UserPasswordCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import testHelpers.FoundationApiMethods
@@ -64,5 +65,16 @@ class FoundationApiUtils {
         def response = methods.getTenant(token, tenantId)
         assert (response.status == SC_OK)
         response.getEntity(Tenant)
+    }
+
+    def getUserPasswordCredentials(String token, String userId) {
+        def response = methods.getUserPasswordCredentials(token, userId)
+        assert (response.status == SC_OK)
+        response.getEntity(UserPasswordCredentials)
+    }
+
+    def addUserTenantRole(String token, String userId, String roleId, String tenantId) {
+        def response = methods.addUserTenantRole(token, userId, roleId, tenantId)
+        assert (response.status == SC_NO_CONTENT)
     }
 }

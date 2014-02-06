@@ -23,4 +23,39 @@ class FoundationUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(getUser)
     }
+
+    def "Get user's password - returns null" () {
+        when:
+        def authData = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
+        def user = foundationUtils.createUser(authData.accessToken.id)
+        def getUserPassword = foundationUtils.getUserPasswordCredentials(authData.accessToken.id, user.id)
+
+        then:
+        authData != null
+        user != null
+        user.firstName == "test"
+        //Returns null since we can no longer retrieve passwords
+        getUserPassword.currentPassword.password == null
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "Grant tenant role to user" () {
+        when:
+        def authData = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
+        def user = foundationUtils.createUser(authData.accessToken.id)
+        def tenant = foundationUtils.createTenant(authData.accessToken.id)
+        foundationUtils.addUserTenantRole(authData.accessToken.id, user.id, "11", tenant.id)
+
+        then:
+        authData != null
+        user != null
+        user.firstName == "test"
+
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteTenant(tenant.id)
+    }
 }

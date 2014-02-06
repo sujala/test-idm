@@ -49,4 +49,12 @@ class FoundationApiMethods {
     def getTenant(String token, String tenantId) {
         resource.path(path).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
+
+    def getUserPasswordCredentials(String token, String userId) {
+        resource.path(path).path(USERS).path(userId).path("passwordcredentials").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def addUserTenantRole(String token, String userId, String roleId, String tenantId) {
+        resource.path(path).path(USERS).path(userId).path(ROLES).path(roleId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
 }
