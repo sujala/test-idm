@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.api.idm.v1.User
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import org.springframework.stereotype.Component
@@ -31,5 +32,21 @@ class FoundationApiMethods {
 
     def validateToken(String adminToken, String token) {
         resource.path(path).path(TOKENS).path(token).header(X_AUTH_TOKEN, adminToken).type(APPLICATION_JSON).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def createUser(String token, user) {
+        resource.path(path).path(USERS).header(X_AUTH_TOKEN, token).type(APPLICATION_JSON).accept(APPLICATION_XML).entity(user).post(ClientResponse)
+    }
+
+    def getUser(String token, String userId) {
+        resource.path(path).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def createTenant(String token, tenant) {
+        resource.path(path).path(TENANTS).header(X_AUTH_TOKEN, token).type(APPLICATION_JSON).accept(APPLICATION_XML).entity(tenant).post(ClientResponse)
+    }
+
+    def getTenant(String token, String tenantId) {
+        resource.path(path).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 }

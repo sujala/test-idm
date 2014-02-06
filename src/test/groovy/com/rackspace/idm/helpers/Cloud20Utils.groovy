@@ -195,6 +195,11 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
+    def deleteTenant(String tenantId) {
+        def response = methods.deleteTenant(getServiceAdminToken(), tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addTenantToDomain(String domainId, String tenantId) {
         def response = methods.addTenantToDomain(getServiceAdminToken(), domainId, tenantId)
         assert (response.status == SC_NO_CONTENT)
@@ -205,4 +210,5 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         response.getEntity(EndpointList).value
     }
+
 }
