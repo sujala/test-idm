@@ -1049,6 +1049,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
+    def "update group with invalid group Id returns 404"() {
+        when:
+        def response = cloud20.updateGroup(serviceAdminToken, "invalidGroupId", v1Factory.createGroup("group name", "group description"))
+
+        then:
+        response.status == 404
+    }
+
     def "invalid operations on get/create/update group returns 'not found'"() {
         expect:
         response.status == 404
