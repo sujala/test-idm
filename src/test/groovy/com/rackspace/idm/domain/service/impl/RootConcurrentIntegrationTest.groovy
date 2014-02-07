@@ -1,9 +1,11 @@
 package com.rackspace.idm.domain.service.impl
 
+import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.RootIntegrationTest
@@ -40,6 +42,8 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     @Shared
     def specificationIdentityAdminToken
 
+    @Autowired
+    Configuration config
 
     @Shared
     def ConcurrentStageTaskRunner concurrentStageTaskRunner = new ConcurrentStageTaskRunner()
@@ -105,6 +109,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
         cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
         def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
+        cloud20.addUserRole(utils.getServiceAdminToken(), userAdmin.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
         return userAdmin;
     }
 

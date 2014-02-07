@@ -225,8 +225,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     }
 
     private boolean userHasMultiFactorBetaRole(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
+        BaseUser user = getUserService().getUserByScopeAccess(scopeAccess);
+        List<TenantRole> userGlobalRoles = getTenantService().getGlobalRolesForUser(user);
 
         if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
             for(TenantRole role : userGlobalRoles) {

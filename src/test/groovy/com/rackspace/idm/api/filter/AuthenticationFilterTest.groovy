@@ -2,6 +2,7 @@ package com.rackspace.idm.api.filter
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.sun.jersey.spi.container.ContainerRequest
 import org.apache.commons.configuration.Configuration
@@ -31,6 +32,8 @@ class AuthenticationFilterTest extends Specification {
         appCtx.getBean(Configuration) >> config
         userService = Mock(UserService)
         appCtx.getBean(UserService) >> userService
+        tenantService = Mock(TenantService)
+        appCtx.getBean(TenantService) >> tenantService
         scopeAccessService = Mock(ScopeAccessService)
         appCtx.getBean(ScopeAccessService) >> scopeAccessService
         request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER) >> authTokenString
@@ -64,8 +67,8 @@ class AuthenticationFilterTest extends Specification {
         def resonse = filter.filter(request)
 
         then:
-        //TODO: verify
-        true == true
+        //TODO: verify 404 and non-404 conditions (with and w/o role)
+        thrown(WebApplicationException)
     }
 
     def "when multi-factor feature flag is set to ON all users are allowed to access the MFA URLs"() {
