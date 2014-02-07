@@ -4,6 +4,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
@@ -58,7 +59,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     @Override
     public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
         BindResult result;
-        Application client = getApplicationByClientId(clientId);
+        Application client = checkAndGetApplicationByClientId(clientId);
 
         Audit audit = Audit.authClient(client);
 
@@ -92,6 +93,16 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     @Override
     public Application getApplicationByClientId(String clientId) {
         return getObject(searchFilterGetApplicationByClientId(clientId));
+    }
+
+    @Override
+    public Application checkAndGetApplicationByClientId(String clientId) {
+        Application application = getApplicationByClientId(clientId);
+        if(application == null) {
+            String errMsg = String.format("Application %s was not found.", clientId);
+           throw new NotFoundException(errMsg);
+        }
+        return application;
     }
 
     @Override
