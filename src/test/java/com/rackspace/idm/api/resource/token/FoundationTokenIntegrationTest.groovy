@@ -29,4 +29,31 @@ class FoundationTokenIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
         utils.deleteDomain(domainId)
     }
+
+    def "authenticate user" () {
+        when:
+        def authData = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
+        def user = foundationUtils.createUser(authData.accessToken.id)
+        def authUser = foundationUtils.authenticateUser(CLIENT_ID, CLIENT_SECRET, user.username, user.passwordCredentials.currentPassword.password)
+
+        then:
+        authData !=null
+        user != null
+        authUser != null
+        authUser.accessToken.id != null
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "authenticate racker" () {
+        when:
+        def authData = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
+        def authRacker = foundationUtils.authenticateRacker(CLIENT_ID, CLIENT_SECRET, "test.racker", "password")
+
+        then:
+        authData !=null
+        authRacker != null
+        authRacker.accessToken.id != null
+    }
 }

@@ -57,4 +57,16 @@ class FoundationApiMethods {
     def addUserTenantRole(String token, String userId, String roleId, String tenantId) {
         resource.path(path).path(USERS).path(userId).path(ROLES).path(roleId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
+
+    def authenticateUser(String clientId, String clientSecret, String username, String password) {
+        def cred = factory.createUserAuthCredentials(clientId, clientSecret, username, password)
+
+        resource.path(path).path(TOKENS).type(APPLICATION_JSON).accept(APPLICATION_XML).entity(cred).post(ClientResponse)
+    }
+
+    def authenticateRacker(String clientId, String clientSecret, String username, String password) {
+        def cred = factory.createRackerAuthCredentials(clientId, clientSecret, username, password)
+
+        resource.path(path).path(TOKENS).type(APPLICATION_JSON).accept(APPLICATION_XML).entity(cred).post(ClientResponse)
+    }
 }
