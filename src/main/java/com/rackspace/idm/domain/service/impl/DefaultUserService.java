@@ -623,6 +623,7 @@ public class DefaultUserService implements UserService {
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
         user.setLdapEntry(currentUser.getLdapEntry());
+        user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user, hasSelfUpdatedPassword);
