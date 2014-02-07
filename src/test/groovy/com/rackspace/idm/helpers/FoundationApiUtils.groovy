@@ -77,4 +77,16 @@ class FoundationApiUtils {
         def response = methods.addUserTenantRole(token, userId, roleId, tenantId)
         assert (response.status == SC_NO_CONTENT)
     }
+
+    def authenticateUser(String clientId, String clientSecret, String username, String password) {
+        def response = methods.authenticateUser(clientId, clientSecret, username, password)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthData)
+    }
+
+    def authenticateRacker(String clientId, String clientSecret, String racker, String password) {
+        def response = methods.authenticateRacker(clientId, clientSecret, racker, password)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthData)
+    }
 }
