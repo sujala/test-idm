@@ -30,6 +30,14 @@ class FoundationTokenIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
+    def "Authenticate invalid client" () {
+        when:
+        def response = foundation.authenticate("badClientId", "secret")
+
+        then:
+        response.status == 404
+    }
+
     def "authenticate user" () {
         when:
         def authData = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
