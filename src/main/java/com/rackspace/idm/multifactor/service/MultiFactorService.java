@@ -5,6 +5,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.MobilePhone;
+import com.rackspace.idm.domain.entity.User;
+
+import java.util.List;
 
 /**
  * This is the main interface for interacting with the multi-factor service and abstracts the interaction with explicit providers of
@@ -114,4 +117,12 @@ public interface MultiFactorService {
      * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException if the user does not have multifactor enabled or is incorrectly set up
      */
     MfaAuthenticationResponse verifyPasscode(String userId, String passcode);
+
+     /**
+     * Return list of mobilephones associated with a given user or empty list if not found
+     *
+     * @param user
+     * @return
+     */
+    List<MobilePhone> getMobilePhonesForUser(User user);
 }

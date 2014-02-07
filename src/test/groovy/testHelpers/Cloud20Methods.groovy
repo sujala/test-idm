@@ -12,6 +12,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 
@@ -39,6 +40,8 @@ class Cloud20Methods {
     @Shared def v1Factory = new V1Factory()
     @Shared String path20 = "cloud/v2.0/"
 
+    MediaTypeContext mediaType
+
     //Extensions
     static def RAX_GRPADM= "RAX-GRPADM"
     static def OS_KSADM = "OS-KSADM"
@@ -60,6 +63,7 @@ class Cloud20Methods {
 
     def init(){
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+        mediaType = new MediaTypeContext()
     }
 
     def authenticate(username, password, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
@@ -298,6 +302,12 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
+    }
+
+    def listDevices(String token, String userId, MediaType accept = mediaType.accept, MediaType contentType = mediaType.contentType) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
+                .header(X_AUTH_TOKEN, token).accept(accept).type(contentType).get(ClientResponse)
     }
 
     def sendVerificationCode(String token, String userId, String mobilePhoneId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

@@ -1081,6 +1081,24 @@ public class Cloud20VersionResource {
     }
 
     /**
+     * The multifactor service to list devices for a given user.
+     *
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones")
+    public Response listDevicesForUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return multiFactorCloud20Service.listDevicesForUser(uriInfo, authToken, userId).build();
+    }
+
+    /**
      * The multifactor service to associate a phone with a given user.
      *
      * @param uriInfo

@@ -26,14 +26,22 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
     def "compareWeights throws forbidden exception if caller weight is greater than role weight"() {
         when:
-        service.compareWeights(100, 500)
-        service.compareWeights(500, 100)
+        def exceptionThrown = false
+        try {
+            service.compareWeights(first, second)
+        }
+        catch (ForbiddenException) {
+            exceptionThrown = true
+        }
 
         then:
-        notThrown(ForbiddenException)
-        
-        then:
-        thrown(ForbiddenException)
+        exceptionThrown == expectedResult
+
+
+        where:
+        first | second || expectedResult
+        100   | 500    || false
+        500   | 100    || true
     }
 
     def "verifyCallerRolePrecedenceForAssignment - throw ForbiddenException if caller has no Identity Role"() {

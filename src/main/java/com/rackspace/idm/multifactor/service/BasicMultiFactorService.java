@@ -5,13 +5,17 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.identity.multifactor.providers.*;
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification;
+import com.rackspace.identity.multifactor.providers.ProviderPhone;
+import com.rackspace.identity.multifactor.providers.ProviderUser;
+import com.rackspace.identity.multifactor.providers.UserManagement;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository;
+import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -28,7 +32,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Simple multi-factor implementation that stores mobile phones in the ldap directory, and integrates with a single
@@ -55,7 +61,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     private UserService userService;
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    private MobilePhoneDao mobilePhoneDao;
 
     @Autowired
     private MobilePhoneVerification mobilePhoneVerification;
@@ -125,7 +131,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new MultiFactorDeviceNotAssociatedWithUserException(ERROR_MSG_PHONE_NOT_ASSOCIATED_WITH_USER);
         }
 
-        MobilePhone phone = mobilePhoneRepository.getById(mobilePhoneId);
+        MobilePhone phone = mobilePhoneDao.getById(mobilePhoneId);
         if (phone == null) {
             throw new NotFoundException("Phone not found");
         } else if (currentUser.getMultiFactorDeviceVerified() != null && currentUser.getMultiFactorDeviceVerified()) {
@@ -168,7 +174,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Override
     public MobilePhone getMobilePhoneById(String mobilePhoneId) {
-        return mobilePhoneRepository.getById(mobilePhoneId);
+        return mobilePhoneDao.getById(mobilePhoneId);
     }
 
     @Override
@@ -217,9 +223,9 @@ public class BasicMultiFactorService implements MultiFactorService {
                 //get and unlink phone (if exists)
                 MobilePhone phone = null;
                 if (StringUtils.hasText(phoneRsId)) {
-                    phone = mobilePhoneRepository.getById(phoneRsId);
+                    phone = mobilePhoneDao.getById(phoneRsId);
                     phone.removeMember(user);
-                    mobilePhoneRepository.updateObjectAsIs(phone);
+                    mobilePhoneDao.updateObjectAsIs(phone);
                 }
             }
         } catch (Exception e) {
@@ -240,7 +246,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         verifyMultiFactorStateOnUser(user);
 
-        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
         verifyMultiFactorStateOnPhone(user, phone);
 
         multiFactorAuthenticationService.sendSmsPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId());
@@ -251,7 +257,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         verifyMultiFactorStateOnUser(user);
 
-        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
         verifyMultiFactorStateOnPhone(user, phone);
 
         MfaAuthenticationResponse response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
@@ -272,8 +278,27 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
+    public List<MobilePhone> getMobilePhonesForUser(User user) {
+        Assert.notNull(user);
+
+        ArrayList<MobilePhone> result = new ArrayList<MobilePhone>();
+
+        if (user.getMultiFactorMobilePhoneRsId() == null) {
+            return result;
+        }
+
+        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
+
+        if (phone == null) {
+            multiFactorConsistencyLogger.error(String.format("Error retrieving device '%s' for user '%s'.  User contains phone rsId but device does not exist", user.getMultiFactorMobilePhoneRsId(), user.getId()));
+        } else {
+            result.add(phone);
+        }
+        return result;
+    }
+
     private void enableMultiFactorForUser(User user) {
-        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
 
         DuoPhone duoPhone = new DuoPhone();
         duoPhone.setNumber(phone.getTelephoneNumber());
@@ -293,7 +318,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             multiFactorConsistencyLogger.error(String.format("An error occurred enabling multifactor for user '%s'. Duo returned a NotFoundException for the user's duo profile '%s'.", user.getId(), providerUser.getProviderId()), e);
             throw new NotFoundException(e.getMessage(), e);
         }
-        mobilePhoneRepository.updateObjectAsIs(phone);
+        mobilePhoneDao.updateObjectAsIs(phone);
 
         boolean alreadyEnabled = user.isMultiFactorEnabled();
 
@@ -353,7 +378,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         MobilePhone mobilePhone = new MobilePhone();
         mobilePhone.setTelephoneNumberAndCn(canonicalizedPhone);
-        mobilePhone.setId(mobilePhoneRepository.getNextId());
+        mobilePhone.setId(mobilePhoneDao.getNextId());
 
         if (isPhoneUserMembershipEnabled()) {
             try {
@@ -364,7 +389,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             }
         }
 
-        mobilePhoneRepository.addObject(mobilePhone);
+        mobilePhoneDao.addObject(mobilePhone);
         return mobilePhone;
     }
 
@@ -372,7 +397,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         Assert.notNull(phoneNumber);
         String canonicalizedPhone = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber);
 
-        MobilePhone mobilePhone = mobilePhoneRepository.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
+        MobilePhone mobilePhone = mobilePhoneDao.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber));
         if (mobilePhone == null) {
             throw new IllegalStateException(String.format("Mobile phone '%s' could not be found", canonicalizedPhone));
         }
@@ -380,7 +405,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         if (isPhoneUserMembershipEnabled()) {
             try {
                 mobilePhone.addMember(user);
-                mobilePhoneRepository.updateObjectAsIs(mobilePhone);
+                mobilePhoneDao.updateObjectAsIs(mobilePhone);
             } catch (Exception e) {
                 multiFactorConsistencyLogger.error(String.format("Error adding user '%s' to phone '%s' membership. The phone membership will" +
                         "be inconsistent unless this is corrected. The user's DN should be added to the phone's 'member' attribute.", user.getId(), mobilePhone.getId()), e);

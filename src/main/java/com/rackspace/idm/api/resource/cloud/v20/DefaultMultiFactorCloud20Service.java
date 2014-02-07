@@ -42,6 +42,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
+import java.util.List;
 
 /**
  */
@@ -323,6 +324,32 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
+    }
+
+    public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
+        verifyMultifactorServicesEnabled();
+
+        try {
+            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            User requester = (User) userService.getUserByScopeAccess(token);
+            validateListDevicesForUser(requester, userId);
+
+            List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(requester);
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWeb(phoneList));
+
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error listing devices on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void validateListDevicesForUser(User requester, String userId) {
+        if (requester == null || !(requester.getId().equals(userId))) {
+            LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+            throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+        }
     }
 
     private void validateRemoveMultiFactorRequest(User requester, String userId) {

@@ -175,8 +175,10 @@ public final class JSONConstants {
     public static final String RAX_AUTH_TENANT_ALIAS = "RAX-AUTH:tenantAlias";
     public static final String TENANT_ALIAS = "tenantAlias";
 
-    public static final String RAX_AUTH_MOBILE_PHONE = "RAX-AUTH:mobilePhone";
     public static final String MOBILE_PHONE = "mobilePhone";
+    public static final String RAX_AUTH_MOBILE_PHONE = "RAX-AUTH:mobilePhone";
+    public static final String MOBILE_PHONES = "mobilePhones";
+    public static final String RAX_AUTH_MOBILE_PHONES = "RAX-AUTH:mobilePhones";
 
     public static final String RAX_AUTH_VERIFICATION_CODE = "RAX-AUTH:verificationCode";
     public static final String VERIFICATION_CODE = "verificationCode";

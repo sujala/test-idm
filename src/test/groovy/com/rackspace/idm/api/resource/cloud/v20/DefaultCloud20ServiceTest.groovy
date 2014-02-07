@@ -2675,17 +2675,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
         given:
-        def weights = [ "0", "100", "500", "1000", "2000" ].asList()
+        def exceptionThrown = false
 
         when:
-        service.isRoleWeightValid(500)
-        service.isRoleWeightValid(3)
+        try {
+            service.isRoleWeightValid(value)
+        } catch(BadRequestException) {
+            exceptionThrown = true
+        }
 
         then:
-        notThrown(BadRequestException)
+        exceptionThrown == expectedResult
 
-        then:
-        thrown(BadRequestException)
+        where:
+        value || expectedResult
+        500   || false
+        3     || true
     }
 
     def "authenticateFederatedDomain sets token authenticatedBy with password credentials"() {
