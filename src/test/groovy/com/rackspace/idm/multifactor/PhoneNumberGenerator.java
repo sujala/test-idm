@@ -30,7 +30,7 @@ public final class PhoneNumberGenerator {
             , 334, 336, 337, 339, 340, 347, 351, 352, 360, 361, 380, 385, 386, 401
             , 402, 403, 404, 405, 406, 407, 408, 409, 410, 412, 413, 414, 415, 416
             , 417, 418, 419, 423, 424, 425, 430, 431, 432, 434, 435, 438, 440, 442
-            , 443, 450, 456, 469, 470, 475, 478, 479, 480, 484, 500, 501, 502, 503
+            , 443, 450, 469, 470, 475, 478, 479, 480, 484, 500, 501, 502, 503
             , 504, 505, 506, 507, 508, 509, 510, 512, 513, 514, 515, 516, 517, 518
             , 519, 520, 530, 539, 540, 541, 551, 559, 561, 562, 563, 567, 570, 571
             , 573, 574, 575, 580, 585, 586, 587, 600, 601, 602, 603, 604, 605, 606
@@ -107,5 +107,20 @@ public final class PhoneNumberGenerator {
     private String internalCanonicalizePhoneNumberToString(Phonenumber.PhoneNumber phoneNumber) {
         return phoneNumberUtil.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
     }
+
+    /*
+
+     */
+//    public static void main(String[] args) {
+//        int runs = 10000;
+//        for (int i=0; i<runs; i++) {
+//            try {
+//                PhoneNumberGenerator.randomUSNumber();
+//            } catch (Exception e) {
+//                System.out.println(e.getMessage());
+//
+//            }
+//        }
+//    }
 
 }
