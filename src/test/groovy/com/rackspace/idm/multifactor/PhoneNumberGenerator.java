@@ -107,20 +107,4 @@ public final class PhoneNumberGenerator {
     private String internalCanonicalizePhoneNumberToString(Phonenumber.PhoneNumber phoneNumber) {
         return phoneNumberUtil.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
     }
-
-    /*
-
-     */
-//    public static void main(String[] args) {
-//        int runs = 10000;
-//        for (int i=0; i<runs; i++) {
-//            try {
-//                PhoneNumberGenerator.randomUSNumber();
-//            } catch (Exception e) {
-//                System.out.println(e.getMessage());
-//
-//            }
-//        }
-//    }
-
 }
