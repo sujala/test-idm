@@ -162,7 +162,7 @@ dependencies {
 
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.8'
-    compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1391201236773-SNAPSHOT'
+    compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1392046790919-SNAPSHOT'
 }
 
 def resourceDirs = [
