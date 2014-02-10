@@ -21,6 +21,10 @@ import org.springframework.test.context.ContextConfiguration
  * Tests the multi-factor service with the exception of the MobilePhoneVerification dependency. The production class will sends texts through Duo Security, which
  * costs money per text. This is NOT desirable for a regression test that will continually run. Instead a simulated service is injected that will return a constant
  * PIN. Actually testing SMS texts should be performed via some other mechanism - in a manual fashion.
+ *
+ * Note - the simulated service for multifactor is only injected into the main spring context. Integration tests also spin up a grizzly container that
+ * contains its own spring context. The grizzly container does NOT have the simulated service. This means these tests can NOT use REST API calls to
+ * perform services that send SMS messages. Creating users and authenticating and such is fine.
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTest {

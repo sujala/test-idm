@@ -2,12 +2,9 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
-import com.rackspace.identity.multifactor.exceptions.*;
-import com.rackspace.identity.multifactor.providers.MobilePhoneVerification;
-import com.rackspace.identity.multifactor.providers.ProviderPhone;
-import com.rackspace.identity.multifactor.providers.ProviderUser;
-import com.rackspace.identity.multifactor.providers.UserManagement;
+import com.rackspace.identity.multifactor.providers.*;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
@@ -62,6 +59,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private MobilePhoneVerification mobilePhoneVerification;
+
+    @Autowired
+    private MultiFactorAuthenticationService multiFactorAuthenticationService;
 
     @Autowired
     private UserManagement<DuoUser, DuoPhone> userManagement;
@@ -232,6 +232,43 @@ public class BasicMultiFactorService implements MultiFactorService {
         //the info in ldap has been removed.
         if (StringUtils.hasText(providerUserId)) {
             deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+        }
+    }
+
+    @Override
+    public void sendSmsPasscode(String userId) {
+        User user = userService.checkAndGetUserById(userId);
+        verifyMultiFactorStateOnUser(user);
+
+        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+        verifyMultiFactorStateOnPhone(user, phone);
+
+        multiFactorAuthenticationService.sendSmsPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId());
+    }
+
+    @Override
+    public MfaAuthenticationResponse verifyPasscode(String userId, String passcode) {
+        User user = userService.checkAndGetUserById(userId);
+        verifyMultiFactorStateOnUser(user);
+
+        MobilePhone phone = mobilePhoneRepository.getById(user.getMultiFactorMobilePhoneRsId());
+        verifyMultiFactorStateOnPhone(user, phone);
+
+        MfaAuthenticationResponse response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+
+        return response;
+    }
+
+    private void verifyMultiFactorStateOnUser(User user) {
+        if (!user.isMultiFactorEnabled() || !StringUtils.hasText(user.getExternalMultiFactorUserId())
+                ||  !StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
+            throw new MultiFactorNotEnabledException(String.format("Multi factor is either not enabled or incorrectly set up on account '%s'", user.getId()));
+        }
+    }
+
+    private void verifyMultiFactorStateOnPhone(User user, MobilePhone phone) {
+        if (phone == null || !StringUtils.hasText(phone.getExternalMultiFactorPhoneId())) {
+            throw new MultiFactorNotEnabledException(String.format("Multi factor not enabled on account '%s' - invalid phone", user.getId()));
         }
     }
 

@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import org.apache.http.HttpStatus
 import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -446,5 +447,10 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         response.getEntity(EndpointList).value
 
+    }
+
+    def extractSessionIdFromWwwAuthenticateHeader(String headerValue) {
+        def matcher = ( headerValue =~ DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX )
+        matcher[0][1]
     }
 }

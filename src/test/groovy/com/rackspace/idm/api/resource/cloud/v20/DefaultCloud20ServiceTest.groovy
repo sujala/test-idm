@@ -2076,6 +2076,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.authenticate(headers, authRequestWithTenantId).build()
 
         then:
+        multiFactorCloud20Service.isMultiFactorEnabled() >> false
         1 * tenantService.hasTenantAccess(_, "tenantName") >> false
         1 * tenantService.hasTenantAccess(_, "tenantId") >> false
         response1.status == 401
@@ -2086,6 +2087,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockTokenConverter(service)
         mockAuthConverterCloudV20(service)
+        multiFactorCloud20Service.isMultiFactorEnabled() >> false
 
         def passwordCred = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
@@ -2094,11 +2096,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def apiKeyAuthRequest = v2Factory.createAuthenticationRequest("", "", apiKeyCred)
         def tokenAuthRequest = v2Factory.createAuthenticationRequest("tokenString", "", "")
 
+        def user = entityFactory.createUser()
+
         def authResponseTuple = new AuthResponseTuple().with {
-            it.user = entityFactory.createUser()
+            it.user = user
             it.userScopeAccess = createUserScopeAccess()
             return it
         }
+
+        def userAuthenticationResult = new UserAuthenticationResult(user, true)
 
         scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
 
@@ -2108,9 +2114,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def res3 = service.authenticate(headers, apiKeyAuthRequest).build()
 
         then:
-        1 * authWithToken.authenticate(_) >> authResponseTuple
-        1 * authWithPasswordCredentials.authenticate(_) >> authResponseTuple
-        1 * authWithApiKeyCredentials.authenticate(_) >> authResponseTuple
+        authWithToken.authenticate(_) >> authResponseTuple
+        authWithPasswordCredentials.authenticate(_) >> userAuthenticationResult
+        authWithPasswordCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
+        authWithApiKeyCredentials.authenticate(_) >> userAuthenticationResult
+        authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
 
         res1.status == 200
         res2.status == 200
@@ -3900,6 +3908,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockSecretQAService(service)
         mockEndpointService(service)
         mockFederatedIdentityService(service);
+        mockMultiFactorCloud20Service(service);
     }
 
     def mockMisc() {

@@ -31,7 +31,6 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -61,10 +60,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
-import static com.sun.jersey.api.client.ClientResponse.*;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -214,6 +210,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private AuthWithApiKeyCredentials authWithApiKeyCredentials;
+
+    @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -807,6 +806,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
+    /*
+    TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
+     */
         try {
             AuthResponseTuple authResponseTuple = new AuthResponseTuple();
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
@@ -822,29 +824,67 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             }
 
-            if (authenticationRequest.getToken() != null) {
+            if (multiFactorCloud20Service.isMultiFactorEnabled() && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
+                //performing 2 factor auth. User must supply session-id header or request is invalid
+                List<String> sessionIdList = httpHeaders.getRequestHeader(MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
+                if (CollectionUtils.isEmpty(sessionIdList) || sessionIdList.size() != 1) {
+                    throw new BadRequestException("Invalid " + MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
+                }
+                try {
+                    authResponseTuple = multiFactorCloud20Service.authenticateSecondFactor(sessionIdList.get(0), authenticationRequest.getCredential().getValue());
+                } catch (MultiFactorNotEnabledException e) {
+                    logger.warn("Request for multifactor authentication was made on account for which multifactor is not enabled", e);
+                    throw new BadRequestException("Unknown credential type");
+                }
+                restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
+            }
+            else if (authenticationRequest.getToken() != null) {
+                //TODO: What do when MFA token is provided...Should it just be refreshed similar to one-factor tokens?
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
-            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
-                authResponseTuple = authWithPasswordCredentials.authenticate(authenticationRequest);
-            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-                authResponseTuple = authWithApiKeyCredentials.authenticate(authenticationRequest);
+                /*
+                This call to restrictTenant (and its corresponding LDAP call) appears to be completely unnecessary as AuthWithToken performs similar calls (just with different
+                 error message. Leaving in for now just to limit the changes for MFA and there are tests verifying the call is made
+                 both from the AuthWithToken class AND this authenticate method.
+                 */
+                restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
             }
+            else {
+                //2-factor only applies when using a userAuth method (apikey or password)
+                UserAuthenticationFactor userAuthenticationFactor = null;
+                if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
+                    userAuthenticationFactor = authWithPasswordCredentials;
+                } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                    userAuthenticationFactor = authWithApiKeyCredentials;
+                }
+                else {
+                    throw new BadRequestException("Unknown credential type");
+                }
+                UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
-            if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
-                logger.warn(errMsg);
-                throw new NotAuthenticatedException(errMsg);
+                if (multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                    return multiFactorCloud20Service.performMultiFactorChallenge(((User) authResult.getUser()).getId(), authResult.getAuthenticatedBy());
+                } else {
+                    authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
+                    restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
+                }
             }
-            if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
-                String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
-                logger.warn(errMsg);
-                throw new NotAuthenticatedException(errMsg);
-            }
-
             AuthenticateResponse auth = buildAuthResponse(authResponseTuple.getUserScopeAccess(), authResponseTuple.getImpersonatedScopeAccess(), authResponseTuple.getUser(), authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void restrictTenantInAuthentication(AuthenticationRequest authenticationRequest, AuthResponseTuple authResponseTuple) {
+        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
+            String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
+            logger.warn(errMsg);
+            throw new NotAuthenticatedException(errMsg);
+        }
+        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
+            String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
+            logger.warn(errMsg);
+            throw new NotAuthenticatedException(errMsg);
         }
     }
 

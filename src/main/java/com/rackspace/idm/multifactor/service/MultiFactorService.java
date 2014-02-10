@@ -2,6 +2,7 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.MobilePhone;
 
@@ -91,4 +92,26 @@ public interface MultiFactorService {
      * @param userId
      */
     void removeMultiFactorForUser(String userId);
+
+    /**
+     * Sends an SMS passcode to the specified user.
+     *
+     * @param userId
+     * @throws com.rackspace.idm.exception.NotFoundException if the user does not exist
+     * @throws com.rackspace.identity.multifactor.exceptions.TelephonyDisabledException if sending of sms messages is disabled
+     * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException if the user does not have multifactor enabled or is incorrectly set up
+     *
+     */
+    void sendSmsPasscode(String userId);
+
+    /**
+     * Verifies that the specified passcode is the same passcode as that sent/received by the user through other means (e.g an SMS message)
+     *
+     * @param userId
+     * @param passcode
+     * @return
+     * @throws com.rackspace.idm.exception.NotFoundException if the user does not exist
+     * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException if the user does not have multifactor enabled or is incorrectly set up
+     */
+    MfaAuthenticationResponse verifyPasscode(String userId, String passcode);
 }
