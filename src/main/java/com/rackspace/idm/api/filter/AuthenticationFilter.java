@@ -230,6 +230,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
             for(TenantRole role : userGlobalRoles) {
+                //TODO: should we check by name or rsId?
                 if(role.getRoleRsId().equals(config.getString("cloudAuth.multiFactorBetaRoleRsId"))) {
                     return true;
                 }

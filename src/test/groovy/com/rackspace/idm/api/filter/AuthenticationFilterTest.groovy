@@ -1,4 +1,7 @@
 package com.rackspace.idm.api.filter
+
+import com.rackspace.idm.domain.entity.BaseUser
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -47,54 +50,76 @@ class AuthenticationFilterTest extends Specification {
         given:
         def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
         request.getPath() >> path
-        config.getString("multifactor.services.enabled") >> "OFF"
 
         when:
         filter.filter(request)
 
         then:
+        1 * config.getString("multifactor.services.enabled") >> "OFF"
         WebApplicationException exception = thrown()
         exception.response.status == 404
     }
 
-    def "when multi-factor feature flag is set to BETA users must have identity-feature:mfa role"() {
+    def "when multi-factor feature flag is set to BETA users without identity-feature:mfa role get 404"() {
+        given:
+        def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
+        request.getPath() >> path
+
+        when:
+        filter.filter(request)
+
+        then:
+        1 * config.getString("multifactor.services.enabled") >> "BETA"
+        WebApplicationException exception = thrown()
+        exception.response.status == 404
+    }
+
+    def "when multi-factor feature flag is set to BETA users with identity-feature:mfa role are allowed to access API"() {
         given:
         def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
         request.getPath() >> path
         config.getString("multifactor.services.enabled") >> "BETA"
-
-        when:
-        def resonse = filter.filter(request)
-
-        then:
-        //TODO: verify 404 and non-404 conditions (with and w/o role)
-        thrown(WebApplicationException)
-    }
-
-    def "when multi-factor feature flag is set to ON all users are allowed to access the MFA URLs"() {
-        given:
-        def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
-        request.getPath() >> path
-        config.getString("multifactor.services.enabled") >> "FULL"
+        def mfaBetaRoleRsId = 123
+        config.getString("cloudAuth.multiFactorBetaRoleRsId") >> mfaBetaRoleRsId
+        def userGlobalRoles = []
+        userGlobalRoles << new TenantRole().with {
+            it.roleRsId = mfaBetaRoleRsId
+            it
+        }
+        def user = new BaseUser()
 
         when:
         def response = filter.filter(request)
 
         then:
-        //TODO: find something better to verify
-        response == response
+        1 * getUserService().getUserByScopeAccess(scopeAccess) >> user
+        1 * getTenantService().getGlobalRolesForUser(user) >> userGlobalRoles
+        response == request
+    }
+
+    def "when multi-factor feature flag is set to FULL all users are allowed to access the MFA URLs"() {
+        given:
+        def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
+        request.getPath() >> path
+
+        when:
+        def response = filter.filter(request)
+
+        then:
+        1 * config.getString("multifactor.services.enabled") >> "FULL"
+        response == request
     }
 
     def "when multi-factor feature flag is invalid all requests to multi-factor URLs get 404"() {
         given:
         def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
         request.getPath() >> path
-        config.getString("multifactor.services.enabled") >> "NOT A VALID VALUE"
 
         when:
         filter.filter(request)
 
         then:
+        1 * config.getString("multifactor.services.enabled") >> "NOT A VALID VALUE"
         WebApplicationException exception = thrown()
         exception.response.status == 404
     }
