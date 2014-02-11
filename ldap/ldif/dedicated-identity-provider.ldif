@@ -9,7 +9,7 @@ description: Defines container of all external providers
 dn: ou=dedicated,o=externalProviders,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
-objectClass: externalProvider
+objectClass: rsExternalProvider
 ou: dedicated
 labeledUri: http://my.rackspace.com
 description: Identity provider for dedicated
