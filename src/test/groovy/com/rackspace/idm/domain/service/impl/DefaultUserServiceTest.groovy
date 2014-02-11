@@ -1239,6 +1239,60 @@ class DefaultUserServiceTest extends RootServiceTest {
         notThrown(UserDisabledException)
     }
 
+    def "validateUserIsEnabled throws UserDisabledException is user is disabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = false
+            it
+        }
+        Domain domain = entityFactory.createDomain()
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "validateUserIsEnabled throws UserDisabledException is domain is disabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = true
+            it
+        }
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = false
+            it
+        }
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "validateUserIsEnabled does not throw UserDisabledException if user and domain is enabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = true
+            it
+        }
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = true
+            it
+        }
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
+
+        then:
+        notThrown(UserDisabledException)
+    }
+
     def "getAllEnabledUsersPaged gets the enabled users"() {
         given:
         PaginatorContext<User> context = new PaginatorContext<>()

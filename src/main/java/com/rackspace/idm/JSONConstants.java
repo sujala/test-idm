@@ -192,6 +192,7 @@ public final class JSONConstants {
     public static final String OPENSTACK_ITEMNOTFOUND_REQUEST = "itemNotFound";
     public static final String OPENSTACK_UNAUTHORIZED_FAULT = "unauthorized";
     public static final String OPENSTACK_IDENTITY_FAULT = "identityFault";
+    public static final String OPENSTACK_USER_DISABLED_FAULT = "userDisabled";
 
     public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";
     public static final String RAX_COMMON_FORBIDDEN_REQUEST = "ForbiddenFault";

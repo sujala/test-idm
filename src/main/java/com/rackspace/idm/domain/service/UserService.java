@@ -141,4 +141,13 @@ public interface UserService {
     Iterable<Group> getGroupsForUser(String userId);
 
     boolean isUserInGroup(String userId, String groupId);
+
+    /**
+     * Checks that a user is considered enabled. This is not a one to one comparison with user enabled flag as it considers
+     * other factors such as domain enabled status.
+     *
+     * @param user
+     * @throws com.rackspace.idm.exception.UserDisabledException If user is not enabled or otherwise should be considered not enabled.
+     */
+    void validateUserIsEnabled(User user);
 }

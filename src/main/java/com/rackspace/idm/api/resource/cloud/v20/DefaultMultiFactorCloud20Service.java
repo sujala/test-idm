@@ -246,7 +246,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public AuthResponseTuple authenticateSecondFactor(String encodedSessionId, CredentialType credential) {
-
         if (!(credential instanceof PasscodeCredentials)) {
             throw new BadRequestException("Not a valid credential. Only passcode credential supported for multifactor");
         }
@@ -267,9 +266,13 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
         }
 
+        //verify user is valid
+        User user = userService.getUserById(sessionId.getUserId());
+        userService.validateUserIsEnabled(user);
+
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
-            return createSuccessfulSecondFactorResponse(response, sessionId);
+            return createSuccessfulSecondFactorResponse(user, response, sessionId);
         }
         else {
             //2-factor request denied. Determine appropriate exception/message for user
@@ -277,7 +280,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private AuthResponseTuple createSuccessfulSecondFactorResponse(MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
+    private AuthResponseTuple createSuccessfulSecondFactorResponse(User user, MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
         //return a token with the necessary authenticated by to reflect 2 factor authentication
         Set<String> authBySet = new HashSet<String>();
 
@@ -286,7 +289,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
         authBySet.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE);
 
-        User user = userService.getUserById(sessionId.getUserId());
         UserScopeAccess scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
         AuthResponseTuple authResponseTuple = new AuthResponseTuple();
         authResponseTuple.setUser(user);

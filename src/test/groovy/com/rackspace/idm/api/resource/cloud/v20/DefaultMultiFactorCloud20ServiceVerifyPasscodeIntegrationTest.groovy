@@ -22,6 +22,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.UnauthorizedFault
+import org.openstack.docs.identity.api.v2.UserDisabledFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
@@ -269,6 +270,37 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.DENY_UNKNOWN
     }
 
+    /**
+     * Returns 403 regardless of whether or not the provided passcode is valid
+     * @return
+     */
+    @Unroll("Fail with 403 when user is disabled and valid sessionId provided: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Fail with 403 when user is disabled and valid sessionId provided"() {
+        setup:
+        String failureMessage = "User '" + userAdmin.username + "' is disabled.";
+        setUpAndEnableMultiFactor()
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        //disable the user
+        User user = userRepository.getUserById(userAdmin.getId())
+        user.setEnabled(false);
+        userRepository.updateUserAsIs(user)
+
+        when:
+        def response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, simulatedPasscode.passcode, requestContentMediaType, acceptMediaType)
+
+        then:
+        assertOpenStackV2FaultResponse(response, UserDisabledFault, HttpStatus.SC_FORBIDDEN, failureMessage)
+
+        where:
+        requestContentMediaType | acceptMediaType | simulatedPasscode
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.DENY_DENY
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_ALLOW
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_BYPASS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
+    }
 
     def void setUpAndEnableMultiFactor() {
         setUpMultiFactorWithoutEnable()
