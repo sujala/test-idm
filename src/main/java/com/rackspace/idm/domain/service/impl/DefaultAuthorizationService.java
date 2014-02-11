@@ -67,17 +67,18 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         Iterable<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-
         if (scopeAccess instanceof FederatedToken) {
             //federated scope accesses has role / tenant information stored at the token level
             FederatedToken token = (FederatedToken)scopeAccess;
             tenantRoles = tenantService.getTenantRolesForFederatedTokenNoDetail(token);
         } else {
-            BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
-            context.setUser(user);
-            tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
-            if(user.getDomainId() != null){
-                context.setDomain(domainService.getDomain(user.getDomainId()));
+            BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+            if (user != null) {
+                context.setUser(user);
+                tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
+                if(user.getDomainId() != null){
+                    context.setDomain(domainService.getDomain(user.getDomainId()));
+                }
             }
         }
 

@@ -639,6 +639,7 @@ public class DefaultUserService implements UserService {
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
         user.setLdapEntry(currentUser.getLdapEntry());
+        user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user);
@@ -747,6 +748,8 @@ public class DefaultUserService implements UserService {
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
+        } else if (scopeAccess instanceof ClientScopeAccess) {
+            return null;
         } else {
             throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }

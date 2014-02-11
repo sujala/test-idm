@@ -16,6 +16,8 @@ public interface ApplicationDao {
 
     Application getApplicationByClientId(String clientId);
 
+    Application checkAndGetApplicationByClientId(String clientId);
+
     Application getApplicationByName(String clientName);
 
     Application getApplicationByCustomerIdAndClientId(String customerId, String clientId);

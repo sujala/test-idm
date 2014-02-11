@@ -314,11 +314,18 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (tenant.getV1Defaults() != null) {
                 // Check for existing v1Default for replace by Service Name
                 CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(String.valueOf(baseUrlRef.getId()));
+
+                List<String> removeV1Defaults = new ArrayList<String>();
+
                 for (String v1d : tenant.getV1Defaults()) {
                     CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(String.valueOf(Integer.parseInt(v1d)));
                     if (newBaseUrl.getServiceName().equals(cloudBaseUrl.getServiceName())) {
-                        tenant.getV1Defaults().remove(v1d);
+                        removeV1Defaults.add(v1d);
                     }
+                }
+
+                if(!removeV1Defaults.isEmpty()){
+                    tenant.getV1Defaults().removeAll(removeV1Defaults);
                 }
             }
             tenant.getV1Defaults().add(baseUrlRefId);
