@@ -55,6 +55,7 @@ public class UserConverter {
                 .getCurrentPassword().getPassword())) {
             user.setPassword(jaxbUser.getPasswordCredentials()
                 .getCurrentPassword().getPassword());
+            user.setUserPassword(jaxbUser.getPasswordCredentials().getCurrentPassword().getPassword());
         }
 
         if (jaxbUser.getSecret() != null

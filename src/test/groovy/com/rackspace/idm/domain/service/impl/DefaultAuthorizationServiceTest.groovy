@@ -406,7 +406,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def result = service.getAuthorizationContext(scopeAccess)
 
         then:
-        1 * userService.getUserByScopeAccess(_, false) >> new BaseUser()
+        1 * userService.getUserByScopeAccess(_) >> new BaseUser()
         1 * tenantService.getTenantRolesForUserNoDetail(_) >> [].asList()
 
         result.roles != null
@@ -437,7 +437,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         def result = service.getAuthorizationContext(scopeAccess)
 
         then:
-        1 * userService.getUserByScopeAccess(_, false) >> new BaseUser()
+        1 * userService.getUserByScopeAccess(_) >> new BaseUser()
         1 * tenantService.getTenantRolesForUserNoDetail(_) >> [entityFactory.createTenantRole()].asList()
 
         result.roles.contains("1")
