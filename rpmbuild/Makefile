@@ -25,8 +25,8 @@ prep_rpmbuild:
 
 prep_master_tarball:
 	mkdir -p master
-	cp -r ../idm-${VERSION}-${RELEASE}.war master/
-	cp -r ../src/main/config master/
+	cp -r ../build/libs/idm-${VERSION}-${RELEASE}.war master/
+	cp -r ../build/config/ master/
 	cp -r ../ldap master/
 	tar czf source/master.tar.gz master/
 
