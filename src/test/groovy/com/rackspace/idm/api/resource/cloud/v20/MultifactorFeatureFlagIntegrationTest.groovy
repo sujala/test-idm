@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -27,6 +29,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Autowired Configuration config
 
     @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
+
+    @Autowired ScopeAccessService scopeAccessService
+
+    @Autowired LdapScopeAccessRepository scopeAccessRepository
 
     @Override
     public void doCleanupSpec() {
@@ -86,12 +92,235 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true | true | BETA_SETTINGS_FILE | 204
     }
 
-    def void addPhone(token, user) {
+    @Unroll("MFA feature flag for delete MFA API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
+    def "multifactor feature flag works for delete MFA for user call"() {
+        setup:
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
+                flagSettingsFile)
+        def settings = v2Factory.createMultiFactorSettings(true)
+        def user = createUserAdmin()
+        def token = authenticate(user.username)
+        if(addMfaRole) {
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+        }
+        def responsePhone
+        if(addPhone) {
+            responsePhone = addPhone(token, user)
+        }
+        if(enableMfa) {
+            cloud20.updateMultiFactorSettings(token, user.id, settings, requestContentMediaType, acceptMediaType)
+            resetTokenExpiration(token)
+        }
+
+        when:
+        def response = cloud20.deleteMultiFactor(token, user.id, requestContentMediaType, acceptMediaType)
+
+        then:
+        response.status == status
+
+        cleanup:
+        if (user != null) {
+            if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
+                deleteUserQuietly(user)
+        }
+        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
+
+        where:
+        requestContentMediaType | acceptMediaType | addMfaRole | addPhone | enableMfa | flagSettingsFile | status
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | OFF_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | true | true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | true | true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | true | true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | true | true | FULL_SETTINGS_FILE | 204
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | true | true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | true | true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true | true | true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true | true | true | BETA_SETTINGS_FILE | 204
+    }
+
+    @Unroll("MFA feature flag for add phone to user API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
+    def "multifactor feature flag works for add phone to user call"() {
+        setup:
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
+                flagSettingsFile)
+        def user = createUserAdmin()
+        def token = authenticate(user.username)
+        if(addMfaRole) {
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+        }
+
+        when:
+        def response = cloud20.addPhoneToUser(token, user.id, v2Factory.createMobilePhone())
+
+        then:
+        response.status == status
+
+        cleanup:
+        if (user != null) {
+            if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
+                deleteUserQuietly(user)
+        }
+
+        where:
+        requestContentMediaType | acceptMediaType | addMfaRole | flagSettingsFile | status
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | OFF_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | FULL_SETTINGS_FILE | 201
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | FULL_SETTINGS_FILE | 201
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | FULL_SETTINGS_FILE | 201
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | FULL_SETTINGS_FILE | 201
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | BETA_SETTINGS_FILE | 201
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | BETA_SETTINGS_FILE | 201
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true | BETA_SETTINGS_FILE | 201
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true | BETA_SETTINGS_FILE | 201
+    }
+
+    @Unroll("MFA feature flag for send verification code API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
+    def "multifactor feature flag works for send verification call"() {
+        setup:
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
+                flagSettingsFile)
+        def user = createUserAdmin()
+        def token = authenticate(user.username)
+        if(addMfaRole) {
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+        }
+        def responsePhoneId
+        if(addPhone) {
+            responsePhoneId = utils.addPhone(token, user.id).id
+        } else {
+            responsePhoneId = ""
+        }
+
+        when:
+        def response = cloud20.sendVerificationCode(token, user.id, responsePhoneId)
+
+        then:
+        response.status == status
+
+        cleanup:
+        if (user != null) {
+            if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
+                deleteUserQuietly(user)
+        }
+        if (!responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
+
+        where:
+        requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 202
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 202
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 202
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 202
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 202
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 202
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 202
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 202
+    }
+
+    @Unroll("MFA feature flag for verify MFA phone API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
+    def "multifactor feature flag works for verify MFA phone"() {
+        setup:
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
+                flagSettingsFile)
+        def user = createUserAdmin()
+        def token = authenticate(user.username)
+        if(addMfaRole) {
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+        }
+        def responsePhoneId
+        if(addPhone) {
+            responsePhoneId = addPhone(token, user, false).id
+        } else {
+            responsePhoneId = ""
+        }
+
+        when:
+        def verificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+        def response = cloud20.verifyVerificationCode(token, user.id, responsePhoneId, verificationCode)
+
+        then:
+        response.status == status
+
+        cleanup:
+        if (user != null) {
+            if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
+                deleteUserQuietly(user)
+        }
+        if (!responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
+
+        where:
+        requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 204
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 204
+    }
+
+    def addPhone(token, user, verify=true) {
         def responsePhone = utils.addPhone(token, user.id)
         utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)
-        def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
+        if(verify) {
+            def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
+        }
         responsePhone
+    }
+
+    def void resetTokenExpiration(tokenString) {
+        Date now = new Date()
+        Date future = new Date(now.year + 1, now.month, now.day)
+        def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
+        userScopeAccess.setAccessTokenExp(future)
+        scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
 
 }
