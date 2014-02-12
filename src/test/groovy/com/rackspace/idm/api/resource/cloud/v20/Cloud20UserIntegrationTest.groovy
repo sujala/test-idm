@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.CredentialListType
+import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -490,6 +491,24 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Allow one userAdmin per domain" () {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def adminToken  = utils.getToken(identityAdmin.username)
+
+        when:
+        def user = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        def userAdmin2 = cloud20.createUser(adminToken, user)
+
+        then:
+        userAdmin2.status == 400
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
 
