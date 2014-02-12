@@ -39,5 +39,5 @@ srpm: prep_rpmbuild prep_master_tarball
 	${RPMBUILD} -bs rs-cloud-identity-schema.spec
 
 publish:
-	scp rpms/${ARCH}/*-${VERSION}-${RELEASE}.${ARCH}.rpm ${PUBLISH_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
+	scp rpms/*/*-${VERSION}-${RELEASE}.*.rpm ${PUBLISH_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
 	ssh -tt ${PUBLISH_USER}@${PUBLISH_HOST} "sudo createrepo ${PUBLISH_DIR}"
