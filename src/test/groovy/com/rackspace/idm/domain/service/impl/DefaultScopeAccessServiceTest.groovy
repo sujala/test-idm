@@ -547,6 +547,73 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
     }
 
+    def "calling updateExpiredUserScopeAccess with impersonated token expiring after user token"() {
+        given:
+        def user = entityFactory.createUser()
+        def impersonatedScopeAccess = new ImpersonatedScopeAccess().with {
+            it.impersonatingToken = "impToken"
+            it.impersonatingUsername = "user"
+            it.accessTokenExp = new Date().plus(2)
+            it
+        }
+        def userScopeAccess = new UserScopeAccess().with {
+            it.accessTokenString = "token"
+            it.clientId = "clientId"
+            it.accessTokenExp = new Date().plus(1)
+            it
+        }
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
+        0 * scopeAccessDao.addScopeAccess(_, _)
+    }
+
+    def "calling updateExpiredUserScopeAccess with impersonated token and user token both expired"() {
+        given:
+        def user = entityFactory.createUser()
+        def impersonatedScopeAccess = new ImpersonatedScopeAccess().with {
+            it.impersonatingToken = "impToken"
+            it.impersonatingUsername = "user"
+            it.accessTokenExp = new Date().minus(1)
+            it
+        }
+        def userScopeAccess = new UserScopeAccess().with {
+            it.accessTokenString = "token"
+            it.clientId = "clientId"
+            it.accessTokenExp = new Date().minus(2)
+            it
+        }
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
+        1 * scopeAccessDao.addScopeAccess(_, _)
+    }
+
+    def "calling updateExpiredUserScopeAccess with only impersonated token"() {
+        given:
+        def user = entityFactory.createUser()
+        def impersonatedScopeAccess = new ImpersonatedScopeAccess().with {
+            it.impersonatingToken = "impToken"
+            it.impersonatingUsername = "user"
+            it.accessTokenExp = new Date().plus(2)
+            it
+        }
+
+
+        when:
+        service.updateExpiredUserScopeAccess(user, "clientId", null)
+
+        then:
+        1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess].asList()
+        1 * scopeAccessDao.addScopeAccess(_, _)
+    }
+
     def "calling updateExpiredUserScopeAccess with scopeAccess sets authenticatedBy"() {
         given:
         def user = entityFactory.createUser()

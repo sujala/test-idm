@@ -553,6 +553,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
          */
         ScopeAccess mostRecentForClient = null;
         for (ScopeAccess scopeAccess : scopeAccessList) {
+            if(!(scopeAccess instanceof UserScopeAccess)){
+                continue;
+            }
             if (clientId.equals(scopeAccess.getClientId())) {
                 //check for most recent
                 if (mostRecentForClient == null || mostRecentForClient.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
