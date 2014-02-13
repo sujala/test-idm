@@ -16,6 +16,8 @@ import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.AuthorizationContext
@@ -182,6 +184,7 @@ class RootServiceTest extends Specification {
     @Shared PropertiesService propertiesService
     @Shared CryptHelper cryptHelper
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
+    @Shared MultiFactorCloud20Service multiFactorCloud20Service;
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -400,6 +403,11 @@ class RootServiceTest extends Specification {
     def mockFederatedIdentityService(service) {
         defaultFederatedIdentityService = Mock()
         service.federatedIdentityService = defaultFederatedIdentityService
+    }
+
+    def mockMultiFactorCloud20Service(service) {
+        multiFactorCloud20Service = Mock(MultiFactorCloud20Service)
+        service.multiFactorCloud20Service = multiFactorCloud20Service
     }
 
     def mockTokenService(service) {

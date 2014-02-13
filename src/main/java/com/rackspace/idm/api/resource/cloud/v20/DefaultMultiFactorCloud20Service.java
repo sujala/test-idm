@@ -2,37 +2,53 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.identity.multifactor.domain.BasicPin;
-import com.rackspace.identity.multifactor.exceptions.*;
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.openstack.docs.identity.api.v2.CredentialType;
+import org.openstack.docs.identity.api.v2.UnauthorizedFault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.*;
 
 /**
  */
 @Component
 public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Service {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMultiFactorCloud20Service.class);
+
     static final String BAD_REQUEST_MSG_MISSING_PHONE_NUMBER = "Must provide a telephone number";
     static final String BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT = "Can only configure multifactor on own account";
     static final String BAD_REQUEST_MSG_ALREADY_LINKED = "Already associated with a mobile phone";
@@ -43,6 +59,18 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
 
+    private static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
+    private static final String SESSION_ID_LIFETIME_PROP_NAME = "multifactor.sessionid.lifetime";
+    private static final String SESSION_ID_PRIMARY_VERSION_PROP_NAME = "multifactor.primary.sessionid.version";
+    public static final String MFA_ADDITIONAL_AUTH_CREDENTIALS_REQUIRED_MSG = "Additional authentication credentials required";
+    public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
+    public static final String HEADER_WWW_AUTHENTICATE_VALUE = "OS-MF sessionId='%s', factor='PASSCODE'";
+    public static final String HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX = String.format("^" + HEADER_WWW_AUTHENTICATE_VALUE + "$", "(.*)");
+    public static final String INVALID_CREDENTIALS_GENERIC_ERROR_MSG = "Can not authenticate with credentials provided";
+    public static final String INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG = "Can not authenticate with credentials provided. Session has expired.";
+    public static final String INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG = "Can not authenticate with credentials provided. The account has been locked due to excessive invalid attempts. Please contact an administrator";
+    public static final String NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT = "Multifactor provider denied a mfa request for user '%s' due to a non-standard reason. Reason: '%s'; Message: '%s'";
+
     /*
     Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
      */
@@ -51,6 +79,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private Configuration config;
@@ -63,6 +94,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20;
+
+    @Autowired
+    private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private SessionIdReaderWriter sessionIdReaderWriter;
 
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
@@ -171,6 +208,123 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
+    @Override
+    public Response.ResponseBuilder performMultiFactorChallenge(String userId, List<String> alreadyAuthenticatedBy) {
+        /*
+        only supported option is SMS passcode so send it and return sessionid header
+         */
+        DateTime created = new DateTime();
+        DateTime expiration = created.plusMinutes(getSessionIdLifetime());
+
+        V1SessionId sessionId = new V1SessionId();
+        sessionId.setVersion(getPrimarySessionIdVersion());
+        sessionId.setUserId(userId);
+        sessionId.setCreatedDate(created);
+        sessionId.setExpirationDate(expiration);
+        sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
+
+        //generate the new sessionId first
+        String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
+
+        //now send the passcode
+        multiFactorService.sendSmsPasscode(userId);
+
+        /*
+        Create unauthorized fault and response
+         */
+        UnauthorizedFault fault = objFactories.getOpenStackIdentityV2Factory().createUnauthorizedFault();
+        fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
+        fault.setMessage(MFA_ADDITIONAL_AUTH_CREDENTIALS_REQUIRED_MSG);
+        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
+                objFactories.getOpenStackIdentityV2Factory().createUnauthorized(fault).getValue())
+                .header(HEADER_WWW_AUTHENTICATE, createWwwAuthenticateHeaderValue(encodedSessionId));
+    }
+
+    private String createWwwAuthenticateHeaderValue(String sessionId) {
+        return String.format(HEADER_WWW_AUTHENTICATE_VALUE, sessionId);
+    }
+
+    @Override
+    public AuthResponseTuple authenticateSecondFactor(String encodedSessionId, CredentialType credential) {
+        if (!(credential instanceof PasscodeCredentials)) {
+            throw new BadRequestException("Not a valid credential. Only passcode credential supported for multifactor");
+        }
+        PasscodeCredentials passcodeCredentials = (PasscodeCredentials) credential;
+
+        String passcode = passcodeCredentials.getPasscode();
+        SessionId sessionId;
+
+        try {
+            sessionId = sessionIdReaderWriter.readEncoded(encodedSessionId);
+        }
+        catch (Exception ex) {
+            LOG.info("Invalid sessionId provided", ex);
+            throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        }
+
+        if (sessionId.getExpirationDate() == null || sessionId.getExpirationDate().isBefore(new DateTime())) {
+            throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
+        }
+
+        //verify user is valid
+        User user = userService.getUserById(sessionId.getUserId());
+        userService.validateUserIsEnabled(user);
+
+        MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
+        if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
+            return createSuccessfulSecondFactorResponse(user, response, sessionId);
+        }
+        else {
+            //2-factor request denied. Determine appropriate exception/message for user
+            throw createFailedSecondFactorException(response, sessionId);
+        }
+    }
+
+    private AuthResponseTuple createSuccessfulSecondFactorResponse(User user, MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
+        //return a token with the necessary authenticated by to reflect 2 factor authentication
+        Set<String> authBySet = new HashSet<String>();
+
+        if (!CollectionUtils.isEmpty(sessionId.getAuthenticatedBy())) {
+            authBySet.addAll(sessionId.getAuthenticatedBy());
+        }
+        authBySet.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE);
+
+        UserScopeAccess scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(scopeAccess);
+
+        return authResponseTuple;
+    }
+
+    /**
+     * Throws appropriately formatted exception that
+     * @param mfaResponse
+     * @param sessionId
+     * @return
+     */
+    private RuntimeException createFailedSecondFactorException(MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
+        //2-factor request denied. Determine appropriate exception/message for user
+        RuntimeException exceptionToThrow;
+        switch (mfaResponse.getDecisionReason()) {
+            case DENY:
+                exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+                break;
+            case LOCKEDOUT:
+                exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+                break;
+            default:
+                String msg = String.format(NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT, sessionId.getUserId(), mfaResponse.getDecisionReason(), mfaResponse.getMessage());
+                LOG.error(msg);
+                exceptionToThrow = new MultiFactorDeniedException();
+        }
+        return exceptionToThrow;
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
     private void validateRemoveMultiFactorRequest(User requester, String userId) {
         if (requester == null || !(requester.getId().equals(userId))) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
@@ -242,8 +396,13 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
+    @Override
+    public boolean isMultiFactorEnabled() {
+        return config.getBoolean("multifactor.services.enabled", false);
+    }
+
     private void verifyMultifactorServicesEnabled() {
-        if (!config.getBoolean("multifactor.services.enabled", false)) {
+        if (!isMultiFactorEnabled()) {
             throw new WebApplicationException(404);
         }
     }
@@ -264,4 +423,20 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_PHONE_NUMBER, ex);
         }
     }
+
+    private String getPrimarySessionIdVersion() {
+        String version = config.getString(SESSION_ID_PRIMARY_VERSION_PROP_NAME);
+        if (version == null) {
+            throw new IllegalStateException(String.format("Configuration is missing property '%s'", SESSION_ID_PRIMARY_VERSION_PROP_NAME));
+        }
+        return version;
+    }
+
+    public int getSessionIdLifetime() {
+        return config.getInt(SESSION_ID_LIFETIME_PROP_NAME, SESSION_ID_LIFETIME_DEFAULT);
+    }
+
+
+
+
 }

@@ -5,6 +5,8 @@ import org.openstack.docs.identity.api.v2.IdentityFault
 
 import javax.ws.rs.core.MediaType
 import javax.xml.bind.JAXBElement
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Holds various higher level assertions that can be used in spock tests. Patterned after JUnit's Assert class.
@@ -35,4 +37,25 @@ class IdmAssert {
         assert fault.code == expectedStatus
     }
 
+    static def <T extends IdentityFault> void assertOpenStackV2FaultResponseWithMessagePattern(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, Pattern expectedMessagePattern) {
+        T fault = null
+
+        if (clientResponse.getType() == MediaType.APPLICATION_XML_TYPE) {
+            JAXBElement<T> responseBody = clientResponse.getEntity(expectedTypeClazz)
+            assert responseBody.value.class.isAssignableFrom(expectedTypeClazz)
+            fault = responseBody.value
+        }
+        else if (clientResponse.getType() == MediaType.APPLICATION_JSON_TYPE) {
+            fault = clientResponse.getEntity(expectedTypeClazz)
+        }
+
+        assert clientResponse.status == expectedStatus
+        assert fault.code == expectedStatus
+        if (expectedMessagePattern == null) {
+            assert fault.message == null
+        }
+        else {
+            assert expectedMessagePattern.matcher(fault.message).matches()
+        }
+    }
 }

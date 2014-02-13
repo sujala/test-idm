@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -48,6 +49,7 @@ class Cloud20Methods {
 
     //Constants
     static def X_AUTH_TOKEN = "X-Auth-Token"
+    static def X_SESSION_ID = MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME
 
     //path constants
     static def SERVICE_PATH_MOBILE_PHONES = "mobile-phones"
@@ -60,9 +62,14 @@ class Cloud20Methods {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
     }
 
-    def authenticate(username, password) {
+    def authenticate(username, password, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
-        resource.path(path20).path(TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
+    }
+
+    def authenticateMFAWithSessionIdAndPasscode(sessionId, passcode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        def credentials = v2Factory.createPasscodeAuthenticationRequest(passcode)
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header(X_SESSION_ID, sessionId).entity(credentials).post(ClientResponse)
     }
 
     //TODO: remove once auth plugin is fixed

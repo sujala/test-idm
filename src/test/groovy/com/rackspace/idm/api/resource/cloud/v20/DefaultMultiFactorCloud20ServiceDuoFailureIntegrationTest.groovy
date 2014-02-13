@@ -16,6 +16,7 @@ import org.springframework.test.context.ContextConfiguration
 import javax.ws.rs.core.Response
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 /**
  * This tests where an unexpected exception is encountered in the multifactor provider class. This class uses grizzly
@@ -72,7 +73,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
     @Override
     public void doCleanupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml")
+        stopGrizzly();
     }
 
     /**

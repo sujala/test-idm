@@ -183,13 +183,19 @@ public final class JSONConstants {
 
     public static final String RAX_AUTH_MULTIFACTOR = "RAX-AUTH:multiFactor";
     public static final String MULTIFACTOR = "multiFactor";
+    public static final String RAX_AUTH_PASSCODE_CREDENTIALS = "RAX-AUTH:passcodeCredentials";
+    public static final String PASSCODE_CREDENTIALS = "passcodeCredentials";
 
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
-    public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
-    public static final String RAX_COMMON_FORBIDDEN_REQUEST = "ForbiddenFault";
     public static final String OPENSTACK_ITEMNOTFOUND_REQUEST = "itemNotFound";
+    public static final String OPENSTACK_UNAUTHORIZED_FAULT = "unauthorized";
+    public static final String OPENSTACK_IDENTITY_FAULT = "identityFault";
+    public static final String OPENSTACK_USER_DISABLED_FAULT = "userDisabled";
+
+    public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";
+    public static final String RAX_COMMON_FORBIDDEN_REQUEST = "ForbiddenFault";
 
     //String path
     public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
@@ -198,6 +204,9 @@ public final class JSONConstants {
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
+    public static final String AUTH_PASSCODE_CREDENTIALS_PATH = "auth.passcodeCredentials";
+    public static final String AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH = "auth.RAX-AUTH:passcodeCredentials";
+
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
     public static final String ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH = "endpointTemplate.tenantAlias";

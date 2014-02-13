@@ -109,6 +109,10 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         return ensureGrizzlyStarted(contextConfigLocation, clientConfigProviderClasses);
     }
 
+    static public void stopGrizzly() throws Exception {
+        afterClass();
+    }
+
 
     public WebResource resource() {
         return resource;

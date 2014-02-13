@@ -22,6 +22,7 @@ import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 /**
@@ -57,7 +58,7 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
 
     @Override
     public void doCleanupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml")
+        stopGrizzly();
     }
 
     /**

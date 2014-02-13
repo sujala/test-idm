@@ -2,13 +2,21 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
+import org.openstack.docs.identity.api.v2.CredentialType;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
 /**
  */
 public interface MultiFactorCloud20Service {
+    static final String X_SESSION_ID_HEADER_NAME = "X-SessionId";
+
+    /**
+     * Whether or not multi-factor services are enabled or not.
+     */
+    boolean isMultiFactorEnabled();
 
     /**
      * Associates the specified phone to the user specified by userId.
@@ -74,4 +82,33 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId);
+
+    /**
+     * Perform multi-factor challenge against the specified user. It is assumed the user successfully authenticated via
+     * the mechanisms provided in the alreadyAuthenticatedBy list.
+     *
+     * Ultimately the user could be approved immediately with the provided information from the first request (Mobile Passcode)
+     * or through the Mobile Push mechanism, so this must return the appropriate response that should be returned to the
+     * user.
+     *
+     * If the request requires a second authentication request a WWW-Authenticate header must be returned in the response
+     * with an encrypted sessionId string to be passed into the {@link #authenticateSecondFactor(String, org.openstack.docs.identity.api.v2.CredentialType)}.
+     *
+     * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException - if multifactor is not enabled for this user account
+     */
+    Response.ResponseBuilder performMultiFactorChallenge(String userId, List<String> alreadyAuthenticatedBy);
+
+    /**
+     * authenticates a 2-factor credential
+     *
+     * @param sessionId
+     * @param credential
+     * @throws IllegalArgumentException If the credential provided is not a supported 2-factor credential or sessionId is null
+     * @throws com.rackspace.idm.exception.NotAuthenticatedException If the supplied sessionId and credential are not valid
+     * @return AuthResponseTuple - Only returned in the authentication is successful. Exceptions should be thrown otherwise.
+     *
+     * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException - if multifactor is not enabled for this user account
+     */
+    AuthResponseTuple authenticateSecondFactor(String sessionId, CredentialType credential);
+
 }

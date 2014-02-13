@@ -52,6 +52,7 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
         prefixValues.put(AUTH_API_KEY_CREDENTIALS_PATH, RAX_KSKEY_API_KEY_CREDENTIALS);
         prefixValues.put(AUTH_RSA_CREDENTIALS_PATH, RAX_AUTH_RSA_CREDENTIALS);
         prefixValues.put(AUTH_DOMAIN_PATH, RAX_AUTH_DOMAIN);
+        prefixValues.put(AUTH_PASSCODE_CREDENTIALS_PATH, RAX_AUTH_PASSCODE_CREDENTIALS);
 
         write(authenticationRequest, entityStream, prefixValues);
     }
@@ -69,12 +70,28 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
             JSONObject auth = getObject(entity);
 
             if(cred != null){
+                String key = null;
+                Object value = null;
                 if(cred.get(API_KEY_CREDENTIALS) != null){
-                    ((JSONObject)auth.get(AUTH)).put(API_KEY_CREDENTIALS, cred.get(API_KEY_CREDENTIALS));
+                    key = API_KEY_CREDENTIALS;
+                    value = cred.get(API_KEY_CREDENTIALS);
                 } else if(cred.get(PASSWORD_CREDENTIALS) != null){
-                    ((JSONObject)auth.get(AUTH)).put(PASSWORD_CREDENTIALS, cred.get(PASSWORD_CREDENTIALS));
+                    key = PASSWORD_CREDENTIALS;
+                    value = cred.get(PASSWORD_CREDENTIALS);
                 } else if(cred.get(RSA_CREDENTIALS) != null){
-                    ((JSONObject)auth.get(AUTH)).put(RSA_CREDENTIALS, cred.get(RSA_CREDENTIALS));
+                    key = RSA_CREDENTIALS;
+                    value = cred.get(RSA_CREDENTIALS);
+                } else if(cred.get(PASSCODE_CREDENTIALS) != null){
+                    key = PASSCODE_CREDENTIALS;
+                    value = cred.get(PASSCODE_CREDENTIALS);
+                }
+                JSONObject authVal = (JSONObject) auth.get(AUTH);
+                if (authVal == null) {
+                    authVal = new JSONObject();
+                    auth.put(AUTH, authVal);
+                }
+                if (key != null) {
+                    ((JSONObject) auth.get(AUTH)).put(key, value);
                 }
             }
 

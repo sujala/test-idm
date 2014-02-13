@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -32,6 +33,7 @@ class V2Factory {
     private static USERNAME = "username"
     private static NAME = "name"
     private static objFactory = new ObjectFactory()
+    private static raxAuthObjFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     def createAuthenticationRequest() {
         return createAuthenticationRequest("tenantId", "tenantName", null)
@@ -65,6 +67,15 @@ class V2Factory {
 
         new AuthenticationRequest().with {
             it.setCredential(objFactory.createPasswordCredentials(credentials))
+            return it
+        }
+    }
+
+    def createPasscodeAuthenticationRequest(String passcode) {
+        def credentials = createPasscodeCredentials(passcode)
+
+        new AuthenticationRequest().with {
+            it.setCredential(raxAuthObjFactory.createPasscodeCredentials(credentials))
             return it
         }
     }
@@ -147,6 +158,13 @@ class V2Factory {
         new PasswordCredentialsRequiredUsername().with {
             it.username = username
             it.password = password
+            return it
+        }
+    }
+
+    def createPasscodeCredentials(String passcode) {
+        new PasscodeCredentials().with {
+            it.passcode = passcode
             return it
         }
     }

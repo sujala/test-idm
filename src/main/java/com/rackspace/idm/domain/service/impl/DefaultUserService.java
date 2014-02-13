@@ -911,10 +911,9 @@ public class DefaultUserService implements UserService {
         this.propertiesService = propertiesService;
     }
 
-    void validateUserStatus(UserAuthenticationResult authenticated ) {
-        User user = (User)authenticated.getUser();
-        boolean isAuthenticated = authenticated.isAuthenticated();
-        if (user != null && isAuthenticated) {
+    @Override
+    public void validateUserIsEnabled(User user) {
+        if (user != null) {
             if (user.isDisabled()) {
                 logger.error(user.getUsername());
                 throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
@@ -926,6 +925,14 @@ public class DefaultUserService implements UserService {
                     throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
                 }
             }
+        }
+    }
+
+    void validateUserStatus(UserAuthenticationResult authenticated ) {
+        User user = (User)authenticated.getUser();
+        boolean isAuthenticated = authenticated.isAuthenticated();
+        if (user != null && isAuthenticated) {
+            validateUserIsEnabled(user);
             logger.debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         }
     }
