@@ -5,10 +5,7 @@ import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -42,6 +39,9 @@ public class DefaultDomainService implements DomainService{
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -165,6 +165,18 @@ public class DefaultDomainService implements DomainService{
     @Override
     public Iterable<Domain> getDomainsForTenants(List<Tenant> tenantIds) {
         return domainDao.getDomainsForTenant(tenantIds);
+    }
+
+    @Override
+    public void expireAllTokenInDomain(String domainId) {
+        for( User user : getUsersByDomainId(domainId) ){
+            try {
+                scopeAccessService.expireAllTokensForUser(user.getUsername());
+            } catch (Exception ex) {
+                String errMsg = String.format("ACTION NEEDED: Failed to expired all tokens for user %s. This user's tokens must be manually expired because the domain was disabled", user.getUsername());
+                logger.error(errMsg, ex);
+            }
+        }
     }
 
     @Override

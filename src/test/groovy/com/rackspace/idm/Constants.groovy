@@ -16,11 +16,16 @@ class Constants {
     static def MOSSO_ROLE_ID = "6"
     static def USER_MANAGE_ROLE_ID = "7"
 
-
     static def DEFAULT_GROUP = "Default"
 
     static def DEFAULT_SECRET_ANWSER = "home"
     static def DEFAULT_SECRET_QUESTION_ID = "1"
     static def DEFAULT_RAX_KSQA_SECRET_QUESTION = "question"
     static def DEFAULT_RAX_KSQA_SECRET_ANWSER = "anwser"
+
+    static String RACKER = "test.racker"
+    static String RACKER_PASSWORD = "password"
+
+    static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
+    static def CLIENT_SECRET = "Password1"
 }

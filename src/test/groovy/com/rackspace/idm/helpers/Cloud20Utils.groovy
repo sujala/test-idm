@@ -99,6 +99,11 @@ class Cloud20Utils {
         testUtils.getRandomUUID("domain")
     }
 
+    def updateDomain(domainId, domain, String token=getServiceAdminToken()) {
+        def response = methods.updateDomain(token, domainId, domain)
+        assert (response.status == SC_OK)
+    }
+
     def deleteDomain(domainId) {
         if (domainId == null) {
             return
@@ -177,8 +182,21 @@ class Cloud20Utils {
         }
     }
 
+    def impersonateWithToken(token, user) {
+        def response = methods.impersonate(token, user)
+        assert (response.status == SC_OK)
+        response.getEntity(ImpersonationResponse)
+    }
+
     def impersonate(impersonator, user) {
         methods.impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user)
+    }
+
+    def impersonateWithRacker(user) {
+        def auth = authenticateRacker(RACKER, RACKER_PASSWORD)
+        def response = methods.impersonate(auth.token.id, user)
+        assert (response.status == SC_OK)
+        response.getEntity(ImpersonationResponse)
     }
 
     def getImpersonatedToken(impersonator, user) {
@@ -261,6 +279,11 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def deleteTenantById(String tenantId) {
+        def response = methods.deleteTenant(getServiceAdminToken(), tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addRoleToUserOnTenant(user, tenant, roleId=MOSSO_ROLE_ID) {
         def response = methods.addRoleToUserOnTenant(getServiceAdminToken(), tenant.id, user.id, roleId)
         assert (response.status == SC_OK)
@@ -287,7 +310,7 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def authenticateRacker(racker, password) {
+    def authenticateRacker(String racker, String password) {
         def response = methods.authenticateRacker(racker, password)
         assert (response.status == SC_OK)
         response.getEntity(AuthenticateResponse).value
@@ -437,6 +460,11 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
+    def deleteTenant(String tenantId) {
+        def response = methods.deleteTenant(getServiceAdminToken(), tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addTenantToDomain(String domainId, String tenantId) {
         def response = methods.addTenantToDomain(getServiceAdminToken(), domainId, tenantId)
         assert (response.status == SC_NO_CONTENT)
@@ -453,4 +481,5 @@ class Cloud20Utils {
         def matcher = ( headerValue =~ DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX )
         matcher[0][1]
     }
+
 }

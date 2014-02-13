@@ -642,6 +642,7 @@ public class DefaultUserService implements UserService {
         user.setMultifactorEnabled(null);
 
         user.setLdapEntry(currentUser.getLdapEntry());
+        user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
         userDao.updateUser(user);
@@ -758,16 +759,33 @@ public class DefaultUserService implements UserService {
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
+        } else if (scopeAccess instanceof ClientScopeAccess) {
+            return null;
         } else {
             throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }
         if (user == null) {
             throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
         }
-        if (checkUserDisabled && user.isDisabled()) {
-            throw new NotFoundException("Token not found.");
+
+        if ( checkUserDisabled ){
+           checkUserDisabled(user);
         }
+
         return user;
+    }
+
+    private void checkUserDisabled(BaseUser user){
+        String exMsg = "Token not found.";
+        if( user.isDisabled() ){
+            throw new NotFoundException(exMsg);
+        }
+
+        Domain domain = domainService.getDomain(user.getDomainId());
+
+        if( domain != null && !domain.getEnabled() ) {
+            throw new NotFoundException(exMsg);
+        }
     }
 
     @Override
@@ -839,6 +857,14 @@ public class DefaultUserService implements UserService {
         }
         return false;
 	}
+
+    @Override
+    public void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess) {
+        if(scopeAccess instanceof UserScopeAccess){
+            BaseUser user = getUser(((UserScopeAccess) scopeAccess).getUsername());
+            checkUserDisabled(user);
+        }
+    }
 
     protected List<User> filterUsersForRole(List<User> users, String roleId) {
         List<User> result = new ArrayList<User>();

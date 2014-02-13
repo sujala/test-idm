@@ -31,7 +31,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_IMPERSONATEDSCOPEACCESS = "impersonatedScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
-    public static final String OBJECTCLASS_FEDERATEDUSERSCOPEACCESS = "federatedUserScopeAccess";
+    public static final String OBJECTCLASS_FEDERATEDUSERSCOPEACCESS = "rsFederatedUserScopeAccess";
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
     public static final String OBJECTCLASS_TENANT = "tenant";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
@@ -42,7 +42,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_REGION = "rsCloudRegion";
     public static final String OBJECTCLASS_PATTERN = "rsPattern";
     public static final String OBJECTCLASS_PROPERTY = "rsProperty";
-    public static final String OBJECTCLASS_EXTERNALPROVIDER = "externalProvider";
+    public static final String OBJECTCLASS_EXTERNALPROVIDER = "rsExternalProvider";
 
     public static final String OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE = "rsMultiFactorMobilePhone";
 
@@ -135,8 +135,8 @@ public abstract class LdapRepository {
     public static final String ATTR_VALUE = "value";
     public static final String ATTR_ENCRYPTION_SALT = "encryptionSalt";
     public static final String ATTR_ENCRYPTION_VERSION_ID = "encryptionVersionId";
-    public static final String ATTR_IDP_NAME = "idpName";
-    public static final String ATTR_TENANT_ALIAS = "tenantAlias";
+    public static final String ATTR_IDP_NAME = "rsIdpName";
+    public static final String ATTR_TENANT_ALIAS = "rsTenantAlias";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";

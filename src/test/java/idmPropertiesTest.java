@@ -37,6 +37,7 @@ public class idmPropertiesTest {
             propertyNameErrorList.remove("atom.hopper.dataCenter");
             propertyNameErrorList.remove("cloudAuthUK11url");
             propertyNameErrorList.remove("cloudAuthUK20url");
+            propertyNameErrorList.remove("auth.ldap.useSSL");
             propertyNameErrorList.remove("migrationAdminGroup");
             if (!propertyNameErrorList.isEmpty()) {
                 error += fileName + ":\n";
