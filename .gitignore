@@ -17,3 +17,6 @@ target
 target/*
 .DS_Store
 rpmbuild/rpmbuild
+rpmbuild/master
+rpmbuild/rpms
+rpmbuild/source
