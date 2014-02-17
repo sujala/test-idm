@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-    <bean class="com.rackspace.idm.api.resource.cloud.v20.ConfigOverrideMultiFactorFeatureFlagPostProcessor">
-        <constructor-arg index="0" value="BETA" />
+    <bean class="com.rackspace.idm.api.resource.cloud.v20.ConfigOverridePostProcessor">
+        <constructor-arg index="0">
+            <util:map key-type="java.lang.String"
+                      value-type="java.lang.Boolean">
+                <entry key="multifactor.services.enabled" value="true"/>
+                <entry key="multifactor.beta.enabled" value="true"/>
+            </util:map>
+        </constructor-arg>
     </bean>
 </beans>

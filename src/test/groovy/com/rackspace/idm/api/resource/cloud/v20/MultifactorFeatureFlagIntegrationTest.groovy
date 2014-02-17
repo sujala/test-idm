@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
@@ -13,6 +14,7 @@ import spock.lang.Unroll
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 @ContextConfiguration(locations = ["classpath:app-config.xml",
     "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
@@ -34,9 +36,11 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired LdapScopeAccessRepository scopeAccessRepository
 
+    @Autowired RoleService roleService
+
     @Override
     public void doCleanupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml")
+        stopGrizzly()
     }
 
     @Unroll("MFA feature flag for enable MFA API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
@@ -49,7 +53,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
-            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+            def mfaBetaRole = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, mfaBetaRole.id)
         }
         def responsePhone
         if(addPhone) {
@@ -81,10 +86,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | true | FULL_SETTINGS_FILE | 204
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 401
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | true | BETA_SETTINGS_FILE | 204
@@ -102,7 +107,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
-            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+            def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
         }
         def responsePhone
         if(addPhone) {
@@ -138,10 +144,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | true | true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | true | true | FULL_SETTINGS_FILE | 204
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 401
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | true | true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | true | true | BETA_SETTINGS_FILE | 204
@@ -158,7 +164,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
-            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+            def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
         }
 
         when:
@@ -185,10 +192,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | FULL_SETTINGS_FILE | 201
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | FULL_SETTINGS_FILE | 201
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 401
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | BETA_SETTINGS_FILE | 201
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | BETA_SETTINGS_FILE | 201
@@ -205,7 +212,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
-            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+            def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
         }
         def responsePhoneId
         if(addPhone) {
@@ -239,10 +247,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 202
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 202
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 202
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 202
@@ -259,7 +267,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
-            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, config.getString("cloudAuth.multiFactorBetaRoleRsId"))
+            def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
         }
         def responsePhoneId
         if(addPhone) {
@@ -280,7 +289,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (!responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
+        if (responsePhoneId != null && !responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
@@ -294,10 +303,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 204
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204

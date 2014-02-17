@@ -1,20 +1,18 @@
 package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -26,9 +24,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -48,14 +46,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     private ApplicationContext springCtx;
 
+    private MultiFactorCloud20Service multiFactorCloud20Service;
+
     @Autowired
     private ScopeAccessService scopeAccessService;
 
-    private Configuration config;
-
     private UserService userService;
-
-    private TenantService tenantService;
 
     AuthenticationFilter() {
 
@@ -115,21 +111,14 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                 }
 
                 if(path.contains("multi-factor")) {
-                    String multifactorStatus = getConfig().getString("multifactor.services.enabled");
 
-                    if("BETA".equalsIgnoreCase(multifactorStatus)) {
-                        if(userHasMultiFactorBetaRole(sa)) {
-                            return request;
-                        } else {
-                            throw new WebApplicationException(404);
+                    //we first check to see if multifactor services are enabled to avoid reading the
+                    //user from the directory when MFA is turned off
+                    if(getMultiFactorCloud20Service().isMultiFactorEnabled()) {
+                        BaseUser user = getUserService().getUserByScopeAccess(sa);
+                        if(!getMultiFactorCloud20Service().isMultiFactorEnabledForUser(user)) {
+                            throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
                         }
-                    } else if("FULL".equalsIgnoreCase(multifactorStatus)) {
-                        return request;
-                    } else if("OFF".equalsIgnoreCase(multifactorStatus)) {
-                        throw new WebApplicationException(404);
-                    } else {
-                        //This should not typically happen. If we get here, then the config is invalid or missing.
-                        throw new WebApplicationException(404);
                     }
 
                 }
@@ -196,12 +185,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         return scopeAccessService;
     }
 
-    private Configuration getConfig() {
-        if (config == null) {
-            config = springCtx.getBean(Configuration.class);
+    MultiFactorCloud20Service getMultiFactorCloud20Service() {
+        if (multiFactorCloud20Service == null) {
+            multiFactorCloud20Service = springCtx.getBean(MultiFactorCloud20Service.class);
         }
 
-        return config;
+        return multiFactorCloud20Service;
     }
 
     private UserService getUserService() {
@@ -212,31 +201,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         return userService;
     }
 
-    private TenantService getTenantService() {
-        if (tenantService == null) {
-            tenantService = springCtx.getBean(TenantService.class);
-        }
-
-        return tenantService;
-    }
-
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
         this.req = httpServletRequest;
     }
 
-    private boolean userHasMultiFactorBetaRole(ScopeAccess scopeAccess) {
-        BaseUser user = getUserService().getUserByScopeAccess(scopeAccess);
-        List<TenantRole> userGlobalRoles = getTenantService().getGlobalRolesForUser(user);
-
-        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
-            for(TenantRole role : userGlobalRoles) {
-                //TODO: should we check by name or rsId?
-                if(role.getRoleRsId().equals(config.getString("cloudAuth.multiFactorBetaRoleRsId"))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 }

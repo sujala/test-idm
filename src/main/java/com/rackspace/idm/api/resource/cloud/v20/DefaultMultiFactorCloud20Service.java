@@ -14,11 +14,9 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
-import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
@@ -39,8 +37,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  */
@@ -99,6 +99,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private SessionIdReaderWriter sessionIdReaderWriter;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
@@ -259,6 +262,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         User user = userService.getUserById(sessionId.getUserId());
         userService.validateUserIsEnabled(user);
 
+        if(!isMultiFactorEnabledForUser(user)) {
+            throw new BadRequestException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        }
+
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
@@ -315,7 +322,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
-        verifyMultifactorServicesEnabled();
 
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
@@ -411,6 +417,26 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
+    @Override
+    public boolean isMultiFactorEnabled() {
+        return config.getBoolean("multifactor.services.enabled", false);
+    }
+
+    @Override
+    public boolean isMultiFactorEnabledForUser(BaseUser user) {
+        if(!isMultiFactorEnabled()) {
+            return false;
+        } else if(config.getBoolean("multifactor.beta.enabled", false)) {
+            if(userHasMultiFactorBetaRole(user)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
     /**
      * Parses the provided string based phone number into standard phone number representation.
      *
@@ -440,7 +466,18 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return config.getInt(SESSION_ID_LIFETIME_PROP_NAME, SESSION_ID_LIFETIME_DEFAULT);
     }
 
+    private boolean userHasMultiFactorBetaRole(BaseUser user) {
+        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
 
+        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
+            for(TenantRole role : userGlobalRoles) {
+                if(role.getName().equals(config.getString("cloudAuth.multiFactorBetaRoleName"))) {
+                    return true;
+                }
+            }
+        }
 
+        return false;
+    }
 
 }

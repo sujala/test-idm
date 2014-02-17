@@ -4,6 +4,8 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import java.util.Map;
+
 /**
  * Purpose of this post processor is to set the status of the multi-factor feature flag
  * in the Configuration of the application. This is useful when the configuration needs to be
@@ -11,19 +13,21 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
  * For example, within Grizzly when test cases do not have access to the Spring context
  * loaded within Grizzly.
  */
-public class ConfigOverrideMultiFactorFeatureFlagPostProcessor implements BeanPostProcessor {
+public class ConfigOverridePostProcessor implements BeanPostProcessor {
 
-    private String overrideValue;
+    private Map<String, Object> overrideValues;
 
-    public ConfigOverrideMultiFactorFeatureFlagPostProcessor(String overrideValue) {
-        this.overrideValue = overrideValue;
+    public ConfigOverridePostProcessor(Map<String, Object> overrideValues) {
+        this.overrideValues = overrideValues;
     }
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        if(bean instanceof Configuration) {
-            Configuration config = (Configuration) bean;
-            config.setProperty("multifactor.services.enabled", overrideValue);
+        for(Map.Entry<String, Object> overrideValueEntry : overrideValues.entrySet()) {
+            if(bean instanceof Configuration) {
+                Configuration config = (Configuration) bean;
+                config.setProperty(overrideValueEntry.getKey(), overrideValueEntry.getValue());
+            }
         }
         return bean;
     }
@@ -32,4 +36,5 @@ public class ConfigOverrideMultiFactorFeatureFlagPostProcessor implements BeanPo
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         return bean;
     }
+
 }
