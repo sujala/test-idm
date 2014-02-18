@@ -12,4 +12,5 @@ public interface RoleService {
     ClientRole getDefaultRole();
     ClientRole getComputeDefaultRole();
     ClientRole getObjectStoreDefaultRole();
+    boolean isIdentityAccessRole(ClientRole role);
 }

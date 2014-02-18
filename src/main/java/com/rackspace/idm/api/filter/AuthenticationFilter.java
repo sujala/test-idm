@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,8 +32,7 @@ import java.util.UUID;
  *         several that are checked for in the if clauses below.
  */
 @Component
-public class AuthenticationFilter implements ContainerRequestFilter,
-        ApplicationContextAware {
+public class AuthenticationFilter implements ContainerRequestFilter {
     private static final String GET = "GET";
     private static final String POST = "POST";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
@@ -44,13 +41,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     @Context
     private HttpServletRequest req;
 
-    private ApplicationContext springCtx;
-
+    @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
 
+    @Autowired
     private UserService userService;
 
     AuthenticationFilter() {
@@ -98,7 +95,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
             if (authToken != null) {
                 //check for impersonation
-                ScopeAccess sa = getScopeAccessService().getScopeAccessByAccessToken(authToken);
+                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
                 if(sa instanceof ImpersonatedScopeAccess){
                     // Check Expiration of impersonated token
                     if (sa.isAccessTokenExpired(new DateTime())) {
@@ -112,12 +109,18 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
                 if(path.contains("multi-factor")) {
 
-                    //we first check to see if multifactor services are enabled to avoid reading the
-                    //user from the directory when MFA is turned off
-                    if(getMultiFactorCloud20Service().isMultiFactorEnabled()) {
-                        BaseUser user = getUserService().getUserByScopeAccess(sa);
-                        if(!getMultiFactorCloud20Service().isMultiFactorEnabledForUser(user)) {
-                            throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
+                    //We first need to check if multifactor services are enabled. If they are disabled, we allow
+                    //the request to pass through in order for the application server to return a 404.
+                    //This is possible because the multifactor resource is not exposed when mfa is turned off.
+                    if(!multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
+                        //we need to check isMultiFactorEnabled here as well because the above call
+                        //only checks for the case where mfa = true and beta = false. It could still be
+                        //the case that mfa = true and beta = true.
+                        if(multiFactorCloud20Service.isMultiFactorEnabled()) {
+                            BaseUser user = userService.getUserByScopeAccess(sa);
+                            if(!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
+                                throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
+                            }
                         }
                     }
 
@@ -160,7 +163,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         final String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        final boolean authResult = getScopeAccessService().authenticateAccessToken(tokenString);
+        final boolean authResult = scopeAccessService.authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated
@@ -170,35 +173,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         // authentication failed if we reach this point
         logger.warn("Authentication Failed for {} ", authHeader);
         throw new NotAuthenticatedException("Authentication Failed.");
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        springCtx = applicationContext;
-    }
-
-    ScopeAccessService getScopeAccessService() {
-        if (scopeAccessService == null) {
-            scopeAccessService = springCtx.getBean(ScopeAccessService.class);
-        }
-
-        return scopeAccessService;
-    }
-
-    MultiFactorCloud20Service getMultiFactorCloud20Service() {
-        if (multiFactorCloud20Service == null) {
-            multiFactorCloud20Service = springCtx.getBean(MultiFactorCloud20Service.class);
-        }
-
-        return multiFactorCloud20Service;
-    }
-
-    private UserService getUserService() {
-        if (userService == null) {
-            userService = springCtx.getBean(UserService.class);
-        }
-
-        return userService;
     }
 
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {

@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.sun.jersey.spi.container.ContainerRequest
-import org.springframework.context.ApplicationContext
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -14,7 +13,6 @@ import javax.ws.rs.WebApplicationException
 class AuthenticationFilterTest extends Specification {
 
     @Shared def request
-    @Shared def appCtx
     @Shared def userService
     @Shared def scopeAccessService
     @Shared def headers
@@ -24,19 +22,17 @@ class AuthenticationFilterTest extends Specification {
     @Shared def mfaService
 
     def setup() {
+        filter = new AuthenticationFilter()
         request = Mock(ContainerRequest)
-        appCtx = Mock(ApplicationContext)
         userService = Mock(UserService)
-        appCtx.getBean(UserService) >> userService
+        filter.userService = userService
         scopeAccessService = Mock(ScopeAccessService)
-        appCtx.getBean(ScopeAccessService) >> scopeAccessService
+        filter.scopeAccessService = scopeAccessService
         request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER) >> authTokenString
         scopeAccess = new UserScopeAccess()
         scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
         mfaService = Mock(MultiFactorCloud20Service)
-        appCtx.getBean(MultiFactorCloud20Service) >> mfaService
-        filter = new AuthenticationFilter()
-        filter.setApplicationContext(appCtx)
+        filter.multiFactorCloud20Service = mfaService
     }
 
     def "when multi-factor feature flag is false all requests to multi-factor are unmodified"() {

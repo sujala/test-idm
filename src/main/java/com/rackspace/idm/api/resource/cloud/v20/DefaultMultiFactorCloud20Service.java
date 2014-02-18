@@ -58,6 +58,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
 
+    static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
+
     private static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
     private static final String SESSION_ID_LIFETIME_PROP_NAME = "multifactor.sessionid.lifetime";
     private static final String SESSION_ID_PRIMARY_VERSION_PROP_NAME = "multifactor.primary.sessionid.version";
@@ -418,15 +420,24 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
+    public boolean isMultiFactorGloballyEnabled() {
+        return isMultiFactorEnabled() && !isMultiFactorBetaEnabled();
+    }
+
+    @Override
     public boolean isMultiFactorEnabled() {
         return config.getBoolean("multifactor.services.enabled", false);
+    }
+
+    private boolean isMultiFactorBetaEnabled() {
+        return config.getBoolean("multifactor.beta.enabled", false);
     }
 
     @Override
     public boolean isMultiFactorEnabledForUser(BaseUser user) {
         if(!isMultiFactorEnabled()) {
             return false;
-        } else if(config.getBoolean("multifactor.beta.enabled", false)) {
+        } else if(isMultiFactorBetaEnabled()) {
             if(userHasMultiFactorBetaRole(user)) {
                 return true;
             } else {
@@ -471,7 +482,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
             for(TenantRole role : userGlobalRoles) {
-                if(role.getName().equals(config.getString("cloudAuth.multiFactorBetaRoleName"))) {
+                if(role.getName().equals(config.getString(MULTIFACTOR_BETA_ROLE_NAME))) {
                     return true;
                 }
             }

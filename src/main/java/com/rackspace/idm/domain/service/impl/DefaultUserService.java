@@ -401,7 +401,7 @@ public class DefaultUserService implements UserService {
         List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user, applicationId);
         for (TenantRole tenantRole : tenantRoles) {
             ClientRole clientRole = applicationService.getClientRoleById(tenantRole.getRoleRsId());
-            if (StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
+            if(roleService.isIdentityAccessRole(clientRole)) {
                 return clientRole.getRsWeight();
             }
         }

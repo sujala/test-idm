@@ -22,16 +22,19 @@ public interface MultiFactorCloud20Service {
     boolean isMultiFactorEnabled();
 
     /**
+     * Whether or not multi-factor services are enabled and multi-factor beta is disabled.
+     *
+     * Returns true if multi-factor services are enabled and multi-factor beta is disabled. Returns false otherwise.
+     */
+    public boolean isMultiFactorGloballyEnabled();
+
+    /**
      * Whether or not multi-factor services are enabled or not for a given user.
      *
      * Returns true if multi-factor status is FULL, true if multi-factor status is BETA and user has
      * multi-factor beta role, and false otherwise.
      */
     boolean isMultiFactorEnabledForUser(BaseUser user);
-
-    /**
-     *
-     */
 
     /**
      * Associates the specified phone to the user specified by userId.

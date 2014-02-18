@@ -1,7 +1,7 @@
 dn: rsId=8,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-cn: multifactor_beta
+cn: identity:multifactor_beta
 rsId: 8
 description: Multi-Factor BETA
 rsWeight: 500

@@ -51,6 +51,9 @@ public class Cloud20VersionResource {
     private SamlUnmarshaller samlUnmarshaller;
 
     @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
+
+    @Autowired
     private CloudMultifactorResource multifactorResource;
 
 
@@ -1083,7 +1086,7 @@ public class Cloud20VersionResource {
 
     @Path("users/{userId}/RAX-AUTH/multi-factor")
     public CloudMultifactorResource getMultifactorResource() {
-        if (config.getBoolean("multifactor.services.enabled", false)) {
+        if (multiFactorCloud20Service.isMultiFactorEnabled()) {
             return multifactorResource;
         } else {
             return null;

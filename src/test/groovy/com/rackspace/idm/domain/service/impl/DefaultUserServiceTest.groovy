@@ -760,6 +760,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
         applicationService.getClientRoleById("0") >> applicationRole
+        mockRoleService.isIdentityAccessRole(applicationRole) >> true
 
         when:
         def weight = service.getUserWeight(user, "applicationId")
@@ -780,6 +781,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def applicationRole = entityFactory.createClientRole("identity:admin").with { it.rsWeight = 100; return it }
         def tenantRoles = [ tenantRole ].asList()
+        mockRoleService.isIdentityAccessRole(applicationRole) >> true
 
         tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
         applicationService.getClientRoleById("0") >> applicationRole
@@ -803,6 +805,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def applicationRole = entityFactory.createClientRole("identity:user-admin").with { it.rsWeight = 1000; return it }
         def tenantRoles = [ tenantRole ].asList()
+        mockRoleService.isIdentityAccessRole(applicationRole) >> true
 
         tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
         applicationService.getClientRoleById("0") >> applicationRole
@@ -829,6 +832,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
         applicationService.getClientRoleById("0") >> applicationRole
+        mockRoleService.isIdentityAccessRole(applicationRole) >> true
 
         when:
         def weight = service.getUserWeight(user, "applicationId")

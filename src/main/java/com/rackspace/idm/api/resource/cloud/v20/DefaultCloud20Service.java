@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
@@ -59,8 +60,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-
-import org.springframework.util.CollectionUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -213,6 +212,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
+
+    @Autowired
+    private RoleService roleService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -716,7 +718,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            checkForMultipleIdentityRoles(user, cRole);
+            checkForMultipleIdentityAccessRoles(user, cRole);
 
             if (authorizationService.authorizeCloudUserAdmin(context) ||
                     authorizationService.authorizeUserManageRole(context)) {
@@ -3469,18 +3471,19 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
+    void checkForMultipleIdentityAccessRoles(User user, ClientRole roleToAdd) {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
         if (user.getRoles() == null ||
             roleToAdd == null ||
-            !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:") ||
+            !roleService.isIdentityAccessRole(roleToAdd) ||
             roleToAdd.getName().equalsIgnoreCase("identity:user-manage")
         ) {
             return;
         }
 
         for (TenantRole userRole : user.getRoles()) {
-            if (StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
+            ClientRole clientRole = applicationService.getClientRoleById(userRole.getRoleRsId());
+            if(roleService.isIdentityAccessRole(clientRole)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }
