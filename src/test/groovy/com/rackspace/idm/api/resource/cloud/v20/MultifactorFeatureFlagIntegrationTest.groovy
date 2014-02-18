@@ -16,6 +16,22 @@ import javax.ws.rs.core.MediaType
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
+/**
+ * Tests the multifactor feature and beta flags. In order to accomplish this, the grizzly container must
+ * be restarted in order to be placed into the different states for these flags. The states that we are
+ * interested in testing here are:
+ *     1)  Multifactor Services are turned OFF
+ *         Mfa services flag = off
+ *         Mfa beta flag = off
+ *     2)  Multifactor Services are turned ON and in Beta
+ *         Mfa services flag = on
+ *         Mfa beta flag = on
+ *     3)  Multifactor Services are in ON and NOT in BETA
+ *         Mfa services flag = on
+ *         Mfa beta flag = off
+ * These settings are configured using a Spring BeanPostProcessor that overrides these settings from their
+ * default values.
+ */
 @ContextConfiguration(locations = ["classpath:app-config.xml",
     "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTest {
