@@ -10,4 +10,6 @@ import java.util.HashSet;
 public class AuthorizationContext {
     ScopeAccess scopeAccess;
     HashSet<String> roles;
+    Domain domain;
+    BaseUser user;
 }

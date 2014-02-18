@@ -1533,7 +1533,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccessByAccessToken);
             authorizationService.verifyUserLevelAccess(context);
 
-            User user = this.userService.getUserById(userId);
+            User user = this.userService.checkAndGetUserById(userId);
             User caller = getUser(scopeAccessByAccessToken);
 
             if (user == null) {
@@ -2157,11 +2157,19 @@ public class DefaultCloud20Service implements Cloud20Service {
         setDomainEmptyValues(domain, domainId);
         validateDomain(domain, domainId);
 
+        Boolean shouldExpireAllTokens =  domainDO.getEnabled() && !domain.isEnabled();
+
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
         domainDO.setEnabled(domain.isEnabled());
         domainDO.setName(domain.getName());
+
         this.domainService.updateDomain(domainDO);
+
+        if(shouldExpireAllTokens){
+            domainService.expireAllTokenInDomain(domainDO.getDomainId());
+        }
+
         return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
     }
 
@@ -2358,7 +2366,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
+            AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccessByAccessToken);
             if (this.authorizationService.authorizeCloudIdentityAdmin(context) ||
                     this.authorizationService.authorizeCloudServiceAdmin(context)) {
                 PaginatorContext<Domain> domainContext = this.domainService.getDomains(marker, limit);
@@ -3331,7 +3339,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException, JAXBException {
-        ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
         AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
 
         if (authToken.equals(tokenId)) {

@@ -21,6 +21,7 @@ import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -890,6 +891,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUserAdminApi.status == 403
     }
 
+    def "getUserApiKey returns 404 when given invalid user Id"() {
+        when:
+        def getUserAdminApi = cloud20.getUserApiKey(defaultUserManageRoleToken, "invalidUserId")
+
+        then:
+        getUserAdminApi.status == 404
+    }
+
     def "a user can be retrieved by email"() {
         when:
         def createUser = v2Factory.createUserForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
@@ -1159,6 +1168,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
                 cloud20.removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
+    }
+
+    def "update group with invalid group Id returns 404"() {
+        when:
+        def response = cloud20.updateGroup(serviceAdminToken, "invalidGroupId", v1Factory.createGroup("group name", "group description"))
+
+        then:
+        response.status == 404
     }
 
     def "invalid operations on get/create/update group returns 'not found'"() {
@@ -1957,37 +1974,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUserQuietly(user, serviceAdminToken)
         utils.deleteUserQuietly(userAdmin, serviceAdminToken)
-    }
-
-    def "Disable one of two user admins in domain does not disable subUsers"() {
-        given:
-        def domain = "someDomainDisableOneUserAdmin$sharedRandom"
-        def username = "userDisableOneUserAdmin$sharedRandom"
-        def password = "Password1"
-
-        def adminUsername = "userAdminDisableOneUserAdmin$sharedRandom"
-        def userAdminForCreate1 = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
-        Object result = userAdminForCreate1.getEntity(User).value
-        if (result instanceof BadRequestFault) {
-            BadRequestFault fault = (BadRequestFault) result
-            LOG.error(String.format("Message: '%s'; details: '%s'", fault.getMessage(), fault.getDetails()))
-        }
-        User userAdmin = (User) result
-
-        def userAdminToken = cloud20.authenticatePassword(adminUsername, password).getEntity(AuthenticateResponse).value.token.id
-        def subUserForCreate = cloud20.createUser(userAdminToken, v2Factory.createUserForCreate(username, "displayName", "someEmail@rackspace.com", true, "ORD", domain, "Password1"))
-
-        when:
-        this.userAdmin.enabled = false;
-        def updateUserResponse = cloud20.updateUser(identityAdminToken, userAdmin.id, userAdmin)
-        def getUserResponse = cloud20.getUser(serviceAdminToken, subUserForCreate.location)
-        User user = getUserResponse.getEntity(User).value
-        cloud20.destroyUser(serviceAdminToken, user.id)
-        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
-
-        then:
-        updateUserResponse.status == 200
-        user.enabled == true
     }
 
     def "default user one cannot get default user two's admins"() {
@@ -2821,6 +2807,39 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def listGroupsResponse = cloud20.listGroupsForUser(serviceAdminToken, "badUserId")
         then:
         listGroupsResponse.status == 404
+    }
+
+    def "updating user does not modify user groups"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userForUpdate = new UserForCreate().with {
+            it.id = userAdmin.id
+            it.password = DEFAULT_PASSWORD
+            it
+        }
+        def createGroupResponse = cloud20.createGroup(serviceAdminToken, v1Factory.createGroup("group1$sharedRandom", "this is my group"))
+        groupLocation = createGroupResponse.location
+        def getGroupResponse = cloud20.getGroup(serviceAdminToken, groupLocation)
+        group = getGroupResponse.getEntity(Group).value
+        cloud20.addUserToGroup(serviceAdminToken, group.id, userAdmin.id)
+        def groupsBeforeUpdateResponse = cloud20.listGroupsForUser(utils.getServiceAdminToken(), userAdmin.id)
+        def groupsBeforeUpdate = groupsBeforeUpdateResponse.getEntity(Groups).value
+
+        when:
+        utils.updateUser(userForUpdate)
+        def groupsAfterUpdateResponse = cloud20.listGroupsForUser(utils.getServiceAdminToken(), userAdmin.id)
+        def groupsAfterUpdate = groupsAfterUpdateResponse.getEntity(Groups).value
+
+        then:
+        for(Group group : groupsBeforeUpdate.group) {
+            assert(groupsAfterUpdate.group.id.contains(group.id))
+        }
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
     }
 
     def "Updating user's secretQA twice with same data - returns 200" () {

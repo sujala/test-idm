@@ -12,4 +12,8 @@ public class BaseUser implements UniqueId {
     public boolean isDisabled() {
         return false;
     }
+
+    public String getDomainId(){
+        return null;
+    }
 }

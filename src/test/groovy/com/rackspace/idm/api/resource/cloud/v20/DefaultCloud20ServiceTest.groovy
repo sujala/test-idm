@@ -1659,7 +1659,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = Mock(User)
         def caller = Mock(User)
 
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
@@ -1713,7 +1713,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
         def caller = entityFactory.createUser()
 
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
@@ -2644,7 +2644,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.status == 200
-        userService.getUserById(userId) >> user
+        userService.checkAndGetUserById(userId) >> user
         userService.getUser(_) >> caller
     }
 
@@ -2666,7 +2666,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.status == 403
-        userService.getUserById(_) >> user
+        userService.checkAndGetUserById(_) >> user
         userService.getUser(_) >> caller
         precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
         authorizationService.authorizeCloudUser(_) >> true
@@ -3788,7 +3788,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
 
         then:
-        1 * userService.getUserById(_) >> user
+        1 * userService.checkAndGetUserById(_) >> user
         1 * userService.getUser(_) >> caller
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
         1 * authorizationService.isSelf(_, _) >> false
@@ -3806,7 +3806,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
-        1 * userService.getUserById(_) >> user
+        1 * userService.checkAndGetUserById(_) >> user
         1 * userService.getUser(_) >> caller
         1 * authorizationService.isSelf(_, _) >> false
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}

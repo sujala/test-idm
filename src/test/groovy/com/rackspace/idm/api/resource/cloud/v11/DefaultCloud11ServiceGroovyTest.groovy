@@ -399,6 +399,27 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
     }
 
+    def "remove v1Defaults" () {
+        given:
+        def baseUrlRef = v1Factory.createBaseUrlRef()
+        def tenant = entityFactory.createTenant().with {
+            it.baseUrlIds = ["1","2","3"].asList()
+            it.v1Defaults = ["1","2","3"].asList()
+            it
+        }
+        def cloudBaseUrl = entityFactory.createCloudBaseUrl().with {
+            it.serviceName = "serviceName"
+            it
+        }
+
+        when:
+        service.replaceAddV1Default(baseUrlRef, tenant, String.valueOf(baseUrlRef.id))
+
+        then:
+        endpointService.getBaseUrlById(_) >> cloudBaseUrl
+        notThrown(ConcurrentModificationException)
+    }
+
     def createUser(String id, String username, int mossoId, String nastId) {
         new com.rackspace.idm.domain.entity.User().with {
             it.id = id

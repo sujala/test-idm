@@ -589,7 +589,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
          */
         ScopeAccess mostRecentForClient = null;
         for (ScopeAccess scopeAccess : scopeAccessList) {
-            if (clientId.equals(scopeAccess.getClientId())) {
+            if (clientId.equals(scopeAccess.getClientId()) && (scopeAccess instanceof UserScopeAccess)) {
                 //check for most recent
                 if (mostRecentForClient == null || mostRecentForClient.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
                     //this new scope access is more recent than the currently chosen one. Check if we should delete the

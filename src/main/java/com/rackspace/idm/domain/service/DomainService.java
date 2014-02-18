@@ -30,4 +30,5 @@ public interface DomainService {
     Domain checkAndGetDomain(String domainId);
     String createNewDomain(String domainId);
     Iterable<Domain> getDomainsForTenants(List<Tenant> tenants);
+    void expireAllTokenInDomain(String domainId);
 }

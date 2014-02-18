@@ -150,4 +150,6 @@ public interface UserService {
      * @throws com.rackspace.idm.exception.UserDisabledException If user is not enabled or otherwise should be considered not enabled.
      */
     void validateUserIsEnabled(User user);
+
+    void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess);
 }
