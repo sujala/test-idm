@@ -86,7 +86,8 @@ class LdapLoggingFilterTest extends Specification {
 
         then:
         !Debug.debugEnabled()
-        response.getHeaderNames().size() == 0
+        response.getHeaderNames().size() == 1
+        response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_LOCATION) == null
         response.getStatus() == HttpStatus.UNAUTHORIZED.value()
     }
 
@@ -107,7 +108,8 @@ class LdapLoggingFilterTest extends Specification {
         then:
         filter.scopeAccessService.getScopeAccessByAccessToken( _) >> null
         filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
-        response.getHeaderNames().size() == 0
+        response.getHeaderNames().size() == 1
+        response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_LOCATION) == null
         response.getStatus() == HttpStatus.UNAUTHORIZED.value()
         !Debug.debugEnabled()
     }
@@ -148,7 +150,8 @@ class LdapLoggingFilterTest extends Specification {
         filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
         response.getStatus() == HttpStatus.UNAUTHORIZED.value()
         !Debug.debugEnabled()
-        response.getHeaderNames().size() == 0
+        response.getHeaderNames().size() == 1
+        response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_LOCATION) == null
     }
 
     def "when logging enabled and requested and non-sa token supplied results in 403"() {
@@ -173,7 +176,8 @@ class LdapLoggingFilterTest extends Specification {
         filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
         response.getStatus() == HttpStatus.FORBIDDEN.value()
         !Debug.debugEnabled()
-        response.getHeaderNames().size() == 0
+        response.getHeaderNames().size() == 1
+        response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_LOCATION) == null
     }
 
     def "when logging enabled and requested and sa token supplied results in headers"() {
@@ -223,7 +227,7 @@ class LdapLoggingFilterTest extends Specification {
         filter.authorizationService.authorizeCloudServiceAdmin(_) >> true
         response.getStatus() == HttpStatus.OK.value()
         !Debug.debugEnabled()
-        response.getHeaderNames().size() == 2
+        response.getHeaderNames().size() == 3
         response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_LOCATION) != null
         response.getHeader(LdapLoggingFilter.HEADER_X_LDAP_LOG_SERVICE_STATUS_CODE) != null
         response.getContentAsString().contains("<message>** START  null **</message>") //arbitary but shows log working
