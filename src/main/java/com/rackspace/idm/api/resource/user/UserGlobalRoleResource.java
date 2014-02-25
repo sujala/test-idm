@@ -64,8 +64,7 @@ public class UserGlobalRoleResource {
 			@PathParam("roleId") String roleId) {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         User user = userService.loadUser(userId);
         Tenant tenant = tenantService.getTenant(tenantId);

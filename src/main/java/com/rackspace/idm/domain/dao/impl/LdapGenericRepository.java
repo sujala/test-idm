@@ -27,16 +27,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/26/12
- * Time: 3:34 PM
- * To change this template use File | Settings | File Templates.
- */
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
     public static final int PAGE_SIZE = 1000;
+
+    public static final String USE_VLV_SSS_OPTIMIZATION_PROP_NAME = "feature.optimize.vlv.sss.usage.enabled";
+    public static final boolean USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE = false;
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -57,7 +53,45 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public Iterable<T> getObjects(Filter searchFilter, String dn, SearchScope scope) {
         getLogger().debug("Getting all " + entityType.toString());
 
-        return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
+        if (optimizeUseOfVlvSss()) {
+            try {
+                return getUnpagedUnsortedObjects(searchFilter,dn, scope);
+            } catch (LDAPSearchException ldapEx) {
+                if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                    //fallback to the paging mechanism to retrieve results. This is not an error and is expected when result size is
+                    // greater than threshold.
+                    getLogger().info(String.format("Server reported search size exceeded threshold. Switched to paged results for '%s' with searchFilter '%s'", entityType.toString(), searchFilter));
+                }
+                else {
+                    //the pre-refactor code returned a fresh context with no results when received an error, so just do the same... May
+                    //need to revisit this...
+                    String loggerMsg = String.format("Encountered error searching for %s - %s using unsorted/paged method. Falling back to original code.", entityType.toString(), searchFilter);
+                    getLogger().error(loggerMsg);
+                }
+                return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
+            }
+        } else {
+            return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
+        }
+    }
+
+    private boolean optimizeUseOfVlvSss() {
+        return config.getBoolean(USE_VLV_SSS_OPTIMIZATION_PROP_NAME, USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE);
+    }
+
+    private List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope) throws LDAPSearchException {
+        getLogger().debug(String.format("Getting all %s unpaged and unsorted objects", entityType));
+
+        SearchResult searchResult;
+        SearchRequest searchRequest = new SearchRequest(dn, scope, searchFilter);
+        List<T> objects = new ArrayList<T>();
+        searchRequest.setSizeLimit(LdapPagingIterator.PAGE_SIZE);
+        searchResult = getAppInterface().search(searchRequest);
+
+        if (searchResult.getEntryCount() > 0) {
+            objects = processSearchResult(searchResult.getSearchEntries());
+        }
+        return objects;
     }
 
     @Override

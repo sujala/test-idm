@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 public class LdapPagingIterator<T> implements Iterable<T> {
 
-    private static final int PAGE_SIZE = 1000;
+    public static final int PAGE_SIZE = 1000;
     private int offset;
     private int index;
 

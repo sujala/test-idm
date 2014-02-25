@@ -145,6 +145,12 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
+        TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
+        return tenantRole != null;
+    }
+
+    @Override
     public TenantRole checkAndGetTenantRoleForUserById(User user, String roleId) {
         TenantRole tenantRole = getTenantRoleForUserById(user, roleId);
         if(tenantRole == null) {

@@ -432,8 +432,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             ScopeAccess scopeAccess = scopeAccessService.getScopeAccessForUser(retrievedUser);
-            AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
-            boolean isDefaultUser = authorizationService.authorizeCloudUser(context);
+            boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
@@ -1112,10 +1111,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(context);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
             if (!authenticated) {
-                authenticated = authorizationService.authorizeCloudServiceAdmin(context);
+                authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
             } if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
             }
@@ -1134,8 +1132,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         } else {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(context) || authorizationService.authorizeCloudServiceAdmin(context);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
@@ -1145,8 +1142,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         String adminPassword = stringStringMap.get("password");
         UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(adminUsername, adminPassword, getCloudAuthClientId());
 
-        AuthorizationContext context = authorizationService.getAuthorizationContext(usa);
-        boolean authorized = authorizationService.authorizeCloudIdentityAdmin(context) || authorizationService.authorizeCloudServiceAdmin(context);
+        boolean authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
         if (!authorized) {
             throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
         }

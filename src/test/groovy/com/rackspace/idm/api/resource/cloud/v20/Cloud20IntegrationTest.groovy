@@ -266,9 +266,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteRole(serviceAdminToken, productRole.getId())
         cloud20.deleteRole(serviceAdminToken, propagatingRole.getId())
 
-        cloud20.destroyUser(serviceAdminToken, userAdmin.getId())
-        cloud20.destroyUser(serviceAdminToken, userAdminTwo.getId())
-
         cloud20.destroyUser(serviceAdminToken, defaultUser.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserTwo.getId())
         cloud20.destroyUser(serviceAdminToken, defaultUserThree.getId())
@@ -278,6 +275,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, defaultUserForProductRole.getId())
 
         cloud20.destroyUser(serviceAdminToken, defaultUserOtherDomain.getId())
+
+        cloud20.destroyUser(serviceAdminToken, userAdmin.getId())
+        cloud20.destroyUser(serviceAdminToken, userAdminTwo.getId())
 
         cloud20.destroyUser(serviceAdminToken, testUser.getId())
 
@@ -2491,8 +2491,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def createSubUser = cloud20.createUser(token, v2Factory.createUserForCreate(subUsername, subUsername, "email@email.email", true, "DFW", null, password)).getEntity(User).value
         def listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, addTenant.id).getEntity(UserList).value
 
-        cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.destroyUser(serviceAdminToken, createSubUser.id)
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.deleteTenant(serviceAdminToken, addTenant.id)
         cloud20.deleteRole(serviceAdminToken, createRole.id)
 
@@ -2560,9 +2560,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createSub2User.id, createRole.id)
         UserList listUsersByTenant = cloud20.listUsersWithTenantId(identityAdminToken, addTenant.id).getEntity(UserList).value
 
-        cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.destroyUser(serviceAdminToken, createSub1User.id)
         cloud20.destroyUser(serviceAdminToken, createSub2User.id)
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.deleteTenant(serviceAdminToken, addTenant.id)
         cloud20.deleteRole(serviceAdminToken, createRole.id)
 

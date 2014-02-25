@@ -12,21 +12,12 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import org.joda.time.DateTime
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 11/29/12
- * Time: 6:14 PM
- * To change this template use File | Settings | File Templates.
- */
 class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     @Shared DefaultScopeAccessService service = new DefaultScopeAccessService()
@@ -293,6 +284,142 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         3 * scopeAccessDao.addScopeAccess(_, _)
 
         returned.accessTokenString.equals("tokenString6")
+    }
+
+    def "addImpersonatedScopeAccess deleting expired tokens logic based on property"() {
+        given:
+        def impersonatingUser = "userToBeImpersonated"
+        def nonExpiredTokenStr = "impToken4"
+        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", expiredDate)
+        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user1", "impUser1", "tokenString2", "impToken2", expiredDate)
+        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user1", "impUser1", "tokenString3", "impToken3", expiredDate)
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user1", "impUser1", nonExpiredTokenStr, "impToken4", futureDate)
+        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user1", "impUser2", "tokenString5", "impToken5", expiredDate)
+        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user1", "impUser2", "tokenString6", "impToken6", futureDate)
+
+        def request = new ImpersonationRequest().with {
+            it.user = v2Factory.createUser("userId", impersonatingUser)
+            return it
+        }
+
+        def expiredList = [ scopeAccessOne, scopeAccessTwo, scopeAccessThree ].asList()
+        def listWithValid = [ scopeAccessFour ].asList()
+        def otherUserList = [scopeAccessFive, scopeAccessSix].asList()
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [
+                expiredList,
+                listWithValid,
+                otherUserList
+        ].asList().flatten()
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUser(_, impersonatingUser) >> [
+                expiredList,
+                listWithValid
+        ].asList().flatten()
+
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, impersonatingUser) >> scopeAccessFour
+
+        when: "optimize is turned off"
+        ImpersonatedScopeAccess nonOptResult = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then: "all expired tokens are deleted regardless of user"
+        1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> false
+        5 * scopeAccessDao.deleteScopeAccess(_) //all 4 expired will be deleted, plus the non-expired of impersonated user
+        1 * scopeAccessDao.addScopeAccess(_, _)
+        nonOptResult != scopeAccessFour
+        nonOptResult.accessTokenString.equals(nonExpiredTokenStr)
+
+        when: "optimize is turned on"
+        ImpersonatedScopeAccess optResult = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then: "all expired tokens are deleted regardless of user"
+        1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> true
+        4 * scopeAccessDao.deleteScopeAccess(_) //all 3 expired of the impersonated user will be deleted, plus the non-expired of impersonated user. but NOT the other user expired
+        1 * scopeAccessDao.addScopeAccess(_, _)
+        optResult != scopeAccessFour
+        optResult.accessTokenString.equals(nonExpiredTokenStr)
+    }
+
+
+    def "addImpersonatedScopeAccess if expired token deletion causes exception then exception bubbles up if feature ignore token delete disabled"() {
+        given:
+        def exceptionToThrow = new RuntimeException("Throwing exception to verify that no more deletes are called once exception thrown")
+
+        def deleteCount = 0
+        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", expiredDate)
+        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user2", "impUser1", "tokenString2", "impToken2", expiredDate)
+        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user3", "impUser1", "tokenString3", "impToken3", expiredDate)
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser1", "tokenString4", "impToken4", futureDate)
+        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser5", "tokenString5", "impToken5", expiredDate)
+        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", futureDate)
+
+        def request = new ImpersonationRequest().with {
+            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            return it
+        }
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+
+        when: "exception encountered deleting second of three expired tokens"
+        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then: "no attempt is made to delete the other expired tokens or the valid token, and exception is bubbled"
+        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
+        2 * scopeAccessDao.deleteScopeAccess(_) >> { if (++deleteCount > 1) throw exceptionToThrow }
+        RuntimeException ex = thrown()
+        ex == exceptionToThrow
+    }
+
+    def "addImpersonatedScopeAccess if expired token deletion causes exception, exception is ignored and cleanup routine exited if feature ignore token delete enabled"() {
+        given:
+        def exceptionToThrow = new RuntimeException("Throwing exception to verify that no more deletes are called once exception thrown")
+        def deleteCount = 0
+        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", expiredDate)
+        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user2", "impUser1", "tokenString2", "impToken2", expiredDate)
+        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user3", "impUser1", "tokenString3", "impToken3", expiredDate)
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser1", "tokenString4", "impToken4", futureDate)
+        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser2", "tokenString5", "impToken5", expiredDate)
+        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser3", "tokenString6", "impToken6", futureDate)
+
+        def request = new ImpersonationRequest().with {
+            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            return it
+        }
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+
+        when: "exception encountered deleting second of three expired tokens"
+        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then: "no attempt is made to delete third expired token, but valid token is still deleted, scope access added and no exception thrown"
+        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
+        3 * scopeAccessDao.deleteScopeAccess(_) >> { if (++deleteCount == 2) throw exceptionToThrow }
+        1 * scopeAccessDao.addScopeAccess(_, _)
+        notThrown(RuntimeException)
+    }
+
+    def "addImpersonatedScopeAccess if valid token deletion causes exception, exception is bubbled"() {
+        given:
+        def exceptionToThrow = new RuntimeException("Throwing exception to verify that no more deletes are called once exception thrown")
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser1", "tokenString4", "impToken4", futureDate)
+
+        def request = new ImpersonationRequest().with {
+            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            return it
+        }
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [scopeAccessFour].asList()
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+
+        when: "exception encountered deleting valid token"
+        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then: "no attempt is made to delete third expired token, but valid token is deleted and no exception thrown"
+        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw exceptionToThrow }
+        RuntimeException ex = thrown()
+        ex == exceptionToThrow
     }
 
     def "atomHopper client is called when expiring all tokens for user" () {

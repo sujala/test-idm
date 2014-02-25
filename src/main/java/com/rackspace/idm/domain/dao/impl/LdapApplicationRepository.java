@@ -100,7 +100,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         Application application = getApplicationByClientId(clientId);
         if(application == null) {
             String errMsg = String.format("Application %s was not found.", clientId);
-           throw new NotFoundException(errMsg);
+            throw new NotFoundException(errMsg);
         }
         return application;
     }

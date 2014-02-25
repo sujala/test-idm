@@ -32,6 +32,7 @@ public interface TenantService {
     List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
     
     TenantRole getTenantRoleForUserById(User user, String roleId);
+    boolean doesUserContainTenantRole(BaseUser user, String roleId);
     TenantRole checkAndGetTenantRoleForUserById(User user, String roleId);
 
     TenantRole getTenantRoleForApplicationById(Application application, String id);

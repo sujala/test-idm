@@ -274,10 +274,8 @@ public class DefaultEncryptionService implements EncryptionService {
             }
         } catch (GeneralSecurityException e) {
             logger.error(String.format(APPLICATION_DECRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()));
-            e.printStackTrace();
         } catch (InvalidCipherTextException e) {
             logger.error(String.format(APPLICATION_DECRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()));
-            e.printStackTrace();
         }
     }
 
