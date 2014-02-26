@@ -29,13 +29,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Autowired
     private UserService userService;
 
-    private static ClientRole idmSuperAdminRole = null;
-    private static ClientRole cloudServiceAdminRole = null;
-    private static ClientRole cloudIdentityAdminRole = null;
-    private static ClientRole cloudUserAdminRole = null;
-    private static ClientRole cloudUserRole = null;
-    private static ClientRole cloudUserManagedRole = null ;
-    private static ClientRole rackerRole = null ;
+    private ClientRole idmSuperAdminRole = null;
+    private ClientRole cloudServiceAdminRole = null;
+    private ClientRole cloudIdentityAdminRole = null;
+    private ClientRole cloudUserAdminRole = null;
+    private ClientRole cloudUserRole = null;
+    private ClientRole cloudUserManagedRole = null ;
+    private ClientRole rackerRole = null ;
 
     @PostConstruct
     public void retrieveAccessControlRoles() {
@@ -362,52 +362,52 @@ public class DefaultAuthorizationService implements AuthorizationService {
         this.scopeAccessService = scopeAccessService;
     }
 
-    public static ClientRole getCloudServiceAdminRole() {
+    public ClientRole getCloudServiceAdminRole() {
         return cloudServiceAdminRole;
     }
 
-    public static void setCloudServiceAdminRole(ClientRole cloudServiceAdminRole) {
-        DefaultAuthorizationService.cloudServiceAdminRole = cloudServiceAdminRole;
+    public void setCloudServiceAdminRole(ClientRole cloudServiceAdminRole) {
+        this.cloudServiceAdminRole = cloudServiceAdminRole;
     }
 
-    public static ClientRole getRackerRole() {
+    public ClientRole getRackerRole() {
         return rackerRole;
     }
 
-    public static void setRackerRole(ClientRole rackerRole) {
-        DefaultAuthorizationService.rackerRole = rackerRole;
+    public void setRackerRole(ClientRole rackerRole) {
+        this.rackerRole = rackerRole;
     }
 
-    public static ClientRole getCloudIdentityAdminRole() {
+    public ClientRole getCloudIdentityAdminRole() {
         return cloudIdentityAdminRole;
     }
 
-    public static void setCloudIdentityAdminRole(ClientRole cloudIdentityAdminRole) {
-        DefaultAuthorizationService.cloudIdentityAdminRole = cloudIdentityAdminRole;
+    public void setCloudIdentityAdminRole(ClientRole cloudIdentityAdminRole) {
+        this.cloudIdentityAdminRole = cloudIdentityAdminRole;
     }
 
-    public static ClientRole getCloudUserAdminRole() {
+    public ClientRole getCloudUserAdminRole() {
         return cloudUserAdminRole;
     }
 
-    public static void setCloudUserAdminRole(ClientRole cloudUserAdminRole) {
-        DefaultAuthorizationService.cloudUserAdminRole = cloudUserAdminRole;
+    public void setCloudUserAdminRole(ClientRole cloudUserAdminRole) {
+        this.cloudUserAdminRole = cloudUserAdminRole;
     }
 
-    public static ClientRole getCloudUserRole() {
+    public ClientRole getCloudUserRole() {
         return cloudUserRole;
     }
 
-    public static void setCloudUserRole(ClientRole cloudUserRole) {
-        DefaultAuthorizationService.cloudUserRole = cloudUserRole;
+    public void setCloudUserRole(ClientRole cloudUserRole) {
+        this.cloudUserRole = cloudUserRole;
     }
 
-    public static ClientRole getIdmSuperAdminRole() {
+    public ClientRole getIdmSuperAdminRole() {
         return idmSuperAdminRole;
     }
 
-    public static void setIdmSuperAdminRole(ClientRole idmSuperAdminRole) {
-        DefaultAuthorizationService.idmSuperAdminRole = idmSuperAdminRole;
+    public void setIdmSuperAdminRole(ClientRole idmSuperAdminRole) {
+        this.idmSuperAdminRole = idmSuperAdminRole;
     }
 
     public ClientRole getCloudUserManagedRole() {
