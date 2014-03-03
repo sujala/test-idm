@@ -635,38 +635,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
         Iterable<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
-
-        /*
-            iterate over scope access to:
-                1. the most recent scope access for the specified client id (regardless of whether it's expired)
-                2. Delete expired scope accesses (regardless of the client id) unless it's the most recent scope access for the specified client id
-            TODO: Ideally the deletion would be batched or even done asynchronously.
-         */
-        ScopeAccess mostRecentForClient = null;
-        for (ScopeAccess scopeAccess : scopeAccessList) {
-            if (clientId.equals(scopeAccess.getClientId()) && (scopeAccess instanceof UserScopeAccess)) {
-                //check for most recent
-                if (mostRecentForClient == null || mostRecentForClient.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
-                    //this new scope access is more recent than the currently chosen one. Check if we should delete the
-                    //current one and update the reference to most recent
-                    if (mostRecentForClient != null && mostRecentForClient.isAccessTokenExpired(new DateTime())) {
-                        deleteScopeAccessQuietly(mostRecentForClient);
-                    }
-                    mostRecentForClient = scopeAccess;
-                }
-                else if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    deleteScopeAccessQuietly(scopeAccess);
-                }
-            }
-            else {
-                //cleaning up expired scope access objects for other client ids.
-                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    deleteScopeAccessQuietly(scopeAccess);
-                }
-            }
-        }
-
-        if (mostRecentForClient == null) {
+        if (! scopeAccessList.iterator().hasNext()) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             if (authenticatedBy != null) {
                 scopeAccess.setAuthenticatedBy(authenticatedBy);
@@ -675,13 +644,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return scopeAccess;
         }
 
-        if (authenticatedBy != null) {
-            //NOTE - this may cause issues if token is NOT expired because updateExpiredUserScopeAccessInternal will return this
-            // exact token reference, which is subsequently returned by this method. This means the returned object will reflect
-            // a different state (authenticatedBy) then the object within ldap.
-            mostRecentForClient.setAuthenticatedBy(authenticatedBy);
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
+
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
+                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                }
+            }
         }
-        return updateExpiredUserScopeAccessInternal(user, (UserScopeAccess) mostRecentForClient, false);  //this assumes it's a UserScopeAccess, though search is for all types
+        if (authenticatedBy != null) {
+            mostRecent.setAuthenticatedBy(authenticatedBy);
+        }
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
 
     private void deleteScopeAccessQuietly(ScopeAccess scopeAccess) {
