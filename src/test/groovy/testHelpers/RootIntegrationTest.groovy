@@ -11,6 +11,11 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.ws.rs.core.MediaType
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON
+import static javax.ws.rs.core.MediaType.APPLICATION_XML
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -42,6 +47,8 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
     @Shared FoundationApiMethods foundation = new FoundationApiMethods()
+
+    def mediaTypeContext
 
     public setupSpec(){
         doSetupSpec()
@@ -152,4 +159,20 @@ class RootIntegrationTest extends Specification {
     def getRandomUUID(prefix='') {
         String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
     }
+
+    def useMediaType(accept, contentType) {
+        mediaTypeContext = GroovySpy(MediaTypeContext, global: true)
+        mediaTypeContext.accept >> accept
+        mediaTypeContext.contentType  >> contentType
+    }
+
+    def contentTypePermutations() {
+        return [
+                [APPLICATION_XML, APPLICATION_XML],
+                [APPLICATION_JSON, APPLICATION_JSON],
+                [APPLICATION_XML, APPLICATION_JSON],
+                [APPLICATION_JSON, APPLICATION_XML]
+        ]
+    }
+
 }

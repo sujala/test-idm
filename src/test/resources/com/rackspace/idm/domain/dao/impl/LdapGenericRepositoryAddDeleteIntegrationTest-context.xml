@@ -8,6 +8,6 @@
 			">
 
     <context:component-scan use-default-filters="false" base-package="com.rackspace.idm.domain.dao.impl">
-        <context:include-filter type="regex" expression=".*LdapGenericRepositoryAddDeleteIntegrationTest.*" />
+        <context:include-filter type="regex" expression=".*LdapGenericRepositoryAddDeleteIntegrationTestConfig.*" />
     </context:component-scan>
 </beans>

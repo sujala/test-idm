@@ -54,6 +54,13 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="mobilePhones" type="RAX-AUTH:MobilePhones" >
+        <annotation>
+            <xsd:documentation>
+                <p>A mobilePhones represents a list of mobile phone capable of being used for multifactor.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
     <element name="verificationCode" type="RAX-AUTH:VerificationCode" >
         <annotation>
             <xsd:documentation>
@@ -117,25 +124,49 @@
         </sequence>
     </complexType>
 
+    <complexType name="MultiFactorDevice" abstract="true">
+        <attribute name="id" type="xsd:string">
+        <annotation>
+            <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    An ID uniquely identifying the device.
+                </p>
+            </xsd:documentation>
+        </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
     <complexType name="MobilePhone">
-        <attribute name="id" type="xsd:string" use="required">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        An ID uniquely identifying the mobile phone.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
-        <attribute name="number" type="xsd:string" use="required">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The telephone number in international format (preceded with '+' and country code). If not preceded with '+', US number is assumed.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
+        <complexContent>
+            <extension base="RAX-AUTH:MultiFactorDevice">
+                <attribute name="number" type="xsd:string">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                The phone number of the mobile phone.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="verified" type="xsd:boolean">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                Whether the device has been verified for the associated user.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="MobilePhones">
+        <sequence>
+            <element name="mobilePhone" type="RAX-AUTH:MobilePhone" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     <complexType name="VerificationCode">
         <attribute name="code" type="xsd:string" use="required">

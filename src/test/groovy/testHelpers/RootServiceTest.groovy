@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
@@ -18,12 +19,14 @@ import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.AuthorizationContext
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
@@ -96,6 +99,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.ObjectFactory
+import org.slf4j.Logger
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -143,6 +147,7 @@ class RootServiceTest extends Specification {
     @Shared QuestionConverterCloudV20 questionConverter
     @Shared SecretQAConverterCloudV20 secretQAConverter
     @Shared ObjectConverter objectConverter
+    @Shared MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20;
 
     //services
     @Shared ApplicationService applicationService
@@ -185,6 +190,7 @@ class RootServiceTest extends Specification {
     @Shared CryptHelper cryptHelper
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
     @Shared MultiFactorCloud20Service multiFactorCloud20Service;
+    @Shared MultiFactorService multiFactorService;
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -197,6 +203,7 @@ class RootServiceTest extends Specification {
     @Shared ApplicationRoleDao applicationRoleDao
     @Shared AuthDao authDao
     @Shared DomainDao domainDao
+    @Shared MobilePhoneDao mobilePhoneDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -434,10 +441,19 @@ class RootServiceTest extends Specification {
         userService = Mock()
         service.userService = userService
     }
+    def mockMultiFactorService(service) {
+        multiFactorService = Mock()
+        service.multiFactorService = multiFactorService
+    }
 
     def mockExceptionHandler(service){
         exceptionHandler = Mock()
         service.exceptionHandler = exceptionHandler
+    }
+
+    def mockPhoneCoverterCloudV20(service) {
+        mobilePhoneConverterCloudV20 = Mock()
+        service.mobilePhoneConverterCloudV20 = mobilePhoneConverterCloudV20
     }
 
     def mockAuthenticationService(service) {
@@ -565,6 +581,11 @@ class RootServiceTest extends Specification {
         service.defaultCloud20Service = defaultCloud20Service
     }
 
+    def mockCloud20Service(service) {
+        defaultCloud20Service = Mock()
+        service.cloud20Service = defaultCloud20Service
+    }
+
     /*
         Mock Dao
     */
@@ -617,6 +638,11 @@ class RootServiceTest extends Specification {
     def mockDomainDao(service) {
         domainDao = Mock()
         service.domainDao = domainDao
+    }
+
+    def mockMobilePhoneRepository(service) {
+        mobilePhoneDao = Mock()
+        service.mobilePhoneDao = mobilePhoneDao
     }
 
     /*
@@ -939,6 +965,10 @@ class RootServiceTest extends Specification {
 
     def allowAccess(scopeAccess) {
         scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
+    }
+
+    def allowMultiFactorAccess() {
+        config.getBoolean("multifactor.services.enabled") >> true
     }
 
     def m(String value){

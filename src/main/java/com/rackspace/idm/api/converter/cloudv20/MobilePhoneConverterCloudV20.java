@@ -1,11 +1,15 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.apache.commons.configuration.Configuration;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Converts between the MobilePhone "LDAP Entity" and the MobilePhone "REST request/response" entity
@@ -41,5 +45,19 @@ public class MobilePhoneConverterCloudV20 {
     public MobilePhone toMobilePhoneWeb(com.rackspace.idm.domain.entity.MobilePhone mobilePhoneEntity) {
         MobilePhone phone = mapper.map(mobilePhoneEntity, MobilePhone.class);
         return phone;
+    }
+
+     /**
+     * Converts from the LDAP representation of a mobile phone list to the request/response web service based representation.
+     *
+     * @param phoneEntityList
+     * @return
+     */
+    public MobilePhones toMobilePhonesWeb(List<com.rackspace.idm.domain.entity.MobilePhone> phoneEntityList) {
+        MobilePhones phones = new MobilePhones();
+        for (com.rackspace.idm.domain.entity.MobilePhone phoneEntity : phoneEntityList) {
+            phones.getMobilePhone().add(toMobilePhoneWeb(phoneEntity));
+        }
+        return phones;
     }
 }

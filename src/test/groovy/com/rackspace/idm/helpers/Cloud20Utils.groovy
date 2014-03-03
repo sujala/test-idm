@@ -2,10 +2,13 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.domain.entity.MobilePhone
+import com.sun.jersey.api.client.GenericType
 import org.apache.http.HttpStatus
 import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -482,4 +485,9 @@ class Cloud20Utils {
         matcher[0][1]
     }
 
+    def listDevices(user, token=getToken(user.username)) {
+        def response = methods.listDevices(token, user.id)
+        assert (response.status = SC_OK)
+        response.getEntity(MobilePhones)
+    }
 }

@@ -111,4 +111,14 @@ public interface MultiFactorCloud20Service {
      */
     AuthResponseTuple authenticateSecondFactor(String sessionId, CredentialType credential);
 
+     /**
+     * The multifactor service to list devices for a given user.
+     *
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId);
 }
