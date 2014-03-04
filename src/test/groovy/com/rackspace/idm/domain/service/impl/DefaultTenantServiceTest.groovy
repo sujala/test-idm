@@ -164,7 +164,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
 
-        tenantRoleDao.getTenantRolesForUser(caller) >> tenantRoleList
+        tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
         tenantRoleDao.getTenantRolesForUser(_) >> [].asList()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         applicationService.getById(_) >> entityFactory.createApplication()
@@ -174,7 +174,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.addCallerTenantRolesToUser(caller, user)
 
         then:
-        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
         config.getString("cloudAuth.adminRole") >> ""
         config.getString("cloudAuth.serviceAdminRole") >> ""
         config.getString("cloudAuth.userAdminRole") >> ""
@@ -189,36 +188,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         service.getRoleDetails(roles)
 
         then:
-        1 * applicationService.getClientRolesByIds(_) >> new ArrayList<ClientRole>()
-    }
-
-    def "getRoleDetails - verify that roles get populated correctly"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.name = "name"
-            it.roleRsId = "1"
-            it.tenantIds = ["123"].asList()
-            it
-        }
-        def roles = [ tenantRole ].asList()
-        def clientRole = entityFactory.createClientRole().with {
-            it.name = "name"
-            it.id = "1"
-            it.description = "desc"
-            it.propagate = false
-            it
-        }
-        def clientRoles = [ clientRole ].asList()
-
-        when:
-        List<TenantRole> roleList = service.getRoleDetails(roles)
-
-        then:
-        1 * applicationService.getClientRolesByIds(_) >> clientRoles
-        roleList.get(0).name == clientRoles.get(0).name
-        roleList.get(0).roleRsId == clientRoles.get(0).id
-        roleList.get(0).description == clientRoles.get(0).description
-        roleList.get(0).tenantIds.contains("123")
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
     }
 
     def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {

@@ -65,6 +65,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(user) >> [sa].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa_2
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -91,8 +92,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >>> [
-                [ sa, expired_sa ].asList()
+                [ expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
+
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
@@ -154,7 +157,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
         def mostRecentScopeAccess = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
 
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess, mostRecentScopeAccess].asList()
+        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
@@ -682,6 +686,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             it.impersonatingToken = "impToken"
             it.impersonatingUsername = "user"
             it.accessTokenExp = new Date().plus(2)
+            it.accessTokenString = "tokenString"
             it
         }
         def userScopeAccess = new UserScopeAccess().with {
@@ -696,6 +701,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> createUserScopeAccess()
         0 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -706,6 +712,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             it.impersonatingToken = "impToken"
             it.impersonatingUsername = "user"
             it.accessTokenExp = new Date().minus(1)
+            it.accessTokenString = "tokenString"
             it
         }
         def userScopeAccess = new UserScopeAccess().with {
@@ -720,6 +727,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
         1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -730,6 +738,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             it.impersonatingToken = "impToken"
             it.impersonatingUsername = "user"
             it.accessTokenExp = new Date().plus(2)
+            it.accessTokenString = "tokenString"
             it
         }
 
@@ -739,6 +748,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
         1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -751,7 +761,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess(), expireScopeAccess(createUserScopeAccess())].asList()
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
@@ -768,7 +779,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         service.getValidUserScopeAccessForClientId(user, "clientId", authenticatedBy)
 
         then:
-        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess(),expireScopeAccess(createUserScopeAccess())].asList()
+        1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->

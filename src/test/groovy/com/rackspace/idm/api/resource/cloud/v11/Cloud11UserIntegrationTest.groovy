@@ -12,6 +12,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         User user = utils11.createUser(testUtils.getRandomUUID('test@test'))
 
         when:
+        utils11.authenticateWithKey(user.id, user.key)
         utils11.getUserByName(user.id)
         def userEnabled = utils11.getUserEnabled(user)
         assert (userEnabled.id == user.id)

@@ -55,8 +55,6 @@ public interface ApplicationService {
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     
     ClientRole getClientRoleById(String id);
-
-    Iterable<ClientRole> getClientRolesByIds(List<String> roleIds);
     
     Iterable<ClientRole> getAllClientRoles();
 

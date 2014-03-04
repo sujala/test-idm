@@ -307,11 +307,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public Iterable<ClientRole> getClientRolesByIds(List<String> roleIds) {
-        return applicationRoleDao.getClientRoles(roleIds);
-    }
-
-    @Override
     public Iterable<Application> getOpenStackServices() {
         logger.debug("Getting Open Stack Services");
         return this.applicationDao.getOpenStackServices();

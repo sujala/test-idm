@@ -17,6 +17,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockApplicationService(service)
         mockUserService(service)
+        mockDomainService(service)
         retrieveAccessControlRoles()
     }
 
@@ -155,23 +156,31 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     def "authorizeCloudUserAdmin verifies the scopeAccess is not expired"() {
         given:
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUserAdmin(expiredScopeAccess)
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
+        1 * userService.getUserByScopeAccess(expiredScopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
         result == false
     }
 
     def "authorizeCloudUserAdmin verifies scopeAccess belongs to a cloudServiceAdmin"() {
         given:
         def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUserAdmin(userScopeAccess)
 
         then:
+        1 * userService.getUserByScopeAccess(userScopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
         result == false
     }
 
@@ -179,6 +188,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         given:
         def scopeAccess = createUserScopeAccess()
         def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUserAdmin(scopeAccess)
@@ -187,36 +197,48 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
         1 * userService.getUserByScopeAccess(scopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
         1 * tenantService.doesUserContainTenantRole(user, _) >> true
     }
 
     def "authorizeCloudUser verifies the scopeAccess is not expired"() {
         given:
         def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUser(expiredScopeAccess)
 
         then:
         1 * scopeAccessService.isScopeAccessExpired(_) >> true
+        1 * userService.getUserByScopeAccess(expiredScopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
         result == false
     }
 
     def "authorizeCloudUser verifies scopeAccess belongs to a cloudServiceAdmin"() {
         given:
         def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUser(userScopeAccess)
 
         then:
         result == false
+        1 * scopeAccessService.isScopeAccessExpired(userScopeAccess) >> false
+        1 * userService.getUserByScopeAccess(userScopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
+        1 * tenantService.doesUserContainTenantRole(user, _) >> false
     }
 
     def "authorizeCloudUser allows access with valid role and non expired token"() {
         given:
         def scopeAccess = createUserScopeAccess()
         def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
 
         when:
         def result = service.authorizeCloudUser(scopeAccess)
@@ -225,6 +247,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
         1 * userService.getUserByScopeAccess(scopeAccess) >> user
+        1 * domainService.getDomain(user.getDomainId()) >> domain
         1 * tenantService.doesUserContainTenantRole(user, _) >> true
     }
 

@@ -718,47 +718,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
-        return updateExpiredUserScopeAccessInternal(user, scopeAccess, impersonated);
-    }
-
-    /**
-     * Internal method where can trust that provided scopeAccess belongs to user
-     *
-     * @param scopeAccess
-     * @param impersonated
-     * @return
-     */
-    private UserScopeAccess updateExpiredUserScopeAccessInternal(BaseUser user, UserScopeAccess scopeAccess, boolean impersonated) {
-        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            UserScopeAccess newScope = cloneUserScopeAccessWithNewExpirationAndToken(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(user, newScope);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
-            return newScope;
-        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
-            UserScopeAccess newScope = cloneUserScopeAccessWithNewExpirationAndToken(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(user, newScope);
-            return newScope;
-        }
-        return scopeAccess;
-    }
-
-    /**
-     *
-     *
-     * @param toClone
-     * @param impersonated misnomer based on how this is actually used.
-     * @return
-     */
-    private UserScopeAccess cloneUserScopeAccessWithNewExpirationAndToken(UserScopeAccess toClone, boolean impersonated) {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
-        scopeAccessToAdd.setClientId(toClone.getClientId());
-        scopeAccessToAdd.setClientRCN(toClone.getClientRCN());
-        scopeAccessToAdd.setUsername(toClone.getUsername());
-        scopeAccessToAdd.setUserRCN(toClone.getUserRCN());
-        scopeAccessToAdd.setUserRsId(toClone.getUserRsId());
-        scopeAccessToAdd.setAuthenticatedBy(toClone.getAuthenticatedBy());
-        scopeAccessToAdd.setAccessTokenString(this.generateToken());
+        scopeAccessToAdd.setClientId(scopeAccess.getClientId());
+        scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+        scopeAccessToAdd.setUsername(scopeAccess.getUsername());
+        scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
+        scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
+        scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
 
         int expirationSeconds;
         if (impersonated) {
@@ -767,7 +733,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
         scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        return scopeAccessToAdd;
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
+
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+
+            scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
+            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            return scopeAccessToAdd;
+        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
+            return scopeAccessToAdd;
+        }
+        return scopeAccess;
     }
 
     @Override
