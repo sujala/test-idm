@@ -320,12 +320,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean isDefaultUser(ScopeAccess scopeAccess) {
         // This method returns whether or not a user is a default user
         // A default user is defined as one that has the identity:default role
-        // but NOT the identity:user-manage role.
+        // this includes a user that also has the identity:user-manage role
         BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
-        if (!containsRole(user, Arrays.asList(cloudUserRole))) {
-            return false;
-        }
-        return !containsRole(user, Arrays.asList(cloudUserManagedRole));
+        return containsRole(user, Arrays.asList(cloudUserRole));
     }
 
     @Override
