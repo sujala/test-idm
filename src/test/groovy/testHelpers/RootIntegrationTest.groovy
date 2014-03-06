@@ -168,10 +168,10 @@ class RootIntegrationTest extends Specification {
 
     def contentTypePermutations() {
         return [
-                [APPLICATION_XML, APPLICATION_XML],
-                [APPLICATION_JSON, APPLICATION_JSON],
-                [APPLICATION_XML, APPLICATION_JSON],
-                [APPLICATION_JSON, APPLICATION_XML]
+                [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE],
+                [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE],
+                [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE],
+                [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
         ]
     }
 
