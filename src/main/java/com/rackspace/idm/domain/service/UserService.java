@@ -114,8 +114,6 @@ public interface UserService {
 
     PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
 
-    int getUserWeight(User user, String applicationId);
-
     void setValidator(Validator validator);
 
     User getUserByUsernameForAuthentication(String username);

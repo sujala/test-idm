@@ -185,7 +185,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         }
 
         when:
-        def response = cloud20.addPhoneToUser(token, user.id, v2Factory.createMobilePhone())
+        def response = cloud20.addPhoneToUser(token, user.id, v2Factory.createMobilePhone(), requestContentMediaType, acceptMediaType)
 
         then:
         response.status == status
@@ -239,7 +239,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         }
 
         when:
-        def response = cloud20.sendVerificationCode(token, user.id, responsePhoneId)
+        def response = cloud20.sendVerificationCode(token, user.id, responsePhoneId, requestContentMediaType, acceptMediaType)
 
         then:
         response.status == status
@@ -295,7 +295,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
         when:
         def verificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        def response = cloud20.verifyVerificationCode(token, user.id, responsePhoneId, verificationCode)
+        def response = cloud20.verifyVerificationCode(token, user.id, responsePhoneId, verificationCode, requestContentMediaType, acceptMediaType)
 
         then:
         response.status == status
@@ -328,6 +328,61 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 204
+    }
+
+    @Unroll("MFA feature flag for list MFA phones API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
+    def "multifactor feature flag works for list MFA phones"() {
+        setup:
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
+                flagSettingsFile)
+        def user = createUserAdmin()
+        def token = authenticate(user.username)
+        if(addMfaRole) {
+            def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+            cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
+        }
+        def responsePhoneId
+        if(addPhone) {
+            responsePhoneId = addPhone(token, user, false).id
+        } else {
+            responsePhoneId = ""
+        }
+
+        when:
+        def response = cloud20.listDevices(token, user.id, acceptMediaType, requestContentMediaType)
+
+        then:
+        response.status == status
+
+        cleanup:
+        if (user != null) {
+            if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
+                deleteUserQuietly(user)
+        }
+        if (responsePhoneId != null && !responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
+
+        where:
+        requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | OFF_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | OFF_SETTINGS_FILE | 404
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 200
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 200
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 200
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 200
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 200
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 200
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 200
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 200
     }
 
     def addPhone(token, user, verify=true) {

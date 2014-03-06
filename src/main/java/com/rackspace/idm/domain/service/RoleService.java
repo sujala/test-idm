@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.ClientRole;
 
+import java.util.List;
+
 public interface RoleService {
 
     ClientRole getRoleByName(String roleName);
@@ -13,4 +15,5 @@ public interface RoleService {
     ClientRole getComputeDefaultRole();
     ClientRole getObjectStoreDefaultRole();
     boolean isIdentityAccessRole(ClientRole role);
+    List<ClientRole> getIdentityAccessRoles();
 }

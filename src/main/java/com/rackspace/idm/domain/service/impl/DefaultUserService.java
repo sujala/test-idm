@@ -397,25 +397,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public int getUserWeight(User user, String applicationId) {
-        List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user, applicationId);
-        for (TenantRole tenantRole : tenantRoles) {
-            ClientRole clientRole = applicationService.getClientRoleById(tenantRole.getRoleRsId());
-            if(roleService.isIdentityAccessRole(clientRole)) {
-                return clientRole.getRsWeight();
-            }
-        }
-        return getDefaultUserWeight();
-    }
-
-    private int getDefaultUserWeight() {
-        String clientId = config.getString("cloudAuth.clientId");
-        String roleName = config.getString("cloudAuth.userRole");
-        ClientRole defaultUserRole = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
-        return defaultUserRole.getRsWeight();
-    }
-
-    @Override
     public void setValidator(Validator validator) {
         this.validator = validator;
     }
