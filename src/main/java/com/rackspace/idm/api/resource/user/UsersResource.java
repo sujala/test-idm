@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
@@ -70,8 +69,7 @@ public class UsersResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader) {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         Iterable<User> userList = null;
     	if (!StringUtils.isBlank(username)) {
@@ -101,8 +99,7 @@ public class UsersResource extends ParentResource {
         userValidator.validateUsername(user.getUsername());
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         com.rackspace.api.idm.v1.User jaxbUser = user;
 

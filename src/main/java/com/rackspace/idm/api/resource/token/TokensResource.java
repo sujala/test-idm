@@ -8,7 +8,6 @@ import com.rackspace.idm.api.converter.CredentialsConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.Credentials;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
@@ -123,8 +122,7 @@ public class TokensResource extends ParentResource {
                                         @PathParam("tokenString") String tokenString) {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        AuthorizationContext context = authorizationService.getAuthorizationContext(scopeAccess);
-        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(context);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         logger.debug("Validating Access Token: {}", tokenString);
         AuthData authData = authenticationService.getAuthDataFromToken(tokenString);

@@ -28,10 +28,9 @@ public interface TenantService {
     void updateTenant(Tenant tenant);
 
     void deleteRbacRolesForUser(User user);
-
-    List<TenantRole> getRoleDetails(Iterable<TenantRole> roles);
     
     TenantRole getTenantRoleForUserById(User user, String roleId);
+    boolean doesUserContainTenantRole(BaseUser user, String roleId);
     TenantRole checkAndGetTenantRoleForUserById(User user, String roleId);
 
     TenantRole getTenantRoleForApplicationById(Application application, String id);

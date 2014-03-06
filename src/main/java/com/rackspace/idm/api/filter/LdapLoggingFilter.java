@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.filter;
 
-import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -209,12 +208,11 @@ public class LdapLoggingFilter extends OncePerRequestFilter {
             throw new NotAuthorizedException(errMsg);
         }
         ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        AuthorizationContext context = authorizationService.getAuthorizationContext(authScopeAccess);
 
         if (authScopeAccess == null || authScopeAccess.isAccessTokenExpired(new DateTime())) {
             throw new NotAuthorizedException(errMsg);
         }
-        if (!authorizationService.authorizeCloudServiceAdmin(context)) {
+        if (!authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             throw new ForbiddenException(errMsg);
         }
         return authScopeAccess;

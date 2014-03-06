@@ -101,7 +101,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(ScopeAccess.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -122,7 +122,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(ScopeAccess.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -143,7 +143,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(null);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(ScopeAccess.class)))
         .andReturn(true);
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
@@ -164,7 +164,7 @@ public class TokenServiceTests {
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(csa);
-        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(AuthorizationContext.class)))
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(EasyMock.anyObject(ScopeAccess.class)))
         .andReturn(false);
         EasyMock.expect(mockAuthorizationService.authorizeAsRequestorOrOwner(usa, csa))
         .andReturn(false);

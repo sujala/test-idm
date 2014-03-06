@@ -33,6 +33,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String NULL_SCOPE_ACCESS_OBJECT_INSTANCE = "Null scope access object instance.";
     public static final String ERROR_DELETING_SCOPE_ACCESS = "Error deleting scope access %s - %s";
 
+    public static final String LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME = "feature.optimize.impersonation.token.cleanup.enabled";
+    public static final boolean LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_DEFAULT_VALUE = false;
+    public static final String FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME = "feature.ignore.token.delete.failure.enabled";
+    public static final boolean FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE = false;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -120,6 +125,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return tenants;
     }
 
+    private boolean optimizeImpersonatedTokenCleanup() {
+        return config.getBoolean(LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_DEFAULT_VALUE);
+    }
+
+    private boolean ignoreTokenDeleteFailures() {
+        return config.getBoolean(FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE);
+    }
+
     private String getOpenStackType(TenantRole role) {
         String type = null;
 
@@ -150,11 +163,32 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ImpersonatedScopeAccess addImpersonatedScopeAccess(BaseUser user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
+
         ImpersonatedScopeAccess mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(user, impersonatingUsername);
 
-        for (ScopeAccess scopeAccess : scopeAccessDao.getAllImpersonatedScopeAccessForUser(user)) {
-            if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                scopeAccessDao.deleteScopeAccess(scopeAccess);
+        try {
+            DateTime now = new DateTime();
+            Iterable<ScopeAccess> scopeAccessToCheckForExpired;
+            if (optimizeImpersonatedTokenCleanup()) {
+                //only clean up those impersonated tokens for the impersonatingUsername
+                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUser(user, impersonatingUsername);
+            } else {
+                //clean up all impersonated tokens regardless of who it's for
+                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUser(user);
+            }
+
+            for (ScopeAccess scopeAccess : scopeAccessToCheckForExpired) {
+                if (scopeAccess.isAccessTokenExpired(now)) {
+                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (ignoreTokenDeleteFailures()) {
+                //if error deleting token, just log, and exit deletion routine
+                logger.warn(String.format("Encountered an error deleting expired impersonated scope accesses for user '%s'. Exiting expired scope access cleanup routine for this user.", user.getUniqueId()), ex);
+            } else {
+                //just rethrow error as if it was never caught
+                throw ex;
             }
         }
 
@@ -177,8 +211,27 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
 
             if (!mostRecent.isAccessTokenExpired(new DateTime())) {
+                /*
+                not sure why we create a new token with same token string, delete the old token, then add a the new token
+                back. This is inefficient and introduces concurrency issue where if 2 threads call this method to add a new token
+                for the same impersonatingUsername and
+                there is an existing valid token for that impersonating username, each thread will first try to delete the
+                same "valid" token - resulting in a failure. Even if the deletion failure was ignored, each thread would
+                then try to add a new token with the same token string (the second request will fail since the token string is part of
+                the scope access rdn). Ultimately, this means there's no point in making the deleteScopeAccess in this block
+                fail safe since we'd just get an error later on anyway.
+
+                Instead, we should introduce refresh windows or whatnot for impersonated tokens and return existing impersonated tokens
+                rather than always create new ones. Within refresh windows new ones should be created with NEW token strings
+                */
                 scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
-                scopeAccessDao.deleteScopeAccess(mostRecent);
+                try {
+                    scopeAccessDao.deleteScopeAccess(mostRecent);
+                } catch (RuntimeException ex) {
+                    //log the issue, but ultimately, we need to rethrow the error
+                    logger.warn(String.format("Encountered an error deleting a valid impersonated token for user '%s' impersonating user '%s'.", user.getUniqueId(), impersonatingUsername), ex);
+                    throw ex;
+                }
             }
         }
 
@@ -582,38 +635,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
         Iterable<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
-
-        /*
-            iterate over scope access to:
-                1. the most recent scope access for the specified client id (regardless of whether it's expired)
-                2. Delete expired scope accesses (regardless of the client id) unless it's the most recent scope access for the specified client id
-            TODO: Ideally the deletion would be batched or even done asynchronously.
-         */
-        ScopeAccess mostRecentForClient = null;
-        for (ScopeAccess scopeAccess : scopeAccessList) {
-            if (clientId.equals(scopeAccess.getClientId()) && (scopeAccess instanceof UserScopeAccess)) {
-                //check for most recent
-                if (mostRecentForClient == null || mostRecentForClient.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
-                    //this new scope access is more recent than the currently chosen one. Check if we should delete the
-                    //current one and update the reference to most recent
-                    if (mostRecentForClient != null && mostRecentForClient.isAccessTokenExpired(new DateTime())) {
-                        deleteScopeAccessQuietly(mostRecentForClient);
-                    }
-                    mostRecentForClient = scopeAccess;
-                }
-                else if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    deleteScopeAccessQuietly(scopeAccess);
-                }
-            }
-            else {
-                //cleaning up expired scope access objects for other client ids.
-                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    deleteScopeAccessQuietly(scopeAccess);
-                }
-            }
-        }
-
-        if (mostRecentForClient == null) {
+        if (! scopeAccessList.iterator().hasNext()) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             if (authenticatedBy != null) {
                 scopeAccess.setAuthenticatedBy(authenticatedBy);
@@ -622,13 +644,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return scopeAccess;
         }
 
-        if (authenticatedBy != null) {
-            //NOTE - this may cause issues if token is NOT expired because updateExpiredUserScopeAccessInternal will return this
-            // exact token reference, which is subsequently returned by this method. This means the returned object will reflect
-            // a different state (authenticatedBy) then the object within ldap.
-            mostRecentForClient.setAuthenticatedBy(authenticatedBy);
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
+
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
+                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                }
+            }
         }
-        return updateExpiredUserScopeAccessInternal(user, (UserScopeAccess) mostRecentForClient, false);  //this assumes it's a UserScopeAccess, though search is for all types
+        if (authenticatedBy != null) {
+            mostRecent.setAuthenticatedBy(authenticatedBy);
+        }
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
 
     private void deleteScopeAccessQuietly(ScopeAccess scopeAccess) {
@@ -690,47 +718,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
-        return updateExpiredUserScopeAccessInternal(user, scopeAccess, impersonated);
-    }
-
-    /**
-     * Internal method where can trust that provided scopeAccess belongs to user
-     *
-     * @param scopeAccess
-     * @param impersonated
-     * @return
-     */
-    private UserScopeAccess updateExpiredUserScopeAccessInternal(BaseUser user, UserScopeAccess scopeAccess, boolean impersonated) {
-        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            UserScopeAccess newScope = cloneUserScopeAccessWithNewExpirationAndToken(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(user, newScope);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
-            return newScope;
-        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
-            UserScopeAccess newScope = cloneUserScopeAccessWithNewExpirationAndToken(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(user, newScope);
-            return newScope;
-        }
-        return scopeAccess;
-    }
-
-    /**
-     *
-     *
-     * @param toClone
-     * @param impersonated misnomer based on how this is actually used.
-     * @return
-     */
-    private UserScopeAccess cloneUserScopeAccessWithNewExpirationAndToken(UserScopeAccess toClone, boolean impersonated) {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
-        scopeAccessToAdd.setClientId(toClone.getClientId());
-        scopeAccessToAdd.setClientRCN(toClone.getClientRCN());
-        scopeAccessToAdd.setUsername(toClone.getUsername());
-        scopeAccessToAdd.setUserRCN(toClone.getUserRCN());
-        scopeAccessToAdd.setUserRsId(toClone.getUserRsId());
-        scopeAccessToAdd.setAuthenticatedBy(toClone.getAuthenticatedBy());
-        scopeAccessToAdd.setAccessTokenString(this.generateToken());
+        scopeAccessToAdd.setClientId(scopeAccess.getClientId());
+        scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+        scopeAccessToAdd.setUsername(scopeAccess.getUsername());
+        scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
+        scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
+        scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
 
         int expirationSeconds;
         if (impersonated) {
@@ -739,7 +733,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
         scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        return scopeAccessToAdd;
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
+
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+
+            scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
+            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            return scopeAccessToAdd;
+        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
+            return scopeAccessToAdd;
+        }
+        return scopeAccess;
     }
 
     @Override

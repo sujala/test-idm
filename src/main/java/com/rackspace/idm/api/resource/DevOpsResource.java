@@ -44,5 +44,4 @@ public class DevOpsResource {
     public Response getLog(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("logName") String logName) {
         return devOpsService.getLdapLog(uriInfo, authToken, logName).build();
     }
-
 }

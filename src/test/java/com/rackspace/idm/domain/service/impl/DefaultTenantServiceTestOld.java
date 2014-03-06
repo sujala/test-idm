@@ -113,11 +113,8 @@ public class DefaultTenantServiceTestOld {
         Entry entry = new Entry(dn);
         Entry readOnlyEntry = new ReadOnlyEntry(entry);
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
-
-        Iterator i = Mockito.mock(Iterator.class);
         when(scopeAccess.getLDAPEntry()).thenReturn((ReadOnlyEntry) readOnlyEntry);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(new ArrayList<TenantRole>());
-        when(applicationService.getClientRolesByIds(new ArrayList<String>())).thenReturn(new ArrayList<ClientRole>());
 
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
         verify(tenantRoleDao).getTenantRolesForScopeAccess(scopeAccess);
@@ -238,7 +235,6 @@ public class DefaultTenantServiceTestOld {
         tenantRoleList.add(null);
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoleList);
         when(tenantRoleDao.getTenantRolesForUser(any(User.class))).thenReturn(new ArrayList<TenantRole>());
-        when(applicationService.getClientRolesByIds(new ArrayList<String>())).thenReturn(new ArrayList<ClientRole>());
         defaultTenantService.getTenantRolesForUser(getUser());
         verify(applicationService, times(0)).getClientRoleById(anyString());
     }

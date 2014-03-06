@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.filter
 
-import com.rackspace.idm.domain.entity.AuthorizationContext
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -105,8 +104,7 @@ class LdapLoggingFilterTest extends Specification {
         filter.doFilterInternal(request, response, fc)
 
         then:
-        filter.scopeAccessService.getScopeAccessByAccessToken( _) >> null
-        filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
+        filter.scopeAccessService.getScopeAccessByAccessToken( _) >> new UserScopeAccess()
         response.getHeaderNames().size() == 0
         response.getStatus() == HttpStatus.UNAUTHORIZED.value()
         !Debug.debugEnabled()
@@ -145,7 +143,6 @@ class LdapLoggingFilterTest extends Specification {
 
         then:
         filter.scopeAccessService.getScopeAccessByAccessToken( _) >> scopeAccess
-        filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
         response.getStatus() == HttpStatus.UNAUTHORIZED.value()
         !Debug.debugEnabled()
         response.getHeaderNames().size() == 0
@@ -170,7 +167,6 @@ class LdapLoggingFilterTest extends Specification {
         then:
         filter.scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
         filter.authorizationService.authorizeCloudServiceAdmin(_) >> false
-        filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
         response.getStatus() == HttpStatus.FORBIDDEN.value()
         !Debug.debugEnabled()
         response.getHeaderNames().size() == 0
@@ -195,7 +191,6 @@ class LdapLoggingFilterTest extends Specification {
         then:
         filter.scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
         filter.authorizationService.authorizeCloudServiceAdmin(_) >> true
-        filter.authorizationService.getAuthorizationContext(_) >> new AuthorizationContext()
         response.getStatus() == HttpStatus.OK.value()
         !Debug.debugEnabled()
         response.getHeaderNames().size() == 1

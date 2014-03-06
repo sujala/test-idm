@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
-import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -41,16 +40,14 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     @Async
     public void encryptUsers(String authToken) {
-        AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
-        authorizationService.verifyServiceAdminLevelAccess(context);
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         userService.reEncryptUsers();
     }
 
     @Override
     public Response.ResponseBuilder getLdapLog(UriInfo uriInfo, String authToken, String logName) {
-        AuthorizationContext context = authorizationService.getAuthorizationContext(getScopeAccessForValidToken(authToken));
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-        authorizationService.verifyServiceAdminLevelAccess(context);
         if (!isLdapLoggingAllowed()) {
             throw new WebApplicationException(404);
         }
