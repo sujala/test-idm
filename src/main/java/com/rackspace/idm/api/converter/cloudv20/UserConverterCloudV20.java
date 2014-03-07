@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -160,11 +161,19 @@ public class UserConverterCloudV20 {
                 jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
             }
 
-            if (user.getRoles() != null) {
+            if (!CollectionUtils.isEmpty(user.getRoles())) {
                 jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(user.getRoles()));
+            } else {
+                /*
+                The initial mapper.map call to create the initial jaxbUser will call user.getRoles(). This
+                call has the side effect of creating an empty ArrayList, which is then set on the jaxbUser object
+                and added to the resultant json as '"roles": {}'. This is not desired. Instead we do not
+                want it included in the json, so null it out.
+                 */
+                jaxbUser.setRoles(null);
             }
 
-            if (user.getRsGroupId() != null) {
+            if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
                 jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
             }
 
