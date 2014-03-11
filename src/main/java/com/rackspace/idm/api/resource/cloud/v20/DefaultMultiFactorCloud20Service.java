@@ -14,14 +14,11 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
-import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -36,13 +33,14 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  */
@@ -59,6 +57,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
+
+    static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
 
     private static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
     private static final String SESSION_ID_LIFETIME_PROP_NAME = "multifactor.sessionid.lifetime";
@@ -102,10 +102,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Autowired
     private SessionIdReaderWriter sessionIdReaderWriter;
 
+    @Autowired
+    private TenantService tenantService;
+
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
-        verifyMultifactorServicesEnabled();
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -128,8 +129,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder sendVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId) {
-        verifyMultifactorServicesEnabled();
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -152,8 +151,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode) {
-        verifyMultifactorServicesEnabled();
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -174,8 +171,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor) {
-        verifyMultifactorServicesEnabled();
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -193,8 +188,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId) {
-        verifyMultifactorServicesEnabled();
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -271,6 +264,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         User user = userService.getUserById(sessionId.getUserId());
         userService.validateUserIsEnabled(user);
 
+        if(!isMultiFactorEnabledForUser(user)) {
+            throw new BadRequestException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        }
+
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
@@ -327,7 +324,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
-        verifyMultifactorServicesEnabled();
 
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
@@ -424,13 +420,31 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
+    public boolean isMultiFactorGloballyEnabled() {
+        return isMultiFactorEnabled() && !isMultiFactorBetaEnabled();
+    }
+
+    @Override
     public boolean isMultiFactorEnabled() {
         return config.getBoolean("multifactor.services.enabled", false);
     }
 
-    private void verifyMultifactorServicesEnabled() {
-        if (!isMultiFactorEnabled()) {
-            throw new WebApplicationException(404);
+    private boolean isMultiFactorBetaEnabled() {
+        return config.getBoolean("multifactor.beta.enabled", false);
+    }
+
+    @Override
+    public boolean isMultiFactorEnabledForUser(BaseUser user) {
+        if(!isMultiFactorEnabled()) {
+            return false;
+        } else if(isMultiFactorBetaEnabled()) {
+            if(userHasMultiFactorBetaRole(user)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
         }
     }
 
@@ -463,7 +477,18 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return config.getInt(SESSION_ID_LIFETIME_PROP_NAME, SESSION_ID_LIFETIME_DEFAULT);
     }
 
+    private boolean userHasMultiFactorBetaRole(BaseUser user) {
+        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
 
+        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
+            for(TenantRole role : userGlobalRoles) {
+                if(role.getName().equals(config.getString(MULTIFACTOR_BETA_ROLE_NAME))) {
+                    return true;
+                }
+            }
+        }
 
+        return false;
+    }
 
 }

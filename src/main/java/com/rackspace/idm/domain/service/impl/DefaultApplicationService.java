@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class DefaultApplicationService implements ApplicationService {
@@ -33,6 +35,8 @@ public class DefaultApplicationService implements ApplicationService {
     private TenantService tenantService;
     @Autowired
     private Configuration config;
+    @Autowired
+    private RoleService roleService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -329,11 +333,10 @@ public class DefaultApplicationService implements ApplicationService {
         List<ClientRole> result = new ArrayList<ClientRole>();
 
         logger.debug("getting identity:* role for user: {}", user);
-        Application application = applicationDao.getApplicationByClientId(getCloudAuthClientId());
 
-        List<ClientRole> clientRoles = IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application, getIdentityRoleNames()).iterator());
+        List<ClientRole> clientRoles = roleService.getIdentityAccessRoles();
 
-        HashSet<String> tenantRoleIds = new HashSet<String>();
+        Set<String> tenantRoleIds = new HashSet<String>();
 
         if (clientRoles.size() > 0) {
             for (TenantRole tenantRole : tenantService.getTenantRolesForUserById(user, clientRoles)) {
@@ -348,21 +351,6 @@ public class DefaultApplicationService implements ApplicationService {
         }
 
         return getRoleWithLowestWeight(result);
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
-    @Override
-    public List<String> getIdentityRoleNames() {
-        List<String> names = new ArrayList<String>();
-        names.add(config.getString("cloudAuth.userRole"));
-        names.add(config.getString("cloudAuth.userAdminRole"));
-        names.add(config.getString("cloudAuth.adminRole"));
-        names.add(config.getString("cloudAuth.userManagedRole"));
-        names.add(config.getString("cloudAuth.serviceAdminRole"));
-        return names;
     }
 
     private ClientRole getRoleWithLowestWeight(List<ClientRole> userIdentityRoles) {

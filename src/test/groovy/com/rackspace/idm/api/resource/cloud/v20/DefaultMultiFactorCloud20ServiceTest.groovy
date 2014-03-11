@@ -25,15 +25,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         mockPhoneCoverterCloudV20(service)
     }
 
-    def "listDevicesForUser verifies multi-factor is enabled"() {
-        when:
-        service.listDevicesForUser(null, null, null)
-
-        then:
-        config.getBoolean("multifactor.services.enabled") >> false
-        thrown(WebApplicationException)
-    }
-
     def "listDevicesForUser validates x-auth-token"() {
         when:
         allowMultiFactorAccess()
@@ -41,7 +32,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         then:
         defaultCloud20Service.getScopeAccessForValidToken(_) >> { throw new NotAuthenticatedException() }
-        thrown(WebApplicationException)
     }
 
     def "validateListDevicesForUser verifies the user is the same"() {

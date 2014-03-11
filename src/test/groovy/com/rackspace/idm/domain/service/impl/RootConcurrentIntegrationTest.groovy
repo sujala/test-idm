@@ -40,7 +40,6 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     @Shared
     def specificationIdentityAdminToken
 
-
     @Shared
     def ConcurrentStageTaskRunner concurrentStageTaskRunner = new ConcurrentStageTaskRunner()
 

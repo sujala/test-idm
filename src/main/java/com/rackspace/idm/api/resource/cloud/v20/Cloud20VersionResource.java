@@ -53,6 +53,10 @@ public class Cloud20VersionResource {
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
+    @Autowired
+    private CloudMultifactorResource multifactorResource;
+
+
     public Cloud20VersionResource() {
     }
 
@@ -1080,90 +1084,13 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteQuestion(authToken, questionId).build();
     }
 
-    /**
-     * The multifactor service to list devices for a given user.
-     *
-     *
-     * @param uriInfo
-     * @param authToken
-     * @param userId
-     * @return
-     */
-    @GET
-    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones")
-    public Response listDevicesForUser(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) {
-        return multiFactorCloud20Service.listDevicesForUser(uriInfo, authToken, userId).build();
-    }
-
-    /**
-     * The multifactor service to associate a phone with a given user.
-     *
-     * @param uriInfo
-     * @param authToken
-     * @param userId
-     * @param mobilePhone
-     * @return
-     */
-    @POST
-    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones")
-    public Response addMultiFactorMobilePhone(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            MobilePhone mobilePhone) {
-        return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
-    }
-
-    /**
-     * The multifactor service to send a verification code to a device.
-     *
-     * @param uriInfo
-     * @param authToken
-     * @param userId
-     * @param deviceId
-     * @return
-     */
-    @POST
-    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones/{deviceId}/verificationcode")
-    public Response sendVerificationCode(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("deviceId") String deviceId) {
-        return multiFactorCloud20Service.sendVerificationCode(uriInfo, authToken, userId, deviceId).build();
-    }
-
-    @POST
-    @Path("/users/{userId}/RAX-AUTH/multi-factor/mobile-phones/{deviceId}/verify")
-    public Response verifyVerificationCode(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("deviceId") String deviceId,
-            VerificationCode verificationCode) {
-        return multiFactorCloud20Service.verifyVerificationCode(uriInfo, authToken, userId, deviceId, verificationCode).build();
-    }
-
-    @PUT
-    @Path("/users/{userId}/RAX-AUTH/multi-factor")
-    public Response updateMultiFactorSettings(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            MultiFactor multiFactor) {
-        return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactor).build();
-    }
-
-    @DELETE
-    @Path("/users/{userId}/RAX-AUTH/multi-factor")
-    public Response deleteMultiFactor(
-            @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) {
-        return multiFactorCloud20Service.deleteMultiFactor(uriInfo, authToken, userId).build();
+    @Path("users/{userId}/RAX-AUTH/multi-factor")
+    public CloudMultifactorResource getMultifactorResource() {
+        if (multiFactorCloud20Service.isMultiFactorEnabled()) {
+            return multifactorResource;
+        } else {
+            return null;
+        }
     }
 
     protected int validateMarker(Integer offset) {

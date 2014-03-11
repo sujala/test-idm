@@ -32,6 +32,7 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         mockTenantService(service)
         mockPrecedenceValidator(service)
         mockConfiguration(service)
+        mockRoleService(service)
     }
 
     def "grantTenantRoleToUser verifies tenantRole"() {
@@ -69,7 +70,6 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         service.grantTenantRoleToUser(AUTH_TOKEN, USER_ID, TENANT_ID, ROLE_ID)
 
         then:
-        1 * applicationService.getIdentityRoleNames() >> [].asList()
         1 * userService.getUserByAuthToken(AUTH_TOKEN)
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
@@ -92,8 +92,27 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         service.grantTenantRoleToUser(AUTH_TOKEN, USER_ID, TENANT_ID, ROLE_ID)
 
         then:
-        1 * applicationService.getIdentityRoleNames() >> [].asList()
         1 * tenantService.addTenantRoleToUser(user, _)
+    }
+
+    def "grantTenantRoleToUser prevents any 'identity:' prefixed role from being added to a user on a tenant"() {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser()
+        def tenant= entityFactory.createTenant()
+        def roleName = "identity:role"
+        def cRole = entityFactory.createClientRole(roleName)
+
+        userService.loadUser(USER_ID) >> user
+        tenantService.getTenant(TENANT_ID) >> tenant
+        applicationService.getClientRoleById(ROLE_ID) >> cRole
+        userService.getUserByAuthToken(AUTH_TOKEN)
+
+        when:
+        service.grantTenantRoleToUser(AUTH_TOKEN, USER_ID, TENANT_ID, ROLE_ID)
+
+        then:
+        thrown(BadRequestException)
     }
 
     def "checkAndGetTenantRole verifies that user exists"() {
@@ -130,14 +149,4 @@ class UserGlobalRoleResourceTest extends RootServiceTest {
         tRole.getTenantIds().contains(TENANT_ID)
     }
 
-    def "getIdentityRoleNames gets a list of known identityRole names"() {
-        when:
-        service.getIdentityRoleNames()
-
-        then:
-        1 * config.getString("cloudAuth.userRole") >> ""
-        1 * config.getString("cloudAuth.userAdminRole") >> ""
-        1 * config.getString("cloudAuth.adminRole") >> ""
-        1 * config.getString("cloudAuth.serviceAdminRole") >> ""
-    }
 }

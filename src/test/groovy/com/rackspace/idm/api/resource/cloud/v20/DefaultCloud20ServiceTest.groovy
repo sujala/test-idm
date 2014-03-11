@@ -3667,6 +3667,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         user.id = "somthingdifferentfromcaller"
         User caller = entityFactory.createUser()
+        roleService.isIdentityAccessRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
@@ -3716,6 +3717,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         user.id = "something different from caller"
         User caller = entityFactory.createUser()
+        roleService.isIdentityAccessRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
@@ -3914,6 +3916,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockFederatedIdentityService(service);
         mockMultiFactorCloud20Service(service);
+        mockRoleService(service);
     }
 
     def mockMisc() {

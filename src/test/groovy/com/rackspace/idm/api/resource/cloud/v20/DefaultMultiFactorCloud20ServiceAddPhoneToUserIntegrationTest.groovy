@@ -39,7 +39,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
     @Unroll("Add a phone to a user-admin: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Add a phone to a user-admin"() {
         setup:
-       com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
         def userAdmin = createUserAdmin()
         String userAdminToken = authenticate(userAdmin.username)
 

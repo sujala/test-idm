@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.AuthorizationContext
 import com.rackspace.idm.domain.service.PropertiesService
+import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
@@ -191,6 +192,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
     @Shared MultiFactorCloud20Service multiFactorCloud20Service;
     @Shared MultiFactorService multiFactorService;
+    @Shared RoleService roleService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -584,6 +586,11 @@ class RootServiceTest extends Specification {
     def mockCloud20Service(service) {
         defaultCloud20Service = Mock()
         service.cloud20Service = defaultCloud20Service
+    }
+
+    def mockRoleService(service) {
+        roleService = Mock()
+        service.roleService = roleService
     }
 
     /*

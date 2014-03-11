@@ -39,6 +39,8 @@ public class UserGlobalRoleResource {
     private PrecedenceValidator precedenceValidator;
     @Autowired
     private Configuration config;
+    @Autowired
+    private RoleService roleService;
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -83,9 +85,7 @@ public class UserGlobalRoleResource {
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, tenantRole);
         }
 
-        List<String> identityRoleNames =  applicationService.getIdentityRoleNames();
-
-        if (identityRoleNames.contains(tenantRole.getName())) {
+        if (tenantRole.getName().startsWith("identity:")) {
             throw new BadRequestException("Cannot add identity roles to tenant.");
         }
 
@@ -110,15 +110,6 @@ public class UserGlobalRoleResource {
 
         return tenantRole;
 	}
-
-    private List<String> getIdentityRoleNames() {
-        List<String> names = new ArrayList<String>();
-        names.add(config.getString("cloudAuth.userRole"));
-        names.add(config.getString("cloudAuth.userAdminRole"));
-        names.add(config.getString("cloudAuth.adminRole"));
-        names.add(config.getString("cloudAuth.serviceAdminRole"));
-        return names;
-    }
 
     public void setConfig(Configuration config) {
         this.config = config;

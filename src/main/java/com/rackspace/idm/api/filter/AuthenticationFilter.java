@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
@@ -11,18 +13,17 @@ import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import java.util.UUID;
 
@@ -31,19 +32,23 @@ import java.util.UUID;
  *         several that are checked for in the if clauses below.
  */
 @Component
-public class AuthenticationFilter implements ContainerRequestFilter,
-        ApplicationContextAware {
+public class AuthenticationFilter implements ContainerRequestFilter {
     private static final String GET = "GET";
+    private static final String POST = "POST";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     @Context
     private HttpServletRequest req;
 
-    private ApplicationContext springCtx;
+    @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
+    @Autowired
+    private UserService userService;
 
     AuthenticationFilter() {
 
@@ -101,6 +106,26 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
                     logger.info("Impersonating token {} with token {} ", authToken, newToken);
                 }
+
+                if(path.contains("multi-factor")) {
+
+                    //We first need to check if multifactor services are enabled. If they are disabled, we allow
+                    //the request to pass through in order for the application server to return a 404.
+                    //This is possible because the multifactor resource is not exposed when mfa is turned off.
+                    if(!multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
+                        //we need to check isMultiFactorEnabled here as well because the above call
+                        //only checks for the case where mfa = true and beta = false. It could still be
+                        //the case that mfa = true and beta = true.
+                        if(multiFactorCloud20Service.isMultiFactorEnabled()) {
+                            BaseUser user = userService.getUserByScopeAccess(sa);
+                            if(!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
+                                throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
+                            }
+                        }
+                    }
+
+                }
+
             }
             return request;
         }
@@ -129,7 +154,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        if ("POST".equals(method) && "tokens".equals(path)) {
+        if (POST.equals(method) && "tokens".equals(path)) {
             return request;
         }
         final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
@@ -138,7 +163,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         final String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        final boolean authResult = getScopeAccessService().authenticateAccessToken(tokenString);
+        final boolean authResult = scopeAccessService.authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated
@@ -150,20 +175,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         throw new NotAuthenticatedException("Authentication Failed.");
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        springCtx = applicationContext;
-    }
-
-    ScopeAccessService getScopeAccessService() {
-        if (scopeAccessService == null) {
-            scopeAccessService = springCtx.getBean(ScopeAccessService.class);
-        }
-
-        return scopeAccessService;
-    }
-
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
         this.req = httpServletRequest;
     }
+
 }

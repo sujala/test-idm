@@ -5,11 +5,17 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.RoleService;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class DefaultRoleService implements RoleService {
@@ -75,4 +81,35 @@ public class DefaultRoleService implements RoleService {
         String defaultRoleName = application.getOpenStackType().concat(":default");
         return applicationRoleDao.getRoleByName(defaultRoleName);
     }
+
+    @Override
+    public boolean isIdentityAccessRole(ClientRole role) {
+        List<String> identityRoleNames = getIdentityAccessRoleNames();
+        for(String idmAccessRoleName : identityRoleNames) {
+            if(StringUtils.equalsIgnoreCase(idmAccessRoleName, role.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public List<ClientRole> getIdentityAccessRoles() {
+        Application application = applicationService.getById(getCloudAuthClientId());
+        return IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application, getIdentityAccessRoleNames()).iterator());
+    }
+
+    private List<String> getIdentityAccessRoleNames() {
+        List<String> roleNames = new ArrayList<String>();
+        List<Object> roleNameObjs = config.getList("cloudAuth.accessRoleNames");
+        for (Object roleName : roleNameObjs) {
+            roleNames.add((String) roleName);
+        }
+        return roleNames;
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
 }

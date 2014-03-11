@@ -71,6 +71,4 @@ public interface ApplicationService {
     void softDeleteApplication(Application application);
 
     ClientRole getUserIdentityRole(User user);
-
-    List<String> getIdentityRoleNames();
 }
