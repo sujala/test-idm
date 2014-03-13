@@ -3,14 +3,12 @@ package com.rackspace.idm.api.resource.token;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.CredentialsConverter;
 import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.AuthorizationContext;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -24,7 +22,6 @@ import javax.ws.rs.core.Response;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,7 +106,7 @@ public class TokensResourceTest {
     @Test
     public void validateAccessToken_callsAuthorizationService_authorizeIdmSuperAdminOrRackspaceClient() throws Exception {
         tokensResource.validateAccessToken("authHeader", "tokenString");
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(AuthorizationContext.class));
+        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
     }
 
     @Test

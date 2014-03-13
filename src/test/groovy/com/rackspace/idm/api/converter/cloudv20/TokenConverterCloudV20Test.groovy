@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.entity.TenantRole
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 import org.openstack.docs.identity.api.v2.Token
@@ -34,5 +35,19 @@ class TokenConverterCloudV20Test extends RootServiceTest {
         ["RSA"]             | ["RSA"]
         ["Password"]        | ["Password"]
         ["RSA", "Password"] | ["RSA", "Password"]
+    }
+
+    def "toTenantForAuthenticateResponse - emtpy tenantIds & compute:default" () {
+        given:
+        TenantRole role = entityFactory.createTenantRole().with {
+            it.name = "compute:default"
+            it
+        }
+
+        when:
+        def result = converter.toTenantForAuthenticateResponse([role].asList())
+
+        then:
+        result == null
     }
 }

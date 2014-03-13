@@ -73,7 +73,7 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNullUser_returnsUnauthorizedResponse() throws Exception {
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException("Username or api key is invalid."));
+        when(userService.getUser("username")).thenReturn(null);
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response status", response.getStatus(), equalTo(401));
     }

@@ -138,8 +138,7 @@ public class DefaultUserService implements UserService {
         // This doesn't happen today because there is business logic to ensure these cases don't happen.
         // We want to eventually remove that. A user should be able to be assigned any role.
         //
-        AuthorizationContext context = authorizationService.getAuthorizationContext(caller);
-        if (authorizationService.hasServiceAdminRole(context)) {
+        if (authorizationService.hasServiceAdminRole(caller)) {
             if (StringUtils.isNotBlank(user.getDomainId())) {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
@@ -147,7 +146,7 @@ public class DefaultUserService implements UserService {
             attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
 
-        if (authorizationService.hasIdentityAdminRole(context)) {
+        if (authorizationService.hasIdentityAdminRole(caller)) {
             if (StringUtils.isBlank(user.getDomainId())) {
                 throw new BadRequestException("User-admin cannot be created without a domain");
             }
@@ -167,7 +166,7 @@ public class DefaultUserService implements UserService {
             attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
         }
 
-        if (authorizationService.hasUserAdminRole(context) || authorizationService.hasUserManageRole(context)) {
+        if (authorizationService.hasUserAdminRole(caller) || authorizationService.hasUserManageRole(caller)) {
             if (StringUtils.isBlank(caller.getDomainId())) {
                 throw new BadRequestException("Default user cannot be created if caller does not have a domain");
             }
@@ -379,7 +378,7 @@ public class DefaultUserService implements UserService {
             if (result == null) {
                 result = user;
             }
-            if (authorizationService.hasUserAdminRole(authorizationService.getAuthorizationContext(user))) {
+            if (authorizationService.hasUserAdminRole(user)) {
                 result = user;
                 break;
             }
@@ -584,7 +583,7 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users) {
-            if(authorizationService.hasDefaultUserRole(authorizationService.getAuthorizationContext(userInList))) {
+            if(authorizationService.hasDefaultUserRole(userInList)) {
                 return true;
             }
         }
@@ -653,8 +652,7 @@ public class DefaultUserService implements UserService {
 
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
-        AuthorizationContext context = authorizationService.getAuthorizationContext(user);
-        if (authorizationService.hasUserAdminRole(context)) {
+        if (authorizationService.hasUserAdminRole(user)) {
             List<User> enabledUserAdmins = domainService.getEnabledDomainAdmins(user.getDomainId());
             if (enabledUserAdmins.size() != 0) {
                 return;

@@ -51,80 +51,37 @@ public class DefaultAuthorizationService implements AuthorizationService {
         rackerRole = applicationService.getClientRoleByClientIdAndRoleName(getIdmClientId(), "Racker");
     }
 
-	@Override
-    public boolean authorizeCloudServiceAdmin(AuthorizationContext context) {
-        return authorizeRoleAccess(context, Arrays.asList(cloudServiceAdminRole));
-    }
-
     @Override
-    public AuthorizationContext getAuthorizationContext(ScopeAccess scopeAccess) {
-        AuthorizationContext context = new AuthorizationContext();
-        context.setScopeAccess(scopeAccess);
-        context.setRoles(new HashSet<String>());
+    public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
 
-        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
-            return context;
-        }
-
-        Iterable<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        if (scopeAccess instanceof FederatedToken) {
-            //federated scope accesses has role / tenant information stored at the token level
-            FederatedToken token = (FederatedToken)scopeAccess;
-            tenantRoles = tenantService.getTenantRolesForFederatedTokenNoDetail(token);
-        } else {
-            BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-            if (user != null) {
-                context.setUser(user);
-                tenantRoles = tenantService.getTenantRolesForUserNoDetail(user);
-                if(user.getDomainId() != null){
-                    context.setDomain(domainService.getDomain(user.getDomainId()));
-                }
-            }
-        }
-
-        for (TenantRole tenantRole : tenantRoles) {
-            context.getRoles().add(tenantRole.getRoleRsId());
-        }
-
-        return context;
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole));
     }
 
-    @Override
-    public AuthorizationContext getAuthorizationContext(User user) {
-        AuthorizationContext context = new AuthorizationContext();
-        context.setRoles(new HashSet<String>());
-
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
-
-        for (TenantRole tenantRole : tenantRoles) {
-            context.getRoles().add(tenantRole.getRoleRsId());
-        }
-
-        return context;
-    }
-
-    public boolean authorizeRacker(AuthorizationContext context){
-        logger.debug("Authorizing {} as a Racker", context.getScopeAccess());
-        if (!(context.getScopeAccess() instanceof RackerScopeAccess)){
+    public boolean authorizeRacker(ScopeAccess scopeAccess){
+        logger.debug("Authorizing {} as a Racker", scopeAccess);
+        if (!(scopeAccess instanceof RackerScopeAccess)){
             return false;
         }
-        boolean authorized = authorize(context, Arrays.asList(rackerRole));
-        logger.debug("Authorized {} as Racker - {}", context.getScopeAccess(), authorized);
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        boolean authorized = authorize(user, scopeAccess, Arrays.asList(rackerRole));
+        logger.debug("Authorized {} as Racker - {}", scopeAccess, authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeCloudIdentityAdmin(AuthorizationContext context) {
-        return authorizeRoleAccess(context, Arrays.asList(cloudIdentityAdminRole));
+    public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudIdentityAdminRole));
     }
 
     @Override
-    public boolean authorizeIdmSuperAdminOrRackspaceClient(AuthorizationContext context) {
-        boolean isRackspaceClient = authorizeRackspaceClient(context);
+    public boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess) {
+        boolean isRackspaceClient = authorizeRackspaceClient(scopeAccess);
         boolean isIdmSuperAdmin = false;
         //verify if caller is a rackspace client, idm client or super admin
         if(!isRackspaceClient){
-            isIdmSuperAdmin = authorizeIdmSuperAdmin(context);
+            isIdmSuperAdmin = authorizeIdmSuperAdmin(scopeAccess);
         }
 
         if(!isRackspaceClient && ! isIdmSuperAdmin) {
@@ -134,64 +91,82 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCloudUserAdmin(AuthorizationContext context) {
-        return authorizeUserAccess(context) &&
-               authorizeDomainAccess(context) &&
-               authorizeRoleAccess(context, Arrays.asList(cloudUserAdminRole));
-    }
-
-    @Override
-    public boolean authorizeUserManageRole(AuthorizationContext context) {
-        return authorizeUserAccess(context) &&
-               authorizeDomainAccess(context) &&
-               authorizeRoleAccess(context, Arrays.asList(cloudUserManagedRole));
-    }
-
-    @Override
-    public boolean authorizeCloudUser(AuthorizationContext context) {
-        return authorizeUserAccess(context) &&
-               authorizeDomainAccess(context) &&
-               authorizeRoleAccess(context, Arrays.asList(cloudUserRole));
-    }
-
-    @Override
-    public boolean hasDefaultUserRole(AuthorizationContext context) {
-        if (context == null) {
+    public boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        if (!authorizeUserAccess(user)) {
             return false;
         }
-        return containsRole(context, Arrays.asList(cloudUserRole));
+        Domain domain = domainService.getDomain(user.getDomainId());
+        if (!authorizeDomainAccess(domain)) {
+            return false;
+        }
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserAdminRole));
     }
 
     @Override
-    public boolean hasUserAdminRole(AuthorizationContext context) {
-        if (context == null) {
+    public boolean authorizeUserManageRole(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        if (!authorizeUserAccess(user)) {
             return false;
         }
-        return containsRole(context, Arrays.asList(cloudUserAdminRole));
+        Domain domain = domainService.getDomain(user.getDomainId());
+        if (!authorizeDomainAccess(domain)) {
+            return false;
+        }
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserManagedRole));
     }
 
     @Override
-    public boolean hasUserManageRole(AuthorizationContext context) {
-        if (context == null) {
+    public boolean authorizeCloudUser(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        if (!authorizeUserAccess(user)) {
             return false;
         }
-        return containsRole(context, Arrays.asList(cloudUserManagedRole));
+        Domain domain = domainService.getDomain(user.getDomainId());
+        if (!authorizeDomainAccess(domain)) {
+            return false;
+        }
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserRole));
     }
 
     @Override
-    public boolean hasIdentityAdminRole(AuthorizationContext context) {
-        if (context == null) {
+    public boolean hasDefaultUserRole(User user) {
+        if (user == null) {
             return false;
         }
-        return containsRole(context, Arrays.asList(cloudIdentityAdminRole));
+        return containsRole(user, Arrays.asList(cloudUserRole));
     }
 
     @Override
-    public boolean hasServiceAdminRole(AuthorizationContext context) {
-        if (context == null) {
+    public boolean hasUserAdminRole(User user) {
+        if (user == null) {
             return false;
         }
-        return containsRole(context, Arrays.asList(cloudServiceAdminRole));
+        return containsRole(user, Arrays.asList(cloudUserAdminRole));
+    }
+
+    @Override
+    public boolean hasUserManageRole(User user) {
+        if (user == null) {
+            return false;
+        }
+        return containsRole(user, Arrays.asList(cloudUserManagedRole));
+    }
+
+    @Override
+    public boolean hasIdentityAdminRole(User user) {
+        if (user == null) {
+            return false;
+        }
+        return containsRole(user, Arrays.asList(cloudIdentityAdminRole));
+    }
+
+    @Override
+    public boolean hasServiceAdminRole(User user) {
+        if (user == null) {
+            return false;
+        }
+        return containsRole(user, Arrays.asList(cloudServiceAdminRole));
     }
 
     @Override
@@ -222,23 +197,22 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeIdmSuperAdmin(AuthorizationContext context) {
-        ScopeAccess scopeAccess = context.getScopeAccess();
+    public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 
-        if (this.authorizeCustomerIdm(context)) {
+        if (this.authorizeCustomerIdm(scopeAccess)) {
             return true;
         }
 
-        boolean authorized = authorize(context, Arrays.asList(idmSuperAdminRole));
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        boolean authorized = authorize(user, scopeAccess, Arrays.asList(idmSuperAdminRole));
 
         logger.debug("Authorized {} as idm super admin - {}", scopeAccess, authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeRackspaceClient(AuthorizationContext context) {
-        ScopeAccess scopeAccess = context.getScopeAccess();
+    public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as rackspace client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             return false;
@@ -249,8 +223,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerIdm(AuthorizationContext context) {
-        ScopeAccess scopeAccess = context.getScopeAccess();
+    public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             return false;
@@ -264,74 +237,92 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
-        ScopeAccess requestingScopeAccess) {
+                                               ScopeAccess requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
 
         boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccess
-            && requestingScopeAccess.getClientId().equalsIgnoreCase(
+                && requestingScopeAccess.getClientId().equalsIgnoreCase(
                 targetScopeAccess.getClientId());
 
         boolean isOwner = false;
 
         if (targetScopeAccess instanceof ClientScopeAccess) {
             isOwner = requestingScopeAccess.getClientId().equals(
-                targetScopeAccess.getClientId());
+                    targetScopeAccess.getClientId());
         } else if (targetScopeAccess instanceof UserScopeAccess) {
             isOwner = ((UserScopeAccess) requestingScopeAccess).getUsername()
-                .equals(((UserScopeAccess) targetScopeAccess).getUsername());
+                    .equals(((UserScopeAccess) targetScopeAccess).getUsername());
         } else if (targetScopeAccess instanceof RackerScopeAccess) {
             isOwner = ((RackerScopeAccess) requestingScopeAccess).getRackerId()
-                .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());
+                    .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());
         }
 
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
-            isOwner);
+                isOwner);
         return (isRequestor || isOwner);
     }
 
     public void verifyIdmSuperAdminAccess(String authHeader) {
-        if(!this.authorizeIdmSuperAdmin(getAuthorizationContext(scopeAccessService.getScopeAccessByAccessToken(authHeader)))){
+        if(!this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
             throw new ForbiddenException("Access denied");
         }
     }
 
     @Override
-    public void verifyServiceAdminLevelAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole));
+    public void verifyServiceAdminLevelAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole));
     }
 
     @Override
-    public void verifyRackerOrIdentityAdminAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyRoleAccess(context, Arrays.asList(rackerRole, cloudIdentityAdminRole));
+    public void verifyRackerOrIdentityAdminAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(rackerRole, cloudIdentityAdminRole));
     }
 
     @Override
-    public void verifyIdentityAdminLevelAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
+    public void verifyIdentityAdminLevelAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
     }
 
     @Override
-    public void verifyUserAdminLevelAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyDomainAccess(context);
-        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
+    public void verifyUserAdminLevelAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        Domain domain = domainService.getDomain(user.getDomainId());
+        verifyDomainAccess(domain);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
     }
 
     @Override
-    public void verifyUserManagedLevelAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyDomainAccess(context);
-        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
+    public void verifyUserManagedLevelAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        Domain domain = domainService.getDomain(user.getDomainId());
+        verifyDomainAccess(domain);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
     }
 
     @Override
-    public void verifyUserLevelAccess(AuthorizationContext context) {
-        verifyUserAccess(context);
-        verifyDomainAccess(context);
-        verifyRoleAccess(context, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
+    public void verifyUserLevelAccess(ScopeAccess scopeAccess) {
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyUserAccess(user);
+        Domain domain = domainService.getDomain(user.getDomainId());
+        verifyDomainAccess(domain);
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
+    }
+
+    @Override
+    public boolean isDefaultUser(ScopeAccess scopeAccess) {
+        // This method returns whether or not a user is a default user
+        // A default user is defined as one that has the identity:default role
+        // this includes a user that also has the identity:user-manage role
+        BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
+        return containsRole(user, Arrays.asList(cloudUserRole));
     }
 
     @Override
@@ -345,7 +336,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
-        if (authorizeRoleAccess(getAuthorizationContext(authScopeAccess), Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
+        BaseUser user = userService.getUserByScopeAccess(authScopeAccess);
+        if (authorizeRoleAccess(user, authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
             return;
         }
 
@@ -372,31 +364,31 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void checkAuthAndHandleFailure(boolean authorized, AuthorizationContext context) {
+    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess scopeAccess) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                    context.getScopeAccess().getAccessTokenString());
+                    scopeAccess.getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
     }
 
-    private boolean authorize(AuthorizationContext context, List<ClientRole> clientRoles) {
-        if (scopeAccessService.isScopeAccessExpired(context.getScopeAccess())) {
+    private boolean authorize(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
+        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
             return false;
         }
 
-        return containsRole(context, clientRoles);
+        return containsRole(user, clientRoles);
     }
 
-    private boolean containsRole(AuthorizationContext context, List<ClientRole> clientRoles) {
+    private boolean containsRole(BaseUser user, List<ClientRole> clientRoles) {
         HashSet<String> clientRoleIds = new HashSet<String>();
         for (ClientRole role : clientRoles) {
             clientRoleIds.add(role.getId());
         }
 
-        for (String tenantRoleId : context.getRoles()) {
-            if (clientRoleIds.contains(tenantRoleId)) {
+        for (String roleId : clientRoleIds) {
+            if (tenantService.doesUserContainTenantRole(user, roleId)) {
                 return true;
             }
         }
@@ -404,25 +396,24 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return false;
     }
 
-    private void verifyRoleAccess(AuthorizationContext context, List<ClientRole> clientRoles) {
-        if (!authorizeRoleAccess(context, clientRoles)) {
+    private void verifyRoleAccess(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
+        if (!authorizeRoleAccess(user, scopeAccess, clientRoles)) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
     }
 
-    private boolean authorizeRoleAccess(AuthorizationContext context, List<ClientRole> clientRoles) {
+    private boolean authorizeRoleAccess(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
         String rolesString = getRoleString(clientRoles);
 
-        logger.debug("Authorizing {} as {}", context.getScopeAccess(), rolesString);
-        boolean authorized = authorize(context, clientRoles);
-        logger.debug(String.format("Authorized %s as %s - %s", context.getScopeAccess(), rolesString, authorized));
+        logger.debug("Authorizing {} as {}", scopeAccess, rolesString);
+        boolean authorized = authorize(user, scopeAccess, clientRoles);
+        logger.debug(String.format("Authorized %s as %s - %s", scopeAccess, rolesString, authorized));
         return authorized;
     }
 
-    private void verifyDomainAccess(AuthorizationContext context) {
-        Domain domain = context.getDomain();
+    private void verifyDomainAccess(Domain domain) {
         if(domain != null && !domain.getEnabled()) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
@@ -430,14 +421,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
     }
 
-    private boolean authorizeDomainAccess(AuthorizationContext context) {
-        Domain domain = context.getDomain();
+    private boolean authorizeDomainAccess(Domain domain) {
         return domain == null || domain.getEnabled();
 
     }
 
-    private void verifyUserAccess(AuthorizationContext context) {
-        BaseUser user = context.getUser();
+    private void verifyUserAccess(BaseUser user) {
         if( user != null && user.isDisabled() ) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
@@ -445,8 +434,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
     }
 
-    private boolean authorizeUserAccess(AuthorizationContext context) {
-        BaseUser user = context.getUser();
+    private boolean authorizeUserAccess(BaseUser user) {
         return user == null || !user.isDisabled();
 
     }
@@ -559,9 +547,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return config.getString("cloudAuth.userManagedRole");
     }
 
-	public void setConfig(Configuration config) {
-		this.config = config;
-	}
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;

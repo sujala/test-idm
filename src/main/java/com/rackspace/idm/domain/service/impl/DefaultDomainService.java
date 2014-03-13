@@ -202,7 +202,7 @@ public class DefaultDomainService implements DomainService{
     private List<User> filterUserAdmins(Iterable<User> userList) {
         List<User> userAdmins = new ArrayList<User>();
         for (User user : userList) {
-            if (authorizationService.hasUserAdminRole(authorizationService.getAuthorizationContext(user))) {
+            if (authorizationService.hasUserAdminRole(user)) {
                 userAdmins.add(user);
             }
         }
