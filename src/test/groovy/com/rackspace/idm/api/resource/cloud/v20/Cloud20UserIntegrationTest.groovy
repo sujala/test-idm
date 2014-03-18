@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.CredentialListType
 import org.openstack.docs.identity.api.v2.User
+import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -494,7 +495,11 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    @Ignore
     def "Allow one userAdmin per domain" () {
+        //NOTE: This test was ignored because the default behavior will be to allow mulitple userAdmins except when
+        //      the feature flag (domain.restricted.to.one.user.admin.enabled) is enabled. If that becomes the default
+        //      behavior again, we will need to change the expected status in this test to 400
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)

@@ -475,7 +475,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
             userService.setUserDefaultsBasedOnCaller(user, caller);
-            userService.addUser(user);
+            userService.addUserV20(user);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user);
 
