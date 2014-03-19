@@ -128,9 +128,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
 
         questionService.addQuestion(_) >> { throw new BadRequestException() }
@@ -165,10 +165,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
 
         questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
 
@@ -214,9 +214,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
+
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
 
 
@@ -293,9 +293,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(authToken) >>> [ null, mock, Mock(ScopeAccess) ]
         authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
         questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
 
@@ -314,9 +313,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, mock ]
         authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
         questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
 
@@ -357,11 +355,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-
         capabilityService.updateCapabilities(_, _, _) >> { throw new BadRequestException() }
 
         when:
@@ -409,10 +405,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
 
         capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
 
@@ -456,11 +452,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockCapabilityConverter(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        def mock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
         authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-
         capabilityService.removeCapabilities(_, _) >> { throw new BadRequestException() }
 
         when:
@@ -609,12 +603,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockUserConverter(service)
 
-        def mock = Mock(AuthorizationContext)
+        def mock = Mock(ScopeAccess)
+        mock.getLDAPEntry() >> createLdapEntry()
         scopeAccessMock = Mock()
         scopeAccessMock.getLDAPEntry() >> createLdapEntry()
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> scopeAccessMock
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
         authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
 
         userService.getUser(_) >>> [
@@ -713,13 +707,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
         mockUserPaginator(service)
 
-        def mock = Mock(AuthorizationContext)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        def scopeAccessMock = Mock(ScopeAccess)
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById(_) >>> [ null ] >> entityFactory.createClientRole()
 
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
         authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
 
         userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "region")
@@ -1002,7 +995,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteUserRole handles exceptions"() {
         given:
-        def mock = Mock(AuthorizationContext)
+        def mockedScopeAccess = Mock(ScopeAccess)
         def user1 = entityFactory.createUser()
         user1.id = "someotherid"
         def user2 = entityFactory.createUser("user2", null, "domain2", "region")
@@ -1016,9 +1009,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ] >> Mock(ScopeAccess)
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
-        authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
+        authorizationService.verifyUserManagedLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
         userService.checkAndGetUserById("1$userId") >> { throw new NotFoundException() }
 
         userService.checkAndGetUserById(_) >>> [ user2, user1, user3 ]
@@ -1230,15 +1222,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole handles exceptions"() {
         given:
-        def mock = Mock(AuthorizationContext)
+        def scopeAccessMock = Mock(ScopeAccess)
         def role = entityFactory.createClientRole("identity:role").with {
             it.id = "unique"
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, Mock(ScopeAccess) ]
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
+        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
+        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById("unique") >> role
 
@@ -2169,9 +2160,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it
         })
         scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [endpoint1, endpoint2].asList()
-
-        def mock = Mock(AuthorizationContext)
-        authorizationService.getAuthorizationContext(_) >>> [ mock, Mock(AuthorizationContext) ]
 
         when:
         def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)

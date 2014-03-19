@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
@@ -7,6 +8,7 @@ import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
@@ -65,11 +67,18 @@ class UserConverterCloudV20Test extends Specification {
         converterCloudV20.config = mockConfig
     }
 
-    def "convert user from domain entity to jaxb object"() {
+    def "convert user from domain entity to jaxb object - roles and groups populated"() {
         given:
         User user = user(false)
+        user.getRsGroupId().add("id")
+        def role = new Role()
+        role.id = "id"
         def roles = new RoleList()
+        roles.role.add(role)
+        def group = new Group()
+        group.id = "id"
         def groups = new Groups()
+        groups.group.add(group)
         def secretQA = new SecretQA()
 
         when:
@@ -90,6 +99,50 @@ class UserConverterCloudV20Test extends Specification {
         jaxbUser.groups == groups
         jaxbUser.password == user.password
         jaxbUser.multiFactorEnabled == user.multifactorEnabled
+    }
+
+    def "convert user from domain entity to jaxb object - user roles and groups null"() {
+        given:
+        User user = userWithNoRolesOrGroup(false)
+        def secretQA = new SecretQA()
+
+        when:
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user)
+
+        then:
+        mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
+        jaxbUser.username == user.username
+        jaxbUser.displayName == user.displayName
+        jaxbUser.email == user.email
+        jaxbUser.enabled == user.enabled
+        jaxbUser.defaultRegion == user.region
+        jaxbUser.secretQA == secretQA
+        jaxbUser.roles == null
+        jaxbUser.groups == null
+        jaxbUser.password == user.password
+    }
+
+    def "convert user from domain entity to jaxb object - user roles and groups empty"() {
+        given:
+        User user = userWithNoRolesOrGroup(false)
+        user.setRoles(Collections.EMPTY_LIST)
+        user.setRsGroupId(new HashSet<String>())
+        def secretQA = new SecretQA()
+
+        when:
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user)
+
+        then:
+        mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
+        jaxbUser.username == user.username
+        jaxbUser.displayName == user.displayName
+        jaxbUser.email == user.email
+        jaxbUser.enabled == user.enabled
+        jaxbUser.defaultRegion == user.region
+        jaxbUser.secretQA == secretQA
+        jaxbUser.roles == null
+        jaxbUser.groups == null
+        jaxbUser.password == user.password
     }
 
     def "convert user from entity to UserForCreate jaxb object"() {
@@ -214,6 +267,22 @@ class UserConverterCloudV20Test extends Specification {
             it.multifactorEnabled = true
             it.roles = [ new TenantRole() ].asList()
             it.rsGroupId = new HashSet<String> ()
+            it.secretQuestion = "question"
+            it.secretAnswer = "answer"
+            it.password = "password"
+            return it
+        }
+    }
+
+    def userWithNoRolesOrGroup(Boolean enabled) {
+        new User().with {
+            it.id = "id"
+            it.username = "username"
+            it.email = "email@email.com"
+            it.displayName = "display"
+            it.enabled = enabled
+            it.region = "region"
+            it.created = created()
             it.secretQuestion = "question"
             it.secretAnswer = "answer"
             it.password = "password"

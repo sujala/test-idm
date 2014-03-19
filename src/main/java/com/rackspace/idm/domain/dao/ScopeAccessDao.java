@@ -30,6 +30,16 @@ public interface ScopeAccessDao {
 
     Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user);
 
+    /**
+     * Return all the impersonated scope acesses objects underneath the specified user that are impersonating
+     * the specified impersonatingUsername
+     *
+     * @param user
+     * @param impersonatingUsername
+     * @return
+     */
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername);
+
     Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
 
     String getClientIdForParent(ScopeAccess scopeAccess);

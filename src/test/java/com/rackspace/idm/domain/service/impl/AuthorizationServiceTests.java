@@ -51,7 +51,6 @@ public class AuthorizationServiceTests {
     ClientScopeAccess authorizedClientToken;
     ClientScopeAccess notAuthorizedClientToken;
     ClientScopeAccess nonRackspaceClientToken;
-    AuthorizationContext authorizationContext;
     UserScopeAccess authorizedUserToken;
     UserScopeAccess otherCompanyUserToken;
     UserScopeAccess authorizedAdminToken;
@@ -73,7 +72,7 @@ public class AuthorizationServiceTests {
     @Test
     public void shouldReturnFalseForRacker() {
 
-        boolean authorized = service.authorizeRacker(authorizationContext);
+        boolean authorized = service.authorizeRacker(authorizedAdminToken);
 
         Assert.assertTrue(!authorized);
     }
@@ -81,8 +80,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForRackspaceClient() {
 
-        authorizationContext.setScopeAccess(authorizedClientToken);
-        boolean authorized = service.authorizeRackspaceClient(authorizationContext);
+        boolean authorized = service.authorizeRackspaceClient(authorizedClientToken);
 
         Assert.assertTrue(authorized);
     }
@@ -90,26 +88,23 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForRackspaceClient() {
 
-        authorizationContext.setScopeAccess(nonRackspaceClientToken);
         boolean authorized = service
-            .authorizeRackspaceClient(authorizationContext);
+            .authorizeRackspaceClient(nonRackspaceClientToken);
 
         Assert.assertTrue(!authorized);
     }
 
     @Test
     public void ShouldReturnTrueForCustomerIdm() {
-        authorizationContext.setScopeAccess(customerIdmToken);
-        boolean authorized = service.authorizeCustomerIdm(authorizationContext);
+        boolean authorized = service.authorizeCustomerIdm(customerIdmToken);
 
         Assert.assertTrue(authorized);
     }
 
     @Test
     public void ShouldReturnFalseForCustomerIdm() {
-        authorizationContext.setScopeAccess(notAuthorizedClientToken);
         boolean authorized = service
-            .authorizeCustomerIdm(authorizationContext);
+            .authorizeCustomerIdm(notAuthorizedClientToken);
 
         Assert.assertTrue(!authorized);
     }
@@ -144,10 +139,6 @@ public class AuthorizationServiceTests {
         authorizedUserToken.setAccessTokenString(tokenString);
         authorizedUserToken.setUsername(username);
         authorizedUserToken.setUserRCN(customerId);
-
-        authorizationContext = new AuthorizationContext();
-        authorizationContext.setScopeAccess(authorizedAdminToken);
-        authorizationContext.setRoles(new HashSet<String>());
 
         otherCompanyUserToken = new UserScopeAccess();
         otherCompanyUserToken.setAccessTokenString(tokenString);

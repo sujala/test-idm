@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.api.idm.v1.User;
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.AuthorizationContext;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -11,7 +9,6 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -19,7 +16,6 @@ import javax.ws.rs.core.Response;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,7 +72,7 @@ public class UsersResourceTest {
         User user = new User();
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
         usersResource.addUser("authHeader", user);
-        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(AuthorizationContext.class));
+        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
     }
 
     @Test
