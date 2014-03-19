@@ -118,6 +118,47 @@ public class DefaultUserService implements UserService {
         userDao.addUser(user);
 
         assignUserRoles(user);
+
+        addExpiredScopeAccessesForUser(user);
+    }
+
+    @Override
+    public void addUserV20(User user) {
+        logger.info("Adding User: {}", user);
+
+        validator.validateUser(user);
+
+        createDomainIfItDoesNotExist(user.getDomainId());
+        checkMaxNumberOfUsersInDomain(user.getDomainId());
+
+        setPasswordIfNotProvided(user);
+        setApiKeyIfNotProvided(user);
+        setRegionIfNotProvided(user);
+
+        //hack alert!! code requires the user object to have the nastid attribute set. this attribute
+        //should no longer be required as users have roles on a tenant instead. once this happens, remove
+        user.setNastId(getNastTenantId(user.getDomainId()));
+        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+        user.setSalt(cryptHelper.generateSalt());
+        user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
+
+        userDao.addUser(user);
+
+        assignUserRoles(user);
+
+        addExpiredScopeAccessesForUser(user);
+    }
+
+    private void addExpiredScopeAccessesForUser(User user) {
+        //Every user by default has the idm application provisioned for them
+        logger.info("Adding User Scope Access for Idm to user {}", user);
+        UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
+        this.scopeAccessService.addUserScopeAccess(user, usa);
+
+        //Every user by default has the cloud auth application provisioned for them
+        UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
+        logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
     /**
@@ -150,7 +191,7 @@ public class DefaultUserService implements UserService {
                 throw new BadRequestException("User-admin cannot be created without a domain");
             }
 
-            if (domainService.getDomainAdmins(user.getDomainId()).size() != 0) {
+            if (getDomainRestrictedToOneUserAdmin() && domainService.getDomainAdmins(user.getDomainId()).size() != 0) {
                 throw new BadRequestException("User-admin already exists for domain");
             }
 
@@ -1162,5 +1203,21 @@ public class DefaultUserService implements UserService {
 
     int getLdapPagingLimitDefault() {
         return config.getInt("ldap.paging.limit.default");
+    }
+
+    private String getIdmClientId() {
+        return config.getString("idm.clientId");
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
+    }
+
+    private boolean getDomainRestrictedToOneUserAdmin() {
+        return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
     }
 }

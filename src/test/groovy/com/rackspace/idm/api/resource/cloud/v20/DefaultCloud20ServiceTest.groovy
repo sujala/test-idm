@@ -3503,7 +3503,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnCaller(_, caller);
-        1 * userService.addUser(_)
+        1 * userService.addUserV20(_)
         notThrown(BadRequestException)
     }
 

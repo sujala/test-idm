@@ -110,7 +110,7 @@ public class UsersResource extends ParentResource {
             userDO.setId(UUID.randomUUID().toString().replace("-", ""));
         }
 
-        this.userService.addUser(userDO);
+        this.userService.addUserV20(userDO);
 
         String locationUri = String.format("%s", userDO.getId());
 

@@ -431,8 +431,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessForUser(retrievedUser);
-            boolean isDefaultUser = authorizationService.isDefaultUser(scopeAccess);
+            boolean isDefaultUser = authorizationService.isDefaultUser(retrievedUser);
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
