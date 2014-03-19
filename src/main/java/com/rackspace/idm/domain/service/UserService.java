@@ -17,6 +17,8 @@ public interface UserService {
 
     void addUser(User user);
 
+    void addUserV20(User user);
+
     void addRacker(Racker racker);
 
     UserAuthenticationResult authenticate(String userId, String password);

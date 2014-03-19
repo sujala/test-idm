@@ -22,7 +22,7 @@ public interface AuthorizationService {
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
     boolean isSelf(User requester, User requestedUser);
-    boolean isDefaultUser(ScopeAccess scopeAccess);
+    boolean isDefaultUser(User user);
 
     boolean hasDefaultUserRole(User user);
     boolean hasUserAdminRole(User user);
