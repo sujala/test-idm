@@ -82,7 +82,7 @@ class UserConverterCloudV20Test extends Specification {
         def secretQA = new SecretQA()
 
         when:
-        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user)
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, true)
 
         then:
         1 * mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
@@ -106,7 +106,7 @@ class UserConverterCloudV20Test extends Specification {
         def secretQA = new SecretQA()
 
         when:
-        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user)
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, true)
 
         then:
         mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
@@ -121,6 +121,27 @@ class UserConverterCloudV20Test extends Specification {
         jaxbUser.password == user.password
     }
 
+    def "convert user from domain entity to jaxb object without secret QA (user had secret QA)"() {
+        given:
+        User user = userWithNoRolesOrGroup(false)
+        def secretQA = new SecretQA()
+
+        when:
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, false)
+
+        then:
+        mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
+        jaxbUser.username == user.username
+        jaxbUser.displayName == user.displayName
+        jaxbUser.email == user.email
+        jaxbUser.enabled == user.enabled
+        jaxbUser.defaultRegion == user.region
+        jaxbUser.secretQA == null
+        jaxbUser.roles == null
+        jaxbUser.groups == null
+        jaxbUser.password == user.password
+    }
+
     def "convert user from domain entity to jaxb object - user roles and groups empty"() {
         given:
         User user = userWithNoRolesOrGroup(false)
@@ -129,7 +150,7 @@ class UserConverterCloudV20Test extends Specification {
         def secretQA = new SecretQA()
 
         when:
-        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user)
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, true)
 
         then:
         mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA

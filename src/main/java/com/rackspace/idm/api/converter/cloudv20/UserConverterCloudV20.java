@@ -144,6 +144,10 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
+        return toUser(user, false);
+    }
+
+    public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeSecretQA) {
         User jaxbUser = mapper.map(user, User.class);
 
         try {
@@ -157,7 +161,7 @@ public class UserConverterCloudV20 {
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
-            if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
+            if (includeSecretQA && (user.getSecretQuestion() != null || user.getSecretAnswer() != null)) {
                 jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
             }
 

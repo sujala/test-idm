@@ -477,7 +477,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             userService.setUserDefaultsBasedOnCaller(user, caller);
             userService.addUserV20(user);
 
-            org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user);
+            org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
 
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getId()).build());
 
