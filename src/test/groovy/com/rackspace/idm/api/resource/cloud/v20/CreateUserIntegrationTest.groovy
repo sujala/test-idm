@@ -108,4 +108,49 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
+    def "response from create user with secret QA returns secret QA"() {
+        given:
+        def username = "user" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def question = "What is the meaning?"
+        def answer = "That is the wrong question"
+        def group = utils.createGroup()
+        def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
+                "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), question, answer)
+
+        when:
+        def response = cloud20.createUser(identityAdminToken, userRequest)
+
+        then:
+        def user = response.getEntity(User).value
+        user.secretQA.question.equals(question)
+        user.secretQA.answer.equals(answer)
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, user.id)
+        utils.deleteGroup(group)
+    }
+
+    def "response from get user does not include secret QA"() {
+        given:
+        def username = "user" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def question = "What is the meaning?"
+        def answer = "That is the wrong question"
+        def group = utils.createGroup()
+        def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
+                "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), question, answer)
+        cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
+
+        when:
+        def user = cloud20.getUserByName(identityAdminToken, username).getEntity(User).value
+
+        then:
+        user.secretQA == null
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, user.id)
+        utils.deleteGroup(group)
+    }
+
 }
