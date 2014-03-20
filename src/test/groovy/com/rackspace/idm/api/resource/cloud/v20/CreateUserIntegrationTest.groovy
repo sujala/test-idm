@@ -153,4 +153,77 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteGroup(group)
     }
 
+    def "Subuser can be created in domain with 2 existing user-admins" () {
+        given:
+        def userAdmin2Region = "DFW"
+        def userAdmin3Region = "ORD"
+        def domainId = utils.createDomain()
+        def allUsers
+        def userAdmin
+        (userAdmin, allUsers) = utils.createUserAdmin(domainId)
+        def identityAdmin = allUsers.get(0)
+        def identityAdminToken  = utils.getToken(identityAdmin.username)
+
+        def userAdmin2 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, userAdmin2Region, domainId, DEFAULT_PASSWORD)
+        def userAdmin2Response = cloud20.createUser(identityAdminToken, userAdmin2)
+        def userAdmin2Entity = userAdmin2Response.getEntity(User).value;
+        assert userAdmin2Response.status == 201
+        def userAdmin2Token  = utils.getToken(userAdmin2Entity.username)
+
+        def userAdmin3 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, userAdmin3Region, domainId, DEFAULT_PASSWORD)
+        def userAdmin3Response = cloud20.createUser(identityAdminToken, userAdmin3)
+        def userAdmin3Entity = userAdmin3Response.getEntity(User).value;
+        assert userAdmin3Response.status == 201
+        def userAdmin3Token  = utils.getToken(userAdmin3Entity.username)
+
+        when: "create a default user from user admin 2"
+        def defaultUser = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        def defaultUserResponse = cloud20.createUser(userAdmin2Token, defaultUser)
+        assert defaultUserResponse.status == 201
+        def defaultUserEntity = defaultUserResponse.getEntity(User).value;
+
+        then: "default user created with user admin 2 region"
+        defaultUserEntity != null
+        defaultUserEntity.getDefaultRegion() == userAdmin2Region
+
+        when: "create a default user from user admin 3"
+        def defaultUser3 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        def defaultUser3Response = cloud20.createUser(userAdmin3Token, defaultUser3)
+        assert defaultUser3Response.status == 201
+        def defaultUser3Entity = defaultUser3Response.getEntity(User).value;
+
+        then: "default user created with user admin 3 region"
+        defaultUser3Entity != null
+        defaultUser3Entity.getDefaultRegion() == userAdmin3Region
+
+        cleanup:
+        utils.deleteUser(defaultUserEntity)
+        utils.deleteUser(defaultUser3Entity)
+        utils.deleteUser(userAdmin2Entity)
+        utils.deleteUser(userAdmin3Entity)
+        utils.deleteUsers(allUsers)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Subuser can be created in domain with 1 existing user-admin" () {
+        given:
+        def domainId = utils.createDomain()
+        def allUsers
+        def userAdmin
+        (userAdmin, allUsers) = utils.createUserAdmin(domainId)
+        def userAdminToken  = utils.getToken(userAdmin.username)
+
+        when: "create a default user"
+        def defaultUser = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        def defaultUserResponse = cloud20.createUser(userAdminToken, defaultUser)
+        assert defaultUserResponse.status == 201
+
+        then: "default user created"
+        defaultUser != null
+
+        cleanup:
+        utils.deleteUser(defaultUserResponse.getEntity(User).value)
+        utils.deleteUsers(allUsers)
+        utils.deleteDomain(domainId)
+    }
 }
