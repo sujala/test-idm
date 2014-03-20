@@ -80,7 +80,7 @@ public class UsersResourceTest {
         User user = new User();
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
         usersResource.addUser("authHeader", user);
-        verify(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
+        verify(userService).addUserV20(any(com.rackspace.idm.domain.entity.User.class));
     }
 
     @Test

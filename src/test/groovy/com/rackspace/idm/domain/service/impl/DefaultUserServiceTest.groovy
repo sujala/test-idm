@@ -247,6 +247,45 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.enabled == true
     }
 
+    def "Add UserV20"() {
+        given:
+        def user = this.createUser(null, true, domainId)
+        user.setRoles([entityFactory.createTenantRole("roleName")].asList())
+        def mossoBaseUrl = entityFactory.createCloudBaseUrl("mossoBaseUrlId", true)
+        def nastBaseUrl = entityFactory.createCloudBaseUrl("nastBaseUrlId", true)
+        def encryptionVersion = "1"
+        def salt = "a1 b2"
+
+        endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.MOSSO_BASE_URL_TYPE) >> [ mossoBaseUrl ].asList()
+        endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.NAST_BASE_URL_TYPE) >> [ nastBaseUrl ].asList()
+        cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
+        propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
+        config.getInt("maxNumberOfUsersInDomain") >> 100
+        config.getBoolean("generate.apiKey.userForCreate") >> true
+        userDao.getUsersByDomain(domainId) >> [].asList()
+        userDao.nextUserId >> "nextId"
+        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
+        cryptHelper.generateSalt() >> salt
+
+        when:
+        service.addUser(user)
+
+        then:
+        1 * mockValidator.validateUser(user)
+        1 * domainService.createNewDomain(domainId)
+        1 * userDao.addUser(user)
+        1 * tenantService.addTenantRoleToUser(user, _);
+
+        user.password != null
+        user.userPassword != null
+        user.apiKey != null
+        user.region != null
+        user.nastId == DefaultUserService.NAST_TENANT_PREFIX + domainId
+        user.encryptionVersion == encryptionVersion
+        user.salt == salt;
+        user.enabled == true
+    }
+
     def "Add User does not set default password if specified"() {
         given:
         minimumMocksForAddUser()
@@ -442,6 +481,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "Set user defaults based on caller throws exception if caller is identity:admin and user domain already has an identity:user-admin"() {
         given:
+        config.getBoolean("domain.restricted.to.one.user.admin.enabled", false) >> true
         def caller = this.createUser(null, true, null)
         def user = this.createUser(null, true, domainId)
         mockRoles()
