@@ -1162,15 +1162,27 @@ public class DefaultUserService implements UserService {
         return assignableTenantRoles;
     }
 
+    /**
+     * [1] When an identity:user-admin or identity:user-manage creates a new user, that new user should get the same
+     * RAX-AUTH:defaultRegion that the identity:user-admin of that domain has regardless of the user that creating user.
+     * [2] if there is more than 1 user-admin of an account (which should be very, very unlikely) then the default
+     * region is the same as the user that created them.
+     * [3] If for some completely unknown reason, there is no user-admin for the domain (which technically is an invalid
+     * state), set the default region to the same as the user that created them.
+     * @param caller
+     * @return
+     */
     private String getRegionBasedOnCaller(User caller) {
-        // this should never happen. we should never have two admins for a domain. when we do support this,
-        // this information should be at the domain level.
         List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
-        if (admins.size() != 1) {
+        if (admins.size() == 1) {
+            return admins.get(0).getRegion();
+        } else if (getDomainRestrictedToOneUserAdmin() && admins.size() > 1) {
             throw new IllegalStateException("Can't retrieve single user-admin for domain " + caller.getDomainId());
         }
-
-        return admins.get(0).getRegion();
+        else {
+            //either 0 admins or > 1 admins
+            return caller.getRegion();
+        }
     }
 
     private boolean isExcludedAssignableCallerRole(TenantRole tenantRole) {
