@@ -470,6 +470,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                         usr.getRoles() != null) {
                     throw new BadRequestException("Can't specify secret qa, groups, or roles in body");
                 }
+            } else {
+                if (usr.getSecretQA() != null) {
+                    if (StringUtils.isBlank(usr.getSecretQA().getQuestion())) {
+                        throw new BadRequestException("Missing secret question");
+                    }
+                    if (StringUtils.isBlank(usr.getSecretQA().getAnswer())) {
+                        throw new BadRequestException("Missing secret answer");
+                    }
+                }
             }
 
             User user = this.userConverterCloudV20.fromUser(usr);

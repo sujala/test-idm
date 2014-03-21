@@ -3507,6 +3507,98 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         notThrown(BadRequestException)
     }
 
+    def "add new user with createUser.fullPayload.enabled allows blank secretQA" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
+        1 * userService.addUserV20(_)
+        notThrown(BadRequestException)
+    }
+
+    def "add new user with createUser.fullPayload.enabled accepts fully populated secretQA" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user.secretQA = secretQA
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
+        1 * userService.addUserV20(_)
+        notThrown(BadRequestException)
+    }
+
+    def "add new user with createUser.fullPayload.enabled throws bad request when question is blank" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA(null, "answer")
+        user.secretQA = secretQA
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        result.status == HttpStatus.SC_BAD_REQUEST
+    }
+
+    def "add new user with createUser.fullPayload.enabled throws bad request when answer is blank" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA("question", null)
+        user.secretQA = secretQA
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        result.status == HttpStatus.SC_BAD_REQUEST
+    }
+
     def "add new user when user is not authorized returns 403 response" () {
         given:
         allowUserAccess()
