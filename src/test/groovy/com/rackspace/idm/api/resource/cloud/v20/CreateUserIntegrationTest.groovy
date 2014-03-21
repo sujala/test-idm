@@ -226,4 +226,44 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(allUsers)
         utils.deleteDomain(domainId)
     }
+
+    def "when creating a user WITH a given password the response DOES NOT include the password given"() {
+        given:
+        def username = "user" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def group = utils.createGroup()
+        def password = "securePassword2"
+        def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
+                password, ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
+
+        when:
+        def user = cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
+
+        then:
+        user.password == null
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, user.id)
+        utils.deleteGroup(group)
+    }
+
+    def "when creating a user WITHOUT a given password the response DOES include the password given"() {
+        given:
+        def username = "user" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def group = utils.createGroup()
+        def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
+                null, ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
+
+        when:
+        def user = cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
+
+        then:
+        user.password != null
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, user.id)
+        utils.deleteGroup(group)
+    }
+
 }
