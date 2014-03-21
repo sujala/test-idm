@@ -472,12 +472,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            boolean passwordProvided = !StringUtils.isBlank(usr.getPassword());
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
             userService.setUserDefaultsBasedOnCaller(user, caller);
             userService.addUserV20(user);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
+
+            if(passwordProvided) {
+                userTO.setPassword(null);
+            }
 
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getId()).build());
 
