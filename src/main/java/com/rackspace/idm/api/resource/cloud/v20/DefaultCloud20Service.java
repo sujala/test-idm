@@ -471,6 +471,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("Can't specify secret qa, groups, or roles in body");
                 }
             } else {
+                // Only identity:admin and identity:service-admins should be able to create a user
+                // including roles, groups and secret QA.
+                if (usr.getSecretQA() != null ||
+                        usr.getGroups() != null ||
+                        usr.getRoles() != null) {
+                    authorizationService.verifyIdentityAdminLevelAccess(scopeAccessByAccessToken);
+                }
                 if (usr.getSecretQA() != null) {
                     if (StringUtils.isBlank(usr.getSecretQA().getQuestion())) {
                         throw new BadRequestException("Missing secret question");

@@ -3599,6 +3599,30 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == HttpStatus.SC_BAD_REQUEST
     }
 
+    def "add new user with createUser.fullPayload.enabled throws forbidden if groups are populated and caller is not at least identity admin level"() {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def group = v2Factory.createGroup("group")
+        def groups = v2Factory.createGroups([group].asList())
+        user.setGroups(groups)
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_) >> { throw new ForbiddenException("You can't haz access")}
+        result.status == HttpStatus.SC_FORBIDDEN
+    }
+
     def "add new user when user is not authorized returns 403 response" () {
         given:
         allowUserAccess()
