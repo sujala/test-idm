@@ -28,4 +28,7 @@ class Constants {
 
     static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
     static def CLIENT_SECRET = "Password1"
+
+    static def MOSSO_V1_DEF = ["15","120"]
+    static def NAST_V1_DEF = ["103","111"]
 }

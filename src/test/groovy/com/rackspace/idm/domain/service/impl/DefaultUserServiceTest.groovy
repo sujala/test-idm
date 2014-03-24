@@ -11,6 +11,8 @@ import com.rackspace.idm.validation.Validator
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
+import static com.rackspace.idm.Constants.*
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -207,7 +209,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, domainId)
         user.setRoles([entityFactory.createTenantRole("roleName")].asList())
         def mossoBaseUrl = entityFactory.createCloudBaseUrl("mossoBaseUrlId", true)
+        mossoBaseUrl.baseUrlType = "MOSSO"
         def nastBaseUrl = entityFactory.createCloudBaseUrl("nastBaseUrlId", true)
+        nastBaseUrl.baseUrlType = "NAST"
         def encryptionVersion = "1"
         def salt = "a1 b2"
 
@@ -219,6 +223,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
         config.getBoolean("generate.apiKey.userForCreate") >> true
+        config.getList("v1defaultMosso") >> MOSSO_V1_DEF
+        config.getList("v1defaultNast") >> NAST_V1_DEF
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")

@@ -97,4 +97,24 @@ class Cloud11Utils {
         response.getEntity(AuthData)
     }
 
+    def addBaseUrl(id=testUtils.getRandomInteger(), serviceName="serviceName", region="ORD", enabled=true, defaul=true, publicURL="http://public.com/v1", adminURL="http://adminURL.com/v1", internalURL="http://internalURL.com/v1", userType="NAST") {
+        def baseUrl = v1Factory.createBaseUrl(id,serviceName, region, enabled, defaul, publicURL, adminURL, internalURL)
+        baseUrl.userType = userType
+        def response = methods.addBaseUrl(baseUrl)
+        assert (response.status == SC_CREATED)
+        response
+    }
+
+    def baseUrlIdFromLocation(String location){
+        String[] parts = location.split('/')
+        return parts[parts.length - 1]
+    }
+
+    def addBaseUrlRef(String username, String baseUrlId, boolean v1Default=false) {
+        def baseUrlRef = v1Factory.createBaseUrlRef(Integer.valueOf(baseUrlId), null, v1Default)
+        def response = methods.addBaseUrlRefs(username, baseUrlRef)
+        //This should be a 200 since its only adding a reference, but its been like this for a while.
+        assert (response.status == SC_CREATED)
+        response.getEntity(BaseURLRef)
+    }
 }

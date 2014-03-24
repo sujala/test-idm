@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
 import testHelpers.RootIntegrationTest
 
@@ -35,6 +36,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
     }
 
     def "Update user's apiKey - validate encryption" () {
@@ -60,6 +64,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
     }
 
     def "Add/Update user's secretQA - validate encryption" () {
@@ -83,5 +90,70 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
+    }
+
+    def "Verify v1Defaults on user creation" () {
+        when:
+        User user = utils11.createUser(testUtils.getRandomUUID('testV1Default'))
+        User getUser = utils11.getUserByName(user.id)
+
+
+        then:
+        validateV1Default(user.baseURLRefs.baseURLRef)
+        validateV1Default(getUser.baseURLRefs.baseURLRef)
+
+        cleanup:
+        utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
+    }
+
+    def "Replacing v1Default on existing service on user" () {
+        given:
+        User user = utils11.createUser(testUtils.getRandomUUID('testNewV1Default'))
+
+        when:
+        def addBaseUrlResponse = utils11.addBaseUrl(testUtils.getRandomInteger(), "cloudFiles")
+        def baseUrlLocation = addBaseUrlResponse.getHeaders().get('Location')[0]
+        def baseUrlId = utils11.baseUrlIdFromLocation(baseUrlLocation)
+        utils11.addBaseUrlRef(user.id, baseUrlId, true)
+
+        User updatedUser = utils11.getUserByName(user.id)
+
+        then:
+        for(BaseURLRef baseURLRef : updatedUser.baseURLRefs.baseURLRef) {
+            String baseUrlRefId = baseURLRef.id
+            if(baseUrlRefId == NAST_V1_DEF[0]){
+                assert (baseURLRef.v1Default == false)
+            }
+            if(baseUrlRefId == baseUrlId){
+                assert (baseURLRef.v1Default == true)
+            }
+        }
+
+        cleanup:
+        utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
+    }
+
+    void validateV1Default(List<BaseURLRef> baseURLRefList){
+        def mossoV1Def = MOSSO_V1_DEF
+        def nastV1Def = NAST_V1_DEF
+        for(BaseURLRef baseURLRef : baseURLRefList){
+            String baseUrlRefId = baseURLRef.id
+            if(mossoV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else if(nastV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else {
+                assert (baseURLRef.v1Default == false)
+            }
+        }
     }
 }

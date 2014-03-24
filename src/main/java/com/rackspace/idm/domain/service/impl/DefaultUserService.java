@@ -1,6 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.dao.RackerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -20,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+
+import static com.rackspace.idm.GlobalConstants.MOSSO;
+import static com.rackspace.idm.GlobalConstants.NAST;
 
 @Component
 public class DefaultUserService implements UserService {
@@ -1049,6 +1055,7 @@ public class DefaultUserService implements UserService {
         for (CloudBaseUrl baseUrl : baseUrls) {
             if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
                 tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
+                addV1DefaultToTenant(tenant, baseUrl);
             }
         }
     }
@@ -1065,6 +1072,25 @@ public class DefaultUserService implements UserService {
         }
 
         return false;
+    }
+
+    private void addV1DefaultToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+        List<Object> v1defaultList = new ArrayList<Object>();
+        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+        String baseUrlType = baseUrl.getBaseUrlType();
+
+        if(baseUrlType.equals(MOSSO)) {
+            v1defaultList = config.getList("v1defaultMosso");
+        } else if(baseUrlType.equals(NAST)) {
+            v1defaultList = config.getList("v1defaultNast");
+        }
+
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+                baseUrl.setV1Default(true);
+                tenant.getV1Defaults().add(baseUrlId);
+            }
+        }
     }
 
     private boolean isUkCloudRegion() {
