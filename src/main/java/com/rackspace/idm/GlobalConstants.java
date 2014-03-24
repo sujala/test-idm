@@ -19,4 +19,7 @@ public final class GlobalConstants {
     public static final String AUTHENTICATED_BY_RSAKEY = "RSAKEY";
     public static final String AUTHENTICATED_BY_APIKEY = "APIKEY";
     public static final String TENANT_ALIAS_PATTERN = "{tenant}";
+
+    public static final String MOSSO = "MOSSO";
+    public static final String NAST = "NAST";
 }

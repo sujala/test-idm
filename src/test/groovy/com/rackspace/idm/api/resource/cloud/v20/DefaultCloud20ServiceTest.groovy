@@ -2659,10 +2659,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         when:
         service.isRoleWeightValid(500)
-        service.isRoleWeightValid(3)
 
         then:
         notThrown(BadRequestException)
+
+        when:
+        service.isRoleWeightValid(3)
 
         then:
         thrown(BadRequestException)
