@@ -442,6 +442,43 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [].asList()
 
         when:
+        service.setUserDefaultsBasedOnCaller(user, caller, false)
+
+        then:
+        def userAdminRoleFound = false
+        def computeDefaultRoleFound = false
+        def objectStoreRoleFound = false
+
+        assert(user.roles.size() == 1)
+        for (tenantRole in user.roles) {
+            if (tenantRole.name == "identity:user-admin") {
+                userAdminRoleFound = true
+            }
+
+            if (tenantRole.name == "compute:default") {
+                computeDefaultRoleFound = true
+            }
+
+            if (tenantRole.name == "object-store:default") {
+                objectStoreRoleFound = true
+            }
+        }
+
+        userAdminRoleFound == true
+        computeDefaultRoleFound == false
+        objectStoreRoleFound == false
+    }
+
+    def "Set user defaults based on caller if caller is identity:admin and is create user in one call"() {
+        given:
+        def caller = this.createUser(null, true, null)
+        def user = this.createUser(null, true, domainId)
+        mockRoles()
+
+        authorizationService.hasIdentityAdminRole(_) >> true
+        domainService.getDomainAdmins(domainId) >> [].asList()
+
+        when:
         service.setUserDefaultsBasedOnCaller(user, caller)
 
         then:
@@ -468,7 +505,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         computeDefaultRoleFound == true
         objectStoreRoleFound == true
     }
-
 
     def "Set user defaults based on caller throws exception if caller is identity:admin and user does not have domainId"() {
         given:

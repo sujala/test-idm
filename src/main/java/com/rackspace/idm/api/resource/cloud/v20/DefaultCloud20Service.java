@@ -464,6 +464,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
+            boolean isCreateUserInOneCall = false;
+
             if (config.getBoolean("createUser.fullPayload.enabled") == false) {
                 if (usr.getSecretQA() != null ||
                         usr.getGroups() != null ||
@@ -471,12 +473,22 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("Can't specify secret qa, groups, or roles in body");
                 }
             } else {
-                // Only identity:admin and identity:service-admins should be able to create a user
-                // including roles, groups and secret QA.
                 if (usr.getSecretQA() != null ||
                         usr.getGroups() != null ||
                         usr.getRoles() != null) {
-                    authorizationService.verifyIdentityAdminLevelAccess(scopeAccessByAccessToken);
+                    // Only identity:admin should be able to create a user including roles, groups and secret QA.
+                    if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    };
+                    // Since the domainId is used as the mossoId in the Create User In One Call call
+                    // we need to make sure it is an integer so it can be used as a mossoId
+                    try {
+                        Integer.parseInt(usr.getDomainId());
+                    } catch (Exception ex) {
+                        throw new BadRequestException("DomainId must be an integer");
+                    }
+                    // If secretQA, groups or roles are populated then it's a createUserInOneCall call
+                    isCreateUserInOneCall = true;
                 }
                 if (usr.getSecretQA() != null) {
                     if (StringUtils.isBlank(usr.getSecretQA().getQuestion())) {
@@ -491,13 +503,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean passwordProvided = !StringUtils.isBlank(usr.getPassword());
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
-            userService.setUserDefaultsBasedOnCaller(user, caller);
-            userService.addUserV20(user);
+            userService.setUserDefaultsBasedOnCaller(user, caller, isCreateUserInOneCall);
+            userService.addUserV20(user, isCreateUserInOneCall);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
 
             if(passwordProvided) {
                 userTO.setPassword(null);
+            }
+
+            // This hack is to ensure backward compatibility for the original create user call that did
+            // not return roles or groups
+            if (!isCreateUserInOneCall) {
+                userTO.setRoles(null);
+                userTO.setGroups(null);
             }
 
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(user.getId()).build());

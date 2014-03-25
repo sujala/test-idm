@@ -130,20 +130,32 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addUserV20(User user) {
+        addUserV20(user, false);
+    }
+
+    @Override
+    public void addUserV20(User user, boolean isCreateUserInOneCall) {
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
 
         createDomainIfItDoesNotExist(user.getDomainId());
+        if (isCreateUserInOneCall) {
+            createDefaultDomainTenantsIfNecessary(user.getDomainId());
+        }
         checkMaxNumberOfUsersInDomain(user.getDomainId());
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
         setRegionIfNotProvided(user);
 
-        //hack alert!! code requires the user object to have the nastid attribute set. this attribute
-        //should no longer be required as users have roles on a tenant instead. once this happens, remove
-        user.setNastId(getNastTenantId(user.getDomainId()));
+        if (isCreateUserInOneCall) {
+            //hack alert!! code requires the user object to have the nastid attribute set. this attribute
+            //should no longer be required as users have roles on a tenant instead. once this happens, remove
+            user.setNastId(getNastTenantId(user.getDomainId()));
+            user.setMossoId(Integer.parseInt(user.getDomainId()));
+        }
+
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
@@ -173,9 +185,10 @@ public class DefaultUserService implements UserService {
      *
      * @param user
      * @param caller
+     * @param isCreateUserInOneCall
      */
     @Override
-    public void setUserDefaultsBasedOnCaller(User user, User caller) {
+    public void setUserDefaultsBasedOnCaller(User user, User caller, boolean isCreateUserInOneCall) {
         //
         // Based on the caller making the call, apply the following rules to the user being created.
         // We will revisit these rules later on, so they are more simplified. Don't want to change for now.
@@ -203,13 +216,15 @@ public class DefaultUserService implements UserService {
 
             attachRoleToUser(roleService.getUserAdminRole(), user);
 
-            //original code had this. this is in place to help ensure the user has access to their
-            //default tenants. currently the user-admin role is not tenant specific. don't want to
-            //change existing behavior. Need to have business discussion to determine if a user
-            //has a non tenant specific role, whether they have access to all tenants in domain.
-            //if this turns out to be the case, then we need to change validateToken logic.
-            attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
-            attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            if (isCreateUserInOneCall) {
+                //original code had this. this is in place to help ensure the user has access to their
+                //default tenants. currently the user-admin role is not tenant specific. don't want to
+                //change existing behavior. Need to have business discussion to determine if a user
+                //has a non tenant specific role, whether they have access to all tenants in domain.
+                //if this turns out to be the case, then we need to change validateToken logic.
+                attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
+                attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            }
         }
 
         if (authorizationService.hasUserAdminRole(caller) || authorizationService.hasUserManageRole(caller)) {
@@ -230,6 +245,18 @@ public class DefaultUserService implements UserService {
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
+    }
+
+    /**
+     * sets default parameters on the user e.g domain id, roles, etc based on
+     * characteristics of the calling user.
+     *
+     * @param user
+     * @param caller
+     */
+    @Override
+    public void setUserDefaultsBasedOnCaller(User user, User caller) {
+        setUserDefaultsBasedOnCaller(user, caller, true);
     }
 
     //TODO: consider removing this method. Just here so code doesn't break

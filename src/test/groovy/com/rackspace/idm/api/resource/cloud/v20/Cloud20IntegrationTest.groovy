@@ -2593,7 +2593,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         createUser != null
         authResponse.user.roles != null
-        authResponse.user.roles.role.size() == 4
+        authResponse.user.roles.role.size() == 2
         authResponse.user.roles.role.name.contains(role.name)
         authResponse.user.roles.role.name.contains("identity:user-admin")
 

@@ -92,7 +92,7 @@ class Cloud20Utils {
     }
 
     def createDomain() {
-        testUtils.getRandomUUID("domain")
+        testUtils.getRandomIntegerString()
     }
 
     def updateDomain(domainId, domain, String token=getServiceAdminToken()) {

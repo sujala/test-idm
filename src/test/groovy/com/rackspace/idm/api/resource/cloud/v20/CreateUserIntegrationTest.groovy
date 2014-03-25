@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -68,6 +69,85 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
+    }
+
+    def "Only user-admin role is added for create user v2.0 calls when secretQA is not provided (ie not a create user in one call)"() {
+        given:
+        def username = "v20Username" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUserForCreate(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        cloud20.createUser(identityAdminToken, user)
+        def userEntity = userService.getUser(username)
+
+        when:
+        def roles = cloud20.listUserGlobalRoles(identityAdminToken, userEntity.id).getEntity(org.openstack.docs.identity.api.v2.RoleList).value
+
+        then:
+        roles.role.size == 1
+        roles.role[0].name == "identity:user-admin"
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, userEntity.id)
+    }
+
+    def "tenants ARE created for create user v2.0 calls when secretQA is populated and caller is identity:admin"() {
+        given:
+        def username = "v20Username" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user.secretQA = secretQA
+        cloud20.createUser(identityAdminToken, user)
+        def userEntity = userService.getUser(username)
+
+        when:
+        def tenants = cloud20.getDomainTenants(identityAdminToken, domainId).getEntity(Tenants).value
+
+        then:
+        !tenants.tenant.isEmpty()
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, userEntity.id)
+        cloud20.deleteTenant(identityAdminToken, tenants.tenant[0].id)
+        cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id)
+        cloud20.deleteDomain(identityAdminToken, domainId)
+    }
+
+    def "tenants ARE NOT created for create user v2.0 calls when secretQA NOT populated and caller is identity:admin"() {
+        given:
+        def username = "v20Username" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        cloud20.createUser(identityAdminToken, user)
+        def userEntity = userService.getUser(username)
+
+        when:
+        def tenantsResponse = cloud20.getDomainTenants(identityAdminToken, domainId)
+
+        then:
+        tenantsResponse.status == 404
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, userEntity.id)
+        cloud20.deleteDomain(identityAdminToken, domainId)
+    }
+
+    def "BadRequestException is thrown when secretQA is populated and caller is identity:admin and domainId is NOT an integer"() {
+        given:
+        def username = "v20Username" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain() + "letters"
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user.secretQA = secretQA
+
+        when:
+        def response = cloud20.createUser(identityAdminToken, user)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        cloud20.deleteDomain(identityAdminToken, domainId)
     }
 
     def "tenants ARE created for create user v1.1 calls"() {
