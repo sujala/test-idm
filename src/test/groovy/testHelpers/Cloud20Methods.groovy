@@ -2,14 +2,21 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
+
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
@@ -33,6 +40,8 @@ class Cloud20Methods {
     @Shared def v1Factory = new V1Factory()
     @Shared String path20 = "cloud/v2.0/"
 
+    MediaTypeContext mediaType
+
     //Extensions
     static def RAX_GRPADM= "RAX-GRPADM"
     static def OS_KSADM = "OS-KSADM"
@@ -43,15 +52,28 @@ class Cloud20Methods {
 
     //Constants
     static def X_AUTH_TOKEN = "X-Auth-Token"
+    static def X_SESSION_ID = MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME
+
+    //path constants
+    static def SERVICE_PATH_MOBILE_PHONES = "mobile-phones"
+    static def SERVICE_PATH_MULTI_FACTOR = "multi-factor"
+    static def SERVICE_PATH_VERIFY = "verify"
+    static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
 
 
     def init(){
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+        mediaType = new MediaTypeContext()
     }
 
-    def authenticate(username, password) {
+    def authenticate(username, password, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
-        resource.path(path20).path(TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
+    }
+
+    def authenticateMFAWithSessionIdAndPasscode(sessionId, passcode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        def credentials = v2Factory.createPasscodeAuthenticationRequest(passcode)
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header(X_SESSION_ID, sessionId).entity(credentials).post(ClientResponse)
     }
 
     //TODO: remove once auth plugin is fixed
@@ -276,9 +298,45 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
+    def addPhoneToUser(String token, String userId, MobilePhone requestMobilePhone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
+    }
+
+    def listDevices(String token, String userId, MediaType accept = mediaType.accept, MediaType contentType = mediaType.contentType) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
+                .header(X_AUTH_TOKEN, token).accept(accept).type(contentType).get(ClientResponse)
+    }
+
+    def sendVerificationCode(String token, String userId, String mobilePhoneId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES).path(mobilePhoneId).path(SERVICE_PATH_VERIFICATION_CODE)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).post(ClientResponse)
+    }
+
+    def verifyVerificationCode(String token, String userId, String mobilePhoneId, VerificationCode verificationCode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES).path(mobilePhoneId).path(SERVICE_PATH_VERIFY)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(verificationCode).post(ClientResponse)
+    }
+
+    def updateMultiFactorSettings(String token, String userId, MultiFactor multiFactorSettings, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorSettings).put(ClientResponse)
+    }
+
+    def deleteMultiFactor(String token, String userId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).delete(ClientResponse)
+    }
+
     def addUserRole(String token, String userId, String roleId) {
-        resource.path(path20).path("users").path(userId)
-                .path("roles").path("OS-KSADM").path(roleId)
+        resource.path(path20).path(USERS).path(userId)
+                .path(ROLES).path(OS_KSADM).path(roleId)
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 

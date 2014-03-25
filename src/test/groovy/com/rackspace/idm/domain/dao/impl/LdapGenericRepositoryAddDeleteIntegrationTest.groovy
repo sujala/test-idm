@@ -13,6 +13,7 @@ import org.apache.commons.lang.NotImplementedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
+import org.tuckey.web.filters.urlrewrite.Conf
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -304,37 +305,4 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
         con.delete(deleteRequest);
     }
-
-    /**
-     * This config is used to wire the dependencies into a dummy generic repository for testing. The context file LdapEndpointRepositoryTest-context.xml
-     * loads this file.
-     */
-    @SingleTestConfiguration
-    public static class Config {
-
-        /**
-         * Raw bean. Nothing overridden.
-         * @return
-         */
-        @Bean
-        LdapGenericRepository<Application> genericApplicationRepository() {
-            return new LdapGenericRepository<Application>() {
-            }
-        }
-
-        /**
-         * Override the base methods that throw NotImplementedExceptions
-         * @return
-         */
-        @Bean
-        LdapGenericRepository<Application> overriddenGenericApplicationRepository() {
-            return new LdapGenericRepository<Application>() {
-                @Override
-                public String getBaseDn(){
-                    return APPLICATIONS_BASE_DN;
-                }
-            }
-        }
-    }
-
 }

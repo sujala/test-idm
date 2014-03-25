@@ -47,9 +47,18 @@ public interface UserDao {
     boolean isUsernameUnique(String username);
 
     /**
+     * Updates the backend with the provided user object. Null values will NOT result in the attribute being removed, unless the property is annotated with @DeleteNullValues.
+     *
      * @param user User instance with update changes
      */
     void updateUser(User user);
+
+    /**
+     * Updates the backend with the provided user object. Null values result in the attribute being removed.
+     *
+     * @param user User instance with update changes
+     */
+    void updateUserAsIs(User user);
 
     void updateUserEncryption(String userId);
 

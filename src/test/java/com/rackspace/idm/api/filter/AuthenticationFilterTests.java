@@ -1,32 +1,30 @@
 package com.rackspace.idm.api.filter;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
-
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.sun.jersey.spi.container.ContainerRequest;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.sun.jersey.spi.container.ContainerRequest;
-import org.springframework.context.ApplicationContext;
-
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 import java.util.ArrayList;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 public class AuthenticationFilterTests {
 
@@ -385,15 +383,5 @@ public class AuthenticationFilterTests {
                 false);
         replayAndRunFilter();
     }
-
-    @Test
-    public void getScopeAccessService_scopeAccessServiceIsNull_callsGetBean() throws Exception {
-        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
-        ApplicationContext applicationContext = mock(ApplicationContext.class);
-        authenticationFilter.setApplicationContext(applicationContext);
-        authenticationFilter.getScopeAccessService();
-        verify(applicationContext).getBean(ScopeAccessService.class);
-    }
-
 
 }

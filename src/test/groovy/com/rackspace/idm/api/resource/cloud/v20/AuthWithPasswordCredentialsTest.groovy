@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -25,22 +27,23 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
         mockConfiguration(service)
     }
 
-    def "authenticate validates credentials"() {
+    def "authenticateForAuthResponse validates credentials"() {
         given:
         def credential = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
 
         when:
-        service.authenticate(authRequest)
+        service.authenticateForAuthResponse(authRequest)
 
         then:
         1 * validator20.validatePasswordCredentials(_) >> { arg1 ->
             assert(arg1.username[0] == "username")
             assert(arg1.password[0] == "Password1")
         }
+        userService.authenticate(_, _) >> new UserAuthenticationResult(new User(), true)
     }
 
-    def "authenticate sets User and UserScopeAccess in authReturnValues"() {
+    def "authenticateForAuthResponse sets User and UserScopeAccess in authReturnValues"() {
         given:
         def credential = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def authRequest = v2Factory.createAuthenticationRequest(null, null, credential)
@@ -48,11 +51,11 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
         def scopeAccess = createUserScopeAccess()
 
         when:
-        def response = service.authenticate(authRequest)
+        def response = service.authenticateForAuthResponse(authRequest)
 
         then:
-        1 * userService.getUserByUsernameForAuthentication("username") >> user
-        1 * scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(_, _, _) >> scopeAccess
+        1 * scopeAccessService.getValidUserScopeAccessForClientId(_, _, _) >> scopeAccess
+        userService.authenticate(_, _) >> new UserAuthenticationResult(user, true)
         response.impersonatedScopeAccess == null
         response.user == user
         response.userScopeAccess == scopeAccess

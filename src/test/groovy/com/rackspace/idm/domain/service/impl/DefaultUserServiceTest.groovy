@@ -767,143 +767,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         usersWithRole.get(0) == user
     }
 
-    def "getUsersWeight gets users tenantRoles"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with { it.roleRsId = "3"; return it }
-        def clientRole = entityFactory.createClientRole(2000)
-        def user = entityFactory.createUser().with {
-            it.username = "username"
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-
-        when:
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> clientRole
-        service.getUserWeight(user, "applicationId")
-
-        then:
-        1 * tenantService.getGlobalRolesForUser(_, _) >> new ArrayList<TenantRole>()
-    }
-
-    def "getUsersWeight finds identity:serviceAdminRole role weight for user"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.roleRsId = "0"
-            return it
-        }
-        def user = entityFactory.createUser().with {
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-        def applicationRole = entityFactory.createClientRole("identity:service-admin").with { it.rsWeight = 0; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
-        applicationService.getClientRoleById("0") >> applicationRole
-
-        when:
-        def weight = service.getUserWeight(user, "applicationId")
-
-        then:
-        weight == 0
-    }
-
-    def "getUsersWeight finds identity:admin role weight for user"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.roleRsId = "0"
-            return it
-        }
-        def user = entityFactory.createUser().with {
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-        def applicationRole = entityFactory.createClientRole("identity:admin").with { it.rsWeight = 100; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
-        applicationService.getClientRoleById("0") >> applicationRole
-
-        when:
-        def weight = service.getUserWeight(user, "applicationId")
-
-        then:
-        weight == 100
-    }
-
-    def "getUsersWeight finds identity:user-admin role weight for user"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.roleRsId = "0"
-            return it
-        }
-        def user = entityFactory.createUser().with {
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-        def applicationRole = entityFactory.createClientRole("identity:user-admin").with { it.rsWeight = 1000; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
-        applicationService.getClientRoleById("0") >> applicationRole
-
-        when:
-        def weight = service.getUserWeight(user, "applicationId")
-
-        then:
-        weight == 1000
-    }
-
-    def "getUsersWeight finds identity:default role weight for user"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.roleRsId = "0"
-            return it
-        }
-        def user = entityFactory.createUser().with {
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-        def applicationRole = entityFactory.createClientRole("identity:user").with { it.rsWeight = 2000; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
-        applicationService.getClientRoleById("0") >> applicationRole
-
-        when:
-        def weight = service.getUserWeight(user, "applicationId")
-
-        then:
-        weight == 2000
-    }
-
-    def "getUsersWeight finds generic role weight for user"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole().with {
-            it.roleRsId = "0"
-            return it
-        }
-        def clientRole = entityFactory.createClientRole(2000);
-        def user = entityFactory.createUser().with {
-            it.roles = [ tenantRole ].asList()
-            return it
-        }
-        def applicationRole = entityFactory.createClientRole("role").with { it.rsWeight = 2000; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        tenantService.getGlobalRolesForUser(user, "applicationId") >> tenantRoles
-        applicationService.getClientRoleById("0") >> applicationRole
-        config.getString("cloudAuth.clientId") >> "id"
-        config.getString("cloudAuth.userRole") >> "role"
-        applicationService.getClientRoleByClientIdAndRoleName("id", "role") >> clientRole
-
-        when:
-        def weight = service.getUserWeight(user, "applicationId")
-
-        then:
-        weight == 2000
-    }
-
     def "GET - Users by tenantId - verify that userId is not null"(){
         given:
         def tenantRole = entityFactory.createTenantRole()
@@ -1274,6 +1137,60 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         when:
         service.authenticate("username", "password")
+
+        then:
+        notThrown(UserDisabledException)
+    }
+
+    def "validateUserIsEnabled throws UserDisabledException is user is disabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = false
+            it
+        }
+        Domain domain = entityFactory.createDomain()
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "validateUserIsEnabled throws UserDisabledException is domain is disabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = true
+            it
+        }
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = false
+            it
+        }
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
+
+        then:
+        thrown(UserDisabledException)
+    }
+
+    def "validateUserIsEnabled does not throw UserDisabledException if user and domain is enabled"() {
+        given:
+        User user = entityFactory.createUser().with {
+            it.enabled = true
+            it
+        }
+        Domain domain = entityFactory.createDomain().with {
+            it.enabled = true
+            it
+        }
+        domainService.getDomain(_) >> domain
+
+        when:
+        service.validateUserIsEnabled(user)
 
         then:
         notThrown(UserDisabledException)

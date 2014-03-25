@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.readers;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.IdmException;
 import org.joda.time.DateTime;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -35,6 +37,7 @@ public class JSONReaderForCloudAuthenticationResponseToken {
                     JSONObject tokenJson = (JSONObject) parser.parse(accessJson.get(JSONConstants.TOKEN).toString());
                     Object tokenId = tokenJson.get(JSONConstants.ID);
                     Object tokenExpiration = tokenJson.get(JSONConstants.EXPIRES);
+                    JSONArray tokenAuthenticatedByArray = (JSONArray) tokenJson.get(JSONConstants.RAX_AUTH_AUTHENTICATED_BY);
 
                     if(tokenId != null){
                         token.setId(tokenId.toString());
@@ -43,6 +46,16 @@ public class JSONReaderForCloudAuthenticationResponseToken {
                     if(tokenExpiration != null){
                         token.setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(
                                             new DateTime(tokenExpiration.toString()).toGregorianCalendar()));
+                    }
+
+                    if (tokenAuthenticatedByArray != null) {
+                        AuthenticatedBy authBy = new AuthenticatedBy();
+                        for (Object authByVal : tokenAuthenticatedByArray) {
+                            authBy.getCredential().add(authByVal.toString());
+                        }
+                        if (authBy.getCredential().size() > 0) {
+                            token.setAuthenticatedBy(authBy);
+                        }
                     }
 
                     if(tokenJson.containsKey(JSONConstants.TENANT)){

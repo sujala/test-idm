@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.dao.UserDao
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.springframework.beans.factory.annotation.Autowired
 import org.openstack.docs.identity.api.v2.CredentialListType
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Ignore
@@ -27,6 +29,9 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
     @Shared def identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo
     @Shared def identityAdminThree, userAdminThree, userManageThree, defaultUserThree
     @Shared def domainId
+
+    @Autowired
+    UserDao userDao
 
 
     def "Update user with password populated in request will expire all tokens" () {
@@ -424,7 +429,41 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "Assigning user 'compute:default' global role should allow authentication" () {
+    def "Multi-factor status is exposed for get user calls"() {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def daoUser = userDao.getUserByUsername(defaultUser.username)
+        daoUser.multifactorEnabled = multiFactorEnabled
+        userDao.updateUser(daoUser)
+
+        when:
+        def userById = utils.getUserById(defaultUser.id)
+        def userByUsername = utils.getUserByName(defaultUser.username)
+        def userByEmail = utils.getUserByEmail(defaultUser.email)
+        def users = utils.listUsers()
+
+        then:
+        userById.multiFactorEnabled == expectedResult
+        userByUsername.multiFactorEnabled == expectedResult
+        userByEmail.multiFactorEnabled == expectedResult
+        for (def user : users) {
+            if (user.id == defaultUser.id) {
+                assert (user.multiFactorEnabled == expectedResult)
+            }
+        }
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        multiFactorEnabled  | expectedResult
+        true                | true
+        false               | false
+    }
+
+        def "Assigning user 'compute:default' global role should allow authentication" () {
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -438,6 +477,27 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "update user does not set multiFactor enabled flag"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when:
+        userAdmin.multiFactorEnabled = true
+        utils.updateUser(userAdmin)
+        def retrievedUser = utils.getUserById(userAdmin.id)
+
+        then:
+        retrievedUser.multiFactorEnabled == false
+
+        cleanup:
+        utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 
@@ -516,7 +576,6 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
-
 
     def "v1.1 created user returns non-null group/roles in v2 getUserByName call" () {
         given:

@@ -26,6 +26,7 @@
     <attribute name="federated" type="xsd:boolean" />
     <attribute name="federatedIdp" type="xsd:string" />
     <attribute name="tenantAlias" type="xsd:string" />
+    <attribute name="multiFactorEnabled" type="xsd:boolean"/>
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -46,6 +47,34 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="mobilePhone" type="RAX-AUTH:MobilePhone" >
+        <annotation>
+            <xsd:documentation>
+                <p>A mobile phone represents an mobile phone capable of being used for multifactor.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="mobilePhones" type="RAX-AUTH:MobilePhones" >
+        <annotation>
+            <xsd:documentation>
+                <p>A mobilePhones represents a list of mobile phone capable of being used for multifactor.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="verificationCode" type="RAX-AUTH:VerificationCode" >
+        <annotation>
+            <xsd:documentation>
+                <p>A verification code represents a code used for verification of something.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="multiFactor" type="RAX-AUTH:MultiFactor" >
+        <annotation>
+            <xsd:documentation>
+                <p>Settings for multifactor authentication.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
     <element name="domains" type="RAX-AUTH:Domains" />
     <element name="policy" type="RAX-AUTH:Policy"/>
     <element name="policies" type="RAX-AUTH:Policies" />
@@ -61,6 +90,7 @@
     <element name="secretqas" type="RAX-AUTH:SecretQAs" />
     <element name="secretqa" type="RAX-AUTH:SecretQA" />
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
+    <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
 
     <!-- Complex Types -->
     <complexType name="AuthenticatedBy">
@@ -93,7 +123,73 @@
             </element>
         </sequence>
     </complexType>
-    
+
+    <complexType name="MultiFactorDevice" abstract="true">
+        <attribute name="id" type="xsd:string">
+        <annotation>
+            <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    An ID uniquely identifying the device.
+                </p>
+            </xsd:documentation>
+        </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <complexType name="MobilePhone">
+        <complexContent>
+            <extension base="RAX-AUTH:MultiFactorDevice">
+                <attribute name="number" type="xsd:string">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                The phone number of the mobile phone.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="verified" type="xsd:boolean">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                Whether the device has been verified for the associated user.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="MobilePhones">
+        <sequence>
+            <element name="mobilePhone" type="RAX-AUTH:MobilePhone" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+    <complexType name="VerificationCode">
+        <attribute name="code" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The code used for verification.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+    <complexType name="MultiFactor">
+        <attribute name="enabled" type="xsd:boolean" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether to enable or disable multi-factor
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
     <complexType name="Domain">
         <sequence>
             <element name="description" type="xsd:string">
@@ -110,7 +206,7 @@
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        An ID uniquely identifying the domain. 
+                        An ID uniquely identifying the domain.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -134,13 +230,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Domains">
         <sequence>
             <element name="domain" type="RAX-AUTH:Domain" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="DefaultRegionServices">
         <sequence>
             <element name="serviceName" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
@@ -171,7 +267,7 @@
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        An ID uniquely identifying the policy. 
+                        An ID uniquely identifying the policy.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -222,7 +318,7 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Policies">
         <sequence>
             <element name="policy" type="RAX-AUTH:Policy" minOccurs="0" maxOccurs="unbounded"/>
@@ -237,7 +333,7 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="PolicySet">
         <annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -277,13 +373,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="PolicySets">
         <sequence>
             <element name="policySet" type="RAX-AUTH:PolicySet" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="Capability">
         <sequence>
             <element name="description" type="xsd:string">
@@ -342,13 +438,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Capabilities">
         <sequence>
             <element name="capability" type="RAX-AUTH:Capability" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="PolicyMetadata">
         <annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -473,7 +569,7 @@
             <element name="serviceApi" type="RAX-AUTH:ServiceApi" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
     </complexType>
-    
+
     <complexType name="ServiceApi">
         <sequence>
         	<element name="description" type="xsd:string" minOccurs="0" maxOccurs="1"/>
@@ -497,7 +593,7 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="RsaCredentials">
         <complexContent>
             <extension base="identity:CredentialType">
@@ -506,11 +602,19 @@
             </extension>
         </complexContent>
     </complexType>
-    
+
+    <complexType name="PasscodeCredentials">
+        <complexContent>
+            <extension base="identity:CredentialType">
+                <attribute name="passcode" type="xsd:string" use="required" />
+            </extension>
+        </complexContent>
+    </complexType>
+
     <simpleType name="StringList">
         <list itemType="xsd:string"/>
     </simpleType>
-    
+
     <xsd:simpleType name="PolicyAlgorithm">
         <xsd:annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -524,23 +628,23 @@
             <xsd:enumeration value="if-false-deny"/>
         </xsd:restriction>
     </xsd:simpleType>
-    
-    <simpleType  name="Action"> 
+
+    <simpleType  name="Action">
         <restriction base="xsd:string">
             <enumeration value="GET"/>
-            <enumeration value="POST"/> 
+            <enumeration value="POST"/>
             <enumeration value="PUT"/>
             <enumeration value="DELETE"/>
             <enumeration value="PATCH"/>
             <enumeration value="*" />
         </restriction>
     </simpleType>
-    
-    <simpleType  name="PolicyType"> 
+
+    <simpleType  name="PolicyType">
         <restriction base="xsd:string">
             <enumeration value="json-policy-format"/>
-            <enumeration value="standard-policy-format"/> 
+            <enumeration value="standard-policy-format"/>
         </restriction>
     </simpleType>
-   
+
 </schema>

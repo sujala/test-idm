@@ -9,6 +9,11 @@ import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.WebAppDescriptor;
 import org.junit.AfterClass;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+
+import javax.ws.rs.ext.Provider;
 
 /**
  * Runs a Jersey server for the duration of a test class. Jersey has a convenient test support class,
@@ -42,6 +47,8 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         if (jerseyTest != null) {
             return resource;
         }
+
+
         jerseyTest = new JerseyTest() {
 
             @Override
@@ -51,6 +58,31 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                     clientConfig.getClasses().add(aClass);
                 }
 
+                /*
+                This was added because when converting to/from JSON on the client side, the custom providers were not loaded as message readers/writers for some unknown reason.
+                This appears to be a bug in jersey, but I haven't had time to investigate fully. Supposedly setting the init param "com.sun.jersey.config.property.packages" as already done
+                by the code should load all the custom idm providers, but it doesn't. For the time being, explicitly loading the json readers/writers works. For a longer
+                 term solution just loading all the providers in the standard json writers/readers directories.
+                 */
+                ClassPathScanningCandidateComponentProvider scanner =
+                        new ClassPathScanningCandidateComponentProvider(false);
+                scanner.addIncludeFilter(new AnnotationTypeFilter(Provider.class));
+                for (BeanDefinition bd : scanner.findCandidateComponents("com.rackspace.idm.api.resource.cloud.v20.json.writers")) {
+                    try {
+                        clientConfig.getClasses().add(Class.forName(bd.getBeanClassName()));
+                    } catch (ClassNotFoundException e) {
+                        //eat
+                    }
+                }
+                for (BeanDefinition bd : scanner.findCandidateComponents("com.rackspace.idm.api.resource.cloud.v20.json.readers")) {
+                    try {
+                        clientConfig.getClasses().add(Class.forName(bd.getBeanClassName()));
+                    } catch (ClassNotFoundException e) {
+                        //eat
+                    }
+                }
+
+
                 return new WebAppDescriptor.Builder()
                         .contextListenerClass(org.springframework.web.context.ContextLoaderListener.class)
                         .requestListenerClass(org.springframework.web.context.request.RequestContextListener.class)
@@ -58,7 +90,10 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                         .clientConfig(clientConfig)
                         .servletClass(SpringServlet.class)
                         .initParam("com.sun.jersey.spi.container.ContainerRequestFilters",
-                        "com.rackspace.idm.api.filter.UriExtensionFilter")
+                                "om.rackspace.idm.api.filter.DefaultAcceptHeaderFilter;" +
+                                "com.rackspace.idm.api.filter.UriExtensionFilter;" +
+                                "com.rackspace.idm.api.filter.AuthenticationFilter;" +
+                                "com.sun.jersey.api.container.filter.GZIPContentEncodingFilter")
                         .initParam("com.sun.jersey.config.property.packages",
                         "com.rackspace.idm;org.codehaus.jackson.jaxrs")
                         .contextPath("")
@@ -69,6 +104,18 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         resource = jerseyTest.resource();
         return resource;
     }
+
+    static public WebResource startOrRestartGrizzly(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
+        if (jerseyTest != null) {
+            afterClass();
+        }
+        return ensureGrizzlyStarted(contextConfigLocation, clientConfigProviderClasses);
+    }
+
+    static public void stopGrizzly() throws Exception {
+        afterClass();
+    }
+
 
     public WebResource resource() {
         return resource;

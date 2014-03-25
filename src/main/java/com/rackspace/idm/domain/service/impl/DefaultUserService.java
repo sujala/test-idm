@@ -28,6 +28,7 @@ public class DefaultUserService implements UserService {
     static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
+    private static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     static final String NAST_TENANT_PREFIX = "MossoCloudFS_";
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
@@ -436,25 +437,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public int getUserWeight(User user, String applicationId) {
-        List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user, applicationId);
-        for (TenantRole tenantRole : tenantRoles) {
-            ClientRole clientRole = applicationService.getClientRoleById(tenantRole.getRoleRsId());
-            if (StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
-                return clientRole.getRsWeight();
-            }
-        }
-        return getDefaultUserWeight();
-    }
-
-    private int getDefaultUserWeight() {
-        String clientId = config.getString("cloudAuth.clientId");
-        String roleName = config.getString("cloudAuth.userRole");
-        ClientRole defaultUserRole = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
-        return defaultUserRole.getRsWeight();
-    }
-
-    @Override
     public void setValidator(Validator validator) {
         this.validator = validator;
     }
@@ -678,6 +660,8 @@ public class DefaultUserService implements UserService {
         User currentUser = userDao.getUserById(user.getId());
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
+        user.setMultifactorEnabled(null);
+
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
@@ -699,6 +683,14 @@ public class DefaultUserService implements UserService {
         }
         logger.info("Updated User: {}", user);
     }
+
+    @Override
+    public void updateUserForMultiFactor(User user) {
+        logger.info("Updating User: {}", user);
+        userDao.updateUserAsIs(user);
+        logger.info("Updated User: {}", user);
+    }
+
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
         if (authorizationService.hasUserAdminRole(user)) {
@@ -965,10 +957,9 @@ public class DefaultUserService implements UserService {
         this.propertiesService = propertiesService;
     }
 
-    void validateUserStatus(UserAuthenticationResult authenticated ) {
-        User user = (User)authenticated.getUser();
-        boolean isAuthenticated = authenticated.isAuthenticated();
-        if (user != null && isAuthenticated) {
+    @Override
+    public void validateUserIsEnabled(User user) {
+        if (user != null) {
             if (user.isDisabled()) {
                 logger.error(user.getUsername());
                 throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
@@ -980,6 +971,14 @@ public class DefaultUserService implements UserService {
                     throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
                 }
             }
+        }
+    }
+
+    void validateUserStatus(UserAuthenticationResult authenticated ) {
+        User user = (User)authenticated.getUser();
+        boolean isAuthenticated = authenticated.isAuthenticated();
+        if (user != null && isAuthenticated) {
+            validateUserIsEnabled(user);
             logger.debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         }
     }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -17,12 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
+    private static final List<String> AUTH_BY_PASSWORD_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
+    private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
 
     @Autowired
     CryptHelper cryptHelper;
@@ -203,6 +207,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
+    public void updateUserAsIs(User user){
+        updateObjectAsIs(user);
+    }
+
+    @Override
     public void updateUserEncryption(String userId) {
         User user = getUserById(userId);
 
@@ -256,7 +265,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         }
 
         boolean isAuthenticated = bindUser(user, password);
-        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated);
+        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated, AUTH_BY_PASSWORD_LIST);
         getLogger().debug("Authenticated User by password");
 
         addAuditLogForAuthentication(user, isAuthenticated);
@@ -272,7 +281,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
         boolean isAuthenticated = !StringUtils.isBlank(user.getApiKey())  && user.getApiKey().equals(apiKey);
 
-        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated);
+        UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated, AUTH_BY_API_KEY_LIST);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
 
         addAuditLogForAuthentication(user, isAuthenticated);

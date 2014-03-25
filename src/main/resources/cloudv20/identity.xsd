@@ -74,6 +74,19 @@
             </appinfo>
          </annotation>
       </attribute>
+      <attribute name="multiFactorEnabled"
+                 use="optional"
+                 default="false"
+                 type="xsd:boolean">
+         <annotation>
+            <documentation>
+               <html:p>True if the user has turn on multi-factor authentication, false otherwise. The default is false.</html:p>
+            </documentation>
+            <appinfo>
+               <usage:attributes/>
+            </appinfo>
+         </annotation>
+      </attribute>
    </complexType>
    <simpleType name="ResourceTypes">
       <annotation>

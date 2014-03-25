@@ -2067,6 +2067,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.authenticate(headers, authRequestWithTenantId).build()
 
         then:
+        multiFactorCloud20Service.isMultiFactorEnabled() >> false
         1 * tenantService.hasTenantAccess(_, "tenantName") >> false
         1 * tenantService.hasTenantAccess(_, "tenantId") >> false
         response1.status == 401
@@ -2077,6 +2078,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockTokenConverter(service)
         mockAuthConverterCloudV20(service)
+        multiFactorCloud20Service.isMultiFactorEnabled() >> false
 
         def passwordCred = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
@@ -2085,11 +2087,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def apiKeyAuthRequest = v2Factory.createAuthenticationRequest("", "", apiKeyCred)
         def tokenAuthRequest = v2Factory.createAuthenticationRequest("tokenString", "", "")
 
+        def user = entityFactory.createUser()
+
         def authResponseTuple = new AuthResponseTuple().with {
-            it.user = entityFactory.createUser()
+            it.user = user
             it.userScopeAccess = createUserScopeAccess()
             return it
         }
+
+        def userAuthenticationResult = new UserAuthenticationResult(user, true)
 
         scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
 
@@ -2099,9 +2105,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def res3 = service.authenticate(headers, apiKeyAuthRequest).build()
 
         then:
-        1 * authWithToken.authenticate(_) >> authResponseTuple
-        1 * authWithPasswordCredentials.authenticate(_) >> authResponseTuple
-        1 * authWithApiKeyCredentials.authenticate(_) >> authResponseTuple
+        authWithToken.authenticate(_) >> authResponseTuple
+        authWithPasswordCredentials.authenticate(_) >> userAuthenticationResult
+        authWithPasswordCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
+        authWithApiKeyCredentials.authenticate(_) >> userAuthenticationResult
+        authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
 
         res1.status == 200
         res2.status == 200
@@ -2655,17 +2663,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
         given:
-        def weights = [ "0", "100", "500", "1000", "2000" ].asList()
+        def exceptionThrown = false
 
         when:
-        service.isRoleWeightValid(500)
-        service.isRoleWeightValid(3)
+        try {
+            service.isRoleWeightValid(value)
+        } catch(BadRequestException) {
+            exceptionThrown = true
+        }
 
         then:
-        notThrown(BadRequestException)
+        exceptionThrown == expectedResult
 
-        then:
-        thrown(BadRequestException)
+        where:
+        value || expectedResult
+        500   || false
+        3     || true
     }
 
     def "authenticateFederatedDomain sets token authenticatedBy with password credentials"() {
@@ -3642,6 +3655,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         user.id = "somthingdifferentfromcaller"
         User caller = entityFactory.createUser()
+        roleService.isIdentityAccessRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
@@ -3691,6 +3705,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         user.id = "something different from caller"
         User caller = entityFactory.createUser()
+        roleService.isIdentityAccessRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
@@ -3888,6 +3903,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockSecretQAService(service)
         mockEndpointService(service)
         mockFederatedIdentityService(service);
+        mockMultiFactorCloud20Service(service);
+        mockRoleService(service);
     }
 
     def mockMisc() {

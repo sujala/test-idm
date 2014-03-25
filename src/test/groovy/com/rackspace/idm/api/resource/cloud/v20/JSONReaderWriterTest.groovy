@@ -72,8 +72,11 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     @Shared JSONReaderRaxAuthForDomain readerForDomain = new JSONReaderRaxAuthForDomain()
 
-    @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
+    @Shared JSONReaderForRaxAuthMobilePhone readerForRaxAuthMobilePhone = new JSONReaderForRaxAuthMobilePhone()
+    @Shared JSONWriterForRaxAuthMobilePhone writerForRaxAuthMobilePhone = new JSONWriterForRaxAuthMobilePhone()
 
+
+    @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
     @Shared JSONReaderForRaxKsQaSecretQA readerForRaxKsQaSecretQA = new JSONReaderForRaxKsQaSecretQA()
     @Shared JSONWriterForRaxKsQaSecretQA writerForRaxKsQaSecretQA = new JSONWriterForRaxKsQaSecretQA()
 
@@ -371,6 +374,24 @@ class JSONReaderWriterTest extends RootServiceTest {
         readDomain.name == "name"
     }
 
+    def "can read/write mobile phone as json"() {
+        given:
+        String phoneNumber = "aphone"
+        def mobilePhone = getMobilePhone(phoneNumber)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForRaxAuthMobilePhone.writeTo(mobilePhone, MobilePhone, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json);
+
+        MobilePhone readMobilePhone = readerForRaxAuthMobilePhone.readFrom(MobilePhone, null, null, null, null, inputStream);
+
+        then:
+        json != null
+        readMobilePhone.number == phoneNumber
+    }
+
     def "should be able to write empty list of policies"() {
         given:
         def capabilities = new Capabilities()
@@ -468,6 +489,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         def email = "no@rackspace.com"
         def enabled = true
         def displayName = "displayName"
+        def multiFactorEnabled = true
 
         User userObject = v2Factory.createUser().with {
             it.displayName = displayName
@@ -475,6 +497,7 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.username = username
             it.email = email
             it.enabled = enabled
+            it.multiFactorEnabled = multiFactorEnabled
             it
         }
 
@@ -492,6 +515,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         user.email == email
         user.enabled == enabled
         user.displayName == displayName
+        user.multiFactorEnabled == multiFactorEnabled
     }
 
     def "can read/write apiKeyCreds as json" () {
@@ -1675,6 +1699,13 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.name = name
             it.enabled = enabled
             it.description = description
+            return it
+        }
+    }
+
+    def getMobilePhone(String phoneNumber) {
+        new MobilePhone().with {
+            it.number = phoneNumber
             return it
         }
     }

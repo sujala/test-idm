@@ -11,6 +11,11 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.ws.rs.core.MediaType
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON
+import static javax.ws.rs.core.MediaType.APPLICATION_XML
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -43,14 +48,29 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
     @Shared FoundationApiMethods foundation = new FoundationApiMethods()
 
-
+    def mediaTypeContext
 
     public setupSpec(){
+        doSetupSpec()
         cloud10.init()
         cloud11.init()
         cloud20.init()
         foundation.init()
     }
+
+    public cleanupSpec() {
+        doCleanupSpec()
+    }
+
+    /**
+     * Hook to allow subclasses to perform actions prior to the setupSpec in this base class. Spock will call the super class setupSpec method first, followed by subclasses.
+     */
+    def void doSetupSpec() {};
+
+    /**
+     * Hook to allow subclasses to perform actions after the cleanupSpec in this base class.
+     */
+    def void doCleanupSpec() {};
 
     def getRange(seconds) {
         HashMap<String, Date> range = new HashMap<>()
@@ -139,4 +159,20 @@ class RootIntegrationTest extends Specification {
     def getRandomUUID(prefix='') {
         String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
     }
+
+    def useMediaType(accept, contentType) {
+        mediaTypeContext = GroovySpy(MediaTypeContext, global: true)
+        mediaTypeContext.accept >> accept
+        mediaTypeContext.contentType  >> contentType
+    }
+
+    def contentTypePermutations() {
+        return [
+                [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE],
+                [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE],
+                [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE],
+                [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
+        ]
+    }
+
 }

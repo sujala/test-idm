@@ -1,7 +1,12 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
@@ -28,6 +33,7 @@ class V2Factory {
     private static USERNAME = "username"
     private static NAME = "name"
     private static objFactory = new ObjectFactory()
+    private static raxAuthObjFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     def createAuthenticationRequest() {
         return createAuthenticationRequest("tenantId", "tenantName", null)
@@ -61,6 +67,15 @@ class V2Factory {
 
         new AuthenticationRequest().with {
             it.setCredential(objFactory.createPasswordCredentials(credentials))
+            return it
+        }
+    }
+
+    def createPasscodeAuthenticationRequest(String passcode) {
+        def credentials = createPasscodeCredentials(passcode)
+
+        new AuthenticationRequest().with {
+            it.setCredential(raxAuthObjFactory.createPasscodeCredentials(credentials))
             return it
         }
     }
@@ -143,6 +158,13 @@ class V2Factory {
         new PasswordCredentialsRequiredUsername().with {
             it.username = username
             it.password = password
+            return it
+        }
+    }
+
+    def createPasscodeCredentials(String passcode) {
+        new PasscodeCredentials().with {
+            it.passcode = passcode
             return it
         }
     }
@@ -440,6 +462,34 @@ class V2Factory {
             it.id = id
             it.info = info
             it.list = list
+            return it
+        }
+    }
+
+    def createMobilePhone(String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        new MobilePhone().with {
+            it.number = telephoneNumber
+            return it
+        }
+    }
+
+    def createMobilePhoneWithId(String id = Cloud20Utils.createRandomString(), String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        createMobilePhone(telephoneNumber).with {
+            it.id = id
+            return it
+        }
+    }
+
+    def createVerificationCode(String verificationCode) {
+        new VerificationCode().with {
+            it.code = verificationCode
+            return it
+        }
+    }
+
+    def createMultiFactorSettings(boolean enabled = true) {
+        new MultiFactor().with {
+            it.enabled = enabled
             return it
         }
     }

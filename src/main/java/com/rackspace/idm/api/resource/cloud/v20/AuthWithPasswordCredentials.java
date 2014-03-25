@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.Validator20;
@@ -10,37 +13,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthWithPasswordCredentials {
+public class AuthWithPasswordCredentials extends BaseUserAuthenticationFactor {
 
     @Autowired
     private Validator20 validator20;
 
     @Autowired
-    private ScopeAccessService scopeAccessService;
-
-    @Autowired
     private UserService userService;
 
-    @Autowired
-    private Configuration config;
+    public AuthResponseTuple authenticateForAuthResponse(AuthenticationRequest authenticationRequest) {
+        UserAuthenticationResult authResult = authenticate(authenticationRequest);
+        return createScopeAccessForUserAuthenticationResult(authResult);
+    }
 
-    AuthResponseTuple authenticate(AuthenticationRequest authenticationRequest) {
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-
+    public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
-        //TODO username validation breaks validate call
         validator20.validatePasswordCredentials(creds);
         String username = creds.getUsername();
         String password = creds.getPassword();
 
-        authResponseTuple.setUser(userService.getUserByUsernameForAuthentication(username));
+        UserAuthenticationResult result = this.userService.authenticate(username, password);
+        validateUserAuthenticationResult(result);
 
-        authResponseTuple.setUserScopeAccess(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId()));
-
-        return authResponseTuple;
+        /*
+        For this use case the instanceof should always return true, but double check for backwards compatibility/refactor sake...
+         */
+        if (!(result.getUser() instanceof User)) {
+            User user = userService.getUserByUsernameForAuthentication(creds.getUsername());
+            result = new UserAuthenticationResult(user, result.isAuthenticated(), result.getAuthenticatedBy());
+        }
+        return result;
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
+
 }

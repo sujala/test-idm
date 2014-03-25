@@ -34,9 +34,11 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
         given:
         def startCount = getNumberOfPreExistingTenants()
 
+        //if the number of existing objects is not less than the page count, then, at a minimum, the < page size tests are invalid.
+        assert startCount < LdapPagingIterator.PAGE_SIZE
+
         def totalWantedForLessThanPage = LdapPagingIterator.PAGE_SIZE - 1
         def numToCreateForLessThanPage = totalWantedForLessThanPage - startCount
-        assert numToCreateForLessThanPage >= 0
 
         def totalWantedForEqualPage = LdapPagingIterator.PAGE_SIZE
         def numToCreateForEqualsPage = totalWantedForEqualPage - totalWantedForLessThanPage
@@ -49,71 +51,41 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
         when: "search result count < page size"
         createdTenants.addAll(addTenants(numToCreateForLessThanPage));
 
+        then:
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        Iterable<Tenant> lessThanTenantsTrue = repo.getTenants();
+        assertIterableTypeWithCount(repo.getTenants(), List, totalWantedForLessThanPage)
 
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        Iterable<Tenant> lessThanTenantsFalse = repo.getTenants();
-        List<Tenant> tenantsLessThanPageFalse = new ArrayList<Tenant>(totalWantedForLessThanPage);
-        for (Tenant t : lessThanTenantsFalse) {
-            tenantsLessThanPageFalse.add(t)
-        }
-
-
-        then: "return LdapPagingIterator when optimization is false, List  when true"
-        lessThanTenantsTrue instanceof List
-        ((List)lessThanTenantsTrue).size() == totalWantedForLessThanPage
-
-        lessThanTenantsFalse instanceof LdapPagingIterator
-        tenantsLessThanPageFalse.size() == totalWantedForLessThanPage
+        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForLessThanPage)
 
         //equal to page test
         when: "search result count == page size"
         createdTenants.addAll(addTenants(numToCreateForEqualsPage));
 
+        then: "return LdapPagingIterator when optimization is false, List when true"
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        Iterable<Tenant> equalTenantsTrue = repo.getTenants();
+        assertIterableTypeWithCount(repo.getTenants(), List, totalWantedForEqualPage)
 
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        Iterable<Tenant> equalTenantsFalse = repo.getTenants();
-        List<Tenant> tenantsEqualsPageFalse = new ArrayList<Tenant>(totalWantedForEqualPage);
-        for (Tenant t : equalTenantsFalse) {
-            tenantsEqualsPageFalse.add(t)
-        }
-
-        then: "return LdapPagingIterator when optimization is false, List when true"
-        equalTenantsTrue instanceof List
-        ((List)equalTenantsTrue).size() == totalWantedForEqualPage
-
-        equalTenantsFalse instanceof LdapPagingIterator
-        tenantsEqualsPageFalse.size() == totalWantedForEqualPage
+        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForEqualPage)
 
         when: "search result count > page size"
         createdTenants.addAll(addTenants(numToCreateForGreaterThanPage));
 
+        then: "always returns LdapPagingIterator"
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        Iterable<Tenant> greaterThanTenantsTrue = repo.getTenants();
-        List<Tenant> tenantsGreaterThanPageTrue = new ArrayList<Tenant>(totalWantedForGreaterThanPage);
-        for (Tenant t : greaterThanTenantsTrue) {
-            tenantsGreaterThanPageTrue.add(t)
-        }
+        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForGreaterThanPage)
 
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        Iterable<Tenant> greaterThanTenantsFalse = repo.getTenants();
-        List<Tenant> tenantsGreaterThanPageFalse = new ArrayList<Tenant>(totalWantedForGreaterThanPage);
-        for (Tenant t : greaterThanTenantsFalse) {
-            tenantsGreaterThanPageFalse.add(t)
-        }
-
-        then: "always returns LdapPagingIterator"
-        greaterThanTenantsTrue instanceof LdapPagingIterator
-        tenantsGreaterThanPageTrue.size() == totalWantedForGreaterThanPage
-
-        greaterThanTenantsFalse instanceof LdapPagingIterator
-        tenantsGreaterThanPageFalse.size() == totalWantedForGreaterThanPage
+        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForGreaterThanPage)
 
         cleanup:
         deleteTenants(createdTenants)
+    }
+
+    def void assertIterableTypeWithCount(Iterable iterator, Class expectedIteratorType, int expectedItemCount) {
+        assert expectedIteratorType.isInstance(iterator)
+        assert countEntriesInIterable(iterator) == expectedItemCount
     }
 
     def getNumberOfPreExistingTenants() {
@@ -123,6 +95,18 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
             preExisting++
         }
         return preExisting
+    }
+
+    def countEntriesInIterable(Iterable iterator) {
+        if (iterator instanceof Collection) {
+            return ((Collection)iterator).size()
+        }
+
+        def i=0
+        for (Object x : iterator) {
+            i++
+        }
+        return i;
     }
 
     def List<Tenant> addTenants(int count) {

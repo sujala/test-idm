@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
@@ -54,6 +55,7 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH, API_KEY_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH, RSA_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH, PASSCODE_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_DOMAIN_PATH, DOMAIN);
 
         return read(inputStream, AUTH, prefixValues);
@@ -112,6 +114,12 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
                 String string = innerObject.toString();
                 credentialType = om.readValue(string.getBytes(), RsaCredentials.class);
                 ((JSONObject)jsonObject.get(AUTH)).remove(RSA_CREDENTIALS);
+            } else if(auth.containsKey(PASSCODE_CREDENTIALS)){
+                innerObject.put(PASSCODE_CREDENTIALS, auth.get(PASSCODE_CREDENTIALS));
+                removeExtraCredentialAttributes((JSONObject)innerObject.get(PASSCODE_CREDENTIALS));
+                String string = innerObject.toString();
+                credentialType = om.readValue(string.getBytes(), PasscodeCredentials.class);
+                ((JSONObject)jsonObject.get(AUTH)).remove(PASSCODE_CREDENTIALS);
             }
 
             String jsonString = jsonObject.toString();

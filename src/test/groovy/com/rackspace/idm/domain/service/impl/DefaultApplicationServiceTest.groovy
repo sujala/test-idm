@@ -30,6 +30,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         mockApplicationRoleDao(service)
         mockScopeAccessService(service)
         mockTenantService(service)
+        mockRoleService(service)
     }
 
     def "add verifies that an application with name does not exist in directory"() {
@@ -153,22 +154,19 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationRoleDao.deleteClientRole(role)
     }
 
-    def "getUserIdentityRole gets Identity Application and list of identity roles"() {
+    def "getUserIdentityRole gets a list of identity roles"() {
         given:
-        def application = entityFactory.createApplication()
         def user = entityFactory.createUser()
 
         when:
         service.getUserIdentityRole(user)
 
         then:
-        1 * applicationDao.getApplicationByClientId(_) >> application
-        1 * applicationRoleDao.getIdentityRoles(application, _) >> [].asList()
+        1 * roleService.getIdentityAccessRoles() >> [].asList()
     }
 
     def "getUserIdentityRole gets users tenantRole matching identityRoles"() {
         given:
-        def application = entityFactory.createApplication()
         def user = entityFactory.createUser()
         def clientRole = entityFactory.createClientRole().with {
             it.id = "id"
@@ -178,9 +176,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
             it.roleRsId = "id"
             return it
         }
-
-        applicationDao.getApplicationByClientId(_) >> application
-        applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
+        roleService.getIdentityAccessRoles() >> [ clientRole ].asList()
 
         when:
         service.getUserIdentityRole(user)
@@ -191,12 +187,10 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
     def "getUserIdentityRole returns null if user has no identityRole"() {
         given:
-        def application = entityFactory.createApplication()
         def user = entityFactory.createUser()
         def clientRole = entityFactory.createClientRole()
 
-        applicationDao.getApplicationByClientId(_) >> application
-        applicationRoleDao.getIdentityRoles(_, _) >> [ clientRole ].asList()
+        roleService.getIdentityAccessRoles() >> [ clientRole ].asList()
         tenantService.getTenantRolesForUserById(_, _) >> [].asList()
 
         when:

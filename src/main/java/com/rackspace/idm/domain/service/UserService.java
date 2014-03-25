@@ -79,6 +79,13 @@ public interface UserService {
     
     void updateUser(User user) throws IOException, JAXBException;
 
+    /**
+     * Updates a user for multifactor. Assumes the passed in user was only modified for multifactor changes.
+     *
+     * @param user
+     */
+    void updateUserForMultiFactor(User user);
+
     Password resetUserPassword(User user);
 
     void softDeleteUser(User user) throws IOException, JAXBException;
@@ -109,8 +116,6 @@ public interface UserService {
 
     PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
 
-    int getUserWeight(User user, String applicationId);
-
     void setValidator(Validator validator);
 
     User getUserByUsernameForAuthentication(String username);
@@ -136,6 +141,15 @@ public interface UserService {
     Iterable<Group> getGroupsForUser(String userId);
 
     boolean isUserInGroup(String userId, String groupId);
+
+    /**
+     * Checks that a user is considered enabled. This is not a one to one comparison with user enabled flag as it considers
+     * other factors such as domain enabled status.
+     *
+     * @param user
+     * @throws com.rackspace.idm.exception.UserDisabledException If user is not enabled or otherwise should be considered not enabled.
+     */
+    void validateUserIsEnabled(User user);
 
     void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess);
 }

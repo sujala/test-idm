@@ -98,6 +98,7 @@ class UserConverterCloudV20Test extends Specification {
         jaxbUser.roles == roles
         jaxbUser.groups == groups
         jaxbUser.password == user.password
+        jaxbUser.multiFactorEnabled == user.multifactorEnabled
     }
 
     def "convert user from domain entity to jaxb object - user roles and groups null"() {
@@ -263,6 +264,7 @@ class UserConverterCloudV20Test extends Specification {
             it.enabled = enabled
             it.region = "region"
             it.created = created()
+            it.multifactorEnabled = true
             it.roles = [ new TenantRole() ].asList()
             it.rsGroupId = new HashSet<String> ()
             it.secretQuestion = "question"

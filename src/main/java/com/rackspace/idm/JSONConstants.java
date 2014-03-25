@@ -27,6 +27,7 @@ public final class JSONConstants {
     public static final String DEFAULT_REGION = "defaultRegion";
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_ID = "domainId";
+    public static final String MULTI_FACTOR_ENABLED = "multiFactorEnabled";
     public static final String DOMAINS = "domains";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
@@ -159,6 +160,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
     public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
     public static final String RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
+    public static final String RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled";
     public static final String RAX_AUTH_POLICY = "RAX-AUTH:policy";
     public static final String RAX_AUTH_POLICIES = "RAX-AUTH:policies";
     public static final String POLICIES_ALGORITHM = "algorithm";
@@ -173,6 +175,30 @@ public final class JSONConstants {
     public static final String RAX_AUTH_TENANT_ALIAS = "RAX-AUTH:tenantAlias";
     public static final String TENANT_ALIAS = "tenantAlias";
 
+    public static final String MOBILE_PHONE = "mobilePhone";
+    public static final String RAX_AUTH_MOBILE_PHONE = "RAX-AUTH:mobilePhone";
+    public static final String MOBILE_PHONES = "mobilePhones";
+    public static final String RAX_AUTH_MOBILE_PHONES = "RAX-AUTH:mobilePhones";
+
+    public static final String RAX_AUTH_VERIFICATION_CODE = "RAX-AUTH:verificationCode";
+    public static final String VERIFICATION_CODE = "verificationCode";
+
+    public static final String RAX_AUTH_MULTIFACTOR = "RAX-AUTH:multiFactor";
+    public static final String MULTIFACTOR = "multiFactor";
+    public static final String RAX_AUTH_PASSCODE_CREDENTIALS = "RAX-AUTH:passcodeCredentials";
+    public static final String PASSCODE_CREDENTIALS = "passcodeCredentials";
+
+    //faults
+    public static final String OPENSTACK_BAD_REQUEST = "badRequest";
+    public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
+    public static final String OPENSTACK_ITEMNOTFOUND_REQUEST = "itemNotFound";
+    public static final String OPENSTACK_UNAUTHORIZED_FAULT = "unauthorized";
+    public static final String OPENSTACK_IDENTITY_FAULT = "identityFault";
+    public static final String OPENSTACK_USER_DISABLED_FAULT = "userDisabled";
+
+    public static final String RAX_COMMON_BAD_REQUEST = "BadRequestFault";
+    public static final String RAX_COMMON_FORBIDDEN_REQUEST = "ForbiddenFault";
+
     //String path
     public static final String AUTH_API_KEY_CREDENTIALS_PATH = "auth.apiKeyCredentials";
     public static final String AUTH_RSA_CREDENTIALS_PATH = "auth.rsaCredentials";
@@ -180,6 +206,9 @@ public final class JSONConstants {
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
+    public static final String AUTH_PASSCODE_CREDENTIALS_PATH = "auth.passcodeCredentials";
+    public static final String AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH = "auth.RAX-AUTH:passcodeCredentials";
+
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
     public static final String ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH = "endpointTemplate.tenantAlias";
@@ -192,9 +221,12 @@ public final class JSONConstants {
     public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";
     public static final String USER_DEFAULT_REGION_PATH = "user.defaultRegion";
     public static final String USER_DOMAIN_ID_PATH = "user.domainId";
+    public static final String USER_MULTI_FACTOR_ENABLED_PATH = "user.multiFactorEnabled";
     public static final String USER_OS_KSADM_PASSWORD_PATH = "user.OS-KSADM:password";
     public static final String USER_RAX_AUTH_DEFAULT_REGION_PATH = "user.RAX-AUTH:defaultRegion";
     public static final String USER_RAX_AUTH_DOMAIN_ID_PATH = "user.RAX-AUTH:domainId";
+    public static final String USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH = "user.RAX-AUTH:multiFactorEnabled";
+
     public static final String USER_PASSWORD_PATH = "user.password";
     public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
     public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX-KSGRP:groups";

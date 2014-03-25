@@ -2,8 +2,15 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.domain.entity.MobilePhone
+import com.sun.jersey.api.client.GenericType
+import org.apache.http.HttpStatus
+import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -71,7 +78,7 @@ class Cloud20Utils {
     }
 
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
-        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD))
+        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@email.com", true, null, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
 
@@ -127,7 +134,7 @@ class Cloud20Utils {
     def createUserAdmin(domainId) {
         def identityAdmin = createIdentityAdmin()
 
-        def identityAdminToken = getToken(identityAdmin.username)
+        def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
 
         def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
 
@@ -149,8 +156,7 @@ class Cloud20Utils {
     }
 
     def createUsers(domainId) {
-        def serviceAdminToken = getServiceAdminToken()
-        def identityAdmin = createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+        def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
 
@@ -349,10 +355,36 @@ class Cloud20Utils {
         response.getEntity(CredentialListType).value
     }
 
+    def getUserById(String id, String token=getServiceAdminToken()){
+        def response = methods.getUserById(token, id)
+        assert (response.status == SC_OK)
+        response.getEntity(User).value
+    }
+
     def getUserByName(String username, String token=getServiceAdminToken()){
-        def reponse = methods.getUserByName(token, username)
-        assert (reponse.status == SC_OK)
-        reponse.getEntity(User).value
+        def response = methods.getUserByName(token, username)
+        assert (response.status == SC_OK)
+        response.getEntity(User).value
+    }
+
+    def getUsersByEmail(String email, String token=getServiceAdminToken()){
+        def response = methods.getUsersByEmail(token, email)
+        assert (response.status == SC_OK)
+        List<User> users = response.getEntity(UserList).value.user
+        users
+    }
+
+    def getUserByEmail(String email, String token=getServiceAdminToken()){
+        def users = getUsersByEmail(email, token)
+        assert (users.size() == 1)
+        users.get(0)
+    }
+
+    def listUsers(String token=getServiceAdminToken()){
+        def response = methods.listUsers(token)
+        assert (response.status == SC_OK)
+        List<User> users = response.getEntity(UserList).value.user
+        users
     }
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
@@ -383,6 +415,42 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def addPhone(token, userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone mobilePhone = factory.createMobilePhone()) {
+        def response = methods.addPhoneToUser(token, userId, mobilePhone)
+        assert(response.status == SC_CREATED)
+        response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
+    }
+
+    def sendVerificationCodeToPhone(token, userId, mobilePhoneId) {
+        def response = methods.sendVerificationCode(token, userId, mobilePhoneId)
+        assert (response.status == SC_ACCEPTED)
+    }
+
+    def verifyPhone(token, userId, mobilePhoneId, com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode verificationCode) {
+        def response = methods.verifyVerificationCode(token, userId, mobilePhoneId, verificationCode)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+    def updateMultiFactor(token, userId, MultiFactor settings) {
+        def response = methods.updateMultiFactorSettings(token, userId, settings)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+    def deleteMultiFactor(token, userId) {
+        def response = methods.deleteMultiFactor(token, userId)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+    def deleteUserQuietly(user, String token=getServiceAdminToken()) {
+        if (user != null) {
+            try {
+                methods.destroyUser(token, user.getId())
+            } catch (all) {
+                //ignore
+            }
+        }
+    }
+
     def createDomain(Domain domain) {
         def response = methods.addDomain(getServiceAdminToken(), domain)
         assert (response.status == SC_OK)
@@ -409,6 +477,17 @@ class Cloud20Utils {
         def response = methods.getEndpointsByDomain(getServiceAdminToken(), domainId)
         assert (response.status == SC_OK)
         response.getEntity(EndpointList).value
+
     }
 
+    def extractSessionIdFromWwwAuthenticateHeader(String headerValue) {
+        def matcher = ( headerValue =~ DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX )
+        matcher[0][1]
+    }
+
+    def listDevices(user, token=getToken(user.username)) {
+        def response = methods.listDevices(token, user.id)
+        assert (response.status = SC_OK)
+        response.getEntity(MobilePhones)
+    }
 }

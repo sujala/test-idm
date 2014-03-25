@@ -160,6 +160,31 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="defaultRegionServices"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='MobilePhone']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="mobilePhone"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='MobilePhones']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="mobilePhones"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='VerificationCode']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="verificationCode"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='MultiFactor']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="multiFactor"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='PasscodeCredentials']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passcodeCredentials"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='Domain']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domain"/>

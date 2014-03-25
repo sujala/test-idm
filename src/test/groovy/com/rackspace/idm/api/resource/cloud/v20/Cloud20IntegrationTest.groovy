@@ -17,6 +17,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
+import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.joda.time.Seconds
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -30,6 +31,8 @@ import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
+    Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
+
     @Autowired LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultApplicationService applicationService
@@ -1948,9 +1951,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Disable a userAdmin disables his subUsers"() {
         given:
-        def domain = "someDomain$randomSuffix"
-        def adminUsername = "userAdmin$randomSuffix"
-        def username = "user$randomSuffix"
+        def domain = "someDomain$sharedRandom"
+        def adminUsername = "userAdminDisableSub$sharedRandom"
+        def username = "userSub$sharedRandom"
         def password = "Password1"
         def userAdminForCreate = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(adminUsername, "displayName", "someEmail@rackspace.com", true, "ORD", domain, password))
         User userAdmin = userAdminForCreate.getEntity(User).value
@@ -1963,12 +1966,14 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def updateUserResponse = cloud20.updateUser(identityAdminToken, userAdmin.id, userAdmin)
         def getUserResponse = cloud20.getUser(serviceAdminToken, createUserForCreate.location)
         User user = getUserResponse.getEntity(User).value
-        cloud20.destroyUser(serviceAdminToken, user.id)
-        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
 
         then:
         updateUserResponse.status == 200
         user.enabled == false
+
+        cleanup:
+        utils.deleteUserQuietly(user, serviceAdminToken)
+        utils.deleteUserQuietly(userAdmin, serviceAdminToken)
     }
 
     def "default user one cannot get default user two's admins"() {
@@ -2406,7 +2411,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "When user admin creates sub-user both should be returned in list users by tenant call"() {
         given:
-        def username = "user$sharedRandom"
+        def username = "usernsdfg43$sharedRandom"
 
         def adminUsername1 = "userAdmin3$sharedRandom"
         com.rackspacecloud.docs.auth.api.v1.User cloud11User = v1Factory.createUser(adminUsername1, "1234567890", randomMosso, null, true)
@@ -2439,7 +2444,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Get user by domainId"() {
         given:
-        def username = "user$sharedRandom"
+        def username = "userkljk$sharedRandom"
         def mossoId = getRandomNumber(1000000,2000000)
 
         def adminUsername1 = "someUserAdmin$sharedRandom"
@@ -2466,8 +2471,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUsersByDomainId.user.username.contains(subUser.username)
 
         cleanup:
-        cloud20.destroyUser(serviceAdminToken, userAdmin.id)
-        cloud20.destroyUser(serviceAdminToken, subUser.id)
+        utils.deleteUserQuietly(subUser, serviceAdminToken)
+        utils.deleteUserQuietly(userAdmin, serviceAdminToken)
         cloud20.deleteTenant(serviceAdminToken, userAdminTenant)
         cloud20.deleteTenant(serviceAdminToken, userEntity.nastId)
     }

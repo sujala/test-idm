@@ -18,5 +18,8 @@ public final class GlobalConstants {
     public static final String AUTHENTICATED_BY_PASSWORD = "PASSWORD";
     public static final String AUTHENTICATED_BY_RSAKEY = "RSAKEY";
     public static final String AUTHENTICATED_BY_APIKEY = "APIKEY";
+    public static final String AUTHENTICATED_BY_PASSCODE = "PASSCODE";
     public static final String TENANT_ALIAS_PATTERN = "{tenant}";
+
+    public static final String MULTIFACTOR_CONSISTENCY_LOG_NAME = "multifactorConsistencyLogger";
 }

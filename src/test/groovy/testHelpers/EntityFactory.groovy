@@ -1,6 +1,7 @@
 package testHelpers
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import spock.lang.Specification
@@ -406,6 +407,21 @@ class EntityFactory extends Specification {
     def createFederatedToken() {
         new FederatedToken().with {
             it.accessTokenString = "ats"
+            return it
+        }
+    }
+
+    def createMobilePhone(String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        new MobilePhone().with {
+            it.telephoneNumber = telephoneNumber
+            it.cn = telephoneNumber
+            return it
+        }
+    }
+
+    def createMobilePhoneWithId(String id = Cloud20Utils.createRandomString(), String telephoneNumber = PhoneNumberGenerator.randomUSNumberAsString()) {
+        createMobilePhone(telephoneNumber).with {
+            it.id = id
             return it
         }
     }

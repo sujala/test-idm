@@ -245,6 +245,31 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return object;
     }
 
+
+    @Override
+    public void updateObjectAsIs(T object) {
+        if (object == null || StringUtils.isBlank(object.getUniqueId())) {
+            getLogger().error(ERROR_GETTING_OBJECT);
+            getLogger().info("Invalid parameter.");
+            throw new IllegalArgumentException("Missing argument on update");
+        }
+        String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
+        getLogger().debug(loggerMsg);
+        Audit audit = Audit.log((Auditable)object).modify();
+
+        try {
+            doPreEncode(object);
+            applyModificationsForAttributes(object, true);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error updating {} - {}", object, ldapEx);
+            audit.fail("Error updating");
+            throwIfStalePassword(ldapEx, audit);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
+        }
+        audit.succeed();
+        getLogger().info("Updated - {}", object);
+    }
+
     @Override
     public void updateObject(T object) {
         if (object == null || StringUtils.isBlank(object.getUniqueId())) {
@@ -289,21 +314,53 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         }
     }
 
-
-    private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
+    /**
+     * Applies the changes for the specified attributes on the passed in object. If no attributes are passed, will operate on all attributes.
+     * If a specified attribute has a Null/blank value, it will be removed.
+     *
+     * @param object
+     * @param attributes
+     * @throws LDAPPersistException
+     */
+    private void applyModificationsForAttributes(T object, boolean deleteNullAttributes, String... attributes) throws LDAPPersistException {
         Audit audit = Audit.log((Auditable)object).modify();
         LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
 
-        String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
-        if(attributes.length > 0){
-            List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
-            audit.modify(mods);
-            if (mods.size() > 0) {
-                persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
-            }
+        List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
+        audit.modify(mods);
+        if (mods.size() > 0) {
+            persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
         }
     }
 
+    private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
+        String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
+        /*
+        This method must only call the applyModificationsForAttributes(object, deleteNullAttributes, attributes); if
+        there is at least one attribute because the purpose of the getLDAPFieldAttributes(object, deleteNullAttributes)
+        method is to explicitly limit which attributes should be updated. If that method determines that no attributes
+        should be updated, then none should be. The applyModificationsForAttributes will analyze ALL attributes if
+        no attributes are provided.
+         */
+        if (attributes.length > 0) {
+            applyModificationsForAttributes(object, deleteNullAttributes, attributes);
+        }
+    }
+
+    /**
+     * Applies logic to determine whether or not to include a particular field for update.
+     *
+     *
+     * 1. If deleteNullAttributes = true, a given attribute is only returned if the property is annotated
+     * with @DeleteNullValues AND the property is not a string with a null/whitespace value
+     *
+     * 2. If deleteNullAttributes = false, a given attribute is only returned if the property is NOT annotated
+     * with @DeleteNullValues AND the property is not a string with a null/whitespace value
+     *
+     * @param object
+     * @param deleteNullAttributes
+     * @return
+     */
     private String[] getLDAPFieldAttributes(T object, boolean deleteNullAttributes) {
         List<String> attributes = new ArrayList<String>();
         for (Field field : getDeclaredFields(object.getClass())) {
