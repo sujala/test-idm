@@ -3504,8 +3504,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
-        1 * userService.addUserV20(_)
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.addUserV20(_, false)
         notThrown(BadRequestException)
     }
 
@@ -3527,8 +3527,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
-        1 * userService.addUserV20(_)
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.addUserV20(_, false)
         notThrown(BadRequestException)
     }
 
@@ -3540,6 +3540,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = v2Factory.createUser()
         def secretQA = v2Factory.createSecretQA("question", "answer")
         user.secretQA = secretQA
+        user.domainId = "0"
         def caller = entityFactory.createUser().with {
             it.username = "caller"
             return it
@@ -3550,10 +3551,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
-        1 * userService.addUserV20(_)
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, true);
+        1 * userService.addUserV20(_, true)
         notThrown(BadRequestException)
     }
 
@@ -3575,6 +3577,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }
@@ -3597,11 +3600,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }
 
-    def "add new user with createUser.fullPayload.enabled throws forbidden if groups are populated and caller is not at least identity admin level"() {
+    def "add new user with createUser.fullPayload.enabled throws forbidden if groups are populated and caller is not identity admin"() {
         given:
         allowUserAccess()
         config.getBoolean("createUser.fullPayload.enabled") >> true
@@ -3621,7 +3625,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_) >> { throw new ForbiddenException("You can't haz access")}
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> false
         result.status == HttpStatus.SC_FORBIDDEN
     }
 
