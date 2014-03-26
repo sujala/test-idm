@@ -496,4 +496,8 @@ class Cloud20Methods {
             return it
         }
     }
+
+    def getEndpointsForToken(String authToken, String token) {
+        resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
+    }
 }

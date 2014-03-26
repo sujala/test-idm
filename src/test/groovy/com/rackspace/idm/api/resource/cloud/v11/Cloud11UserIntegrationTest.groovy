@@ -102,8 +102,8 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
 
         then:
-        validateV1Default(user.baseURLRefs.baseURLRef)
-        validateV1Default(getUser.baseURLRefs.baseURLRef)
+        utils11.validateV1Default(user.baseURLRefs.baseURLRef)
+        utils11.validateV1Default(getUser.baseURLRefs.baseURLRef)
 
         cleanup:
         utils11.deleteUser(user)
@@ -142,18 +142,28 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.deleteTenant(user.nastId)
     }
 
-    void validateV1Default(List<BaseURLRef> baseURLRefList){
-        def mossoV1Def = MOSSO_V1_DEF
-        def nastV1Def = NAST_V1_DEF
-        for(BaseURLRef baseURLRef : baseURLRefList){
-            String baseUrlRefId = baseURLRef.id
-            if(mossoV1Def.contains(baseUrlRefId)){
-                assert (baseURLRef.v1Default == true)
-            } else if(nastV1Def.contains(baseUrlRefId)){
-                assert (baseURLRef.v1Default == true)
-            } else {
-                assert (baseURLRef.v1Default == false)
-            }
-        }
+    def "Verify attributes on the v1.1 create user" () {
+        given:
+        String username=testUtils.getRandomUUID()
+        String key=testUtils.getRandomUUID()
+        Integer mossoId=testUtils.getRandomInteger()
+        String nastId=testUtils.getRandomUUID()
+        Boolean enabled=true
+
+        when:
+        def user = utils11.createUser(username, key, mossoId, nastId, enabled)
+
+        then:
+        user.nastId != nastId
+        user.mossoId == mossoId
+        user.enabled == true
+        user.key == key
+
+        cleanup:
+        utils11.deleteUser(user)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
+
     }
 }

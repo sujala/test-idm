@@ -1,6 +1,7 @@
 package com.rackspace.idm.helpers
 
 import com.rackspacecloud.docs.auth.api.v1.AuthData
+import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
@@ -13,6 +14,7 @@ import testHelpers.V2Factory
 
 import javax.annotation.PostConstruct
 
+import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
 
 @Component
@@ -116,5 +118,26 @@ class Cloud11Utils {
         //This should be a 200 since its only adding a reference, but its been like this for a while.
         assert (response.status == SC_CREATED)
         response.getEntity(BaseURLRef)
+    }
+
+    def getBaseURLById(String id) {
+        def response = methods.getBaseURLById(id)
+        assert (response.status == SC_OK)
+        response.getEntity(BaseURL)
+    }
+
+    void validateV1Default(List<BaseURLRef> baseURLRefList){
+        def mossoV1Def = MOSSO_V1_DEF
+        def nastV1Def = NAST_V1_DEF
+        for(BaseURLRef baseURLRef : baseURLRefList){
+            String baseUrlRefId = baseURLRef.id
+            if(mossoV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else if(nastV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else {
+                assert (baseURLRef.v1Default == false)
+            }
+        }
     }
 }
