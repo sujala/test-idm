@@ -146,7 +146,7 @@ class Cloud20Utils {
         return [userAdmin, [identityAdmin, userAdmin].asList()]
     }
 
-    def createUserAdmin(domainId) {
+    def createUserAdmin(domainId=testUtils.getRandomIntegerString()) {
         def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username)

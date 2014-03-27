@@ -84,7 +84,9 @@ public class UserConverterCloudV20 {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
-        jaxbUser.setFederated(user.isFederated());
+        if(isSamlEnabled()){
+            jaxbUser.setFederated(user.isFederated());
+        }
 
         if (StringUtils.isNotBlank(user.getFederatedIdp())) {
             jaxbUser.setFederatedIdp(user.getFederatedIdp());
@@ -197,5 +199,9 @@ public class UserConverterCloudV20 {
         }
 
         return list;
+    }
+
+    private boolean isSamlEnabled(){
+        return config.getBoolean("saml.enabled");
     }
 }
