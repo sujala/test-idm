@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
@@ -23,6 +24,7 @@ class RootIntegrationTest extends Specification {
 
     @Autowired Cloud20Utils utils
     @Autowired Cloud11Utils utils11
+    @Autowired Cloud10Utils utils10
 
     @Autowired CloudTestUtils testUtils
 
