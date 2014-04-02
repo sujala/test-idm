@@ -313,6 +313,12 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def authenticateUser(String username, String password) {
+        def response = methods.authenticatePassword(username, password)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthenticateResponse).value
+    }
+
     def authenticateRacker(String racker, String password) {
         def response = methods.authenticateRacker(racker, password)
         assert (response.status == SC_OK)

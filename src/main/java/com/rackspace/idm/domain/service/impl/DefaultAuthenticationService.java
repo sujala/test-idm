@@ -315,7 +315,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 ((UserScopeAccess) scopeAccess).setUsername(username);
             }
 
-            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
+            int expirationSeconds;
+            if (scopeAccess instanceof RackerScopeAccess) {
+                expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultRackerTokenExpirationSeconds());
+            } else {
+                expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
+            }
 
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -494,7 +499,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                                                        : new DateTime(scopeAccessToAdd.getAccessTokenExp());
 
         if (accessExpiration.isBefore(current)) {
-            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultTokenExpirationSeconds());
+            int expirationSeconds = scopeAccessService.getTokenExpirationSeconds(getDefaultRackerTokenExpirationSeconds());
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(current.plusSeconds(expirationSeconds).toDate());
         }
@@ -631,7 +636,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     int getDefaultTokenExpirationSeconds() {
-        return config.getInt("token.expirationSeconds");
+        return config.getInt("token.expirationSeconds", 86400);
+    }
+
+    int getDefaultRackerTokenExpirationSeconds() {
+        return config.getInt("token.rackerExpirationSeconds", 43200);
     }
 
     boolean isTrustedServer() {
