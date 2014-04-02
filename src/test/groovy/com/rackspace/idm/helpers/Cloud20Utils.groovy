@@ -87,6 +87,18 @@ class Cloud20Utils {
         return entity
     }
 
+    def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
+        def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        def response = methods.createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     def addRoleToUser(user, roleId, token=getServiceAdminToken()) {
         def response = methods.addApplicationRoleToUser(token, roleId, user.id)
 
@@ -99,7 +111,7 @@ class Cloud20Utils {
     }
 
     def createDomain() {
-        testUtils.getRandomUUID("domain")
+        testUtils.getRandomIntegerString()
     }
 
     def updateDomain(domainId, domain, String token=getServiceAdminToken()) {
@@ -131,7 +143,17 @@ class Cloud20Utils {
         return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
     }
 
-    def createUserAdmin(domainId) {
+    def createUserAdminWithTenants(domainId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username)
+
+        def userAdmin = createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
+
+        return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    def createUserAdmin(domainId=testUtils.getRandomIntegerString()) {
         def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
@@ -489,5 +511,15 @@ class Cloud20Utils {
         def response = methods.listDevices(token, user.id)
         assert (response.status = SC_OK)
         response.getEntity(MobilePhones)
+    }
+
+    def getNastTenant(String domainId){
+        return NAST_TENANT_PREFIX.concat(domainId)
+    }
+
+    def getEndpointsForToken(String token) {
+        def response = methods.getEndpointsForToken(getServiceAdminToken(), token)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointList).value
     }
 }

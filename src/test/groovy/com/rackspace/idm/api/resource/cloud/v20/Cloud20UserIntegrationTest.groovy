@@ -8,13 +8,8 @@ import org.openstack.docs.identity.api.v2.User
 import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
-import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
-import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_ANWSER
-import static com.rackspace.idm.Constants.DEFAULT_RAX_KSQA_SECRET_QUESTION
-import static com.rackspace.idm.Constants.DEFAULT_SECRET_ANWSER
-import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
-import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
-import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
+
+import static com.rackspace.idm.Constants.*
 
 /**
  * Created with IntelliJ IDEA
@@ -25,9 +20,8 @@ import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
  */
 class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
-    @Shared def identityAdmin, userAdmin, userManage, defaultUser
+    @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def identityAdminTwo, userAdminTwo, userManageTwo, defaultUserTwo
-    @Shared def identityAdminThree, userAdminThree, userManageThree, defaultUserThree
     @Shared def domainId
 
     @Autowired
@@ -590,5 +584,52 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         if (user20 != null) utils.deleteUsers(user20)
+    }
+
+    def "Verify values on create one user call" () {
+        given:
+        def domainId = utils.createDomain()
+
+        when:
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        then:
+        userAdmin != null
+        userAdmin.secretQA.answer == "answer"
+        userAdmin.secretQA.question == "question"
+        userAdmin.roles.role.name.contains(IDENTITY_USER_ADMIN_ROLE)
+        userAdmin.roles.role.name.contains(DEFAULT_COMPUTE_ROLE)
+        userAdmin.roles.role.name.contains(DEFAULT_OBJECT_STORE_ROLE)
+
+        //Verify that tenants are associated to correct role
+        def computeIndex = userAdmin.roles.role.name.indexOf(DEFAULT_COMPUTE_ROLE)
+        userAdmin.roles.role[computeIndex].tenantId == domainId
+
+        def objectStoreIndex = userAdmin.roles.role.name.indexOf(DEFAULT_OBJECT_STORE_ROLE)
+        userAdmin.roles.role[objectStoreIndex].tenantId == utils.getNastTenant(domainId)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(userAdmin.domainId)
+        utils.deleteTenant(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteDomain(userAdmin.domainId)
+    }
+
+    def "Verify values on regular create user call does not return secretQA, roles, or groups" () {
+        given:
+        def domainId = utils.createDomain()
+
+        when:
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        then:
+        userAdmin != null
+        userAdmin.secretQA == null
+        userAdmin.roles == null
+        userAdmin.groups == null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(userAdmin.domainId)
     }
 }

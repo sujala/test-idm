@@ -1,6 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.dao.RackerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -20,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+
+import static com.rackspace.idm.GlobalConstants.MOSSO;
+import static com.rackspace.idm.GlobalConstants.NAST;
 
 @Component
 public class DefaultUserService implements UserService {
@@ -125,20 +131,32 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addUserV20(User user) {
+        addUserV20(user, false);
+    }
+
+    @Override
+    public void addUserV20(User user, boolean isCreateUserInOneCall) {
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
 
         createDomainIfItDoesNotExist(user.getDomainId());
+        if (isCreateUserInOneCall) {
+            createDefaultDomainTenantsIfNecessary(user.getDomainId());
+        }
         checkMaxNumberOfUsersInDomain(user.getDomainId());
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
         setRegionIfNotProvided(user);
 
-        //hack alert!! code requires the user object to have the nastid attribute set. this attribute
-        //should no longer be required as users have roles on a tenant instead. once this happens, remove
-        user.setNastId(getNastTenantId(user.getDomainId()));
+        if (isCreateUserInOneCall) {
+            //hack alert!! code requires the user object to have the nastid attribute set. this attribute
+            //should no longer be required as users have roles on a tenant instead. once this happens, remove
+            user.setNastId(getNastTenantId(user.getDomainId()));
+            user.setMossoId(Integer.parseInt(user.getDomainId()));
+        }
+
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
@@ -168,9 +186,10 @@ public class DefaultUserService implements UserService {
      *
      * @param user
      * @param caller
+     * @param isCreateUserInOneCall
      */
     @Override
-    public void setUserDefaultsBasedOnCaller(User user, User caller) {
+    public void setUserDefaultsBasedOnCaller(User user, User caller, boolean isCreateUserInOneCall) {
         //
         // Based on the caller making the call, apply the following rules to the user being created.
         // We will revisit these rules later on, so they are more simplified. Don't want to change for now.
@@ -198,13 +217,15 @@ public class DefaultUserService implements UserService {
 
             attachRoleToUser(roleService.getUserAdminRole(), user);
 
-            //original code had this. this is in place to help ensure the user has access to their
-            //default tenants. currently the user-admin role is not tenant specific. don't want to
-            //change existing behavior. Need to have business discussion to determine if a user
-            //has a non tenant specific role, whether they have access to all tenants in domain.
-            //if this turns out to be the case, then we need to change validateToken logic.
-            attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
-            attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            if (isCreateUserInOneCall) {
+                //original code had this. this is in place to help ensure the user has access to their
+                //default tenants. currently the user-admin role is not tenant specific. don't want to
+                //change existing behavior. Need to have business discussion to determine if a user
+                //has a non tenant specific role, whether they have access to all tenants in domain.
+                //if this turns out to be the case, then we need to change validateToken logic.
+                attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
+                attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            }
         }
 
         if (authorizationService.hasUserAdminRole(caller) || authorizationService.hasUserManageRole(caller)) {
@@ -225,6 +246,18 @@ public class DefaultUserService implements UserService {
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
+    }
+
+    /**
+     * sets default parameters on the user e.g domain id, roles, etc based on
+     * characteristics of the calling user.
+     *
+     * @param user
+     * @param caller
+     */
+    @Override
+    public void setUserDefaultsBasedOnCaller(User user, User caller) {
+        setUserDefaultsBasedOnCaller(user, caller, true);
     }
 
     //TODO: consider removing this method. Just here so code doesn't break
@@ -1048,6 +1081,7 @@ public class DefaultUserService implements UserService {
         for (CloudBaseUrl baseUrl : baseUrls) {
             if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
                 tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
+                addV1DefaultToTenant(tenant, baseUrl);
             }
         }
     }
@@ -1064,6 +1098,25 @@ public class DefaultUserService implements UserService {
         }
 
         return false;
+    }
+
+    private void addV1DefaultToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+        List<Object> v1defaultList = new ArrayList<Object>();
+        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+        String baseUrlType = baseUrl.getBaseUrlType();
+
+        if(baseUrlType.equals(MOSSO)) {
+            v1defaultList = config.getList("v1defaultMosso");
+        } else if(baseUrlType.equals(NAST)) {
+            v1defaultList = config.getList("v1defaultNast");
+        }
+
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+                baseUrl.setV1Default(true);
+                tenant.getV1Defaults().add(baseUrlId);
+            }
+        }
     }
 
     private boolean isUkCloudRegion() {
@@ -1161,15 +1214,27 @@ public class DefaultUserService implements UserService {
         return assignableTenantRoles;
     }
 
+    /**
+     * [1] When an identity:user-admin or identity:user-manage creates a new user, that new user should get the same
+     * RAX-AUTH:defaultRegion that the identity:user-admin of that domain has regardless of the user that creating user.
+     * [2] if there is more than 1 user-admin of an account (which should be very, very unlikely) then the default
+     * region is the same as the user that created them.
+     * [3] If for some completely unknown reason, there is no user-admin for the domain (which technically is an invalid
+     * state), set the default region to the same as the user that created them.
+     * @param caller
+     * @return
+     */
     private String getRegionBasedOnCaller(User caller) {
-        // this should never happen. we should never have two admins for a domain. when we do support this,
-        // this information should be at the domain level.
         List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
-        if (admins.size() != 1) {
+        if (admins.size() == 1) {
+            return admins.get(0).getRegion();
+        } else if (getDomainRestrictedToOneUserAdmin() && admins.size() > 1) {
             throw new IllegalStateException("Can't retrieve single user-admin for domain " + caller.getDomainId());
         }
-
-        return admins.get(0).getRegion();
+        else {
+            //either 0 admins or > 1 admins
+            return caller.getRegion();
+        }
     }
 
     private boolean isExcludedAssignableCallerRole(TenantRole tenantRole) {
