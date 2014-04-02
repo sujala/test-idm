@@ -1,6 +1,7 @@
 package com.rackspace.idm.helpers
 
 import com.rackspacecloud.docs.auth.api.v1.AuthData
+import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
@@ -13,6 +14,7 @@ import testHelpers.V2Factory
 
 import javax.annotation.PostConstruct
 
+import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
 
 @Component
@@ -97,4 +99,45 @@ class Cloud11Utils {
         response.getEntity(AuthData)
     }
 
+    def addBaseUrl(id=testUtils.getRandomInteger(), serviceName="serviceName", region="ORD", enabled=true, defaul=true, publicURL="http://public.com/v1", adminURL="http://adminURL.com/v1", internalURL="http://internalURL.com/v1", userType="NAST") {
+        def baseUrl = v1Factory.createBaseUrl(id,serviceName, region, enabled, defaul, publicURL, adminURL, internalURL)
+        baseUrl.userType = userType
+        def response = methods.addBaseUrl(baseUrl)
+        assert (response.status == SC_CREATED)
+        response
+    }
+
+    def baseUrlIdFromLocation(String location){
+        String[] parts = location.split('/')
+        return parts[parts.length - 1]
+    }
+
+    def addBaseUrlRef(String username, String baseUrlId, boolean v1Default=false) {
+        def baseUrlRef = v1Factory.createBaseUrlRef(Integer.valueOf(baseUrlId), null, v1Default)
+        def response = methods.addBaseUrlRefs(username, baseUrlRef)
+        //This should be a 200 since its only adding a reference, but its been like this for a while.
+        assert (response.status == SC_CREATED)
+        response.getEntity(BaseURLRef)
+    }
+
+    def getBaseURLById(String id) {
+        def response = methods.getBaseURLById(id)
+        assert (response.status == SC_OK)
+        response.getEntity(BaseURL)
+    }
+
+    void validateV1Default(List<BaseURLRef> baseURLRefList){
+        def mossoV1Def = MOSSO_V1_DEF
+        def nastV1Def = NAST_V1_DEF
+        for(BaseURLRef baseURLRef : baseURLRefList){
+            String baseUrlRefId = baseURLRef.id
+            if(mossoV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else if(nastV1Def.contains(baseUrlRefId)){
+                assert (baseURLRef.v1Default == true)
+            } else {
+                assert (baseURLRef.v1Default == false)
+            }
+        }
+    }
 }

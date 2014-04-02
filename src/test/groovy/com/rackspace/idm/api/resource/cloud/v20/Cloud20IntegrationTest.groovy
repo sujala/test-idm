@@ -2598,7 +2598,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         createUser != null
         authResponse.user.roles != null
-        authResponse.user.roles.role.size() == 4
+        authResponse.user.roles.role.size() == 2
         authResponse.user.roles.role.name.contains(role.name)
         authResponse.user.roles.role.name.contains("identity:user-admin")
 
@@ -2774,23 +2774,21 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Create admin user with complete payload" () {
         given:
-        def domainId1 = "domainId" + (long)(Math.random() * 100000)
+        def domain = utils.createDomain()
         def username1 = "username" + (long)(Math.random() * 100000)
-        def groupName = "groupName"
-
-        if (cloud20.getGroupByName(identityAdminToken, groupName).status == 404) {
-            cloud20.createGroup(identityAdminToken, groupName)
-        }
-
-        def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domainId1,
-                                                 "securePassword2", ["identity:user-manage"].asList(), [groupName].asList(), "What is the meaning?", "That is the wrong question")
+        def group = utils.createGroup()
+        def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domain,
+                                                 "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def result = cloud20.createUser(identityAdminToken, user)
 
         then:
-        result.status == 400
+        result.status == 201
 
+        cleanup:
+        utils.deleteUser(result.getEntity(User).value)
+        utils.deleteGroup(group)
     }
 
     def "List credentials should not return allow an identity admin to list service admin credentials"() {
