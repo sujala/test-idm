@@ -11,6 +11,7 @@ public final class AtomHopperConstants {
 
     public static final String DELETED = "deleted";
     public static final String DISABLED = "disabled";
+    public static final String ENABLED = "enabled";
     public static final String MIGRATED = "migrated";
     public static final String GROUP = "group";
     public static final String ROLE = "role";
@@ -20,4 +21,5 @@ public final class AtomHopperConstants {
     public static final String IDENTITY_EVENT =  "Identity Event";
     public static final String IDENTITY_TOKEN_EVENT = "Identity Token Event";
     public static final String MULTI_FACTOR = "multiFactorEnabled";
+
 }

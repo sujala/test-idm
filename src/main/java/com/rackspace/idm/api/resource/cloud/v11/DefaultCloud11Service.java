@@ -727,6 +727,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.updateUser(gaUser);
             if (gaUser.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+            } else if (!gaUser.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -810,6 +812,8 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if (gaUser.isDisabled() && !isDisabled ) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+            } else if (!gaUser.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
