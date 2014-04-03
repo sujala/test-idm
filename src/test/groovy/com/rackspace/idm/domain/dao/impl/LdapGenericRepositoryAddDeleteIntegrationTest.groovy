@@ -9,10 +9,12 @@ import com.unboundid.ldap.sdk.DeleteRequest
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl
 import com.unboundid.ldap.sdk.persist.LDAPPersister
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.NotImplementedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -52,6 +54,9 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 
     @Autowired
     LdapConnectionPools ldapConnectionPools
+
+    @Autowired
+    Configuration config
 
     LDAPInterface con
     LDAPPersister<Application> applicationPersister
@@ -137,8 +142,6 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
                         addObject(String dn, T Object) tests
     ############################################################################### */
     def "addObject(String, Obj) - verify throws IllegalArgumentException when provide null obj argument"() {
-        setup:
-
         when:
         genericApplicationRepository.addObject("abc", null)
 
@@ -186,8 +189,9 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
                         deleteObject(Object) tests
     ############################################################################### */
 
-    def "deleteObject(Obj) - verify can delete single object with no subentries"() {
+    def "deleteObject(Obj) - verify can delete single object with no subentries using recursion subtree delete"() {
         setup:
+        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         assert con.getEntry(app.getUniqueId()) != null
 
@@ -201,8 +205,86 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         deleteDirect(app)
     }
 
-    def "deleteObject(Obj) - verify no-op if delete object that no longer exists"() {
+    def "deleteObject(Obj) - verify throws exception if delete object that no longer exists using recursion subtree delete"() {
         setup:
+        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        Application app = persistClientDirect()
+        genericApplicationRepository.deleteObject(app) //delete the object from ldap
+        con.getEntry(app.getUniqueId()) == null
+
+        when:
+        genericApplicationRepository.deleteObject(app) //trying to delete the object should throw an exception
+
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message == "no such object"
+
+        cleanup:
+        deleteDirect(app)
+    }
+
+    def "deleteObject(Obj) - verify throws exception if delete object that never existed using recursion subtree delete"() {
+        setup:
+        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        Application app = mock(Application.class)
+        when(app.getUniqueId()).thenReturn("ou=nonexistant,o=rackspace,dc=rackspace,dc=com")
+
+        when:
+        genericApplicationRepository.deleteObject(app) //trying to delete the object should throw an exception
+
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message == "no such object"
+    }
+
+    def "deleteObject(Obj) - verify deleting entry that has children will delete entire tree using recursion subtree delete"() {
+        setup:
+        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        Application app = persistClientDirect()
+        addTokenContainerDirect(app)
+        assert con.getEntry(app.getUniqueId()) != null
+        assert con.getEntry(getTokenContainerDNForClient(app)) != null
+
+        when:
+        genericApplicationRepository.deleteObject(app)
+
+        then:
+        assert con.getEntry(app.getUniqueId()) == null
+        assert con.getEntry(getTokenContainerDNForClient(app)) == null
+
+        cleanup:
+        deleteDirect(app)
+    }
+
+    /**
+     * This test is meant to test the use of the subtree delete control. This needs the configuration feature.use.subtree.delete.control.for.subtree.deletion.enabled
+     * to be set to true. By default, it is false. The test needs to be updated to set it to true.
+     */
+    @Ignore("Ignore this test until feature.use.subtree.delete.control.for.subtree.deletion.enabled is supported in enabled state")
+    def "deleteObject(Obj) - verify can delete single object with no subentries using subtree delete control"() {
+        setup:
+        assert genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        Application app = persistClientDirect()
+        assert con.getEntry(app.getUniqueId()) != null
+
+        when:
+        genericApplicationRepository.deleteObject(app)
+
+        then:
+        con.getEntry(app.getUniqueId()) == null
+
+        cleanup:
+        deleteDirect(app)
+    }
+
+    /**
+     * This test is meant to test the use of the subtree delete control. This needs the configuration feature.use.subtree.delete.control.for.subtree.deletion.enabled
+     * to be set to true. By default, it is false. The test needs to be updated to set it to true.
+     */
+    @Ignore("Ignore this test until feature.use.subtree.delete.control.for.subtree.deletion.enabled is supported in enabled state")
+    def "deleteObject(Obj) - verify no-op if delete object that no longer exists using subtree delete control"() {
+        setup:
+        assert genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         genericApplicationRepository.deleteObject(app) //delete the object from ldap
         con.getEntry(app.getUniqueId()) == null
@@ -214,8 +296,14 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         deleteDirect(app)
     }
 
-    def "deleteObject(Obj) - verify no-op if delete object that never existed"() {
+    /**
+     * This test is meant to test the use of the subtree delete control. This needs the configuration feature.use.subtree.delete.control.for.subtree.deletion.enabled
+     * to be set to true. By default, it is false. The test needs to be updated to set it to true.
+     */
+    @Ignore("Ignore this test until feature.use.subtree.delete.control.for.subtree.deletion.enabled is supported in enabled state")
+    def "deleteObject(Obj) - verify no-op if delete object that never existed using subtree delete control"() {
         setup:
+        assert genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
         Application app = mock(Application.class)
         when(app.getUniqueId()).thenReturn("ou=nonexistant,o=rackspace,dc=rackspace,dc=com")
 
@@ -223,8 +311,14 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         genericApplicationRepository.deleteObject(app)
     }
 
-    def "deleteObject(Obj) - verify deleting entry that has children will delete entire tree"() {
+    /**
+     * This test is meant to test the use of the subtree delete control. This needs the configuration feature.use.subtree.delete.control.for.subtree.deletion.enabled
+     * to be set to true. By default, it is false. The test needs to be updated to set it to true.
+     */
+    @Ignore("Ignore this test until feature.use.subtree.delete.control.for.subtree.deletion.enabled is supported in enabled state")
+    def "deleteObject(Obj) - verify deleting entry that has children will delete entire tree using subtree delete control"() {
         setup:
+        assert genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         addTokenContainerDirect(app)
         assert con.getEntry(app.getUniqueId()) != null
