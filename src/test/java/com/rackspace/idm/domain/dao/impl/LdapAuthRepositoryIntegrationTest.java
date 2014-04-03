@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import org.junit.runner.RunWith;
 
+import org.junit.runners.JUnit4;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.test.context.ContextConfiguration;
@@ -20,8 +21,41 @@ import java.util.List;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapAuthRepositoryIntegrationTest {
+
     @Autowired
     private LdapAuthRepository repo;
+
+    @Test
+    public void authenticateTestRacker() {
+        boolean check = repo.authenticate("test.racker", "password");
+        Assert.assertTrue(check);
+    }
+
+    @Test
+    public void getTestRackerRoles() {
+        List<String> roles = repo.getRackerRoles("test.racker");
+        Assert.assertTrue(roles.contains("team-cloud-identity"));
+    }
+
+    @Test
+    public void authenticateTestAlias() {
+        boolean check = repo.authenticate("test.alias", "password");
+        Assert.assertTrue(check);
+    }
+
+    @Test
+    public void getTestAliasRoles() {
+        List<String> roles = repo.getRackerRoles("test.alias");
+        Assert.assertTrue(roles.contains("team-cloud-identity"));
+    }
+
+    @Test
+    public void notAuthenticateTestLegacy() {
+        boolean check = !repo.authenticate("test.legacy", "password");
+        Assert.assertTrue(check);
+    }
+
+
     @Autowired
     private LDAPConnectionPool connPool;
 
