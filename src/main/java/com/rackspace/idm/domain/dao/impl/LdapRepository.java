@@ -82,6 +82,7 @@ public abstract class LdapRepository {
     public static final String ATTR_MOSSO_ID = "rsMossoId";
     public static final String ATTR_NAME = "cn";
     public static final String ATTR_NAST_ID = "rsNastId";
+    public static final String ATTR_NO_ATTRIBUTES = "NO_ATTRIBUTES";
     public static final String ATTR_URI = "labeledUri";
     public static final String ATTR_OBJECT_CLASS = "objectClass";
     public static final String ATTR_OU = "ou";
@@ -178,6 +179,9 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_SCOPE_ACCESS_ATTRIBUTES = {"*", ATTR_CREATED_DATE};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
+    public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
+    public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = false;
+
     @Autowired
     protected LdapConnectionPools connPools;
 
@@ -208,6 +212,20 @@ public abstract class LdapRepository {
     }
 
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
+        if (useSubtreeDeleteControlForSubtreeDeletion()) {
+            deleteEntryAndSubtreeUsingSubtreeDeleteControl(dn, audit);
+        }
+        else {
+            deleteEntryAndSubtreeUsingRecursion(dn, audit);
+        }
+    }
+
+    protected boolean useSubtreeDeleteControlForSubtreeDeletion() {
+        return config.getBoolean(FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE);
+    }
+
+
+    protected void deleteEntryAndSubtreeUsingSubtreeDeleteControl(String dn, Audit audit) {
         try {
             DeleteRequest deleteRequest = new DeleteRequest(dn);
             deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
@@ -219,6 +237,26 @@ public abstract class LdapRepository {
             throw new IllegalStateException(e.getMessage(), e);
         }
     }
+
+    protected void deleteEntryAndSubtreeUsingRecursion(String dn, Audit audit) {
+        try {
+
+            SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
+                    "(objectClass=*)", ATTR_NO_ATTRIBUTES);
+
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                deleteEntryAndSubtree(entry.getDN(), audit);
+            }
+
+            getAppInterface().delete(dn);
+
+        } catch (LDAPException e) {
+            audit.fail();
+            getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResult searchResult;
