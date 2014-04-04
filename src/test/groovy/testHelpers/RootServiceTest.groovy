@@ -226,15 +226,19 @@ class RootServiceTest extends Specification {
     @Shared def v1Factory = new V1Factory()
     @Shared def v2Factory = new V2Factory()
 
-    @Shared def defaultExpirationHours = 12
+    @Shared def defaultExpirationHours = 24
+    @Shared def defaultRackerExpirationHours = 12
     @Shared def defaultCloudAuthExpirationHours = 24
+    @Shared def defaultCloudAuthRackerExpirationHours = 12
     @Shared def defaultRefreshHours = 6
     @Shared def defaultImpersonationHours = 1
 
     @Shared def defaultExpirationSeconds = 3600 * defaultExpirationHours
+    @Shared def defaultRackerExpirationSeconds = 3600 * defaultRackerExpirationHours
     @Shared def defaultRefreshSeconds = 3600 * defaultRefreshHours
     @Shared def defaultImpersonationExpirationSeconds = 3600 * defaultImpersonationHours
     @Shared def defaultCloudAuthExpirationSeconds = 3600 * defaultCloudAuthExpirationHours
+    @Shared def defaultCloudAuthRackerExpirationSeconds = 3600 * defaultCloudAuthRackerExpirationHours
 
     /*
         Mock Converters
@@ -882,6 +886,10 @@ class RootServiceTest extends Specification {
     }
 
     def createRackerScopeAccess(String tokenString, String rackerId, Date expiration) {
+        return createRackerScopeAccess(tokenString, rackerId, "clientId", expiration)
+    }
+
+    def createRackerScopeAccess(String tokenString, String rackerId, String clientId, Date expiration) {
         tokenString = tokenString ? tokenString : "tokenString"
         rackerId = rackerId ? rackerId : "rackerId"
         def dn = "accessToken=$tokenString,cn=TOKENS,rsId=$rackerId,ou=rackers"
@@ -890,6 +898,7 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.rackerId = rackerId
+            it.clientId = clientId
             it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }

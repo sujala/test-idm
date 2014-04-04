@@ -545,7 +545,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessByClientId(racker, clientId);
         if (scopeAccess == null){
-            int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+            int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthRackerTokenExpirationSeconds());
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setClientId(clientId);
             scopeAccess.setRackerId(racker.getRackerId());
@@ -782,7 +782,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     int getDefaultCloudAuthTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds");
+        return config.getInt("token.cloudAuthExpirationSeconds", 86400);
+    }
+
+    int getDefaultCloudAuthRackerTokenExpirationSeconds() {
+        return config.getInt("token.cloudAuthRackerExpirationSeconds", 43200);
     }
 
     Double getTokenEntropy(){
@@ -822,7 +826,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
         scopeAccessToAdd.setAuthenticatedBy(authenticatedBy);
 
-        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthRackerTokenExpirationSeconds());
         Racker racker = (Racker) userService.getUserByScopeAccess(scopeAccess);
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {

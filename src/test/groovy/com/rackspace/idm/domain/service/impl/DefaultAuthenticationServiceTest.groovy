@@ -38,6 +38,8 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         futureDate = new DateTime().plusHours(refreshWindowHours + 1).toDate()
 
         config.getInt("token.refreshWindowHours") >> refreshWindowHours
+        config.getInt("token.expirationSeconds", _) >> defaultExpirationSeconds
+        config.getInt("token.rackerExpirationSeconds", _) >> defaultRackerExpirationSeconds
     }
 
     def "Calls getAndUpdateUserScopeAccessForClientId adds new scope access and deletes old"() {
@@ -67,7 +69,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         1 * scopeAccessService.addUserScopeAccess(userTwo, _)
     }
 
-    def "Calls getAndUpdateUserScopeAccessForClientId returns existing scopeAccess if not exipired"() {
+    def "Calls getAndUpdateUserScopeAccessForClientId returns existing scopeAccess if not expired"() {
         given:
         def user= entityFactory.createUser()
         def scopeAccess = createUserScopeAccess()
@@ -211,6 +213,43 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         1 * scopeAccessService.deleteScopeAccess(_)
     }
 
+    def "Calls getTokens with refreshtoken Racker credentials adds new and deletes old scopeaccess"() {
+        given:
+        def scopeAccess = createRackerScopeAcccss().with {
+            it.refreshTokenString = "refresh"
+            it.refreshTokenExp = refreshDate
+            return it
+        }
+
+        def credentials = Mock(Credentials)
+        credentials.getOAuthGrantType() >> OAuthGrantType.REFRESH_TOKEN
+        credentials.getGrantType() >> "REFRESH_TOKEN"
+        credentials.getClientId() >> "12345"
+
+        def authResult = Mock(ClientAuthenticationResult)
+        authResult.isAuthenticated() >> true
+        authResult.getClient() >> new Application().with() {
+            it.clientId = "clientId"
+            return it
+        }
+
+        def user = entityFactory.createRacker()
+
+        applicationService.authenticate(_, _) >> authResult
+        userService.getUserByScopeAccess(_) >> user
+        scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
+        userService.getUserById(_) >> user
+
+        when:
+        def returned = service.getTokens(credentials, new DateTime())
+
+        then:
+        returned.clientId == "clientId"
+        1 * scopeAccessService.addUserScopeAccess(_, _)
+        1 * scopeAccessService.deleteScopeAccess(_)
+        1 * scopeAccessService.getTokenExpirationSeconds(defaultRackerExpirationSeconds)
+    }
+
     def "Calls getTokens sets token expiration with entropy"() {
         given:
         def credentials = Mock(Credentials)
@@ -283,12 +322,13 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         role.clientId = "clientId"
         tenantService.getTenantRolesForUser(_) >> [role].asList()
         config.getString("idm.clientId") >> role.clientId
+        config.getInt("token.rackerExpirationSeconds") >> defaultRackerExpirationSeconds
 
         when:
         service.getAndUpdateRackerScopeAccessForClientId(user, application)
 
         then:
-        1 * scopeAccessService.getTokenExpirationSeconds(_)
+        1 * scopeAccessService.getTokenExpirationSeconds(defaultRackerExpirationSeconds)
     }
 
     def attribute() {

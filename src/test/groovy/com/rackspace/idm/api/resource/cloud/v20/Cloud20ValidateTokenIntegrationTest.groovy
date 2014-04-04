@@ -11,8 +11,29 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Shared def defaultUser, users
 
+    def "Validate user token" () {
+        when:
+        def expirationTimeInSeconds = 86400
+        def marginOfErrorInSeconds = 1000
+        def response = utils.authenticateUser(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
+        utils.revokeToken(response.token.id)
+        response = utils.authenticateUser(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
+        def validateResponse = utils.validateToken(response.token.id)
+
+        then:
+        validateResponse != null
+        validateResponse.token.authenticatedBy.credential.contains("PASSWORD")
+
+        // Validates the expiration time for "User"
+        def deltaInSeconds = (validateResponse.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
+        deltaInSeconds < expirationTimeInSeconds + marginOfErrorInSeconds
+        deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
+    }
+
     def "AuthenticatedBy should be displayed for racker token" () {
         when:
+        def expirationTimeInSeconds = 43200
+        def marginOfErrorInSeconds = 1000
         def response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
         utils.revokeToken(response.token.id)
         response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
@@ -21,6 +42,11 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         then:
         validateResponse != null
         validateResponse.token.authenticatedBy.credential.contains("PASSWORD")
+
+        // Validates the expiration time for "Racker"
+        def deltaInSeconds = (validateResponse.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
+        deltaInSeconds < expirationTimeInSeconds + marginOfErrorInSeconds
+        deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
     }
 
     def "Validate racker token" () {
