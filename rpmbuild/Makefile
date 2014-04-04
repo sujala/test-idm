@@ -10,12 +10,21 @@ RPMBUILD := rpmbuild \
 	--define "_srcrpmdir    %(pwd)/rpms/src"  \
 	--define "_sourcedir    %(pwd)/source"
 
-PUBLISH_HOST 	:= 'jenkins-n01.qe.ord1.cidm.rackspace.net'
-PUBLISH_DIR 	:= '/var/www/html/repos/rhel/6/dev'
-PUBLISH_USER  := 'jenkins'
+SSO_USER      := 'identity'
+PUBLISH_HOST  := 'idm-pulp-n01.qe.ord1.cidm.rackspace.net'
+PUBLISH_DIR   := "/home/${SSO_USER}/rpms"
+PULP_USER     := 'identity'
+PULP_PASS     := 'identity'
+PULP_REPO     := 'identity'
+
+FETCH_HOST := 'd-build1.iad2.corp.rackspace.com:8100'
+FETCH_URL  := "/nexus/content/repositories/releases/com/rackspace/idm/${VERSION}-${RELEASE}"
 
 clean:
 	rm -rf rpmbuild/ rpms/ source/ master/
+
+fetch:
+	wget --timestamping --directory-prefix ../build/libs http://${FETCH_HOST}${FETCH_URL}/idm-${VERSION}-${RELEASE}.war
 
 prep_rpmbuild:
 	mkdir -p rpmbuild
@@ -26,7 +35,7 @@ prep_rpmbuild:
 prep_master_tarball:
 	mkdir -p master
 	cp -r ../build/libs/idm-${VERSION}-${RELEASE}.war master/
-	cp -r ../build/config/ master/
+	cp -r ../src master/
 	cp -r ../ldap master/
 	tar czf source/master.tar.gz master/
 
@@ -39,5 +48,10 @@ srpm: prep_rpmbuild prep_master_tarball
 	${RPMBUILD} -bs rs-cloud-identity-schema.spec
 
 publish:
-	scp rpms/*/*-${VERSION}-${RELEASE}.*.rpm ${PUBLISH_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
-	ssh -tt ${PUBLISH_USER}@${PUBLISH_HOST} "sudo createrepo ${PUBLISH_DIR}"
+	scp rpms/*/*-${VERSION}-${RELEASE}.*.rpm ${SSO_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
+	ssh -tt ${SSO_USER}@${PUBLISH_HOST} "\
+	  pulp-admin login -u ${PULP_USER} -p ${PULP_PASS}; \
+	  pulp-admin rpm repo uploads rpm --repo-id ${PULP_REPO} --dir ${PUBLISH_DIR} --skip-existing; \
+	  pulp-admin rpm repo publish run --repo-id ${PULP_REPO} --bg; \
+	  pulp-admin node repo publish --repo-id ${PULP_REPO} --bg; \
+	  pulp-admin logout"

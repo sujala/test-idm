@@ -26,7 +26,7 @@ Cloud Identity Project
 %install
 mkdir -p %{buildroot}/etc/idm
 # TODO: true up packaged configs with those from written by Chef
-# cp config/DEV/* %{buildroot}/etc/idm
+# cp src/main/config/DEV/* %{buildroot}/etc/idm
 
 mkdir -p %{buildroot}/var/log/idm
 
