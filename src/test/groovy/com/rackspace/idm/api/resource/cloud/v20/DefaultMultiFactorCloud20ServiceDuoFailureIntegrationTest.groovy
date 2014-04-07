@@ -1,11 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.identity.multifactor.providers.duo.domain.FailureResult
+import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.UserManagement
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
@@ -53,6 +57,9 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
     @Autowired
     private UserManagement userManagement
+
+    @Autowired
+    private SessionIdReaderWriter sessionIdReaderWriter
 
     @Autowired
     private DefaultMultiFactorCloud20Service multiFactorCloud20Service
@@ -131,6 +138,29 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
         cleanup:
         multiFactorService.mobilePhoneVerification = mobilePhoneVerification //reset to original service
+    }
+
+    def "performMultiFactorChallenge: Fail with 403 when account is locked out"() {
+        setup:
+        addPhone()
+
+        BasicMultiFactorService mockedBasicMultiFactorService = Mock(BasicMultiFactorService)
+        mockedBasicMultiFactorService.sendSmsPasscode(_) >> {throw new DuoLockedOutException(new FailureResult(0, "status", "message"))}
+        multiFactorCloud20Service.multiFactorService = mockedBasicMultiFactorService
+
+        SessionIdReaderWriter mockedSessionIdReaderWriter = Mock(SessionIdReaderWriter)
+        mockedSessionIdReaderWriter.writeEncoded(_) >> "dummy"
+        multiFactorCloud20Service.sessionIdReaderWriter = mockedSessionIdReaderWriter
+
+        when:
+        Response.ResponseBuilder result = multiFactorCloud20Service.performMultiFactorChallenge(userAdmin.id, ["PASSWORD"].asList())
+
+        then:
+        thrown(ForbiddenException)
+
+        cleanup:
+        multiFactorCloud20Service.multiFactorService = multiFactorService
+        multiFactorCloud20Service.sessionIdReaderWriter = sessionIdReaderWriter
     }
 
     def void addPhone() {
