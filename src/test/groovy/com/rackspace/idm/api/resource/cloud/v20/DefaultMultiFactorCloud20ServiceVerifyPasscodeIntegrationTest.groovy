@@ -19,6 +19,7 @@ import org.joda.time.DateTime
 import org.joda.time.Minutes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.UnauthorizedFault
@@ -183,8 +184,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
     }
 
-    @Unroll("Fail with 401 when wrong passcode or account locked: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Fail with 401 when passcode invalid"() {
+    @Unroll("Fail with 401 when wrong passcode: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Fail with 401 when wrong passcode"() {
         setup:
         setUpAndEnableMultiFactor()
         def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
@@ -203,6 +204,24 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.DENY_DENY | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_GENERIC_ERROR_MSG
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.DENY_DENY | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_GENERIC_ERROR_MSG
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.DENY_DENY | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_GENERIC_ERROR_MSG
+    }
+
+    @Unroll("Fail with 403 when account locked: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Fail with 403 when account locked"() {
+        setup:
+        setUpAndEnableMultiFactor()
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        when:
+        def response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, simulatedPasscode.passcode, requestContentMediaType, acceptMediaType)
+
+        then:
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, expectedFailureMessage)
+
+        where:
+        requestContentMediaType | acceptMediaType | simulatedPasscode | expectedFailureMessage
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.DENY_LOCKEDOUT | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.DENY_LOCKEDOUT | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.DENY_LOCKEDOUT | DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG

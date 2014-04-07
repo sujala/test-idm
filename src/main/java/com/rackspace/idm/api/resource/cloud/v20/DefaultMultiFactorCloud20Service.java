@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
+import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
@@ -221,7 +222,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
         //now send the passcode
-        multiFactorService.sendSmsPasscode(userId);
+        try {
+            multiFactorService.sendSmsPasscode(userId);
+        } catch (DuoLockedOutException lockedOutException) {
+            throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+        }
 
         /*
         Create unauthorized fault and response
@@ -309,7 +314,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
                 break;
             case LOCKEDOUT:
-                exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+                exceptionToThrow = new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
                 break;
             default:
                 String msg = String.format(NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT, sessionId.getUserId(), mfaResponse.getDecisionReason(), mfaResponse.getMessage());
