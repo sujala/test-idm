@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.resource.cloud
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.config.providers.cloudv20.Core20XMLWriter
 import com.rackspace.idm.exception.BadRequestException
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
-import spock.lang.Specification
 import testHelpers.RootServiceTest
 
 class XMLReaderTest extends RootServiceTest {
@@ -17,6 +17,7 @@ class XMLReaderTest extends RootServiceTest {
         reader = new XMLReader()
         writer = new Core20XMLWriter().with {
             it.corev20NsPrefixMap = Eval.me('["http://docs.openstack.org/identity/api/v2.0":""]')
+            it.multiFactorCloud20Service = Mock(MultiFactorCloud20Service)
             return it
         }
     }

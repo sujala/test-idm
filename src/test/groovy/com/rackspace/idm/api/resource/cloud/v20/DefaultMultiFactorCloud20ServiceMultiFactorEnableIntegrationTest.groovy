@@ -11,6 +11,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.sun.jersey.api.client.ClientResponse
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
@@ -104,6 +106,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+        def adminToken = utils.getServiceAdminToken()
+        def userByIdResponse = cloud20.getUserById(adminToken, userAdmin.id, acceptMediaType)
+        def userByUsername = cloud20.getUserByName(adminToken, userAdmin.username, acceptMediaType)
+        def usersByEmailResponse = cloud20.getUsersByEmail(adminToken, userAdmin.email, acceptMediaType)
+        def usersByDomainResponse = cloud20.getUsersByDomainId(adminToken, userAdmin.domainId, acceptMediaType)
+        def usersListResponse = cloud20.listUsers(adminToken, "0", "1000", acceptMediaType)
 
         then:
         response.getStatus() == HttpStatus.SC_NO_CONTENT
@@ -111,6 +119,11 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         finalUserAdmin.getMultiFactorDevicePin() == null
         finalUserAdmin.isMultiFactorDeviceVerified()
         finalUserAdmin.isMultiFactorEnabled()
+        utils.checkUserMFAFlag(userByIdResponse, true)
+        utils.checkUserMFAFlag(userByUsername, true)
+        utils.checkUsersMFAFlag(usersByEmailResponse, userAdmin.username, true)
+        utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, true)
+        utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, true)
 
         where:
         requestContentMediaType | acceptMediaType
@@ -136,11 +149,22 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         settings.setEnabled(false)
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+        def adminToken = utils.getServiceAdminToken()
+        def userByIdResponse = cloud20.getUserById(adminToken, userAdmin.id, acceptMediaType)
+        def userByUsername = cloud20.getUserByName(adminToken, userAdmin.username, acceptMediaType)
+        def usersByEmailResponse = cloud20.getUsersByEmail(adminToken, userAdmin.email, acceptMediaType)
+        def usersByDomainResponse = cloud20.getUsersByDomainId(adminToken, userAdmin.domainId, acceptMediaType)
+        def usersListResponse = cloud20.listUsers(adminToken, "0", "1000", acceptMediaType)
 
         then:
         response.getStatus() == HttpStatus.SC_NO_CONTENT
         !finalUserAdmin.isMultiFactorEnabled()
         finalUserAdmin.getExternalMultiFactorUserId() == null
+        utils.checkUserMFAFlag(userByIdResponse, false)
+        utils.checkUserMFAFlag(userByUsername, false)
+        utils.checkUsersMFAFlag(usersByEmailResponse, userAdmin.username, false)
+        utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, false)
+        utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, false)
 
         where:
         requestContentMediaType | acceptMediaType
@@ -353,4 +377,5 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         userScopeAccess.setAccessTokenExp(future)
         scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
+
 }
