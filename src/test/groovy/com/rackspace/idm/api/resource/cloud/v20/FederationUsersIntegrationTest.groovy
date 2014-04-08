@@ -57,8 +57,10 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
     ClientRole rbacRole2;
     ClientRole role1000;
 
-    def globalEndpoint
-    def lonGlobalEndpoint
+    def usGlobalEndpointEnabled
+    def usGlobalEndpointDisabled
+    def lonGlobalEndpointEnabled
+    def lonGlobalEndpointDisabled
     def globalEndpointTemplateRegion = "ORD"
     def lonGlobalEndpointTemplateRegion = "LON"
 
@@ -72,13 +74,17 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         assert rbacRole2.rsWeight == 1000
         assert role1000.rsWeight == 1000
 
-        globalEndpoint = utils.createEndpointTemplate(true, null, "compute", globalEndpointTemplateRegion)
-        lonGlobalEndpoint = utils.createEndpointTemplate(true, null, "compute", lonGlobalEndpointTemplateRegion)
+        usGlobalEndpointEnabled = utils.createEndpointTemplate(true, null, true, "compute", globalEndpointTemplateRegion)
+        usGlobalEndpointDisabled = utils.createEndpointTemplate(true, null, false, "compute", globalEndpointTemplateRegion)
+        lonGlobalEndpointEnabled = utils.createEndpointTemplate(true, null, true, "compute", lonGlobalEndpointTemplateRegion)
+        lonGlobalEndpointDisabled = utils.createEndpointTemplate(true, null, false, "compute", lonGlobalEndpointTemplateRegion)
     }
 
     def cleanup() {
-        utils.deleteEndpointTemplate(globalEndpoint)
-        utils.deleteEndpointTemplate(lonGlobalEndpoint)
+        utils.deleteEndpointTemplate(usGlobalEndpointEnabled)
+        utils.deleteEndpointTemplate(usGlobalEndpointDisabled)
+        utils.deleteEndpointTemplate(lonGlobalEndpointEnabled)
+        utils.deleteEndpointTemplate(lonGlobalEndpointDisabled)
     }
 
     def "initial user populated appropriately from saml no roles provided"() {
@@ -470,20 +476,32 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         assert authResponse.serviceCatalog != null
         assert authResponse.serviceCatalog.service.size() > 0
 
-        def foundUSGlobalEndpoint = false
-        def foundLonGlobalEndpoint = false
-        String usTenantEndpoint = String.format("%s/%s", globalEndpoint.publicURL, userAdminEntity.mossoId)
-        String lonTenantEndpoint = String.format("%s/%s", lonGlobalEndpoint.publicURL, userAdminEntity.mossoId)
+        def foundUsGlobalEndpointEnabled = false
+        def foundUsGlobalEndpointDisabled = false
+        def foundLonGlobalEndpointEnabled = false
+        def foundLonGlobalEndpointDisabled = false
+        String usTenantEndpointEnabled = String.format("%s/%s", usGlobalEndpointEnabled.publicURL, userAdminEntity.mossoId)
+        String usTenantEndpointDisabled = String.format("%s/%s", usGlobalEndpointDisabled.publicURL, userAdminEntity.mossoId)
+        String lonTenantEndpointEnabled = String.format("%s/%s", lonGlobalEndpointEnabled.publicURL, userAdminEntity.mossoId)
+        String lonTenantEndpointDisabled = String.format("%s/%s", lonGlobalEndpointDisabled.publicURL, userAdminEntity.mossoId)
         for (List publicUrls : authResponse.serviceCatalog.service.endpoint.publicURL) {
-            if (publicUrls.contains(usTenantEndpoint)) {
-                foundUSGlobalEndpoint = true
+            if (publicUrls.contains(usTenantEndpointEnabled)) {
+                foundUsGlobalEndpointEnabled = true
             }
-            if (publicUrls.contains(lonTenantEndpoint)) {
-                foundUSGlobalEndpoint = true
+            if (publicUrls.contains(usTenantEndpointDisabled)) {
+                foundUsGlobalEndpointDisabled = true
+            }
+            if (publicUrls.contains(lonTenantEndpointEnabled)) {
+                foundLonGlobalEndpointEnabled = true
+            }
+            if (publicUrls.contains(lonTenantEndpointDisabled)) {
+                foundLonGlobalEndpointDisabled = true
             }
         }
-        assert foundUSGlobalEndpoint
-        assert !foundLonGlobalEndpoint
+        assert foundUsGlobalEndpointEnabled
+        assert !foundUsGlobalEndpointDisabled
+        assert !foundLonGlobalEndpointEnabled
+        assert !foundLonGlobalEndpointDisabled
     }
 
     def "passing multiple saml requests with same info references same user"() {

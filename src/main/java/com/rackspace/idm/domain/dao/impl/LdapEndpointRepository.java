@@ -138,6 +138,7 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
                 .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
                 .addEqualAttribute(ATTR_GLOBAL, Boolean.toString(true).toUpperCase())
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .addNotEqualAttribute(ATTR_REGION, "LON").build();
     }
 
@@ -146,6 +147,7 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
                 .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
                 .addEqualAttribute(ATTR_GLOBAL, Boolean.toString(true).toUpperCase())
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_REGION, "LON").build();
     }
 
