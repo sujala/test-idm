@@ -3234,6 +3234,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
 
         then:
+        2 * authorizationService.verifyUserLevelAccess(_)
         2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
         2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
         4 * authorizationService.hasServiceAdminRole(_) >>> [ callerSA, userSA, callerSA, userSA ]
