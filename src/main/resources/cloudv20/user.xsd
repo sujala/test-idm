@@ -58,6 +58,7 @@
 
         <attribute ref="RAX-AUTH:domainId" use="optional"/>
         <attribute ref="RAX-AUTH:defaultRegion" use="optional"/>
+        <attribute ref="RAX-AUTH:multiFactorEnabled" use="optional"/>
         <attribute ref="OS-KSADM:password" use="optional"/>
 
         <attribute name="id" type="xsd:ID" use="required">
@@ -128,17 +129,6 @@
                         xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         A creation time-stamp for the user.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
-        <attribute name="multiFactorEnabled" type="xsd:boolean" default="false" use="optional">
-            <annotation>
-                <xsd:documentation
-                    xml:lang="EN"
-                    xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        True if multi-factor is enabled (active).
                     </p>
                 </xsd:documentation>
             </annotation>

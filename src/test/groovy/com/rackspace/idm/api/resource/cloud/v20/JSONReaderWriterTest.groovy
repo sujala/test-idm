@@ -130,7 +130,10 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONWriterForVersionChoice writerForVersionChoice = new JSONWriterForVersionChoice()
     @Shared JSONWriterForCredentialListType writerForCredentialListType = new JSONWriterForCredentialListType()
     @Shared JSONWriterForRoles writerForRoles = new JSONWriterForRoles()
-    @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers()
+    @Shared JSONWriterForUsers writerForUsers = new JSONWriterForUsers().with {
+        it.multiFactorCloud20Service = Mock(MultiFactorCloud20Service)
+        return it
+    }
     @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
     @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
     @Shared JSONWriterForBaseURLList writerForBaseURLList = new JSONWriterForBaseURLList()

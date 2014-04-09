@@ -22,6 +22,7 @@ import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
 /**
  * Created with IntelliJ IDEA.
@@ -101,8 +102,8 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).path(token).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getUserByName(String token, String name) {
-        resource.path(path20).path(USERS).queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def getUserByName(String token, String name, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).queryParam("name", name).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def createUser(String token, user) {
@@ -141,24 +142,24 @@ class Cloud20Methods {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listUsers(String token) {
-        resource.path(path20).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    def listUsers(String token, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
-    def listUsers(String token, offset, limit) {
-        resource.path(path20).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    def listUsers(String token, offset, limit, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
-    def getUserById(String token, String userId) {
-        resource.path(path20).path(USERS).path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def getUserById(String token, String userId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getUsersByEmail(String token, String email) {
-        resource.path(path20).path(USERS).queryParam("email", email).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def getUsersByEmail(String token, String email, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).queryParam("email", email).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getUsersByDomainId(String token, String domainId) {
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def getUsersByDomainId(String token, String domainId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user) {

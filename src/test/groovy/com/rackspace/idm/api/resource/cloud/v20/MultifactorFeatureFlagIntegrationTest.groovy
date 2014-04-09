@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.sun.jersey.api.client.ClientResponse
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -83,6 +85,23 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         then:
         response.status == status
 
+        // Check the MFA flag is properly populated
+        if (flagSettingsFile == FULL_SETTINGS_FILE || flagSettingsFile == BETA_SETTINGS_FILE) {
+            def adminToken = utils.getServiceAdminToken()
+            def userByIdResponse = cloud20.getUserById(adminToken, user.id, acceptMediaType)
+            def userByUsername = cloud20.getUserByName(adminToken, user.username, acceptMediaType)
+            def usersByEmailResponse = cloud20.getUsersByEmail(adminToken, user.email, acceptMediaType)
+            def usersByDomainResponse = cloud20.getUsersByDomainId(adminToken, user.domainId, acceptMediaType)
+            def usersListResponse = cloud20.listUsers(adminToken, "0", "1000", acceptMediaType)
+
+            def value = flagSettingsFile == BETA_SETTINGS_FILE && !addPhone ? null : addPhone
+            utils.checkUserMFAFlag(userByIdResponse, value)
+            utils.checkUserMFAFlag(userByUsername, value)
+            utils.checkUsersMFAFlag(usersByEmailResponse, user.username, value)
+            utils.checkUsersMFAFlag(usersByDomainResponse, user.username, value)
+            utils.checkUsersMFAFlag(usersListResponse, user.username, value)
+        }
+
         cleanup:
         if (user != null) {
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
@@ -101,6 +120,11 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | true | FULL_SETTINGS_FILE | 204
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | FULL_SETTINGS_FILE | 400
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | FULL_SETTINGS_FILE | 400
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | FULL_SETTINGS_FILE | 400
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | FULL_SETTINGS_FILE | 400
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 401
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 401
