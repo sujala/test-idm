@@ -19,7 +19,7 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '2.2.0-SNAPSHOT'
+featureVersion = '2.3.0_future'
 buildVersion = System.currentTimeMillis()
 gitRevision = "git rev-parse HEAD".execute().text.trim()
 
