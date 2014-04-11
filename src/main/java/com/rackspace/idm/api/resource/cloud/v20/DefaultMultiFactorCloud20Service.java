@@ -335,8 +335,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             User requester = (User) userService.getUserByScopeAccess(token);
             validateListDevicesForUser(requester, userId);
 
+            //NOTE: Since this call is restricted to a user listing his own devices (ie requesters userId must
+            //      equal the passed in userId), its perfectly fine to save an LDAP call and send in the requestor
+            //      as the parameter in the call below in order to get the List of MobilePhones. If that restriction
+            //      is ever removed we'll need to add a call to get the userById and pass that user into the call.
             List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(requester);
-            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWeb(phoneList));
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, requester));
 
         } catch (IllegalStateException ex) {
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
