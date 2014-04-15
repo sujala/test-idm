@@ -3,6 +3,7 @@ package com.rackspace.idm.helpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 
@@ -83,6 +84,8 @@ class Cloud20Utils {
     def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
         def response = methods.createUser(token, user)
 
         assert (response.status == SC_CREATED)
@@ -230,9 +233,8 @@ class Cloud20Utils {
 
     def updateUser(user) {
         def response = methods.updateUser(getServiceAdminToken(), user.id, user)
-
         assert (response.status == SC_OK)
-
+        response.getEntity(User).value
     }
 
     def disableUser(user) {
@@ -372,9 +374,15 @@ class Cloud20Utils {
     }
 
     def getUserByName(String username, String token=getServiceAdminToken()){
-        def reponse = methods.getUserByName(token, username)
-        assert (reponse.status == SC_OK)
-        reponse.getEntity(User).value
+        def response = methods.getUserByName(token, username)
+        assert (response.status == SC_OK)
+        response.getEntity(User).value
+    }
+
+    def getUserById(String userId, String token=getServiceAdminToken()){
+        def response = methods.getUserById(token, userId)
+        assert (response.status == SC_OK)
+        response.getEntity(User).value
     }
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
