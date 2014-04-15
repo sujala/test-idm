@@ -53,7 +53,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def retrievedUser = ldapUserRepository.getUserByUsername(username)
         def retrievedUser2 = ldapUserRepository.getUserByUsername(username)
         ldapUserRepository.deleteUser(retrievedUser);
-        ldapUserRepository.deleteUser(retrievedUser2);
         def deletedUser = ldapUserRepository.getUserByUsername(username)
 
         then:
@@ -76,6 +75,13 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.getPasswordFailureDate() == null
         retrievedUser.getSecureId() != null
         retrievedUser.getRsGroupDN() == null
+
+        when: "delete object already deleted when using recursion delete algorithm"
+        ldapUserRepository.deleteUser(retrievedUser2);
+
+        then: "an illegal state exception is thrown"
+        def e = thrown(IllegalStateException)
+        e.message == "no such object"
     }
 
     def "retrieving users in a domain returns all users within the domain"() {
