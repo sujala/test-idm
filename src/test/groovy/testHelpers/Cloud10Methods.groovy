@@ -2,6 +2,7 @@ package testHelpers
 
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
+import org.springframework.stereotype.Component
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -15,6 +16,7 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * To change this template use File | Settings | File Templates.
  */
 
+@Component
 class Cloud10Methods {
 
     @Shared WebResource resource

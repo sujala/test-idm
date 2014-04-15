@@ -301,7 +301,7 @@ class V1Factory {
             it.id = id
             it.answer  = answer
             it.question = question
-            return it
+            it
         }
     }
 

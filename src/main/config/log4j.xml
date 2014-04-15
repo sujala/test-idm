@@ -1,115 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE log4j:configuration PUBLIC "-//LOGGER" "log4j.dtd">
-
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-
-	<!-- Appenders -->
-	<appender name="console" class="org.apache.log4j.ConsoleAppender">
-		<param name="Target" value="System.out" />
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d %-5p [%c] %m %X{GUUID} %n"/>
-		</layout>
-	</appender>
-
-    <!--<appender name="file" class="org.apache.log4j.-->
-
-	<appender name="file" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/idm.log.%d.zip"/>
-            <param name="activeFileName" value="/var/log/idm/idm.log"/>
-        </rollingPolicy>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %-5p [%c] %m %X{GUUID} %n"/>
-		</layout>
-	</appender>
-	
-	<appender name="audit" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/audit.log.%d.zip"/>
-            <param name="activeFileName" value="/var/log/idm/audit.log"/>
-        </rollingPolicy>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %m %n"/>
-		</layout>
-	</appender>
-
-	<appender name="analytics" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/analytics.log.%d.zip"/>
-            <param name="activeFileName" value="/var/log/idm/analytics.log"/>
-        </rollingPolicy>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
-		</layout>
-	</appender>
-
-    <appender name="userDelete" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/userDelete.log.%d.zip"/>
-            <param name="activeFileName" value="/var/log/idm/userDelete.log"/>
-        </rollingPolicy>
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
-        </layout>
-    </appender>
-
-    <appender name="multifactorConsistencyLogger" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/multifactorConsistency.log.%d.zip"/>
-            <param name="activeFileName" value="/var/log/idm/multifactorConsistency.log"/>
-        </rollingPolicy>
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
-        </layout>
-    </appender>
-
-	<!-- Application Loggers -->
-	<logger name="com.rackspace.idm">
-		<level value="info" />
-	</logger>
-	
-	<logger name="audit" additivity="false">
-		<appender-ref ref="audit" />
-	</logger>
-
-	<logger name="analytics" additivity="false">
-		<appender-ref ref="analytics" />
-	</logger>
-
-    <logger name="userDelete" additivity="false">
-        <appender-ref ref="userDelete" />
-    </logger>
-
-    <logger name="multifactorConsistencyLogger" additivity="false">
-        <appender-ref ref="multifactorConsistencyLogger" />
-    </logger>
-
-	<!-- 3rdparty Loggers -->
-	<logger name="org.springframework.core">
-		<level value="info" />
-	</logger>
-
-	<logger name="org.springframework.beans">
-		<level value="info" />
-	</logger>
-
-	<logger name="org.springframework.context">
-		<level value="info" />
-	</logger>
-
-	<logger name="org.springframework.web">
-		<level value="info" />
-	</logger>
-	
-	<logger name="org.jboss.resteasy.springmvc">
-		<level value="info" />
-	</logger>
-
-	<!-- Root Logger -->
-	<root>
-		<priority value="info" />
-		<appender-ref ref="file" />
-	</root>
-
+  <!-- Appenders -->
+  <appender name="console" class="org.apache.log4j.ConsoleAppender">
+    <param name="Target" value="System.out"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d %-5p [%c] %m %X{GUUID} %n"/>
+    </layout>
+  </appender>
+  <!--<appender name="file" class="org.apache.log4j.-->
+  <appender name="file" class="org.apache.log4j.net.SyslogAppender">
+    <param name="Facility" value="USER"/>
+    <param name="SyslogHost" value="localhost"/>
+    <param name="Header" value="true"/>
+    <param name="Threshold" value="INFO"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %-5p [%c] %m %X{GUUID} %n"/>
+    </layout>
+  </appender>
+  <appender name="audit" class="org.apache.log4j.net.SyslogAppender">
+    <param name="Facility" value="USER"/>
+    <param name="SyslogHost" value="localhost"/>
+    <param name="Header" value="true"/>
+    <param name="Threshold" value="INFO"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %m %n"/>
+    </layout>
+  </appender>
+  <appender name="analytics" class="org.apache.log4j.net.SyslogAppender">
+    <param name="Facility" value="USER"/>
+    <param name="SyslogHost" value="localhost"/>
+    <param name="Header" value="true"/>
+    <param name="Threshold" value="INFO"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
+    </layout>
+  </appender>
+  <appender name="userDelete" class="org.apache.log4j.net.SyslogAppender">
+    <param name="Facility" value="USER"/>
+    <param name="SyslogHost" value="localhost"/>
+    <param name="Header" value="true"/>
+    <param name="Threshold" value="INFO"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z}%n %m %n"/>
+    </layout>
+  </appender>
+  <!-- Application Loggers -->
+  <logger name="com.rackspace.idm">
+    <level value="info"/>
+  </logger>
+  <logger name="file" additivity="false">
+    <appender-ref ref="file"/>
+  </logger>
+  <logger name="audit" additivity="false">
+    <appender-ref ref="audit"/>
+  </logger>
+  <logger name="analytics" additivity="false">
+    <appender-ref ref="analytics"/>
+  </logger>
+  <logger name="userDelete" additivity="false">
+    <appender-ref ref="userDelete"/>
+  </logger>
+  <!-- 3rdparty Loggers -->
+  <logger name="org.springframework.core">
+    <level value="info"/>
+  </logger>
+  <logger name="org.springframework.beans">
+    <level value="info"/>
+  </logger>
+  <logger name="org.springframework.context">
+    <level value="info"/>
+  </logger>
+  <logger name="org.springframework.web">
+    <level value="info"/>
+  </logger>
+  <logger name="org.jboss.resteasy.springmvc">
+    <level value="info"/>
+  </logger>
+  <!-- Root Logger -->
+  <root>
+    <priority value="info"/>
+    <appender-ref ref="file"/>
+  </root>
 </log4j:configuration>
-

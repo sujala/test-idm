@@ -122,7 +122,7 @@ public final class JsonWriterHelper {
         return outer;
     }
 
-    public static JSONObject getUser(User user) {
+    public static JSONObject getUser(User user, boolean isMultiFactorGloballyEnabled) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, user.getId());
         outer.put(JSONConstants.USERNAME, user.getUsername());
@@ -148,6 +148,12 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getDefaultRegion());
         }else {
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
+        }
+
+        if (isMultiFactorGloballyEnabled) {
+            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled());
+        } else if (Boolean.TRUE.equals(user.isMultiFactorEnabled())) {
+            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, true);
         }
 
         if (user.getOtherAttributes().size() != 0) {

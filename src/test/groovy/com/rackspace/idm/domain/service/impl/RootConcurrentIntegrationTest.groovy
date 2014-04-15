@@ -102,7 +102,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     }
 
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
-        cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+        cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", adminUsername + "@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
         def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
         return userAdmin;
     }

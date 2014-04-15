@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
+import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
@@ -221,7 +222,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
         //now send the passcode
-        multiFactorService.sendSmsPasscode(userId);
+        try {
+            multiFactorService.sendSmsPasscode(userId);
+        } catch (DuoLockedOutException lockedOutException) {
+            throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+        }
 
         /*
         Create unauthorized fault and response
@@ -309,7 +314,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
                 break;
             case LOCKEDOUT:
-                exceptionToThrow = new NotAuthenticatedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+                exceptionToThrow = new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
                 break;
             default:
                 String msg = String.format(NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT, sessionId.getUserId(), mfaResponse.getDecisionReason(), mfaResponse.getMessage());
@@ -330,8 +335,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             User requester = (User) userService.getUserByScopeAccess(token);
             validateListDevicesForUser(requester, userId);
 
+            //NOTE: Since this call is restricted to a user listing his own devices (ie requesters userId must
+            //      equal the passed in userId), its perfectly fine to save an LDAP call and send in the requestor
+            //      as the parameter in the call below in order to get the List of MobilePhones. If that restriction
+            //      is ever removed we'll need to add a call to get the userById and pass that user into the call.
             List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(requester);
-            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWeb(phoneList));
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, requester));
 
         } catch (IllegalStateException ex) {
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());

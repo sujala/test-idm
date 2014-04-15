@@ -36,6 +36,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME = "feature.ignore.token.delete.failure.enabled";
     public static final boolean FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE = false;
 
+    public static final String FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME = "feature.ignore.authentication.token.delete.failure.enabled";
+    public static final boolean FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_DEFAULT_VALUE = true;
+    public static final String FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME = "feature.authentication.token.delete.failure.stops.cleanup.enabled";
+    public static final boolean FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE = false;
+
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -129,6 +135,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private boolean ignoreTokenDeleteFailures() {
         return config.getBoolean(FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE);
+    }
+
+    private boolean ignoreAuthenticationTokenDeleteFailures() {
+        return config.getBoolean(FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_DEFAULT_VALUE);
+    }
+
+    private boolean authenticationTokenDeleteFailuresStopsCleanup() {
+        return config.getBoolean(FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE);
     }
 
     private String getOpenStackType(TenantRole role) {
@@ -644,10 +658,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
 
+
+        boolean exitDeletionRoutineOnError = authenticationTokenDeleteFailuresStopsCleanup();
+        boolean ignoreDeletionFailures = ignoreAuthenticationTokenDeleteFailures();
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
                 if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                    if (ignoreDeletionFailures) {
+                        boolean success = deleteScopeAccessQuietly(scopeAccess);
+                        if (!success && exitDeletionRoutineOnError) {
+                            break;
+                        }
+                    }
+                    else {
+                        scopeAccessDao.deleteScopeAccess(scopeAccess);
+                    }
                 }
             }
         }
@@ -657,11 +682,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
 
-    private void deleteScopeAccessQuietly(ScopeAccess scopeAccess) {
+    /**
+     * Catches any exceptions, but notes whether an exception was actually caught
+     * @param scopeAccess
+     * @return false if exception was caught; true otherwise
+     */
+    private boolean deleteScopeAccessQuietly(ScopeAccess scopeAccess) {
         try {
             scopeAccessDao.deleteScopeAccess(scopeAccess);
+            return true;
         } catch (Exception e) {
-            logger.error("Error deleting scope access token. This error does not necessarily require manual intervention unless it is a frequent occurrence. It is for notification purposes only.", e);
+            logger.error(String.format("Error deleting expired scope access token '%s'. This error does not necessarily require manual intervention unless it is a frequent occurrence. It is for notification purposes only.", scopeAccess.getAccessTokenString()), e);
+            return false;
         }
     }
 
@@ -737,7 +769,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
             scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
+
+            if (ignoreAuthenticationTokenDeleteFailures()) {
+                deleteScopeAccessQuietly(scopeAccess);
+            }
+            else {
+                scopeAccessDao.deleteScopeAccess(scopeAccess);
+            }
+
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
@@ -833,7 +872,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessDao.addScopeAccess(racker, scopeAccessToAdd);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            if (ignoreAuthenticationTokenDeleteFailures()) {
+                deleteScopeAccessQuietly(scopeAccess);
+            }
+            else {
+                scopeAccessDao.deleteScopeAccess(scopeAccess);
+            }
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());

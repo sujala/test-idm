@@ -3419,6 +3419,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
 
         then:
+        2 * authorizationService.verifyUserLevelAccess(_)
         2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
         2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
         4 * authorizationService.hasServiceAdminRole(_) >>> [ callerSA, userSA, callerSA, userSA ]
@@ -3700,9 +3701,129 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller);
-        1 * userService.addUserV20(_)
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.addUserV20(_, false)
         notThrown(BadRequestException)
+    }
+
+    def "add new user with createUser.fullPayload.enabled allows blank secretQA" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.addUserV20(_, false)
+        notThrown(BadRequestException)
+    }
+
+    def "add new user with createUser.fullPayload.enabled accepts fully populated secretQA" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user.secretQA = secretQA
+        user.domainId = "0"
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * userService.setUserDefaultsBasedOnCaller(_, caller, true);
+        1 * userService.addUserV20(_, true)
+        notThrown(BadRequestException)
+    }
+
+    def "add new user with createUser.fullPayload.enabled throws bad request when question is blank" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA(null, "answer")
+        user.secretQA = secretQA
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * userService.getUserByScopeAccess(_) >> caller
+        result.status == HttpStatus.SC_BAD_REQUEST
+    }
+
+    def "add new user with createUser.fullPayload.enabled throws bad request when answer is blank" () {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def secretQA = v2Factory.createSecretQA("question", null)
+        user.secretQA = secretQA
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * userService.getUserByScopeAccess(_) >> caller
+        result.status == HttpStatus.SC_BAD_REQUEST
+    }
+
+    def "add new user with createUser.fullPayload.enabled throws forbidden if groups are populated and caller is not identity admin"() {
+        given:
+        allowUserAccess()
+        config.getBoolean("createUser.fullPayload.enabled") >> true
+
+        def user = v2Factory.createUser()
+        def group = v2Factory.createGroup("group")
+        def groups = v2Factory.createGroups([group].asList())
+        user.setGroups(groups)
+        def caller = entityFactory.createUser().with {
+            it.username = "caller"
+            return it
+        }
+
+        when:
+        def result = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        result.status == HttpStatus.SC_FORBIDDEN
     }
 
     def "add new user when user is not authorized returns 403 response" () {

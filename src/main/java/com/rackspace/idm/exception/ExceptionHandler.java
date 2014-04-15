@@ -3,6 +3,8 @@ package com.rackspace.idm.exception;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.apache.commons.lang.NotImplementedException;
 import org.openstack.docs.identity.api.v2.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,8 @@ import javax.ws.rs.core.Response;
  */
 @Component
 public class ExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -93,29 +97,22 @@ public class ExceptionHandler {
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof BadRequestException || ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof NotAuthorizedException || ex instanceof NotAuthenticatedException) {
             return notAuthenticatedExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof ForbiddenException) {
             return forbiddenExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof NotFoundException) {
             return notFoundExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof ClientConflictException) {
             return tenantConflictExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof UserDisabledException) {
             return userDisabledExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof DuplicateUsernameException || ex instanceof BaseUrlConflictException || ex instanceof DuplicateException) {
             return conflictExceptionResponse(ex.getMessage());
-
         } else if (ex instanceof NotImplementedException) {
             return notImplementedExceptionResponse();
-
-        }else {
+        } else {
+            LOGGER.error("Unexpected exception:", ex);
             return serviceExceptionResponse();
         }
     }
@@ -123,4 +120,5 @@ public class ExceptionHandler {
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
+
 }
