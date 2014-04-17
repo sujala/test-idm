@@ -15,9 +15,13 @@ public interface UserService {
 
     void setUserDefaultsBasedOnCaller(User user, User caller);
 
+    void setUserDefaultsBasedOnCaller(User user, User caller, boolean isCreateUserInOneCall);
+
     void addUser(User user);
 
     void addUserV20(User user);
+
+    void addUserV20(User user, boolean isCreateUserInOneCall);
 
     void addRacker(Racker racker);
 

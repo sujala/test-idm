@@ -774,6 +774,125 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteResponses.status == 204
     }
 
+    def "user admins should be able to delete API keys for User-Manage, Default User"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username, DEFAULT_PASSWORD)
+
+        when: "Themselves"
+        utils.addApiKeyToUser(userAdmin)
+        def getApiKeyResponse = cloud20.getUserApiKey(userAdminToken, userAdmin.id)
+        def deleteApiKeyResponse = cloud20.deleteUserApiKey(userAdminToken, userAdmin.id)
+
+        then:
+        // Note: All users can view and delete API Key Credentials from themselves EXCEPT
+        //       for identity:user-admins. They can only retrieve their API key (not delete it).
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 403
+
+        when: "User-Manage"
+        utils.addApiKeyToUser(userManage)
+        getApiKeyResponse = cloud20.getUserApiKey(userAdminToken, userManage.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(userAdminToken, userManage.id)
+
+        then:
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+
+        when: "Default User"
+        utils.addApiKeyToUser(defaultUser)
+        getApiKeyResponse = cloud20.getUserApiKey(userAdminToken, defaultUser.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(userAdminToken, defaultUser.id)
+
+        then:
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "user managed should be able to delete API keys for Themselves, Default User"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
+
+        when: "User Admin"
+        utils.addApiKeyToUser(userAdmin)
+        def getApiKeyResponse = cloud20.getUserApiKey(userManageToken, userAdmin.id)
+        def deleteApiKeyResponse = cloud20.deleteUserApiKey(userManageToken, userAdmin.id)
+
+        then:
+        getApiKeyResponse.status == 403
+        deleteApiKeyResponse.status == 403
+
+        when: "Themselves"
+        utils.addApiKeyToUser(userManage)
+        getApiKeyResponse = cloud20.getUserApiKey(userManageToken, userManage.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(userManageToken, userManage.id)
+
+        then:
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+
+        when: "Default User"
+        utils.addApiKeyToUser(defaultUser)
+        getApiKeyResponse = cloud20.getUserApiKey(userManageToken, defaultUser.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(userManageToken, defaultUser.id)
+
+        then:
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
+    def "default users should be able to delete API keys for Themselves"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
+
+        when: "User Admin"
+        utils.addApiKeyToUser(userAdmin)
+        def getApiKeyResponse = cloud20.getUserApiKey(defaultUserToken, userAdmin.id)
+        def deleteApiKeyResponse = cloud20.deleteUserApiKey(defaultUserToken, userAdmin.id)
+
+        then:
+        getApiKeyResponse.status == 403
+        deleteApiKeyResponse.status == 403
+
+        when: "User Manage"
+        utils.addApiKeyToUser(userManage)
+        getApiKeyResponse = cloud20.getUserApiKey(defaultUserToken, userManage.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(defaultUserToken, userManage.id)
+
+        then:
+        getApiKeyResponse.status == 403
+        deleteApiKeyResponse.status == 403
+
+        when: "Themselves"
+        utils.addApiKeyToUser(defaultUser)
+        getApiKeyResponse = cloud20.getUserApiKey(defaultUserToken, defaultUser.id)
+        deleteApiKeyResponse = cloud20.deleteUserApiKey(defaultUserToken, defaultUser.id)
+
+        then:
+        getApiKeyResponse.status == 200
+        deleteApiKeyResponse.status == 204
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+    }
+
     def "user manage get user's api key" () {
         given:
         def random = ("$randomness").replace('-', "")
@@ -2598,7 +2717,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         createUser != null
         authResponse.user.roles != null
-        authResponse.user.roles.role.size() == 4
+        authResponse.user.roles.role.size() == 2
         authResponse.user.roles.role.name.contains(role.name)
         authResponse.user.roles.role.name.contains("identity:user-admin")
 
@@ -2774,23 +2893,21 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "Create admin user with complete payload" () {
         given:
-        def domainId1 = "domainId" + (long)(Math.random() * 100000)
+        def domain = utils.createDomain()
         def username1 = "username" + (long)(Math.random() * 100000)
-        def groupName = "groupName"
-
-        if (cloud20.getGroupByName(identityAdminToken, groupName).status == 404) {
-            cloud20.createGroup(identityAdminToken, groupName)
-        }
-
-        def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domainId1,
-                                                 "securePassword2", ["identity:user-manage"].asList(), [groupName].asList(), "What is the meaning?", "That is the wrong question")
+        def group = utils.createGroup()
+        def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domain,
+                                                 "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def result = cloud20.createUser(identityAdminToken, user)
 
         then:
-        result.status == 400
+        result.status == 201
 
+        cleanup:
+        utils.deleteUser(result.getEntity(User).value)
+        utils.deleteGroup(group)
     }
 
     def "List credentials should not return allow an identity admin to list service admin credentials"() {

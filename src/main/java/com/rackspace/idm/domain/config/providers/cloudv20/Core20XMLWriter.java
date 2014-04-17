@@ -8,12 +8,16 @@ package com.rackspace.idm.domain.config.providers.cloudv20;
  * To change this template use File | Settings | File Templates.
  */
 
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import org.apache.log4j.Logger;
+import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.UserList;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -44,8 +48,7 @@ import java.util.Set;
 @Provider
 @Produces("application/xml")
 @Component
-public class Core20XMLWriter extends NamespacePrefixMapper implements
-        MessageBodyWriter<Object> {
+public class Core20XMLWriter extends NamespacePrefixMapper implements MessageBodyWriter<Object> {
     public static final Logger LOG = Logger.getLogger(Core20XMLWriter.class);
 
     @Resource(name = "corev20NsPrefixMap")
@@ -56,6 +59,9 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
     private static final String PREFIX_MAPPER_PROP = "com.sun.xml.bind.namespacePrefixMapper";
 
     private static JAXBContext jaxbContext;
+
+    @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
 
     static {
         try {
@@ -77,10 +83,6 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
     private JAXBContext getContext() throws JAXBException {
         return jaxbContext;
     }
-
-//
-// MessageBodyWriter
-//
 
     private boolean isCorrectClass(Type genericType) {
         boolean ret = false;
@@ -112,6 +114,14 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
     @Override
     public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         //To change body of implemented methods use File | Settings | File Templates.
+        if (o instanceof User) {
+            cleanNullBooleans((User) o);
+        }
+        if (o instanceof UserList) {
+            for (User user : ((UserList) o).getUser()) {
+                cleanNullBooleans(user);
+            }
+        }
         try {
             Marshaller m = getContext().createMarshaller();
             m.setProperty(PREFIX_MAPPER_PROP, this);
@@ -120,16 +130,23 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
             throw new WebApplicationException(e);
         }
     }
-//
-// Prefix mapper
-//
 
-    public String getPreferredPrefix(String namespaceUri, String suggestion,
-                                     boolean requirePrefix) {
+    // Workaround to avoid null values from JAXB generated classes
+    private void cleanNullBooleans(User user) {
+        if (multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
+            user.setMultiFactorEnabled(user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled());
+            user.setEnabled(user.isEnabled());
+        } else if (Boolean.FALSE.equals(user.isMultiFactorEnabled())) {
+            user.setMultiFactorEnabled(null);
+        }
+    }
+
+    public String getPreferredPrefix(String namespaceUri, String suggestion,  boolean requirePrefix) {
         return corev20NsPrefixMap.get(namespaceUri);
     }
 
     public void setNsPrefixMap(Map<String, String> corev20NsPrefixMap) {
         this.corev20NsPrefixMap = corev20NsPrefixMap;
     }
+
 }

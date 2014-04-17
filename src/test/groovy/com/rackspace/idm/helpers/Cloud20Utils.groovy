@@ -8,7 +8,9 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.MobilePhone
+import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.GenericType
+import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -30,6 +32,7 @@ import testHelpers.V1Factory
 import testHelpers.V2Factory
 
 import javax.annotation.PostConstruct
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
@@ -87,6 +90,18 @@ class Cloud20Utils {
         return entity
     }
 
+    def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
+        def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        def response = methods.createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     def addRoleToUser(user, roleId, token=getServiceAdminToken()) {
         def response = methods.addApplicationRoleToUser(token, roleId, user.id)
 
@@ -99,7 +114,7 @@ class Cloud20Utils {
     }
 
     def createDomain() {
-        testUtils.getRandomUUID("domain")
+        testUtils.getRandomIntegerString()
     }
 
     def updateDomain(domainId, domain, String token=getServiceAdminToken()) {
@@ -131,7 +146,17 @@ class Cloud20Utils {
         return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
     }
 
-    def createUserAdmin(domainId) {
+    def createUserAdminWithTenants(domainId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username)
+
+        def userAdmin = createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
+
+        return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    def createUserAdmin(domainId=testUtils.getRandomIntegerString()) {
         def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username, DEFAULT_PASSWORD)
@@ -496,4 +521,50 @@ class Cloud20Utils {
         assert (response.status = SC_OK)
         response.getEntity(MobilePhones)
     }
+
+    def getNastTenant(String domainId){
+        return NAST_TENANT_PREFIX.concat(domainId)
+    }
+
+    def getEndpointsForToken(String token) {
+        def response = methods.getEndpointsForToken(getServiceAdminToken(), token)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointList).value
+    }
+
+    def boolean checkUsersMFAFlag(ClientResponse usersResponse, String username, Boolean test) {
+        String body = usersResponse.getEntity(String.class)
+        def slurper;
+        if (usersResponse.getType() == MediaType.APPLICATION_XML_TYPE) {
+            def root = new XmlSlurper(false, true).parseText(body)
+            slurper = root.user.findAll({ it -> it.getProperty('@username') == username })[0]
+        } else {
+            def root = new JsonSlurper().parseText(body)
+            slurper = root.users.findAll({ it -> it.username == username })[0]
+        }
+        return checkUserMFAFlagSlurper(slurper, usersResponse.getType(), test)
+    }
+
+    def boolean checkUserMFAFlag(ClientResponse userResponse, Boolean test) {
+        String body = userResponse.getEntity(String.class)
+        def slurper;
+        if (userResponse.getType() == MediaType.APPLICATION_XML_TYPE) {
+            slurper = new XmlSlurper(false, true).parseText(body)
+        } else {
+            slurper = new JsonSlurper().parseText(body).user
+        }
+        return checkUserMFAFlagSlurper(slurper, userResponse.getType(), test)
+    }
+
+    def boolean checkUserMFAFlagSlurper(def slurper, MediaType mediaType, Boolean test) {
+        if (slurper == null) {
+            return false;
+        } else if (mediaType == MediaType.APPLICATION_XML_TYPE) {
+            return slurper.getProperty('@rax-auth:multiFactorEnabled') == test
+        } else {
+            return slurper.'RAX-AUTH:multiFactorEnabled' == test
+        }
+        return false
+    }
+
 }

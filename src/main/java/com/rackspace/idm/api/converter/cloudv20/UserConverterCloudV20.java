@@ -84,7 +84,9 @@ public class UserConverterCloudV20 {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
-        jaxbUser.setFederated(user.isFederated());
+        if(isSamlEnabled()){
+            jaxbUser.setFederated(user.isFederated());
+        }
 
         if (StringUtils.isNotBlank(user.getFederatedIdp())) {
             jaxbUser.setFederatedIdp(user.getFederatedIdp());
@@ -144,6 +146,10 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
+        return toUser(user, false);
+    }
+
+    public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeSecretQA) {
         User jaxbUser = mapper.map(user, User.class);
 
         try {
@@ -157,7 +163,7 @@ public class UserConverterCloudV20 {
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
 
-            if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
+            if (includeSecretQA && (user.getSecretQuestion() != null || user.getSecretAnswer() != null)) {
                 jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
             }
 
@@ -193,5 +199,9 @@ public class UserConverterCloudV20 {
         }
 
         return list;
+    }
+
+    private boolean isSamlEnabled(){
+        return config.getBoolean("saml.enabled");
     }
 }
