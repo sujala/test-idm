@@ -335,6 +335,16 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         deleteDirect(app)
     }
 
+    def "Verify correct values for 'stalePasswordMsg' property"() {
+        when:
+        String[] stalePasswordMsg = config.getStringArray("stalePasswordMsg")
+
+        then:
+        stalePasswordMsg.size() == 2
+        Arrays.asList(stalePasswordMsg).contains("Password matches previous password")
+        Arrays.asList(stalePasswordMsg).contains("Password match in history")
+    }
+
 
     /* ###############################################################################
                         HELPER METHODS
