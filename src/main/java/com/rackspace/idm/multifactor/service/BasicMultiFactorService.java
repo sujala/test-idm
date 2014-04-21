@@ -180,19 +180,33 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Override
     public void updateMultiFactorSettings(String userId, MultiFactor multiFactor) {
         User user = userService.checkAndGetUserById(userId);
+        handleMultiFactorUnlock(user, multiFactor);
+        handleMultiFactorEnable(user, multiFactor);
+    }
 
-        if (user.isMultiFactorEnabled() == multiFactor.isEnabled()) {
-            return; //no-op
-        } else if (!StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
-            throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
-        } else if (!user.isMultiFactorDeviceVerified()) {
-            throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
+    private void handleMultiFactorUnlock(User user, MultiFactor multiFactor) {
+        if (multiFactor.isUnlock() != null
+                && multiFactor.isUnlock()
+                && StringUtils.hasText(user.getExternalMultiFactorUserId())) {
+            //want to try and unlock user regardless of mfa enable/disable
+            userManagement.unlockUser(user.getExternalMultiFactorUserId());
         }
+    }
 
-        if (multiFactor.isEnabled()) {
-            enableMultiFactorForUser(user);
-        } else {
-            disableMultiFactorForUser(user);
+    private void handleMultiFactorEnable(User user, MultiFactor multiFactor) {
+        //only mess with enabling/disabling mfa on user if non-null
+        if (multiFactor.isEnabled() != null && user.isMultiFactorEnabled() != multiFactor.isEnabled()) {
+            if (!StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
+                throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
+            } else if (!user.isMultiFactorDeviceVerified()) {
+                throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
+            }
+
+            if (multiFactor.isEnabled()) {
+                enableMultiFactorForUser(user);
+            } else {
+                disableMultiFactorForUser(user);
+            }
         }
     }
 

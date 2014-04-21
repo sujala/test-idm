@@ -501,12 +501,15 @@ class V2Factory {
         }
     }
 
-    def createMultiFactorSettings(boolean enabled = true) {
+    def createMultiFactorSettings(Boolean enabled = true, Boolean unlock = null ) {
         new MultiFactor().with {
             it.enabled = enabled
+            it.unlock = unlock
             return it
         }
     }
+
+
 
     def createSecretQA(String secretQuestion, String secretAnswer) {
         new SecretQA().with {

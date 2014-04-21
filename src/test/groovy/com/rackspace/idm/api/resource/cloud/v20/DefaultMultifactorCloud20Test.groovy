@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
@@ -8,19 +9,29 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWrite
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.multifactor.service.MultiFactorService
+import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.V2Factory
+
+import javax.ws.rs.core.UriInfo
 
 class DefaultMultifactorCloud20Test extends Specification {
 
     def config
-    def service
+    DefaultMultiFactorCloud20Service service
     def user;
     def betaRoleName = "mfaBetaRoleName"
     def rolesWithoutMfaBetaRole
@@ -30,6 +41,12 @@ class DefaultMultifactorCloud20Test extends Specification {
     def sessionIdReaderWriter
     def tenantService
     def multiFactorService
+    def defaultCloud20Service
+    def precedenceValidator
+    def authorizationService
+    def exceptionHandler
+
+    @Shared def v2Factory = new V2Factory()
 
     def setup() {
         service = new DefaultMultiFactorCloud20Service()
@@ -58,6 +75,12 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.tenantService = tenantService
         multiFactorService = Mock(MultiFactorService)
         service.multiFactorService = multiFactorService
+        defaultCloud20Service = Mock(DefaultCloud20Service)
+        service.cloud20Service = defaultCloud20Service
+        precedenceValidator = Mock(PrecedenceValidator)
+        service.precedenceValidator = precedenceValidator
+        authorizationService = Mock(AuthorizationService)
+        service.authorizationService = authorizationService
     }
 
     def "isMultiFactorEnabled checks multifactor feature flag"() {
@@ -158,6 +181,66 @@ class DefaultMultifactorCloud20Test extends Specification {
         then:
         1 * config.getBoolean("multifactor.services.enabled", false) >> false
         thrown(BadRequestException)
+    }
+
+    def "updateMultifactor unlock - allow unlocking another account account"() {
+        User caller = new User().with {
+            it.id = "callerId"
+            it
+        }
+        User targetUser = new User().with {
+            it.id = "targetId"
+            it
+        }
+
+        UserScopeAccess token = new UserScopeAccess()
+
+        def authToken = "authToken"
+        UriInfo uriInfo = Mock();
+        MultiFactor settings = v2Factory.createMultiFactorSettings(null, true)
+
+        when:
+        def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings)
+
+        then:
+        1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
+        1 * userService.getUserByScopeAccess(token) >> caller
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * userService.checkAndGetUserById(targetUser.id) >> targetUser
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
+        1 * multiFactorService.updateMultiFactorSettings(_,_)
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "validateUpdateMultiFactorSettingsRequest throws errors"() {
+        given:
+        User caller = new User().with {
+            it.id = "callerId"
+            it
+        }
+        def token = new UserScopeAccess()
+        def userId = "userId"
+        MultiFactor enabledSettings = v2Factory.createMultiFactorSettings(true, null)
+        MultiFactor unlockSettings = v2Factory.createMultiFactorSettings(null, true)
+
+        when:
+        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, null)
+
+        then:
+        thrown(BadRequestException)
+
+        when:
+        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, enabledSettings)
+
+        then:
+        thrown(ForbiddenException)
+
+        when:
+        caller.id = userId
+        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, unlockSettings)
+
+        then:
+        thrown(ForbiddenException)
     }
 
     def setupForMfaAuth(encodedSessionId, userRoles) {

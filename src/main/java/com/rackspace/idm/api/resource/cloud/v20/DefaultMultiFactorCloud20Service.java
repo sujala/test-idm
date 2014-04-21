@@ -16,11 +16,13 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -106,6 +108,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Autowired
     private TenantService tenantService;
 
+    @Autowired
+    private AuthorizationService authorizationService;
+
+    @Autowired
+    private PrecedenceValidator precedenceValidator;
+
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
         try {
@@ -175,7 +183,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            validateUpdateMultiFactorSettingsRequest(requester, userId, multiFactor);
+            validateUpdateMultiFactorSettingsRequest(requester, token, userId, multiFactor);
             multiFactorService.updateMultiFactorSettings(userId, multiFactor);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (IllegalStateException ex) {
@@ -364,14 +372,34 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateUpdateMultiFactorSettingsRequest(User requester, String userId, MultiFactor multiFactor) {
+    private void validateUpdateMultiFactorSettingsRequest(User requester, ScopeAccess token, String userId, MultiFactor multiFactor) {
         if (multiFactor == null) {
             LOG.debug(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS);
         }
-        else if (requester == null || !(requester.getId().equals(userId))) {
-            LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
-            throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+
+        //if enabling mfa, you can only do it on yourself
+        if (multiFactor.isEnabled() != null) {
+            if (requester == null || !(requester.getId().equals(userId))) {
+                LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+                throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+            }
+        }
+
+        //if unlocking mfa on user, can only do it on OTHER users
+        if (multiFactor.isUnlock() != null && multiFactor.isUnlock()) {
+            //can not unlock own account
+            if (requester == null || requester.getId().equals(userId)) {
+                LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+                throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+            }
+
+            //check that the requester is either an identity admin or a service admin
+            authorizationService.verifyIdentityAdminLevelAccess(token);
+
+            //now verify the requester can unlock the user
+            User userBeingUnlocked = userService.checkAndGetUserById(userId);
+            precedenceValidator.verifyCallerPrecedenceOverUser(requester, userBeingUnlocked);
         }
     }
 
@@ -499,5 +527,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         return false;
     }
+
+
 
 }
