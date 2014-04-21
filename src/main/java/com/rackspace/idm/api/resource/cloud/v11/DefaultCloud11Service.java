@@ -6,6 +6,8 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
@@ -52,6 +54,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     public static final String USER_S_NOT_FOUND = "User %s not found";
     public static final String USER_NOT_FOUND = "User not found: ";
+    public static final String MFA_USER_AUTH_FORBIDDEN_MESSAGE = "Can not authenticate with credentials provided. This account has multi-factor authentication enabled and you must use version 2.0+ to authenticate.";
 
     @Autowired
     private AuthConverterCloudV11 authConverterCloudV11;
@@ -101,6 +104,12 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private Validator validator;
+
+    @Autowired
+    private MultiFactorCloud20Service multiFactorCloud20Service;
+
+    @Autowired
+    private AuthWithApiKeyCredentials authWithApiKeyCredentials;
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
@@ -1056,6 +1065,12 @@ public class DefaultCloud11Service implements Cloud11Service {
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
+
+                //if mfa is enabled (either globally or beta), and user has mfa enabled, we must throw some kind of exception
+                if (user != null && multiFactorCloud20Service.isMultiFactorEnabled() && user.isMultiFactorEnabled()) {
+                    processAuthenticationForMFAUser(user, apiKey);
+                }
+
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             }
 
@@ -1072,6 +1087,25 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    /**
+     * v1.1 does NOT support MFA authentication. This method will throw an exception. The only question is which one.
+     *
+     * For Users who have MFA enabled and authenticate with v1.1 this method will:
+     * 1. Throw ForbiddenException if user provides correct api key credentials.
+     * 2. Throw NotAuthenticatedException, like they do if MFA wasn't enabled, if user provides incorrect credentials
+     *
+     * @param user
+     * @param providedApiKey
+     * @throws ForbiddenException
+     * @throw NotAuthenticatedException
+     */
+    private void processAuthenticationForMFAUser(User user, String providedApiKey) {
+        UserAuthenticationResult authResult = authWithApiKeyCredentials.authenticate(user.getUsername(), providedApiKey);
+
+        //previous call would have thrown NotAuthenticatedException if auth was unsuccessful. Must therefore throw Forbidden
+        throw new ForbiddenException(MFA_USER_AUTH_FORBIDDEN_MESSAGE);
     }
 
     private void hideAdminUrls(List<OpenstackEndpoint> endpoints) {

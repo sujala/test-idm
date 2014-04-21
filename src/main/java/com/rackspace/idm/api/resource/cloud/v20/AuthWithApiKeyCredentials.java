@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
 
+    public static final String AUTH_FAILURE_MSG = "Username or api key is invalid.";
+
     @Autowired
     private Validator20 validator20;
 
@@ -32,15 +34,25 @@ public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
         validator20.validateApiKeyCredentials(creds);
         String username = creds.getUsername();
         String key = creds.getApiKey();
+        return authenticate(username, key);
+    }
 
-        UserAuthenticationResult result = this.userService.authenticateWithApiKey(username, key);
+    /**
+     * Returns a successful authentication result. Unsuccessful attempts will result in an exception being thrown.
+     *
+     * @param username
+     * @param apiKey
+     * @throws NotAuthenticatedException if the authentication was unsuccessful
+     */
+    public UserAuthenticationResult authenticate(String username, String apiKey) {
+        UserAuthenticationResult result = this.userService.authenticateWithApiKey(username, apiKey);
         validateUserAuthenticationResult(result);
 
         /*
         For this use case the instanceof should always return true, but double check for backwards compatibility/refactor sake...
          */
         if (!(result.getUser() instanceof User)) {
-            User user = userService.getUserByUsernameForAuthentication(creds.getUsername());
+            User user = userService.getUserByUsernameForAuthentication(username);
             result = new UserAuthenticationResult(user, result.isAuthenticated(), result.getAuthenticatedBy());
         }
         return result;
@@ -54,7 +66,7 @@ public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
     @Override
     public void validateUserAuthenticationResult(final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
-            String errorMessage = String.format("Username or api key is invalid.");
+            String errorMessage = String.format(AUTH_FAILURE_MSG);
             throw new NotAuthenticatedException(errorMessage);
         }
     }

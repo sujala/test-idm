@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -11,6 +12,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
+import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
@@ -20,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.util.StringUtils
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
 
@@ -125,6 +129,20 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, true)
         utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, true)
 
+        when: "try to auth via 1.1 with correct API key should be forbidden when mfa enabled"
+        def cred = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
+        def auth11Response403 = cloud11.authenticate(cred, requestContentMediaType, acceptMediaType)
+
+        then: "receive 403"
+        IdmAssert.assertV1AuthFaultResponse(auth11Response403, ForbiddenFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_FORBIDDEN, DefaultCloud11Service.MFA_USER_AUTH_FORBIDDEN_MESSAGE)
+
+        when: "try to auth via 1.1 with incorrect API key should return 401"
+        def cred2 = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), "abcd1234")
+        def auth11Response401 = cloud11.authenticate(cred2, requestContentMediaType, acceptMediaType)
+
+        then: "receive 401"
+        IdmAssert.assertV1AuthFaultResponse(auth11Response401, UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, AuthWithApiKeyCredentials.AUTH_FAILURE_MSG)
+
         where:
         requestContentMediaType | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
@@ -165,6 +183,20 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.checkUsersMFAFlag(usersByEmailResponse, userAdmin.username, false)
         utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, false)
         utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, false)
+
+        when: "try to auth via 1.1 with correct API key after mfa disabled should now be allowed"
+        def cred = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
+        def auth11Response200 = cloud11.authenticate(cred, requestContentMediaType, acceptMediaType)
+
+        then: "receive 200"
+        auth11Response200.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_OK
+
+        when: "try to auth via 1.1 with incorrect API key"
+        def cred2 = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), "abcd1234")
+        def auth11Response401 = cloud11.authenticate(cred2, requestContentMediaType, acceptMediaType)
+
+        then: "receive 401"
+        IdmAssert.assertV1AuthFaultResponse(auth11Response401, UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, AuthWithApiKeyCredentials.AUTH_FAILURE_MSG)
 
         where:
         requestContentMediaType | acceptMediaType

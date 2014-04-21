@@ -8,14 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 12/29/11
- * Time: 1:55 PM
- * To change this template use File | Settings | File Templates.
- */
-
 @Component
 public class CloudExceptionResponse extends WebApplicationException {
 
@@ -55,6 +47,9 @@ public class CloudExceptionResponse extends WebApplicationException {
         }
         if (ex instanceof NumberFormatException) {
             return badRequestExceptionResponse("baseURLId not an integer");
+        }
+        if (ex instanceof ForbiddenException) {
+            return forbiddenExceptionResponse(ex.getMessage());
         }
         if (ex instanceof BaseUrlConflictException) {
             return badRequestExceptionResponse(ex.getMessage());
@@ -111,4 +106,11 @@ public class CloudExceptionResponse extends WebApplicationException {
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault).getValue());
     }
 
+    public Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
+        ForbiddenFault fault = OBJ_FACTORY.createForbiddenFault();
+        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
+        fault.setMessage(errMsg);
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
+                OBJ_FACTORY.createForbidden(fault).getValue());
+    }
 }

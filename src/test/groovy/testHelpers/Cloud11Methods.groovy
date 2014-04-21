@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.ws.rs.core.MediaType
+
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
@@ -36,8 +38,8 @@ class Cloud11Methods {
         resource.path(path11).path(AUTH_ADMIN).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
-    def authenticate(credentials) {
-        resource.path(path11).path(AUTH).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+    def authenticate(credentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE ) {
+        resource.path(path11).path(AUTH).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
     }
 
     def validateToken(String token) {
