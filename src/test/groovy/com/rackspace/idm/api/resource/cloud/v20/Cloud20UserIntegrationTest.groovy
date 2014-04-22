@@ -632,4 +632,42 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(users)
         utils.deleteDomain(userAdmin.domainId)
     }
+
+    def "Verify that getUserById, getUserByName and update do not return secretQA, roles, or groups" () {
+        given:
+        def domainId = utils.createDomain()
+
+        when:
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        User getUserByName = utils.getUserByName(userAdmin.username)
+        User getUserById = utils.getUserById(userAdmin.id)
+        userAdmin.enabled = false
+        User updateUser = utils.updateUser(userAdmin)
+
+        then:
+        userAdmin != null
+        userAdmin.secretQA != null
+        userAdmin.roles != null
+        userAdmin.groups != null
+
+        getUserByName != null
+        getUserByName.secretQA == null
+        getUserByName.roles == null
+        getUserByName.groups == null
+
+        getUserById != null
+        getUserById.secretQA == null
+        getUserById.roles == null
+        getUserById.groups == null
+
+        updateUser != null
+        updateUser.secretQA == null
+        updateUser.roles == null
+        updateUser.groups == null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(userAdmin.domainId)
+    }
+
 }

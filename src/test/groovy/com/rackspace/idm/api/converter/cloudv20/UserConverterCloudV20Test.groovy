@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.config.ExternalBeansConfiguration
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
@@ -140,6 +141,72 @@ class UserConverterCloudV20Test extends Specification {
         jaxbUser.secretQA == null
         jaxbUser.roles == null
         jaxbUser.groups == null
+        jaxbUser.password == user.password
+    }
+
+    def "convert user from domain entity to jaxb object without secret QA (user had secret QA, roles, and groups)"() {
+        given:
+        User user = userWithNoRolesOrGroup(false)
+        def secretQA = new SecretQA()
+        def roles = new RoleList()
+        def groups = new Groups()
+
+
+        when:
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, false)
+
+        then:
+        mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
+        mockGroupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()) >> groups
+        mockRoleConverterCloudV20.toRoleListJaxb(user.getRoles()) >> roles
+
+        jaxbUser.username == user.username
+        jaxbUser.displayName == user.displayName
+        jaxbUser.email == user.email
+        jaxbUser.enabled == user.enabled
+        jaxbUser.defaultRegion == user.region
+        jaxbUser.secretQA == null
+        jaxbUser.roles == null
+        jaxbUser.groups == null
+        jaxbUser.password == user.password
+    }
+
+    def "convert user from domain entity to jaxb object with secret QA"() {
+        given:
+        User user = userWithNoRolesOrGroup(false)
+        user.roles = new ArrayList<TenantRole>()
+        user.roles.add(new TenantRole())
+        user.rsGroupId = new ArrayList<String>()
+        user.rsGroupId.add("0")
+
+        def secretQA = new SecretQA()
+        def role = new Role()
+        def roles = new RoleList().with {
+            it.role.add(role)
+            it
+        }
+        def group = new Group()
+        def groups = new Groups().with {
+            it.group.add(group)
+            it
+        }
+
+        when:
+        org.openstack.docs.identity.api.v2.User jaxbUser = converterCloudV20.toUser(user, true)
+
+        then:
+        mockSecretQAConverterCloudV20.toSecretQA(user.secretQuestion, user.secretAnswer) >> secretQA
+        mockGroupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()) >> groups
+        mockRoleConverterCloudV20.toRoleListJaxb(user.getRoles()) >> roles
+
+        jaxbUser.username == user.username
+        jaxbUser.displayName == user.displayName
+        jaxbUser.email == user.email
+        jaxbUser.enabled == user.enabled
+        jaxbUser.defaultRegion == user.region
+        jaxbUser.secretQA != null
+        jaxbUser.roles != null
+        jaxbUser.groups != null
         jaxbUser.password == user.password
     }
 
