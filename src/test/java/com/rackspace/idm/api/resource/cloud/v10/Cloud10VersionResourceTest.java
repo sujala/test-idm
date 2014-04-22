@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -46,7 +48,9 @@ public class Cloud10VersionResourceTest {
     UserService userService;
     Cloud10VersionResource cloud10VersionResource;
     TenantService tenantService;
-    
+    MultiFactorCloud20Service multiFactorCloud20Service;
+    AuthWithApiKeyCredentials authWithApiKeyCredentials;
+
     @Before
     public void setUp() throws Exception {
         tenantService = mock(TenantService.class);
@@ -56,7 +60,9 @@ public class Cloud10VersionResourceTest {
         endpointConverterCloudV11 = mock(EndpointConverterCloudV11.class);
         endpointService = mock(EndpointService.class);
         userService = mock(UserService.class);
-        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService);
+        multiFactorCloud20Service = mock(MultiFactorCloud20Service.class);
+        authWithApiKeyCredentials = mock(AuthWithApiKeyCredentials.class);
+        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService, multiFactorCloud20Service, authWithApiKeyCredentials);
     }
 
     @Test
