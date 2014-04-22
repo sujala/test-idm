@@ -60,7 +60,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud11.deleteUser(identityAdmin.username)
     }
 
-    def "Authenticate with password credentials returns 200"() {
+    def "Admin authenticate with password credentials returns 200"() {
         given:
         String username = "auth" + sharedRandom
         String password = "Password1"
@@ -80,6 +80,28 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud11.deleteUser(username)
         cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
+    }
+
+    def "user authenticate success"() {
+        given:
+        def username = "userAuth11$sharedRandom"
+        String domain = "userAuth11$sharedRandom"
+        def key = "$sharedRandom"
+        def credential = v1Factory.createApiKeyCredentials(username, key)
+
+        def user = v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", domain, "Password1")
+        def userId = cloud20.createUser(identityAdminToken, user).getEntity(org.openstack.docs.identity.api.v2.User).value.id
+        cloud20.addApiKeyToUser(serviceAdminToken, userId, credential)
+
+        when:
+        def authData = utils11.authenticateWithKey(username, key)
+
+        then:
+        authData.token != null
+
+        cleanup:
+        cloud11.deleteUser(username)
+        cloud20.hardDeleteUser(serviceAdminToken, userId)
     }
 
     def "CRUD user v1.1"() {
@@ -208,7 +230,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.hardDeleteUser(serviceAdminToken, userId)
-
     }
 
     def "Allow baseUrls to be assigned to negative tenants" () {

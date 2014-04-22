@@ -82,6 +82,20 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                     }
                 }
 
+                for (BeanDefinition bd : scanner.findCandidateComponents("com.rackspace.idm.api.resource.cloud.v11.json.writers")) {
+                    try {
+                        clientConfig.getClasses().add(Class.forName(bd.getBeanClassName()));
+                    } catch (ClassNotFoundException e) {
+                        //eat
+                    }
+                }
+                for (BeanDefinition bd : scanner.findCandidateComponents("com.rackspace.idm.api.resource.cloud.v11.json.readers")) {
+                    try {
+                        clientConfig.getClasses().add(Class.forName(bd.getBeanClassName()));
+                    } catch (ClassNotFoundException e) {
+                        //eat
+                    }
+                }
 
                 return new WebAppDescriptor.Builder()
                         .contextListenerClass(org.springframework.web.context.ContextLoaderListener.class)

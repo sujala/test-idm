@@ -20,6 +20,24 @@ class IdmAssert {
         assert fault.code == expectedStatus
     }
 
+    /**
+     * Use to verify Faults that should be returned in response to v1.1 API calls have the appropriate type, status code, and message.
+     *
+     * Note - when processing JSON responses be sure the appropriate JSON readers exist for the expected fault type. Otherwise
+     * the Fault object returned will just contain nulls. See com.rackspace.idm.api.resource.cloud.v11.json.readers.JSONReaderForForbiddenFault.
+     *
+     * @param clientResponse
+     * @param expectedTypeClazz
+     * @param expectedStatus
+     * @param expectedMessage
+     */
+    static def <T extends com.rackspacecloud.docs.auth.api.v1.AuthFault> void assertV1AuthFaultResponse(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, String expectedMessage) {
+        T fault = clientResponse.getEntity(expectedTypeClazz)
+        assert clientResponse.status == expectedStatus
+        assert fault.message == expectedMessage
+        assert fault.code == expectedStatus
+    }
+
     static def <T extends IdentityFault> void assertOpenStackV2FaultResponse(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, String expectedMessage) {
         T fault = null
 
