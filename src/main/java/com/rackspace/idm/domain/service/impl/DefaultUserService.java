@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
@@ -89,6 +90,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private MultiFactorService multiFactorService;
 
     @Override
     public void addRacker(Racker racker) {
@@ -311,6 +315,9 @@ public class DefaultUserService implements UserService {
         logger.info("Deleting User: {}", user.getUsername());
 
         List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
+        if(StringUtils.isNotBlank(user.getExternalMultiFactorUserId())) {
+            multiFactorService.removeMultiFactorForUser(user.getId());
+        }
         this.userDao.deleteUser(user);
         deleteUserLogger.warn(DELETE_USER_FORMAT,
                 new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
