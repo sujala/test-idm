@@ -149,7 +149,7 @@ public class UserConverterCloudV20 {
         return toUser(user, false);
     }
 
-    public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeSecretQA) {
+    public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeOtherAttributes) {
         User jaxbUser = mapper.map(user, User.class);
 
         try {
@@ -162,25 +162,27 @@ public class UserConverterCloudV20 {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
-
-            if (includeSecretQA && (user.getSecretQuestion() != null || user.getSecretAnswer() != null)) {
-                jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
-            }
-
-            if (!CollectionUtils.isEmpty(user.getRoles())) {
-                jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(user.getRoles()));
-            } else {
-                /*
+            /*
                 The initial mapper.map call to create the initial jaxbUser will call user.getRoles(). This
                 call has the side effect of creating an empty ArrayList, which is then set on the jaxbUser object
                 and added to the resultant json as '"roles": {}'. This is not desired. Instead we do not
                 want it included in the json, so null it out.
-                 */
-                jaxbUser.setRoles(null);
-            }
+            */
+            jaxbUser.setRoles(null);
 
-            if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
-                jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
+            if(includeOtherAttributes) {
+                if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
+                    jaxbUser.setSecretQA(this.secretQAConverterCloudV20.toSecretQA(user.getSecretQuestion(), user.getSecretAnswer()));
+                }
+
+                if (!CollectionUtils.isEmpty(user.getRoles())) {
+                    jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(user.getRoles()));
+                }
+
+                if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
+                    jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
+                }
+
             }
 
         } catch (DatatypeConfigurationException e) {

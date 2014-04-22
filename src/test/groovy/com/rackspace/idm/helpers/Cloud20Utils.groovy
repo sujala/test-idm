@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -93,6 +94,8 @@ class Cloud20Utils {
     def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
         def response = methods.createUser(token, user)
 
         assert (response.status == SC_CREATED)
@@ -239,9 +242,8 @@ class Cloud20Utils {
 
     def updateUser(user) {
         def response = methods.updateUser(getServiceAdminToken(), user.id, user)
-
         assert (response.status == SC_OK)
-
+        response.getEntity(User).value
     }
 
     def disableUser(user) {
