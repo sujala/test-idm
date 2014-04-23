@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
@@ -129,6 +130,13 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, true)
         utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, true)
 
+        when: "try to auth via 1.0 with correct API key should be forbidden when mfa enabled"
+        def auth10Response = cloud10.authenticate(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
+
+        then: "receive 403"
+        auth10Response.getEntity(String.class) == Cloud10VersionResource.MFA_USER_AUTH_FORBIDDEN_MESSAGE
+        auth10Response.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_FORBIDDEN
+
         when: "try to auth via 1.1 with correct API key should be forbidden when mfa enabled"
         def cred = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
         def auth11Response403 = cloud11.authenticate(cred, requestContentMediaType, acceptMediaType)
@@ -183,6 +191,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.checkUsersMFAFlag(usersByEmailResponse, userAdmin.username, false)
         utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, false)
         utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, false)
+
+        when: "try to auth via 1.0 with correct API key after mfa disabled should now be allowed"
+        def auth10Response = cloud10.authenticate(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
+
+        then: "receive 204"
+        auth10Response.status == 204
 
         when: "try to auth via 1.1 with correct API key after mfa disabled should now be allowed"
         def cred = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())

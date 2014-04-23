@@ -1,11 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
@@ -39,6 +43,8 @@ import java.util.List;
 @Component
 public class Cloud10VersionResource {
 
+    public static final String MFA_USER_AUTH_FORBIDDEN_MESSAGE = "Can not authenticate with credentials provided. This account has multi-factor authentication enabled and you must use version 2.0+ to authenticate.";
+
     public static final String HEADER_AUTH_TOKEN = "X-Auth-Token";
     public static final String HEADER_STORAGE_TOKEN = "X-Storage-Token";
     public static final String HEADER_STORAGE_URL = "X-Storage-Url";
@@ -64,16 +70,22 @@ public class Cloud10VersionResource {
     private final ScopeAccessService scopeAccessService;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
     private final UserService userService;
+    private final MultiFactorCloud20Service multiFactorCloud20Service;
+    private final AuthWithApiKeyCredentials authWithApiKeyCredentials;
 
     @Autowired
     public Cloud10VersionResource(Configuration config,
         ScopeAccessService scopeAccessService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
-        UserService userService) {
+        UserService userService,
+        MultiFactorCloud20Service multiFactorCloud20Service,
+        AuthWithApiKeyCredentials authWithApiKeyCredentials) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.userService = userService;
+        this.multiFactorCloud20Service = multiFactorCloud20Service;
+        this.authWithApiKeyCredentials = authWithApiKeyCredentials;
     }
 
     @GET
@@ -101,6 +113,10 @@ public class Cloud10VersionResource {
         }
 
         try {
+            //if mfa is enabled (either globally or beta), and user has mfa enabled, we must throw some kind of exception
+            if (user != null && multiFactorCloud20Service.isMultiFactorEnabled() && user.isMultiFactorEnabled()) {
+                processAuthenticationForMFAUser(user, key);
+            }
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
@@ -131,6 +147,8 @@ public class Cloud10VersionResource {
             long secondsLeft = (usa.getAccessTokenExp().getTime() - new Date().getTime()) / DateUtils.MILLIS_PER_SECOND;
             builder.header(CACHE_CONTROL, "s-maxage=" + secondsLeft);
             return builder.build();
+        } catch(ForbiddenException fex) {
+            return builder.status(HttpServletResponse.SC_FORBIDDEN).entity(fex.getMessage()).build();
         } catch (NotAuthenticatedException nae) {
             String errMsg = AUTH_V1_0_FAILED_MSG;
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
@@ -141,6 +159,23 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
         }
 
+    }
+
+    /**
+     * v1.0 does NOT support MFA authentication. This method will throw an exception. The only question is which one.
+     *
+     * For Users who have MFA enabled and authenticate with v1.0 this method will:
+     * 1. Throw ForbiddenException if user provides correct api key credentials.
+     * 2. Throw NotAuthenticatedException, like they do if MFA wasn't enabled, if user provides incorrect credentials
+     *
+     * @throws ForbiddenException
+     * @throws NotAuthenticatedException
+     */
+    private void processAuthenticationForMFAUser(User user, String providedApiKey) {
+        authWithApiKeyCredentials.authenticate(user.getUsername(), providedApiKey);
+
+        //previous call would have thrown NotAuthenticatedException if auth was unsuccessful. Must therefore throw Forbidden
+        throw new ForbiddenException(MFA_USER_AUTH_FORBIDDEN_MESSAGE);
     }
 
     private String getCloudAuthClientId() {

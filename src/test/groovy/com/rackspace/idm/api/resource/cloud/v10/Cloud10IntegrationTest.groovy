@@ -53,6 +53,13 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         response.status == 204
     }
 
+    def "authenticate using username and invalid apiKey returns 401"() {
+        when:
+        def response = cloud10.authenticate(username, "invalidApiKey")
+        then:
+        response.status == 401
+    }
+
     def "authenticate and verify token entropy"() {
         given:
         def response = cloud10.authenticate(username, "thisismykey")
