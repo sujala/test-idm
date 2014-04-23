@@ -1,6 +1,9 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.providers.duo.config.apache.ApacheConfigDuoSecurityConfig
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -13,6 +16,7 @@ import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.util.Assert
 import spock.lang.Shared
 
@@ -112,7 +116,89 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
 
         cleanup:
         if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
+        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
     }
 
+    /**
+     * This test performs the entire golden use case of adding a mobile phone to a user-admin, sending sms, and verifying the code. The
+     * end state of the user is verified for appropriate behavior.
+     *
+     * @return
+     */
+    def "verify unlock functionality"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+
+        Phonenumber.PhoneNumber telephoneNumber = standardizedTestPhone;
+        String canonTelephoneNumber = PhoneNumberGenerator.canonicalizePhoneNumberToString(telephoneNumber)
+
+        when:
+        //STEP 1: Add phone to user
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
+
+        //STEP 2: Send PIN
+        multiFactorService.sendVerificationPin(userAdminOpenStack.getId(), phone.getId())
+
+        //STEP 3: Verify PIN
+        //need to get the user to get the pin
+        User tempUser = userRepository.getUserById(userAdminOpenStack.getId())
+        assert tempUser.getMultiFactorDevicePin() != null
+
+        multiFactorService.verifyPhoneForUser(userAdminOpenStack.getId(), phone.getId(), new BasicPin(tempUser.getMultiFactorDevicePin()))
+
+        MobilePhone finalPhone = mobilePhoneRepository.getById(phone.getId())  //retrieve the phone from ldap
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        //verify phone
+        finalPhone.getId() != null
+        finalPhone.getTelephoneNumber() == canonTelephoneNumber
+
+        //verify user state
+        finalUserAdmin.getMultiFactorMobilePhoneRsId() == finalPhone.getId()
+        finalUserAdmin.getMultiFactorDevicePin() == null
+        finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        finalUserAdmin.getMultiFactorDeviceVerified()
+        !finalUserAdmin.getMultifactorEnabled()
+
+        when:
+        //STEP 4: enable multifactor
+        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true, null)
+        multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), enableSettings)
+        finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then:
+        finalUserAdmin.getMultifactorEnabled()
+        finalUserAdmin.getExternalMultiFactorUserId() != null
+
+        when:
+        //STEP 5: verify unlock on an unlocked user works
+        MultiFactor unlockSettings = v2Factory.createMultiFactorSettings(null, true)
+        multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), unlockSettings)
+
+        then:
+        notThrown(Exception)
+
+        when:
+        //STEP 6: lock the user by sending in wrong passcode twice
+        def verify1 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), "0000000")
+        def verify2 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), "0000000")
+
+        then:
+        // verify the user is locked
+        verify1.decision == MfaAuthenticationDecision.DENY
+        verify2.decision == MfaAuthenticationDecision.DENY
+        verify2.message == com.rackspace.identity.multifactor.providers.duo.exception.DuoErrorCodes.ACCOUNT_LOCKED_DUE_TO_FAILED_ATTEMPTS
+
+        when:
+        //STEP 7: unlock the locked user
+        multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), unlockSettings)
+
+        then:
+        notThrown(Exception)
+
+        cleanup:
+        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+    }
 }

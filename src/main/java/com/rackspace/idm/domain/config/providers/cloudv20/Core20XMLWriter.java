@@ -148,5 +148,4 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements MessageBod
     public void setNsPrefixMap(Map<String, String> corev20NsPrefixMap) {
         this.corev20NsPrefixMap = corev20NsPrefixMap;
     }
-
 }
