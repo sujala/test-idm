@@ -852,7 +852,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             }
 
-            if (multiFactorCloud20Service.isMultiFactorEnabled() && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
+            if (multiFactorCloud20Service.isMultiFactorEnabled() && authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
                 //performing 2 factor auth. User must supply session-id header or request is invalid
                 List<String> sessionIdList = httpHeaders.getRequestHeader(MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
                 if (CollectionUtils.isEmpty(sessionIdList) || sessionIdList.size() != 1) {
