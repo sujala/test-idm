@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -7,9 +8,9 @@ import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
+
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 class CreateUserIntegrationTest extends RootIntegrationTest {
@@ -23,6 +24,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     @Autowired def TenantService tenantService
     @Autowired def UserService userService
     @Autowired def Configuration config
+    @Autowired def EndpointService endpointService
 
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()

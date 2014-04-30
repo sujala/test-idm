@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.configuration.Configuration;
 import org.apache.cxf.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,18 @@ import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 @Component
 public class DefaultEndpointService implements EndpointService {
 
+    public static final String FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY = "feature.baseurl.to.cloud.region.mapping.strategy";
+    public static final String UK_CLOUD_LON_REGION = "LON";
+    public static final int UK_CLOUD_BASEURL_ID_THRESHOLD = 1000;
+    public static final String CLOUD_REGION_UK = "UK";
+    public static final String CLOUD_REGION_US = "US";
+    public static final String CLOUD_REGION_PROP_NAME = "cloud.region";
+
     @Autowired
     private EndpointDao endpointDao;
+
+    @Autowired
+    private Configuration config;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -270,4 +281,102 @@ public class DefaultEndpointService implements EndpointService {
 	public void setEndpointDao(EndpointDao endpointDao) {
 		this.endpointDao = endpointDao;
 	}
+
+    private BaseUrlToRegionMappingStrategy getBaseUrlToRegionMappingStrategy() {
+        String propValue = config.getString(FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY);
+        BaseUrlToRegionMappingStrategy result = BaseUrlToRegionMappingStrategy.fromCode(propValue);
+
+        //if not provided (or provided value was not valid), default to rsregion (2.1.2 strategy)
+        if (result == null) {
+            result = BaseUrlToRegionMappingStrategy.RSREGION;
+        }
+
+        return result;
+    }
+
+    /**
+     * The configured cloud region is determined by the property "cloud.region". When "UK" then the cloud region is UK, otherwise it's US.
+     *
+     * The permissible strategies are determined by BaseUrlToRegionMappingStrategy, defaulting to the BaseUrlToRegionMappingStrategy.RSREGION
+     * strategy.
+     *
+     * @param baseUrl
+     * @return
+     */
+    @Override
+    public boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl) {
+        BaseUrlToRegionMappingStrategy strategy = getBaseUrlToRegionMappingStrategy();
+        boolean ukCloudRegion = isUkCloudRegion();
+        if (baseUrl.getBaseUrlId() == null){
+            return false;
+        }
+
+       if (BaseUrlToRegionMappingStrategy.RSREGION == strategy) {
+            //this is the newly added version that requires UK urls to have a region
+            if(ukCloudRegion && UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
+                return true;
+            }
+            if(!ukCloudRegion && !UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
+                return true;
+            }
+        }
+        else if (BaseUrlToRegionMappingStrategy.HYBRID == strategy) {
+            /*
+            this is a hybrid of legacy and rsRegion. BaseUrls without a specified region must have an id <1000 for US, >=1000 for UK.
+            if a baseurl specifies the region, it's UK if the region is "LON" (case sensitive) regardless of the id, and US
+            otherwise
+             */
+            String baseUrlRegion = baseUrl.getRegion();
+            int baseUrlId = Integer.parseInt(baseUrl.getBaseUrlId());
+            if(ukCloudRegion
+                    && (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && (org.apache.commons.lang.StringUtils.isBlank(baseUrlRegion) || UK_CLOUD_LON_REGION.equals(baseUrlRegion))
+                        ||
+                       (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && baseUrlRegion != null && UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
+               ) {
+                //only uk region if id is (>= 1000 AND the region is either blank or LON) OR <1000 and region is LON
+                return true;
+            }
+            if(!ukCloudRegion
+                    && (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && (org.apache.commons.lang.StringUtils.isBlank(baseUrlRegion) || !UK_CLOUD_LON_REGION.equals(baseUrlRegion))
+                    ||
+                    (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && baseUrlRegion != null && !UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
+                    ) {
+                //only us region if id is (< 1000 AND the region is either blank or something other than LON) OR >=1000 and region is something other than LON
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isUkCloudRegion() {
+        return CLOUD_REGION_UK.equalsIgnoreCase(config.getString(CLOUD_REGION_PROP_NAME));
+    }
+
+    public enum BaseUrlToRegionMappingStrategy {
+        HYBRID("hybrid"),
+        RSREGION("rsregion");
+
+        private String code;
+
+        private BaseUrlToRegionMappingStrategy(String code) {
+            this.code = code;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public static BaseUrlToRegionMappingStrategy fromCode(String code) {
+            if (!org.apache.commons.lang.StringUtils.isBlank(code)) {
+                for (BaseUrlToRegionMappingStrategy strategy : values()) {
+                    if (code.equalsIgnoreCase(strategy.getCode())) {
+                        return strategy;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+    
+    
 }
