@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,9 @@ import java.util.regex.Pattern;
 public class Validator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private static final String FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME="feature.validate.subuser.defaultregion.enabled";
+    private static final boolean FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE=true;
+
     @Autowired
     LdapPatternRepository ldapPatternRepository;
 
@@ -47,6 +51,9 @@ public class Validator {
 
     @Autowired
     GroupService groupService;
+
+    @Autowired
+    Configuration config;
 
     static final String USERNAME="username";
     static final String ALPHANUMERIC="alphanumeric";
@@ -81,9 +88,41 @@ public class Validator {
         validateUsername(user.getUsername());
         validatePassword(user.getPassword());
         validateEmail(user.getEmail());
-        validateDefaultRegion(user.getRegion());
+
+        /*
+        don't validate the user's default region for subusers. This is required due to D-18002 https://www15.v1host.com/RACKSPCE/defect.mvc/Summary?oidToken=Defect:1066346
+        where UK user-admins need to be able to create subusers on US IDM. In this case the defaultRegion on the UK admin
+        will be something like "LON" which is NOT a valid region for US IDM (though it is for UK IDM).
+
+        Also, currently the defaultRegion of all subusers will get set to the defaultRegion of the associated user-admin or creator (see B-58588 and D-18046).
+        Since we can assume the user-admin has a valid default region, we don't need to validate the subuser's default region at this time. When
+        D-18046 is addressed, the default region on subuser's will need to be verified once again.
+
+        Keeping this logic here rather than moving logic higher to prevent changing the order of validation checks (e.g. an invalid username will
+        be thrown before an invalid region).
+         */
+        if (validateSubUserDefaultRegion() || !isUserASubUser(user)) {
+            //if we're validating subusers, then we're validating ALL users so can short circuit the check whether the user
+            //is a subuser if we need to validate the region anyways.
+            validateDefaultRegion(user.getRegion());
+        }
         validateRoles(user.getRoles());
         validateGroups(user.getRsGroupId());
+    }
+
+    private boolean validateSubUserDefaultRegion() {
+        return config.getBoolean(FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE);
+    }
+
+    private boolean isUserASubUser(com.rackspace.idm.domain.entity.User user) {
+        String subUserRoleName = config.getString("cloudAuth.userRole");
+        List<TenantRole> userRoles = user.getRoles();
+        for (TenantRole userRole : userRoles) {
+            if (subUserRoleName != null && subUserRoleName.equals(userRole.getName())) {
+               return true;
+            }
+        }
+        return false;
     }
 
     public boolean validatePasswordForCreateOrUpdate(String password){
