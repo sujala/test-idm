@@ -1,5 +1,6 @@
 package com.rackspace.idm.helpers
 
+import org.apache.commons.lang.math.RandomUtils
 import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
@@ -25,5 +26,7 @@ class CloudTestUtils {
     def getRandomIntegerString() {
         String.valueOf(getRandomInteger())
     }
+
+
 
 }

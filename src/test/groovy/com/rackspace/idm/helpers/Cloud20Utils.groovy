@@ -259,6 +259,13 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
+    def listEndpointsForTenant(token, tenantId) {
+        def response = methods.listEndpointsForTenant(token, tenantId)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointList).value
+    }
+
+
     def createService() {
         def serviceName = testUtils.getRandomUUID("service")
         def service = v1Factory.createService(serviceName, serviceName)

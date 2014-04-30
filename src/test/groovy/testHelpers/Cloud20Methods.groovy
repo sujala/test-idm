@@ -11,6 +11,8 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 
+import javax.ws.rs.core.MediaType
+
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
@@ -44,6 +46,7 @@ class Cloud20Methods {
     //Constants
     static def X_AUTH_TOKEN = "X-Auth-Token"
 
+    static def ENDPOINTS = "endpoints"
 
     def init(){
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
@@ -240,6 +243,10 @@ class Cloud20Methods {
 
     def listUsersWithTenantId(String token, tenantId) {
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def listEndpointsForTenant(String token, tenantId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
     def createRole(String token, Role role) {
