@@ -78,7 +78,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
                 "      </saml2:Subject>\n" +
                 "      <saml2:AuthnStatement AuthnInstant=\"2013-10-01T15:02:42.103Z\">\n" +
                 "         <saml2:AuthnContext>\n" +
-                "            <saml2:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordPotectedTransport</saml2:AuthnContextClassRef>\n" +
+                "            <saml2:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml2:AuthnContextClassRef>\n" +
                 "         </saml2:AuthnContext>\n" +
                 "      </saml2:AuthnStatement>\n" +
                 "      <saml2:AttributeStatement>\n" +
