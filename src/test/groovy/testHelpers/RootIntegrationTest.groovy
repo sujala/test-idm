@@ -6,6 +6,7 @@ import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.rackspace.idm.helpers.FoundationApiUtils
 import com.sun.jersey.api.client.WebResource
+import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -177,4 +178,16 @@ class RootIntegrationTest extends Specification {
         ]
     }
 
+    static def getRandomIntegerInRange(int min, int max) {
+        int randomNum = RandomUtils.nextInt((max - min) + 1) + min;
+        return randomNum;
+    }
+
+    static def getRandomIntegerLessThan(int max) {
+        return getRandomIntegerInRange(Integer.MIN_VALUE, max);
+    }
+
+    static def getRandomIntegerGreaterThan(int min) {
+        return getRandomIntegerInRange(min, Integer.MAX_VALUE);
+    }
 }

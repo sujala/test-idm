@@ -13,6 +13,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateUsernameException
 import com.rackspace.idm.validation.Validator
 import com.rackspacecloud.docs.auth.api.v1.User
+import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -34,6 +35,7 @@ class ValidatorTest extends Specification {
     @Shared Pattern passwordPattern
     @Shared Pattern usernamePattern
     @Shared Pattern emailPattern
+    @Shared Configuration config
 
     def setupSpec(){
         validator = new Validator();
@@ -321,12 +323,79 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate user when default region is invalid"(){
+    def "Validate user validates region for non-subusers when subuser region validation enabled"(){
         given:
+        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
 
         def userEntity = createUser()
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
+        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user validates region for non-subusers when subuser region validation disabled"(){
+        given:
+        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
+
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate user does not validate region for subuser when flag disabled"(){
+        given:
+        def subUserRoleName = "identity:default"
+        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
+        config.getString("cloudAuth.userRole") >> subUserRoleName
+
+        def userEntity = createUser()
+        TenantRole subUserRole = new TenantRole().with {
+            it.name = subUserRoleName
+            return it
+        }
+        userEntity.getRoles().add(subUserRole)
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
+
+        when:
+        validator.validateUser(userEntity)
+
+        then:
+        notThrown(BadRequestException)
+    }
+
+    def "Validate user does validate region for subuser when flag enabled"(){
+        given:
+        def subUserRoleName = "identity:default"
+        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
+        config.getString("cloudAuth.userRole") >> subUserRoleName
+
+        def userEntity = createUser()
+        TenantRole subUserRole = new TenantRole().with {
+            it.name = subUserRoleName
+            return it
+        }
+        userEntity.getRoles().add(subUserRole)
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
         defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
 
         when:
@@ -373,12 +442,15 @@ class ValidatorTest extends Specification {
         defaultRegionService = Mock()
         roleService = Mock()
         groupService = Mock()
+        config = Mock()
+
 
         validator.ldapPatternRepository = ldapPatternRepository
         validator.userService = userService
         validator.roleService = roleService
         validator.groupService = groupService
         validator.defaultRegionService = defaultRegionService
+        validator.config = config
     }
 
     def pattern (String name, String regex, String errMsg, String description){

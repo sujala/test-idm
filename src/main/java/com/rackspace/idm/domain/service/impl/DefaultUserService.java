@@ -1079,25 +1079,11 @@ public class DefaultUserService implements UserService {
 
     private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
         for (CloudBaseUrl baseUrl : baseUrls) {
-            if(doesBaseUrlBelongToRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
+            if(endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
                 tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
                 addV1DefaultToTenant(tenant, baseUrl);
             }
         }
-    }
-
-    private boolean doesBaseUrlBelongToRegion(CloudBaseUrl baseUrl){
-        if (baseUrl.getBaseUrlId() != null){
-            if(isUkCloudRegion() &&  "LON".equals(baseUrl.getRegion())){
-                return true;
-            }
-
-            if(!isUkCloudRegion() && !"LON".equals(baseUrl.getRegion())){
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void addV1DefaultToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
@@ -1117,10 +1103,6 @@ public class DefaultUserService implements UserService {
                 tenant.getV1Defaults().add(baseUrlId);
             }
         }
-    }
-
-    private boolean isUkCloudRegion() {
-        return "UK".equalsIgnoreCase(config.getString("cloud.region"));
     }
 
     private void assignUserRoles(User user) {
