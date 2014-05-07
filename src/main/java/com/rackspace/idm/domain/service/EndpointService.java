@@ -46,4 +46,11 @@ public interface EndpointService {
 	void deletePolicyToEndpoint(String baseUrlId, String policyId);
 
 	void setEndpointDao(EndpointDao endpointDao);
+
+    /**
+     * Whether or not the specified baseUrl belongs to the configured cloud region.
+     * @param baseUrl
+     * @return
+     */
+    boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl);
 }

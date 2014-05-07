@@ -130,7 +130,6 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         afterClass();
     }
 
-
     public WebResource resource() {
         return resource;
     }

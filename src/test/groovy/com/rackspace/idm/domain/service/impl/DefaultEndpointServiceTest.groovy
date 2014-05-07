@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import static com.rackspace.idm.GlobalConstants.*
@@ -28,6 +29,7 @@ class DefaultEndpointServiceTest extends RootServiceTest {
 
     def setup() {
         mockEndpointDao(service)
+        mockConfiguration(service)
     }
 
     def "dao is used to retrieve a list of baseUrls with policyId when calling getBaseUrlsWithPolicyId"() {
@@ -193,5 +195,40 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         endpoint.baseUrls[0].enabled == true
         endpoint.baseUrls[0].openstackType == baseUrl.openstackType
         endpoint.baseUrls[0].adminUrl == baseUrl.adminUrl
+    }
+
+    @Unroll("doesBaseUrlBelongToCloudRegion cloudRegion: #cloudRegion, baseUrlID: #baseUrlID, baseUrlrsRegion: #baseUrlrsRegion, expects #doesBaseUrlBelongToCloudRegionResult")
+    def "doesBaseUrlBelongToCloudRegion for hybrid strategy"() {
+        given:
+        CloudBaseUrl baseUrl = entityFactory.createCloudBaseUrl().with( {
+            it.baseUrlId = baseUrlID
+            it.def = true
+            it.enabled = true
+            it.global = false
+            it.region = baseUrlrsRegion
+            return it
+        })
+        config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> DefaultEndpointService.BaseUrlToRegionMappingStrategy.HYBRID.getCode()
+        config.getString(DefaultEndpointService.CLOUD_REGION_PROP_NAME) >> cloudRegion
+
+        expect:
+        doesBaseUrlBelongToCloudRegionResult == service.doesBaseUrlBelongToCloudRegion(baseUrl)
+
+        where:
+        cloudRegion                             |   baseUrlID   |   baseUrlrsRegion     |   doesBaseUrlBelongToCloudRegionResult
+        DefaultEndpointService.CLOUD_REGION_US  |   -1000       |   null                |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   999         |   null                |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   1000        |   null                |   false
+        DefaultEndpointService.CLOUD_REGION_US  |   500         |   "DFW"               |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   10000       |   "DFW"               |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   10000       |   "LON"               |   false
+        DefaultEndpointService.CLOUD_REGION_US  |   200         |   "LON"               |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   -1000       |   null                |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   999         |   null                |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   1000        |   null                |   true
+        DefaultEndpointService.CLOUD_REGION_UK  |   500         |   "DFW"               |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "DFW"               |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "LON"               |   true
+        DefaultEndpointService.CLOUD_REGION_UK  |   200         |   "LON"               |   true
     }
 }

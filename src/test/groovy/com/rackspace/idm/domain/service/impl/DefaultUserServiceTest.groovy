@@ -242,6 +242,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.addTenantToDomain(DefaultUserService.NAST_TENANT_PREFIX + domainId, domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _);
+        endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
 
         user.password != null
         user.userPassword != null

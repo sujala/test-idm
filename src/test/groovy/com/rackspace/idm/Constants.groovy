@@ -11,6 +11,8 @@ class Constants {
     static def IDENTITY_ADMIN_PASSWORD = "auth123"
 
     static def DEFAULT_PASSWORD = "Password1"
+    static def DEFAULT_API_KEY = "Password1"
+
 
     static def NAST_ROLE_ID = "5"
     static def MOSSO_ROLE_ID = "6"

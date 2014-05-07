@@ -115,11 +115,11 @@ public class SamlResponseValidator {
     private void validateAuthContextClassRef(Assertion samlAssertion) {
         if (samlAssertion.getAuthnStatements().get(0).getAuthnContext() == null ||
             samlAssertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
-            throw new BadRequestException("AuthContextClassRef is not specified");
+            throw new BadRequestException("AuthnContextClassRef is not specified");
         }
 
         if ( !samlAssertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef().equals(SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)) {
-            throw new BadRequestException("Invalid AuthContext value");
+            throw new BadRequestException("Invalid AuthnContext value");
         }
     }
 
