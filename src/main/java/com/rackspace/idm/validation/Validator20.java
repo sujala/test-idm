@@ -8,6 +8,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
@@ -156,6 +157,14 @@ public class Validator20 {
     public void validateToken(String token) {
         if (!token.matches("^[A-Za-z0-9-]+$")) {
             String errMsg = "Invalid token";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    public void validateEndpointTemplate(EndpointTemplate endpoint) {
+        if (StringUtils.isBlank(endpoint.getName())) {
+            String errMsg = "'name' is a required attribute";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
