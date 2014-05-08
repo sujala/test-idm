@@ -3,8 +3,10 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.validation.Validator
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
+import org.apache.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -24,9 +26,13 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
     @Shared UserConverterCloudV11 userConverterCloudV11
     @Shared HttpServletRequest request
 
+    @Shared Validator realValidator
+
     def setupSpec(){
         service = new DefaultCloud11Service()
         service.cloudExceptionResponse = new CloudExceptionResponse()
+
+        realValidator = new Validator()
     }
 
     def cleanupSpec() {
@@ -46,6 +52,22 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockEndpointService(service)
         mockAtomHopperClient(service)
         mockValidator(service)
+    }
+
+    def "addBaseUrl handles missing attribute error"() {
+        given:
+        service.validator = realValidator
+        allowAccess()
+        def baseUrl = entityFactory.createBaseUrl(null)
+
+        when:
+        def response = service.addBaseURL(null, null, baseUrl)
+
+        then:
+        response.status == HttpStatus.SC_BAD_REQUEST
+
+        cleanup:
+        service.validator = validator
     }
 
     def "Create User" () {
