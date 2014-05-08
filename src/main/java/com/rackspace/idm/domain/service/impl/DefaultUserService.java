@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
@@ -715,6 +716,11 @@ public class DefaultUserService implements UserService {
         if (userIsBeingDisabled) {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
             disableUserAdminSubUsers(currentUser);
+            if(currentUser.isMultiFactorEnabled()) {
+                MultiFactor mfa = new MultiFactor();
+                mfa.setEnabled(false);
+                multiFactorService.updateMultiFactorSettings(user.getId(), mfa);
+            }
         }
 
         for (ScopeAccess scopeAccess : scopeAccessService.getScopeAccessListByUserId(user.getId())) {
