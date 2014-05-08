@@ -39,6 +39,8 @@ public class DefaultUserService implements UserService {
     static final String NAST_TENANT_PREFIX = "MossoCloudFS_";
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
+    static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
+    static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
@@ -606,7 +608,8 @@ public class DefaultUserService implements UserService {
     public PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit) {
         logger.debug("Getting All Users with role {}", roleId);
 
-        List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId);
+        int sizeLimit = config.getInt(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
+        List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId, sizeLimit);
 
         List<User> users = new ArrayList<User>();
         for (User user : this.userDao.getUsers(userIds)) {

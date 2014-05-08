@@ -722,8 +722,8 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<String> getIdsForUsersWithTenantRole(String roleId) {
-        return tenantRoleDao.getIdsForUsersWithTenantRole(roleId);
+    public List<String> getIdsForUsersWithTenantRole(String roleId, int sizeLimit) {
+        return tenantRoleDao.getIdsForUsersWithTenantRole(roleId, sizeLimit);
     }
 
     @Override
