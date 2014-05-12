@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
@@ -7,6 +8,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
@@ -89,6 +91,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private MultiFactorService multiFactorService;
 
     @Override
     public void addRacker(Racker racker) {
@@ -311,6 +316,9 @@ public class DefaultUserService implements UserService {
         logger.info("Deleting User: {}", user.getUsername());
 
         List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
+        if(StringUtils.isNotBlank(user.getExternalMultiFactorUserId())) {
+            multiFactorService.removeMultiFactorForUser(user.getId());
+        }
         this.userDao.deleteUser(user);
         deleteUserLogger.warn(DELETE_USER_FORMAT,
                 new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
@@ -708,6 +716,11 @@ public class DefaultUserService implements UserService {
         if (userIsBeingDisabled) {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
             disableUserAdminSubUsers(currentUser);
+            if(currentUser.isMultiFactorEnabled()) {
+                MultiFactor mfa = new MultiFactor();
+                mfa.setEnabled(false);
+                multiFactorService.updateMultiFactorSettings(user.getId(), mfa);
+            }
         }
 
         for (ScopeAccess scopeAccess : scopeAccessService.getScopeAccessListByUserId(user.getId())) {

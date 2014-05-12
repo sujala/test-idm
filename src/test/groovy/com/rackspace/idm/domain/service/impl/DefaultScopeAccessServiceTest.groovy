@@ -48,8 +48,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockApplicationService(service)
 
-        config.getInt("token.cloudAuthExpirationSeconds") >>  defaultCloudAuthExpirationSeconds
-        config.getInt("token.expirationSeconds") >> defaultExpirationSeconds
+        config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
+        config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
+        config.getInt("token.expirationSeconds", _) >> defaultExpirationSeconds
+        config.getInt("token.rackerExpirationSeconds", _) >> defaultRackerExpirationSeconds
         config.getInt("token.impersonatedExpirationSeconds") >> defaultImpersonationExpirationSeconds
         config.getInt("token.refreshWindowHours") >> defaultRefreshHours
     }
@@ -1053,7 +1055,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         UserScopeAccess scopeAccess = service.provisionUserScopeAccess(entityFactory.createUser(), "clientId")
 
         then:
-        1 * config.getInt("token.cloudAuthExpirationSeconds") >> exSeconds
+        1 * config.getInt("token.cloudAuthExpirationSeconds", _) >> exSeconds
         1 * config.getDouble("token.entropy") >> entropy
         scopeAccess.accessTokenExp <= ((Date)range.get("max"))
         scopeAccess.accessTokenExp >= range.get("min")
@@ -1159,7 +1161,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def entropy = 0.01
         def clientId = "clientId"
         def authedBy = ["PASSWORD"].asList()
-        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+        def range = getRange(defaultCloudAuthRackerExpirationSeconds, entropy)
 
         scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
 
@@ -1174,7 +1176,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "updateExpiredRackerScopeAccess sets token expiration with entropy"() {
         given:
-        def range = getRange(defaultCloudAuthExpirationSeconds, entropy)
+        def range = getRange(defaultCloudAuthRackerExpirationSeconds, entropy)
         def scopeAccess = createRackerScopeAcccss()
         scopeAccess.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
         if (refresh) {
