@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
@@ -1502,6 +1503,38 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "5", "-1"),
                 cloud20.listUsersWithRole(serviceAdminToken, sharedRole.getId(), "-1", "-1")
         ]
+    }
+
+    def "listUsersWithRole returns invalid request when trying to list more users than size limit"() {
+        given:
+        def domains = []
+        def users = []
+        def role = utils.createRole()
+        def userSizeLimit = config.getInt(DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_NAME)
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
+        for(i in 0..userSizeLimit) {
+            def domain = utils.createDomain()
+            domains << domain
+            def user = utils.createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domain)
+            users << user
+            utils.addRoleToUser(user, role.id)
+        }
+
+        when:
+        def response = cloud20.listUsersWithRole(utils.getServiceAdminToken(), role.id)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        for(user in users) {
+            utils.deleteUser(user)
+        }
+        for(domain in domains) {
+            utils.deleteDomain(domain)
+        }
+        utils.deleteRole(role)
     }
 
     def "listUsersWithRole offset greater than result set length returns 200 with empty list"() {

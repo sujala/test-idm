@@ -79,13 +79,21 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return config.getBoolean(USE_VLV_SSS_OPTIMIZATION_PROP_NAME, USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE);
     }
 
-    private List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope) throws LDAPSearchException {
+    protected List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope) throws LDAPSearchException {
+        return getUnpagedUnsortedObjects(searchFilter, dn, scope, LdapPagingIterator.PAGE_SIZE);
+    }
+
+    protected List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope, int maxResult) throws LDAPSearchException {
+        if(maxResult > LdapPagingIterator.PAGE_SIZE) {
+            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", maxResult, LdapPagingIterator.PAGE_SIZE);
+            throw new IllegalArgumentException("Max results must not exceed " + LdapPagingIterator.PAGE_SIZE);
+        }
         getLogger().debug(String.format("Getting all %s unpaged and unsorted objects", entityType));
 
         SearchResult searchResult;
         SearchRequest searchRequest = new SearchRequest(dn, scope, searchFilter);
         List<T> objects = new ArrayList<T>();
-        searchRequest.setSizeLimit(LdapPagingIterator.PAGE_SIZE);
+        searchRequest.setSizeLimit(maxResult);
         searchResult = getAppInterface().search(searchRequest);
 
         if (searchResult.getEntryCount() > 0) {
