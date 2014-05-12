@@ -5,8 +5,11 @@ import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
+import com.rsa.cryptoj.c.T;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +19,8 @@ import java.util.List;
 
 @Component
 public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> implements TenantRoleDao {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     DefaultPaginator<String> stringPaginator;
@@ -134,6 +139,32 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
             }
         }
 
+        return userIds;
+    }
+
+    @Override
+    public List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult) {
+        List<String> userIds = new ArrayList<String>();
+
+        List<TenantRole> roles = null;
+        try {
+            roles = getUnpagedUnsortedObjects(searchFilterGetTenantRolesByRoleId(roleId), getBaseDn(), SearchScope.SUB, maxResult);
+        } catch (LDAPSearchException ldapEx) {
+            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                logger.debug("Aborting loading users with role. Result size of {} will exceed limit of {}", userIds.size(), maxResult);
+                throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
+            } else {
+                throw new IllegalStateException(ldapEx);
+            }
+        }
+        //get the userIds
+        for (TenantRole tenantRole : roles) {
+            try {
+                userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
+            } catch (LDAPException e) {
+                throw new IllegalStateException();
+            }
+        }
         return userIds;
     }
 

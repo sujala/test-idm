@@ -734,6 +734,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         userDao.getUsers(_) >> [].asList()
         tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
+        tenantService.getIdsForUsersWithTenantRole(_) >> [].asList()
     }
 
     def "getUsersWithRole calls getUserById"() {
@@ -749,6 +750,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         userDao.getUsers(_) >> [].asList()
         tenantService.getIdsForUsersWithTenantRole(sharedRandom, 0, 10) >> stringPaginator
+        tenantService.getIdsForUsersWithTenantRole(_) >> [].asList()
     }
 
     def "getUsersWithRole calls getAllUsersNoLimit"() {
@@ -760,6 +762,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         userDao.getUsers(_) >> userList
+        tenantService.getIdsForUsersWithTenantRole(_) >> [].asList()
     }
 
     def "filterUsersForRole no Users have role"() {
