@@ -736,6 +736,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.updateUser(gaUser);
             if (gaUser.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+            } else if (!gaUser.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -819,6 +821,8 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if (gaUser.isDisabled() && !isDisabled ) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+            } else if (!gaUser.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
@@ -908,6 +912,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) {
 
         try {
+            validator.validateBaseUrl(baseUrl);
             authenticateAndAuthorizeCloudAdminUser(request);
             this.endpointService.addBaseUrl(this.endpointConverterCloudV11.toBaseUrlDO(baseUrl));
             return Response.status(HttpServletResponse.SC_CREATED).header("Location", request.getContextPath() + "/baseUrls/" + baseUrl.getId());

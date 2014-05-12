@@ -246,6 +246,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
         try {
+            validator20.validateEndpointTemplate(endpoint);
+
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
@@ -648,7 +650,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.fromUser(user);
             if (userDO.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
+            } else if (!userDO.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.ENABLED);
             }
+
             Boolean updateRegion = true;
             if (userDO.getRegion() != null && retrievedUser != null) {
                 if (userDO.getRegion().equals(retrievedUser.getRegion())) {
@@ -2989,10 +2994,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User userDO = userService.checkAndGetUserById(userId);
 
+            boolean isDisabled = userDO.isDisabled();
             userDO.setEnabled(user.isEnabled());
 
-            if (userDO.isDisabled()) {
+            if (userDO.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(userDO, AtomHopperConstants.DISABLED);
+            } else if (!userDO.isDisabled() && isDisabled) {
+                atomHopperClient.asyncPost(userDO, AtomHopperConstants.ENABLED);
             }
 
             this.userService.updateUser(userDO);

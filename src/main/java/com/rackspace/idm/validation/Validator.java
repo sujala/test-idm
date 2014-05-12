@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import org.apache.commons.configuration.Configuration;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,6 +218,14 @@ public class Validator {
         User user = userService.getUserByTenantId(String.valueOf(mossoId));
         if (user != null) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+        }
+    }
+
+    public void validateBaseUrl(BaseURL baseUrl) {
+        if (StringUtils.isBlank(baseUrl.getServiceName())) {
+            String errMsg = "'serviceName' is a required attribute";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
         }
     }
 }

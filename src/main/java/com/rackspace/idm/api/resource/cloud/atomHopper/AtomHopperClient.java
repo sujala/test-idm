@@ -12,7 +12,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.HttpEntity;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -51,10 +51,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-
 /**
  * Created by IntelliJ IDEA.
- * User: jorge
+ * User: jorge, bernardo
  * Date: May 30, 2012
  * Time: 4:12:42 PM
  * To change this template use File | Settings | File Templates.
@@ -66,6 +65,7 @@ public class AtomHopperClient {
     public static final int PORT443 = 443;
     public static final int MAX_TOTAL_CONNECTION = 200;
     public static final int DEFAULT_MAX_PER_ROUTE = 200;
+
     @Autowired
     private Configuration config;
 
@@ -84,19 +84,18 @@ public class AtomHopperClient {
 
     public AtomHopperClient() {
         try {
-            SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
+            final SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
                 @Override
                 public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
                     return true;
                 }
             }, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            SchemeRegistry schemeRegistry = new SchemeRegistry();
-            schemeRegistry.register(
-                    new Scheme("http", PORT80, PlainSocketFactory.getSocketFactory()));
-            schemeRegistry.register(
-                    new Scheme("https", PORT443, sslsf));
 
-            PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+            final SchemeRegistry schemeRegistry = new SchemeRegistry();
+            schemeRegistry.register(new Scheme("http", PORT80, PlainSocketFactory.getSocketFactory()));
+            schemeRegistry.register(new Scheme("https", PORT443, sslsf));
+
+            final PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
             // Increase max total connection to 200
             cm.setMaxTotal(MAX_TOTAL_CONNECTION);
             // Increase default max connection per route to 20
@@ -104,7 +103,7 @@ public class AtomHopperClient {
 
             httpClient = new DefaultHttpClient(cm);
         } catch (Exception e) {
-            logger.error("unabled to setup SSL trust manager: {}", e.getMessage());
+            logger.error("unable to setup SSL trust manager: {}", e.getMessage());
             httpClient = new DefaultHttpClient();
         }
 
@@ -130,46 +129,36 @@ public class AtomHopperClient {
 
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            HttpResponse response = null;
-            Writer writer;
-            UsageEntry entry;
+            UsageEntry entry = null;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
                 entry = createEntryForUser(user, EventType.DELETE, false);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.DISABLED)) {
                 entry = createEntryForUser(user, EventType.SUSPEND, false);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
                 entry = createEntryForUser(user, EventType.CREATE, true);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.GROUP)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             } else if (userStatus.equals(AtomHopperConstants.ROLE)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            } else if (userStatus.equals(AtomHopperConstants.ENABLED)) {
+                entry = createEntryForUser(user, EventType.UNSUSPEND, false);
             } else if (userStatus.equals(AtomHopperConstants.MULTI_FACTOR)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
-                writer = marshalEntry(entry);
-                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
             }
 
-            if(response != null){
+            HttpResponse response = null;
+            if (entry != null) {
+                response = executePostRequest(authToken, marshalEntry(entry), config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            }
+
+            if (response != null) {
                 if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                    String errorMsg = reader.readLine();
+                    final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                     logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
                     logger.warn(errorMsg);
                 }
-
-                HttpEntity enty = response.getEntity();
-                atomHopperHelper.entityConsume(enty);
-            }else{
+                atomHopperHelper.entityConsume(response.getEntity());
+            } else {
                 logger.warn("AtomHopperClient: Response was null");
             }
         } catch (Exception e) {
@@ -178,26 +167,23 @@ public class AtomHopperClient {
     }
 
     public void postToken(User user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
-        try{
-            UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
-            Writer writer = marshalEntry(entry);
-            HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
-            if(response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                String errorMsg = reader.readLine();
+        try {
+            final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
+            final Writer writer = marshalEntry(entry);
+            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
                 logger.warn(errorMsg);
             }
-
-            HttpEntity enty = response.getEntity();
-            atomHopperHelper.entityConsume(enty);
-        } catch (Exception e){
+            atomHopperHelper.entityConsume(response.getEntity());
+        } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
         }
     }
 
     public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        HttpPost httpPost = new HttpPost(url);
+        final HttpPost httpPost = new HttpPost(url);
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
@@ -205,9 +191,9 @@ public class AtomHopperClient {
     }
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
-        Writer writer = new StringWriter();
-        JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class);
-        Marshaller marshaller = jc.createMarshaller();
+        final Writer writer = new StringWriter();
+        final JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class);
+        final Marshaller marshaller = jc.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
         marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new AHNamespaceMapper());
         marshaller.marshal(entry, writer);
@@ -215,101 +201,90 @@ public class AtomHopperClient {
     }
 
     public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
-        InputStream isStream = new ByteArrayInputStream(s.getBytes("UTF-8"));
-        return new InputStreamEntity(isStream, -1);
+        return new InputStreamEntity(new ByteArrayInputStream(s.getBytes("UTF-8")), -1);
     }
 
     public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
         logger.warn("Creating user entry ...");
-        CloudIdentityType cloudIdentityType = new CloudIdentityType();
+
+        final CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
         cloudIdentityType.setMultiFactorEnabled(user.isMultiFactorEnabled());
-        for(Group group : userService.getGroupsForUser(user.getId())){
+        for (Group group : userService.getGroupsForUser(user.getId())) {
             cloudIdentityType.getGroups().add(group.getGroupId());
         }
-        List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
-        if(tenantRoles != null){
-            for(TenantRole tenantRole : tenantRoles){
+
+        final List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
+        if (tenantRoles != null) {
+            for (TenantRole tenantRole : tenantRoles) {
                 cloudIdentityType.getRoles().add(tenantRole.getName());
             }
         }
         cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
-        if(migrated){
+        if (migrated) {
             cloudIdentityType.setMigrated(migrated);
         }
 
-        V1Element v1Element = new V1Element();
-        v1Element.setType(eventType);
-        v1Element.setResourceId(user.getId());
-        v1Element.setResourceName(user.getUsername());
-        v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
-        v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
-        v1Element.setVersion(AtomHopperConstants.VERSION);
-        v1Element.getAny().add(cloudIdentityType);
-        GregorianCalendar c = new GregorianCalendar();
-        c.setTime(new Date());
-        c.setTimeZone(TimeZone.getTimeZone("UTC"));
-        XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-        v1Element.setEventTime(now);
-        String id = UUID.randomUUID().toString();
-        v1Element.setId(id);
-
-        UsageContent usageContent = new UsageContent();
-        usageContent.setEvent(v1Element);
-        usageContent.setType(MediaType.APPLICATION_XML);
-
-        UsageEntry usageEntry = new UsageEntry();
-        usageEntry.setContent(usageContent);
-        Title title = new Title();
-        title.setValue(AtomHopperConstants.IDENTITY_EVENT);
-        usageEntry.setTitle(title);
+        final String id = UUID.randomUUID().toString();
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), user.getUsername(), AtomHopperConstants.IDENTITY_EVENT);
         logger.warn("Created Identity user entry with id: " + id);
         return usageEntry;
     }
 
     public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
         logger.warn("Creating revoke token entry ...");
-        com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
+
+        final com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
         cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
 
-        List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
-        for(TenantRole tenantRole : tenantRoles){
-            if(tenantRole.getTenantIds() != null){
-                for(String tenantId : tenantRole.getTenantIds()){
+        final List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
+        for (TenantRole tenantRole : tenantRoles) {
+            if (tenantRole.getTenantIds() != null) {
+                for (String tenantId : tenantRole.getTenantIds()) {
                     cloudIdentityType.getTenants().add(tenantId);
                 }
             }
         }
 
-        V1Element v1Element = new V1Element();
-        v1Element.setType(EventType.DELETE);
-        v1Element.setResourceId(token);
+        final String id = UUID.randomUUID().toString();
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT);
+        logger.warn("Created Identity token entry with id: " + id);
+        return usageEntry;
+    }
+
+    private UsageEntry createUsageEntry(Object cloudIdentityType, EventType eventType, String id, String resourceId, String resourceName, String title) throws DatatypeConfigurationException {
+        final V1Element v1Element = new V1Element();
+        v1Element.setType(eventType);
+        v1Element.setResourceId(resourceId);
+        v1Element.setResourceName(resourceName);
         v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
-        GregorianCalendar c = new GregorianCalendar();
+
+        final GregorianCalendar c = new GregorianCalendar();
         c.setTime(new Date());
         c.setTimeZone(TimeZone.getTimeZone("UTC"));
-        XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+
+        final XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
         v1Element.setEventTime(now);
-        String id = UUID.randomUUID().toString();
         v1Element.setId(id);
 
-        UsageContent usageContent = new UsageContent();
+        final UsageContent usageContent = new UsageContent();
         usageContent.setEvent(v1Element);
         usageContent.setType(MediaType.APPLICATION_XML);
 
-        UsageEntry usageEntry = new UsageEntry();
+        final UsageEntry usageEntry = new UsageEntry();
         usageEntry.setContent(usageContent);
-        Title title = new Title();
-        title.setValue(AtomHopperConstants.IDENTITY_TOKEN_EVENT);
-        usageEntry.setTitle(title);
-        logger.warn("Created Identity token entry with id: " + id);
+
+        final Title entryTitle = new Title();
+        entryTitle.setValue(title);
+        usageEntry.setTitle(entryTitle);
+
         return usageEntry;
     }
 
@@ -317,7 +292,7 @@ public class AtomHopperClient {
         this.config = config;
     }
 
-    public void setDefaultTenantService(DefaultTenantService defaultTenantService){
+    public void setDefaultTenantService(DefaultTenantService defaultTenantService) {
         this.defaultTenantService = defaultTenantService;
     }
 
@@ -328,4 +303,5 @@ public class AtomHopperClient {
     public void setAtomHopperHelper(AtomHopperHelper atomHopperHelper) {
         this.atomHopperHelper = atomHopperHelper;
     }
+
 }

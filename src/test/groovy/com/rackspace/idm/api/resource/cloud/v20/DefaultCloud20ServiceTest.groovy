@@ -13,6 +13,7 @@ import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
+import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
@@ -37,6 +38,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared JAXBObjectFactories objFactories
     @Shared DefaultCloud20Service service
 
+    @Shared Validator20 realValidator20
+
     @Shared ScopeAccess scopeAccessMock
 
     @Shared def offset = 0
@@ -54,6 +57,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         //service being tested
         service = new DefaultCloud20Service()
+
+        realValidator20 = new Validator20()
 
         exceptionHandler = new ExceptionHandler()
         objFactories = new JAXBObjectFactories()
@@ -98,15 +103,34 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "addEndpointTemplate handles DuplicateException"() {
         given:
         allowUserAccess()
+        def endpointTemplate = entityFactory.createEndpointTemplate("name")
         def endpointConverter = Mock(EndpointConverterCloudV20)
         service.endpointConverterCloudV20 = endpointConverter
         endpointService.addBaseUrl(_) >> {throw new DuplicateException()}
 
         when:
-        def response = service.addEndpointTemplate(null, null, authToken, null)
+        def response = service.addEndpointTemplate(null, null, authToken, endpointTemplate)
 
         then:
         response.build().getStatus() == 409
+    }
+
+    def "addEndpointTemplate handles Missing Name Attribute"() {
+        given:
+        allowUserAccess()
+        def endpointTemplate = entityFactory.createEndpointTemplate(null)
+        def endpointConverter = Mock(EndpointConverterCloudV20)
+        service.endpointConverterCloudV20 = endpointConverter
+        service.validator20 = realValidator20
+
+        when:
+        def response = service.addEndpointTemplate(null, null, authToken, endpointTemplate)
+
+        then:
+        response.build().getStatus() == HttpStatus.SC_BAD_REQUEST
+
+        cleanup:
+        service.validator20 = validator20
     }
 
     def "question create verifies Identity admin level access and adds Question"() {
@@ -2835,12 +2859,197 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
         userService.checkAndGetUserById(_) >> updateUser
         userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.isUsernameUnique(_) >> true
 
         when:
         service.updateUser(headers, authToken, "2", user)
 
         then:
         0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Enabling a enabled user does not send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.isUsernameUnique(_) >> true
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Enabling a enabled user using 'setUserEnabled' does not send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+
+        when:
+        service.setUserEnabled(headers, authToken, "2", user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Disabling a disabled user using 'setUserEnabled' does not send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+
+        when:
+        service.setUserEnabled(headers, authToken, "2", user)
+
+        then:
+        0 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Enabling a disabled user using 'setUserEnabled' does send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+
+        when:
+        service.setUserEnabled(headers, authToken, "2", user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Disabling a enabled user using 'setUserEnabled' does send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+        userService.checkAndGetUserById(_) >> updateUser
+
+        when:
+        service.setUserEnabled(headers, authToken, "2", user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Enabling a disabled user does send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        User updatedUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.isUsernameUnique(_) >> true
+        service.userConverterCloudV20.fromUser(_) >> updatedUser
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Disabling a enabled user does send an atom feed"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+        UserForCreate user = new UserForCreate().with {
+            it.username = "name"
+            it.id = "2"
+            it.enabled = true
+            it.email = "someEmail@rackspace.com"
+            return it
+        }
+
+        User updateUser = entityFactory.createUser()
+        updateUser.enabled = true
+        updateUser.id = 2
+        User updatedUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+
+        userService.checkAndGetUserById(_) >> updateUser
+        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.isUsernameUnique(_) >> true
+        service.userConverterCloudV20.fromUser(_) >> updatedUser
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        1 * atomHopperClient.asyncPost(_,_)
     }
 
     def "updateUser does not allow a user to enable their own account"() {

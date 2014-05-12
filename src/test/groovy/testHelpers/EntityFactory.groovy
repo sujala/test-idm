@@ -2,8 +2,10 @@ package testHelpers
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
+import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Specification
 /**
  * Created with IntelliJ IDEA.
@@ -127,6 +129,12 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createBaseUrl(String serviceName) {
+        new BaseURL().with {
+            it.serviceName = serviceName
+            return it
+        }
+    }
 
     def createCloudBaseUrl() {
         return createCloudBaseUrl("CloudServersOpenStack", "region")
@@ -159,6 +167,13 @@ class EntityFactory extends Specification {
             it.mossoId = mossoId ? mossoId : 1
             it.nastId = nastId ? nastId : "nastId"
             it.baseUrl = createCloudBaseUrl()
+            return it
+        }
+    }
+
+    def createEndpointTemplate(String name) {
+        new EndpointTemplate().with {
+            it.name = name
             return it
         }
     }
