@@ -281,11 +281,14 @@ class DefaultTenantServiceTest extends RootServiceTest {
     }
 
     def "getIdsForUsersWithTenantRole calls DAO to retrieve context object"() {
+        given:
+        def sizeLimit = 123;
+
         when:
-        service.getIdsForUsersWithTenantRole("roleId")
+        service.getIdsForUsersWithTenantRole("roleId", sizeLimit)
 
         then:
-        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId")
+        1 * tenantRoleDao.getIdsForUsersWithTenantRole("roleId", sizeLimit)
     }
 
     def "addTenantRoleToUser verifies that user is not null"() {

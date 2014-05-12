@@ -62,7 +62,7 @@ public interface TenantService {
     List<Tenant> getTenantsFromNameList(String[] tenants);
 
     Iterable<TenantRole> getTenantRolesForUserById(User user, List<ClientRole> clientRolesForFilter);
-    List<String> getIdsForUsersWithTenantRole(String roleId);
+    List<String> getIdsForUsersWithTenantRole(String roleId, int sizeLimit);
 	void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 
