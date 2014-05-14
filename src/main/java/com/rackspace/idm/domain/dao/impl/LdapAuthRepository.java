@@ -34,7 +34,7 @@ public class LdapAuthRepository implements AuthDao {
         BindResult result = null;
         try {
             final String userDn = String.format("cn=%s,", userName) + getBaseDn();
-            result = connPool.bind(userDn, password);
+            result = connPool.bindAndRevertAuthentication(userDn, password);
         } catch (LDAPException e1) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e1.getResultCode())) {
                 try {
@@ -133,7 +133,7 @@ public class LdapAuthRepository implements AuthDao {
         if (realUserDn == null) {
             throw new LDAPException(ResultCode.INVALID_CREDENTIALS);
         } else {
-            return connPool.bind(realUserDn, password);
+            return connPool.bindAndRevertAuthentication(realUserDn, password);
         }
     }
 
