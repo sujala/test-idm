@@ -11,11 +11,9 @@ RPMBUILD := rpmbuild \
 	--define "_sourcedir    %(pwd)/source"
 
 SSO_USER      := 'identity'
-PUBLISH_HOST  := 'idm-pulp-n01.qe.ord1.cidm.rackspace.net'
+PUBLISH_HOST  := 'idm-mirrors-n01.qe.ord1.cidm.rackspace.net'
 PUBLISH_DIR   := "/home/${SSO_USER}/rpms"
-PULP_USER     := 'identity'
-PULP_PASS     := 'identity'
-PULP_REPO     := 'identity'
+REPO_DIR      := '/opt/mirrors/repos/upstream/identity/'
 
 FETCH_HOST := 'd-build1.iad2.corp.rackspace.com:8100'
 FETCH_URL  := "/nexus/content/repositories/releases/com/rackspace/idm/${VERSION}-${RELEASE}"
@@ -50,8 +48,4 @@ srpm: prep_rpmbuild prep_master_tarball
 publish:
 	scp rpms/*/*-${VERSION}-${RELEASE}.*.rpm ${SSO_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
 	ssh -tt ${SSO_USER}@${PUBLISH_HOST} "\
-	  pulp-admin login -u ${PULP_USER} -p ${PULP_PASS}; \
-	  pulp-admin rpm repo uploads rpm --repo-id ${PULP_REPO} --dir ${PUBLISH_DIR} --skip-existing; \
-	  pulp-admin rpm repo publish run --repo-id ${PULP_REPO} --bg; \
-	  pulp-admin node repo publish --repo-id ${PULP_REPO} --bg; \
-	  pulp-admin logout"
+	  cp ~/rpms/* ${REPO_DIR} && createrepo ${REPO_DIR}"
