@@ -2050,6 +2050,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             else if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
                 Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
+                if(getCheckRackerImpersonateRole()){
+                    List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
+                    if(rackerRoles.isEmpty() || !rackerRoles.contains(getRackerImpersonateRole())){
+                        throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
+                    }
+                }
                 usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
             } else {
                 throw new NotAuthorizedException("User does not have access");
@@ -3464,6 +3470,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
+    }
+
+    private String getRackerImpersonateRole(){
+        return config.getString("racker.impersonate.role");
+    }
+
+    private Boolean getCheckRackerImpersonateRole(){
+        return config.getBoolean("feature.restrict.impersonation.to.rackers.with.role.enabled", false);
     }
 
     JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {

@@ -6,6 +6,7 @@ import org.jasypt.encryption.StringEncryptor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
+import testHelpers.ConfigurationWrapper
 
 @ContextConfiguration(locations = ["classpath:app-config.xml"])
 class PropertyFileBeansConfigurationTest extends Specification {
@@ -19,7 +20,7 @@ class PropertyFileBeansConfigurationTest extends Specification {
     def "Configuration is being autowired"() {
         expect:
         configuration != null
-        configuration instanceof PropertiesConfiguration
+        configuration instanceof ConfigurationWrapper
     }
 
     def "String encryptor is being autowired"() {

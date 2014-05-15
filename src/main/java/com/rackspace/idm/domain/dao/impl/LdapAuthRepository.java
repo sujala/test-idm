@@ -93,9 +93,11 @@ public class LdapAuthRepository implements AuthDao {
 
         String[] groups = entry.getAttributeValues("groupMembership");
 
-        for (String group : groups) {
-            String[] split1 = group.split(",");
-            roles.add(split1[0].split("=")[1]);
+        if(groups != null && groups.length > 0) {
+            for (String group : groups) {
+                String[] split1 = group.split(",");
+                roles.add(split1[0].split("=")[1]);
+            }
         }
 
         return roles;
