@@ -9,7 +9,6 @@ class Constants {
 
     static def IDENTITY_ADMIN_USERNAME = "auth"
     static def IDENTITY_ADMIN_PASSWORD = "auth123"
-
     static def DEFAULT_PASSWORD = "Password1"
     static def DEFAULT_API_KEY = "Password1"
 
@@ -27,6 +26,12 @@ class Constants {
 
     static String RACKER = "test.racker"
     static String RACKER_PASSWORD = "password"
+
+    static String RACKER_IMPERSONATE = "test.impersonate"
+    static String RACKER_IMPERSONATE_PASSWORD = "password"
+
+    static String RACKER_NOGROUP = "test.nogroup"
+    static String RACKER_NOGROUP_PASSWORD = "password"
 
     static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
     static def CLIENT_SECRET = "Password1"

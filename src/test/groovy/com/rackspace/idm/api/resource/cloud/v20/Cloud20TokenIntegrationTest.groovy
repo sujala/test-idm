@@ -2,10 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
+import static com.rackspace.idm.Constants.*
 
-/**
- * Created by jorge on 3/27/14.
- */
 class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
     @Shared def userAdmin, users
@@ -21,5 +19,13 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
+    }
+
+    def "Authenticate racker with no groups"() {
+        when:
+        def auth = utils.authenticateRacker(RACKER_NOGROUP, RACKER_NOGROUP_PASSWORD)
+
+        then:
+        auth != null
     }
 }

@@ -49,6 +49,7 @@
     <!-- Scans within the base package of the application for @Components to configure as beans. -->
     <context:component-scan base-package="com.rackspace.idm, testHelpers">
         <context:exclude-filter type="annotation" expression="com.rackspace.test.SingleTestConfiguration" />
+        <context:exclude-filter type="regex" expression="com\.rackspace\.idm\.domain\.config\.PropertyFileConfiguration" />
     </context:component-scan>
 
     <!--
