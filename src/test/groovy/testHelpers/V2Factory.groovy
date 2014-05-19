@@ -62,6 +62,26 @@ class V2Factory {
         }
     }
 
+    def createPasswordAuthenticationRequestWithTenantId(String username, String password, String tenantId) {
+        def credentials = createPasswordCredentialsRequiredUsername(username, password)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createPasswordCredentials(credentials))
+            it.setTenantId(tenantId)
+            return it
+        }
+    }
+
+    def createPasswordAuthenticationRequestWithTenantName(String username, String password, String tenantName) {
+        def credentials = createPasswordCredentialsRequiredUsername(username, password)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createPasswordCredentials(credentials))
+            it.setTenantName(tenantName)
+            return it
+        }
+    }
+
     def createPasswordAuthenticationRequest(String username, String password) {
         def credentials = createPasswordCredentialsRequiredUsername(username, password)
 

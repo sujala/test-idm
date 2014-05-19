@@ -75,6 +75,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final String RBAC = "rbac";
 
+    public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
+    public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -950,22 +953,25 @@ public class DefaultCloud20Service implements Cloud20Service {
         //tenant was specified
         if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
             List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
+            Tenant tenant;
+
             if (!StringUtils.isBlank(tenantId)) {
-                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
+                tenant = tenantService.getTenant(tenantId);
+            } else {
+                tenant = tenantService.getTenantByName(tenantName);
+            }
+
+            if (shouldFilterServiceCatalogByTenant(tenant.getTenantId(), roles)) {
+                convertedToken.setTenant(convertTenantEntityToApi(tenant));
                 for (OpenstackEndpoint endpoint : endpoints) {
-                    if (tenantId.equals(endpoint.getTenantId())) {
+                    if (tenant.getTenantId().equals(endpoint.getTenantId())) {
                         tenantEndpoints.add(endpoint);
                     }
                 }
+            } else {
+                tenantEndpoints.addAll(endpoints);
             }
-            if (!StringUtils.isBlank(tenantName)) {
-                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
-                for (OpenstackEndpoint endpoint : endpoints) {
-                    if (tenantName.equals(endpoint.getTenantName())) {
-                        tenantEndpoints.add(endpoint);
-                    }
-                }
-            }
+
             auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, tenantEndpoints);
             auth.setToken(convertedToken);
         } else {
@@ -973,6 +979,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return auth;
+    }
+
+    private boolean shouldFilterServiceCatalogByTenant(String tenantId, List<TenantRole> roles) {
+        // If the feature flag is false, then we should always filter the service catalog by tenant
+        if (!config.getBoolean(FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED, FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE)) {
+            return true;
+        }
+
+        // If the feature flag is true then we should filter the service catalog
+        // when the tenant specified is NOT the mosso tenant
+        return !isMossoTenant(tenantId, roles);
+    }
+
+    private boolean isMossoTenant(String tenantId, List<TenantRole> roles) {
+        for (TenantRole role : roles) {
+            if (role.getName().equals("compute:default")) {
+                return role.getTenantIds().contains(tenantId);
+            }
+        }
+        return tenantId.matches("\\d+");
     }
 
     User getUserByIdForAuthentication(String id) {
