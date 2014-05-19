@@ -52,16 +52,6 @@ public class PropertyFileConfiguration {
         return readConfigFile(CONFIG_FILE_NAME);
     }
 
-    /**
-     * Configuration instance from the classpath. Use this for unit tests, so
-     * that the config file from /etc/idm won't be read instead.
-     * 
-     * @return
-     */
-    public Configuration getConfigFromClasspath() {
-        return readConfigFile(CONFIG_FILE_NAME);
-    }
-
     Configuration readConfigFile(String filePath) {
         try {
             logger.debug(String.format("Attempting to open file %s", filePath));

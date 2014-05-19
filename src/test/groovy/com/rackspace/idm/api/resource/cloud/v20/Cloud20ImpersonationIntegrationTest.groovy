@@ -50,7 +50,7 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
 
     def "impersonating user - racker with impersonate role feature flag = true" () {
         given:
-        setBooleanConfiguration("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
+        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
 
@@ -69,7 +69,7 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
 
     def "impersonating user - racker with no impersonate role - feature flag = true" () {
         given:
-        setBooleanConfiguration("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
+        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
         def domainId = utils.createDomain()
        (defaultUser, users) = utils.createDefaultUser(domainId)
 
