@@ -10,6 +10,11 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
 
+    def cleanup() {
+        //for this test we want all properties reset for each test
+        staticIdmConfiguration.reset()
+    }
+
     def "impersonating a disabled user should be possible"() {
         given:
         def domainId = utils.createDomain()

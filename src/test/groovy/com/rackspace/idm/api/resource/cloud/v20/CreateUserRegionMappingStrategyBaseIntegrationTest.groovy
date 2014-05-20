@@ -26,17 +26,6 @@ abstract class CreateUserRegionMappingStrategyBaseIntegrationTest extends RootIn
     @Autowired def Configuration config
     @Autowired def EndpointService endpointService
 
-    abstract getSettingsLocation()
-
-    def setupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                getSettingsLocation())
-    }
-
-    def cleanupSpec() {
-        stopGrizzly()
-    }
-
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()
     }

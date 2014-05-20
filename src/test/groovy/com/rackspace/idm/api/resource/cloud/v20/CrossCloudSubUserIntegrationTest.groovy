@@ -23,15 +23,6 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired def UserService userService
 
-    static def US_CLOUD_FILE = "classpath:com/rackspace/idm/api/resource/cloud/v20/US_cloud.xml"
-    static def UK_CLOUD_FILE = "classpath:com/rackspace/idm/api/resource/cloud/v20/UK_cloud.xml"
-
-    def setupSpec() {}
-
-    def cleanupSpec() {
-        stopGrizzly()
-    }
-
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()
     }
@@ -39,8 +30,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
     def "UK admin can create UK subuser on US cloud"() {
         setup:
         //spin up the uk cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                UK_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "UK")
 
         //create a 1.1, 2.0 legacy, and 2.0 "one-user" user-admin
         def randomId = testUtils.getRandomUUID()
@@ -49,8 +39,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
         def v20OneUser = create20OneUserAdmin(randomId)
 
         //switch to us cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                US_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "US")
 
         when: "1.1 UK useradmin creating subuser in US without specified region"
         User v11SubUser = createSubUserWithApiAuth(v11User, null)
@@ -85,8 +74,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
     def "US admin can create US subuser on UK cloud"() {
         setup:
         //spin up the us cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                US_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "US")
 
         //create a 1.1, 2.0 legacy, and 2.0 "one-user" user-admin
         def randomId = testUtils.getRandomUUID()
@@ -95,8 +83,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
         def v20OneUser = create20OneUserAdmin(randomId)
 
         //switch to uk cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                UK_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "UK")
 
         when: "1.1 US useradmin creating subuser in UK without specified region"
         User v11SubUser = createSubUserWithApiAuth(v11User, null)
@@ -131,8 +118,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
     def "US admin can create US subuser on US cloud"() {
         setup:
         //spin up the us cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                US_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "US")
 
         //create a 1.1, 2.0 legacy, and 2.0 "one-user" user-admin
         def randomId = testUtils.getRandomUUID()
@@ -173,8 +159,7 @@ class CrossCloudSubUserIntegrationTest extends RootIntegrationTest {
     def "UK admin can create UK subuser on UK cloud"() {
         setup:
         //spin up the us cloud
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                UK_CLOUD_FILE)
+        staticIdmConfiguration.setProperty("cloud.region", "UK")
 
         //create a 1.1, 2.0 legacy, and 2.0 "one-user" user-admin
         def randomId = testUtils.getRandomUUID()

@@ -48,18 +48,13 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
     @Shared FoundationApiMethods foundation = new FoundationApiMethods()
 
-    @Autowired
-    SingletonConfiguration staticIdmConfiguration;
+    @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
 
     def mediaTypeContext
 
-    def cleanup(){
-        //Making sure the overrideData map is cleared after each test
-        staticIdmConfiguration.reset()
-    }
-
     public setupSpec(){
         doSetupSpec()
+        staticIdmConfiguration.reset()
         cloud10.init()
         cloud11.init()
         cloud20.init()
@@ -67,6 +62,9 @@ class RootIntegrationTest extends Specification {
     }
 
     public cleanupSpec() {
+        //reset the configuration properties at the end of each test class. This allows a test class to configure a common
+        //configuration that applies to all tests in the class
+        staticIdmConfiguration.reset()
         doCleanupSpec()
     }
 
