@@ -53,8 +53,8 @@ class RootIntegrationTest extends Specification {
     def mediaTypeContext
 
     public setupSpec(){
-        doSetupSpec()
         staticIdmConfiguration.reset()
+        doSetupSpec()
         cloud10.init()
         cloud11.init()
         cloud20.init()
@@ -64,8 +64,8 @@ class RootIntegrationTest extends Specification {
     public cleanupSpec() {
         //reset the configuration properties at the end of each test class. This allows a test class to configure a common
         //configuration that applies to all tests in the class
-        staticIdmConfiguration.reset()
         doCleanupSpec()
+        staticIdmConfiguration.reset()
     }
 
     /**
