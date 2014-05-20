@@ -4,11 +4,9 @@ import spock.lang.Unroll
 
 class CreateUserUSRsRegionMappingStrategyIntegrationTest extends CreateUserRegionMappingStrategyBaseIntegrationTest {
 
-    static def settingsFile = "classpath:com/rackspace/idm/api/resource/cloud/v20/Feature_RegionlessEndpoints_US_cloud_rsregion_strategy.xml"
-
-    @Override
-    def getSettingsLocation() {
-        return settingsFile
+    def setup() {
+        staticIdmConfiguration.setProperty("feature.baseurl.to.cloud.region.mapping.strategy", "rsregion")
+        staticIdmConfiguration.setProperty("cloud.region", "US")
     }
 
     @Unroll("add user UK - v2.0 'one user' and v1.1 adds non-global endpoints as necessary for rsregion strategy - baseUrlID: #baseUrlID, baseUrlrsRegion: #baseUrlrsRegion, expects endpoint to have been added == #shouldBaseUrlHaveBeenAdded")

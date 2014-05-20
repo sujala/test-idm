@@ -1,13 +1,11 @@
 package testHelpers
 
-import com.rackspace.idm.domain.config.PropertyFileConfiguration
 import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.rackspace.idm.helpers.FoundationApiUtils
 import com.sun.jersey.api.client.WebResource
-import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,9 +14,6 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.ws.rs.core.MediaType
-
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON
-import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,17 +48,12 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
     @Shared FoundationApiMethods foundation = new FoundationApiMethods()
 
-    @Autowired
-    ConfigurationWrapper configurationWrapper;
+    @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
 
     def mediaTypeContext
 
-    def cleanup(){
-        //Making sure the overrideData map is cleared after each test
-        configurationWrapper.overrideData.clear()
-    }
-
     public setupSpec(){
+        staticIdmConfiguration.reset()
         doSetupSpec()
         cloud10.init()
         cloud11.init()
@@ -72,7 +62,10 @@ class RootIntegrationTest extends Specification {
     }
 
     public cleanupSpec() {
+        //reset the configuration properties at the end of each test class. This allows a test class to configure a common
+        //configuration that applies to all tests in the class
         doCleanupSpec()
+        staticIdmConfiguration.reset()
     }
 
     /**
@@ -171,14 +164,6 @@ class RootIntegrationTest extends Specification {
 
     def getRandomUUID(prefix='') {
         String.format("%s%s", prefix, UUID.randomUUID().toString().replace('-', ''))
-    }
-
-    def setBooleanConfiguration(String key, Boolean value){
-        configurationWrapper.overrideData.put(key, value)
-    }
-
-    def setStringConfiguration(String key, String value){
-        configurationWrapper.overrideData.put(key, value)
     }
 
     def useMediaType(accept, contentType) {

@@ -4,11 +4,9 @@ import spock.lang.Unroll
 
 class CreateUserUKHybridMappingStrategyIntegrationTest extends CreateUserRegionMappingStrategyBaseIntegrationTest {
 
-    static def settingsFile = "classpath:com/rackspace/idm/api/resource/cloud/v20/Feature_RegionlessEndpoints_UK_cloud_hybrid_strategy.xml"
-
-    @Override
-    def getSettingsLocation() {
-        return settingsFile
+    def setup() {
+        staticIdmConfiguration.setProperty("feature.baseurl.to.cloud.region.mapping.strategy", "hybrid")
+        staticIdmConfiguration.setProperty("cloud.region", "UK")
     }
 
     @Unroll("add user UK - v2.0 'one user' and v1.1 adds non-global endpoints as necessary - baseUrlID: #baseUrlID, baseUrlrsRegion: #baseUrlrsRegion, expects endpoint to have been added == #shouldBaseUrlHaveBeenAdded")

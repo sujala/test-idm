@@ -10,6 +10,11 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
 
+    def cleanup() {
+        //for this test we want all properties reset for each test
+        staticIdmConfiguration.reset()
+    }
+
     def "impersonating a disabled user should be possible"() {
         given:
         def domainId = utils.createDomain()
@@ -50,7 +55,7 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
 
     def "impersonating user - racker with impersonate role feature flag = true" () {
         given:
-        setBooleanConfiguration("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
+        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
 
@@ -69,7 +74,7 @@ class Cloud20ImpersonationIntegrationTest extends RootIntegrationTest {
 
     def "impersonating user - racker with no impersonate role - feature flag = true" () {
         given:
-        setBooleanConfiguration("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
+        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
         def domainId = utils.createDomain()
        (defaultUser, users) = utils.createDefaultUser(domainId)
 
