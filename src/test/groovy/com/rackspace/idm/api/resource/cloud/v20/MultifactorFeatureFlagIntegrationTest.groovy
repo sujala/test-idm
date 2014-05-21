@@ -56,17 +56,36 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired RoleService roleService
 
-    @Override
-    public void doCleanupSpec() {
+    def void doSetupSpec() {
+        startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml ")
+    }
+
+    def void doCleanupSpec() {
         stopGrizzly()
+    }
+
+    def setFlagSettings(String flagSettingsFile) {
+        switch (flagSettingsFile) {
+            case OFF_SETTINGS_FILE:
+                staticIdmConfiguration.setProperty("multifactor.services.enabled", false)
+                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
+                break;
+            case FULL_SETTINGS_FILE:
+                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
+                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
+                break;
+            case BETA_SETTINGS_FILE:
+                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
+                staticIdmConfiguration.setProperty("multifactor.beta.enabled", true)
+                break;
+        }
     }
 
     @Unroll("MFA feature flag for enable MFA API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for enable MFA for user call"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
         def token = authenticate(user.username)
@@ -140,9 +159,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Unroll("MFA feature flag for delete MFA API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for delete MFA for user call"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
         def token = authenticate(user.username)
@@ -198,9 +215,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Unroll("MFA feature flag for add phone to user API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for add phone to user call"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
@@ -246,9 +261,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Unroll("MFA feature flag for send verification code API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for send verification call"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
@@ -301,9 +314,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Unroll("MFA feature flag for verify MFA phone API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for verify MFA phone"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
@@ -357,9 +368,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     @Unroll("MFA feature flag for list MFA phones API call: requestContentType=#requestContentMediaType ; acceptMediaType=#acceptMediaType ; addMfaRole=#addMfaRole ; flagSettingsFile=#flagSettingsFile")
     def "multifactor feature flag works for list MFA phones"() {
         setup:
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                flagSettingsFile)
+        setFlagSettings(flagSettingsFile)
         def user = createUserAdmin()
         def token = authenticate(user.username)
         if(addMfaRole) {
