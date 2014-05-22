@@ -5,8 +5,8 @@ apply plugin: 'jetty'
 apply plugin: 'war'
 apply plugin: 'idea'
 apply plugin: 'nexus'
-apply plugin: 'sonar-runner'
 apply plugin: 'jacoco'
+apply plugin: 'sonar-runner'
 
 buildscript {
     repositories {
@@ -215,7 +215,7 @@ idea {
 }
 
 jacoco {
-    toolVersion = "0.6.2.201302030002"
+    toolVersion = "0.7.1.201405082137"
     reportsDir = file("$buildDir/customJacocoReportDir")
 }
 
@@ -226,7 +226,7 @@ test {
 
     // set JVM arguments for the test JVM(s)
     jvmArgs '-XX:MaxPermSize=1024m'
-    systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/OPENLDAP')
+    systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/VAGRANT')
     systemProperties['jersey.test.port']  = System.getProperty('jersey.test.port', '9998')
 
     jacoco {
@@ -406,7 +406,7 @@ jacocoTestReport {
     reports {
         xml.enabled false
         csv.enabled false
-        html.destination "${buildDir}/jacocoHtml"
+        html.destination "$buildDir/jacocoHtml"
     }
 }
 
@@ -417,6 +417,6 @@ sonarRunner {
         property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
         property "sonar.jdbc.username", "sonarqube"
         property "sonar.jdbc.password", "sonarqube"
-        property "sonar.exclusions", "**/v1/*.java,**/v2/*.java,**/atom/*.java"
+        property "sonar.exclusions", "**/generated-src/jaxb/**,**/domain/entity/*.java"
     }
 }
