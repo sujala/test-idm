@@ -119,7 +119,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                         if(multiFactorCloud20Service.isMultiFactorEnabled()) {
                             BaseUser user = userService.getUserByScopeAccess(sa);
                             if(!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
-                                throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
+                                throw new WebApplicationException(HttpServletResponse.SC_NOT_FOUND);
                             }
                         }
                     }

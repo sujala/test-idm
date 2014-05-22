@@ -49,7 +49,7 @@ class AuthenticationFilterTest extends Specification {
         noExceptionThrown()
     }
 
-    def "when multi-factor feature flag is true and user does not have MFA access throws 401"() {
+    def "when multi-factor feature flag is true and user does not have MFA access throws 404"() {
         given:
         def path = "cloud/v2.0/users/{userId}/RAX-AUTH/multi-factor"
         request.getPath() >> path
@@ -61,7 +61,7 @@ class AuthenticationFilterTest extends Specification {
         1 * mfaService.isMultiFactorEnabled() >> true
         1 * mfaService.isMultiFactorEnabledForUser(_) >> false
         WebApplicationException exception = thrown()
-        exception.response.status == 401
+        exception.response.status == 404
     }
 
     def "when multi-factor feature flag is true and user does have MFA request is unmodified"() {
