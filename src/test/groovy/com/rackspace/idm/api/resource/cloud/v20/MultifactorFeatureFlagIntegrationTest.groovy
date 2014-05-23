@@ -418,6 +418,31 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 200
     }
 
+    def "mfa feature flag works for impersonated tokens"() {
+        given:
+        setFlagSettings(BETA_SETTINGS_FILE)
+        def settings = v2Factory.createMultiFactorSettings(true)
+        def user = createUserAdmin()
+        def mfaBetaRole = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
+        cloud20.addUserRole(utils.getServiceAdminToken(), user.id, mfaBetaRole.id)
+        def mfaUserToken = utils.authenticate(user).token.id
+        def responsePhone = addPhone(mfaUserToken, user)
+        def identityAdmin = utils.createIdentityAdmin()
+        def token = utils.getImpersonatedToken(identityAdmin, user)
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(token, user.id, settings)
+
+        then:
+        response.status == 204
+
+        cleanup:
+        multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
+        deleteUserQuietly(user)
+        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
+        utils.deleteUser(identityAdmin)
+    }
+
     def addPhone(token, user, verify=true) {
         def responsePhone = utils.addPhone(token, user.id)
         utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)

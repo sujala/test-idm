@@ -117,7 +117,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                         //only checks for the case where mfa = true and beta = false. It could still be
                         //the case that mfa = true and beta = true.
                         if(multiFactorCloud20Service.isMultiFactorEnabled()) {
-                            BaseUser user = userService.getUserByScopeAccess(sa);
+                            BaseUser user;
+                            if(sa instanceof ImpersonatedScopeAccess) {
+                                ScopeAccess impersonatedScopeAccess = scopeAccessService.getScopeAccessByAccessToken(((ImpersonatedScopeAccess) sa).getImpersonatingToken());
+                                user = userService.getUserByScopeAccess(impersonatedScopeAccess);
+                            } else {
+                                user = userService.getUserByScopeAccess(sa);
+                            }
                             if(!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
                                 throw new WebApplicationException(HttpServletResponse.SC_UNAUTHORIZED);
                             }
