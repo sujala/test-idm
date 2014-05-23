@@ -145,10 +145,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | FULL_SETTINGS_FILE | 400
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | FULL_SETTINGS_FILE | 400
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | true | BETA_SETTINGS_FILE | 204
@@ -201,10 +201,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | true | true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | true | true | FULL_SETTINGS_FILE | 204
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | false | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | false | false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | true | true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | true | true | BETA_SETTINGS_FILE | 204
@@ -247,10 +247,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | FULL_SETTINGS_FILE | 201
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | FULL_SETTINGS_FILE | 201
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true | BETA_SETTINGS_FILE | 201
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true | BETA_SETTINGS_FILE | 201
@@ -300,10 +300,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 202
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 202
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 202
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 202
@@ -354,10 +354,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 204
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 204
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 204
@@ -407,10 +407,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  true | FULL_SETTINGS_FILE | 200
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  true | FULL_SETTINGS_FILE | 200
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 401
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 401
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false |  false | BETA_SETTINGS_FILE | 404
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false |  false | BETA_SETTINGS_FILE | 404
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE    | true |  true | BETA_SETTINGS_FILE | 200
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE   | true |  true | BETA_SETTINGS_FILE | 200
