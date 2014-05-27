@@ -101,7 +101,7 @@ public class RootResource {
 
     @Path("{versionId: v[1-9](\\.[0-9])?}")
     public Version10Resource getVersionResource(@PathParam("versionId") String versionId) {
-        if (versionId.equalsIgnoreCase("v1.0") || versionId.equalsIgnoreCase("v1")) {
+        if ((versionId.equalsIgnoreCase("v1.0") || versionId.equalsIgnoreCase("v1")) && isFoundationEnabled()) {
             return versionResource;
         }
         
@@ -124,5 +124,9 @@ public class RootResource {
 
     public void setServiceProfileDescriptionBuilder(ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder) {
         this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
+    }
+
+    private boolean isFoundationEnabled(){
+        return config.getBoolean("feature.access.to.foundation.api", true);
     }
 }

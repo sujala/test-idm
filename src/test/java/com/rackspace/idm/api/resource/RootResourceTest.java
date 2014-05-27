@@ -73,12 +73,14 @@ public class RootResourceTest {
 
     @Test
     public void getVersionResource_versionIdMatchesV10_returnsVersionResource() throws Exception {
+        when(config.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         Version10Resource resource = rootResource.getVersionResource("v1.0");
         assertThat("version resource", resource, equalTo(version10Resource));
     }
 
     @Test
     public void getVersionResource_versionIdMatchesV1_returnsVersionResource() throws Exception {
+        when(config.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         Version10Resource resource = rootResource.getVersionResource("v1");
         assertThat("version resource", resource, equalTo(version10Resource));
     }
