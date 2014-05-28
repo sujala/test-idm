@@ -2022,73 +2022,40 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) {
         try {
-            authorizationService.verifyRackerOrIdentityAdminAccess(getScopeAccessForValidToken(authToken));
-            validator20.validateImpersonationRequest(impersonationRequest);
+            ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyRackerOrIdentityAdminAccess(callerScopeAccess);
 
-            String impersonatingToken;
-            String impersonatingUsername = impersonationRequest.getUser().getUsername();
-
-            if (StringUtils.isBlank(impersonatingUsername)) {
-                throw new BadRequestException("Username for user to be impersonated must be provided");
-            }
-
-            User user = userService.getUser(impersonatingUsername);
-
-            if(user == null){
-                throw new NotFoundException(String.format("User %s not found", impersonatingUsername));
-            }
-            if (!isValidImpersonatee(user)) {
-                throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
-            }
-
-            UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(user, getCloudAuthClientId());
-
-            if(impAccess == null){
-                impAccess = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
-                scopeAccessService.addUserScopeAccess(user, impAccess);
-            }
-
-            if (impAccess.isAccessTokenExpired(new DateTime())) {
-                UserScopeAccess scopeAccess;
-                if (!user.getEnabled()) {
-                    logger.info("Impersonating a disabled user");
-                    scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
-                } else {
-                    scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
-                }
-                impersonatingToken = scopeAccess.getAccessTokenString();
-            } else {
-                impersonatingToken = impAccess.getAccessTokenString();
-            }
-
-            if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
-                throw new BadRequestException("Invalid user");
-            }
-
-            ScopeAccess sa = checkAndGetToken(authToken);
-            ScopeAccess usa;
-            //impersonator is a service user
-            if (sa instanceof UserScopeAccess) {
-                UserScopeAccess userSa = (UserScopeAccess) sa;
-                User impersonator = this.userService.getUserById(userSa.getUserRsId());
-                usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
-            }
-            //impersonator is a Racker
-            else if (sa instanceof RackerScopeAccess) {
-                RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
-                Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
+            ImpersonatorType impersonatorType = null;
+            BaseUser impersonator = null;
+            if (callerScopeAccess instanceof RackerScopeAccess) {
+                impersonatorType = ImpersonatorType.RACKER;
+                validator20.validateImpersonationRequestForRacker(impersonationRequest);
+                impersonator = this.userService.getRackerByRackerId(((RackerScopeAccess)callerScopeAccess).getRackerId());
                 if(getCheckRackerImpersonateRole()){
-                    List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
+                    List<String> rackerRoles = userService.getRackerRoles(((Racker)impersonator).getRackerId());
                     if(rackerRoles.isEmpty() || !rackerRoles.contains(getRackerImpersonateRole())){
                         throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
                     }
                 }
-                usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+            } else if (callerScopeAccess instanceof UserScopeAccess) {
+                impersonatorType = ImpersonatorType.SERVICE;
+                validator20.validateImpersonationRequestForService(impersonationRequest);
+                impersonator = this.userService.getUserById(((UserScopeAccess)callerScopeAccess).getUserRsId());
             } else {
+                //this shouldn't really happen do to verification that user is racker or identity admin, but just in case.
+                // TODO: Should be a 403 rather than 401, but this is how it has been historically
+                logger.warn(String.format("Invalid impersonation request. Unrecognized token type '%s'", callerScopeAccess));
                 throw new NotAuthorizedException("User does not have access");
             }
 
-            ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
+            //validate the user being impersonated can be found and is allowed to be impersonated
+            User user = userService.checkAndGetUserByName(impersonationRequest.getUser().getUsername());
+            if (!isValidImpersonatee(user)) {
+                throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
+            }
+
+            ImpersonatedScopeAccess impersonatedToken = scopeAccessService.processImpersonatedScopeAccessRequest(impersonator, user, impersonationRequest, impersonatorType);
+            ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(impersonatedToken);
             return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -3582,6 +3549,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         return roleNames;
     }
+
+
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;

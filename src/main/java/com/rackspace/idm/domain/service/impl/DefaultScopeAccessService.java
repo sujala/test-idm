@@ -3,11 +3,11 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 
 @Component
@@ -41,6 +40,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME = "feature.authentication.token.delete.failure.stops.cleanup.enabled";
     public static final boolean FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE = false;
 
+    public static final String TOKEN_IMPERSONATED_BY_SERVICE_DEFAULT_SECONDS_PROP_NAME = "token.impersonatedByServiceDefaultSeconds";
+    public static final String TOKEN_IMPERSONATED_BY_RACKER_DEFAULT_SECONDS_PROP_NAME = "token.impersonatedByRackerDefaultSeconds";
+    public static final String TOKEN_IMPERSONATED_BY_RACKER_MAX_SECONDS_PROP_NAME = "token.impersonatedByRackerMaxSeconds";
+    public static final String TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME = "token.impersonatedByServiceMaxSeconds";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -172,21 +175,84 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return region;
     }
 
-    @Override
-    public ImpersonatedScopeAccess addImpersonatedScopeAccess(BaseUser user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
-        String impersonatingUsername = impersonationRequest.getUser().getUsername();
+    /**
+     * Creates and saves a new impersonation token to use against the user and cleans up any expired scope accesses.
+     */
+    public ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, User userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType) {
+        DateTime requestInstant = new DateTime();
 
-        ImpersonatedScopeAccess mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(user, impersonatingUsername);
+        DateTime desiredImpersonationTokenExpiration = calculateDesiredImpersonationTokenExpiration(impersonationRequest, impersonatorType, requestInstant);
 
+        //get the user scope access to use
+        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
+
+        String impersonatingUsername = userBeingImpersonated.getUsername();
+
+        //get the most recent scope access prior to cleaning up since the most recent could be expired (and will be removed by subsequent clean up code)
+        ImpersonatedScopeAccess mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(impersonator, impersonatingUsername);
+        cleanUpImpersonatorsExpiredImpersonationTokens(impersonator, impersonatingUsername);
+
+        //create a shiny new token
+        ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userTokenForImpersonation, desiredImpersonationTokenExpiration);
+
+        /*
+        I don't understand this logic at all.
+
+        1. Why would we copy the username/clientid/impersonatingusername from the old token
+          rather than just leave the values set in the new token? Theoretically the old values could be different (e.g. changed username, etc)
+          but not sure why we wouldn't want to use the most recent information over the old.
+
+        2. I am not sure why we create a new token with same token string, delete the old token, then add a the new token
+        back. This is inefficient and introduces concurrency issue where if 2 threads call this method to add a new token
+        for the same impersonatingUsername and there is an existing valid token for that impersonating username,
+        each thread will first try to delete the
+        same "valid" token - resulting in a failure. Even if the deletion failure was ignored, each thread would
+        then try to add a new token with the same token string (the second request will fail since the token string is part of
+        the scope access rdn). Ultimately, this means there's no point in making the deleteScopeAccess in this block
+        fail safe since we'd just get an error on the add anyway.
+
+        If the purpose is to limit the number of valid impresonation tokens against a given user, we should introduce refresh
+        windows or whatnot for impersonated tokens and return existing impersonated tokens
+        rather than always creating a new one and deleting the old. Within refresh windows new ones should be created with NEW token strings.
+
+        However, all this is legacy logic so I'm not going to change it without an explicit story.
+        */
+        if (mostRecent != null) {
+            scopeAccessToAdd.setUsername(mostRecent.getUsername());
+            scopeAccessToAdd.setClientId(mostRecent.getClientId());
+            scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
+            if (!mostRecent.isAccessTokenExpired(new DateTime())) {
+                scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
+                try {
+                    scopeAccessDao.deleteScopeAccess(mostRecent);
+                } catch (RuntimeException ex) {
+                    //log the issue, but ultimately, we need to rethrow the error
+                    logger.warn(String.format("Encountered an error deleting a valid impersonated token for user '%s' impersonating user '%s'.", impersonator.getUniqueId(), impersonatingUsername), ex);
+                    throw ex;
+                }
+            }
+        }
+
+        logger.info(ADDING_SCOPE_ACCESS, scopeAccessToAdd);
+        scopeAccessDao.addScopeAccess(impersonator, scopeAccessToAdd);
+        logger.info(ADDED_SCOPE_ACCESS, scopeAccessToAdd);
+
+        return scopeAccessToAdd;
+    }
+
+    private void cleanUpImpersonatorsExpiredImpersonationTokens(BaseUser impersonator, String impersonatingUsername) {
         try {
             DateTime now = new DateTime();
             Iterable<ScopeAccess> scopeAccessToCheckForExpired;
             if (optimizeImpersonatedTokenCleanup()) {
                 //only clean up those impersonated tokens for the impersonatingUsername
-                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUser(user, impersonatingUsername);
+                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUser(impersonator, impersonatingUsername);
             } else {
-                //clean up all impersonated tokens regardless of who it's for
-                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUser(user);
+                //The optimizeImpersonatedTokenCleanup is the preferred mechanism. This cleanup block that removes all
+                // expired imp tokens regardless of the user being impersonated is here for legacy reasons as part of a
+                // feature flag. When the feature flag is removed, this block should be removed and the optimization always
+                // used.
+                scopeAccessToCheckForExpired = scopeAccessDao.getAllImpersonatedScopeAccessForUser(impersonator);
             }
 
             for (ScopeAccess scopeAccess : scopeAccessToCheckForExpired) {
@@ -197,106 +263,39 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         } catch (RuntimeException ex) {
             if (ignoreTokenDeleteFailures()) {
                 //if error deleting token, just log, and exit deletion routine
-                logger.warn(String.format("Encountered an error deleting expired impersonated scope accesses for user '%s'. Exiting expired scope access cleanup routine for this user.", user.getUniqueId()), ex);
+                logger.warn(String.format("Encountered an error deleting expired impersonated scope accesses for user '%s'. Exiting expired scope access cleanup routine for this user.", impersonator.getUniqueId()), ex);
             } else {
                 //just rethrow error as if it was never caught
                 throw ex;
             }
         }
-
-        ImpersonatedScopeAccess scopeAccessToAdd = new ImpersonatedScopeAccess();
-        scopeAccessToAdd = setImpersonatedScopeAccess(user, impersonationRequest, scopeAccessToAdd);
-        scopeAccessToAdd.setAccessTokenString(this.generateToken());
-        scopeAccessToAdd.setImpersonatingToken(impersonatingToken);
-
-        if (mostRecent == null) {
-            if(user instanceof Racker){
-                scopeAccessToAdd.setUsername(((Racker)user).getRackerId());
-            } else {
-                scopeAccessToAdd.setUsername(((User)user).getUsername());
-            }
-            scopeAccessToAdd.setClientId(clientId);
-            scopeAccessToAdd.setImpersonatingUsername(impersonatingUsername);
-        } else {
-            scopeAccessToAdd.setUsername(mostRecent.getUsername());
-            scopeAccessToAdd.setClientId(mostRecent.getClientId());
-            scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
-
-            if (!mostRecent.isAccessTokenExpired(new DateTime())) {
-                /*
-                not sure why we create a new token with same token string, delete the old token, then add a the new token
-                back. This is inefficient and introduces concurrency issue where if 2 threads call this method to add a new token
-                for the same impersonatingUsername and
-                there is an existing valid token for that impersonating username, each thread will first try to delete the
-                same "valid" token - resulting in a failure. Even if the deletion failure was ignored, each thread would
-                then try to add a new token with the same token string (the second request will fail since the token string is part of
-                the scope access rdn). Ultimately, this means there's no point in making the deleteScopeAccess in this block
-                fail safe since we'd just get an error later on anyway.
-
-                Instead, we should introduce refresh windows or whatnot for impersonated tokens and return existing impersonated tokens
-                rather than always create new ones. Within refresh windows new ones should be created with NEW token strings
-                */
-                scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
-                try {
-                    scopeAccessDao.deleteScopeAccess(mostRecent);
-                } catch (RuntimeException ex) {
-                    //log the issue, but ultimately, we need to rethrow the error
-                    logger.warn(String.format("Encountered an error deleting a valid impersonated token for user '%s' impersonating user '%s'.", user.getUniqueId(), impersonatingUsername), ex);
-                    throw ex;
-                }
-            }
-        }
-
-        logger.info(ADDING_SCOPE_ACCESS, scopeAccessToAdd);
-        scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
-        logger.info(ADDED_SCOPE_ACCESS, scopeAccessToAdd);
-
-        return scopeAccessToAdd;
     }
 
-    ImpersonatedScopeAccess setImpersonatedScopeAccess(BaseUser caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
-        validateExpireInElement(caller, impersonationRequest);
+    /**
+     * Create a new impersonated scope access based on the passed in information
+     *
+     * @param impersonator
+     * @param userTokenForImpersonation
+     * @param impersonationTokenExpirationDate
+     * @return
+     */
+    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate) {
+        String clientId = getCloudAuthClientId();
 
-        int expirationSeconds;
-        if (impersonationRequest.getExpireInSeconds() == null) {
-            if (caller instanceof Racker) {
-                impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByRackerDefaultSeconds"));
-            } else {
-                expirationSeconds = getTokenExpirationSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds"));
-            }
+        ImpersonatedScopeAccess newImpersonatedScopeAccess = new ImpersonatedScopeAccess();
+        if (impersonator instanceof Racker) {
+            newImpersonatedScopeAccess.setRackerId(((Racker) impersonator).getRackerId());
+            newImpersonatedScopeAccess.setUsername(((Racker) impersonator).getRackerId());
         } else {
-            if (caller instanceof Racker) {
-                impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-            }
-
-            expirationSeconds = impersonationRequest.getExpireInSeconds();
+            newImpersonatedScopeAccess.setUsername(((User) impersonator).getUsername());
         }
+        newImpersonatedScopeAccess.setClientId(clientId);
+        newImpersonatedScopeAccess.setAccessTokenString(this.generateToken());
+        newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
+        newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
+        newImpersonatedScopeAccess.setImpersonatingUsername(userTokenForImpersonation.getUsername());
 
-        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        return impersonatedScopeAccess;
-    }
-
-    void validateExpireInElement(BaseUser caller, ImpersonationRequest impersonationRequest) {
-        if(impersonationRequest==null || impersonationRequest.getExpireInSeconds()==null){
-            return;
-        }
-        if (impersonationRequest.getExpireInSeconds() < 1) {
-            throw new BadRequestException("Expire in element cannot be less than 1.");
-        }
-        if (caller instanceof Racker) {
-            int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
-
-            if (impersonationRequest.getExpireInSeconds() > rackerMax) {
-                throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
-            }
-        } else {
-            int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
-
-            if (impersonationRequest.getExpireInSeconds() > serviceMax) {
-                throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
-            }
-        }
+        return newImpersonatedScopeAccess;
     }
 
     @Override
@@ -679,7 +678,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (authenticatedBy != null) {
             mostRecent.setAuthenticatedBy(authenticatedBy);
         }
-        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
     }
 
     /**
@@ -746,8 +745,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return usa;
     }
 
-    @Override
-    public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
+    //TODO: Refactor this. Method doesn't really reflect use, not really required anymore since impersonation aspect taken out. Combine with only caller.
+    private UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
@@ -756,12 +755,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
 
-        int expirationSeconds;
-        if (impersonated) {
-            expirationSeconds = getTokenExpirationSeconds(getDefaultImpersonatedTokenExpirationSeconds());
-        } else {
-            expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
-        }
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
         BaseUser user = userService.getUserByScopeAccess(scopeAccess, false);
 
@@ -836,10 +830,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return config.getInt("token.refreshWindowHours");
     }
 
-    int getDefaultImpersonatedTokenExpirationSeconds() {
-        return config.getInt("token.impersonatedExpirationSeconds");
-    }
-
     void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.", username);
@@ -886,5 +876,64 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return scopeAccessToAdd;
         }
         return scopeAccess;
+    }
+
+    private DateTime calculateDesiredImpersonationTokenExpiration(ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType, DateTime requestInstant) {
+        Integer desiredImpersonationTokenExpirationInSeconds = impersonationRequest.getExpireInSeconds();
+        if (desiredImpersonationTokenExpirationInSeconds == null) {
+            if (impersonatorType == ImpersonatorType.RACKER) {
+                desiredImpersonationTokenExpirationInSeconds = config.getInt(TOKEN_IMPERSONATED_BY_RACKER_DEFAULT_SECONDS_PROP_NAME);
+            } else {
+                desiredImpersonationTokenExpirationInSeconds = config.getInt(TOKEN_IMPERSONATED_BY_SERVICE_DEFAULT_SECONDS_PROP_NAME);
+            }
+        }
+        DateTime desiredImpersonationTokenExpiration = requestInstant.plusSeconds(desiredImpersonationTokenExpirationInSeconds);
+
+        return desiredImpersonationTokenExpiration;
+    }
+
+    /**
+     * Upon creation, impersonated token lifetimes must be set to the requested (or default) expiration. If this
+     * is greater than the remaining lifetime of the user's token, a new user
+     * token must be generated with the lifetime set to the default lifetime of a user token.
+     */
+    private UserScopeAccess getUserScopeAccessForImpersonationRequest(User user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
+        UserScopeAccess scopeAccessForImpersonation = null;
+
+        //get the latest user scope access for this user
+        UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) getMostRecentDirectScopeAccessForUserByClientId(user, getCloudAuthClientId());
+
+        //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
+        DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
+
+        if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
+            //user token is expired or it's lifetime is before the requested
+            // impersonation expiration so must create a new token for the user.
+            scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
+        } else {
+            scopeAccessForImpersonation = latestScopeAccessForUser;
+        }
+
+        return scopeAccessForImpersonation;
+    }
+
+    private UserScopeAccess createNewUserTokenForImpersonation(User user) {
+        DateTime now = new DateTime();
+
+        UserScopeAccess newUserScopeAccess = createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+        int tokenLifetimeInSeconds = getDefaultCloudAuthTokenExpirationSeconds();
+        DateTime expiration = now.plusSeconds(tokenLifetimeInSeconds);
+        newUserScopeAccess.setAccessTokenExp(expiration.toDate());
+        addUserScopeAccess(user, newUserScopeAccess);
+
+        return newUserScopeAccess;
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 }

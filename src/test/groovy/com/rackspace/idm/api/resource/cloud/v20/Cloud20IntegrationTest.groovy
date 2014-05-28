@@ -2948,9 +2948,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         given:
         def domain = utils.createDomain()
         def username1 = "username" + (long)(Math.random() * 100000)
-        def group = utils.createGroup()
+        def agroup = utils.createGroup()
         def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domain,
-                                                 "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
+                                                 "securePassword2", ["identity:user-manage"].asList(), [agroup.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def result = cloud20.createUser(identityAdminToken, user)
@@ -2959,8 +2959,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         result.status == 201
 
         cleanup:
-        utils.deleteUser(result.getEntity(User).value)
-        utils.deleteGroup(group)
+        utils.deleteUserQuietly(result.getEntity(User).value, serviceAdminToken)
+        cloud20.deleteGroup(serviceAdminToken, agroup.id)
     }
 
     def "List credentials should not return allow an identity admin to list service admin credentials"() {
