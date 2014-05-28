@@ -1230,9 +1230,21 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def getRange(seconds, entropy) {
+        /*
+        to account for processing time, add +- the fudgeSeconds to the calculated range.
+
+        - We add to the max in case this range is calculated before the call to generate the token - which means as long
+        as it doesn't take longer than the fudgeSeconds between the time we calculate the range and when the code generates
+        the token we're guaranteed that the token expiration will fall before the max of the range
+
+        - We subtract from the min in case this range is calculated after the call to generate the token - which means as long
+        as it doesn't take longer than the fudgeSeconds between the time the code generates the token and we calculate this
+        range we're guaranteed that the token expiration will fall after the min of the range
+         */
+        int fudgeSeconds = 30
         HashMap<String, Date> range = new HashMap<>()
-        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
-        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate())
+        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))-fudgeSeconds).toDate())
+        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))+fudgeSeconds).toDate())
         return range
     }
 }
