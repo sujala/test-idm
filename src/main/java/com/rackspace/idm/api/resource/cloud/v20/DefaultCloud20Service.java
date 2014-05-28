@@ -961,8 +961,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 tenant = tenantService.getTenantByName(tenantName);
             }
 
+            convertedToken.setTenant(convertTenantEntityToApi(tenant));
+
             if (shouldFilterServiceCatalogByTenant(tenant.getTenantId(), roles)) {
-                convertedToken.setTenant(convertTenantEntityToApi(tenant));
                 for (OpenstackEndpoint endpoint : endpoints) {
                     if (tenant.getTenantId().equals(endpoint.getTenantId())) {
                         tenantEndpoints.add(endpoint);
