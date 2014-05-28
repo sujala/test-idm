@@ -47,6 +47,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
 
         then:
         auth.serviceCatalog.service.size == 9
+        auth.token.tenant.id == domainId
 
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
@@ -82,6 +83,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
 
         then:
         auth.serviceCatalog.service.size == 9
+        auth.token.tenant.id == domainId
 
         when:
         def authRequest2 = v2Factory.createPasswordAuthenticationRequestWithTenantName(username, "Password1", mossoName)
@@ -89,6 +91,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
 
         then:
         auth2.serviceCatalog.service.size == 9
+        auth.token.tenant.id == domainId
 
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
@@ -124,6 +127,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
 
         then:
         auth.serviceCatalog.service.size == 2
+        auth.token.tenant.id == nastId
 
         when:
         def authRequest2 = v2Factory.createPasswordAuthenticationRequestWithTenantName(username, "Password1", nastName)
@@ -131,6 +135,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
 
         then:
         auth2.serviceCatalog.service.size == 2
+        auth.token.tenant.id == nastId
 
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
