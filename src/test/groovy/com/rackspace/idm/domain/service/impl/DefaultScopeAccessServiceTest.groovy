@@ -1265,7 +1265,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def result = service.getRegion(token)
 
         then:
-        1 * userService.getUserByScopeAccess(token) >> user
+        1 * userService.getUserByScopeAccess(token, false) >> user
         result == expectedRegion
 
         where:
