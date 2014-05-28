@@ -1,6 +1,7 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
@@ -223,9 +224,15 @@ class Cloud20Utils {
         methods.impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user)
     }
 
-    def impersonateWithRacker(user) {
+    def impersonate(String token, User user, Integer expireTime) {
+        def response = methods.impersonate(token, user, expireTime)
+        assert (response.status == SC_OK)
+        response.getEntity(ImpersonationResponse)
+    }
+
+    def impersonateWithRacker(user, expireTime = 10800) {
         def auth = authenticateRacker(RACKER, RACKER_PASSWORD)
-        def response = methods.impersonate(auth.token.id, user)
+        def response = methods.impersonate(auth.token.id, user, expireTime)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)
     }

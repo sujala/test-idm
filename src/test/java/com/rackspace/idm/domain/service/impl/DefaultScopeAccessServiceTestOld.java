@@ -238,104 +238,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
-        defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
-    }
-    @Test
-    public void setImpersonatedScopeAccess_callerIsRacker_setsRackerId() throws Exception {
-        Racker racker = new Racker();
-        racker.setRackerId("foo");
-        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(racker, impersonationRequest, new ImpersonatedScopeAccess());
-        assertThat("racker id", impersonatedScopeAccess.getRackerId(), equalTo("foo"));
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsRacker_setsExpiration() throws Exception {
-        DateTime expectedExpirationTime = new DateTime().plusSeconds(10000);
-        impersonationRequest.setExpireInSeconds(10000);
-        when(configuration.getInt("token.impersonatedByRackerMaxSeconds")).thenReturn(10800);
-        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), greaterThan(expectedExpirationTime.getMillis() - 60000L));
-        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), lessThan(expectedExpirationTime.getMillis() + 60000L));
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsServiceUser_setsExpiration() throws Exception {
-        DateTime expectedExpirationTime = new DateTime().plusSeconds(10000);
-        impersonationRequest.setExpireInSeconds(10000);
-        when(configuration.getInt("token.impersonatedByServiceMaxSeconds")).thenReturn(10800);
-        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), greaterThan(expectedExpirationTime.getMillis() - 60000L));
-        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), lessThan(expectedExpirationTime.getMillis() + 60000L));
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void setImpersonationScopeAccess_expireInGreaterThanMaxAndCallerIsRacker_throwsBadRequestException() throws Exception {
-        impersonationRequest.setExpireInSeconds(10800000);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void setImpersonationScopeAccess_expireInGreaterThanMaxAndCallerIsServiceUser_throwsBadRequestException() throws Exception {
-        impersonationRequest.setExpireInSeconds(108000000);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void setImpersonationScopeAccess_expireInLessThan1AndCallerIsRacker_throwsBadRequestException() throws Exception {
-        impersonationRequest.setExpireInSeconds(0);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void setImpersonationScopeAccess_expireInLessThan1AndCallerIsServiceUser_throwsBadRequestException() throws Exception {
-        impersonationRequest.setExpireInSeconds(0);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsRacker_checksMaxTime() throws Exception {
-        impersonationRequest.setExpireInSeconds(10800);
-        when(configuration.getInt("token.impersonatedByRackerMaxSeconds")).thenReturn(10800);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByRackerMaxSeconds");
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsServiceUser_checksMaxTime() throws Exception {
-        impersonationRequest.setExpireInSeconds(10800);
-        when(configuration.getInt("token.impersonatedByServiceMaxSeconds")).thenReturn(10800);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByServiceMaxSeconds");
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNullAndCallerIsRacker_setsExpirationToRackerDefault() throws Exception {
-        impersonationRequest.setExpireInSeconds(null);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByRackerDefaultSeconds");
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_expireInIsNullAndCallerIsServiceUser_setsExpirationToServiceDefault() throws Exception {
-        impersonationRequest.setExpireInSeconds(null);
-        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByServiceDefaultSeconds");
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_CallerIsRacker_setsExpirationToRackerDefault() throws Exception {
-        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByRackerDefaultSeconds");
-    }
-
-    @Test
-    public void setImpersonationScopeAccess_CallerIsServiceUser_setsExpirationToServiceDefault() throws Exception {
-        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
-        verify(configuration).getInt("token.impersonatedByServiceDefaultSeconds");
-    }
-
-    @Test
     public void addDirectScopeAccess_scopeAccessIsNull_throwsIllegalArgumentException() throws Exception {
         try{
             defaultScopeAccessService.addUserScopeAccess(null, null);
@@ -424,12 +326,6 @@ public class DefaultScopeAccessServiceTestOld {
     public void getUserScopeAccessForClientIdByUsernameAndApiCredentials_notAuthenticated_throwsNotAuthenticated() throws Exception {
         when(userService.authenticateWithApiKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(new User(), false));
         defaultScopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId");
-    }
-
-    @Test
-    public void getDefaultImpersonatedTokenExpirationSeconds_returnsInt() throws Exception {
-        when(configuration.getInt("token.impersonatedExpirationSeconds")).thenReturn(100);
-        assertThat("int", defaultScopeAccessService.getDefaultImpersonatedTokenExpirationSeconds(), equalTo(100));
     }
 
     @Test

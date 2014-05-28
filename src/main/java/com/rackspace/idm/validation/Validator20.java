@@ -4,8 +4,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -29,6 +31,12 @@ import java.util.regex.Pattern;
 @Component
 public class Validator20 {
 
+    public static final String USER_NULL_IMPERSONATION_ERROR_MSG = "User cannot be null for impersonation request";
+    public static final String USERNAME_NULL_IMPERSONATION_ERROR_MSG = "Username cannot be null for impersonation request";
+    public static final String USERNAME_EMPTY_IMPERSONATION_ERROR_MSG = "Username cannot be empty or blank";
+    public static final String EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG = "Expire in element cannot be less than 1.";
+    public static final String EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG = "Expire in element cannot be more than %s";
+    public static final String TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME = "token.cloudAuthExpirationSeconds";
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public static final int PASSWORD_MIN_LENGTH = 8;
@@ -36,6 +44,9 @@ public class Validator20 {
     public static final int MAX_GROUP_DESC = 1000;
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    Configuration config;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -117,15 +128,35 @@ public class Validator20 {
         }
     }
 
-    public void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
+    public void validateImpersonationRequestForRacker(ImpersonationRequest impersonationRequest) {
+        validateImpersonationRequestInternal(impersonationRequest, config.getInt(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_RACKER_MAX_SECONDS_PROP_NAME));
+    }
+
+    public void validateImpersonationRequestForService(ImpersonationRequest impersonationRequest) {
+        validateImpersonationRequestInternal(impersonationRequest, config.getInt(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME));
+    }
+
+    private void validateImpersonationRequestInternal(ImpersonationRequest impersonationRequest, int maxRequestedExpireTimeForType) {
+        int maxUserTokenLifetime = config.getInt(TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME);
+
+        if (maxUserTokenLifetime < maxRequestedExpireTimeForType) {
+            //if the max user token lifetime is less than the max impersonation token lifetime, must use the user token
+            // lifetime as the impersonation max
+            maxRequestedExpireTimeForType = maxUserTokenLifetime;
+        }
+
         if (impersonationRequest.getUser() == null) {
-            throw new BadRequestException("User cannot be null for impersonation request");
+            throw new BadRequestException(USER_NULL_IMPERSONATION_ERROR_MSG);
         } else if (impersonationRequest.getUser().getUsername() == null) {
-            throw new BadRequestException("Username cannot be null for impersonation request");
+            throw new BadRequestException(USERNAME_NULL_IMPERSONATION_ERROR_MSG);
         } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
-            throw new BadRequestException("Username cannot be empty or blank");
-        } else if (impersonationRequest.getExpireInSeconds() != null && impersonationRequest.getExpireInSeconds() < 1) {
-            throw new BadRequestException("Expire in element cannot be less than 1.");
+            throw new BadRequestException(USERNAME_EMPTY_IMPERSONATION_ERROR_MSG);
+        } else if (impersonationRequest.getExpireInSeconds() != null) {
+           if (impersonationRequest.getExpireInSeconds() < 1) {
+            throw new BadRequestException(EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG);
+           } else if (impersonationRequest.getExpireInSeconds() > maxRequestedExpireTimeForType) {
+               throw new BadRequestException(String.format(EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG, maxRequestedExpireTimeForType));
+           }
         }
     }
 

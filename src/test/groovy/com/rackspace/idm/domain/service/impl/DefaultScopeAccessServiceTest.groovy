@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
@@ -52,7 +53,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
         config.getInt("token.expirationSeconds", _) >> defaultExpirationSeconds
         config.getInt("token.rackerExpirationSeconds", _) >> defaultRackerExpirationSeconds
-        config.getInt("token.impersonatedExpirationSeconds") >> defaultImpersonationExpirationSeconds
         config.getInt("token.refreshWindowHours") >> defaultRefreshHours
     }
 
@@ -77,9 +77,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def refresh_sa = createUserScopeAccess("refreshTokenString", "userRsId", "clientId", refreshDate)
 
         when:
-        service.updateExpiredUserScopeAccess(sa, true)
-        service.updateExpiredUserScopeAccess(expired_sa, false)
-        service.updateExpiredUserScopeAccess(refresh_sa, false)
+        service.updateExpiredUserScopeAccess(sa)
+        service.updateExpiredUserScopeAccess(expired_sa)
+        service.updateExpiredUserScopeAccess(refresh_sa)
 
         then:
         2 * scopeAccessDao.addScopeAccess(_, _)
@@ -92,7 +92,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
 
         when:
-        service.updateExpiredUserScopeAccess(expired_sa, true)
+        service.updateExpiredUserScopeAccess(expired_sa)
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _)
@@ -105,7 +105,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
 
         when:
-        service.updateExpiredUserScopeAccess(expired_sa, true)
+        service.updateExpiredUserScopeAccess(expired_sa)
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _)
@@ -301,15 +301,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             return it
         }
 
-        HashMap<String, Date> range
-        if (impersonated)
-            range = getRange(defaultImpersonationExpirationSeconds, entropy)
-        else {
-            range = getRange(defaultCloudAuthExpirationSeconds, entropy)
-        }
+        HashMap<String, Date> range = getRange(defaultCloudAuthExpirationSeconds, entropy)
 
         when:
-        def scopeAccess = service.updateExpiredUserScopeAccess(expiredScopeAccess, impersonated)
+        def scopeAccess = service.updateExpiredUserScopeAccess(expiredScopeAccess)
 
         then:
         1 * config.getDouble("token.entropy") >> entropy
@@ -317,9 +312,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccess.accessTokenExp >= range.get("min")
 
         where:
-        impersonated | entropy
-        false        | 0.01
-        true         | 0.05
+        entropy | _
+        0.01 | _
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
@@ -436,46 +430,45 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessOne.getAccessTokenExp() != null
     }
 
-    def "addImpersonatedScopeAccess deletes expired scopeAccess and creates new scopeAccess"() {
+    def "processImpersonatedScopeAccessRequest deletes expired scopeAccess and _last_ valid token and creates new scopeAccess"() {
         given:
-        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impToken1", expiredDate)
-        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user2", "impUser2", "tokenString2", "impToken2", expiredDate)
-        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user3", "impUser3", "tokenString3", "impToken3", expiredDate)
-        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser4", "tokenString4", "impToken4", expiredDate)
-        ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser5", "tokenString5", "impToken5", refreshDate)
-        ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", futureDate)
+        def existingValidImpersonationTokenString = "validImpersonatingToken"
+        ImpersonatedScopeAccess scopeAccessOne = createImpersonatedScopeAccess("user1", "impUser1", "tokenString1", "impersonatedToken1", expiredDate)
+        ImpersonatedScopeAccess scopeAccessTwo = createImpersonatedScopeAccess("user1", "impUser2", "tokenString2", "impersonatedToken2", expiredDate)
+        ImpersonatedScopeAccess scopeAccessThree = createImpersonatedScopeAccess("user1", "impUser3", "tokenString3", "impersonatedToken2", futureDate)
+        ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user1", "impUser3", existingValidImpersonationTokenString, "impersonatedToken4", futureDate)
+        UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
+
+        def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
+        def impersonator = entityFactory.createUser("username2", "userId2", "domainId2", "region2")
 
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            it.user = v2Factory.createUser(impersonatedUser.id, impersonatedUser.username)
+            it.expireInSeconds = 1000
             return it
         }
 
         def expiredList = [ scopeAccessOne, scopeAccessTwo ].asList()
-        def listWithValid = [ scopeAccessThree, scopeAccessFour ].asList()
-        def listWithTwoImpForOneUser = [ scopeAccessFour, scopeAccessFive, scopeAccessSix ].asList()
+        def listWithValid = [ scopeAccessThree, scopeAccessFour].asList()
+        def listAll = expiredList + listWithValid
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >>> [
-                expiredList,
-                listWithValid,
-                listWithTwoImpForOneUser
+                listAll,
         ]
 
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >>> [
-                null,
-                scopeAccessThree,
-                scopeAccessSix
+                scopeAccessFour,
         ]
 
         when:
-        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
-        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
-        ImpersonatedScopeAccess returned = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess returned = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then:
-        6 * scopeAccessDao.deleteScopeAccess(_)
-        3 * scopeAccessDao.addScopeAccess(_, _)
+        3 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
 
-        returned.accessTokenString.equals("tokenString6")
+        returned.accessTokenString.equals(existingValidImpersonationTokenString)
     }
 
     def "addImpersonatedScopeAccess deleting expired tokens logic based on property"() {
@@ -489,8 +482,17 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user1", "impUser2", "tokenString5", "impToken5", expiredDate)
         ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user1", "impUser2", "tokenString6", "impToken6", futureDate)
 
+        //return valid user scope token
+        UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        config.getString("cloudAuth.clientId") >> "clientId"
+
+        def impersonatedUser = entityFactory.createUser(impersonatingUser, "userId", "domainId", "region")
+        def impersonator = entityFactory.createUser("username2", "userId2", "domainId2", "region2")
+
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", impersonatingUser)
+            it.user = v2Factory.createUser(impersonatedUser.id, impersonatedUser.username)
+            it.expireInSeconds = 1000
             return it
         }
 
@@ -512,7 +514,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, impersonatingUser) >> scopeAccessFour
 
         when: "optimize is turned off"
-        ImpersonatedScopeAccess nonOptResult = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then: "all expired tokens are deleted regardless of user"
         1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> false
@@ -522,7 +524,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         nonOptResult.accessTokenString.equals(nonExpiredTokenStr)
 
         when: "optimize is turned on"
-        ImpersonatedScopeAccess optResult = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then: "all expired tokens are deleted regardless of user"
         1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> true
@@ -545,8 +547,17 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser5", "tokenString5", "impToken5", expiredDate)
         ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser6", "tokenString6", "impToken6", futureDate)
 
+        //return valid user scope token
+        UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        config.getString("cloudAuth.clientId") >> "clientId"
+
+        def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
+        def impersonator = entityFactory.createUser("username2", "userId2", "domainId2", "region2")
+
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            it.user = v2Factory.createUser(impersonatedUser.id, impersonatedUser.username)
+            it.expireInSeconds = 1000
             return it
         }
 
@@ -554,7 +565,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting second of three expired tokens"
-        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then: "no attempt is made to delete the other expired tokens or the valid token, and exception is bubbled"
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
@@ -574,16 +585,24 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         ImpersonatedScopeAccess scopeAccessFive = createImpersonatedScopeAccess("user5", "impUser2", "tokenString5", "impToken5", expiredDate)
         ImpersonatedScopeAccess scopeAccessSix = createImpersonatedScopeAccess("user6", "impUser3", "tokenString6", "impToken6", futureDate)
 
+        //return valid user scope token
+        UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        config.getString("cloudAuth.clientId") >> "clientId"
+
+        def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
+        def impersonator = entityFactory.createUser("username2", "userId2", "domainId2", "region2")
+
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            it.user = v2Factory.createUser(impersonatedUser.id, impersonatedUser.username)
+            it.expireInSeconds = 1000
             return it
         }
-
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting second of three expired tokens"
-        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then: "no attempt is made to delete third expired token, but valid token is still deleted, scope access added and no exception thrown"
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
@@ -597,8 +616,17 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def exceptionToThrow = new RuntimeException("Throwing exception to verify that no more deletes are called once exception thrown")
         ImpersonatedScopeAccess scopeAccessFour = createImpersonatedScopeAccess("user4", "impUser1", "tokenString4", "impToken4", futureDate)
 
+        //return valid user scope token
+        UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
+        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        config.getString("cloudAuth.clientId") >> "clientId"
+
+        def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
+        def impersonator = entityFactory.createUser("username2", "userId2", "domainId2", "region2")
+
         def request = new ImpersonationRequest().with {
-            it.user = v2Factory.createUser("userId", "userToBeImpersonated")
+            it.user = v2Factory.createUser(impersonatedUser.id, impersonatedUser.username)
+            it.expireInSeconds = 1000
             return it
         }
 
@@ -606,7 +634,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting valid token"
-        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
         then: "no attempt is made to delete third expired token, but valid token is deleted and no exception thrown"
         1 * scopeAccessDao.deleteScopeAccess(_) >> {throw exceptionToThrow }
@@ -1081,81 +1109,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         result >= min
     }
 
-    @Unroll
-    def "setImpersonatedScopeAccess adds entropy to token expiration"() {
-        given:
-        config.getInt("token.impersonatedByRackerMaxSeconds") >> exSeconds * 2
-        config.getInt("token.impersonatedByServiceMaxSeconds") >> exSeconds * 2
-        config.getInt("token.impersonatedByRackerDefaultSeconds") >> exSeconds
-        config.getInt("token.impersonatedByServiceDefaultSeconds") >> exSeconds
-
-        def impersonationRequest = v1Factory.createImpersonationRequest(v2Factory.createUser())
-        if (notNullExpireIn) {
-            impersonationRequest.expireInSeconds = exSeconds
-        }
-
-        def caller
-        def range
-        if (isRacker) {
-            caller = entityFactory.createRacker()
-            range = getRange(exSeconds, entropy)
-        } else {
-            caller = entityFactory.createUser()
-            range = getRange(exSeconds, entropy)
-        }
-        def scopeAccess = createImpersonatedScopeAccess().with {
-            it.accessTokenExp = new DateTime().minusSeconds(3600).toDate()
-            return it
-        }
-
-        when:
-        def returnedSA = service.setImpersonatedScopeAccess(caller, impersonationRequest, scopeAccess)
-
-        then:
-        if (notNullExpireIn){
-            0 * config.getDouble("token.entropy") >> entropy
-        } else{
-            1 * config.getDouble("token.entropy") >> entropy
-        }
-
-        returnedSA.accessTokenExp <= range.get("max")
-        returnedSA.accessTokenExp >= range.get("min")
-
-        where:
-        isRacker | exSeconds | entropy | notNullExpireIn
-        true     | 3600      | 0.01    | false
-        false    | 9000      | 0.05    | false
-        true     | 3600      | 0.01    | true
-        false    | 9000      | 0.05    | true
-    }
-
-    def "validateExpireInElement accounts for expiration entropy"() {
-        given:
-        config.getInt("token.impersonatedByRackerMaxSeconds") >> expireIn * 2
-        config.getInt("token.impersonatedByServiceMaxSeconds") >> expireIn * 2
-
-        def caller
-        if (isRacker) {
-            caller = entityFactory.createRacker()
-        } else {
-            caller = entityFactory.createUser()
-        }
-
-        def request = v1Factory.createImpersonationRequest(v2Factory.createUser())
-        request.expireInSeconds = expireIn
-
-        when:
-        service.validateExpireInElement(caller, request)
-
-        then:
-        0 * config.getDouble("token.entropy") >> entropy
-
-        where:
-        isRacker | expireIn | entropy
-        true     | 3600     | 0.01
-        false    | 3600     | 0.01
-    }
-
     def "calling getValidRackerScopeAccessForClientId sets expiration with entropy if non existing"() {
         given:
         def entropy = 0.01
@@ -1277,9 +1230,21 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def getRange(seconds, entropy) {
+        /*
+        to account for processing time, add +- the fudgeSeconds to the calculated range.
+
+        - We add to the max in case this range is calculated before the call to generate the token - which means as long
+        as it doesn't take longer than the fudgeSeconds between the time we calculate the range and when the code generates
+        the token we're guaranteed that the token expiration will fall before the max of the range
+
+        - We subtract from the min in case this range is calculated after the call to generate the token - which means as long
+        as it doesn't take longer than the fudgeSeconds between the time the code generates the token and we calculate this
+        range we're guaranteed that the token expiration will fall after the min of the range
+         */
+        int fudgeSeconds = 30
         HashMap<String, Date> range = new HashMap<>()
-        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))).toDate())
-        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))).toDate())
+        range.put("min", new DateTime().plusSeconds((int)Math.floor(seconds * (1 - entropy))-fudgeSeconds).toDate())
+        range.put("max", new DateTime().plusSeconds((int)Math.ceil(seconds * (1 + entropy))+fudgeSeconds).toDate())
         return range
     }
 }

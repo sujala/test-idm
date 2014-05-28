@@ -16,6 +16,9 @@ import com.rackspace.idm.exception.*
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.lang.StringUtils
+import org.joda.time.DateTime
+
+import javax.ws.rs.core.HttpHeaders
 import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -76,7 +79,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def weights = [ "0", "100", "500", "1000", "2000" ].asList()
         config.getList("cloudAuth.allowedRoleWeights") >> weights
 
-        headers = Mock()
+        headers = Mock(HttpHeaders)
         jaxbMock = Mock(JAXBElement)
     }
 
@@ -659,7 +662,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def contextMock = Mock(PaginatorContext)
         contextMock.getValueList() >> [].asList()
 
-        userService.getUsersWithRole(_, _, _, _) >> contextMock
+        userService.getUsersWithRole(_, _, _) >> contextMock
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
@@ -1561,25 +1564,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
         def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new Date())
 
-        scopeAccessMock = Mock()
-        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        def callerToken =  new UserScopeAccess().with {
+            it.accessTokenExp = new DateTime().plusDays(1).toDate()
+            it.accessTokenString = "token"
+            return it
+        }
+
+        def impersonatedToken = new ImpersonatedScopeAccess().with {
+            return it
+        }
+
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [
-                scopeAccessMock,
+                callerToken,
                 userScopeAccess
         ]
 
-        userService.getUser(_) >> entityUser
+        userService.checkAndGetUserByName(_) >> entityUser
         tenantService.getGlobalRolesForUser(entityUser) >> [
                 entityFactory.createTenantRole("identity:default")
         ].asList()
-
-        scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(_, _) >> userScopeAccess
 
         when:
         def responseBuilder = service.impersonate(headers, authToken, impRequest)
 
         then:
-        1 * scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess, true) >> userScopeAccess
+        1 * authorizationService.verifyRackerOrIdentityAdminAccess(_)
+        1 * scopeAccessService.processImpersonatedScopeAccessRequest(_, _, _, _) >> impersonatedToken
         responseBuilder.build().status == 200
     }
 
@@ -4188,32 +4198,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * tenantService.getTenantsForFederatedTokenByTenantRoles(_)  >> [].asList()
         result.status == 200
-    }
-
-    def "Impersonate should create a new token if user does not have a scopeAccess"() {
-        given:
-        allowUserAccess()
-        def username = "impersonatingUser"
-        def v20user = v2Factory.createUser()
-        v20user.username = username
-        def impersonate = v1Factory.createImpersonationRequest(v20user)
-        def entityUser = entityFactory.createUser(username, null, null, "region").with {
-            it.enabled = false
-            return it
-        }
-        def tenantRole = new TenantRole().with {
-            it.name = "identity:default"
-            it
-        }
-
-
-        when:
-        service.impersonate(headers, authToken, impersonate)
-
-        then:
-        1 * userService.getUser(_) >> entityUser
-        1 * tenantService.getGlobalRolesForUser(_) >> [tenantRole].asList()
-        1 * scopeAccessService.createInstanceOfUserScopeAccess(_, _, _)
     }
 
     def mockServices() {

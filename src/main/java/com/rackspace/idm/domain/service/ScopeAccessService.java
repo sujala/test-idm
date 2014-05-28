@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.domain.entity.*;
 
 import javax.xml.bind.JAXBException;
@@ -12,8 +13,6 @@ public interface ScopeAccessService {
     void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 
     void addApplicationScopeAccess(Application application, ScopeAccess scopeAccess);
-
-    ScopeAccess addImpersonatedScopeAccess(BaseUser user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
 
     boolean authenticateAccessToken(String accessTokenStr);
 
@@ -77,8 +76,6 @@ public interface ScopeAccessService {
 
     UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy);
 
-    UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
-
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
 
     void setApplicationService(ApplicationService applicationService);
@@ -94,4 +91,16 @@ public interface ScopeAccessService {
     String getUserIdForParent(ScopeAccess scopeAccessByAccessToken);
 
     UserScopeAccess createInstanceOfUserScopeAccess(User user, String clientId, String clientRCN);
-}
+
+    /**
+     * Processes an impersonation request and returns an appropriate ImpersonatedScopeAccess.
+     *
+     * @param impersonator
+     * @param userBeingImpersonated
+     * @param impersonationRequest
+     * @param impersonatorType
+     * @return
+     */
+    ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, User userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType);
+
+ }
