@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.util.SamlResponseValidator
@@ -40,6 +41,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
     @Shared def mockIdentityProviderDao
     @Shared def mockFederatedUserDao
     @Shared def mockRoleDao
+    @Shared def mockDomainService
 
     def setupSpec(){
         DefaultBootstrap.bootstrap()
@@ -102,6 +104,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockFederatedUserDao(service)
         mockRoleDao(service)
         mockConfig(service)
+        mockDomainService(service)
 
         user = new User();
         endpoints = [].toList()
@@ -113,13 +116,14 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         given:
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
 
-
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider(IDP_NAME,IDP_URI)
         mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> null
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForFederatedToken(_) >> roles
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
 
         when:
         def authInfo = service.generateAuthenticationInfo(samlResponse)
@@ -151,6 +155,8 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForFederatedToken(_) >> roles
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
 
         when:
         def authInfo = service.generateAuthenticationInfo(samlResponse)
@@ -269,6 +275,11 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockRoleDao = Mock(ApplicationRoleDao)
         mockRoleDao.getRoleByName(_) >> createClientRole("50", "roleName")
         service.roleDao = mockRoleDao
+    }
+
+    def mockDomainService(service) {
+        mockDomainService = Mock(DomainService)
+        service.domainService = mockDomainService
     }
 
     def mockConfig(service) {

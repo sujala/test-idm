@@ -1,5 +1,6 @@
 package com.rackspace.idm.util
 
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
@@ -103,14 +104,11 @@ class SamlResponseValidatorTest extends Specification {
         given:
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-        def mockUserAdminRole = Mock(ClientRole)
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
         mockDomainDao.getDomain(DOMAIN) >> Mock(Domain)
-        mockConfig.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
-        mockRoleService.getUserAdminRole() >> mockUserAdminRole
 
         when:
         samlResponseValidator.validate(samlResponseDecorator)
@@ -118,7 +116,7 @@ class SamlResponseValidatorTest extends Specification {
         then:
         noExceptionThrown()
         1 * mockSamlSignatureValidator.validateSignature(_,IDP_PUBLIC_CERTIFICATE)
-        1 * mockPrecedenceValidator.verifyRolePrecedenceForAssignment(mockUserAdminRole, _);
+        1 * mockPrecedenceValidator.verifyRolePrecedenceForAssignment(PrecedenceValidator.RBAC_ROLES_WEIGHT - 1, samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
     }
 
     def "validate saml response when signature is not specified" (){

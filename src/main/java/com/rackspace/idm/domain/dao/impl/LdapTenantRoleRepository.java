@@ -118,6 +118,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
+    public void deleteTenantRoleForFederatedToken(FederatedToken token, TenantRole tenantRole) {
+        deleteOrUpdateTenantRole(tenantRole, token.getUniqueId());
+    }
+
+    @Override
     public void deleteTenantRoleForApplication(Application application, TenantRole tenantRole) {
         deleteOrUpdateTenantRole(tenantRole, application.getUniqueId());
     }

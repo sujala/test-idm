@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -11,6 +12,7 @@ import testHelpers.RootServiceTest
 
 class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
+    @Shared FederatedUserDao mockFederatedUserDao
 
     String clientId = "clientId"
     String name = "name"
@@ -30,6 +32,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockScopeAccessService(service)
         mockAtomHopperClient(service)
+        mockFederatedUserDao(service)
     }
 
     def "delete rbac roles for user deletes all rbac roles (roles where weight=default.rsWeight)"() {
@@ -244,6 +247,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
         applicationService.getClientRoleById(_) >> cRole
         config.getString(_) >> roleName
+        mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
         service.deleteTenantRoleForUser(user, role)
@@ -406,6 +410,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         applicationService.getById(_) >> entityFactory.createApplication()
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
         userService.getSubUsers(_) >> [ subUser ].asList()
+        mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
         service.addTenantRoleToUser(user, role)
@@ -489,6 +494,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         applicationService.getById(_) >> entityFactory.createApplication()
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
         userService.getSubUsers(_) >> [ subUser ].asList()
+        mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
         service.deleteTenantRoleForUser(user, role)
@@ -565,6 +571,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
         userService.getSubUsers(user) >> [ subUser ].asList()
         config.getString("cloudAuth.userAdminRole") >> roleName
+        mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
         service.addTenantRoleToUser(user, tenantRole)
@@ -753,5 +760,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantRoleDao.getTenantRolesForFederatedToken(_) >> tenantRoles
         1 * tenantDao.getTenant("tenantId1") >> tenant
         1 * tenantDao.getTenant("tenantId2") >> tenant
+    }
+
+    def mockFederatedUserDao(service) {
+        mockFederatedUserDao = Mock(FederatedUserDao)
+        service.federatedUserDao = mockFederatedUserDao
     }
 }

@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.domain.dao.FederatedTokenDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -51,7 +53,13 @@ public class DefaultTenantService implements TenantService {
     private TenantRoleDao tenantRoleDao;
 
     @Autowired
+    private FederatedTokenDao federatedTokenDao;
+
+    @Autowired
     private AtomHopperClient atomHopperClient;
+
+    @Autowired
+    FederatedUserDao federatedUserDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -303,14 +311,28 @@ public class DefaultTenantService implements TenantService {
             ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
             atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
             if (isUserAdmin((User) user) && cRole.getPropagate()) {
+                //add the role to all sub-users
                 for (User subUser : userService.getSubUsers((User) user)) {
                     try {
                         role.setLdapEntry(null);
                         tenantRoleDao.addTenantRoleToUser(subUser, role);
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                     } catch (ClientConflictException ex) {
-                        String msg = String.format("User %s already has tenantRole %s", ((User)user).getId(), role.getName());
+                        String msg = String.format("User %s already has tenantRole %s", subUser.getId(), role.getName());
                         logger.warn(msg);
+                    }
+                }
+
+                //add role to all federated sub-users' tokens
+                for(User subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
+                    for(FederatedToken token : federatedTokenDao.getFederatedTokensByUserId(subUser.getId())) {
+                        try {
+                            role.setLdapEntry(null);
+                            tenantRoleDao.addTenantRoleToFederatedToken(token, role);
+                        } catch (ClientConflictException ex) {
+                            String msg = String.format("Federated user %s already has tenantRole %s", subUser.getId(), role.getName());
+                            logger.warn(msg);
+                        }
                     }
                 }
             }
@@ -411,16 +433,31 @@ public class DefaultTenantService implements TenantService {
         atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
 
         if (isUserAdmin(user) && cRole.getPropagate()) {
+            //remove propagating roles from sub-users
             for (User subUser : userService.getSubUsers(user)) {
                 try {
                     role.setLdapEntry(null);
                     tenantRoleDao.deleteTenantRoleForUser(subUser, role);
                     atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                 } catch (NotFoundException ex) {
-                    String msg = String.format("User %s does not have tenantRole %s", user.getId(), role.getName());
+                    String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
                     logger.warn(msg);
                 }
             }
+
+            //remove propagating roles from federated users
+            for(User subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
+                for(FederatedToken token : federatedTokenDao.getFederatedTokensByUserId(subUser.getId())) {
+                    try {
+                        role.setLdapEntry(null);
+                        tenantRoleDao.deleteTenantRoleForFederatedToken(token, role);
+                    } catch (NotFoundException ex) {
+                        String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
+                        logger.warn(msg);
+                    }
+                }
+            }
+
         }
     }
 

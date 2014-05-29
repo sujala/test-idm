@@ -23,6 +23,8 @@ import java.util.List;
 @Component
 public class PrecedenceValidator {
 
+    public static final int RBAC_ROLES_WEIGHT = 1000;
+
     @Autowired
     private ApplicationService applicationService;
 
@@ -88,12 +90,15 @@ public class PrecedenceValidator {
 
     public void verifyRolePrecedenceForAssignment(ClientRole clientRole, List<String> roleNames) {
         if (clientRole != null && roleNames != null) {
-            int roleWeight = clientRole.getRsWeight();
-            for (String roleName : roleNames) {
-                ClientRole role = roleService.getRoleByName(roleName);
-                if (role != null) {
-                    compareWeights(roleWeight, role.getRsWeight());
-                }
+            verifyRolePrecedenceForAssignment(clientRole.getRsWeight(), roleNames);
+        }
+    }
+
+    public void verifyRolePrecedenceForAssignment(int roleWeight, List<String> roleNames) {
+        for (String roleName : roleNames) {
+            ClientRole role = roleService.getRoleByName(roleName);
+            if (role != null) {
+                compareWeights(roleWeight, role.getRsWeight());
             }
         }
     }
