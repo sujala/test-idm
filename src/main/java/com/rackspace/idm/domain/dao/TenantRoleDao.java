@@ -26,6 +26,7 @@ public interface TenantRoleDao {
     TenantRole getTenantRoleForFederatedToken(FederatedToken token, String roleId);
     void updateTenantRole(TenantRole tenantRole);
     void deleteTenantRoleForUser(User user, TenantRole tenantRole);
+    void deleteTenantRoleForFederatedToken(FederatedToken token, TenantRole role);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
     List<String> getIdsForUsersWithTenantRole(String roleId);

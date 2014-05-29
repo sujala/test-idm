@@ -156,7 +156,7 @@ public class SamlResponseValidator {
             roleNames.add(role);
         }
 
-        //don't allow saml response to include role with more power than an identity:user-admin
-        precedenceValidator.verifyRolePrecedenceForAssignment(roleService.getUserAdminRole(), roles);
+        //don't allow saml response to include role with more power than RBAC roles
+        precedenceValidator.verifyRolePrecedenceForAssignment(PrecedenceValidator.RBAC_ROLES_WEIGHT - 1, roles);
     }
 }

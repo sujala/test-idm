@@ -6,13 +6,13 @@ import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.FederatedIdentityService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.util.SamlResponseValidator;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +27,8 @@ import java.util.UUID;
  */
 @Component
 public class DefaultFederatedIdentityService implements FederatedIdentityService {
+
+    private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
     @Autowired
     SamlResponseValidator samlResponseValidator;
@@ -45,6 +47,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Autowired
     TenantService tenantService;
+
+    @Autowired
+    DomainService domainService;
+
+    @Autowired
+    RoleService roleService;
 
     @Autowired
     private Configuration config;
@@ -137,6 +145,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
         List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
 
+        //get the roles passed in with the saml assertion
         for (String role : roles) {
             ClientRole roleObj = roleDao.getRoleByName(role);
             TenantRole tenantRole = new TenantRole();
@@ -150,6 +159,29 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
             }
 
             tenantRoles.add(tenantRole);
+        }
+
+        //get the propagating roles for the domain
+        List<User> userAdmins = domainService.getDomainAdmins(domainId);
+
+        if(userAdmins.size() == 0) {
+            log.error("Unable to get roles for saml assertion due to no user admin for domain {}", domainId);
+            throw new IllegalStateException("no user admin exists for domain " + domainId);
+        }
+
+        if(userAdmins.size() > 1 && getDomainRestrictedToOneUserAdmin()) {
+            log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domainId);
+            throw new IllegalStateException("more than one user admin exists for domain " + domainId);
+        }
+
+        for (User userAdmin : userAdmins) {
+            for (TenantRole role : tenantService.getTenantRolesForUser(userAdmin)) {
+                if (role.getPropagate()) {
+                    role.setLdapEntry(null);
+                    role.setUserId(null);
+                    tenantRoles.add(role);
+                }
+            }
         }
 
         return tenantRoles;
@@ -168,4 +200,9 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         //In the meantime, we're hard coding the cloud auth client id in the scope access.
         return config.getString("cloudAuth.clientId");
     }
+
+    private boolean getDomainRestrictedToOneUserAdmin() {
+        return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
+    }
+
 }

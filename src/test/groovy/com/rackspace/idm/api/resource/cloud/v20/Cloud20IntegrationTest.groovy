@@ -234,6 +234,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         //testIdentityRole = getRole(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
     }
 
+    def cleanup() {
+        staticIdmConfiguration.reset()
+    }
+
     def createClientRole(sharedRandom, weight) {
         def productRole = v2Factory.createRole()
         productRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
@@ -3356,15 +3360,22 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteGroup(identityAdminToken, groupId)
     }
 
-    def "saml-tokens should return a 404"() {
+    @Unroll
+    def "saml api call returns #expectedStatus when saml feature flag is #samlEnabled and given an empty payload"() {
         given:
         org.opensaml.saml2.core.Response res = null;
 
         when:
+        staticIdmConfiguration.setProperty("saml.enabled", samlEnabled)
         def response = cloud20.samlAuthenticate(res)
 
         then:
-        response.status == 404
+        assert response.status == expectedStatus
+
+        where:
+        samlEnabled | expectedStatus
+        false       | 404
+        true        | 400
     }
 
     def authAndExpire(String username, String password) {
