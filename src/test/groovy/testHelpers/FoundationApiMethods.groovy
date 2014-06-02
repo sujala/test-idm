@@ -1,6 +1,5 @@
 package testHelpers
 
-import com.rackspace.api.idm.v1.User
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import org.springframework.stereotype.Component
@@ -69,4 +68,17 @@ class FoundationApiMethods {
 
         resource.path(path).path(TOKENS).type(APPLICATION_JSON).accept(APPLICATION_XML).entity(cred).post(ClientResponse)
     }
+
+    def invalidFoundationCall(){
+        resource.path(path).path("invalid").type(APPLICATION_XML).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def invalidIdmCall(){
+        resource.path("invalid").path("invalid").type(APPLICATION_XML).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def invalidCall(){
+        resource.path("invalid").type(APPLICATION_XML).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
 }

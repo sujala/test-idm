@@ -49,7 +49,9 @@ public class AuthenticationFilterTests {
         scopeAccessServiceMock = mock(ScopeAccessService.class);
         userService = mock(UserService.class);
         configuration = mock(Configuration.class);
+        authFilter.setConfiguration(configuration);
         authenticationFilterWithMock = new AuthenticationFilter(scopeAccessServiceMock);
+        authenticationFilterWithMock.setConfiguration(configuration);
     }
 
     @Test
@@ -178,6 +180,7 @@ public class AuthenticationFilterTests {
     public void shouldIgnoreApplicationWadlRequest() {
         EasyMock.expect(request.getPath()).andReturn("v1.0/application.wadl");
         EasyMock.expect(request.getMethod()).andReturn("GET");
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -185,6 +188,7 @@ public class AuthenticationFilterTests {
     public void shouldIgnoreIdmWadlRequest() {
         EasyMock.expect(request.getPath()).andReturn("v1.0/idm.wadl");
         EasyMock.expect(request.getMethod()).andReturn("GET");
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -225,6 +229,7 @@ public class AuthenticationFilterTests {
     public void shouldIgnoreTokenRequest() {
         EasyMock.expect(request.getPath()).andReturn("v1.0/tokens");
         EasyMock.expect(request.getMethod()).andReturn("POST");
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -238,6 +243,7 @@ public class AuthenticationFilterTests {
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -250,6 +256,7 @@ public class AuthenticationFilterTests {
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -263,6 +270,7 @@ public class AuthenticationFilterTests {
         .andReturn(header);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 false);
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -272,6 +280,7 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getMethod()).andReturn("GET");
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
         .andReturn(null);
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
@@ -381,6 +390,7 @@ public class AuthenticationFilterTests {
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 false);
+        when(configuration.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
         replayAndRunFilter();
     }
 
