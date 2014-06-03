@@ -333,6 +333,11 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def addRoleToUserOnTenantId(user, tenantId, roleId=MOSSO_ROLE_ID) {
+        def response = methods.addRoleToUserOnTenant(getServiceAdminToken(), tenantId, user.id, roleId)
+        assert (response.status == SC_OK)
+    }
+
     def createEndpointTemplate(EndpointTemplate endpointTemplate) {
         def response = methods.addEndpointTemplate(getServiceAdminToken(), endpointTemplate)
         assert (response.status == SC_CREATED)

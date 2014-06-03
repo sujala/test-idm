@@ -143,9 +143,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private List<TenantRole> getTenantRoles(List<String> roles, String domainId) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
 
-        List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
-
-        //get the roles passed in with the saml assertion
+        //get the roles passed in with the saml assertion and add as global roles
         for (String role : roles) {
             ClientRole roleObj = roleDao.getRoleByName(role);
             TenantRole tenantRole = new TenantRole();
@@ -153,10 +151,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
             tenantRole.setClientId(roleObj.getClientId());
             tenantRole.setName(roleObj.getName());
             tenantRole.setDescription(roleObj.getDescription());
-
-            for (Tenant tenant : tenants) {
-                tenantRole.getTenantIds().add(tenant.getTenantId());
-            }
 
             tenantRoles.add(tenantRole);
         }
