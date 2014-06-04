@@ -10,9 +10,11 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -49,6 +51,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private Configuration config;
 
     AuthenticationFilter() {
 
@@ -136,6 +141,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             return request;
         }
 
+        if( (path.startsWith("v1") || path.startsWith("v1.0")) && !isFoundationEnabled()){
+            String errMsg = String.format("Resource Not Found");
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
         // Skip authentication for the following calls
         int index = path.indexOf('/');
         path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
@@ -163,6 +174,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         if (POST.equals(method) && "tokens".equals(path)) {
             return request;
         }
+
         final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
         if (StringUtils.isBlank(authHeader)) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
@@ -179,10 +191,19 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         // authentication failed if we reach this point
         logger.warn("Authentication Failed for {} ", authHeader);
         throw new NotAuthenticatedException("Authentication Failed.");
+
     }
 
     public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
         this.req = httpServletRequest;
+    }
+
+    public void setConfiguration(Configuration config){
+        this.config = config;
+    }
+
+    private boolean isFoundationEnabled(){
+        return config.getBoolean("feature.access.to.foundation.api", true);
     }
 
 }
