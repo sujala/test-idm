@@ -5,10 +5,15 @@ import com.rackspace.idm.domain.dao.FederatedTokenDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
+import org.apache.commons.collections.CollectionUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import spock.lang.Ignore
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlAssertionFactory
 
@@ -16,6 +21,7 @@ import static com.rackspace.idm.Constants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationRolesIntegrationTest extends RootIntegrationTest {
+    def IDENTITY_DEFAULT_ROLE_NAME = "identity:default"
 
     @Autowired
     FederatedTokenDao federatedTokenDao
@@ -27,24 +33,33 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
+    DefaultUserService userService
+
+    @Autowired
     DomainDao domainDao
 
-    def "passing roles in saml assertion adds roles to user"() {
+    def "passing roles in saml assertion adds roles to user as global roles"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 5
         def role = utils.createRole()
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default", role.name].asList());
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, [IDENTITY_DEFAULT_ROLE_NAME, role.name].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when:
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        RoleList roles = samlResponse.getEntity(AuthenticateResponse).value.user.roles
+        Role addedIdentityRole = roles.role.find {it.name == IDENTITY_DEFAULT_ROLE_NAME}
+        Role addedCustomRole = roles.role.find {it.name == role.name}
 
         then:
         samlResponse.status == 200
-        samlResponse.getEntity(AuthenticateResponse).value.user.roles.role.name.contains(role.name)
+        addedIdentityRole != null
+        addedIdentityRole.tenantId == null
+        addedCustomRole != null
+        addedCustomRole.tenantId == null
 
         cleanup:
         utils.deleteUsers(users)
@@ -58,6 +73,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
             it.propagate = true
             return it
         }
+
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
         def domainId = utils.createDomain()
@@ -68,12 +84,20 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
 
-        when: "adding role to user-admin with federated sub-users"
+        when: "adding global propagating role to user-admin"
         utils.addRoleToUser(userAdmin, propagatingRole.id)
+
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
-        then: "federated sub-user's tokens have propagating role"
-        federatedTokensHaveRole(federatedTokens, propagatingRole)
+        then: "federated sub-user's tokens get global propagating role"
+        assertAllFederatedTokensHaveGlobalRole(federatedTokens, propagatingRole)
+
+        when: "adding tenant based propagating role to user-admin"
+        utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
+        federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
+
+        then: "federated sub-user's tokens get propagating role on tenant"
+        assertAllFederatedTokensHaveRoleForTenant(federatedTokens, propagatingRole, domainId)
 
         cleanup:
         utils.deleteUsers(users)
@@ -102,7 +126,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
         then: "federated sub-user's tokens do not have non-propagating role"
-        !federatedTokensHaveRole(federatedTokens, propagatingRole)
+        assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, propagatingRole)
 
         cleanup:
         utils.deleteUsers(users)
@@ -148,7 +172,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username)
     }
 
-    def "new federated tokens get propagating roles"() {
+    def "new federated tokens get global propagating roles"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
             it.propagate = true
@@ -174,7 +198,41 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
         then: "the propagating role is also added to the token in the directory"
-        federatedTokensHaveRole(federatedTokens, propagatingRole)
+        assertAllFederatedTokensHaveGlobalRole(federatedTokens, propagatingRole)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteRole(propagatingRole)
+        deleteFederatedUser(username)
+    }
+
+    def "new federated tokens get tenant based propagating roles"() {
+        given:
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.propagate = true
+            return it
+        }
+        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default"].asList());
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
+
+        when: "creating a saml user under a user-admin with a tenant propagating role"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+
+        then: "the tenant propagating role is shown in the response"
+        samlResponse.user.roles.role.id.contains(propagatingRole.id)
+
+        when: "loading the federated user's tokens from the directory"
+        def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
+
+        then: "the tenant propagating role is also added to the token in the directory"
+        assertAllFederatedTokensHaveRoleForTenant(federatedTokens, propagatingRole, domainId)
 
         cleanup:
         utils.deleteUsers(users)
@@ -208,7 +266,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
         then: "the non-propagating role is not added to the token in the directory"
-        !federatedTokensHaveRole(federatedTokens, propagatingRole)
+        assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, propagatingRole)
 
         cleanup:
         utils.deleteUsers(users)
@@ -243,7 +301,77 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
         then: "the propagating role is removed from the federated user's token"
-        !federatedTokensHaveRole(federatedTokens, propagatingRole)
+        assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, propagatingRole)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteRole(propagatingRole)
+        deleteFederatedUser(username)
+    }
+
+    def "remove propagating tenant role assigned to only one tenant on user-admin removes the role from the federated sub-user"() {
+        given:
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.propagate = true
+            return it
+        }
+        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default"].asList());
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        assert samlResponse.user.roles.role.id.contains(propagatingRole.id)
+
+        when: "the propagating tenant role is removed from the user-admin"
+        cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), domainId, userAdmin.id, propagatingRole.id)
+        def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
+
+        then: "the propagating tenant role is completely removed from the federated user's token"
+        assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, propagatingRole)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteRole(propagatingRole)
+        deleteFederatedUser(username)
+    }
+
+    @Ignore("Ignored because this demonstrates a bug D-18423. Once that bug is fixed, the ignore annotation should be removed to verify federated users will work appropriately in this situation")
+    def "when remove one of two tenants on propagating role assigned to user-admin removes only one tenant from the role on the federated sub-user"() {
+        given:
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.propagate = true
+            return it
+        }
+        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def domainId = utils.createDomain()
+        def nastTenantId = userService.getNastTenantId(domainId)
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default"].asList());
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
+        utils.addRoleToUserOnTenantId(userAdmin, nastTenantId, propagatingRole.id)
+
+        //create the user
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
+        assertAllFederatedTokensHaveRoleForTenant(federatedTokens, propagatingRole, domainId)
+        assertAllFederatedTokensHaveRoleForTenant(federatedTokens, propagatingRole, nastTenantId)
+
+        when: "the propagating role is removed from the user-admin on nast tenant"
+        cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), nastTenantId, userAdmin.id, propagatingRole.id)
+        federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
+
+        then: "the nastTenantId is removed from propagating role on all tokens"
+        assertNoFederatedTokenHasRoleForTenant(federatedTokens, propagatingRole, nastTenantId)
+        assertAllFederatedTokensHaveRoleForTenant(federatedTokens, propagatingRole, domainId)
 
         cleanup:
         utils.deleteUsers(users)
@@ -284,7 +412,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def federatedTokens = federatedTokenDao.getFederatedTokensByUserId(samlResponse.user.id)
 
         then: "the propagating role is removed from all of the federated user's tokens"
-        !federatedTokensHaveRole(federatedTokens, propagatingRole)
+        assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, propagatingRole)
 
         cleanup:
         utils.deleteUsers(users)
@@ -391,17 +519,68 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username)
     }
 
-    def federatedTokensHaveRole(federatedTokens, role) {
+    def void assertAllFederatedTokensHaveGlobalRole(federatedTokens, role) {
         def allTokensHaveRole = true
         for(token in federatedTokens) {
-            def tokenHasRole = false
+            def tokenHasProperRole = false
             def tenantRoles = tenantRoleDao.getTenantRolesForScopeAccess(token)
             for(curTenantRole in tenantRoles) {
-                tokenHasRole = tokenHasRole || curTenantRole.roleRsId.equals(role.id)
+                if (!tokenHasProperRole && (curTenantRole.roleRsId.equals(role.id))) {
+                    //should NOT have any role
+                    tokenHasProperRole = CollectionUtils.isEmpty(curTenantRole.tenantIds)
+                }
             }
-            allTokensHaveRole = allTokensHaveRole && tokenHasRole
+            allTokensHaveRole = allTokensHaveRole && tokenHasProperRole
         }
-        return allTokensHaveRole
+        assert allTokensHaveRole
+    }
+
+    def void assertNoFederatedTokenHasGlobalRole(federatedTokens, role) {
+        for(token in federatedTokens) {
+            def tenantRoles = tenantRoleDao.getTenantRolesForScopeAccess(token)
+            for(curTenantRole in tenantRoles) {
+                //may have tenant role, which is ok. just not global
+                assert !(curTenantRole.roleRsId.equals(role.id) && CollectionUtils.isEmpty(curTenantRole.tenantIds))
+            }
+        }
+    }
+
+    def void assertNoFederatedTokenHasRoleAsGlobalOrTenant(federatedTokens, role) {
+        def aTokenHasRole = false
+        for(token in federatedTokens) {
+            def tenantRoles = tenantRoleDao.getTenantRolesForScopeAccess(token)
+            for(curTenantRole in tenantRoles) {
+                //may have tenant role, which is ok. just not global
+                assert !curTenantRole.roleRsId.equals(role.id)
+            }
+        }
+    }
+
+    def void assertAllFederatedTokensHaveRoleForTenant(federatedTokens, role, tenantId) {
+        def allTokensHaveRole = true
+        for(token in federatedTokens) {
+            def tokenHasProperRole = false
+            def tenantRoles = tenantRoleDao.getTenantRolesForScopeAccess(token)
+            for(curTenantRole in tenantRoles) {
+                if (!tokenHasProperRole && (curTenantRole.roleRsId.equals(role.id))) {
+                    tokenHasProperRole = curTenantRole.tenantIds.contains(tenantId)
+                }
+            }
+            allTokensHaveRole = allTokensHaveRole && tokenHasProperRole
+        }
+        assert allTokensHaveRole
+    }
+
+    def void assertNoFederatedTokenHasRoleForTenant(federatedTokens, role, tenantId) {
+        for(token in federatedTokens) {
+            def tenantRoles = tenantRoleDao.getTenantRolesForScopeAccess(token)
+            for(curTenantRole in tenantRoles) {
+                if (curTenantRole.roleRsId.equals(role.id)) {
+                    //a global role is fine, just not a tenant based role
+                    assert !curTenantRole.tenantIds.contains(tenantId)
+                }
+            }
+        }
     }
 
     def deleteFederatedUser(username) {
