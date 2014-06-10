@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.util.SamlResponseValidator;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class DefaultFederatedIdentityService implements FederatedIdentityService {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
+    public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
 
     @Autowired
     SamlResponseValidator samlResponseValidator;
@@ -87,6 +89,8 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         User user = getUser(username, provider);
         if (user == null) {
             user = createUser(username, domain, provider);
+        } else if (!domain.equalsIgnoreCase(user.getDomainId())) {
+            throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
         }
 
         return user;

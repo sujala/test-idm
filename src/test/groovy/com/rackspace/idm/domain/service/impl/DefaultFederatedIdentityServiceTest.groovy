@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.exception.DuplicateUsernameException
 import com.rackspace.idm.util.SamlResponseValidator
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.configuration.Configuration
@@ -106,7 +107,10 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockConfig(service)
         mockDomainService(service)
 
-        user = new User();
+        user = new User().with{
+            it.domainId = DOMAIN_ID
+            return it
+        };
         endpoints = [].toList()
         roles = [].toList()
         tenants = [createTenant("tenantId"), createTenant("nastTenantId")].toList()
@@ -173,6 +177,26 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         authInfo.user.federated == true
         authInfo.user.federatedIdp == IDP_URI
         authInfo.user.roles == roles
+    }
+
+    def "Generate authentication info from saml response when user exists under different domainId throws exception"() {
+        given:
+        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        User existingUser = new User().with{
+            it.domainId="diffDomain"
+            return it
+        }
+
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider(IDP_NAME,IDP_URI)
+        mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> existingUser
+
+        when:
+        def authInfo = service.generateAuthenticationInfo(samlResponse)
+
+        then:
+        1 * mockSamlResponseValidator.validate(_)
+        DuplicateUsernameException ex = thrown()
+        ex.getMessage() == DefaultFederatedIdentityService.DUPLICATE_USERNAME_ERROR_MSG
     }
 
     def "Generate authentication info throws saml response validation exception"() {
