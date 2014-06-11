@@ -27,6 +27,7 @@
     <attribute name="federatedIdp" type="xsd:string" />
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>
+    <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -98,6 +99,13 @@
             <element name="credential" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
+
+    <simpleType name="MultiFactorStateEnum">
+        <restriction base="xsd:string">
+            <enumeration value="ACTIVE"/>
+            <enumeration value="LOCKED"/>
+        </restriction>
+    </simpleType>
 
     <complexType name="ImpersonationRequest">
         <sequence>

@@ -59,6 +59,7 @@
         <attribute ref="RAX-AUTH:domainId" use="optional"/>
         <attribute ref="RAX-AUTH:defaultRegion" use="optional"/>
         <attribute ref="RAX-AUTH:multiFactorEnabled" use="optional"/>
+        <attribute ref="RAX-AUTH:multiFactorState" use="optional"/>
         <attribute ref="OS-KSADM:password" use="optional"/>
 
         <attribute name="id" type="xsd:ID" use="required">

@@ -57,6 +57,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     public static final String CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED = "feature.multifactor.phone.membership.enabled";
 
+    public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
+    public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
+
     @Autowired
     private UserService userService;
 
@@ -190,6 +193,8 @@ public class BasicMultiFactorService implements MultiFactorService {
                 && StringUtils.hasText(user.getExternalMultiFactorUserId())) {
             //want to try and unlock user regardless of mfa enable/disable
             userManagement.unlockUser(user.getExternalMultiFactorUserId());
+            user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
+            userService.updateUserForMultiFactor(user);
         }
     }
 
@@ -225,6 +230,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePin(null);
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
+        user.setMultiFactorState(null);
         userService.updateUserForMultiFactor(user);
 
         if (enabled) {
@@ -337,6 +343,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean alreadyEnabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(true);
+        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
         userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
@@ -351,6 +358,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean enabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(false);
+        user.setMultiFactorState(null);
         user.setExternalMultiFactorUserId(null);
         userService.updateUserForMultiFactor(user);
 
