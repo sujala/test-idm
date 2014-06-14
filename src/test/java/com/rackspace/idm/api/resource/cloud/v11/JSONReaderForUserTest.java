@@ -128,9 +128,9 @@ public class JSONReaderForUserTest {
     }
 
     @Test
-    public void getUserFromJSONString_withEmptyValidJSON_setsEnabledFalse() throws Exception {
+    public void getUserFromJSONString_withEmptyValidJSON_setsEnabledNull() throws Exception {
         User userFromJSONString = JSONReaderForUser.getUserFromJSONString(emptyUserJSON);
-        assertThat("user enabled", userFromJSONString.isEnabled(), equalTo(true));
+        assertThat("user enabled", userFromJSONString.isEnabled(), nullValue());
     }
 
     @Test

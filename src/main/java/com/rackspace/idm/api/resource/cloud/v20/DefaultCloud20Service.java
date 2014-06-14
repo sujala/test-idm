@@ -646,11 +646,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator.isUsernameValid(user.getUsername());
             }
 
-            if (!user.isEnabled() && isUpdatingSelf) {
+            if (user.isEnabled() != null && !user.isEnabled() && isUpdatingSelf) {
                 throw new BadRequestException("User cannot enable/disable his/her own account.");
             }
 
             User userDO = this.userConverterCloudV20.fromUser(user);
+            if (user.isEnabled() == null) {
+                userDO.setEnabled(retrievedUser.getEnabled());
+            }
             if (userDO.isDisabled() && !isDisabled) {
                 atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
             } else if (!userDO.isDisabled() && isDisabled) {
