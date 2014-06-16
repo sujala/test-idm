@@ -86,7 +86,7 @@
             </annotation>
         </attribute>
         <attribute name="email" type="xsd:string" use="optional"/>
-        <attribute name="enabled" type="xsd:boolean" default="true" use="optional">
+        <attribute name="enabled" type="xsd:boolean" use="optional">
             <annotation>
                 <xsd:documentation
                         xml:lang="EN"

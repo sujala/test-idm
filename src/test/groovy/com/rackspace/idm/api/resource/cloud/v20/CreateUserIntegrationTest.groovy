@@ -30,6 +30,33 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         identityAdminToken = utils.getIdentityAdminToken()
     }
 
+    def "creating user with null enabled attribute creates an enabled user"() {
+        given:
+        def v20Username = "v20Username" + testUtils.getRandomUUID()
+        def v20User = v2Factory.createUserForCreate(v20Username, "displayName", "testemail@rackspace.com", null, "ORD", testUtils.getRandomUUID(), "Password1")
+        def randomMosso = 10000000 + new Random().nextInt(1000000)
+        def v11Username = "v11Username" + testUtils.getRandomUUID()
+        def v11User = v1Factory.createUser(v11Username, "1234567890", randomMosso, null, null)
+
+        when: "creating the user in v2.0"
+        cloud20.createUser(identityAdminToken, v20User)
+        def v20CreatedUser = utils.getUserByName(v20Username)
+
+        then: "the user is enabled"
+        v20CreatedUser.enabled == true
+
+        when: "creating the user in v1.1"
+        cloud11.createUser(v11User)
+        def v11CreatedUser = utils.getUserByName(v11Username)
+
+        then: "the user is enabled"
+        v11CreatedUser.enabled == true
+
+        cleanup:
+        utils.deleteUser(v20CreatedUser)
+        utils.deleteUser(v11CreatedUser)
+    }
+
     def "scope access is created when a user is created"() {
         given:
         def v20Username = "v20Username" + testUtils.getRandomUUID()

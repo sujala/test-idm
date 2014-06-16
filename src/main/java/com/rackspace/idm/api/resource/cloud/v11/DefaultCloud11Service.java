@@ -792,7 +792,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             gaUser.setMossoId(user.getMossoId());
             gaUser.setNastId(user.getNastId());
-            gaUser.setEnabled(user.isEnabled());
+            if(user.isEnabled() != null) {
+                gaUser.setEnabled(user.isEnabled());
+            }
 
             this.userService.updateUser(gaUser);
             gaUser = this.userService.getUser(gaUser.getUsername());
