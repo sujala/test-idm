@@ -245,3 +245,24 @@ clientRCN: RACKSPACE
 rsType: PASSWORD
 uid: cloudIdentitySA2
 
+dn: rsId=249,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+cn: rax_managed
+description: Rackspace Managed Cloud Customer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 249
+rsPropagate: TRUE
+rsWeight: 500
+
+dn: rsId=250,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+cn: rack_connect
+description: Rackspace RackConnect Customer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsId: 250
+rsPropagate: TRUE
+rsWeight: 500
+
