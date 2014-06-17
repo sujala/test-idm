@@ -1,2 +1,2 @@
+include 'identity'
 rootProject.name = 'idm'
-
