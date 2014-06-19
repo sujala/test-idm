@@ -21,6 +21,8 @@ FETCH_URL  := "/nexus/content/repositories/releases/com/rackspace/idm/${VERSION}
 clean:
 	rm -rf rpmbuild/ rpms/ source/ master/
 
+onestep: clean fetch rpms publish
+
 fetch:
 	wget --timestamping --directory-prefix ../build/libs http://${FETCH_HOST}${FETCH_URL}/idm-${VERSION}-${RELEASE}.war
 
