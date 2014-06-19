@@ -1,5 +1,8 @@
 %{!?version : %define version __VERSION__}
 %{!?release : %define release __RELEASE__}
+%define _target noarch
+%define _target_os linux
+%define _target_vendor unknown
 
 Name:           rs-cloud-identity-schema
 Version:        %{version}
