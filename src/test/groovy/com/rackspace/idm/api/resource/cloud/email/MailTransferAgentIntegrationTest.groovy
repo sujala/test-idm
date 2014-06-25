@@ -14,12 +14,38 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
 
     def "Successfully send locked out email"() {
         given:
-        User user = new User();
+        User user = new User()
         user.username = "testUser"
-        user.email = "matt.kovacs@rackspace.com"
+        user.email = "test.user@rackspace.com"
 
         when:
         def response = client.sendMultiFactorLockoutOutMessage(user)
+
+        then:
+        response == true
+    }
+
+    def "Successfully send mfa enabled email"() {
+        given:
+        User user = new User()
+        user.username = "testUser"
+        user.email = "test.user@rackspace.com"
+
+        when:
+        def response = client.sendMultiFactorEnabledMessage(user)
+
+        then:
+        response == true
+    }
+
+    def "Successfully send mfa disabled email"() {
+        given:
+        User user = new User()
+        user.username = "testUser"
+        user.email = "test.user@rackspace.com"
+
+        when:
+        def response = client.sendMultiFactorDisabledMessage(user)
 
         then:
         response == true
@@ -29,24 +55,32 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
         given:
         User user = new User();
         user.username = "testUser"
-        user.email = "matt.kovacs@rackspace2.com"
+        user.email = "test.user@rackspace2.com"
 
         when:
         def response = client.sendMultiFactorLockoutOutMessage(user)
+        def response1 = client.sendMultiFactorEnabledMessage(user)
+        def response2 = client.sendMultiFactorDisabledMessage(user)
 
         then:
         response == false
+        response1 == false
+        response2 == false
     }
 
     def "Exception thrown for send locked out email email"() {
         given:
-        User user = new User();
-        user.username = "mkovacs"
+        User user = new User()
+        user.username = "testUser"
 
         when:
         def response = client.sendMultiFactorLockoutOutMessage(user)
+        def response1 = client.sendMultiFactorEnabledMessage(user)
+        def response2 = client.sendMultiFactorDisabledMessage(user)
 
         then:
         response == false
+        response1 == false
+        response2 == false
     }
 }

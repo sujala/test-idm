@@ -34,7 +34,9 @@ public class MailTransferAgentClient implements EmailClient {
     private static final String USERNAME = "[USERNAME]";
     private static final String RACKSPACE_EMAIL = "@rackspace.com";
     private static final String FORBIDDEN_MESSAGE = "Sending emails to external email accounts is NOT enabled";
-    private static final String LOCKED_OUT_ERROR_MSG = "Error sending locked out email to user '%s'";
+    private static final String LOCKED_OUT_ERROR_MSG = "Error sending mfa locked out email to user '%s'";
+    private static final String ENABLED_ERROR_MSG = "Error sending mfa enabled email to user '%s'";
+    private static final String DISABLED_ERROR_MSG = "Error sending mfa disabled email to user '%s'";
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentClient.class);
 
     private Properties properties;
@@ -42,6 +44,10 @@ public class MailTransferAgentClient implements EmailClient {
     private String from;
     private String lockedOutEmail;
     private String lockedOutEmailSubject;
+    private String enabledEmail;
+    private String enabledEmailSubject;
+    private String disabledEmail;
+    private String disabledEmailSubject;
 
     @PostConstruct
     private void postConstruct() {
@@ -57,9 +63,20 @@ public class MailTransferAgentClient implements EmailClient {
         lockedOutEmail = documentService.getMFALockedOutEmail();
         lockedOutEmailSubject = identityConfig.getEmailLockedOutSubject();
 
+        enabledEmail = documentService.getMFAEnabledEmail();
+        enabledEmailSubject = identityConfig.getEmailMFAEnabledSubject();
+
+        disabledEmail = documentService.getMFADisabledEmail();
+        disabledEmailSubject = identityConfig.getEmailMFADisabledSubject();
+
         Assert.notNull(from);
         Assert.notNull(lockedOutEmail);
         Assert.notNull(lockedOutEmailSubject);
+        Assert.notNull(enabledEmail);
+        Assert.notNull(enabledEmailSubject);
+        Assert.notNull(disabledEmail);
+        Assert.notNull(disabledEmailSubject);
+
     }
 
     @Override
@@ -72,6 +89,30 @@ public class MailTransferAgentClient implements EmailClient {
     public boolean sendMultiFactorLockoutOutMessage(User user) {
         String body = lockedOutEmail.replace(USERNAME, user.getUsername());
         return sendEmail(user, lockedOutEmailSubject, body, LOCKED_OUT_ERROR_MSG);
+    }
+
+    @Override
+    @Async
+    public void asyncSendMultiFactorEnabledMessage(User user) {
+        sendMultiFactorEnabledMessage(user);
+    }
+
+    @Override
+    public boolean sendMultiFactorEnabledMessage(User user) {
+        String body = enabledEmail.replace(USERNAME, user.getUsername());
+        return sendEmail(user, enabledEmailSubject, body, ENABLED_ERROR_MSG);
+    }
+
+    @Override
+    @Async
+    public void asyncSendMultiFactorDisabledMessage(User user) {
+        sendMultiFactorDisabledMessage(user);
+    }
+
+    @Override
+    public boolean sendMultiFactorDisabledMessage(User user) {
+        String body = disabledEmail.replace(USERNAME, user.getUsername());
+        return sendEmail(user, disabledEmailSubject, body, DISABLED_ERROR_MSG);
     }
 
     private boolean sendEmail(User user, String subject, String body, String errorMsg) {
