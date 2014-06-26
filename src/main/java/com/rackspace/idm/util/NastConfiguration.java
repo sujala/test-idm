@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 10/18/11
- * Time: 6:01 PM
+ * This class is no longer used and will be removed in a future version of IDM.
+ *
+ * @deprecated
  */
+@Deprecated
 @Component
 public class NastConfiguration {
 

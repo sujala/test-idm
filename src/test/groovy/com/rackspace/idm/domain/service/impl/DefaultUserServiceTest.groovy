@@ -8,6 +8,7 @@ import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
+import org.apache.commons.lang.RandomStringUtils
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -206,6 +207,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "Add User"() {
         given:
+        def expectedNastTenantId = service.getNastTenantId(domainId)
         def user = this.createUser(null, true, domainId)
         user.setRoles([entityFactory.createTenantRole("roleName")].asList())
         def mossoBaseUrl = entityFactory.createCloudBaseUrl("mossoBaseUrlId", true)
@@ -237,9 +239,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * mockValidator.validateUser(user)
         1 * domainService.createNewDomain(domainId)
         1 * tenantService.addTenant({ it.tenantId == domainId; it.baseUrlIds.contains("mossoBaseUrlId")  })
-        1 * tenantService.addTenant({ it.tenantId == DefaultUserService.NAST_TENANT_PREFIX + domainId; it.baseUrlIds.contains("nastBaseUrlId")  })
+        1 * tenantService.addTenant({ it.tenantId == expectedNastTenantId; it.baseUrlIds.contains("nastBaseUrlId")  })
         1 * domainService.addTenantToDomain(domainId,domainId)
-        1 * domainService.addTenantToDomain(DefaultUserService.NAST_TENANT_PREFIX + domainId, domainId)
+        1 * domainService.addTenantToDomain(expectedNastTenantId, domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _);
         endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
@@ -248,7 +250,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.userPassword != null
         user.apiKey != null
         user.region != null
-        user.nastId == DefaultUserService.NAST_TENANT_PREFIX + domainId
+        user.nastId == expectedNastTenantId
         user.encryptionVersion == encryptionVersion
         user.salt == salt;
         user.enabled == true
@@ -287,7 +289,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.userPassword != null
         user.apiKey != null
         user.region != null
-        user.nastId == DefaultUserService.NAST_TENANT_PREFIX + domainId
+        user.nastId == service.getNastTenantId(domainId)
         user.encryptionVersion == encryptionVersion
         user.salt == salt;
         user.enabled == true
@@ -1269,6 +1271,17 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         result == user
         notThrown(NotFoundException)
+    }
+
+    def "Nast tenantId uses formula <prefix><domainId> where prefix is a config property"() {
+        config.getString(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME, _) >> prefix
+        def domain = "abcd"
+
+        expect:
+        service.getNastTenantId(domain) == prefix+domain
+
+        where:
+        prefix << [RandomStringUtils.randomAscii(10), RandomStringUtils.randomAscii(10), ""]
     }
 
     def createStringPaginatorContext() {

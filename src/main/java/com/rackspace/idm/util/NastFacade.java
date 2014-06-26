@@ -19,6 +19,12 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletResponse;
 import java.net.MalformedURLException;
 
+/**
+ * This class is no longer used and will be removed in a future version of IDM.
+ *
+ * @deprecated
+ */
+@Deprecated
 @Component
 public class NastFacade {
     @Autowired
