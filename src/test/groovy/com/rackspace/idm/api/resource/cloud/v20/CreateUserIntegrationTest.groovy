@@ -4,7 +4,9 @@ import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,6 +30,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()
+        staticIdmConfiguration.reset()
     }
 
     def "creating user with null enabled attribute creates an enabled user"() {
@@ -141,6 +144,54 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id)
         cloud20.deleteDomain(identityAdminToken, domainId)
     }
+
+    /**
+     * Pick and set a random prefix on the expected property value. Per nast tenant naming convention we know the name
+     * should be prefix+domainId (e.g. MossoFS_12345 where "MossoFS_" is the prefix, and 12345 is the domain
+     *
+     * @return
+     */
+    def "NAST tenant for v2.0 user call is prefixed with the value of the configuration property nast.tenant.prefix"() {
+        def randomPrefix = RandomStringUtils.randomAscii(10)
+        staticIdmConfiguration.setProperty(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME, randomPrefix)
+
+        when: "create user in v20 one user call"
+        def username = "v20Username" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user.secretQA = secretQA
+        cloud20.createUser(identityAdminToken, user)
+        def userEntity = userService.getUser(username)
+        Tenants tenants = cloud20.getDomainTenants(identityAdminToken, domainId).getEntity(Tenants).value
+
+        then: "nast tenant is prefixed with property value"
+        !tenants.tenant.isEmpty()
+        tenants.tenant.find({t -> t.id.equals(randomPrefix+domainId) && userEntity.getNastId() == t.id}) != null
+
+        when: "Create user in v11"
+        def v11username = "v11Username" + testUtils.getRandomUUID()
+        def v11MossoId = testUtils.getRandomInteger()
+        def v11user = v1Factory.createUser(v11username, "apiKey", v11MossoId)
+        cloud11.createUser(v11user)
+        def v11UserEntity = userService.getUser(v11username)
+        Tenants v11tenants = cloud20.getDomainTenants(identityAdminToken, v11MossoId as String).getEntity(Tenants).value
+
+        then: "nast tenant is prefixed with property value"
+        !v11tenants.tenant.isEmpty()
+        v11tenants.tenant.find({t -> t.id.equals(randomPrefix+(v11MossoId as String)) && v11UserEntity.getNastId() == t.id}) != null
+
+        cleanup:
+        cloud20.deleteUser(identityAdminToken, userEntity.id)
+        cloud20.deleteUser(identityAdminToken, v11UserEntity.id)
+        cloud20.deleteTenant(identityAdminToken, tenants.tenant[0].id)
+        cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id)
+        cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[0].id)
+        cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[1].id)
+        cloud20.deleteDomain(identityAdminToken, domainId)
+        cloud20.deleteDomain(identityAdminToken, v11MossoId as String)
+    }
+
 
     def "tenants ARE NOT created for create user v2.0 calls when secretQA NOT populated and caller is identity:admin"() {
         given:
