@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.User;
 import org.openstack.docs.identity.api.v2.CredentialType;
 
 import javax.ws.rs.core.Response;
@@ -114,7 +115,7 @@ public interface MultiFactorCloud20Service {
      *
      * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException - if multifactor is not enabled for this user account
      */
-    Response.ResponseBuilder performMultiFactorChallenge(String userId, List<String> alreadyAuthenticatedBy);
+    Response.ResponseBuilder performMultiFactorChallenge(User user, List<String> alreadyAuthenticatedBy);
 
     /**
      * authenticates a 2-factor credential
