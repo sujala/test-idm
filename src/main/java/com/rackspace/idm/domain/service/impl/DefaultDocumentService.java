@@ -15,4 +15,14 @@ public class DefaultDocumentService implements DocumentService {
     public String getMFALockedOutEmail() {
         return apiDocDao.getContent("/email_mfa_lockedout.txt");
     }
+
+    @Override
+    public String getMFAEnabledEmail() {
+        return apiDocDao.getContent("/email_mfa_enabled.txt");
+    }
+
+    @Override
+    public String getMFADisabledEmail() {
+        return apiDocDao.getContent("/email_mfa_disabled.txt");
+    }
 }

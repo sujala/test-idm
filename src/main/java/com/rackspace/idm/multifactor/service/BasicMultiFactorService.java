@@ -15,6 +15,7 @@ import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
@@ -80,6 +81,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
+    @Autowired
+    private EmailClient emailClient;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -229,6 +233,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         if (enabled) {
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 
         //unlink phone from user.
@@ -342,6 +347,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         if (!alreadyEnabled) {
             scopeAccessService.expireAllTokensForUserById(user.getId());
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
     }
 
@@ -356,6 +362,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         if (enabled){
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 
         deleteExternalUser(user.getId(), user.getUsername(), providerUserId);

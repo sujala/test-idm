@@ -15,9 +15,9 @@ public class IdentityConfig {
     private static final String LOCALHOST = "localhost";
 
     //REQUIRED PROPERTIES
-    private static final String MAILGUN_URL = "mailgun.url";
-    private static final String MAILGUN_KEY = "mailgun.key";
     private static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
+    private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
+    private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
     private static final String EMAIL_HOST = "email.host";
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
@@ -37,10 +37,10 @@ public class IdentityConfig {
     @PostConstruct
     private void verifyConfigs() {
         // Verify and Log Required Values
-        verifyAndLogProperty(MAILGUN_URL, OPTIONAL);
-        verifyAndLogProperty(MAILGUN_KEY, OPTIONAL);
         verifyAndLogProperty(EMAIL_FROM_EMAIL_ADDRESS, REQUIRED);
         verifyAndLogProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
+        verifyAndLogProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
+        verifyAndLogProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
         verifyAndLogProperty(EMAIL_HOST, OPTIONAL);
         verifyAndLogProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
     }
@@ -54,20 +54,20 @@ public class IdentityConfig {
         }
     }
 
-    public String getMailgunUrl() {
-        return config.getString(MAILGUN_URL);
-    }
-
-    public String getMailgunKey() {
-        return config.getString(MAILGUN_KEY);
-    }
-
     public String getEmailFromAddress() {
         return config.getString(EMAIL_FROM_EMAIL_ADDRESS);
     }
 
     public String getEmailLockedOutSubject() {
         return config.getString(EMAIL_LOCKED_OUT_SUBJECT);
+    }
+
+    public String getEmailMFAEnabledSubject() {
+        return config.getString(EMAIL_MFA_ENABLED_SUBJECT);
+    }
+
+    public String getEmailMFADisabledSubject() {
+        return config.getString(EMAIL_MFA_DISABLED_SUBJECT);
     }
 
     public String getEmailHost() {
