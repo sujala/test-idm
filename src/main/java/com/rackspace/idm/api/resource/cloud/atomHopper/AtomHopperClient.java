@@ -221,6 +221,9 @@ public class AtomHopperClient {
                 cloudIdentityType.getRoles().add(tenantRole.getName());
             }
         }
+
+        final String tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
+
         cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
         cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
         if (migrated) {
@@ -228,7 +231,7 @@ public class AtomHopperClient {
         }
 
         final String id = UUID.randomUUID().toString();
-        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), user.getUsername(), AtomHopperConstants.IDENTITY_EVENT);
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), user.getUsername(), AtomHopperConstants.IDENTITY_EVENT, tenantId);
         logger.warn("Created Identity user entry with id: " + id);
         return usageEntry;
     }
@@ -251,16 +254,17 @@ public class AtomHopperClient {
         }
 
         final String id = UUID.randomUUID().toString();
-        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT);
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT, null);
         logger.warn("Created Identity token entry with id: " + id);
         return usageEntry;
     }
 
-    private UsageEntry createUsageEntry(Object cloudIdentityType, EventType eventType, String id, String resourceId, String resourceName, String title) throws DatatypeConfigurationException {
+    private UsageEntry createUsageEntry(Object cloudIdentityType, EventType eventType, String id, String resourceId, String resourceName, String title, String tenantId) throws DatatypeConfigurationException {
         final V1Element v1Element = new V1Element();
         v1Element.setType(eventType);
         v1Element.setResourceId(resourceId);
         v1Element.setResourceName(resourceName);
+        v1Element.setTenantId(tenantId);
         v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
         v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
         v1Element.setVersion(AtomHopperConstants.VERSION);

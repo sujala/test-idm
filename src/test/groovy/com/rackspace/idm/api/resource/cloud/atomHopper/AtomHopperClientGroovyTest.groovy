@@ -51,6 +51,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
@@ -59,6 +60,7 @@ class AtomHopperClientGroovyTest extends Specification {
         entry.title.value.equals("Identity Event")
         entry.content.type.equals(MediaType.APPLICATION_XML)
         entry.content.event.resourceName.equals("testUser")
+        entry.content.event.tenantId.equals("tenantId")
     }
 
     def "atom entry posts Groud Id not Group Name " () {
@@ -74,6 +76,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
@@ -96,6 +99,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         config.getString(_) >> "DFW" >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.DELETED)
@@ -115,6 +119,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
@@ -134,6 +139,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.MIGRATED)
@@ -176,6 +182,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
         client.postUser(user, "someToken", AtomHopperConstants.DISABLED)

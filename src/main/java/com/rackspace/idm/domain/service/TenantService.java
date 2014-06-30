@@ -69,4 +69,19 @@ public interface TenantService {
     void deleteTenantRole(TenantRole role);
 
     void addUserIdToTenantRole(TenantRole tenantRole);
+
+    /**
+     * Returns the tenantId of a role with name "compute:default" in the roles list.
+     * <p>
+     * If that role is not present then it returns the tenantId of a role where the tenant is all digits.
+     * (this is currently how we define the mossoId).
+     * </p>
+     * <p>
+     * If neither of those roles exist in the roles parameter then this method returns null.
+     * </p>
+     *
+     * @param roles
+     * @throws IllegalArgumentException if roles is null
+     */
+    String getMossoIdFromTenantRoles(List<TenantRole> roles);
 }
