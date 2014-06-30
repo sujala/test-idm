@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.domain.dao.FederatedTokenDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
@@ -51,9 +50,6 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
-
-    @Autowired
-    private FederatedTokenDao federatedTokenDao;
 
     @Autowired
     private AtomHopperClient atomHopperClient;
@@ -148,7 +144,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForUserById(User user, String roleId) {
+    public TenantRole getTenantRoleForUserById(EndUser user, String roleId) {
         return tenantRoleDao.getTenantRoleForUser(user, roleId);
     }
 
@@ -159,7 +155,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole checkAndGetTenantRoleForUserById(User user, String roleId) {
+    public TenantRole checkAndGetTenantRoleForUserById(EndUser user, String roleId) {
         TenantRole tenantRole = getTenantRoleForUserById(user, roleId);
         if(tenantRole == null) {
             String errMsg = String.format("Tenant Role %s not found for user %s", roleId, user.getId());
@@ -175,7 +171,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<Tenant> getTenantsForUserByTenantRoles(User user) {
+    public List<Tenant> getTenantsForUserByTenantRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
@@ -204,21 +200,6 @@ public class DefaultTenantService implements TenantService {
         return tenants;
     }
 
-    @Override
-    public List<Tenant> getTenantsForFederatedTokenByTenantRoles(FederatedToken token) {
-        if (token == null) {
-            throw new IllegalStateException();
-        }
-
-        logger.info("Getting Tenants for Parent");
-
-        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForFederatedToken(token);
-        List<Tenant> tenants = getTenants(tenantRoles);
-
-        logger.info("Got {} tenants", tenants.size());
-        return tenants;
-    }
-
     private List<Tenant> getTenants(Iterable<TenantRole> tenantRoles) {
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
@@ -240,7 +221,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public boolean hasTenantAccess(User user, String tenantId) {
+    public boolean hasTenantAccess(EndUser user, String tenantId) {
         if(user ==null){
             return false;
         }
@@ -271,7 +252,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteRbacRolesForUser(User user) {
+    public void deleteRbacRolesForUser(EndUser user) {
         logger.info("Deleting Product Roles for {}", user);
         Iterable<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user);
 
@@ -323,16 +304,14 @@ public class DefaultTenantService implements TenantService {
                     }
                 }
 
-                //add role to all federated sub-users' tokens
-                for(User subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
-                    for(FederatedToken token : federatedTokenDao.getFederatedTokensByUserId(subUser.getId())) {
-                        try {
-                            role.setLdapEntry(null);
-                            tenantRoleDao.addTenantRoleToFederatedToken(token, role);
-                        } catch (ClientConflictException ex) {
-                            String msg = String.format("Federated user %s already has tenantRole %s", subUser.getId(), role.getName());
-                            logger.warn(msg);
-                        }
+                //add role to all federated users
+                for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
+                    try {
+                        role.setLdapEntry(null);
+                        tenantRoleDao.addTenantRoleToUser(subUser, role);
+                    } catch (ClientConflictException ex) {
+                        String msg = String.format("Federated user %s already has tenantRole %s", subUser.getId(), role.getName());
+                        logger.warn(msg);
                     }
                 }
             }
@@ -394,31 +373,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addTenantRolesToFederatedToken(FederatedToken token, List<TenantRole> tenantRoles) {
+    public void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles) {
         for (TenantRole tenantRole : tenantRoles) {
-             addTenantRoleToFederatedToken(token, tenantRole);
+             addTenantRoleToUser(user, tenantRole);
         }
 
-        logger.info("Added tenantRoles {} to federated token {}", tenantRoles, token);
+        logger.info("Added tenantRoles {} to user {}", tenantRoles, user);
     }
 
     @Override
-    public void addTenantRoleToFederatedToken(FederatedToken token, TenantRole role) {
-        if (token == null || StringUtils.isBlank(token.getUniqueId()) || role == null) {
-            throw new IllegalArgumentException(
-                    "Federated token cannot be null and must have uniqueID; role cannot be null");
-        }
-
-        validateTenantRole(role);
-
-        tenantRoleDao.addTenantRoleToFederatedToken(token, role);
-
-        logger.info("Added tenantRole {} to federated token {}", role, token);
-    }
-
-    @Override
-    public void deleteTenantRoleForUser(User user, TenantRole role) {
-        if (user == null || role == null) {
+    public void deleteTenantRoleForUser(EndUser endUser, TenantRole role) {
+        if (endUser == null || role == null) {
             throw new IllegalArgumentException();
         }
 
@@ -429,36 +394,40 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        tenantRoleDao.deleteTenantRoleForUser(user, role);
-        atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+        tenantRoleDao.deleteTenantRoleForUser(endUser, role);
 
-        if (isUserAdmin(user) && cRole.getPropagate()) {
-            //remove propagating roles from sub-users
-            for (User subUser : userService.getSubUsers(user)) {
-                try {
-                    role.setLdapEntry(null);
-                    tenantRoleDao.deleteTenantRoleForUser(subUser, role);
-                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
-                } catch (NotFoundException ex) {
-                    String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
-                    logger.warn(msg);
-                }
-            }
+        if (endUser instanceof User) {
+            //this only applies for users, not federatedusers for now...
+            User user = (User) endUser;
+            atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
 
-            //remove propagating roles from federated users
-            for(User subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
-                for(FederatedToken token : federatedTokenDao.getFederatedTokensByUserId(subUser.getId())) {
+            if (isUserAdmin(user) && cRole.getPropagate()) {
+                //remove propagating roles from sub-users
+                for (User subUser : userService.getSubUsers(user)) {
                     try {
                         role.setLdapEntry(null);
-                        tenantRoleDao.deleteTenantRoleForFederatedToken(token, role);
+                        tenantRoleDao.deleteTenantRoleForUser(subUser, role);
+                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                    } catch (NotFoundException ex) {
+                        String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
+                        logger.warn(msg);
+                    }
+                }
+
+                //remove propagating roles from federated users
+                for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
+                    try {
+                        role.setLdapEntry(null);
+                        tenantRoleDao.deleteTenantRoleForUser(subUser, role);
                     } catch (NotFoundException ex) {
                         String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
                         logger.warn(msg);
                     }
                 }
-            }
 
+            }
         }
+
     }
 
     @Override
@@ -481,7 +450,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUser(User user, String applicationId) {
+    public List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId) {
         logger.debug("Getting Global Roles");
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
         return getGlobalRoles(roles);
@@ -510,7 +479,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant) {
+    public List<TenantRole> getTenantRolesForUserOnTenant(EndUser user, Tenant tenant) {
         if (tenant == null) {
             throw new IllegalArgumentException(
                     "Tenant cannot be null.");
@@ -539,26 +508,13 @@ public class DefaultTenantService implements TenantService {
         return getRoleDetails(roles);
     }
 
-    @Override
-    public List<TenantRole> getTenantRolesForFederatedToken(FederatedToken token) {
-        logger.debug(GETTING_TENANT_ROLES);
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForFederatedToken(token);
-        return getRoleDetails(roles);
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForFederatedTokenNoDetail(FederatedToken token) {
-        logger.debug(GETTING_TENANT_ROLES);
-        return this.tenantRoleDao.getTenantRolesForFederatedToken(token);
-    }
-
     public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
         return this.tenantRoleDao.getTenantRolesForUser(user);
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
+    public List<TenantRole> getTenantRolesForUser(EndUser user, String applicationId, String tenantId) {
         logger.debug(GETTING_TENANT_ROLES);
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId, tenantId);
         return getRoleDetails(roles);
@@ -754,7 +710,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public Iterable<TenantRole> getTenantRolesForUserById(User user, List<ClientRole> rolesForFilter) {
+    public Iterable<TenantRole> getTenantRolesForUserById(EndUser user, List<ClientRole> rolesForFilter) {
         return tenantRoleDao.getTenantRoleForUser(user, rolesForFilter);
     }
 

@@ -1,6 +1,6 @@
 package com.rackspace.idm.util
 
-import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
@@ -13,6 +13,7 @@ import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.opensaml.saml2.core.Response
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -52,6 +53,7 @@ class SamlResponseValidatorTest extends Specification {
         mockDomainDao(samlResponseValidator)
         mockPrecedenceValidator(samlResponseValidator)
         mockConfig(samlResponseValidator)
+        mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -95,6 +97,9 @@ class SamlResponseValidatorTest extends Specification {
                 "         <saml2:Attribute Name=\"domain\">\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + DOMAIN + "</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -108,15 +113,14 @@ class SamlResponseValidatorTest extends Specification {
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
-        mockDomainDao.getDomain(DOMAIN) >> Mock(Domain)
+        mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         noExceptionThrown()
         1 * mockSamlSignatureValidator.validateSignature(_,IDP_PUBLIC_CERTIFICATE)
-        1 * mockPrecedenceValidator.verifyRolePrecedenceForAssignment(PrecedenceValidator.RBAC_ROLES_WEIGHT - 1, samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
     }
 
     def "validate saml response when signature is not specified" (){
@@ -129,7 +133,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -145,7 +149,7 @@ class SamlResponseValidatorTest extends Specification {
         1 * mockSamlSignatureValidator.validateSignature(_,IDP_PUBLIC_CERTIFICATE) >> { throw new Exception("Invalid Siganture")}
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -158,7 +162,7 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -173,7 +177,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> null
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -189,7 +193,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -205,7 +209,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -221,7 +225,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -237,7 +241,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -253,7 +257,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -270,7 +274,7 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -330,7 +334,7 @@ class SamlResponseValidatorTest extends Specification {
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -338,7 +342,6 @@ class SamlResponseValidatorTest extends Specification {
 
     def "validate saml response when domain attribute is specified more than once" (){
         given:
-
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
                 "   <ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\n" +
@@ -382,6 +385,9 @@ class SamlResponseValidatorTest extends Specification {
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">1234</saml2:AttributeValue>\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">5678</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -394,7 +400,7 @@ class SamlResponseValidatorTest extends Specification {
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -402,6 +408,8 @@ class SamlResponseValidatorTest extends Specification {
 
     def "validate saml response when domain does not exist" (){
         given:
+        mockDomainDao(samlResponseValidator)
+        mockDomainDao.getDomain(DOMAIN) >> null
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -445,6 +453,9 @@ class SamlResponseValidatorTest extends Specification {
                 "         <saml2:Attribute Name=\"domain\">\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">1234</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -457,13 +468,13 @@ class SamlResponseValidatorTest extends Specification {
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
     }
 
-    def "validate saml response when roles attribute is not specified" (){
+    def "validate saml response is accepted when roles attribute is not specified" (){
         given:
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
@@ -505,6 +516,9 @@ class SamlResponseValidatorTest extends Specification {
                 "         <saml2:Attribute Name=\"domain\">\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">1234</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -516,12 +530,13 @@ class SamlResponseValidatorTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
-        thrown(BadRequestException)
+        noExceptionThrown()
     }
 
+    @Ignore("This should be ignored until B-74253 is implemented")
     def "validate saml response when role does not exist" (){
         given:
 
@@ -567,6 +582,9 @@ class SamlResponseValidatorTest extends Specification {
                 "         <saml2:Attribute Name=\"roles\">\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + ROLE_NAME + "</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -579,12 +597,13 @@ class SamlResponseValidatorTest extends Specification {
         mockRoleService.getRoleByName(ROLE_NAME) >> null
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
     }
 
+    @Ignore("This should be ignored until B-74253 is implemented")
     def "validate saml response when same role specified more than once" (){
         given:
 
@@ -631,6 +650,9 @@ class SamlResponseValidatorTest extends Specification {
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + ROLE_NAME + "</saml2:AttributeValue>\n" +
                 "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + ROLE_NAME + "</saml2:AttributeValue>\n" +
                 "         </saml2:Attribute>\n" +
+                "         <saml2:Attribute Name=\"email\">\n" +
+                "            <saml2:AttributeValue xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:string\">" + Constants.DEFAULT_FED_EMAIL + "</saml2:AttributeValue>\n" +
+                "         </saml2:Attribute>\n" +
                 "      </saml2:AttributeStatement>\n" +
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
@@ -643,7 +665,7 @@ class SamlResponseValidatorTest extends Specification {
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validate(samlResponseDecorator)
+        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
 
         then:
         thrown(BadRequestException)
@@ -684,6 +706,15 @@ class SamlResponseValidatorTest extends Specification {
             it.name = IDP_NAME
             it.uri = IDP_URI
             it.publicCertificate = IDP_PUBLIC_CERTIFICATE
+            return it
+        })
+    }
+
+    def createDomain() {
+        new Domain().with({
+            it.enabled = true
+            it.domainId = DOMAIN
+            it.name = DOMAIN
             return it
         })
     }

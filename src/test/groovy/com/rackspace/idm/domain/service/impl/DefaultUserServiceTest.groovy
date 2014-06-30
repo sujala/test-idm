@@ -1256,17 +1256,15 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "get federated user from federated token"() {
         given:
-        def user = entityFactory.createUser()
-        def federatedToken = createFederatedToken("239843lsdfsfd","http://test.com","john.doe")
+        def user = entityFactory.createFederatedUser()
+        def federatedToken = entityFactory.createFederatedToken(user)
         mockFederatedUserDao(service)
-
-        and:
-        mockFederatedUserDao.getUserByToken(federatedToken) >> user
 
         when:
         def result = service.getUserByScopeAccess(federatedToken)
 
         then:
+        mockFederatedUserDao.getUserByToken(federatedToken) >> user
         result == user
         notThrown(NotFoundException)
     }

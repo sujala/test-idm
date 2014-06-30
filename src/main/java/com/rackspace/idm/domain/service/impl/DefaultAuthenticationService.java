@@ -129,11 +129,13 @@ public class DefaultAuthenticationService implements AuthenticationService {
     AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
         AuthData authData = getAuthData(scopeAccess);
 
-        if (authData.getUser() != null) {
-            User user = authData.getUser();
+        if (authData.getUser() != null && (authData.getUser() instanceof User)) {
+            //only care if persistent user. This is foundation API which is no longer used and should be deleted soon. Even
+            //if it is used, it's not supported for federated users
+            EndUser user = authData.getUser();
             List<TenantRole> roles = tenantService
                     .getTenantRolesForScopeAccess(scopeAccess);
-            user.setRoles(roles);
+            ((User)user).setRoles(roles);
         } else if (authData.getApplication() != null) {
             Application application = authData.getApplication();
             List<TenantRole> roles = tenantService

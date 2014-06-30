@@ -1,15 +1,19 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.ClientConflictException
+import com.rackspace.idm.helpers.CloudTestUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.RootIntegrationTest
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapTenantRoleRepositoryIntegrationTest extends Specification {
+class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private LdapTenantRoleRepository roleRepository
@@ -26,31 +30,33 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
     @Autowired
     private LdapFederatedUserRepository federatedUserRepository
 
+    @Autowired
+    LdapIdentityProviderRepository ldapIdentityProviderRepository
+
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared User user;
     @Shared Application application;
-    @Shared User federatedUser;
-    @Shared FederatedToken federatedToken;
+    @Shared FederatedUser federatedUser;
+    @Shared UserScopeAccess federatedToken;
 
-    def setupSpec(){
-        sharedRandom = ("$sharedRandomness").replace('-',"")
-    }
-
-    def cleanupSpec(){
-    }
+    private IdentityProvider commonIdentityProvider;
 
     def setup() {
+        sharedRandom = ("$sharedRandomness").replace('-',"")
+
         userRepository.addUser(getUser("$sharedRandom"))
         user = userRepository.getUserById("$sharedRandom")
 
         applicationRepository.addApplication(getApplication("app$sharedRandom"))
         application = applicationRepository.getApplicationByClientId("app$sharedRandom")
 
-        federatedUserRepository.addUser(getUser("$sharedRandom"), "dedicated")
-        federatedUser = federatedUserRepository.getUserByUsername("username$sharedRandom", "dedicated")
-        scopeAccessRepository.addScopeAccess(federatedUser, getFederatedToken("username$sharedRandom", "dedicated", "89234jk2343423"))
-        federatedToken = scopeAccessRepository.getScopeAccessByAccessToken("89234jk2343423")
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
+        federatedUserRepository.addUser(commonIdentityProvider, getFederatedUser("$sharedRandom"))
+        federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName("username$sharedRandom", commonIdentityProvider.getName())
+
+        federatedToken = getFederatedToken(federatedUser)
+        scopeAccessRepository.addScopeAccess(federatedUser, federatedToken)
     }
 
     def cleanup() {
@@ -116,12 +122,12 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         def tenantRole = getTenantRole("name", "2", tenantIds, applicationId, "userId")
 
         when:
-        roleRepository.addTenantRoleToFederatedToken(federatedToken, tenantRole)
-        List<TenantRole> roles = roleRepository.getTenantRolesForFederatedToken(federatedToken).collect()
-        TenantRole role = roleRepository.getTenantRoleForFederatedToken(federatedToken, "2")
+        roleRepository.addTenantRoleToUser(federatedUser, tenantRole)
+        List<TenantRole> roles = roleRepository.getTenantRolesForUser(federatedUser).collect()
+        TenantRole role = roleRepository.getTenantRoleForUser(federatedUser, "2")
 
         roleRepository.deleteTenantRole(roles.get(0))
-        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForFederatedToken(federatedToken).collect()
+        List<TenantRole> rolesAfterDelete = roleRepository.getTenantRolesForUser(federatedUser).collect()
 
         then:
         roles.size() == 1
@@ -213,6 +219,18 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         }
     }
 
+    def getFederatedUser(id) {
+        new FederatedUser().with {
+            it.id = id
+            it.username = "username$id"
+            it.email = "username@test.com"
+            it.domainId="12345"
+            it.region="ORD"
+            it.federatedIdpUri = Constants.DEFAULT_IDP_URI
+            return it
+        }
+    }
+
     def getApplication(id) {
         new Application().with {
             it.clientId = id
@@ -223,14 +241,14 @@ class LdapTenantRoleRepositoryIntegrationTest extends Specification {
         }
     }
 
-    def getFederatedToken(username, idpName, tokenStr) {
-        new FederatedToken().with {
-            it.userRsId = "userId"
+    def getFederatedToken(EndUser user, tokenStr = testUtils.getRandomUUID("token")) {
+        new UserScopeAccess().with {
+            it.userRsId = user.id
             it.accessTokenString = tokenStr
             it.accessTokenExp = new DateTime().plusDays(1).toDate()
-            it.username = username
+            it.username = user.username
             it.clientId = "clientId"
-            it.idpName = idpName
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
     }

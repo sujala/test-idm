@@ -1,16 +1,20 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.FederatedTokenDao;
-import com.rackspace.idm.domain.entity.FederatedToken;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
+/**
+ * @deprecated Use normal ldapscopeaccessrepository
+ */
+@Deprecated
 @Component
-public class LdapFederatedTokenRepository extends LdapGenericRepository<FederatedToken> implements FederatedTokenDao {
+public class LdapFederatedTokenRepository extends LdapGenericRepository<UserScopeAccess> implements FederatedTokenDao {
 
     @Override
     public String getLdapEntityClass() {
-        return OBJECTCLASS_FEDERATEDUSERSCOPEACCESS;
+        return OBJECTCLASS_USERSCOPEACCESS;
     }
 
     @Override
@@ -29,14 +33,14 @@ public class LdapFederatedTokenRepository extends LdapGenericRepository<Federate
     }
 
     @Override
-    public Iterable<FederatedToken> getFederatedTokensByUserId(String userId) {
+    public Iterable<UserScopeAccess> getFederatedTokensByUserId(String userId) {
         return getObjects(searchFilterGetTokensByUserId(userId));
     }
 
     private Filter searchFilterGetTokensByUserId(String userId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_USER_RS_ID, userId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_FEDERATEDUSERSCOPEACCESS).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_USERSCOPEACCESS).build();
     }
 
 }

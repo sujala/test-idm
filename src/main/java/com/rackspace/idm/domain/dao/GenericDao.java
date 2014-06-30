@@ -55,6 +55,13 @@ public interface GenericDao<T> {
     String getNextId();
     String addLdapContainer(String dnString, String containerName);
     void doPreEncode(T object);
+
+    /**
+     * After retrieving and decoding the ldap entry into the appropriate object, this method is called to do any required
+     * post processing of the result prior to returning
+     *
+     * @param object
+     */
     void doPostEncode(T object);
 
     /**

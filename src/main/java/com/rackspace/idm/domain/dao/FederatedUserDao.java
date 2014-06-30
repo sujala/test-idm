@@ -1,18 +1,24 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.FederatedToken;
-import com.rackspace.idm.domain.entity.User;
-
-import java.util.List;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public interface FederatedUserDao {
 
-    public void addUser(User user, String idpName);
+    void addUser(IdentityProvider provider, FederatedUser user);
 
-    public User getUserByToken(FederatedToken token);
+    FederatedUser getUserByToken(UserScopeAccess token);
 
-    public User getUserByUsername(String username, String idp);
+    FederatedUser getUserByUsernameForIdentityProviderName(String username, String idp);
 
-    public Iterable<User> getUsersByDomainId(String domainId);
+    FederatedUser getUserById(String id);
 
+    Iterable<FederatedUser> getUsersByDomainId(String domainId);
+
+    /**
+     * Update the federated user. This will only update non-null values that have changed from the previous value.
+     * @param user
+     */
+    void updateUser(FederatedUser user);
 }

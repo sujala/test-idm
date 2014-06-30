@@ -1,12 +1,17 @@
 package com.rackspace.idm.domain.service.impl
+
+import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.FederatedToken
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
@@ -27,13 +32,15 @@ class DefaultFederatedIdentityServiceTest extends Specification {
     @Shared def USERNAME = "john.doe"
     @Shared def UUID = "729238492sklff293824923423423"
     @Shared def DOMAIN_ID = "1234"
+    @Shared def EMAIL="federated-noreply@rackspace.com"
 
     @Shared def samlStr
     @Shared def samlResponse
     @Shared def user
     @Shared def endpoints
     @Shared def roles
-    @Shared def tenants;
+    @Shared def tenants
+    @Shared def theIdentityProvider
 
     @Shared def mockSamlResponseValidator
     @Shared def mockConfig
@@ -107,94 +114,122 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockConfig(service)
         mockDomainService(service)
 
-        user = new User().with{
+        user = new FederatedUser().with{
+            it.username = USERNAME
+            it.federatedIdpUri = IDP_URI
             it.domainId = DOMAIN_ID
+            it.email = EMAIL
             return it
         };
+
+        theIdentityProvider = new IdentityProvider().with {
+            it.name = IDP_NAME
+            it.uri = IDP_URI
+            return it
+        }
         endpoints = [].toList()
         roles = [].toList()
         tenants = [createTenant("tenantId"), createTenant("nastTenantId")].toList()
     }
 
-    def "Generate authentication info from saml response when user has not been lazy provisioned"() {
-        given:
+    def "Generate authentication info from saml response when user does not exist"() {
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
 
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider(IDP_NAME,IDP_URI)
-        mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> null
+        def FederatedUserRequest request = new FederatedUserRequest().with{
+            it.federatedUser = user
+            it.requestedTokenExpirationDate = new DateTime()
+            it.identityProvider = theIdentityProvider
+            return it
+        }
+
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> null
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
-        mockTenantService.getTenantRolesForFederatedToken(_) >> roles
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
 
         when:
-        def authInfo = service.generateAuthenticationInfo(samlResponse)
+        def authInfo = service.processSamlResponse(samlResponse)
 
         then:
-        1 * mockSamlResponseValidator.validate(_)
-        1 * mockScopeAccessService.deleteExpiredTokens(_)
-        1 * mockFederatedUserDao.addUser(_, IDP_NAME)
+        1 * mockSamlResponseValidator.validateAndPopulateRequest(_) >> request
+
+        //shouldn't try to delete tokens since it's a new user
+        0 * mockScopeAccessService.deleteExpiredTokensQuietly(_)
+        1 * mockFederatedUserDao.addUser(_, _)
         1 * mockScopeAccessService.addUserScopeAccess(_, _)
-        1 * mockTenantService.addTenantRolesToFederatedToken(_,_)
+        1 * mockTenantService.addTenantRolesToUser(_,_)
+
         authInfo.token != null
         authInfo.token.roles == roles
         authInfo.endpoints == endpoints
-        authInfo.user != user
         authInfo.user.username == USERNAME
-        authInfo.user.federated == true
-        authInfo.user.federatedIdp == IDP_URI
+        ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI
         authInfo.user.domainId == DOMAIN_ID
-        authInfo.user.roles == roles
     }
 
-    def "Generate authentication info from saml response when user has been lazy provisioned"() {
-        given:
+    def "Generate authentication info from saml response when user already exists"() {
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
 
-        and:
+        def FederatedUserRequest request = new FederatedUserRequest().with{
+            it.federatedUser = user
+            it.requestedTokenExpirationDate = new DateTime()
+            it.identityProvider = theIdentityProvider
+            return it
+        }
+
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider(IDP_NAME,IDP_URI)
-        mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> user
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> user
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
-        mockTenantService.getTenantRolesForFederatedToken(_) >> roles
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
 
         when:
-        def authInfo = service.generateAuthenticationInfo(samlResponse)
+        def authInfo = service.processSamlResponse(samlResponse)
 
         then:
-        1 * mockSamlResponseValidator.validate(_)
-        1 * mockScopeAccessService.deleteExpiredTokens(user)
+        1 * mockSamlResponseValidator.validateAndPopulateRequest(_) >> request
+        1 * mockScopeAccessService.deleteExpiredTokensQuietly(user)
         1 * mockScopeAccessService.addUserScopeAccess(user, _)
-        1 * mockTenantService.addTenantRolesToFederatedToken(_,_)
+        0 * mockTenantService.addTenantRolesToUser(_,_)
+        0 * mockFederatedUserDao.addUser(_,_)
+
         authInfo.token != null
         authInfo.token.roles == roles
         authInfo.endpoints == endpoints
         authInfo.user == user
-        authInfo.user.federated == true
-        authInfo.user.federatedIdp == IDP_URI
+        ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI
         authInfo.user.roles == roles
+        authInfo.user.domainId == DOMAIN_ID
     }
 
     def "Generate authentication info from saml response when user exists under different domainId throws exception"() {
         given:
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
-        User existingUser = new User().with{
+        FederatedUser existingUser = new FederatedUser().with{
             it.domainId="diffDomain"
             return it
         }
 
+        def FederatedUserRequest request = new FederatedUserRequest().with{
+            it.federatedUser = user
+            it.requestedTokenExpirationDate = new DateTime()
+            it.identityProvider = theIdentityProvider
+            return it
+        }
+
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider(IDP_NAME,IDP_URI)
-        mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> existingUser
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> existingUser
 
         when:
-        def authInfo = service.generateAuthenticationInfo(samlResponse)
+        service.processSamlResponse(samlResponse)
 
         then:
-        1 * mockSamlResponseValidator.validate(_)
+        1 * mockSamlResponseValidator.validateAndPopulateRequest(_) >> request
+        0 * mockTenantService.addTenantRolesToUser(_,_)
+        0 * mockFederatedUserDao.addUser(_,_)
+
         DuplicateUsernameException ex = thrown()
         ex.getMessage() == DefaultFederatedIdentityService.DUPLICATE_USERNAME_ERROR_MSG
     }
@@ -207,7 +242,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockSamlResponseValidator.validate(_) >> { throw new Exception() }
 
         when:
-        def authInfo = service.generateAuthenticationInfo(samlResponse)
+        def authInfo = service.processSamlResponse(samlResponse)
 
         then:
         thrown(Exception)
@@ -215,12 +250,12 @@ class DefaultFederatedIdentityServiceTest extends Specification {
 
     def "Get authentication info for federated token"() {
         given:
-        def federatedToken = createFederatedToken(UUID, IDP_NAME, USERNAME)
+        def federatedToken = createFederatedToken(UUID, USERNAME)
 
         and:
         mockIdentityProviderDao.getIdentityProviderByName(IDP_NAME) >> createIdentityProvider(IDP_NAME,IDP_URI)
-        mockFederatedUserDao.getUserByUsername(USERNAME, IDP_NAME) >> user
-        mockTenantService.getTenantRolesForFederatedToken(federatedToken) >> roles
+        mockFederatedUserDao.getUserById(_) >> user
+        mockTenantService.getTenantRolesForUser(_) >> roles
 
         when:
         def authInfo = service.getAuthenticationInfo(federatedToken)
@@ -230,8 +265,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         authInfo.token.accessTokenExp != null
         authInfo.endpoints == null
         authInfo.user == user
-        authInfo.user.federated == true
-        authInfo.user.federatedIdp == IDP_URI
+        ((FederatedUser)authInfo.user).getFederatedIdpUri() == IDP_URI
         authInfo.user.roles == roles
     }
 
@@ -243,13 +277,12 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         }
     }
 
-    def createFederatedToken(String tokenString, String idpName, String username) {
-        new FederatedToken().with {
+    def createFederatedToken(String tokenString, String username) {
+        new UserScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = new DateTime().toDate()
-            it.idpName = idpName
             it.username = username
-
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);
             return it
         }
     }
