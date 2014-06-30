@@ -35,6 +35,36 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
     }
 
+    def "get mossoId from roles returns compute:default tenantId"() {
+        given:
+        def computeRoleWithTenant = entityFactory.createTenantRole("compute:default")
+        computeRoleWithTenant.tenantIds = ["tenantId"]
+        def computeRoleWithoutTenant = entityFactory.createTenantRole("compute:default")
+
+        when:
+        def mossoId1 = service.getMossoIdFromTenantRoles([computeRoleWithTenant].asList())
+        def mossoId2 = service.getMossoIdFromTenantRoles([computeRoleWithoutTenant].asList())
+
+        then:
+        mossoId1 == "tenantId"
+        mossoId2 == null
+    }
+
+    def "get mossoId from roles returns tenantId that is all digits"() {
+        given:
+        def computeRoleWithTenant = entityFactory.createTenantRole("somerole")
+        computeRoleWithTenant.tenantIds = ["12345"]
+        def computeRoleWithoutTenant = entityFactory.createTenantRole("somerole")
+
+        when:
+        def mossoId1 = service.getMossoIdFromTenantRoles([computeRoleWithTenant].asList())
+        def mossoId2 = service.getMossoIdFromTenantRoles([computeRoleWithoutTenant].asList())
+
+        then:
+        mossoId1 == "12345"
+        mossoId2 == null
+    }
+
     def "delete rbac roles for user deletes all rbac roles (roles where weight=default.rsWeight)"() {
         given:
         def role = entityFactory.createTenantRole()

@@ -16,10 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 @Component
@@ -800,5 +802,25 @@ public class DefaultTenantService implements TenantService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
+    }
+
+    public String getMossoIdFromTenantRoles(List<TenantRole> roles) {
+
+        Assert.notNull(roles);
+
+        for (TenantRole role : roles) {
+            if (role.getName().equals("compute:default") && !role.getTenantIds().isEmpty()) {
+                return role.getTenantIds().iterator().next();
+            }
+        }
+
+        for (TenantRole tenantRole : roles) {
+            for (String tenantId : tenantRole.getTenantIds()) {
+                if (tenantId.matches("\\d+")) {
+                    return tenantId;
+                }
+            }
+        }
+        return null;
     }
 }
