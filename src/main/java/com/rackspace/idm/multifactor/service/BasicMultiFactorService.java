@@ -15,6 +15,7 @@ import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
@@ -57,6 +58,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     public static final String CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED = "feature.multifactor.phone.membership.enabled";
 
+    public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
+    public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
+
     @Autowired
     private UserService userService;
 
@@ -80,6 +84,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
+    @Autowired
+    private EmailClient emailClient;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -190,6 +197,8 @@ public class BasicMultiFactorService implements MultiFactorService {
                 && StringUtils.hasText(user.getExternalMultiFactorUserId())) {
             //want to try and unlock user regardless of mfa enable/disable
             userManagement.unlockUser(user.getExternalMultiFactorUserId());
+            user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
+            userService.updateUserForMultiFactor(user);
         }
     }
 
@@ -225,10 +234,12 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePin(null);
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
+        user.setMultiFactorState(null);
         userService.updateUserForMultiFactor(user);
 
         if (enabled) {
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 
         //unlink phone from user.
@@ -337,11 +348,13 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean alreadyEnabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(true);
+        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
         userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
             scopeAccessService.expireAllTokensForUserById(user.getId());
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
     }
 
@@ -351,11 +364,13 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean enabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(false);
+        user.setMultiFactorState(null);
         user.setExternalMultiFactorUserId(null);
         userService.updateUserForMultiFactor(user);
 
         if (enabled){
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 
         deleteExternalUser(user.getId(), user.getUsername(), providerUserId);

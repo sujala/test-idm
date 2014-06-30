@@ -6,6 +6,8 @@ import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutEx
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.UserManagement
@@ -53,6 +55,9 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
+    private UserService userService
+
+    @Autowired
     private MobilePhoneVerification mobilePhoneVerification;
 
     @Autowired
@@ -65,6 +70,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
     private DefaultMultiFactorCloud20Service multiFactorCloud20Service
 
     org.openstack.docs.identity.api.v2.User userAdmin;
+    User userAdminUser
     String userAdminToken;
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
     VerificationCode constantVerificationCode;
@@ -90,6 +96,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
      */
     def setup() {
         userAdmin = createUserAdmin()
+        userAdminUser = userRepository.getUserById(userAdmin.id)
         userAdminToken = authenticate(userAdmin.username)
     }
 
@@ -152,15 +159,25 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         mockedSessionIdReaderWriter.writeEncoded(_) >> "dummy"
         multiFactorCloud20Service.sessionIdReaderWriter = mockedSessionIdReaderWriter
 
+        UserService mockUserService = Mock(UserService)
+        User user = new User()
+        multiFactorCloud20Service.userService = mockUserService
+        mockUserService.getUserById(userAdmin.id) >> user
+
         when:
-        Response.ResponseBuilder result = multiFactorCloud20Service.performMultiFactorChallenge(userAdmin.id, ["PASSWORD"].asList())
+        Response.ResponseBuilder result = multiFactorCloud20Service.performMultiFactorChallenge(userAdminUser, ["PASSWORD"].asList())
 
         then:
+        1 * mockUserService.updateUserForMultiFactor(_) >> { User userArg ->
+            assert (userArg.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED)
+        }
         thrown(ForbiddenException)
+
 
         cleanup:
         multiFactorCloud20Service.multiFactorService = multiFactorService
         multiFactorCloud20Service.sessionIdReaderWriter = sessionIdReaderWriter
+        multiFactorCloud20Service.userService = userService
     }
 
     def void addPhone() {

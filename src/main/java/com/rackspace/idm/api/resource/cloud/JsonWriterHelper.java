@@ -151,9 +151,14 @@ public final class JsonWriterHelper {
         }
 
         if (isMultiFactorGloballyEnabled) {
-            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled());
+            boolean mfaEnabledValue = user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled();
+            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, mfaEnabledValue);
+            if(mfaEnabledValue) {
+                outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
+            }
         } else if (Boolean.TRUE.equals(user.isMultiFactorEnabled())) {
             outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, true);
+            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
         }
 
         if (user.getOtherAttributes().size() != 0) {

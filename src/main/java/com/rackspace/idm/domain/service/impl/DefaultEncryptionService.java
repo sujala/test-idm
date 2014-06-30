@@ -125,16 +125,6 @@ public class DefaultEncryptionService implements EncryptionService {
         } catch (InvalidCipherTextException e) {
             logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, API_KEY, user.getId()), e);
         }
-
-        try {
-            if (user.getPassword() != null) {
-                user.setEncryptedClearPassword(cryptHelper.encrypt(user.getPassword(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, user.getId()), e);
-        }
     }
 
     @Override

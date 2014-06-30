@@ -901,7 +901,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
                 if (multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
-                    return multiFactorCloud20Service.performMultiFactorChallenge(((User) authResult.getUser()).getId(), authResult.getAuthenticatedBy());
+                    return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
                     authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
                     restrictTenantInAuthentication(authenticationRequest, authResponseTuple);

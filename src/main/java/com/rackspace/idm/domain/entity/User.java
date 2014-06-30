@@ -59,10 +59,6 @@ public class User implements EndUser {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String email;
 
-    @LDAPField(attribute=LdapRepository.ATTR_CLEAR_PASSWORD,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private byte[] encryptedClearPassword;
     private String password;
 
     private boolean passwordIsNew = true;
@@ -253,6 +249,9 @@ public class User implements EndUser {
 
     @LDAPField(attribute = LdapRepository.ATTR_EXTERNAL_MULTIFACTOR_USER_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String externalMultiFactorUserId;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_STATE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private String multiFactorState;
 
     private List<TenantRole> roles;
 
