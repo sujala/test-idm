@@ -14,7 +14,7 @@ public class ExternalBeansConfiguration {
     public Mapper getMapper() {
         DozerBeanMapper mapper = new DozerBeanMapper();
 
-        List<String> mappingFiles = Arrays.asList("xmlgregoriancalender-mapping.xml");
+        List<String> mappingFiles = Arrays.asList("dozer-mapping.xml");
         mapper.setMappingFiles(mappingFiles);
 
         return mapper;

@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
@@ -239,6 +240,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             multiFactorService.sendSmsPasscode(user.getId());
         } catch (DuoLockedOutException lockedOutException) {
             emailClient.asyncSendMultiFactorLockedOutMessage(user);
+            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
+            userService.updateUserForMultiFactor(user);
             throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
         }
 
@@ -290,11 +293,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
-        }
-        else {
-            if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
-                emailClient.asyncSendMultiFactorLockedOutMessage(user);
-            }
+        } else if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
+            emailClient.asyncSendMultiFactorLockedOutMessage(user);
+            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
+            userService.updateUserForMultiFactor(user);
+            throw createFailedSecondFactorException(response, sessionId);
+        } else {
             //2-factor request denied. Determine appropriate exception/message for user
             throw createFailedSecondFactorException(response, sessionId);
         }

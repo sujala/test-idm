@@ -419,6 +419,13 @@ class Cloud20Utils {
         response.getEntity(User).value
     }
 
+    def getUsersByDomainId(String domainId, String token=getServiceAdminToken()) {
+        def response = methods.getUsersByDomainId(token, domainId)
+        assert(response.status == SC_OK)
+        List<User> users = response.getEntity(UserList).value.user
+        users
+    }
+
     def getUsersByEmail(String email, String token=getServiceAdminToken()){
         def response = methods.getUsersByEmail(token, email)
         assert (response.status == SC_OK)

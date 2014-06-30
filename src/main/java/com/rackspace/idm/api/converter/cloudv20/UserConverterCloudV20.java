@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
@@ -169,6 +171,17 @@ public class UserConverterCloudV20 {
                 want it included in the json, so null it out.
             */
             jaxbUser.setRoles(null);
+
+            //legacy users will not have a multifactor state in the directory, if they are mfa enabled then their state is active
+            if(user.getMultifactorEnabled() != null && user.getMultifactorEnabled() && user.getMultiFactorState() == null) {
+                jaxbUser.setMultiFactorState(MultiFactorStateEnum.ACTIVE);
+            }
+
+            //protect against invalid data in the directory
+            //if a user is not using multifactor then they should not have a mfa state
+            if(user.getMultifactorEnabled() == null || !user.getMultifactorEnabled()) {
+                jaxbUser.setMultiFactorState(null);
+            }
 
             if(includeOtherAttributes) {
                 if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {

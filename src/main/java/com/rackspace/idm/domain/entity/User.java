@@ -247,6 +247,9 @@ public class User  extends BaseUser implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_EXTERNAL_MULTIFACTOR_USER_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String externalMultiFactorUserId;
 
+    @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_STATE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private String multiFactorState;
+
     private List<TenantRole> roles;
 
     public User() {
