@@ -198,9 +198,7 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     @Override
     public Class getEntityType(SearchResultEntry entry) {
         //NOTE:!! order precedence is important. Base classes should be further down in the check list.
-        if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_FEDERATEDUSERSCOPEACCESS)) {
-            return FederatedToken.class;
-        } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
+        if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
             return UserScopeAccess.class;
         }else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_CLIENTSCOPEACCESS)) {
             return ClientScopeAccess.class;

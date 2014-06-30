@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
@@ -21,7 +22,6 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
-import com.rackspace.idm.domain.entity.FederatedToken
 
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
@@ -934,12 +934,11 @@ class RootServiceTest extends Specification {
     }
 
     def createFederatedToken(String tokenString, String idpName, String username) {
-        new FederatedToken().with {
+        new UserScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = new DateTime().plusDays(1).toDate()
-            it.idpName = idpName
             it.username = username
-
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
     }

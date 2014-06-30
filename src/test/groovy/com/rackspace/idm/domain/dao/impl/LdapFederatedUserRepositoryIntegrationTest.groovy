@@ -1,6 +1,10 @@
 package com.rackspace.idm.domain.dao.impl
-import com.rackspace.idm.domain.entity.FederatedToken
-import com.rackspace.idm.domain.entity.User
+
+import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.IdentityProvider
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -13,41 +17,64 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
-    ScopeAccessService scopeAccessService
+    LdapIdentityProviderRepository ldapIdentityProviderRepository
 
-    @Shared def IDP_NAME = "dedicated";
+    @Autowired
+    ScopeAccessService scopeAccessService
 
     @Shared def random
     @Shared def username
+
+    private IdentityProvider commonIdentityProvider;
 
     def setup() {
         def randomness = UUID.randomUUID()
         random = ("$randomness").replace('-', "")
         username = "someName"+random
+
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
     }
 
-    def "add and get a federated user by username"() {
+    def "add and get a federated user"() {
         given:
-        def id = UUID.randomUUID()
-        def user = createUser(random, username)
+        def user = createFederatedUser(random, username)
 
         when:
-        ldapFederatedUserRepository.addUser(user, IDP_NAME)
+        ldapFederatedUserRepository.addUser(commonIdentityProvider, user)
 
         then:
-        def addedUser = ldapFederatedUserRepository.getUserByUsername(username, IDP_NAME)
+        user.id != null
+        user.getLdapEntry() != null
 
+        when:
+        def addedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, Constants.DEFAULT_IDP_NAME)
+
+        then:
+        addedUser != null
         addedUser.id == user.id
         addedUser.username == user.username
     }
 
+    def "add federated user with inconsistent uri throws exception"() {
+        given:
+        def user = createFederatedUser(random, username).with({
+            it.federatedIdpUri = "wrongUri"
+            return it
+        })
+
+        when:
+        ldapFederatedUserRepository.addUser(commonIdentityProvider, user)
+
+        then:
+        IllegalArgumentException ex = thrown()
+    }
+
     def "get federated user by token"() {
         given:
-        def id = UUID.randomUUID()
-        def user = createUser(random, username)
-        def federatedToken = createFederatedToken(random, username, random, new Date().plus(1), IDP_NAME)
+        def user = createFederatedUser(random, username)
+        ldapFederatedUserRepository.addUser(commonIdentityProvider, user)
 
-        ldapFederatedUserRepository.addUser(user, IDP_NAME)
+        def federatedToken = createFederatedToken(user.id, username, random, new Date().plus(1), Constants.DEFAULT_IDP_NAME)
         scopeAccessService.addUserScopeAccess(user, federatedToken)
 
         when:
@@ -59,22 +86,27 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
     }
 
     def createFederatedToken(String userId, String username, String tokenStr, Date expiration, String idpName)   {
-        new FederatedToken().with {
+        new UserScopeAccess().with {
             it.userRsId = userId
             it.accessTokenString = tokenStr
             it.accessTokenExp = expiration
             it.username = username
             it.clientId = "fakeClientId"
-            it.idpName = idpName
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
     }
 
-    def createUser(String id, String username) {
-        new User().with {
+    def createFederatedUser(String id, String username) {
+        new FederatedUser().with {
             it.id = id
             it.username = username
+            it.domainId = "123"
+            it.region="ORD"
+            it.email="test@rackspace.com"
+            it.federatedIdpUri = Constants.DEFAULT_IDP_URI
             return it
         }
     }
+
 }

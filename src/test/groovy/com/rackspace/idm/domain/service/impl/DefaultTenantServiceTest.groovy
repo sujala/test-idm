@@ -2,9 +2,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.FederatedToken
 import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
@@ -640,126 +638,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         null    | null    | null   | false           | false
         "1"     | "desc"  | "name" | true            | true
 
-    }
-
-    def "add TenantRole to federated token throws exception with invalid input" () {
-        when:
-        service.addTenantRoleToFederatedToken(federatedToken, tenantRole)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        where:
-        federatedToken                           | tenantRole
-        null                                     | entityFactory.createTenantRole()
-        entityFactory.createFederatedToken()     | null
-    }
-
-    def "add TenantRole to federated token throws exception with invalid TenantRole params" () {
-        given:
-        def mockFederatedToken = Mock(FederatedToken)
-        def tenantRole = entityFactory.createTenantRole("role")
-
-        and:
-        mockFederatedToken.getUniqueId() >> "uniqueId"
-
-        when:
-        service.addTenantRoleToFederatedToken(mockFederatedToken, tenantRole)
-        applicationService.getById(clientId) >> application
-        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> clientRole
-
-        then:
-        thrown(NotFoundException)
-
-        where:
-        application                         | clientRole
-        entityFactory.createApplication()   | null
-        null                                | entityFactory.createClientRole()
-    }
-
-    def "add TenantRole to federated token" () {
-        given:
-        def mockFederatedToken = Mock(FederatedToken)
-        def role = entityFactory.createTenantRole("role")
-
-        and:
-        mockFederatedToken.getUniqueId() >> "uniqueId"
-        applicationService.getById(clientId) >> entityFactory.createApplication()
-        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> entityFactory.createClientRole()
-
-        when:
-        service.addTenantRoleToFederatedToken(mockFederatedToken, role)
-
-        then:
-        1 * tenantRoleDao.addTenantRoleToFederatedToken(mockFederatedToken, role)
-    }
-
-    def "add TenantRoles to federated token" () {
-        given:
-        def mockFederatedToken = Mock(FederatedToken)
-        def roles = [entityFactory.createTenantRole("role1"), entityFactory.createTenantRole("role2")].toList()
-
-        and:
-        mockFederatedToken.getUniqueId() >> "uniqueId"
-        applicationService.getById(clientId) >> entityFactory.createApplication()
-        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role1") >> entityFactory.createClientRole()
-        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role2") >> entityFactory.createClientRole()
-
-        when:
-        service.addTenantRolesToFederatedToken(mockFederatedToken, roles)
-
-        then:
-        2 * tenantRoleDao.addTenantRoleToFederatedToken(mockFederatedToken, _)
-    }
-
-    def "get TenantRoles for federated token" () {
-        given:
-        def list = [].asList()
-        def federatedToken = entityFactory.createFederatedToken()
-
-        and:
-        tenantRoleDao.getTenantRolesForFederatedToken(federatedToken) >> list
-
-        when:
-        List<TenantRole> result = service.getTenantRolesForFederatedToken(federatedToken)
-
-        then:
-        result == list
-    }
-
-    def "get tenants for federated token"() {
-        given:
-        def federatedToken = entityFactory.createFederatedToken()
-        def tenant = entityFactory.createTenant()
-        def tenantRole = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId" ]; return it }
-        def tenantRoles = [ tenantRole ].asList()
-
-        when:
-        def tenants = service.getTenantsForFederatedTokenByTenantRoles(federatedToken)
-
-        then:
-        tenants == [ tenant ].asList()
-        1 * tenantRoleDao.getTenantRolesForFederatedToken(_) >> tenantRoles
-        1 * tenantDao.getTenant(_) >> tenant
-    }
-
-    def "get tenants for federated token when it has multiple tenant roles with multiple tenants"() {
-        given:
-        def federatedToken = entityFactory.createFederatedToken()
-        def tenant = entityFactory.createTenant()
-        def tenantRole1 = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId1", "tenantId2" ]; return it }
-        def tenantRole2 = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId1", "tenantId2" ]; return it }
-        def tenantRoles = [ tenantRole1, tenantRole2 ].asList()
-
-        when:
-        def tenants = service.getTenantsForFederatedTokenByTenantRoles(federatedToken)
-
-        then:
-        tenants != null
-        tenants.size() == 2
-        1 * tenantRoleDao.getTenantRolesForFederatedToken(_) >> tenantRoles
-        1 * tenantDao.getTenant("tenantId1") >> tenant
-        1 * tenantDao.getTenant("tenantId2") >> tenant
     }
 
     def mockFederatedUserDao(service) {

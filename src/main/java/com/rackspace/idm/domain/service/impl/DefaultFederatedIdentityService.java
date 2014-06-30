@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.SAMLConstants;
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
@@ -9,6 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.util.SamlResponseValidator;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Response;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,79 +63,146 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private Configuration config;
 
     @Override
-    public AuthData generateAuthenticationInfo(Response response) {
-        SamlResponseDecorator samlResponse = new SamlResponseDecorator(response);
-        samlResponseValidator.validate(samlResponse);
+    public AuthData processSamlResponse(Response response) {
+        SamlResponseDecorator decoratedSamlResponse = new SamlResponseDecorator(response);
+        FederatedUserRequest request = samlResponseValidator.validateAndPopulateRequest(decoratedSamlResponse);
 
-        String domainId = samlResponse.getAttribute(SAMLConstants.ATTR_DOMAIN).get(0);
-        IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponse.getIdpUri());
-        User user = getOrCreateUser(samlResponse.getUsername(), domainId, provider);
-        scopeAccessService.deleteExpiredTokens(user);
+        FederatedUser user = processUserForRequest(request);
 
-        FederatedToken token = createFederatedToken(user, provider, samlResponse.getAttribute(SAMLConstants.ATTR_ROLES), domainId);
+        UserScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate());
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForFederatedToken(token);
+        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
 
         return getAuthData(user, token, endpoints, tenantRoles);
     }
 
     @Override
-    public AuthData getAuthenticationInfo(FederatedToken token) {
-        IdentityProvider provider = identityProviderDao.getIdentityProviderByName(token.getIdpName());
-        User user = getUser(token.getUsername(), provider);
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForFederatedToken(token);
+    public AuthData getAuthenticationInfo(UserScopeAccess token) {
+        FederatedUser user = federatedUserDao.getUserById(token.getUserRsId());
+        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(user);
 
         return getAuthData(user, token, null, tenantRoles);
     }
 
-    private User getOrCreateUser(String username, String domain, IdentityProvider provider) {
-        User user = getUser(username, provider);
-        if (user == null) {
-            user = createUser(username, domain, provider);
-        } else if (!domain.equalsIgnoreCase(user.getDomainId())) {
+    /**
+     * If the user already exists, will return a _new_ user object representing the stored user. If the user does not exist, a new user is created in the backend, but the provided
+     * user object is altered (updated with ID).
+     *
+     * Will also delete expired tokens if the user already existed
+     *
+     * @param request
+     * @return
+     */
+    private FederatedUser processUserForRequest(FederatedUserRequest request) {
+        FederatedUser resultUser = getFederatedUserForIdp(request.getFederatedUser().getUsername(), request.getIdentityProvider());
+        if (resultUser == null) {
+            resultUser = createUserForRequest(request);
+        } else if (!request.getFederatedUser().getDomainId().equalsIgnoreCase(resultUser.getDomainId())) {
             throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
+        } else {
+            if (!request.getFederatedUser().getEmail().equalsIgnoreCase(resultUser.getEmail())) {
+                resultUser.setEmail(request.getFederatedUser().getEmail());
+                federatedUserDao.updateUser(resultUser);
+            }
+            //if the user already exists, delete any expired tokens
+            scopeAccessService.deleteExpiredTokensQuietly(resultUser);
         }
 
+        return resultUser;
+    }
+
+    /**
+     * Retrieve the existing user for the specified username and IDP.
+     *
+     * @param username
+     * @param provider
+     * @return
+     */
+    private FederatedUser getFederatedUserForIdp(String username, IdentityProvider provider) {
+        FederatedUser user = federatedUserDao.getUserByUsernameForIdentityProviderName(username, provider.getName());
         return user;
     }
 
-    private User getUser(String username, IdentityProvider provider) {
-        User user = federatedUserDao.getUserByUsername(username, provider.getName());
-        if (user != null) {
-            user.setFederated(true);
-            user.setFederatedIdp(provider.getUri());
-        }
-        return user;
+    private FederatedUser createUserForRequest(FederatedUserRequest request) {
+        FederatedUser userToCreate = request.getFederatedUser();
+
+        List<User> domainUserAdmins = getDomainUserAdmins(userToCreate.getDomainId());
+
+        String defaultRegion = calculateDefaultRegionForNewUserRequest(request, domainUserAdmins);
+        userToCreate.setRegion(defaultRegion);
+
+        List<TenantRole> tenantRoles = calculateRolesForNewUserRequest(request, domainUserAdmins);
+
+        federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
+        tenantService.addTenantRolesToUser(userToCreate, tenantRoles);
+
+        return userToCreate;
     }
 
-    private User createUser(String username, String domainId, IdentityProvider provider) {
-        User user = new User();
-        user.setUsername(username);
-        user.setFederated(true);
-        user.setFederatedIdp(provider.getUri());
-        user.setDomainId(domainId);
-        federatedUserDao.addUser(user, provider.getName());
-
-        return user;
+    /**
+     * Determine the region for the new user based on the passed in request and the user-admins. For now, if multiple
+     * userAdmins for the domain exist (and this is allowed per
+     * configuration), the first userAdmin returned will be used to determine the default region.
+     *
+     * @param request
+     * @param userAdmins
+     * @return
+     */
+    private String calculateDefaultRegionForNewUserRequest(FederatedUserRequest request, List<User> userAdmins) {
+        Assert.notEmpty(userAdmins, "Must provide at least one user admin!");
+        return userAdmins.get(0).getRegion();
     }
 
-    private FederatedToken createFederatedToken(User user, IdentityProvider provider, List<String> roles, String domainId) {
-        FederatedToken token = new FederatedToken();
+    /**
+     * Determine the roles that the new federated user should receive
+     * @return
+     */
+    private List<TenantRole> calculateRolesForNewUserRequest(FederatedUserRequest request, List<User> userAdmins) {
+        FederatedUser userToCreate = request.getFederatedUser();
+
+        //get the roles that should be added to the user
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+
+        //add in default role which is added to all federated users
+        //TODO: Candidate for caching...
+        ClientRole roleObj = roleDao.getRoleByName("identity:default");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setRoleRsId(roleObj.getId());
+        tenantRole.setClientId(roleObj.getClientId());
+        tenantRole.setName(roleObj.getName());
+        tenantRole.setDescription(roleObj.getDescription());
+        tenantRoles.add(tenantRole);
+
+        //add in the propagating roles
+        tenantRoles.addAll(getDomainPropagatingRoles(userAdmins));
+
+        /*
+        add in the saml requested roles
+
+        TODO: This needs to get populated. May need to loop through these and "convert" them to full on tenant roles (populated name/description, etc
+        depending on how much is done in the validator. May not want to populate that info unless we know we need to persist. Don't know.
+        Will figure out when role logic story is implemented. For now, the list is always empty anyway...
+         */
+        tenantRoles.addAll(userToCreate.getRoles());
+
+        return tenantRoles;
+    }
+
+    private UserScopeAccess createToken(FederatedUser user, DateTime requestedExpirationDate) {
+        UserScopeAccess token = new UserScopeAccess();
         token.setUserRsId(user.getId());
         token.setAccessTokenString(generateToken());
-        token.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+        token.setAccessTokenExp(requestedExpirationDate.toDate());
         token.setUsername(user.getUsername());
         token.setClientId(getCloudAuthClientId());
-        token.setIdpName(provider.getName());
-        scopeAccessService.addUserScopeAccess(user, token);
+        token.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);
 
-        List<TenantRole> tenantRoles = getTenantRoles(roles, domainId);
-        tenantService.addTenantRolesToFederatedToken(token, tenantRoles);
+        scopeAccessService.addUserScopeAccess(user, token);
 
         return token;
     }
 
-    private AuthData getAuthData(User user, FederatedToken token, List<OpenstackEndpoint> endpoints, List<TenantRole> tenantRoles) {
+    private AuthData getAuthData(FederatedUser user, UserScopeAccess token, List<OpenstackEndpoint> endpoints, List<TenantRole> tenantRoles) {
         AuthData authData = new AuthData();
         authData.setToken(token);
         authData.setUser(user);
@@ -144,21 +214,29 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         return authData;
     }
 
-    private List<TenantRole> getTenantRoles(List<String> roles, String domainId) {
+    private List<TenantRole> convertSamlProvidedRolesToTenantRoles(List<String> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
 
         //get the roles passed in with the saml assertion and add as global roles
-        for (String role : roles) {
-            ClientRole roleObj = roleDao.getRoleByName(role);
-            TenantRole tenantRole = new TenantRole();
-            tenantRole.setRoleRsId(roleObj.getId());
-            tenantRole.setClientId(roleObj.getClientId());
-            tenantRole.setName(roleObj.getName());
-            tenantRole.setDescription(roleObj.getDescription());
-
-            tenantRoles.add(tenantRole);
+        if (CollectionUtils.isNotEmpty(roles)) {
+            for (String role : roles) {
+                ClientRole roleObj = roleDao.getRoleByName(role);
+                TenantRole tenantRole = new TenantRole();
+                tenantRole.setRoleRsId(roleObj.getId());
+                tenantRole.setClientId(roleObj.getClientId());
+                tenantRole.setName(roleObj.getName());
+                tenantRole.setDescription(roleObj.getDescription());
+                tenantRoles.add(tenantRole);
+            }
         }
 
+        return tenantRoles;
+    }
+
+    /**
+     * Retrieve the user-admin for the specified domain
+     */
+    List<User> getDomainUserAdmins(String domainId) {
         //get the propagating roles for the domain
         List<User> userAdmins = domainService.getDomainAdmins(domainId);
 
@@ -172,17 +250,32 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
             throw new IllegalStateException("more than one user admin exists for domain " + domainId);
         }
 
-        for (User userAdmin : userAdmins) {
+        return userAdmins;
+    }
+
+
+    /**
+     * Retrieve the propagating roles associated with the domain by retrieving the propagating roles assigned to the user-admin.
+     *
+     * Note - yes, such roles probably should be attached to the domain rather than the user-admin, but that's how propagating
+     * roles were implemented so that's why we retrieve them off the user-admin instead of the domain. :)
+     *
+     * @param domainUserAdmins
+     * @return
+     */
+    private List<TenantRole> getDomainPropagatingRoles(List<User> domainUserAdmins) {
+        List<TenantRole> propagatingRoles = new ArrayList<TenantRole>();
+
+        for (User userAdmin : domainUserAdmins) {
             for (TenantRole role : tenantService.getTenantRolesForUser(userAdmin)) {
                 if (role.getPropagate()) {
                     role.setLdapEntry(null);
                     role.setUserId(null);
-                    tenantRoles.add(role);
+                    propagatingRoles.add(role);
                 }
             }
         }
-
-        return tenantRoles;
+        return propagatingRoles;
     }
 
     String generateToken() {

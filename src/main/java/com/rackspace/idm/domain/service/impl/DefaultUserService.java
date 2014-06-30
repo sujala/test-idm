@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
@@ -12,6 +13,7 @@ import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -805,15 +807,6 @@ public class DefaultUserService implements UserService {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             user = getRackerByRackerId((rackerScopeAccess.getRackerId()));
         }
-        else if (scopeAccess instanceof FederatedToken) {
-            //whenever a caller makes a request with a token, the code
-            //attempts to get the user for the calling token, so it can
-            //apply authorization rules, policies, etc
-            //federated users are stored in a different space,
-            //TODO: investigate encapsulating this in UserDao
-            FederatedToken token = (FederatedToken) scopeAccess;
-            user = federatedUserDao.getUserByToken(token);
-        }
         else if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             if (impersonatedScopeAccess.getRackerId() != null) {
@@ -827,7 +820,14 @@ public class DefaultUserService implements UserService {
             }
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
-            user = getUser(userScopeAccess.getUsername());
+            if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
+                //will be a federated user  (FederatedUser)
+                user = federatedUserDao.getUserByToken(userScopeAccess);
+            }
+            else {
+                //will be a "persistent" user (User)
+                user = getUser(userScopeAccess.getUsername());
+            }
         } else if (scopeAccess instanceof ClientScopeAccess) {
             return null;
         } else {
