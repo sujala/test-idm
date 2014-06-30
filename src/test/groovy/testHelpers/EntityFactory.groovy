@@ -1,4 +1,7 @@
 package testHelpers
+
+import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
@@ -373,6 +376,30 @@ class EntityFactory extends Specification {
         return createUser("username", "id", "domainId", "region")
     }
 
+    def createFederatedToken(FederatedUser user, String tokenStr=Cloud20Utils.createRandomString(), Date expiration = new Date())   {
+        new UserScopeAccess().with {
+            it.userRsId = user.id
+            it.accessTokenString = tokenStr
+            it.accessTokenExp = expiration
+            it.username = user.username
+            it.clientId = "fakeClientId"
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
+            return it
+        }
+    }
+
+    def createFederatedUser(String username=Cloud20Utils.createRandomString(), String federatedIdpUri = Constants.DEFAULT_IDP_URI) {
+        new FederatedUser().with {
+            it.id = Cloud20Utils.createRandomString()
+            it.username = username
+            it.domainId = "123"
+            it.region="ORD"
+            it.email="test@rackspace.com"
+            it.federatedIdpUri = federatedIdpUri
+            return it
+        }
+    }
+
     def createUser(String username, String userId, String domainId, String region) {
         def id = userId ? userId : "id"
         new User().with {
@@ -420,8 +447,9 @@ class EntityFactory extends Specification {
     }
 
     def createFederatedToken() {
-        new FederatedToken().with {
+        new UserScopeAccess().with {
             it.accessTokenString = "ats"
+            it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
     }

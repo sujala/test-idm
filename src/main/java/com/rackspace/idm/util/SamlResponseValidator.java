@@ -1,23 +1,28 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.SAMLConstants;
+import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
-import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+//TODO: Refactor this completely
 @Component
 public class SamlResponseValidator {
 
@@ -39,27 +44,34 @@ public class SamlResponseValidator {
     @Autowired
     private Configuration config;
 
-    public void validate(SamlResponseDecorator samlResponseDecorator) {
-        validateIssuer(samlResponseDecorator);
-        validateSignature(samlResponseDecorator);
-        validateAssertion(samlResponseDecorator);
+    /**
+     * Validate the samlResponse contains the required data. In addition it verifies the specified issuer exists, the
+     * signature validates against that issuer, and the domain exists.
+     * - a valid issuer
+     *
+     * @param samlResponseDecorator
+     */
+    public FederatedUserRequest validateAndPopulateRequest(SamlResponseDecorator samlResponseDecorator) {
+        IdentityProvider provider = validateIssuer(samlResponseDecorator);
+        validateSignatureForProvider(samlResponseDecorator, provider);
 
-        Assertion samlAssertion = samlResponseDecorator.getSamlResponse().getAssertions().get(0);
-        validateSubject(samlAssertion);
-        validateSubjectConfirmationNotOnOrAfterDate(samlAssertion);
-        validateAuthInstant(samlAssertion);
-        validateAuthContextClassRef(samlAssertion);
-        validateDomain(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_DOMAIN));
-        validateRoles(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
+        //populate a federated user object based on saml data
+        FederatedUserRequest request = new FederatedUserRequest();
+        request.setIdentityProvider(provider);
+
+        request.setFederatedUser(new FederatedUser());
+        request.getFederatedUser().setFederatedIdpUri(provider.getUri());
+
+        //validate assertion
+        validateSamlAssertionAndPopulateRequest(samlResponseDecorator, request);
+
+        return request;
     }
 
-    private void validateSignature(SamlResponseDecorator samlResponseDecorator) {
+    private void validateSignatureForProvider(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
         if (samlResponseDecorator.getSamlResponse().getSignature() == null) {
             throw new BadRequestException("No Signature specified");
         }
-
-        IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.getIdpUri());
-
         try {
             samlSignatureValidator.validateSignature(samlResponseDecorator.getSamlResponse().getSignature(), provider.getPublicCertificate());
         } catch (Throwable t) {
@@ -68,30 +80,54 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateAssertion(SamlResponseDecorator samlResponseDecorator) {
+    private void validateSamlAssertionAndPopulateRequest(SamlResponseDecorator samlResponseDecorator, FederatedUserRequest request) {
         if (samlResponseDecorator.getSamlResponse().getAssertions() == null || samlResponseDecorator.getSamlResponse().getAssertions().size() == 0) {
             throw new BadRequestException("No Assertions specified");
         }
+
+        Assertion samlAssertion = samlResponseDecorator.getSamlResponse().getAssertions().get(0);
+
+        request.getFederatedUser().setUsername(validateAndReturnUsername(samlAssertion));
+
+        validateSubjectConfirmationNotOnOrAfterDateAndPopulateRequest(samlAssertion, request);
+
+        validateAuthInstant(samlAssertion);
+        validateAuthContextClassRef(samlAssertion);
+
+        //validate and populate domain
+        validateSamlDomainAndPopulateRequest(samlResponseDecorator, request);
+
+        //validate and populate email
+        validateSamlEmailAndPopulateRequest(samlResponseDecorator, request);
+
+//        validateRoles(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
+
+
+
     }
 
-    private void validateIssuer(SamlResponseDecorator samlResponseDecorator) {
+    private IdentityProvider validateIssuer(SamlResponseDecorator samlResponseDecorator) {
         if (samlResponseDecorator.getSamlResponse().getIssuer() == null || StringUtils.isBlank(samlResponseDecorator.getSamlResponse().getIssuer().getValue())) {
             throw new BadRequestException("Issuer is not specified");
         }
 
-        if (identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.getSamlResponse().getIssuer().getValue()) == null) {
+        IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.getSamlResponse().getIssuer().getValue());
+
+        if ( provider == null) {
             throw new BadRequestException("Issuer is unknown");
         }
+        return provider;
     }
 
-    private void validateSubject(Assertion samlAssertion) {
+    private String validateAndReturnUsername(Assertion samlAssertion) {
         if (samlAssertion.getSubject() == null || samlAssertion.getSubject().getNameID() == null
                 || StringUtils.isBlank(samlAssertion.getSubject().getNameID().getValue())) {
             throw new BadRequestException("Subject is not specified");
         }
+        return samlAssertion.getSubject().getNameID().getValue();
     }
 
-    private void validateSubjectConfirmationNotOnOrAfterDate(Assertion samlAssertion) {
+    private void validateSubjectConfirmationNotOnOrAfterDateAndPopulateRequest(Assertion samlAssertion, FederatedUserRequest request) {
         if (samlAssertion.getSubject().getSubjectConfirmations() == null ||
             samlAssertion.getSubject().getSubjectConfirmations().size() == 0 ||
             samlAssertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData() == null ||
@@ -99,9 +135,12 @@ public class SamlResponseValidator {
             throw new BadRequestException("SubjectConfirmationData NotOnOrAfter is not specified");
         }
 
-        if (samlAssertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getNotOnOrAfter().isBeforeNow())  {
+        DateTime expirationDate = samlAssertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getNotOnOrAfter();
+        if (expirationDate.isBeforeNow())  {
             throw new BadRequestException("SubjectConfirmationData NotOnOrAfter can not be in the past");
         }
+
+        request.setRequestedTokenExpirationDate(expirationDate);
     }
 
     private void validateAuthInstant(Assertion samlAssertion) {
@@ -123,40 +162,72 @@ public class SamlResponseValidator {
         }
     }
 
-    private void validateDomain(List<String> domain) {
-        if (domain == null || domain.size() == 0) {
-            throw new BadRequestException("domain attribute is not specified");
+    /**
+     * Returns the validated domain
+     *
+     * @return
+     */
+    private void validateSamlDomainAndPopulateRequest(SamlResponseDecorator decoratedResponse, FederatedUserRequest request) {
+        List<String> domains = decoratedResponse.getAttribute(SAMLConstants.ATTR_DOMAIN);
+
+        if (domains == null || domains.size() == 0) {
+            throw new BadRequestException("Domain attribute is not specified");
         }
 
-        if (domain.size() > 1) {
-            throw new BadRequestException("multiple domains specified");
+        if (domains.size() > 1) {
+            throw new BadRequestException("Multiple domains specified");
         }
 
-        if (domainDao.getDomain(domain.get(0)) == null) {
-            throw new BadRequestException("domain '" + domain.get(0) + "' does not exist");
+        String requestedDomain = domains.get(0);
+        Domain domain = domainDao.getDomain(requestedDomain);
+        if (domain == null) {
+            throw new BadRequestException("Domain '" + requestedDomain + "' does not exist.");
         }
+        else if (!domain.getEnabled()) {
+            throw new BadRequestException("Domain '" + requestedDomain + "' is disabled.");
+        }
+
+        request.getFederatedUser().setDomainId(domain.getDomainId());
     }
 
-    private void validateRoles(List<String> roles) {
-        if (roles == null || roles.size() == 0) {
-            throw new BadRequestException("roles attribute is not specified");
+    /**
+     * Validates and sets the email on the provided federateduserrequest.
+     *
+     * @return
+     */
+    private void validateSamlEmailAndPopulateRequest(SamlResponseDecorator decoratedResponse, FederatedUserRequest request) {
+        List<String> emails = decoratedResponse.getAttribute(SAMLConstants.ATTR_EMAIL);
+
+        if (emails == null || emails.size() == 0) {
+            throw new BadRequestException("Email attribute is not specified");
         }
 
-        Set<String> roleNames = new HashSet<String>();
-
-        for (String role : roles) {
-            if (roleService.getRoleByName(role) == null) {
-                throw new BadRequestException("role '" + role + "' does not exist");
-            }
-
-            if (roleNames.contains(role)) {
-                throw new BadRequestException("role '" + role + "' specified more than once");
-            }
-
-            roleNames.add(role);
+        if (emails.size() > 1) {
+            throw new BadRequestException("Multiple emails specified");
         }
 
+        String email = emails.get(0);
+
+        request.getFederatedUser().setEmail(email);
+    }
+
+    private void validateRolesAndPopulateRequest(List<String> roles, FederatedUserRequest request) {
+        if (CollectionUtils.isNotEmpty(roles)) {
+            Set<String> roleNames = new HashSet<String>();
+            for (String role : roles) {
+                if (roleService.getRoleByName(role) == null) {
+                    throw new BadRequestException("role '" + role + "' does not exist");
+                }
+
+                if (roleNames.contains(role)) {
+                    throw new BadRequestException("role '" + role + "' specified more than once");
+                }
+                roleNames.add(role);
+            }
+        }
         //don't allow saml response to include role with more power than RBAC roles
         precedenceValidator.verifyRolePrecedenceForAssignment(PrecedenceValidator.RBAC_ROLES_WEIGHT - 1, roles);
     }
+
+
 }

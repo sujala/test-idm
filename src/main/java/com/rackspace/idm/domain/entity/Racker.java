@@ -14,7 +14,10 @@ import java.util.List;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKER)
-public class Racker extends BaseUser implements Auditable, UniqueId {
+public class Racker implements BaseUser {
+
+    //TODO: Not sure why this property is needed. Look into and remove if not necessary
+    private String uniqueId;
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
@@ -49,5 +52,14 @@ public class Racker extends BaseUser implements Auditable, UniqueId {
         } else {
             return ldapEntry.getDN();
         }
+    }
+
+    /**
+     * BaseUser requires this method, but it's irrelevant in context of Racker so return null
+     *
+     * @return
+     */
+    public String getDomainId(){
+        return null;
     }
 }

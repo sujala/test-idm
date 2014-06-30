@@ -22,7 +22,19 @@ public interface ScopeAccessService {
 
     void deleteScopeAccessesForUser(User user, String clientId);
 
-    void deleteExpiredTokens(User user);
+    /**
+     * Delete a user's tokens - and error if there was an error deleting one. In general, the {@link #deleteExpiredTokensQuietly(com.rackspace.idm.domain.entity.EndUser)} should
+     * be used in preference to this one.
+     *
+     * @param user
+     */
+    void deleteExpiredTokens(EndUser user);
+
+    /**
+     * Delete all the user's tokens quietly. An error trying to delete an expired token does not result in an error. It is simply logged.
+     * @param user
+     */
+    void deleteExpiredTokensQuietly(EndUser user);
 
     void expireAccessToken(String tokenString);
 

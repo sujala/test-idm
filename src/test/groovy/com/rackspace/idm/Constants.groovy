@@ -47,4 +47,5 @@ class Constants {
 
     static def DEFAULT_IDP_NAME = "test"
     static def DEFAULT_IDP_URI = "http://test.rackspace.com"
+    static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
 }

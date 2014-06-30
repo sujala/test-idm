@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter;
 
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Role;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
@@ -205,7 +206,7 @@ public class UserConverter {
     }
 
     public JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxbFromUser(
-        User user) {
+        EndUser user) {
         if (user == null) {
             return null;
         }

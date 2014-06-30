@@ -1326,3 +1326,17 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
         may-contain
                 rsExternalMultiFactorPhoneId
 };
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.37) = {
+        name = rsFederatedPerson
+        ldap-names = rsFederatedPerson
+        subclass-of top
+        kind = structural
+        must-contain
+                rsId,
+                uid,
+                rsRegion,
+                rsDomainId,
+                mail,
+                labeledUri
+};

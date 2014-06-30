@@ -930,7 +930,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse) {
         try {
-            AuthData authInfo = federatedIdentityService.generateAuthenticationInfo(samlResponse);
+            AuthData authInfo = federatedIdentityService.processSamlResponse(samlResponse);
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(authInfo);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
         } catch (Exception ex) {
@@ -1896,15 +1896,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(access);
 
             List<Tenant> tenants = null;
-            if (access instanceof FederatedToken) {
-                //federated scope accesses has role / tenant information stored at the token level
-                FederatedToken federatedToken = (FederatedToken)access;
-                tenants = this.tenantService.getTenantsForFederatedTokenByTenantRoles(federatedToken);
-            }
-            else {
-                User user = (User) userService.getUserByScopeAccess(access);
-                tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
-            }
+            BaseUser user = userService.getUserByScopeAccess(access);
+            tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
 
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
@@ -3229,19 +3222,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
             }
-            else if (sa instanceof FederatedToken) {
-                FederatedToken federatedTokenInfo = (FederatedToken) sa;
-                AuthData authData = federatedIdentityService.getAuthenticationInfo(federatedTokenInfo);
-                validator20.validateTenantIdInRoles(tenantId, authData.getToken().getRoles());
-                access = authConverterCloudV20.toAuthenticationResponse(authData);
-            }
             else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 BaseUser impersonator;
-                User user;
+                EndUser user;
                 List<TenantRole> roles;
                 if (sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
-                    user = (User) userService.getUserByScopeAccess(usa);
+                    user = (EndUser) userService.getUserByScopeAccess(usa);
                     roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(sa, roles));

@@ -26,7 +26,10 @@ import java.util.List;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User  extends BaseUser implements Auditable, UniqueId {
+public class User implements EndUser {
+
+    //TODO: Not sure why this property is needed. Look into and remove if not necessary
+    private String uniqueId;
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

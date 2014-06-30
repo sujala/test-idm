@@ -25,6 +25,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_RACKER = "rsRacker";
     public static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
     public static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
+    public static final String OBJECTCLASS_RACKSPACE_FEDERATED_PERSON = "rsFederatedPerson";
     public static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
     public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
     public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";

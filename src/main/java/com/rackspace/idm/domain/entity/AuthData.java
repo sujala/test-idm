@@ -33,7 +33,7 @@ public class AuthData {
     private Date accessTokenExpiration;
 
     private boolean isPasswordResetOnlyToken;
-    private User user;
+    private EndUser user;
     private Application application;
     private DateTime passwordExpirationDate;
     private Racker racker;

@@ -48,7 +48,7 @@ public class AuthConverterCloudV20 {
         if(user instanceof Racker){
             auth.setUser(this.userConverterCloudV20.toRackerForAuthenticateResponse((Racker) user, roles));
         }else {
-            auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse((User) user, roles));
+            auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse((EndUser) user, roles));
         }
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
         

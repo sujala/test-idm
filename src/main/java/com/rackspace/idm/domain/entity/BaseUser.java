@@ -5,15 +5,12 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import lombok.Data;
 
-@Data
-public class BaseUser implements UniqueId {
-    public String uniqueId;
+/**
+ * Marker interface that represents all classes of "users" within Identity.
+ */
+public interface BaseUser extends UniqueId, Auditable {
+    //TODO: Not sure why this would be required for Rackers. Need to investigate and refactor if not necessary
+    String getDomainId();
 
-    public boolean isDisabled() {
-        return false;
-    }
-
-    public String getDomainId(){
-        return null;
-    }
+    boolean isDisabled();
 }

@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -67,11 +69,11 @@ public class UserConverterCloudV20 {
         return userEntity;
     }
 
-    public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user) {
+    public UserForAuthenticateResponse toUserForAuthenticateResponse(EndUser user) {
         return toUserForAuthenticateResponse(user, user.getRoles());
     }
 
-    public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
+    public UserForAuthenticateResponse toUserForAuthenticateResponse(EndUser user, List<TenantRole> roles) {
         UserForAuthenticateResponse jaxbUser = objectFactory.createUserForAuthenticateResponse();
 
         jaxbUser.setId(user.getId());
@@ -86,15 +88,17 @@ public class UserConverterCloudV20 {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
-        if(isSamlEnabled()){
-            jaxbUser.setFederated(user.isFederated());
-        }
-
-        if (StringUtils.isNotBlank(user.getFederatedIdp())) {
-            jaxbUser.setFederatedIdp(user.getFederatedIdp());
+        if (user instanceof FederatedUser) {
+            toUserForAuthenticateResponseFederated(jaxbUser, (FederatedUser) user);
         }
 
         return jaxbUser;
+    }
+
+    private void toUserForAuthenticateResponseFederated(UserForAuthenticateResponse jaxbUser, FederatedUser user) {
+        if(isSamlEnabled() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
+            jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
+        }
     }
 
     public UserForAuthenticateResponse toRackerForAuthenticateResponse(Racker racker, List<TenantRole> roles) {

@@ -1,8 +1,11 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.entity.FederatedToken
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.IdentityProvider
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.helpers.CloudTestUtils
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
@@ -25,18 +28,27 @@ class LdapFederatedTokenRepositoryIntegrationTest extends Specification {
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
+    LdapIdentityProviderRepository ldapIdentityProviderRepository
+
+    @Autowired
     ScopeAccessDao scopeAccessDao
 
     @Autowired
     Configuration configuration
 
+    private IdentityProvider commonIdentityProvider;
+
+    def setup() {
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
+    }
+
     def "getFederatedTokensByUserId gets federated tokens for user"() {
         given:
         def userId = testUtils.getRandomUUID()
         def username = testUtils.getRandomUUID("user")
-        def user = createUser(userId, username)
-        ldapFederatedUserRepository.addUser(user, DEFAULT_IDP_NAME)
-        def addedUser = ldapFederatedUserRepository.getUserByUsername(username, DEFAULT_IDP_NAME)
+        def user = createFederatedUser(userId, username)
+        ldapFederatedUserRepository.addUser(commonIdentityProvider, user)
+        def addedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, Constants.DEFAULT_IDP_NAME)
         def token = createFederatedToken(addedUser)
         scopeAccessDao.addScopeAccess(addedUser, token)
 
@@ -50,23 +62,32 @@ class LdapFederatedTokenRepositoryIntegrationTest extends Specification {
         ldapFederatedUserRepository.deleteObject(addedUser)
     }
 
-    def createUser(String id, String username) {
-        new User().with {
+    def createFederatedUser(String id, String username) {
+        new FederatedUser().with {
             it.id = id
             it.username = username
+            it.domainId = "123"
+            it.region="ORD"
+            it.email="test@rackspace.com"
+            it.federatedIdpUri = DEFAULT_IDP_URI
             return it
         }
     }
 
     def createFederatedToken(user) {
-        FederatedToken token = new FederatedToken();
+        UserScopeAccess token = new UserScopeAccess();
         token.setUserRsId(user.getId());
         token.setAccessTokenString(testUtils.getRandomUUID());
         token.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
         token.setUsername(user.getUsername());
         token.setClientId(configuration.getString("cloudAuth.clientId"));
-        token.setIdpName(DEFAULT_IDP_NAME);
+        token.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
+
         return token
+    }
+
+    def createIdentityProvider() {
+        IdentityProvider provider = new IdentityProvider()
     }
 
 }

@@ -23,7 +23,6 @@
     <attribute name="defaultRegion" type="xsd:string" />
     <attribute name="domainId" type="xsd:string" />
     <attribute name="propagate" type="xsd:boolean" />
-    <attribute name="federated" type="xsd:boolean" />
     <attribute name="federatedIdp" type="xsd:string" />
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>

@@ -256,10 +256,6 @@ public final class JsonWriterHelper {
             }
         }
 
-        if(user.isFederated() != null) {
-            userInner.put(JSONConstants.RAX_AUTH_FEDERATED, user.isFederated());
-        }
-
         if (!StringUtils.isEmpty(user.getFederatedIdp())) {
             userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
         }

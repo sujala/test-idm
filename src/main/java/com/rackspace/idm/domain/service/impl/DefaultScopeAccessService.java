@@ -633,12 +633,31 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void deleteExpiredTokens(User user) {
+    public void deleteExpiredTokens(EndUser user) {
         Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
         if (tokenIterator != null) {
             for (ScopeAccess token : tokenIterator) {
                 if (token.isAccessTokenExpired(new DateTime())) {
                     this.deleteScopeAccess(token);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteExpiredTokensQuietly(EndUser user) {
+        Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
+        DateTime now = new DateTime();
+        if (tokenIterator != null) {
+            for (ScopeAccess token : tokenIterator) {
+                if (token.isAccessTokenExpired(now)) {
+                    try {
+                        this.deleteScopeAccess(token);
+                    } catch (Exception e) {
+                        String tokenStr = token.getAccessTokenString();
+                        String maskedToken = tokenStr != null ? tokenStr.substring(Math.max(tokenStr.length() - 4, 0)) : "";
+                        logger.warn(String.format("Error deleting user '%s' expired token ending in '%s'.", user.getAuditContext(), maskedToken));
+                    }
                 }
             }
         }

@@ -4177,7 +4177,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.authConverterCloudV20 = authConverter;
 
         and:
-        defaultFederatedIdentityService.generateAuthenticationInfo() >> mockAuthData
+        defaultFederatedIdentityService.processSamlResponse() >> mockAuthData
         authConverter.toAuthenticationResponse(_) >> mockAuthenticateResponse
 
         when: "saml response is validated"
@@ -4185,19 +4185,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.build().status == 200
-    }
-
-    def "List tenants for federated token"() {
-        given:
-        allowFederatedTokenAccess()
-        mockTenantConverter(service)
-
-        when:
-        def result = service.listTenants(headers, authToken, null, null).build()
-
-        then:
-        1 * tenantService.getTenantsForFederatedTokenByTenantRoles(_)  >> [].asList()
-        result.status == 200
     }
 
     def mockServices() {
