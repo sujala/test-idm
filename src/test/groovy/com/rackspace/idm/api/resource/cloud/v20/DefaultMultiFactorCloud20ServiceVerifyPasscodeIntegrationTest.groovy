@@ -5,6 +5,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.User
@@ -72,6 +73,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
     @Autowired
     private DefaultMultiFactorCloud20Service defaultMultiFactorCloud20Service;
+
+    @Autowired
+    private UserDao userDao
 
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
@@ -219,6 +223,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
         then:
         assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, expectedFailureMessage)
+        def directoryUser = userDao.getUserById(userAdmin.id)
+        directoryUser.multiFactorState == 'LOCKED'
 
         where:
         requestContentMediaType | acceptMediaType | simulatedPasscode | expectedFailureMessage

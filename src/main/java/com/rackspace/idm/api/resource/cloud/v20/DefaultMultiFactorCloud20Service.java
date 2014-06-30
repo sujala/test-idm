@@ -6,12 +6,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
@@ -21,6 +23,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
@@ -113,6 +116,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private PrecedenceValidator precedenceValidator;
+
+    @Autowired
+    private EmailClient emailClient;
 
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
@@ -212,7 +218,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
-    public Response.ResponseBuilder performMultiFactorChallenge(String userId, List<String> alreadyAuthenticatedBy) {
+    public Response.ResponseBuilder performMultiFactorChallenge(User user, List<String> alreadyAuthenticatedBy) {
         /*
         only supported option is SMS passcode so send it and return sessionid header
          */
@@ -221,7 +227,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         V1SessionId sessionId = new V1SessionId();
         sessionId.setVersion(getPrimarySessionIdVersion());
-        sessionId.setUserId(userId);
+        sessionId.setUserId(user.getId());
         sessionId.setCreatedDate(created);
         sessionId.setExpirationDate(expiration);
         sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
@@ -231,8 +237,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         //now send the passcode
         try {
-            multiFactorService.sendSmsPasscode(userId);
+            multiFactorService.sendSmsPasscode(user.getId());
         } catch (DuoLockedOutException lockedOutException) {
+            emailClient.asyncSendMultiFactorLockedOutMessage(user);
+            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
+            userService.updateUserForMultiFactor(user);
             throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
         }
 
@@ -284,8 +293,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
-        }
-        else {
+        } else if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
+            emailClient.asyncSendMultiFactorLockedOutMessage(user);
+            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
+            userService.updateUserForMultiFactor(user);
+            throw createFailedSecondFactorException(response, sessionId);
+        } else {
             //2-factor request denied. Determine appropriate exception/message for user
             throw createFailedSecondFactorException(response, sessionId);
         }

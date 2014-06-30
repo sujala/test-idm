@@ -1,0 +1,10 @@
+Dear [USERNAME],
+
+Multi-Factor Authentication has been enabled for your Rackspace Cloud account. If you did not make this change, please contact Rackspace Support immediately.
+
+Best Regards,
+
+The Rackspace Cloud
+US Toll Free: 1.800.926.4141
+International: +1.210.312.5400
+UK: 0800-083-3012

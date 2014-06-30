@@ -801,6 +801,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.107) = {
 	description = "Links the user to a specific mobile phone rsId"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.108) = {
+	name = rsMultiFactorState
+	ldap-names = rsMultiFactorState
+    equality = caseExactMatch
+	syntax = directoryString
+	description = "The state of a multifactor account"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -851,7 +859,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsMultiFactorMobilePhoneRsId,
         rsMultiFactorDeviceVerified,
         rsExternalMultiFactorUserId,
-        rsMultiFactorEnabled
+        rsMultiFactorEnabled,
+        rsMultiFactorState
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {

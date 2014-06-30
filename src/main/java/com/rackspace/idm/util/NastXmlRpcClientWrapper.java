@@ -10,6 +10,12 @@ import org.springframework.stereotype.Component;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * This class is no longer used and will be removed in a future version of IDM.
+ *
+ * @deprecated
+ */
+@Deprecated
 @Component
 public class NastXmlRpcClientWrapper {
 

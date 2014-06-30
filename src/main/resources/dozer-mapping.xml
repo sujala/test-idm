@@ -9,6 +9,11 @@
                 <class-a>org.joda.time.DateTime</class-a>
                 <class-b>javax.xml.datatype.XMLGregorianCalendar</class-b>
             </converter>
+
+            <converter type="com.rackspace.idm.domain.dozer.converters.MultiFactorStateConverter">
+                <class-a>java.lang.String</class-a>
+                <class-b>com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum</class-b>
+            </converter>
         </custom-converters>
     </configuration>
 
