@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.domain.entity.BaseUser;
@@ -140,4 +141,14 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId);
+
+    /**
+     * The multifactor service to generate bypass codes for a given user.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes);
 }

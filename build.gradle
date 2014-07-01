@@ -206,7 +206,7 @@ task wadl << {
 copyBaseConfig.dependsOn copyConfig
 test.dependsOn copyBaseConfig
 zipConfig.dependsOn copyBaseConfig
-build.dependsOn copyGeneratedSrc
+copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
 war.dependsOn zipLdap
 jettyRun.dependsOn copyBaseConfig
