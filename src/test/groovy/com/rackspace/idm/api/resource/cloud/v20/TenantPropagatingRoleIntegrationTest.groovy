@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
+import javax.ws.rs.core.MediaType
+
 /**
  * Tests propagation of roles when the role is assigned as a tenant based role as opposed to a global (non-tenant) role. See GlobalPropagatingRoleIntegrationTest
  * for tests of global role propagation.
@@ -450,7 +452,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def boolean hasRoleOnTenant(user, tenant, role) {
-        def response = cloud20.listRolesForUserOnTenant(specificationServiceAdminToken, tenant.getId(), user.getId())
+        def response = cloud20.listRolesForUserOnTenant(specificationServiceAdminToken, tenant.getId(), user.getId(), MediaType.APPLICATION_JSON_TYPE)
         assert response.status == HttpStatus.OK.value()
 
         JSONReaderForRoles jsonReaderForRoles = new JSONReaderForRoles();

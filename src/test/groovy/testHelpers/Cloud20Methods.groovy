@@ -352,9 +352,9 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listRolesForUserOnTenant(String token, String tenantId, String userId) {
+    def listRolesForUserOnTenant(String token, String tenantId, String userId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId).path(ROLES)
-                .header(X_AUTH_TOKEN, token).get(ClientResponse)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
     def addEndpoint(String token, String tenantId, endpointTemplate) {

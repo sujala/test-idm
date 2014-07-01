@@ -21,7 +21,30 @@ public interface TenantService {
     void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles);
     void addCallerTenantRolesToUser(User caller, User user);
     void addTenantRoleToClient(Application client, TenantRole role);
+
+    /**
+     * Deletes the TenantRole from the user. This will delete the role from the
+     * given user regardless if this is a global role or associated with tenants.
+     *
+     * @param user
+     * @param role
+     */
     void deleteTenantRoleForUser(EndUser user, TenantRole role);
+
+    /**
+     * Deletes the TenantRole from the user for the given tenant. There are two different
+     * scenarios this method accounts for:
+     * 1) The number of tenants associated with the role is greater than 1. In this case this
+     * method will simply remove the given tenant from the role. Afterwards, the user will
+     * still have the role assigned to the other tenants.
+     * 2) The number of tenants is equal to one. In this case the role is deleted from the user.
+     * Afterwards the user will not have the role assigned (either associated with a tenant or globally).
+     *
+     * @param user
+     * @param role
+     * @param tenant
+     */
+    void deleteTenantOnRoleForUser(EndUser user, TenantRole role, Tenant tenant);
     void deleteTenantRoleForApplication(Application application, TenantRole role);
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);

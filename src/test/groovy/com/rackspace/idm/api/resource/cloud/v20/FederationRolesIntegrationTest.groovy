@@ -342,7 +342,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username)
     }
 
-    @Ignore("Ignored because this demonstrates a bug D-18423. Once that bug is fixed, the ignore annotation should be removed to verify federated users will work appropriately in this situation")
     def "when remove one of two tenants on propagating role assigned to user-admin removes only one tenant from the role on the federated sub-user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
