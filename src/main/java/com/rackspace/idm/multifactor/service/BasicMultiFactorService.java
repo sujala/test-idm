@@ -5,10 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.identity.multifactor.providers.*;
-import com.rackspace.identity.multifactor.providers.MobilePhoneVerification;
-import com.rackspace.identity.multifactor.providers.ProviderPhone;
-import com.rackspace.identity.multifactor.providers.ProviderUser;
-import com.rackspace.identity.multifactor.providers.UserManagement;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
@@ -22,8 +18,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -33,7 +27,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -57,6 +53,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     private final Logger multiFactorConsistencyLogger = LoggerFactory.getLogger(GlobalConstants.MULTIFACTOR_CONSISTENCY_LOG_NAME);
 
     public static final String CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED = "feature.multifactor.phone.membership.enabled";
+
+    public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
+    public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
 
     public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
     public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
@@ -87,6 +86,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private EmailClient emailClient;
+
+    @Autowired
+    private Configuration config;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -322,6 +324,22 @@ public class BasicMultiFactorService implements MultiFactorService {
         return result;
     }
 
+    @Override
+    public List<String> getBypassCodes(User user, int validSecs) {
+        final int numberOfCodes = getNumberOfCodes(BigInteger.ONE);
+        return Arrays.asList(userManagement.getBypassCodes(user.getExternalMultiFactorUserId(), numberOfCodes, validSecs));
+    }
+
+    // The reason for this method is for future use, when we allow the user to have multiple codes.
+    private int getNumberOfCodes(BigInteger requested) {
+        final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_NUMBER, BigInteger.valueOf(10));
+        if (requested == null) {
+            return config.getBigInteger(BYPASS_DEFAULT_NUMBER, BigInteger.ONE).max(BigInteger.ONE).intValue();
+        } else {
+            return max.min(requested).max(BigInteger.ONE).intValue();
+        }
+    }
+
     private void enableMultiFactorForUser(User user) {
         MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
 
@@ -455,4 +473,5 @@ public class BasicMultiFactorService implements MultiFactorService {
     public boolean isPhoneUserMembershipEnabled() {
         return globalConfig.getBoolean(CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
     }
+
 }

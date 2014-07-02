@@ -91,6 +91,7 @@
     <element name="secretqa" type="RAX-AUTH:SecretQA" />
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
+    <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
 
     <!-- Complex Types -->
     <complexType name="AuthenticatedBy">
@@ -665,5 +666,26 @@
             <enumeration value="standard-policy-format"/>
         </restriction>
     </simpleType>
+
+    <complexType name="BypassCodes">
+        <attribute name="codes" type="RAX-AUTH:StringList" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A list of bypass codes for the user
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="validityDuration" type="xsd:duration" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        How long the the requested bypass codes are requested to be good for
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
 
 </schema>

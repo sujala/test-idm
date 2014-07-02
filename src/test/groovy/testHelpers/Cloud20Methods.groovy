@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
@@ -60,6 +61,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_MULTI_FACTOR = "multi-factor"
     static def SERVICE_PATH_VERIFY = "verify"
     static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
+    static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
 
     static def ENDPOINTS = "endpoints"
 
@@ -332,6 +334,12 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorSettings).put(ClientResponse)
+    }
+
+    def getBypassCodes(String token, String userId, BypassCodes bypassCodes, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_BYPASS_CODES)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(bypassCodes).post(ClientResponse)
     }
 
     def deleteMultiFactor(String token, String userId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

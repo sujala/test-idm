@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
@@ -42,11 +43,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import java.math.BigInteger;
 import java.net.URI;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  */
@@ -63,6 +65,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
+    static final String BAD_REQUEST_MSG_MULTIFACTOR_DISABLED = "User does not have multifactor enabled";
 
     static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
 
@@ -77,6 +80,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     public static final String INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG = "Can not authenticate with credentials provided. Session has expired.";
     public static final String INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG = "Can not authenticate with credentials provided. The account has been locked due to excessive invalid attempts. Please contact an administrator";
     public static final String NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT = "Multifactor provider denied a mfa request for user '%s' due to a non-standard reason. Reason: '%s'; Message: '%s'";
+
+    public static final String BYPASS_MAXIMUM_DURATION = "multifactor.bypass.maximum.duration.seconds";
+    public static final String BYPASS_DEFAULT_DURATION = "multifactor.bypass.default.duration.seconds";
 
     /*
     Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
@@ -541,6 +547,62 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return false;
     }
 
+    @Override
+    public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
+        final User user = validateGenerateBypassCodesRequest(authToken, userId);
+        final int validSecs = getValidSecs(bypassCodes.getValidityDuration());
+        final List<String> codes = multiFactorService.getBypassCodes(user, validSecs);
 
+        final BypassCodes entity = new BypassCodes();
+        entity.getCodes().addAll(codes);
+        entity.setValidityDuration(getDurationFromSeconds(validSecs));
+
+        final Response.ResponseBuilder response = Response.ok();
+        response.entity(entity);
+        return response;
+    }
+
+    private int getValidSecs(Duration duration) {
+        final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_DURATION, BigInteger.valueOf(10800));
+        if (duration == null) {
+            return config.getBigInteger(BYPASS_DEFAULT_DURATION, BigInteger.valueOf(1800)).max(BigInteger.ONE).intValue();
+        } else {
+            return max.min(getSecondsFromDuration(duration)).max(BigInteger.ONE).intValue();
+        }
+    }
+
+    private BigInteger getSecondsFromDuration(Duration duration) {
+        return  BigInteger.valueOf(duration.getTimeInMillis(new Date(0)) / 1000l);
+    }
+
+    private Duration getDurationFromSeconds(int seconds) {
+        try {
+            final DatatypeFactory factory = DatatypeFactory.newInstance();
+            return factory.newDuration(seconds * 1000l);
+        } catch (DatatypeConfigurationException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private User validateGenerateBypassCodesRequest(String authToken, String userId) {
+        final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+        final User requester = (User) userService.getUserByScopeAccess(token);
+        final User user = userService.checkAndGetUserById(userId);
+
+        // Verify requester/user precedence level
+        authorizationService.verifyUserAdminLevelAccess(token);
+        precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
+        if (authorizationService.authorizeCloudUserAdmin(token)) {
+            authorizationService.verifyDomain(requester, user);
+        }
+
+        // Verify if the user is valid
+        userService.validateUserIsEnabled(user);
+        if (!user.isMultiFactorEnabled()) {
+            throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_DISABLED);
+        }
+
+        return user;
+    }
 
 }

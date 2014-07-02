@@ -1,12 +1,14 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 
+import javax.xml.datatype.Duration;
 import java.util.List;
 
 /**
@@ -125,4 +127,13 @@ public interface MultiFactorService {
      * @return
      */
     List<MobilePhone> getMobilePhonesForUser(User user);
+
+    /**
+     * Return list of bypass codes, giving a duration in seconds, associated with a given user
+     *
+     * @param user
+     * @param validSecs
+     * @return
+     */
+    public List<String> getBypassCodes(User user, int validSecs);
 }

@@ -235,4 +235,7 @@ public final class JSONConstants {
     public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
     public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX-KSGRP:groups";
     public static final String USER_ROLES_PATH = "user.roles";
+
+    public static final String RAX_AUTH_BYPASS_CODES = "RAX-AUTH:bypassCodes";
+    public static final String BYPASS_CODES = "bypassCodes";
 }

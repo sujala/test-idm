@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.util.Assert
 import spock.lang.Shared
+
+import javax.xml.datatype.DatatypeFactory
 
 /**
  * This is an integration test between the idm DefaultMultiFactorService, ldap, and Duo Security that will use Duo
@@ -113,6 +116,69 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         finalUserAdmin.getMultiFactorDevicePinExpiration() == null
         finalUserAdmin.getMultiFactorDeviceVerified()
         !finalUserAdmin.getMultifactorEnabled()
+
+        cleanup:
+        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+    }
+
+    def "Get an user-admin bypass code"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+
+        Phonenumber.PhoneNumber telephoneNumber = standardizedTestPhone;
+        String canonTelephoneNumber = PhoneNumberGenerator.canonicalizePhoneNumberToString(telephoneNumber)
+
+        BypassCodes request = new BypassCodes()
+        DatatypeFactory factory = DatatypeFactory.newInstance();
+        request.validityDuration = factory.newDuration("PT10S")
+
+        //STEP 1: Add phone to user
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
+
+        //STEP 2: Send PIN
+        multiFactorService.sendVerificationPin(userAdminOpenStack.getId(), phone.getId())
+
+        //STEP 3: Verify PIN
+        //need to get the user to get the pin
+        User tempUser = userRepository.getUserById(userAdminOpenStack.getId())
+        assert tempUser.getMultiFactorDevicePin() != null
+
+        multiFactorService.verifyPhoneForUser(userAdminOpenStack.getId(), phone.getId(), new BasicPin(tempUser.getMultiFactorDevicePin()))
+
+        MobilePhone finalPhone = mobilePhoneRepository.getById(phone.getId())  //retrieve the phone from ldap
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        //STEP 4: enable multifactor
+        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true, null)
+        multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), enableSettings)
+        finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        when:
+        //STEP 5: Get Bypass code
+        def adminToken = utils.getServiceAdminToken()
+        def response = cloud20.getBypassCodes(adminToken, userAdminOpenStack.getId(), request)
+        def codes = response.getEntity(BypassCodes.class)
+
+        then:
+        response.getStatus() == 200
+        codes.getCodes().size() == 1
+        codes.validityDuration.seconds == 10
+
+        when:
+        //STEP 6: Test bypass code
+        def verify1 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes.getCodes().get(0))
+
+        then:
+        verify1.decision == MfaAuthenticationDecision.ALLOW
+
+        when:
+        //STEP 7: Test bypass code twice
+        def verify2 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes.getCodes().get(0))
+
+        then:
+        verify2.decision == MfaAuthenticationDecision.DENY
+        verify2.message == "Incorrect passcode. Please try again."
 
         cleanup:
         if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
