@@ -48,6 +48,6 @@ srpm: prep_rpmbuild prep_master_tarball
 	${RPMBUILD} -bs rs-cloud-identity-schema.spec
 
 publish:
-	scp rpms/*/*-${VERSION}-${RELEASE}.*.rpm ${SSO_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
+	scp rpms/*/*-${VERSION}-${RELEASE}.noarch.rpm ${SSO_USER}@${PUBLISH_HOST}:${PUBLISH_DIR}
 	ssh -tt ${SSO_USER}@${PUBLISH_HOST} "\
-	  cp ~/rpms/* ${REPO_DIR} && createrepo ${REPO_DIR}"
+	  cp ~/rpms/*-${VERSION}-${RELEASE}.noarch.rpm ${REPO_DIR} && createrepo ${REPO_DIR}"
