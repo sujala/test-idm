@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.util.SamlResponseValidator;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Response;
@@ -20,9 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class is responsible for handling identity operations related
@@ -100,15 +99,58 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         } else if (!request.getFederatedUser().getDomainId().equalsIgnoreCase(resultUser.getDomainId())) {
             throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
         } else {
+            //update email if necessary
             if (!request.getFederatedUser().getEmail().equalsIgnoreCase(resultUser.getEmail())) {
                 resultUser.setEmail(request.getFederatedUser().getEmail());
                 federatedUserDao.updateUser(resultUser);
             }
-            //if the user already exists, delete any expired tokens
+
+            //update roles as necessary
+            reconcileRequestedRbacRolesFromRequest(resultUser, request.getFederatedUser().getRoles());
+
+            //clean up any expired tokens
             scopeAccessService.deleteExpiredTokensQuietly(resultUser);
         }
 
         return resultUser;
+    }
+
+    /**
+     * Reconcile the requested set of RBAC roles included in the initial saml response to those on the existing user.
+     *
+     * Must remove those RBAC roles that are not present in the saml response, and add those in the response that are not
+     * not on the user.
+     *
+     *
+     * @param existingFederatedUser
+     * @param desiredRbacRolesOnUser
+     */
+    private void reconcileRequestedRbacRolesFromRequest(FederatedUser existingFederatedUser, List<TenantRole> desiredRbacRolesOnUser) {
+        Map<String, TenantRole> desiredRbacRoleMap = new HashMap<String, TenantRole>();
+        for (TenantRole tenantRole : desiredRbacRolesOnUser) {
+            desiredRbacRoleMap.put(tenantRole.getName(), tenantRole);
+        }
+
+        List<TenantRole> existingRbacRolesOnUser = tenantService.getRbacRolesForUser(existingFederatedUser);
+        Map<String, TenantRole> existingRbacRoleMap = new HashMap<String, TenantRole>();
+        for (TenantRole tenantRole : existingRbacRolesOnUser) {
+            existingRbacRoleMap.put(tenantRole.getName(), tenantRole);
+        }
+
+        Collection<String> add = ListUtils.removeAll(desiredRbacRoleMap.keySet(), existingRbacRoleMap.keySet());
+        Collection<String> remove = ListUtils.removeAll(existingRbacRoleMap.keySet(), desiredRbacRoleMap.keySet());
+
+        //remove roles that user should no longer have
+        for (String roleToRemove : remove) {
+            tenantService.deleteGlobalRole(existingRbacRoleMap.get(roleToRemove));
+        }
+
+        //add roles that user should have
+        for (String roleToAdd : add) {
+            tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd));
+        }
+
+        existingFederatedUser.setRoles(desiredRbacRolesOnUser);
     }
 
     /**
@@ -178,10 +220,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
         /*
         add in the saml requested roles
-
-        TODO: This needs to get populated. May need to loop through these and "convert" them to full on tenant roles (populated name/description, etc
-        depending on how much is done in the validator. May not want to populate that info unless we know we need to persist. Don't know.
-        Will figure out when role logic story is implemented. For now, the list is always empty anyway...
          */
         tenantRoles.addAll(userToCreate.getRoles());
 

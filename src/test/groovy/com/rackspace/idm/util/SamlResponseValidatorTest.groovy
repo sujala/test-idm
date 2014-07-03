@@ -16,6 +16,7 @@ import org.opensaml.saml2.core.Response
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.EntityFactory
 
 class SamlResponseValidatorTest extends Specification {
     @Shared SamlResponseValidator samlResponseValidator
@@ -23,7 +24,7 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def IDP_NAME = "dedicated";
     @Shared def IDP_URI = "http://my.test.idp"
     @Shared def IDP_PUBLIC_CERTIFICATE = "--BEGIN CERTIFICATE-- bla bla bla --END CERTIFICATE--"
-    @Shared def ROLE_NAME = "observer"
+    @Shared def ROLE_NAME = "rbacRole1"
     @Shared def DOMAIN = "1234"
 
     @Shared def samlUnmarshaller
@@ -37,6 +38,9 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def mockDomainDao
     @Shared def mockPrecedenceValidator
     @Shared def mockConfig
+
+    @Shared EntityFactory entityFactory = new EntityFactory()
+    @Shared ClientRole dummyRbacRole = entityFactory.createClientRole(ROLE_NAME, PrecedenceValidator.RBAC_ROLES_WEIGHT)
 
     def setupSpec() {
         //initializes open saml. allows us use unmarshaller
@@ -112,7 +116,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
         when:
@@ -536,7 +540,6 @@ class SamlResponseValidatorTest extends Specification {
         noExceptionThrown()
     }
 
-    @Ignore("This should be ignored until B-74253 is implemented")
     def "validate saml response when role does not exist" (){
         given:
 
@@ -603,7 +606,6 @@ class SamlResponseValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    @Ignore("This should be ignored until B-74253 is implemented")
     def "validate saml response when same role specified more than once" (){
         given:
 
@@ -662,7 +664,7 @@ class SamlResponseValidatorTest extends Specification {
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
+        mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
 
         when:
         samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)

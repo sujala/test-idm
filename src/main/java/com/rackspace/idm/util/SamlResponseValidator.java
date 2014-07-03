@@ -17,10 +17,7 @@ import org.opensaml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 //TODO: Refactor this completely
 @Component
@@ -100,7 +97,7 @@ public class SamlResponseValidator {
         //validate and populate email
         validateSamlEmailAndPopulateRequest(samlResponseDecorator, request);
 
-//        validateRoles(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES));
+        validateRolesAndPopulateRequest(samlResponseDecorator.getAttribute(SAMLConstants.ATTR_ROLES), request);
 
 
 
@@ -211,23 +208,31 @@ public class SamlResponseValidator {
         request.getFederatedUser().setEmail(email);
     }
 
-    private void validateRolesAndPopulateRequest(List<String> roles, FederatedUserRequest request) {
-        if (CollectionUtils.isNotEmpty(roles)) {
-            Set<String> roleNames = new HashSet<String>();
-            for (String role : roles) {
-                if (roleService.getRoleByName(role) == null) {
-                    throw new BadRequestException("role '" + role + "' does not exist");
+    private void validateRolesAndPopulateRequest(List<String> roleNames, FederatedUserRequest request) {
+        if (CollectionUtils.isNotEmpty(roleNames)) {
+            Map<String, TenantRole> roles = new HashMap<String, TenantRole>();
+            for (String roleName : roleNames) {
+                if (roles.containsKey(roleName)) {
+                    throw new BadRequestException("role '" + roleName + "' specified more than once");
                 }
 
-                if (roleNames.contains(role)) {
-                    throw new BadRequestException("role '" + role + "' specified more than once");
+                //TODO: Candidate for caching...
+                ClientRole role = roleService.getRoleByName(roleName);
+                if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT) {
+                    throw new BadRequestException("Invalid role '" + roleName + "'");
                 }
-                roleNames.add(role);
+
+                request.getRequestClientRoleCache().put(roleName, role);
+
+                //create a new global role to add
+                TenantRole tenantRole = new TenantRole();
+                tenantRole.setRoleRsId(role.getId());
+                tenantRole.setClientId(role.getClientId());
+                tenantRole.setName(role.getName());
+                tenantRole.setDescription(role.getDescription());
+                roles.put(roleName, tenantRole);
             }
+            request.getFederatedUser().getRoles().addAll(roles.values());
         }
-        //don't allow saml response to include role with more power than RBAC roles
-        precedenceValidator.verifyRolePrecedenceForAssignment(PrecedenceValidator.RBAC_ROLES_WEIGHT - 1, roles);
     }
-
-
 }
