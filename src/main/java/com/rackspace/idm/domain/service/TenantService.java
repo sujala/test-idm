@@ -36,6 +36,7 @@ public interface TenantService {
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     List<TenantRole> getGlobalRolesForUser(BaseUser user);
+    List<TenantRole> getRbacRolesForUser(EndUser user);
     List<TenantRole> getGlobalRolesForApplication(Application application);
     List<TenantRole> getGlobalRolesForApplication(Application user, String applicationId);
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
