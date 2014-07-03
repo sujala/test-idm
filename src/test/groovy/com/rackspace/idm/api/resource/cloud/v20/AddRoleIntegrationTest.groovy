@@ -159,6 +159,65 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(defaultUser)
     }
 
+    def "Cannot create two Client roles with the same name under the same application"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.name = roleName
+            it.serviceId = APPLICATION_ID
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+        def createdRole = response.getEntity(Role).value
+
+        then:
+        response.status == 201
+
+        when:
+        response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        utils.deleteRole(createdRole)
+    }
+
+    def "Cannot create two Client roles with the same name under two different applications"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        def service = utils.createService()
+        Role createRole1 = v2Factory.createRole().with {
+            it.name = roleName
+            it.serviceId = APPLICATION_ID
+            it
+        }
+        Role createRole2 = v2Factory.createRole().with {
+            it.name = roleName
+            it.serviceId = service.id
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole1)
+        def createdRole = response.getEntity(Role).value
+
+        then:
+        response.status == 201
+
+        when:
+        response = cloud20.createRole(utils.getServiceAdminToken(), createRole2)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        utils.deleteService(service)
+        utils.deleteRole(createdRole)
+    }
+
     def deleteUserQuietly(user) {
         if (user != null) {
             try {

@@ -286,6 +286,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 role.setServiceId(config.getString("cloudAuth.globalRoles.clientId"));
             }
 
+            ClientRole dirClientRole = this.roleService.getRoleByName(role.getName());
+            if(dirClientRole != null) {
+                String errMsg = "role with name " + role.getName() + " already exists";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
             if (!authorizationService.authorizeCloudServiceAdmin(tokenScopeAccess)) {
                 /*if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
                         || role.getServiceId().equals(config.getString("idm.clientId"))) {
