@@ -336,7 +336,7 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorSettings).put(ClientResponse)
     }
 
-    def getBypassCodes(String token, String userId, BypassCodes bypassCodes, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def getBypassCodes(String token, String userId, bypassCodes, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_BYPASS_CODES)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(bypassCodes).post(ClientResponse)
