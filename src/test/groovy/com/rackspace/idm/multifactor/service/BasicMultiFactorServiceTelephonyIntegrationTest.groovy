@@ -15,12 +15,16 @@ import com.rackspace.idm.helpers.ApacheTestConfigLoader
 import com.rackspace.idm.helpers.ApacheTestConfigurationWrapper
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.util.Assert
 import spock.lang.Shared
+import spock.lang.Unroll
 
+import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
 /**
@@ -122,16 +126,12 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
     }
 
-    def "Get an user-admin bypass code"() {
-        setup:
-        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
-
+    /**
+     * Those tests verifies bypass code creating and usage.
+     */
+    def bypassSetup(userAdminOpenStack) {
         Phonenumber.PhoneNumber telephoneNumber = standardizedTestPhone;
         String canonTelephoneNumber = PhoneNumberGenerator.canonicalizePhoneNumberToString(telephoneNumber)
-
-        BypassCodes request = new BypassCodes()
-        DatatypeFactory factory = DatatypeFactory.newInstance();
-        request.validityDuration = factory.newDuration("PT10S")
 
         //STEP 1: Add phone to user
         MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
@@ -154,35 +154,82 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), enableSettings)
         finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
-        when:
-        //STEP 5: Get Bypass code
-        def adminToken = utils.getServiceAdminToken()
-        def response = cloud20.getBypassCodes(adminToken, userAdminOpenStack.getId(), request)
-        def codes = response.getEntity(BypassCodes.class)
+        return [finalUserAdmin, finalPhone]
+    }
+
+    def bypassTearDown(User finalUserAdmin, MobilePhone finalPhone) {
+        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+    }
+
+    def createBypassRequest(seconds, mediaType) {
+        if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
+            return new JsonBuilder(["RAX-AUTH:bypassCodes": ["validityDuration": "PT" + seconds + "S"]]).toString()
+        } else {
+            final BypassCodes request = new BypassCodes()
+            DatatypeFactory factory = DatatypeFactory.newInstance();
+            request.validityDuration = factory.newDuration(seconds * 1000)
+            return request;
+        }
+    }
+
+    def parseCodes(response, mediaType) {
+        if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
+            def body = response.getEntity(String.class)
+            def slurper = new JsonSlurper().parseText(body)
+            return slurper.'RAX-AUTH:bypassCodes'.codes
+        } else {
+            return response.getEntity(BypassCodes.class).getCodes()
+        }
+    }
+
+    @Unroll
+    def "Get an user-admin bypass code: #mediaType, #tokenType"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        def userToken = utils.getToken(userAdminOpenStack.getUsername())
+
+        def setupResults = bypassSetup(userAdminOpenStack)
+        User finalUserAdmin = setupResults[0]
+        MobilePhone finalPhone = setupResults[1]
+
+        def request = createBypassRequest(10, mediaType)
+        def adminToken = tokenType == 'identity' ? utils.getIdentityAdminToken() : utils.getServiceAdminToken()
+
+        when: "request bypass code"
+        def response = cloud20.getBypassCodes(adminToken, userAdminOpenStack.getId(), request, mediaType, mediaType)
+        def codes = parseCodes(response, mediaType)
 
         then:
+        then: "gets one code, and 200 OK"
         response.getStatus() == 200
-        codes.getCodes().size() == 1
-        codes.validityDuration.seconds == 10
+        codes.size() == 1
 
-        when:
-        //STEP 6: Test bypass code
-        def verify1 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes.getCodes().get(0))
+        when: "use bypass code"
+        def verify1 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes[0])
 
-        then:
+        then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
-        when:
-        //STEP 7: Test bypass code twice
-        def verify2 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes.getCodes().get(0))
+        when: "use bypass code twice"
+        def verify2 = multiFactorService.verifyPasscode(userAdminOpenStack.getId(), codes[0])
 
-        then:
+        then: "get denied"
         verify2.decision == MfaAuthenticationDecision.DENY
         verify2.message == "Incorrect passcode. Please try again."
 
+        when: "user tries to create bypass code to himself"
+        def selfservice = cloud20.getBypassCodes(userToken, userAdminOpenStack.getId(), request, mediaType, mediaType)
+
+        then: "user get a bad request"
+        selfservice.getStatus() == 401
+
         cleanup:
-        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
-        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+        bypassTearDown(finalUserAdmin, finalPhone)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+        tokenType << ['service', 'identity']
     }
 
     /**
