@@ -433,6 +433,64 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public void deleteTenantOnRoleForUser(EndUser endUser, TenantRole role, Tenant tenant) {
+        Assert.notNull(endUser);
+        Assert.notNull(role);
+        Assert.notNull(tenant);
+
+        ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
+        if (cRole == null) {
+            String errMsg = String.format("ClientRole %s not found", role.getName());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        deleteTenantFromTenantRole(role, tenant);
+
+        if (endUser instanceof User) {
+            //this only applies for users, not federatedusers for now...
+            User user = (User) endUser;
+            atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+
+            if (isUserAdmin(user) && cRole.getPropagate()) {
+                //remove propagating roles from sub-users
+                for (User subUser : userService.getSubUsers(user)) {
+                    try {
+                        TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
+                        deleteTenantFromTenantRole(subUserTenantRole, tenant);
+                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                    } catch (NotFoundException ex) {
+                        String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
+                        logger.warn(msg);
+                    }
+                }
+
+                //remove propagating roles from federated users
+                for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
+                    try {
+                        TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
+                        deleteTenantFromTenantRole(subUserTenantRole, tenant);
+                    } catch (NotFoundException ex) {
+                        String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
+                        logger.warn(msg);
+                    }
+                }
+
+            }
+        }
+
+    }
+
+    private void deleteTenantFromTenantRole(TenantRole role, Tenant tenant) {
+        role.getTenantIds().remove(tenant.getTenantId());
+        if(role.getTenantIds().size() == 0) {
+            tenantRoleDao.deleteTenantRole(role);
+        } else {
+            tenantRoleDao.updateTenantRole(role);
+        }
+    }
+
+    @Override
     public void deleteTenantRoleForApplication(Application application, TenantRole role) {
         if (application == null || role == null) {
             throw new IllegalStateException();

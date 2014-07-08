@@ -1107,7 +1107,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             TenantRole tenantRole = tenantService.checkAndGetTenantRoleForUserById(user, roleId);
 
-            this.tenantService.deleteTenantRoleForUser(user, tenantRole);
+            if(!tenantRole.getTenantIds().contains(tenant.getTenantId())) {
+                throw new NotFoundException(String.format("Role %s not associated with Tenant %s on user %s.", roleId, tenantId, userId));
+            }
+
+            this.tenantService.deleteTenantOnRoleForUser(user, tenantRole, tenant);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

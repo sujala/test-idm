@@ -1,7 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -78,6 +79,137 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteRole(role)
+    }
+
+    def "delete role for user on tenant that is assigned to two tenants leaves role assigned to other tenant"() {
+        given:
+        def role = utils.createRole(service)
+        def tenantA = tenant
+        def tenantB = utils.createTenant()
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id, role.id)
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantB.id, defaultUser.id, role.id)
+
+        when: "delete role from user on TenantA"
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id, role.id)
+
+        then: "role is still assigned to user on TenantB"
+        response.status == 204
+        def roles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenantB.id, defaultUser.id).getEntity(RoleList).value
+        roles.role.size() == 1
+
+        cleanup:
+        utils.deleteRole(role)
+        utils.deleteTenant(tenantB)
+    }
+
+    def "delete role for user on tenant that is only assigned to one tenant deletes the role from the user"() {
+        given:
+        def role = utils.createRole(service)
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id, role.id)
+
+        when:
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == 204
+        def roles = cloud20.listUserGlobalRoles(serviceAdminToken, defaultUser.id).getEntity(RoleList).value
+        !roles.role.id.contains(role.id)
+        def rolesOnTenant = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id).getEntity(RoleList).value
+        !rolesOnTenant.role.id.contains(role.id)
+
+        cleanup:
+        utils.deleteRole(role)
+    }
+
+    def "delete role on tenant from user-admin deletes tenant on role for sub-users if two tenants assigned to role"() {
+        given:
+        def roleRequest = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.propagate = true
+            return it
+        }
+        def role = cloud20.createRole(serviceAdminToken, roleRequest).getEntity(Role).value
+        def tenantA = tenant
+        def tenantB = utils.createTenant()
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantA.id, userAdmin.id, role.id)
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantB.id, userAdmin.id, role.id)
+
+        when: "list roles for sub-user on tenantA"
+        def subUserRoles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id).getEntity(RoleList).value
+
+        then: "contains propagating role"
+        subUserRoles.role.id.contains(role.id)
+
+        when: "remove the tenantA from the role on user-admin"
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenantA.id, userAdmin.id, role.id)
+        subUserRoles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id).getEntity(RoleList).value
+
+        then: "removes the tenant from the role on the sub-user"
+        response.status == 204
+        !subUserRoles.role.id.contains(role.id)
+
+        when: "list roles for sub-user on tenantB"
+        subUserRoles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenantB.id, defaultUser.id).getEntity(RoleList).value
+
+        then: "sub-user still has role for tenantB"
+        subUserRoles.role.id.contains(role.id)
+
+        cleanup:
+        utils.deleteRole(role)
+        utils.deleteTenant(tenantB)
+    }
+
+    def "delete role on tenant from user admin deletes role from tenant on sub-users if one tenant assigned to role"() {
+        given:
+        def roleRequest = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.propagate = true
+            return it
+        }
+        def role = cloud20.createRole(serviceAdminToken, roleRequest).getEntity(Role).value
+
+
+        when: "add propagating role to user admin"
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, userAdmin.id, role.id)
+
+        then: "adds role to sub-users"
+        def subUserRoles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id).getEntity(RoleList).value
+        subUserRoles.role.id.contains(role.id)
+
+        when: "remove the tenant from the role on user-admin"
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, userAdmin.id, role.id)
+        subUserRoles = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenant.id, defaultUser.id).getEntity(RoleList).value
+        def subUserGlobalRoles = cloud20.listUserGlobalRoles(serviceAdminToken, defaultUser.id).getEntity(RoleList).value
+
+        then: "removes the tenant from the role on the sub-user"
+        response.status == 204
+        !subUserRoles.role.id.contains(role.id)
+        !subUserGlobalRoles.role.id.contains(role.id)
+
+        cleanup:
+        utils.deleteRole(role)
+    }
+
+    def "delete role on user with invalid tenant ID does not delete the role on the user"() {
+        given:
+        def role = utils.createRole(service)
+        def tenantA = tenant
+        def tenantB = utils.createTenant()
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id, role.id)
+
+        when: "try to delete the role with a tenant ID not associated with that role"
+        def response = cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenantB.id, defaultUser.id, role.id)
+
+        then:
+        response.status == 404
+
+        when: "list the user roles on the correct tenant"
+        def userRolesOnTenant = cloud20.listRolesForUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id).getEntity(RoleList).value
+
+        then: "the user still has the role on that tenant"
+        userRolesOnTenant.role.id.contains(role.id)
+
+        cleanup:
+        utils.deleteRole(role)
+        utils.deleteTenant(tenantB)
     }
 
 }

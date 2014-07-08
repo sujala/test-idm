@@ -1498,17 +1498,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
+        def tenant = entityFactory.createTenant()
+        def clientRole = entityFactory.createClientRole()
+        def tenantRole = entityFactory.createTenantRole()
 
-        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        tenantService.checkAndGetTenant(_) >> tenant
         userService.checkAndGetUserById(_) >> user
         userService.getUserByAuthToken(_) >> caller
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        applicationService.getClientRoleById(_) >> clientRole
+        tenantService.checkAndGetTenantRoleForUserById(_, _) >> tenantRole
+        tenantRole.tenantIds << tenant.tenantId
 
         when:
         def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
 
         then:
-        1 * tenantService.deleteTenantRoleForUser(user, _)
+        1 * tenantService.deleteTenantOnRoleForUser(user, _, _)
         response.status == 204
     }
 
