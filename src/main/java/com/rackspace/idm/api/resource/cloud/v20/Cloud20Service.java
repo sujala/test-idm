@@ -91,9 +91,9 @@ public interface Cloud20Service {
 
 	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
 
-	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, Integer marker, Integer limit) ;
+	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, String roleId, Integer marker, Integer limit) ;
 
-	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
+	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, Integer marker, Integer limit) ;
 
 	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 

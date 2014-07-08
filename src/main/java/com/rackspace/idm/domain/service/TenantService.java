@@ -50,8 +50,8 @@ public interface TenantService {
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
 
     boolean hasTenantAccess(EndUser user, String tenantId);
-    List<User> getUsersForTenant(String tenantId, int offset, int limit);
-    List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
+    PaginatorContext<User> getUsersForTenant(String tenantId, int offset, int limit);
+    PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
     List<TenantRole> getTenantRolesForTenant(String tenantId);
     boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles);
 
