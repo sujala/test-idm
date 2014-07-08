@@ -280,6 +280,14 @@ class V1Factory {
         }
     }
 
+    def createRole(String name, String tenantId) {
+        new Role().with {
+            it.name = name
+            it.tenantId = tenantId
+            return it
+        }
+    }
+
     def createRsaCredentials() {
         return createRsaCredentials("username", "tokenKey")
     }

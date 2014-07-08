@@ -133,6 +133,10 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
+    def getTenant(String token, String tenantId) {
+        resource.path(path20).path(TENANTS).path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def getUserApiKey(String token, String userId) {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }

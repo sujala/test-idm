@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.UserDao
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import org.openstack.docs.identity.api.v2.CredentialListType
 import org.openstack.docs.identity.api.v2.User
@@ -612,6 +613,45 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(users)
         utils.deleteTenant(userAdmin.domainId)
         utils.deleteTenant(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteDomain(userAdmin.domainId)
+    }
+
+    def "Verify values on create one user call with additional tenant created" () {
+        given:
+        def domainId = utils.createDomain()
+        def tenantId = testUtils.getRandomUUID("AddTenant")
+        def newRole = utils.createRole()
+
+        when:
+        (userAdmin, users) = utils.createUserAdminWithTenantsAndRole(domainId, newRole.name, tenantId)
+        Tenant retreivedTenant = utils.getTenant(tenantId)
+
+        then:
+        userAdmin != null
+        userAdmin.secretQA.answer == "answer"
+        userAdmin.secretQA.question == "question"
+        userAdmin.roles.role.name.contains(IDENTITY_USER_ADMIN_ROLE)
+        userAdmin.roles.role.name.contains(DEFAULT_COMPUTE_ROLE)
+        userAdmin.roles.role.name.contains(DEFAULT_OBJECT_STORE_ROLE)
+        userAdmin.roles.role.name.contains(newRole.name)
+
+        //Verify that tenants are associated to correct role
+        def computeIndex = userAdmin.roles.role.name.indexOf(DEFAULT_COMPUTE_ROLE)
+        userAdmin.roles.role[computeIndex].tenantId == domainId
+
+        def objectStoreIndex = userAdmin.roles.role.name.indexOf(DEFAULT_OBJECT_STORE_ROLE)
+        userAdmin.roles.role[objectStoreIndex].tenantId == utils.getNastTenant(domainId)
+
+        def newRoleIndex = userAdmin.roles.role.name.indexOf(newRole.name)
+        userAdmin.roles.role[newRoleIndex].tenantId == tenantId
+
+        retreivedTenant.id == tenantId
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(userAdmin.domainId)
+        utils.deleteTenant(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteTenant(tenantId)
         utils.deleteDomain(userAdmin.domainId)
     }
 
