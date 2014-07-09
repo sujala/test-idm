@@ -200,7 +200,6 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         def response = cloud20.getBypassCodes(adminToken, userAdminOpenStack.getId(), request, mediaType, mediaType)
         def codes = parseCodes(response, mediaType)
 
-        then:
         then: "gets one code, and 200 OK"
         response.getStatus() == 200
         codes.size() == 1
@@ -228,8 +227,8 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         bypassTearDown(finalUserAdmin, finalPhone)
 
         where:
-        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
-        tokenType << ['service', 'identity']
+        mediaType << [MediaType.APPLICATION_XML_TYPE] * 2 + [MediaType.APPLICATION_JSON_TYPE] * 2
+        tokenType << ['service', 'identity'] * 2
     }
 
     /**
