@@ -23,10 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.rackspace.idm.GlobalConstants.MOSSO;
 import static com.rackspace.idm.GlobalConstants.NAST;
@@ -153,7 +150,10 @@ public class DefaultUserService implements UserService {
 
         createDomainIfItDoesNotExist(user.getDomainId());
         if (isCreateUserInOneCall) {
+            verifyUserRolesExist(user);
+            verifyUserTenantsDoNotExist(user);
             createDefaultDomainTenantsIfNecessary(user.getDomainId());
+            createTenantsIfNecessary(user);
         }
         checkMaxNumberOfUsersInDomain(user.getDomainId());
 
@@ -177,6 +177,57 @@ public class DefaultUserService implements UserService {
         assignUserRoles(user);
 
         addExpiredScopeAccessesForUser(user);
+    }
+
+    private void verifyUserRolesExist(User user) {
+        for (TenantRole role : user.getRoles()) {
+            ClientRole roleObj = roleService.getRoleByName(role.getName());
+            if (roleObj == null) {
+                throw new BadRequestException(String.format("Role '%s' does not exist.", role.getName()));
+            }
+        }
+
+    }
+
+    private void verifyUserTenantsDoNotExist(User user) {
+        for (TenantRole role : user.getRoles()) {
+            for (String tenantId : role.getTenantIds()) {
+                if (tenantService.getTenant(tenantId) != null) {
+                    throw new BadRequestException(String.format("Tenant with Id '%s' already exists", tenantId));
+                }
+            }
+        }
+    }
+
+    private void createTenantsIfNecessary(User user) {
+        Domain domain = domainService.getDomain(user.getDomainId());
+        List<String> domainTenants = new ArrayList(Arrays.asList(domain.getTenantIds()));
+
+        for (TenantRole role : user.getRoles()) {
+            for (String tenantId : role.getTenantIds()) {
+                Tenant tenant = new Tenant();
+                tenant.setName(tenantId);
+                tenant.setTenantId(tenantId);
+                tenant.setDisplayName(tenantId);
+                tenant.setEnabled(true);
+
+                try {
+                    tenantService.addTenant(tenant);
+                } catch (DuplicateException dex) {
+                    // no-op
+                    // We've already checked to make sure the tenants did not exist prior to this call
+                    // so a duplicate would only happen when we try to add the mosso and nast tenant
+                    // again or if a user was given more than one role on a tenant. In either of these
+                    // cases we don't want to error out, we just want to catch and move on.
+                }
+
+                if (!domainTenants.contains(tenantId)) {
+                    domainService.addTenantToDomain(tenantId, user.getDomainId());
+                    domainTenants.add(tenantId);
+                }
+            }
+        }
+
     }
 
     private void addExpiredScopeAccessesForUser(User user) {

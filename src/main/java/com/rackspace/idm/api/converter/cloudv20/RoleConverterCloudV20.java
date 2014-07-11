@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
@@ -100,6 +101,9 @@ public class RoleConverterCloudV20 {
         for (Role role : roleList.getRole()) {
             TenantRole tenantRole = new TenantRole();
             tenantRole.setName(role.getName());
+            if (StringUtils.isNotBlank(role.getTenantId())) {
+                tenantRole.getTenantIds().add(role.getTenantId());
+            }
             tenantRoles.add(tenantRole);
         }
 

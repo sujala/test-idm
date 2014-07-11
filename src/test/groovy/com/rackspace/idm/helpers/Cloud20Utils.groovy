@@ -92,6 +92,23 @@ class Cloud20Utils {
         return entity
     }
 
+    def createUserWithTenantsAndRole(token, username=testUtils.getRandomUUID(), domainId, rolename, tenantId) {
+
+        def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
+        user.roles = new RoleList()
+        user.roles.role.add(v1Factory.createRole(rolename, tenantId))
+        def response = methods.createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         user.secretQA = v1Factory.createRaxKsQaSecretQA()
@@ -148,6 +165,16 @@ class Cloud20Utils {
     def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
         return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+    }
+
+    def createUserAdminWithTenantsAndRole(domainId, rolename, tenantId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username)
+
+        def userAdmin = createUserWithTenantsAndRole(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId, rolename, tenantId)
+
+        return [userAdmin, [identityAdmin, userAdmin].asList()]
     }
 
     def createUserAdminWithTenants(domainId) {
@@ -525,6 +552,12 @@ class Cloud20Utils {
     def deleteTenant(String tenantId) {
         def response = methods.deleteTenant(getServiceAdminToken(), tenantId)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def getTenant(String tenantId) {
+        def response = methods.getTenant(getServiceAdminToken(), tenantId)
+        assert (response.status == SC_OK)
+        response.getEntity(Tenant).value
     }
 
     def addTenantToDomain(String domainId, String tenantId) {
