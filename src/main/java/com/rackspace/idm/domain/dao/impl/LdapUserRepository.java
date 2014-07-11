@@ -301,7 +301,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             result = getBindConnPool().bind(user.getUniqueId(), password);
         } catch (LDAPException e) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                getLogger().info("Invalid login attempt by user {} with password {}.",user.getUsername(), password);
+                getLogger().info("Invalid login attempt by user {} with password ****.", user.getUsername());
                 return false;
             }
             getLogger().error("Bind operation on username " + user.getUsername() + " failed.", e);
