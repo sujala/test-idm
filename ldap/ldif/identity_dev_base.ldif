@@ -2485,3 +2485,21 @@ objectClass: top
 objectClass: tenantRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 roleRsId: 10053955
+
+dn: rsId=22776,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: rbacRole1
+rsId: 22776
+description: A random rbac role
+rsWeight: 1000
+
+dn: rsId=122776,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: rbacRole2
+rsId: 122776
+description: A random rbac role part II
+rsWeight: 1000
