@@ -646,20 +646,24 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void deleteExpiredTokensQuietly(EndUser user) {
-        Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
-        DateTime now = new DateTime();
-        if (tokenIterator != null) {
-            for (ScopeAccess token : tokenIterator) {
-                if (token.isAccessTokenExpired(now)) {
-                    try {
-                        this.deleteScopeAccess(token);
-                    } catch (Exception e) {
-                        String tokenStr = token.getAccessTokenString();
-                        String maskedToken = tokenStr != null ? tokenStr.substring(Math.max(tokenStr.length() - 4, 0)) : "";
-                        logger.warn(String.format("Error deleting user '%s' expired token ending in '%s'.", user.getAuditContext(), maskedToken));
+        try {
+            Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
+            DateTime now = new DateTime();
+            if (tokenIterator != null) {
+                for (ScopeAccess token : tokenIterator) {
+                    if (token.isAccessTokenExpired(now)) {
+                        try {
+                            this.deleteScopeAccess(token);
+                        } catch (Exception e) {
+                            String tokenStr = token.getAccessTokenString();
+                            String maskedToken = tokenStr != null ? tokenStr.substring(Math.max(tokenStr.length() - 4, 0)) : "";
+                            logger.warn(String.format("Error deleting user '%s' expired token ending in '%s'.", user.getAuditContext(), maskedToken), e);
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            logger.warn(String.format("Error deleting expired tokens from user '%s'", user.getAuditContext(), e));
         }
     }
 

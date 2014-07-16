@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -507,6 +508,32 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting Global Roles for user {}", user.getUniqueId());
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
         return getGlobalRoles(roles);
+    }
+
+    @Override
+    public List<TenantRole> getRbacRolesForUser(EndUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "User cannot be null.");
+        }
+        logger.debug("Getting Global Rbac Roles for user {}", user.getUniqueId());
+        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+
+        List<TenantRole> globalRbacRoles = new ArrayList<TenantRole>();
+        for (TenantRole role : roles) {
+            if (role != null
+                    && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
+                //TODO: Caching option?
+                ClientRole cRole = this.applicationService.getClientRoleById(role
+                        .getRoleRsId());
+                if (cRole.getRsWeight() == PrecedenceValidator.RBAC_ROLES_WEIGHT) {
+                    role.setName(cRole.getName());
+                    role.setDescription(cRole.getDescription());
+                    globalRbacRoles.add(role);
+                }
+            }
+        }
+        return globalRbacRoles;
     }
 
     @Override
