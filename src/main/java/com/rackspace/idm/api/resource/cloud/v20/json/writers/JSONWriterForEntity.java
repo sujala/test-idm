@@ -21,7 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
+import java.util.Map;
 
 public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
 
@@ -45,7 +45,11 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
         write(entity, entityStream, null);
     }
 
-    protected void write(T entity, OutputStream entityStream, HashMap prefixValues) {
+    protected void write(T entity, OutputStream entityStream, Map prefixValues) {
+        write(entity, entityStream, prefixValues, true);
+    }
+
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, boolean pluralizeArrays) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -62,7 +66,7 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
                 jsonObject = outer;
             }
 
-            arrayTransformer.transformRemoveWrapper(jsonObject, null);
+            arrayTransformer.transformRemoveWrapper(jsonObject, null, pluralizeArrays);
 
             String newJsonString = jsonObject.toString();
             entityStream.write(newJsonString.getBytes(JSONConstants.UTF_8));

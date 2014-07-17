@@ -2,7 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
+import groovy.json.JsonSlurper
 import testHelpers.RootIntegrationTest
+
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 
@@ -164,6 +167,27 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+    }
 
+    def "default user group list JSON doesn't have extra data [D-17806]"() {
+        given:
+        String username=testUtils.getRandomUUID()
+        String key=testUtils.getRandomUUID()
+        Integer mossoId=testUtils.getRandomInteger()
+        String nastId=testUtils.getRandomUUID()
+        Boolean enabled=true
+
+        when:
+        def user = utils11.createUser(username, key, mossoId, nastId, enabled)
+        def response = cloud11.getGroups(username, MediaType.APPLICATION_JSON)
+
+        then:
+        response.status == 200
+        def body = response.getEntity(String.class)
+        def slurper = new JsonSlurper().parseText(body)
+        slurper.getAt("valuess") == null
+
+        cleanup:
+        utils11.deleteUser(user)
     }
 }
