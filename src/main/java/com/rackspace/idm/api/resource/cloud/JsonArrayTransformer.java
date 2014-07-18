@@ -66,14 +66,18 @@ public class JsonArrayTransformer {
         return object;
     }
 
-    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent){
+    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent) {
+        return transformRemoveWrapper(object, parent, true);
+    }
+
+    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent, boolean pluralizeArrays) {
         for(Object key : object.keySet()){
             Object value = object.get(key);
             if (value instanceof JSONObject) {
-                value = transformRemoveWrapper((JSONObject) value, object);
+                value = transformRemoveWrapper((JSONObject) value, object, pluralizeArrays);
             }
 
-            if (value instanceof JSONArray) {
+            if (pluralizeArrays && value instanceof JSONArray) {
 
                 //remove the wrapper element. following convention
                 //e.g roles.role

@@ -107,8 +107,8 @@ class Cloud11Methods {
         resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getGroups(String username) {
-        resource.path(path11).path(USERS).path(username).path(GROUPS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    def getGroups(String username, String mediaType = APPLICATION_XML) {
+        resource.path(path11).path(USERS).path(username).path(GROUPS).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
     }
 
     def getUserBaseURLRef(String username, String baseUrlRefId) {

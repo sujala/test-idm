@@ -3,8 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import org.json.simple.JSONObject;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,7 +20,7 @@ public class JsonPrefixMapper {
      replaceJsonObject method travels the path to the element and updates it.
      */
 
-    public JSONObject mapPrefix(JSONObject object, HashMap prefixValues){
+    public JSONObject mapPrefix(JSONObject object, Map prefixValues){
 
         for(Object key : prefixValues.keySet()){
             String[] elements = ((String)key).split("\\.");
