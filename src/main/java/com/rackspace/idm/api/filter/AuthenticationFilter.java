@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
@@ -35,6 +36,7 @@ import java.util.UUID;
  */
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter {
+
     private static final String GET = "GET";
     private static final String POST = "POST";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
@@ -55,8 +57,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     @Autowired
     private Configuration config;
 
-    AuthenticationFilter() {
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
+    AuthenticationFilter() {
     }
 
     AuthenticationFilter(ScopeAccessService scopeAccessService) {
@@ -107,9 +111,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                         throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
                     }
                     // Swap token out and Log
-                    String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
+                    final ImpersonatedScopeAccess tk = (ImpersonatedScopeAccess) sa;
+                    final String newToken = tk.getImpersonatingToken();
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
                     logger.info("Impersonating token {} with token {} ", authToken, newToken);
+                    // Saves on a thread local variable
+                    requestContextHolder.setImpersonated(true);
                 }
 
                 if(path.contains("multi-factor")) {
@@ -200,6 +207,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     public void setConfiguration(Configuration config){
         this.config = config;
+    }
+
+    public void setRequestContextHolder(RequestContextHolder requestContextHolder) {
+        this.requestContextHolder = requestContextHolder;
     }
 
     private boolean isFoundationEnabled(){

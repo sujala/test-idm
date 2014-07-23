@@ -512,12 +512,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verify2.decision == MfaAuthenticationDecision.DENY
         verify2.message == "Incorrect passcode. Please try again."
 
-        when: "user request for himself"
-        def response2 = cloud20.getBypassCodes(defaultUserToken, defaultUser.id, request, mediaType, mediaType)
-
-        then: "response should be 403"
-        response2.getStatus() == 403
-
         when: "user admin from another domain request bypass code"
         def anotherAdmin = createUserAdmin()
         def anotherAdminToken = authenticate(anotherAdmin.username)
@@ -540,7 +534,117 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         tokenType << ['service', 'identity', 'admin'] * 2
     }
 
-    def parseCodes(response, mediaType) {
+    @Unroll
+    def "Get a self-service bypass code: #mediaType, #tokenType"() {
+        setup:
+        createMultiFactorDefaultUser()
+        addDefaultUserPhone()
+        verifyDefaultUserPhone()
+        enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
+
+        def request = createBypassRequest(10, mediaType, 2)
+
+        when: "user request for himself"
+        def response = cloud20.getBypassCodes(defaultUserToken, defaultUser.id, request, mediaType, mediaType)
+        def codes = parseCodes(response, mediaType)
+
+        then: "gets two codes, and 200 OK"
+        response.getStatus() == 200
+        codes.size() == 2
+
+        when: "use bypass code (1)"
+        def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
+
+        then: "it allow auth"
+        verify1.decision == MfaAuthenticationDecision.ALLOW
+
+        when: "use bypass code (1) twice"
+        def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
+
+        then: "get denied"
+        verify2.decision == MfaAuthenticationDecision.DENY
+        verify2.message == "Incorrect passcode. Please try again."
+
+        when: "use bypass code (2)"
+        def verify3 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
+
+        then: "it allow auth"
+        verify3.decision == MfaAuthenticationDecision.ALLOW
+
+        when: "use bypass code (2) twice"
+        def verify4 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
+
+        then: "get denied"
+        verify4.decision == MfaAuthenticationDecision.DENY
+        verify4.message == "Incorrect passcode. Please try again."
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "Get a self-service bypass code with impersonated token"() {
+        setup:
+        createMultiFactorDefaultUser()
+        addDefaultUserPhone()
+        verifyDefaultUserPhone()
+        enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
+        def token = utils.impersonate(utils.getIdentityAdminToken(), defaultUser, 20).token.id
+
+        def request = createBypassRequest(10, MediaType.APPLICATION_XML_TYPE, 2)
+
+        when: "request two bypass codes"
+        def response = cloud20.getBypassCodes(token, defaultUser.id, request)
+        def codes = parseCodes(response, MediaType.APPLICATION_XML_TYPE)
+
+        then: "gets just one"
+        response.getStatus() == 200
+        codes.size() == 1
+
+        when: "use bypass code"
+        def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
+
+        then: "it allow auth"
+        verify1.decision == MfaAuthenticationDecision.ALLOW
+
+        when: "use bypass code twice"
+        def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
+
+        then: "get denied"
+        verify2.decision == MfaAuthenticationDecision.DENY
+        verify2.message == "Incorrect passcode. Please try again."
+    }
+
+    def "Test concurrency on bypass codes"() {
+        setup:
+        createMultiFactorDefaultUser()
+        addDefaultUserPhone()
+        verifyDefaultUserPhone()
+        enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
+        def adminToken = utils.getIdentityAdminToken()
+        def impersonatedToken = utils.impersonate(adminToken, defaultUser, 1000).token.id
+        def request = createBypassRequest(10, MediaType.APPLICATION_XML_TYPE, 2)
+
+        when: "create all thread calls"
+        def threadCount = 10;
+        def List<Boolean> results = new ArrayList<Boolean>();
+        for (i in 1..threadCount) {
+            final boolean odd = i % 2 == 1;
+            Thread.start {
+                def response = cloud20.getBypassCodes(odd ? impersonatedToken : defaultUserToken, defaultUser.id, request);
+                def codes = parseCodes(response, MediaType.APPLICATION_XML_TYPE)
+                results.add(codes.size() == (odd ? 1 : 2))
+            }
+        }
+
+        while (results.size() < threadCount) {
+            sleep(100); // wait to fill the results
+        }
+
+        then: "test all results"
+        !results.contains(false)
+    }
+
+    def parseCodes(response, mediaType = MediaType.APPLICATION_XML_TYPE) {
         if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
             def body = response.getEntity(String.class)
             def slurper = new JsonSlurper().parseText(body)
@@ -550,14 +654,19 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         }
     }
 
-    def createBypassRequest(seconds, mediaType) {
+    def createBypassRequest(seconds, mediaType, numberOfCodes = null) {
         if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
-            return new JsonBuilder(["RAX-AUTH:bypassCodes": ["validityDuration": "PT" + seconds + "S"]]).toString()
+            return new JsonBuilder(["RAX-AUTH:bypassCodes": [
+                    "validityDuration": "PT" + seconds + "S",
+                    "numberOfCodes": numberOfCodes
+            ]]).toString()
         } else {
             final BypassCodes request = new BypassCodes()
             DatatypeFactory factory = DatatypeFactory.newInstance();
             request.validityDuration = factory.newDuration(seconds * 1000)
+            request.numberOfCodes = numberOfCodes
             return request;
         }
     }
+
 }
