@@ -122,8 +122,9 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockDomainService(service)
         mockPropertiesService(service)
         mockCryptHelper(service)
-        mockValidator(service)
         mockRoleService(service);
+        mockFederatedUserDao(service)
+        mockIdentityUserService(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -923,6 +924,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
+        identityUserService.getEndUsersByDomainId(_) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -935,6 +937,27 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
+    def "disableUserAdminSubUsers expires all federated sub-users tokens"() {
+        given:
+        def user = entityFactory.createUser()
+        def federatedUserId = "fedId"
+        def federatedSubUser = entityFactory.createFederatedUser("federatedUsername", "idpName").with {
+            it.id = federatedUserId
+            it
+        }
+        def users = [].asList()
+        domainService.getEnabledDomainAdmins(_) >> [].asList()
+        identityUserService.getEndUsersByDomainId(_) >> users
+
+        when:
+        service.disableUserAdminSubUsers(user)
+
+        then:
+        authorizationService.hasUserAdminRole(_) >> true
+        mockFederatedUserDao.getUsersByDomainId(_) >> [federatedSubUser].asList()
+        scopeAccessService.expireAllTokensForUserById(federatedUserId)
+    }
+
     def "disableUserAdminSubUsers does not disable sub users that are disabled"() {
         given:
         def user = entityFactory.createUser()
@@ -945,6 +968,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
+        identityUserService.getEndUsersByDomainId(_) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -964,6 +988,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
+        identityUserService.getEndUsersByDomainId(_) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -988,6 +1013,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
+        identityUserService.getEndUsersByDomainId(_) >> users
 
         when:
         service.updateUser(user)
@@ -1048,7 +1074,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.disableUserAdminSubUsers(userAdmin)
 
         then:
-        1 * userDao.getUsersByDomain(_) >> users
+        1 * identityUserService.getEndUsersByDomainId(_) >> users
         1 * userDao.updateUser(_)
     }
 

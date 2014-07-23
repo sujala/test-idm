@@ -379,7 +379,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username)
     }
 
-    @Ignore("We can't add a second user admin through the API because on the second add the mosso and nast tenants already exist which errors")
     def "trying to pass a saml assertion for a domain with more than one user admin returns 500 if 'domain.restricted.to.one.user.admin.enabled' == true"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
@@ -389,7 +388,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin1, userAdmin2, users1, users2
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdmin(domainId)
 
         when:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", true)

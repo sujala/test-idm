@@ -168,7 +168,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private FederatedUser createUserForRequest(FederatedUserRequest request) {
         FederatedUser userToCreate = request.getFederatedUser();
 
-        List<User> domainUserAdmins = getDomainUserAdmins(userToCreate.getDomainId());
+        List<User> domainUserAdmins = domainService.getDomainAdmins(userToCreate.getDomainId());
 
         String defaultRegion = calculateDefaultRegionForNewUserRequest(request, domainUserAdmins);
         userToCreate.setRegion(defaultRegion);
@@ -272,27 +272,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     /**
-     * Retrieve the user-admin for the specified domain
-     */
-    List<User> getDomainUserAdmins(String domainId) {
-        //get the propagating roles for the domain
-        List<User> userAdmins = domainService.getDomainAdmins(domainId);
-
-        if(userAdmins.size() == 0) {
-            log.error("Unable to get roles for saml assertion due to no user admin for domain {}", domainId);
-            throw new IllegalStateException("no user admin exists for domain " + domainId);
-        }
-
-        if(userAdmins.size() > 1 && getDomainRestrictedToOneUserAdmin()) {
-            log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domainId);
-            throw new IllegalStateException("more than one user admin exists for domain " + domainId);
-        }
-
-        return userAdmins;
-    }
-
-
-    /**
      * Retrieve the propagating roles associated with the domain by retrieving the propagating roles assigned to the user-admin.
      *
      * Note - yes, such roles probably should be attached to the domain rather than the user-admin, but that's how propagating
@@ -328,10 +307,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         //ScopeAccesses require a client id. This is legacy stuff that needs to be removed.
         //In the meantime, we're hard coding the cloud auth client id in the scope access.
         return config.getString("cloudAuth.clientId");
-    }
-
-    private boolean getDomainRestrictedToOneUserAdmin() {
-        return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
     }
 
 }

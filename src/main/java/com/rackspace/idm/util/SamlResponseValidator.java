@@ -6,14 +6,18 @@ import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Assertion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +26,10 @@ import java.util.*;
 //TODO: Refactor this completely
 @Component
 public class SamlResponseValidator {
+
+    private static final Logger log = LoggerFactory.getLogger(SamlResponseValidator.class);
+
+    public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
 
     @Autowired
     SamlSignatureValidator samlSignatureValidator;
@@ -40,6 +48,9 @@ public class SamlResponseValidator {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    DomainService domainService;
 
     /**
      * Validate the samlResponse contains the required data. In addition it verifies the specified issuer exists, the
@@ -181,7 +192,24 @@ public class SamlResponseValidator {
             throw new BadRequestException("Domain '" + requestedDomain + "' does not exist.");
         }
         else if (!domain.getEnabled()) {
-            throw new BadRequestException("Domain '" + requestedDomain + "' is disabled.");
+            throw new BadRequestException(String.format(DISABLED_DOMAIN_ERROR_MESSAGE, requestedDomain));
+        }
+
+        List<User> userAdmins = domainService.getDomainAdmins(domain.getDomainId());
+
+        if(userAdmins.size() == 0) {
+            log.error("Unable to get roles for saml assertion due to no user admin for domain {}", domain.getDomainId());
+            throw new IllegalStateException("no user admin exists for domain " + domain.getDomainId());
+        }
+
+        if(userAdmins.size() > 1 && getDomainRestrictedToOneUserAdmin()) {
+            log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domain.getDomainId());
+            throw new IllegalStateException("more than one user admin exists for domain " + domain.getDomainId());
+        }
+
+        boolean enabledUserAdmin = org.apache.commons.collections4.CollectionUtils.exists(userAdmins, new UserEnabledPredicate());
+        if(!enabledUserAdmin) {
+            throw new BadRequestException(String.format(DISABLED_DOMAIN_ERROR_MESSAGE, requestedDomain));
         }
 
         request.getFederatedUser().setDomainId(domain.getDomainId());
@@ -235,4 +263,9 @@ public class SamlResponseValidator {
             request.getFederatedUser().getRoles().addAll(roles.values());
         }
     }
+
+    private boolean getDomainRestrictedToOneUserAdmin() {
+        return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
+    }
+
 }

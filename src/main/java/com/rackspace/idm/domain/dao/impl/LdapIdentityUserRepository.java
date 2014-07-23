@@ -30,21 +30,31 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     private LdapUserRepository userDao;
 
     public User getProvisionedUserById(String userId) {
-        return searchForUser(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
+        return searchForUserById(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
 
     public FederatedUser getFederatedUserById(String userId) {
-        return searchForUser(userId, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class);
+        return searchForUserById(userId, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class);
     }
 
     @Override
     public EndUser getEndUserById(String userId) {
-        return searchForUser(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
+        return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
     }
 
-    private <T extends EndUser> T searchForUser(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
+    @Override
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
+        return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    private <T extends EndUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), SearchScope.SUB);
     }
+
+    private <T extends EndUser> Iterable<T> searchForUsersByDomainId(String domainId, List<Filter> userClassFilterList, Class<T> clazz) {
+        return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, userClassFilterList));
+    }
+
 
     @Override
     public String getBaseDn(){
@@ -73,6 +83,12 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         );
     }
 
+    private Filter searchFilterGetUserByDomainId(String domainId, List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId)
+        );
+    }
 
     @Override
     public void doPreEncode(BaseUser object) {
@@ -95,6 +111,12 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public String getSortAttribute() {
+        return ATTR_ID;
+    }
+
+
+        @Override
     public void addObject(BaseUser object) {
         throw new UnsupportedOperationException("Not supported");
     }

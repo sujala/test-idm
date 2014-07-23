@@ -6,6 +6,7 @@ import com.rackspace.docs.core.event.Region;
 import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
@@ -119,7 +120,7 @@ public class AtomHopperClient {
     }
 
     @Async
-    public void asyncTokenPost(User user, String revokedToken) {
+    public void asyncTokenPost(EndUser user, String revokedToken) {
         try {
             postToken(user, atomHopperHelper.getAuthToken(), revokedToken);
         } catch (Exception e) {
@@ -166,7 +167,7 @@ public class AtomHopperClient {
         }
     }
 
-    public void postToken(User user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postToken(EndUser user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
             final Writer writer = marshalEntry(entry);
@@ -236,7 +237,7 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
-    public UsageEntry createEntryForRevokeToken(User user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+    public UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
         logger.warn("Creating revoke token entry ...");
 
         final com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();

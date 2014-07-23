@@ -7,6 +7,8 @@ import com.rackspace.idm.domain.decorator.SamlResponseDecorator
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.IdentityProvider
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.PrecedenceValidator
@@ -38,6 +40,8 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def mockDomainDao
     @Shared def mockPrecedenceValidator
     @Shared def mockConfig
+    @Shared def mockDomainService
+    @Shared def domainAdmin
 
     @Shared EntityFactory entityFactory = new EntityFactory()
     @Shared ClientRole dummyRbacRole = entityFactory.createClientRole(ROLE_NAME, PrecedenceValidator.RBAC_ROLES_WEIGHT)
@@ -57,7 +61,12 @@ class SamlResponseValidatorTest extends Specification {
         mockDomainDao(samlResponseValidator)
         mockPrecedenceValidator(samlResponseValidator)
         mockConfig(samlResponseValidator)
+        mockDomainService(samlResponseValidator)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
+        domainAdmin = new User().with {
+            it.enabled = true
+            it
+        }
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -113,6 +122,7 @@ class SamlResponseValidatorTest extends Specification {
         given:
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -529,6 +539,7 @@ class SamlResponseValidatorTest extends Specification {
 
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -594,6 +605,7 @@ class SamlResponseValidatorTest extends Specification {
 
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -661,6 +673,7 @@ class SamlResponseValidatorTest extends Specification {
 
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -701,6 +714,11 @@ class SamlResponseValidatorTest extends Specification {
     def mockConfig(validator) {
         mockConfig = Mock(Configuration)
         validator.config = mockConfig
+    }
+
+    def mockDomainService(validator) {
+        mockDomainService = Mock(DomainService)
+        validator.domainService = mockDomainService
     }
 
     def createIdentityProvider() {
