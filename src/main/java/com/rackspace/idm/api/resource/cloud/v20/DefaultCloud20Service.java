@@ -2954,7 +2954,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) {
+    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, Integer marker, Integer limit) {
 
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
@@ -2964,9 +2964,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId(), marker, limit);
+            PaginatorContext<User> pageContext = this.tenantService.getUsersForTenant(tenant.getTenantId(), marker, limit);
+            String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)).getValue());
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createUsers(userConverterCloudV20.toUserList(pageContext.getValueList())).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2974,7 +2978,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
+    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId,
                                                       String roleId, Integer marker, Integer limit) {
 
         try {
@@ -2986,10 +2990,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            List<User> users = this.tenantService.getUsersWithTenantRole(tenant, role, marker, limit);
+            PaginatorContext<User> pageContext = this.tenantService.getUsersWithTenantRole(tenant, role, marker, limit);
+            String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createUsers(userConverterCloudV20.toUserList(pageContext.getValueList())).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

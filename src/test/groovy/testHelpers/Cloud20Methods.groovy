@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component
 import spock.lang.Shared
 
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
@@ -268,8 +269,14 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).path(RAX_AUTH).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsersWithTenantId(String token, tenantId) {
-        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    def listUsersWithTenantId(String token, tenantId, offset = "0", limit = "1000") {
+        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def listUsersWithTenantIdAndRole(String token, tenantId, roleId, offset = "0", limit = "1000") {
+        MultivaluedMap<String, String> pageParams = pageParams(offset, limit)
+        pageParams.add("roleId", roleId)
+        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(pageParams).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listEndpointsForTenant(String token, tenantId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

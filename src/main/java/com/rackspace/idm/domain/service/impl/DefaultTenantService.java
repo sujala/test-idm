@@ -19,10 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -655,7 +652,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<User> getUsersForTenant(String tenantId, int offset, int limit) {
+    public PaginatorContext<User> getUsersForTenant(String tenantId, int offset, int limit) {
         logger.debug("Getting Users for Tenant {}", tenantId);
         List<User> users = new ArrayList<User>();
 
@@ -670,6 +667,8 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
+        Collections.sort(userIds, String.CASE_INSENSITIVE_ORDER);
+
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
             if (user != null && user.getEnabled()) {
@@ -678,7 +677,9 @@ public class DefaultTenantService implements TenantService {
         }
 
         logger.debug("Got {} Users for Tenant {}", users.size(), tenantId);
-        return users;
+        PaginatorContext<User> pageContext = new PaginatorContext<User>();
+        pageContext.update(users, offset, limit);
+        return pageContext;
     }
 
     @Override
@@ -730,7 +731,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
+    public PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
         List<User> users = new ArrayList<User>();
 
         List<String> userIds = new ArrayList<String>();
@@ -741,6 +742,8 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
+        Collections.sort(userIds, String.CASE_INSENSITIVE_ORDER);
+
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
             if (user != null && user.getEnabled()) {
@@ -750,7 +753,9 @@ public class DefaultTenantService implements TenantService {
 
         logger.debug("Got {} Users for Tenant {}", users.size(),
             tenant.getTenantId());
-        return users;
+        PaginatorContext<User> pageContext = new PaginatorContext<User>();
+        pageContext.update(users, offset, limit);
+        return pageContext;
 
     }
 

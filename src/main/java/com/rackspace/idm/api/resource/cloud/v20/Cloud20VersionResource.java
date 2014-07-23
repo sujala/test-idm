@@ -618,15 +618,16 @@ public class Cloud20VersionResource {
     @Path("tenants/{tenantId}/users")
     public Response listUsersForTenantAndListUsersWithRoleForTenant(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
             @QueryParam("roleId") String roleId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         if (roleId != null) {
-            return cloud20Service.listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, validateMarker(marker), validateLimit(limit)).build();
+            return cloud20Service.listUsersWithRoleForTenant(httpHeaders, uriInfo, authToken, tenantId, roleId, validateMarker(marker), validateLimit(limit)).build();
         } else {
-            return cloud20Service.listUsersForTenant(httpHeaders, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
+            return cloud20Service.listUsersForTenant(httpHeaders, uriInfo, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 
