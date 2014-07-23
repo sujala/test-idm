@@ -211,6 +211,21 @@ class Cloud20Utils {
         return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
     }
 
+    def createFederatedUser(domainId) {
+        def identityAdmin = createIdentityAdmin()
+
+        def identityAdminToken = getToken(identityAdmin.username)
+
+        def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
+
+        def userAdminToken  = getToken(userAdmin.username)
+
+        def defaultUser = createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+
+        return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
+    }
+
+
     def createUsers(domainId) {
         def identityAdmin = createIdentityAdmin()
 

@@ -9,7 +9,15 @@ public interface EndUser extends BaseUser {
     String getRegion();
     String getEmail();
     String getUsername();
+    String getDomainId();
     List<TenantRole> getRoles();
     String getCustomerId();
     String getId();
+
+    /*
+    These were added to allow conversion for userById service
+     */
+    void setEmail(String email);
+    void setRegion(String region);
+    void setDomainId(String domainId);
 }

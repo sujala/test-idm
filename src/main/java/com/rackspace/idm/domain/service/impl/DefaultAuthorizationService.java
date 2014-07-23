@@ -130,7 +130,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasDefaultUserRole(User user) {
+    public boolean hasDefaultUserRole(EndUser user) {
         if (user == null) {
             return false;
         }
@@ -138,32 +138,32 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasUserAdminRole(User user) {
-        if (user == null) {
+    public boolean hasUserAdminRole(EndUser user) {
+        if (user == null || user instanceof FederatedUser) {
             return false;
         }
         return containsRole(user, Arrays.asList(cloudUserAdminRole));
     }
 
     @Override
-    public boolean hasUserManageRole(User user) {
-        if (user == null) {
+    public boolean hasUserManageRole(EndUser user) {
+        if (user == null || user instanceof FederatedUser) {
             return false;
         }
         return containsRole(user, Arrays.asList(cloudUserManagedRole));
     }
 
     @Override
-    public boolean hasIdentityAdminRole(User user) {
-        if (user == null) {
+    public boolean hasIdentityAdminRole(EndUser user) {
+        if (user == null || user instanceof FederatedUser) {
             return false;
         }
         return containsRole(user, Arrays.asList(cloudIdentityAdminRole));
     }
 
     @Override
-    public boolean hasServiceAdminRole(User user) {
-        if (user == null) {
+    public boolean hasServiceAdminRole(EndUser user) {
+        if (user == null || user instanceof FederatedUser) {
             return false;
         }
         return containsRole(user, Arrays.asList(cloudServiceAdminRole));
@@ -354,7 +354,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyDomain(User caller, User retrievedUser) {
+    public void verifyDomain(EndUser caller, EndUser retrievedUser) {
         if (!caller.getId().equals(retrievedUser.getId())) {
             if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED_MSG);

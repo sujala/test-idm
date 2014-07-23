@@ -130,6 +130,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserService userService;
 
     @Autowired
+    private IdentityUserService identityUserService;
+
+    @Autowired
     private CloudGroupBuilder cloudGroupBuilder;
 
     @Autowired
@@ -1470,7 +1473,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            User caller = getUser(scopeAccessByAccessToken);
+
+            //legacy code assumed User and did not check for disabled. We're expanding to Fed, and still won't check for disabled
+            EndUser caller = (EndUser) userService.getUserByScopeAccess(scopeAccessByAccessToken, false);
+
             //if caller has default user role
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) &&
                     !authorizationService.hasUserManageRole(caller)) {
@@ -1481,7 +1487,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
-            User user = this.userService.getUserById(userId);
+            EndUser user = this.identityUserService.getEndUserById(userId);
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
                 logger.warn(errMsg);
@@ -1498,7 +1504,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void setEmptyUserValues(User user) {
+    void setEmptyUserValues(EndUser user) {
         if (StringUtils.isEmpty(user.getEmail())) {
             user.setEmail("");
         }
@@ -1509,6 +1515,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setDomainId("");
         }
     }
+
 
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {

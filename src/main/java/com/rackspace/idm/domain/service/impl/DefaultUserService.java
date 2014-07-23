@@ -471,6 +471,7 @@ public class DefaultUserService implements UserService {
         return userDao.getUsersByEmail(email);
     }
 
+    @Override
     public User getUserByAuthToken(String authToken) {
         if (authToken == null) {
             return null;
@@ -484,6 +485,20 @@ public class DefaultUserService implements UserService {
         return getUser(uid);
     }
 
+    @Override
+    public BaseUser getTokenSubject(String token) {
+        if (token == null) {
+            return null;
+        }
+        ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(token);
+        if(scopeAccessByAccessToken == null) {
+            return null;
+        }
+
+        BaseUser user = getUserByScopeAccess(scopeAccessByAccessToken, false);
+
+        return user;
+    }
 
     @Override
     public User getUser(String customerId, String username) {
@@ -878,7 +893,7 @@ public class DefaultUserService implements UserService {
                 user = federatedUserDao.getUserByToken(userScopeAccess);
             }
             else {
-                //will be a "persistent" user (User)
+                //will be a "provisioned" user (User)
                 user = getUser(userScopeAccess.getUsername());
             }
         } else if (scopeAccess instanceof ClientScopeAccess) {
