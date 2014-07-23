@@ -325,16 +325,28 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     @Override
-    public List<String> getBypassCodes(User user, int validSecs) {
-        final int numberOfCodes = getNumberOfCodes(BigInteger.ONE);
-        return Arrays.asList(userManagement.getBypassCodes(user.getExternalMultiFactorUserId(), numberOfCodes, validSecs));
+    public String getBypassCode(User user, Integer validSecs) {
+        return getBypassCodes(user, validSecs, BigInteger.ONE, false).get(0);
     }
 
-    // The reason for this method is for future use, when we allow the user to have multiple codes.
-    private int getNumberOfCodes(BigInteger requested) {
+    @Override
+    public List<String> getSelfServiceBypassCodes(User user, Integer validSecs, BigInteger numberOfCodes) {
+        return getBypassCodes(user, validSecs, numberOfCodes, true);
+    }
+
+    private List<String> getBypassCodes(User user, Integer validSecs, BigInteger numberOfCodes, boolean isSelfService) {
+        final int normalizedNumberOfCodes = getNumberOfCodes(numberOfCodes, isSelfService);
+        final int normalizedValidSecs = isSelfService && validSecs == null ? 0 : validSecs;
+        return Arrays.asList(userManagement.getBypassCodes(user.getExternalMultiFactorUserId(), normalizedNumberOfCodes, normalizedValidSecs));
+    }
+
+    private int getNumberOfCodes(BigInteger requested, boolean isSelfService) {
+        if (!isSelfService) {
+            return config.getBigInteger(BYPASS_DEFAULT_NUMBER, BigInteger.ONE).max(BigInteger.ONE).intValue();
+        }
         final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_NUMBER, BigInteger.valueOf(10));
         if (requested == null) {
-            return config.getBigInteger(BYPASS_DEFAULT_NUMBER, BigInteger.ONE).max(BigInteger.ONE).intValue();
+            return max.intValue();
         } else {
             return max.min(requested).max(BigInteger.ONE).intValue();
         }

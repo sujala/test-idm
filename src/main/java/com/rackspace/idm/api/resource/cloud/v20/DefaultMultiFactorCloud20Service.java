@@ -18,6 +18,7 @@ import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -26,6 +27,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import com.rackspace.idm.util.DateHelper;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -43,12 +45,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  */
@@ -125,6 +128,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private EmailClient emailClient;
+
+    @Autowired
+    private DateHelper dateHelper;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
@@ -549,52 +558,38 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
-        final User user = validateGenerateBypassCodesRequest(authToken, userId);
-        final int validSecs = getValidSecs(bypassCodes.getValidityDuration());
-        final List<String> codes = multiFactorService.getBypassCodes(user, validSecs);
+        final User user = userService.checkAndGetUserById(userId);
+        final boolean isSelfService = validateGenerateBypassCodesRequest(authToken, user);
+
+        final Integer validSecs = getValidSecs(bypassCodes.getValidityDuration(), isSelfService);
+        final List<String> codes = new ArrayList<String>();
+        if (isSelfService) {
+            codes.addAll(multiFactorService.getSelfServiceBypassCodes(user, validSecs, bypassCodes.getNumberOfCodes()));
+        } else {
+            codes.add(multiFactorService.getBypassCode(user, validSecs));
+        }
 
         final BypassCodes entity = new BypassCodes();
         entity.getCodes().addAll(codes);
-        entity.setValidityDuration(getDurationFromSeconds(validSecs));
+        entity.setValidityDuration(dateHelper.getDurationFromSeconds(validSecs));
 
         final Response.ResponseBuilder response = Response.ok();
         response.entity(entity);
         return response;
     }
 
-    private int getValidSecs(Duration duration) {
+    private Integer getValidSecs(Duration duration, boolean isSelfService) {
         final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_DURATION, BigInteger.valueOf(10800));
         if (duration == null) {
-            return config.getBigInteger(BYPASS_DEFAULT_DURATION, BigInteger.valueOf(1800)).max(BigInteger.ONE).intValue();
+            return isSelfService ? null : config.getBigInteger(BYPASS_DEFAULT_DURATION, BigInteger.valueOf(1800)).max(BigInteger.ONE).intValue();
         } else {
-            return max.min(getSecondsFromDuration(duration)).max(BigInteger.ONE).intValue();
+            return max.min(dateHelper.getSecondsFromDuration(duration)).max(BigInteger.ONE).intValue();
         }
     }
 
-    private BigInteger getSecondsFromDuration(Duration duration) {
-        return  BigInteger.valueOf(duration.getTimeInMillis(new Date(0)) / 1000l);
-    }
-
-    private Duration getDurationFromSeconds(int seconds) {
-        try {
-            final DatatypeFactory factory = DatatypeFactory.newInstance();
-            return factory.newDuration(seconds * 1000l);
-        } catch (DatatypeConfigurationException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private User validateGenerateBypassCodesRequest(String authToken, String userId) {
+    private boolean validateGenerateBypassCodesRequest(String authToken, User user) {
         final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
         final User requester = (User) userService.getUserByScopeAccess(token);
-        final User user = userService.checkAndGetUserById(userId);
-
-        // Verify requester/user precedence level
-        authorizationService.verifyUserAdminLevelAccess(token);
-        precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-        if (authorizationService.authorizeCloudUserAdmin(token)) {
-            authorizationService.verifyDomain(requester, user);
-        }
 
         // Verify if the user is valid
         userService.validateUserIsEnabled(user);
@@ -602,7 +597,19 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_DISABLED);
         }
 
-        return user;
+        final String userId = user.getId();
+        if (userId != null && userId.equals(requester.getId())) {
+            // Self-service request
+            return !requestContextHolder.isImpersonated();
+        } else {
+            // Verify requester/user precedence level
+            authorizationService.verifyUserAdminLevelAccess(token);
+            precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
+            if (authorizationService.authorizeCloudUserAdmin(token)) {
+                authorizationService.verifyDomain(requester, user);
+            }
+            return false;
+        }
     }
 
 }

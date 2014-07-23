@@ -686,6 +686,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="numberOfCodes" type="xsd:integer" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The number of codes requested.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
 </schema>

@@ -32,7 +32,7 @@ public class JSONWriterForBypassCodes extends JSONWriterForEntity<BypassCodes> {
         final HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.BYPASS_CODES, JSONConstants.RAX_AUTH_BYPASS_CODES);
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        write(bypassCodes, buffer, prefixValues);
+        write(bypassCodes, buffer, prefixValues, false);
 
         try {
             final JSONParser parser = new JSONParser();
@@ -47,9 +47,6 @@ public class JSONWriterForBypassCodes extends JSONWriterForEntity<BypassCodes> {
             for (String code : codes.split(" ")) {
                 newCodes.add(code);
             }
-
-            // Workaround to fix broken array conversion
-            object.remove("codess");
 
             // Save
             entityStream.write(object.toJSONString().getBytes(JSONConstants.UTF_8));
