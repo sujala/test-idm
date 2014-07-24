@@ -4074,12 +4074,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.getUserById(headers, authToken, "abc123")
 
         then:
-        1 * userService.getUser(_) >> caller
+        userService.getUserByScopeAccess(_, false) >> caller
         1 * authorizationService.authorizeCloudUser(_) >> true
         1 * authorizationService.hasUserManageRole(_) >> true
-        1 * userService.getUserById(_) >> user
+        1 * identityUserService.getEndUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.verifyDomain(_, _)
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
         result.build().status == 200
     }
 
@@ -4211,6 +4212,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockFederatedIdentityService(service);
         mockMultiFactorCloud20Service(service);
         mockRoleService(service);
+        mockIdentityUserService(service)
     }
 
     def mockMisc() {

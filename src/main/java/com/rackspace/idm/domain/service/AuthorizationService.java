@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import org.apache.commons.configuration.Configuration;
@@ -24,10 +25,10 @@ public interface AuthorizationService {
     boolean isSelf(User requester, User requestedUser);
     boolean isDefaultUser(User user);
 
-    boolean hasDefaultUserRole(User user);
-    boolean hasUserAdminRole(User user);
-    boolean hasUserManageRole(User user);
-    boolean hasServiceAdminRole(User user);
+    boolean hasDefaultUserRole(EndUser user);
+    boolean hasUserAdminRole(EndUser user);
+    boolean hasUserManageRole(EndUser user);
+    boolean hasServiceAdminRole(EndUser user);
     boolean hasSameDomain(User caller, User retrievedUser);
 
     void verifyIdmSuperAdminAccess(String authToken);
@@ -39,9 +40,9 @@ public interface AuthorizationService {
     void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
-    void verifyDomain(User retrievedUser, User caller);
+    void verifyDomain(EndUser retrievedUser, EndUser caller);
 
     void setConfig(Configuration config);
 
-    boolean hasIdentityAdminRole(User user);
+    boolean hasIdentityAdminRole(EndUser user);
 }

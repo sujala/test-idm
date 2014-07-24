@@ -162,8 +162,11 @@ public abstract class LdapRepository {
 
     // Definitions for LDAP DNs
     protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
+    protected static final String EXTERNAL_PROVIDERS_USER_CONTAINER_NAME = "users";
+
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String SCOPE_ACCESS_BASE_DN = "dc=rackspace,dc=com";
+    protected static final String IDENTITY_USER_BASE_DN = "dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";

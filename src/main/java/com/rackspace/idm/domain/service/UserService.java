@@ -54,7 +54,16 @@ public interface UserService {
     Iterable<User> getUsersByEmail(String email);
 
     User getUserByAuthToken(String authToken);
-    
+
+    /**
+     * Retrieve the user for whom the token was issued. This returns the associated user if one exists, regardless of the state of the
+     * token (e.g. expired) or the state of the user (e.g. - disabled).
+     *
+     * @param token
+     * @return
+     */
+    BaseUser getTokenSubject(String token);
+
     User getUserById(String id);
 
     User checkAndGetUserById(String id);

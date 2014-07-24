@@ -151,8 +151,13 @@ public class UserConverterCloudV20 {
         return jaxbUser;
     }
 
-    public User toUser(com.rackspace.idm.domain.entity.User user) {
-        return toUser(user, false);
+    public User toUser(com.rackspace.idm.domain.entity.EndUser user) {
+        if (user instanceof com.rackspace.idm.domain.entity.User) {
+            return toUser((com.rackspace.idm.domain.entity.User)user, false);
+        } else if (user instanceof FederatedUser) {
+            return toFederatedUser((FederatedUser) user);
+        }
+        throw new IllegalArgumentException("Unrecognized end user");
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeOtherAttributes) {
@@ -201,6 +206,40 @@ public class UserConverterCloudV20 {
                 }
 
             }
+
+        } catch (DatatypeConfigurationException e) {
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
+        }
+
+        return jaxbUser;
+    }
+
+    public User toFederatedUser(FederatedUser user) {
+        User jaxbUser = mapper.map(user, User.class);
+
+        try {
+            if (user.getCreated() != null) {
+                jaxbUser.setCreated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(new DateTime(user.getCreated()).toGregorianCalendar()));
+            }
+
+            if (user.getUpdated() != null) {
+                jaxbUser.setUpdated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
+            }
+            /*
+                The initial mapper.map call to create the initial jaxbUser will call user.getRoles(). This
+                call has the side effect of creating an empty ArrayList, which is then set on the jaxbUser object
+                and added to the resultant json as '"roles": {}'. This is not desired. Instead we do not
+                want it included in the json, so null it out.
+            */
+            jaxbUser.setRoles(null);
+
+            if(isSamlEnabled() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
+                jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
+            }
+
+            jaxbUser.setEnabled(true); //fed users that exist are always enabled
 
         } catch (DatatypeConfigurationException e) {
             logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());

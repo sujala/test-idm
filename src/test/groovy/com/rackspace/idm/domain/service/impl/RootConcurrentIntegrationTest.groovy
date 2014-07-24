@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import spock.lang.Shared
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.RootIntegrationTest
+
 /**
  */
 abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {

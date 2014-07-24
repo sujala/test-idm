@@ -22,7 +22,7 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
-
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
@@ -190,6 +190,7 @@ class RootServiceTest extends Specification {
     @Shared PropertiesService propertiesService
     @Shared CryptHelper cryptHelper
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
+    @Shared IdentityUserService  identityUserService
     @Shared MultiFactorCloud20Service multiFactorCloud20Service;
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
@@ -416,6 +417,11 @@ class RootServiceTest extends Specification {
     def mockFederatedIdentityService(service) {
         defaultFederatedIdentityService = Mock()
         service.federatedIdentityService = defaultFederatedIdentityService
+    }
+
+    def mockIdentityUserService(service) {
+        identityUserService = Mock()
+        service.identityUserService = identityUserService
     }
 
     def mockMultiFactorCloud20Service(service) {
