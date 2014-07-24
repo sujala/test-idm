@@ -276,7 +276,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def answer = "That is the wrong question"
         def group = utils.createGroup()
         def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
-                "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), question, answer)
+                "securePassword2", ["rbacRole1"].asList(), [group.name].asList(), question, answer)
 
         when:
         def response = cloud20.createUser(identityAdminToken, userRequest)
@@ -299,7 +299,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def answer = "That is the wrong question"
         def group = utils.createGroup()
         def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
-                "securePassword2", ["identity:user-manage"].asList(), [group.name].asList(), question, answer)
+                "securePassword2", ["rbacRole1"].asList(), [group.name].asList(), question, answer)
         cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
 
         when:
@@ -394,7 +394,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def group = utils.createGroup()
         def password = "securePassword2"
         def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
-                password, ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
+                password, ["rbacRole1"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def user = cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
@@ -413,7 +413,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def group = utils.createGroup()
         def userRequest = v2Factory.createUserForCreate(username, username, "john.smith@example.org", true, "DFW", domainId,
-                null, ["identity:user-manage"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
+                null, ["rbacRole1"].asList(), [group.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def user = cloud20.createUser(identityAdminToken, userRequest).getEntity(User).value
