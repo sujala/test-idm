@@ -2954,7 +2954,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username1 = "username" + (long)(Math.random() * 100000)
         def agroup = utils.createGroup()
         def user = v2Factory.createUserForCreate(username1, username1, "john.smith@example.org", true, "DFW", domain,
-                                                 "securePassword2", ["identity:user-manage"].asList(), [agroup.name].asList(), "What is the meaning?", "That is the wrong question")
+                                                 "securePassword2", ["rbacRole1"].asList(), [agroup.name].asList(), "What is the meaning?", "That is the wrong question")
 
         when:
         def result = cloud20.createUser(identityAdminToken, user)

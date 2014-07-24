@@ -500,6 +500,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                     } catch (Exception ex) {
                         throw new BadRequestException("DomainId must be an integer");
                     }
+
+                    if (usr.getRoles() != null) {
+                        for (Role role : usr.getRoles().getRole()) {
+                            if (StringUtils.isBlank(role.getName())) {
+                                throw new BadRequestException("Role name cannot be blank");
+                            }
+                            if (roleService.isIdentityAccessRole(role.getName())) {
+                                throw new ForbiddenException(NOT_AUTHORIZED);
+                            }
+                        }
+                    }
                     // If secretQA, groups or roles are populated then it's a createUserInOneCall call
                     isCreateUserInOneCall = true;
                 }

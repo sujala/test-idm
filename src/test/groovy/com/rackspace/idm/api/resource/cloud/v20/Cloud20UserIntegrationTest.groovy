@@ -1,14 +1,20 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.domain.dao.UserDao
+import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import org.openstack.docs.identity.api.v2.CredentialListType
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Ignore
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 
@@ -614,6 +620,58 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteTenant(userAdmin.domainId)
         utils.deleteTenant(utils.getNastTenant(userAdmin.domainId))
         utils.deleteDomain(userAdmin.domainId)
+    }
+
+    def "Verify blank role name throws BadRequest when sent in one user call"() {
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def domainId = utils.createDomain()
+        def tenantId = testUtils.getRandomUUID("AddTenant")
+        def username = testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        def role = v1Factory.createRole("roleName", tenantId)
+        role.name = null
+        user.roles = new RoleList()
+        user.roles.role.add(role)
+
+        when:
+        def response = cloud20.createUser(identityAdminToken, user)
+
+        then:
+        response.status == HttpStatus.SC_BAD_REQUEST
+
+        cleanup:
+        utils.deleteUser(identityAdmin)
+    }
+
+    @Unroll("Verify #identityRole is NOT allowed in the create one user call")
+    def "Verify identity access roles are NOT allowed with create one user call"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def domainId = utils.createDomain()
+        def tenantId = testUtils.getRandomUUID("AddTenant")
+        def username = testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.roles = new RoleList()
+        user.roles.role.add(v1Factory.createRole(identityRole, tenantId))
+
+        when:
+        def response = cloud20.createUser(identityAdminToken, user)
+
+        then:
+        response.status == expectedStatus
+
+        cleanup:
+        utils.deleteUser(identityAdmin)
+
+        where:
+        identityRole               |   expectedStatus
+        "identity:default"         |   HttpStatus.SC_FORBIDDEN
+        "identity:user-manage"     |   HttpStatus.SC_FORBIDDEN
+        "identity:user-admin"      |   HttpStatus.SC_FORBIDDEN
+        "identity:admin"           |   HttpStatus.SC_FORBIDDEN
+        "identity:service-admin"   |   HttpStatus.SC_FORBIDDEN
     }
 
     def "Verify values on create one user call with additional tenant created" () {

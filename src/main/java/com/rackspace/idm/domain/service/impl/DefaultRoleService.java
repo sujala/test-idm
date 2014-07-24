@@ -84,9 +84,14 @@ public class DefaultRoleService implements RoleService {
 
     @Override
     public boolean isIdentityAccessRole(ClientRole role) {
+        return isIdentityAccessRole(role.getName());
+    }
+
+    @Override
+    public boolean isIdentityAccessRole(String rolename) {
         List<String> identityRoleNames = getIdentityAccessRoleNames();
         for(String idmAccessRoleName : identityRoleNames) {
-            if(StringUtils.equalsIgnoreCase(idmAccessRoleName, role.getName())) {
+            if(StringUtils.equalsIgnoreCase(idmAccessRoleName, rolename)) {
                 return true;
             }
         }
