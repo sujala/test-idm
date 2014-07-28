@@ -83,7 +83,7 @@ class Cloud20Utils {
     }
 
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
-        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@email.com", true, null, domainId, DEFAULT_PASSWORD))
+        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
 

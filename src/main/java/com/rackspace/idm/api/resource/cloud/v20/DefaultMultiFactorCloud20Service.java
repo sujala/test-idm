@@ -405,19 +405,34 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS);
         }
+        if (requester == null) {
+            LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
+            throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+        }
 
-        //if enabling mfa, you can only do it on yourself
         if (multiFactor.isEnabled() != null) {
-            if (requester == null || !(requester.getId().equals(userId))) {
-                LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
-                throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+            //only check the caller's identity access role if they are not trying to modify themselves
+            if (!requester.getId().equals(userId)) {
+                //check that the requester is either an identity admin, service admin, user admin, or user manage
+                authorizationService.verifyUserManagedLevelAccess(token);
+
+                //now verify the requester can unlock the user
+                User userBeingUpdated = userService.checkAndGetUserById(userId);
+                precedenceValidator.verifyCallerPrecedenceOverUser(requester, userBeingUpdated);
+
+                //now verify that the users are in the same domain if they are either a user admin or a user manage
+                boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(token);
+                boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(token);
+                if (callerIsUserAdmin || callerHasUserManageRole) {
+                    authorizationService.verifyDomain(requester, userBeingUpdated);
+                }
             }
         }
 
         //if unlocking mfa on user, can only do it on OTHER users
         if (multiFactor.isUnlock() != null && multiFactor.isUnlock()) {
             //can not unlock own account
-            if (requester == null || requester.getId().equals(userId)) {
+            if (requester.getId().equals(userId)) {
                 LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
                 throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
             }
