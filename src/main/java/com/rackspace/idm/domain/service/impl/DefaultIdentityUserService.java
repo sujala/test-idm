@@ -28,4 +28,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
     public FederatedUser getFederatedUserById(String userId) {
         return identityUserRepository.getFederatedUserById(userId);
     }
+
+    @Override
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
+        return identityUserRepository.getEndUsersByDomainId(domainId);
+    }
 }

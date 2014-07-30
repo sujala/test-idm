@@ -11,9 +11,11 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.util.SamlResponseValidator
 import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
@@ -245,6 +247,101 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+    }
+
+    def "federated user is disabled when last user admin on domain is disabled"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def userAdmin1, userAdmin2, users1, users2
+        def disabledDomainErrorMessage = String.format(SamlResponseValidator.DISABLED_DOMAIN_ERROR_MESSAGE, domainId)
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdmin(domainId)
+
+        when: "try to pass a saml assertion for a domain with 2 user admins"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "the request succeeds"
+        samlResponse.status == 200
+
+        when: "disable one of the user admins and try to pass a saml assertion again for the same user"
+        utils.disableUser(userAdmin1)
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "the request succeeds"
+        samlResponse.status == 200
+
+        when: "disable the other user admin and try to pass a saml assertion again for the same user"
+        utils.disableUser(userAdmin2)
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "the request returns an error that matches that of a disabled domain"
+        samlResponse.status == 400
+        samlResponse.getEntity(BadRequestFault).value.message == disabledDomainErrorMessage
+
+        when: "try to pass a saml assertion for a new user in the same domain"
+        samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, testUtils.getRandomUUID(), expDays, domainId, null);
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "the request returns an error that matches that of a disabled domain"
+        samlResponse.status == 400
+        samlResponse.getEntity(BadRequestFault).value.message == disabledDomainErrorMessage
+
+        cleanup:
+        utils.deleteUsers(users1)
+        utils.deleteUsers(users2)
+        staticIdmConfiguration.reset()
+    }
+
+    def "federated and provisioned user tokens are revoked when the last user admin for the domain is disabled"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def userAdmin1, userAdmin2, users1, users2
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdmin(domainId)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthToken = samlResponse.getEntity(AuthenticateResponse).value.token.id
+        def provisionedUser = utils.createUserWithUser(userAdmin1)
+        def provisionedUserToken = utils.authenticate(provisionedUser).token.id
+
+        when: "validate the tokens with 2 enabled user admins"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthToken)
+        def validateProvisionedTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserToken)
+
+        then: "the tokens are still valid"
+        validateSamlTokenResponse.status == 200
+        validateProvisionedTokenResponse.status == 200
+
+        when: "disable one user admin"
+        utils.disableUser(userAdmin1)
+        validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthToken)
+        validateProvisionedTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserToken)
+
+        then: "the token is still valid"
+        validateSamlTokenResponse.status == 200
+        validateProvisionedTokenResponse.status == 200
+
+        when: "disable the other user admin"
+        utils.disableUser(userAdmin2)
+        validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthToken)
+        validateProvisionedTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserToken)
+
+        then: "the token is no longer valid"
+        validateSamlTokenResponse.status == 404
+        validateProvisionedTokenResponse.status == 404
+
+        cleanup:
+        utils.deleteUser(provisionedUser)
+        utils.deleteUsers(users1)
+        utils.deleteUsers(users2)
+        staticIdmConfiguration.reset()
     }
 
     /**

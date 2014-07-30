@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +39,9 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
     @Autowired
     LdapIdentityProviderRepository ldapIdentityProviderRepository
+
+    @Autowired
+    CloudTestUtils utils
 
     LDAPInterface con
     LDAPPersister<Application> applicationPersister
@@ -69,33 +73,13 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         EndUser retrievedEndUser = identityUserDao.getEndUserById(fedUser.id)
 
         then: "we get the federated user back"
-        retrievedEndUser != null
-        retrievedEndUser instanceof FederatedUser
-        ((FederatedUser)retrievedEndUser).username == fedUser.username
-        ((FederatedUser)retrievedEndUser).region == fedUser.region
-        ((FederatedUser)retrievedEndUser).domainId == fedUser.domainId
-        ((FederatedUser)retrievedEndUser).email == fedUser.email
-        ((FederatedUser)retrievedEndUser).federatedIdpUri == fedUser.federatedIdpUri
-        ((FederatedUser)retrievedEndUser).getLdapEntry() != null
-
-        retrievedEndUser.getUniqueId() == expectedDn
-
-        federatedUserLdapHelper.entryExists(retrievedEndUser)
+        verifyFederatedUser(fedUser, retrievedEndUser, expectedDn)
 
         when:  "search for federated user"
         FederatedUser retrievedFederatedUser = identityUserDao.getFederatedUserById(fedUser.id)
 
         then: "we get the federated user back"
-        retrievedFederatedUser != null
-        retrievedFederatedUser.region == fedUser.region
-        retrievedFederatedUser.domainId == fedUser.domainId
-        retrievedFederatedUser.email == fedUser.email
-        retrievedFederatedUser.federatedIdpUri == fedUser.federatedIdpUri
-        retrievedFederatedUser.getLdapEntry() != null
-
-        retrievedFederatedUser.getUniqueId() == expectedDn
-
-        federatedUserLdapHelper.entryExists(retrievedFederatedUser)
+        verifyFederatedUser(fedUser, retrievedFederatedUser, expectedDn)
 
         when: "search for federated user via provisioned user method"
         User retrievedProvisionedUser = identityUserDao.getProvisionedUserById(fedUser.id)
@@ -118,32 +102,13 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         EndUser retrievedEndUser = identityUserDao.getEndUserById(user.id)
 
         then: "we get the provisioned user back"
-        retrievedEndUser != null
-        retrievedEndUser instanceof User
-        ((User)retrievedEndUser).username == user.username
-        ((User)retrievedEndUser).region == user.region
-        ((User)retrievedEndUser).domainId == user.domainId
-        ((User)retrievedEndUser).email == user.email
-        ((User)retrievedEndUser).getLdapEntry() != null
-
-        retrievedEndUser.getUniqueId() == expectedDn
-
-        provisionedUserLdapHelper.entryExists(retrievedEndUser)
+        verifyProvisionedUser(user, retrievedEndUser, expectedDn)
 
         when: "search for provisioned user"
         User retrievedProvisionedUser = identityUserDao.getProvisionedUserById(user.id)
 
         then: "we get the provisioned user back"
-        retrievedProvisionedUser != null
-        retrievedProvisionedUser.username == user.username
-        retrievedProvisionedUser.region == user.region
-        retrievedProvisionedUser.domainId == user.domainId
-        retrievedProvisionedUser.email == user.email
-        retrievedProvisionedUser.getLdapEntry() != null
-
-        retrievedProvisionedUser.getUniqueId() == expectedDn
-
-        provisionedUserLdapHelper.entryExists(retrievedProvisionedUser)
+        verifyProvisionedUser(user, retrievedProvisionedUser, expectedDn)
 
         when: "search for provisioned user via federated user search"
         User retrievedFederatedUser = identityUserDao.getFederatedUserById(user.id)
@@ -155,6 +120,45 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         cleanup:
         provisionedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
         provisionedUserLdapHelper.deleteDirect(retrievedEndUser) //delete this in case the uniqueId is NOT the expected one
+    }
+
+    def "Verify retrieving a users by domain id"() {
+        setup:
+        def domainId = utils.getRandomUUID("domain")
+        FederatedUser fedUser = entityFactory.createFederatedUser().with {
+            it.domainId = domainId
+            it
+        }
+        def expectedFederatedUserDn =  getExpectedFederatedUserDn(commonIdentityProvider, fedUser)
+        def provisionedUser = entityFactory.createUser().with {
+            it.domainId = domainId
+            it
+        }
+        provisionedUserDao.addUser(provisionedUser)
+        def expectedProvisionedUserDn =  getExpectedProvisionedUserDn(provisionedUser)
+        federatedUserDao.addUser(commonIdentityProvider, fedUser)
+
+        when: "search for users by domain id"
+        Iterable<EndUser> retrievedEndUsers = identityUserDao.getEndUsersByDomainId(domainId)
+        def retrievedFederatedUser
+        def retrievedProvisionedUser
+        for(user in retrievedEndUsers) {
+            if(user instanceof User) {
+                retrievedProvisionedUser = user
+            } else if(user instanceof FederatedUser) {
+                retrievedFederatedUser = user
+            }
+        }
+
+        then: "we get the federated user back"
+        verifyFederatedUser(fedUser, retrievedFederatedUser, expectedFederatedUserDn)
+        verifyProvisionedUser(provisionedUser, retrievedProvisionedUser, expectedProvisionedUserDn)
+
+        cleanup:
+        federatedUserLdapHelper.deleteDirect(expectedFederatedUserDn) //delete this in case the ldap entry is not set correctly
+        federatedUserLdapHelper.deleteDirect(retrievedFederatedUser) //delete this in case the uniqueId is NOT the expected one
+        federatedUserLdapHelper.deleteDirect(expectedProvisionedUserDn) //delete this in case the ldap entry is not set correctly
+        federatedUserLdapHelper.deleteDirect(retrievedProvisionedUser) //delete this in case the uniqueId is NOT the expected one
     }
 
     def "Verify searches returns null when id does not exist at all"() {
@@ -175,4 +179,34 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
     String getExpectedProvisionedUserDn(User user) {
         new LdapRepository.LdapDnBuilder(LdapRepository.USERS_BASE_DN).addAttribute(LdapRepository.ATTR_ID, user.id).build()
     }
+
+    void verifyFederatedUser(originalUser, retrievedUser, expectedDn) {
+        assert retrievedUser != null
+        assert retrievedUser instanceof FederatedUser
+        assert retrievedUser.username == originalUser.username
+        assert retrievedUser.region == originalUser.region
+        assert retrievedUser.domainId == originalUser.domainId
+        assert retrievedUser.email == originalUser.email
+        assert retrievedUser.federatedIdpUri == originalUser.federatedIdpUri
+        assert retrievedUser.getLdapEntry() != null
+
+        assert retrievedUser.getUniqueId() == expectedDn
+
+        assert federatedUserLdapHelper.entryExists(retrievedUser)
+    }
+
+    void verifyProvisionedUser(originalUser, retrievedUser, expectedDn) {
+        assert retrievedUser != null
+        assert retrievedUser instanceof User
+        assert retrievedUser.username == originalUser.username
+        assert retrievedUser.region == originalUser.region
+        assert retrievedUser.domainId == originalUser.domainId
+        assert retrievedUser.email == originalUser.email
+        assert retrievedUser.getLdapEntry() != null
+
+        assert retrievedUser.getUniqueId() == expectedDn
+
+        assert provisionedUserLdapHelper.entryExists(retrievedUser)
+    }
+
 }

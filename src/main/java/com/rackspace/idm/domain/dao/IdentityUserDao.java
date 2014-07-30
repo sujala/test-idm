@@ -29,4 +29,12 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
      * @return
      */
     public FederatedUser getFederatedUserById(String userId);
+
+    /**
+     * Search for end users with the specified domain id.
+     *
+     * @param domainId
+     * @return
+     */
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId);
 }

@@ -98,6 +98,9 @@ public class DefaultUserService implements UserService {
     @Autowired
     private MultiFactorService multiFactorService;
 
+    @Autowired
+    private IdentityUserService identityUserService;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -817,15 +820,22 @@ public class DefaultUserService implements UserService {
             if (enabledUserAdmins.size() != 0) {
                 return;
             }
-            List<User> subUsers = getSubUsers(user);
 
-            for (User subUser : subUsers) {
-                if (subUser.getEnabled()) {
-                    subUser.setEnabled(false);
-                    userDao.updateUser(subUser);
-                    scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+            Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+
+            for (EndUser subUser : subUsers) {
+                if(subUser instanceof User) {
+                    User provisionedUser = (User) subUser;
+                    if (provisionedUser.getEnabled()) {
+                        provisionedUser.setEnabled(false);
+                        userDao.updateUser(provisionedUser);
+                        scopeAccessService.expireAllTokensForUser(provisionedUser.getUsername());
+                    }
+                } else if(subUser instanceof FederatedUser) {
+                    scopeAccessService.expireAllTokensForUserById(subUser.getId());
                 }
             }
+
         }
     }
 

@@ -92,6 +92,17 @@ class Cloud20Utils {
         return entity
     }
 
+    def createUserWithUser(user, username=testUtils.getRandomUUID(), domainId=null) {
+        def token = authenticate(user).token.id
+        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@email.com", true, null, domainId, DEFAULT_PASSWORD))
+
+        assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     def createUserWithTenantsAndRole(token, username=testUtils.getRandomUUID(), domainId, rolename, tenantId) {
 
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)

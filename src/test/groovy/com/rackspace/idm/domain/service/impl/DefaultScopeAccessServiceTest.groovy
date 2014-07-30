@@ -48,6 +48,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockEndpointService(service)
         mockApplicationService(service)
+        mockIdentityUserService(service)
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
@@ -687,7 +688,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userService.getUserById(_) >> user
+        identityUserService.getEndUserById(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
@@ -709,7 +710,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        userService.getUserById(_) >> user
+        identityUserService.getEndUserById(_) >> user
 
         def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
         def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)

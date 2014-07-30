@@ -63,6 +63,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private Configuration config;
     @Autowired
     private AtomHopperClient atomHopperClient;
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
@@ -415,7 +417,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAllTokensForUserById(String userId) {
         logger.debug("Expiring all tokens for user {}", userId);
-        final User user = this.userService.getUserById(userId);
+        final EndUser user = identityUserService.getEndUserById(userId);
         if (user == null) {
             return;
         }

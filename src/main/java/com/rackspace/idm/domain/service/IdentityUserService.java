@@ -29,4 +29,12 @@ public interface IdentityUserService {
      * @return
      */
     public FederatedUser getFederatedUserById(String userId);
+
+    /**
+     * Returns all federated and provisioned users associated with the specified domain.
+     *
+     * @param domainId
+     * @return
+     */
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId);
 }
