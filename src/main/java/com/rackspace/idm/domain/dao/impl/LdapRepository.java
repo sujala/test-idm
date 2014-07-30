@@ -34,6 +34,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
     public static final String OBJECTCLASS_FEDERATEDUSERSCOPEACCESS = "rsFederatedUserScopeAccess";
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
+    public static final String OBJECTCLASS_ORGANIZATIONAL_UNIT = "organizationalUnit";
     public static final String OBJECTCLASS_TENANT = "tenant";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
     public static final String OBJECTCLASS_DOMAIN = "rsDomain";
@@ -69,6 +70,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
     public static final String ATTR_PUBLIC_KEY = "nisPublicKey";
+    public static final String ATTR_USER_CERTIFICATES = "userCertificate;binary";
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
@@ -186,10 +188,10 @@ public abstract class LdapRepository {
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
 
-
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";
     protected static final String CONTAINER_TOKENS = "TOKENS";
+    protected static final String CONTAINER_USERS = "USERS";
     protected static final String CONTAINER_APPLICATION_ROLES = "CLIENT ROLES";
 
     // Search Attributes

@@ -54,6 +54,7 @@ public interface GenericDao<T> {
     String getLdapEntityClass();
     String getNextId();
     String addLdapContainer(String dnString, String containerName);
+    String addOrganizationalUnit(String partialDnString, String ou);
     void doPreEncode(T object);
 
     /**

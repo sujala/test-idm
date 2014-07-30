@@ -6,28 +6,33 @@ import org.opensaml.common.SAMLVersion;
 import org.opensaml.saml2.core.*;
 import org.opensaml.saml2.core.impl.*;
 import org.opensaml.xml.schema.XSString;
-import org.opensaml.xml.schema.impl.XSStringBuilder;
+import org.opensaml.xml.schema.impl.XSStringBuilder
+import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureConstants;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.signature.impl.SignatureBuilder;
 import org.opensaml.xml.util.XMLHelper;
-import org.w3c.dom.Element;
+import org.w3c.dom.Element
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 
 public class SamlAssertionProducer {
 
-	private String privateKeyLocation;
-	private String publicKeyLocation;
-	
-	private CertManager certManager = new CertManager();
-	
-	public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
+    private Credential credential;
+
+	private SamlCredentialUtils samlCredentialUtils = new SamlCredentialUtils();
+
+    SamlAssertionProducer(String privateKeyLocation, String publicKeyLocation) {
+        credential = samlCredentialUtils.getSigningCredential(publicKeyLocation, privateKeyLocation)
+    }
+
+    SamlAssertionProducer(Credential credential) {
+        this.credential = credential
+    }
+
+    public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
 			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionDays) {
 		
 		try {
@@ -211,10 +216,10 @@ public class SamlAssertionProducer {
 	}
 	
 	private Signature createSignature() throws Throwable {
-		if (publicKeyLocation != null && privateKeyLocation != null) {
+		if (credential != null) {
 			SignatureBuilder builder = new SignatureBuilder();
 			Signature signature = builder.buildObject();
-			signature.setSigningCredential(certManager.getSigningCredential(publicKeyLocation, privateKeyLocation));
+			signature.setSigningCredential(credential);
 			signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
 			signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 			

@@ -24,11 +24,6 @@ class FoundationApiUtils {
     @Autowired
     FoundationFactory factory
 
-    @PostConstruct
-    def init() {
-        methods.init()
-    }
-
     def authenticate(String clientId, String clientSecret) {
         def response = methods.authenticate(clientId, clientSecret)
         assert (response.status == SC_OK)

@@ -8,8 +8,15 @@ import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.apache.commons.collections.CollectionUtils
+import org.apache.commons.lang.RandomStringUtils
+import org.opensaml.xml.security.x509.X509Credential
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Specification
+import testHelpers.saml.SamlCredentialUtils
+
+import java.security.cert.X509Certificate
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -468,4 +475,35 @@ class EntityFactory extends Specification {
             return it
         }
     }
+
+    def createIdentityProviderWithoutCertificate() {
+        IdentityProvider provider = new IdentityProvider().with {
+            it.name = RandomStringUtils.randomAlphabetic(10)
+            it.uri = it.name
+            return it
+        }
+        return provider
+    }
+
+    def createIdentityProviderWithCredential(name = RandomStringUtils.randomAlphabetic(5), X509Credential credential = SamlCredentialUtils.generateX509Credential()) {
+        return createIdentityProviderWithCertificates([credential.entityCertificate])
+    }
+
+    def createIdentityProviderWithCertificates(List<X509Certificate> certificates = [SamlCredentialUtils.generateX509Credential().entityCertificate]) {
+        if (CollectionUtils.isEmpty(certificates)) {
+            return createIdentityProviderWithoutCertificate()
+        }
+
+        IdentityProvider provider = createIdentityProviderWithoutCertificate().with {
+            for (X509Certificate certificate : certificates) {
+                it.addUserCertificate(certificate)
+            }
+            it.publicCertificate = SamlCredentialUtils.getCertificateAsPEMString(certificates.get(0));
+            return it
+        }
+
+        return provider
+    }
+
+
 }
