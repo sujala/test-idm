@@ -487,6 +487,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
             case 'identity': adminToken = utils.getIdentityAdminToken(); break;
             case 'service':  adminToken = utils.getServiceAdminToken(); break;
             case 'admin': adminToken = userAdminToken; break;
+            case 'manager': adminToken = userManagerToken; break;
         }
 
         def request = createBypassRequest(10, mediaType)
@@ -520,18 +521,22 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         then: "response should be 403"
         response3.getStatus() == 403
 
-        when: "user manager request bypass code"
-        def response4 = cloud20.getBypassCodes(userManagerToken, defaultUser.id, request, mediaType, mediaType)
+        when: "user manager from another domain request bypass code"
+        def anotherUserManager = createDefaultUser(anotherAdminToken)
+        utils.addRoleToUser(anotherUserManager, USER_MANAGE_ROLE_ID)
+        def anotherUserManagerToken = authenticate(anotherUserManager.username)
+        def response4 = cloud20.getBypassCodes(anotherUserManagerToken, defaultUser.id, request, mediaType, mediaType)
 
         then: "response should be 403"
         response4.getStatus() == 403
 
         cleanup:
         deleteUserQuietly(anotherAdmin)
+        deleteUserQuietly(anotherUserManager)
 
         where:
-        mediaType << [MediaType.APPLICATION_XML_TYPE] * 3 + [MediaType.APPLICATION_JSON_TYPE] * 3
-        tokenType << ['service', 'identity', 'admin'] * 2
+        mediaType << [MediaType.APPLICATION_XML_TYPE] * 4 + [MediaType.APPLICATION_JSON_TYPE] * 4
+        tokenType << ['service', 'identity', 'admin', 'manager'] * 2
     }
 
     @Unroll
