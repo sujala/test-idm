@@ -603,9 +603,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return !requestContextHolder.isImpersonated();
         } else {
             // Verify requester/user precedence level
-            authorizationService.verifyUserAdminLevelAccess(token);
+            authorizationService.verifyUserManagedLevelAccess(token);
             precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-            if (authorizationService.authorizeCloudUserAdmin(token)) {
+            if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
                 authorizationService.verifyDomain(requester, user);
             }
             return false;
