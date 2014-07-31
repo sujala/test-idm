@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.SignatureValidationException
 import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
@@ -19,6 +20,8 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
+
+import java.security.GeneralSecurityException
 
 class SamlResponseValidatorTest extends Specification {
     @Shared SamlResponseValidator samlResponseValidator
@@ -123,9 +126,10 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
@@ -134,7 +138,7 @@ class SamlResponseValidatorTest extends Specification {
 
         then:
         noExceptionThrown()
-        1 * mockSamlSignatureValidator.validateSignature(_,IDP_PUBLIC_CERTIFICATE)
+        1 * mockSamlSignatureValidator.validateSignatureForIdentityProvider(_,idp)
     }
 
     def "validate saml response when signature is not specified" (){
@@ -142,9 +146,10 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponse.setSignature(null)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
 
         when:
         samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
@@ -157,10 +162,11 @@ class SamlResponseValidatorTest extends Specification {
         given:
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-        1 * mockSamlSignatureValidator.validateSignature(_,IDP_PUBLIC_CERTIFICATE) >> { throw new Exception("Invalid Siganture")}
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
+        1 * mockSamlSignatureValidator.validateSignatureForIdentityProvider(_,idp) >> { throw new SignatureValidationException("Invalid Siganture")}
 
         when:
         samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)

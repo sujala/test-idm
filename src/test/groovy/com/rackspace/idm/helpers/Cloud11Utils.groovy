@@ -32,11 +32,6 @@ class Cloud11Utils {
     @Autowired
     CloudTestUtils testUtils
 
-    @PostConstruct
-    def init() {
-        methods.init()
-    }
-
     def createUser(String username=testUtils.getRandomUUID(), String key=testUtils.getRandomUUID(), Integer mossoId=testUtils.getRandomInteger(), String nastId=testUtils.getRandomUUID(), Boolean enabled=true) {
         User user = v1Factory.createUser(username, key, mossoId, nastId, enabled)
         def response = methods.createUser(user)

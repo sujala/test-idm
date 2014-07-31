@@ -1,38 +1,84 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.SignatureValidationException;
+import org.apache.commons.collections.CollectionUtils;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.security.x509.BasicX509Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureValidator;
+import org.opensaml.xml.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.List;
 
 @Component
 public class SamlSignatureValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(SamlSignatureValidator.class);
 
-    public void validateSignature(Signature signature, String publicCertificate) {
+    private String INVALID_SIGNATURE_ERROR_MSG = "Signature is invalid";
+
+    public void validateSignature(Signature signature, X509Certificate publicCertificate) {
         try {
-            Credential credential = getSignatureValidationCredential(publicCertificate);
+            BasicX509Credential credential = new BasicX509Credential();
+            credential.setEntityCertificate(publicCertificate);
             SignatureValidator signatureValidator = new SignatureValidator(credential);
             signatureValidator.validate(signature);
-        } catch (Throwable t) {
-            throw new SignatureValidationException("Signature is invalid", t);
+        } catch (ValidationException t) {
+            throw new SignatureValidationException(INVALID_SIGNATURE_ERROR_MSG, t);
         }
     }
 
-    private Credential getSignatureValidationCredential(String certificateStr) throws Throwable  {
+    public void validateSignatureForIdentityProvider(Signature signature, IdentityProvider identityProvider) {
+        boolean validated = false;
+        SignatureValidationException lastException = null;
+
+        List<X509Certificate> idpCerts;
+        try {
+            idpCerts = identityProvider.getUserCertificatesAsX509();
+        }
+        catch (CertificateException ex) {
+            throw new IllegalStateException("Error retrieving provider certificates", ex);
+        }
+
+        if (CollectionUtils.isEmpty(idpCerts)) {
+            //if no certs for identity provider, signature obviously won't validate. Just throw standard error message.
+            throw new SignatureValidationException(INVALID_SIGNATURE_ERROR_MSG);
+        }
+
+        /*
+        loop through the 1+ signatures to see if any validate. If none do, return the error thrown by the last attempt
+        to verify.
+         */
+        for (int i=0; i<idpCerts.size() && !validated; i++) {
+            X509Certificate x509Certificate = idpCerts.get(i);
+            try {
+                validateSignature(signature, x509Certificate);
+                validated = true;
+            } catch (SignatureValidationException ex) {
+                lastException = ex;
+            }
+        }
+        if (!validated) {
+            throw lastException;
+        }
+    }
+
+    private Credential getSignatureValidationCredential(String certificateStr) throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
         X509Certificate certificate = getPublicCertificate(certificateStr);
 
         //pull out the public key part of certificate into keyspec
@@ -58,11 +104,10 @@ public class SamlSignatureValidator {
      * @param certificateStr
      * @return X509 certificate
      */
-    private X509Certificate getPublicCertificate(final String certificateStr) throws Throwable {
+    private X509Certificate getPublicCertificate(final String certificateStr) throws CertificateException {
         InputStream inStream = new ByteArrayInputStream(certificateStr.getBytes());
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate publicKey = (X509Certificate)cf.generateCertificate(inStream);
-        inStream.close();
         return publicKey;
     }
 }

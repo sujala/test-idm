@@ -65,7 +65,7 @@ public class LdapFederatedUserRepository extends LdapGenericRepository<Federated
     }
 
     private String getBaseDnWithIdpName(String idpName) {
-        return String.format("ou=users,ou=%s,%s", idpName, EXTERNAL_PROVIDERS_BASE_DN);
+        return String.format("ou=%s,ou=%s,%s", EXTERNAL_PROVIDERS_USER_CONTAINER_NAME, idpName, EXTERNAL_PROVIDERS_BASE_DN);
     }
 
     private Filter searchFilterGetUserByUsername(String username) {
@@ -84,7 +84,6 @@ public class LdapFederatedUserRepository extends LdapGenericRepository<Federated
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_FEDERATED_PERSON).build();
-
     }
 
 }

@@ -207,6 +207,27 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public String addOrganizationalUnit(String partialDnString, String ou) {
+        SearchResultEntry entry = getLdapOrganizationalUnit(partialDnString, ou);
+        if (entry == null) {
+            Audit audit = Audit.log(String.format("Adding organizational unit: %s", ou));
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute(ATTR_OBJECT_CLASS, OBJECTCLASS_ORGANIZATIONAL_UNIT));
+            attributes.add(new Attribute(ATTR_OU, ou));
+            Attribute[] attributeArray = attributes.toArray(new Attribute[0]);
+            String dn = new LdapDnBuilder(partialDnString).addAttribute(ATTR_OU, ou).build();
+            try {
+                getAppInterface().add(dn, attributeArray);
+                audit.succeed();
+                return dn;
+            } catch (LDAPException e) {
+                throw new IllegalStateException(e.getMessage(), e);
+            }
+        }
+        return entry.getDN();
+    }
+
+    @Override
     public void doPreEncode(T object) {
     }
 
@@ -218,6 +239,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER)
                 .addEqualAttribute(ATTR_NAME, containerName).build();
+        return getSingleEntry(dn, SearchScope.ONE, filter);
+    }
+
+    private SearchResultEntry getLdapOrganizationalUnit(String dn, String ouName) {
+        Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_ORGANIZATIONAL_UNIT)
+                .addEqualAttribute(ATTR_OU, ouName).build();
         return getSingleEntry(dn, SearchScope.ONE, filter);
     }
 

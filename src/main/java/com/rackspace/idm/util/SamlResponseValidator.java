@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
+import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -81,10 +82,9 @@ public class SamlResponseValidator {
             throw new BadRequestException("No Signature specified");
         }
         try {
-            samlSignatureValidator.validateSignature(samlResponseDecorator.getSamlResponse().getSignature(), provider.getPublicCertificate());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw new BadRequestException("Signature is invalid");
+            samlSignatureValidator.validateSignatureForIdentityProvider(samlResponseDecorator.getSamlResponse().getSignature(), provider);
+        } catch (SignatureValidationException t) {
+            throw new BadRequestException("Signature is invalid", t);
         }
     }
 

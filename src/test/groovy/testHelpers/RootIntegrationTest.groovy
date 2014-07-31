@@ -55,10 +55,7 @@ class RootIntegrationTest extends Specification {
     public setupSpec(){
         staticIdmConfiguration.reset()
         doSetupSpec()
-        cloud10.init()
-        cloud11.init()
         cloud20.init()
-        foundation.init()
     }
 
     public cleanupSpec() {

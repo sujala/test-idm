@@ -14,11 +14,6 @@ class Cloud10Utils {
     @Autowired
     Cloud10Methods methods
 
-    @PostConstruct
-    def init() {
-        methods.init()
-    }
-
     def authenticate(String username, String key) {
         def response = methods.authenticate(username, key)
         assert (response.status == SC_NO_CONTENT)

@@ -33,6 +33,18 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
     private static JerseyTest jerseyTest;
     private static WebResource resource;
 
+
+    static synchronized public boolean isGrizzlyStarted() {
+        return jerseyTest != null;
+    }
+
+    static synchronized public WebResource ensureGrizzlyStarted(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
+        if (!isGrizzlyStarted()) {
+            return startGrizzly(contextConfigLocation, clientConfigProviderClasses);
+        }
+        return resource;
+    }
+
     /**
      * If the test Jersey server isn't running, starts it. Also creates and makes available a {@link com.sun.jersey.api.client.Client
      * com.sun.jersey.api.client.Client} for talking to the server that it starts.
@@ -43,11 +55,10 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
      *                                    which this method creates
      * @return a {@link com.sun.jersey.api.client.WebResource} set to interact with the server
      */
-    static public WebResource ensureGrizzlyStarted(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
-        if (jerseyTest != null) {
-            return resource;
+    static synchronized public WebResource startGrizzly(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
+        if (isGrizzlyStarted()) {
+            throw new IllegalStateException("Grizzly is already started. Start and stop first.");
         }
-
 
         jerseyTest = new JerseyTest() {
 
@@ -119,25 +130,23 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         return resource;
     }
 
-    static public WebResource startOrRestartGrizzly(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
-        if (jerseyTest != null) {
-            afterClass();
+    static synchronized public WebResource startOrRestartGrizzly(final String contextConfigLocation, final Class<?>... clientConfigProviderClasses) throws Exception {
+        if (isGrizzlyStarted()) {
+            stopGrizzly();
         }
-        return ensureGrizzlyStarted(contextConfigLocation, clientConfigProviderClasses);
+        return startGrizzly(contextConfigLocation, clientConfigProviderClasses);
     }
 
-    static public void stopGrizzly() throws Exception {
-        afterClass();
+
+
+    static synchronized public void stopGrizzly() throws Exception {
+        jerseyTest.tearDown();
+        jerseyTest = null;
+        resource = null;
     }
 
     public WebResource resource() {
         return resource;
-    }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-        jerseyTest.tearDown();
-        jerseyTest = null;
     }
 }
 

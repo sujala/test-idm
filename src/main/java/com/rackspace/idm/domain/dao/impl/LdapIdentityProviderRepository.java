@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
@@ -35,5 +37,11 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OU, name)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER).build();
+    }
+
+    @Override
+    public void addObject(IdentityProvider object) {
+        super.addObject(object);
+        addOrganizationalUnit(object.getUniqueId(), LdapRepository.EXTERNAL_PROVIDERS_USER_CONTAINER_NAME);
     }
 }

@@ -25,11 +25,12 @@ class Cloud10Methods {
     @Shared String X_AUTH_USER = "X-Auth-User"
     @Shared String X_AUTH_KEY = "X-Auth-Key"
 
-    def init(){
-        this.resource = ensureGrizzlyStarted("classpath:app-config.xml")
+    def initOnUse(){
+        resource = ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
     def authenticate(String username, String apiKey) {
+        initOnUse();
         resource.path(path10).header(X_AUTH_USER, username).header(X_AUTH_KEY, apiKey).get(ClientResponse)
     }
 }
