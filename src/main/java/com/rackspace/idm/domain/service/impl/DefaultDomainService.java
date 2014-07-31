@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.DomainDao;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -29,7 +26,7 @@ import java.util.regex.Pattern;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class DefaultDomainService implements DomainService{
+public class DefaultDomainService implements DomainService {
 
     @Autowired
     private Configuration config;
@@ -45,6 +42,9 @@ public class DefaultDomainService implements DomainService{
 
     @Autowired
     private AuthorizationService authorizationService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
@@ -169,9 +169,9 @@ public class DefaultDomainService implements DomainService{
 
     @Override
     public void expireAllTokenInDomain(String domainId) {
-        for( User user : getUsersByDomainId(domainId) ){
+        for(EndUser user : identityUserService.getEndUsersByDomainId(domainId)) {
             try {
-                scopeAccessService.expireAllTokensForUser(user.getUsername());
+                scopeAccessService.expireAllTokensForUserById(user.getId());
             } catch (Exception ex) {
                 String errMsg = String.format("ACTION NEEDED: Failed to expired all tokens for user %s. This user's tokens must be manually expired because the domain was disabled", user.getUsername());
                 logger.error(errMsg, ex);

@@ -574,7 +574,7 @@ class Cloud20Methods {
 
     def addDomain(String token, Domain domain) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path("domains").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).post(ClientResponse)
     }
 
     def updateDomain(String token, String domainId, domain) {
@@ -584,7 +584,7 @@ class Cloud20Methods {
 
     def deleteDomain(String token, String domainId) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path("domains").path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addTenantToDomain(String token, String domainId, String tenantId) {
