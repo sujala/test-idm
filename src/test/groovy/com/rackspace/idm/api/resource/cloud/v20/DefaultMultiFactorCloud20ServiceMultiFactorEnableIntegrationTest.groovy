@@ -674,4 +674,44 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         }
     }
 
+    @Unroll("Successfully delete multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    def "Successfully delete multifactor"() {
+        setup:
+        createMultiFactorDefaultUser()
+        addDefaultUserPhone()
+        verifyDefaultUserPhone()
+        enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
+        resetTokenExpiration()
+
+        def adminToken
+        switch (tokenType) {
+            case 'identity': adminToken = utils.getIdentityAdminToken(); break;
+            case 'service':  adminToken = utils.getServiceAdminToken(); break;
+            case 'admin': adminToken = userAdminToken; break;
+            case 'manager': adminToken = userManagerToken; break;
+        }
+
+        when:
+        def response = cloud20.deleteMultiFactor(adminToken, defaultUser.id, requestContentMediaType, acceptMediaType)
+        User finalUser = userRepository.getUserById(defaultUser.getId())
+
+        then:
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        verifyFinalUserState(finalUser)
+
+        where:
+        requestContentMediaType << [MediaType.APPLICATION_XML_TYPE] * 4 + [MediaType.APPLICATION_JSON_TYPE] * 4
+        acceptMediaType = requestContentMediaType
+        tokenType << ['service', 'identity', 'admin', 'manager'] * 2
+    }
+
+    def void verifyFinalUserState(User finalUserAdmin) {
+        assert finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        assert finalUserAdmin.getMultiFactorDevicePin() == null
+        assert !finalUserAdmin.isMultiFactorDeviceVerified()
+        assert !finalUserAdmin.isMultiFactorEnabled()
+        assert finalUserAdmin.getExternalMultiFactorUserId() == null
+        assert finalUserAdmin.getMultiFactorMobilePhoneRsId() == null
+    }
+
 }

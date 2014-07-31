@@ -219,9 +219,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
-            User requester = (User) userService.getUserByScopeAccess(token);
-            validateRemoveMultiFactorRequest(requester, userId);
+            final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            validateRemoveMultiFactorRequest(token, userId);
             multiFactorService.removeMultiFactorForUser(userId);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (IllegalStateException ex) {
@@ -393,10 +392,17 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateRemoveMultiFactorRequest(User requester, String userId) {
-        if (requester == null || !(requester.getId().equals(userId))) {
+    private void validateRemoveMultiFactorRequest(ScopeAccess token, String userId) {
+        final User requester = (User) userService.getUserByScopeAccess(token);
+
+        if (userId == null || requester == null) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT); //logged as debug because this is a bad request, not an error in app
             throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
+        }
+
+        if (!userId.equals(requester.getId())) {
+            final User user = userService.getUserById(userId);
+            validateUserManagerLevel(token, requester, user);
         }
     }
 
@@ -602,13 +608,17 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             // Self-service request
             return !requestContextHolder.isImpersonated();
         } else {
-            // Verify requester/user precedence level
-            authorizationService.verifyUserManagedLevelAccess(token);
-            precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-            if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
-                authorizationService.verifyDomain(requester, user);
-            }
+            validateUserManagerLevel(token, requester, user);
             return false;
+        }
+    }
+
+    private void validateUserManagerLevel(ScopeAccess token, User requester, User user) {
+        // Verify requester/user precedence level
+        authorizationService.verifyUserManagedLevelAccess(token);
+        precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
+        if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
+            authorizationService.verifyDomain(requester, user);
         }
     }
 
