@@ -422,11 +422,19 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 throw new ForbiddenException(BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT);
             }
 
-            //check that the requester is either an identity admin or a service admin
-            authorizationService.verifyIdentityAdminLevelAccess(token);
-
-            //now verify the requester can unlock the user
             User userBeingUnlocked = userService.checkAndGetUserById(userId);
+
+            // Check if the requester has identity:user-admin or identity:user-manage role
+            if (authorizationService.hasUserAdminRole(requester) || authorizationService.hasUserManageRole(requester)) {
+                // Check that the requester and user being unlocked have the same domain
+                authorizationService.verifyDomain(requester, userBeingUnlocked);
+            } else {
+                // If the requester doesn't have identity:user-admin or identity:user-manage roles
+                // then check if the requester is an identity:admin or an identity:service-admin
+                authorizationService.verifyIdentityAdminLevelAccess(token);
+            }
+
+            // Now verify the requester can unlock the user
             precedenceValidator.verifyCallerPrecedenceOverUser(requester, userBeingUnlocked);
         }
     }

@@ -205,7 +205,39 @@ class DefaultMultifactorCloud20Test extends Specification {
         then:
         1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
         1 * userService.getUserByScopeAccess(token) >> caller
+        1 * authorizationService.hasUserAdminRole(_) >> false
+        1 * authorizationService.hasUserManageRole(_) >> false
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * userService.checkAndGetUserById(targetUser.id) >> targetUser
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
+        1 * multiFactorService.updateMultiFactorSettings(_,_)
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "updateMultifactor unlock - allow unlocking another user in same domain"() {
+        User caller = new User().with {
+            it.id = "callerId"
+            it
+        }
+        User targetUser = new User().with {
+            it.id = "targetId"
+            it
+        }
+
+        UserScopeAccess token = new UserScopeAccess()
+
+        def authToken = "authToken"
+        UriInfo uriInfo = Mock();
+        MultiFactor settings = v2Factory.createMultiFactorSettings(null, true)
+
+        when:
+        def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings)
+
+        then:
+        1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
+        1 * userService.getUserByScopeAccess(token) >> caller
+        1 * authorizationService.hasUserAdminRole(_) >> true
+        1 * authorizationService.verifyDomain(_,_)
         1 * userService.checkAndGetUserById(targetUser.id) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
         1 * multiFactorService.updateMultiFactorSettings(_,_)

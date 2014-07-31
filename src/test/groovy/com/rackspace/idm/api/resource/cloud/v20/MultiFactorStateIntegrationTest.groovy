@@ -15,9 +15,12 @@ import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import spock.lang.Shared
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.getDEFAULT_PASSWORD
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
@@ -38,6 +41,9 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired LdapScopeAccessRepository scopeAccessRepository
 
     @Autowired UserDao userDao
+
+    @Shared def identityAdmin, userAdmin, userManage, defaultUser
+    @Shared def domainId
 
     def void doSetupSpec() {
         startOrRestartGrizzly("classpath:app-config.xml " +
@@ -382,6 +388,73 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
+        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
+    }
+
+    def "user-admin and user-manage should be able to mfa unlock user's in their domain"() {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def userAdminToken = utils.getToken(userAdmin.username, DEFAULT_PASSWORD)
+        def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
+        def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
+
+        def settings = v2Factory.createMultiFactorSettings(true)
+        def responsePhone = addPhone(defaultUserToken, defaultUser)
+        cloud20.updateMultiFactorSettings(defaultUserToken, defaultUser.id, settings)
+        resetTokenExpiration(defaultUserToken)
+
+        when: "loading the user through the api"
+        def userById = utils.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'ACTIVE'"
+        userById.multiFactorState == MultiFactorStateEnum.ACTIVE
+
+        when: "loading the user from the directory"
+        def directoryUser = userDao.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'ACTIVE'"
+        directoryUser.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_ACTIVE
+
+        when: "user mfa state is updated to 'LOCKED'"
+        directoryUser = userDao.getUserById(defaultUser.id)
+        directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
+        userDao.updateUserAsIs(directoryUser)
+        userById = utils.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'LOCKED'"
+        userById.multiFactorState == MultiFactorStateEnum.LOCKED
+
+        when: "the user admin unlocks the user"
+        settings = v2Factory.createMultiFactorSettings(null, true)
+        cloud20.updateMultiFactorSettings(userAdminToken, defaultUser.id, settings)
+        userById = utils.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'ACTIVE'"
+        userById.multiFactorState == MultiFactorStateEnum.ACTIVE
+
+        when: "user mfa stat is updated back to 'LOCKED'"
+        directoryUser = userDao.getUserById(defaultUser.id)
+        directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
+        userDao.updateUserAsIs(directoryUser)
+        userById = utils.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'LOCKED'"
+        userById.multiFactorState == MultiFactorStateEnum.LOCKED
+
+        when: "the user manager unlocks the user"
+        settings = v2Factory.createMultiFactorSettings(null, true)
+        cloud20.updateMultiFactorSettings(userManageToken, defaultUser.id, settings)
+        userById = utils.getUserById(defaultUser.id)
+
+        then: "the user's mfa state is 'ACTIVE'"
+        userById.multiFactorState == MultiFactorStateEnum.ACTIVE
+
+        cleanup:
+        multiFactorService.removeMultiFactorForUser(defaultUser.id)  //remove duo profile
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
         mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
