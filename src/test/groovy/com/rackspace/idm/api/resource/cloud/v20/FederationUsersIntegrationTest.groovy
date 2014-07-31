@@ -461,6 +461,76 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users2)
     }
 
+    def "test federated user with a disabled domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def adminToken = utils.getIdentityAdminToken()
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when: "first authenticate the token"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlToken = authResponse.token.id
+        def validateResponse = cloud20.validateToken(adminToken, samlToken)
+
+        then: "response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        validateResponse.status == HttpServletResponse.SC_OK
+
+        when: "disable the domain"
+        def domain = v1Factory.createDomain().with {
+            it.id = domainId
+            it.name = domainId
+            it.enabled = false
+            it
+        }
+        utils.updateDomain(domainId, domain)
+
+        then: "token should not work"
+        def validateResponse2 = cloud20.validateToken(adminToken, samlToken)
+        validateResponse2.status == HttpServletResponse.SC_NOT_FOUND
+
+        when: "try to get another token"
+        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "token should not work"
+        samlResponse2.status == HttpServletResponse.SC_BAD_REQUEST
+
+        when: "enable the domain again"
+        domain = v1Factory.createDomain().with {
+            it.id = domainId
+            it.name = domainId
+            it.enabled = true
+            it
+        }
+        utils.updateDomain(domainId, domain)
+
+        then: "old token should not work [B-71699]"
+        def validateResponse3 = cloud20.validateToken(adminToken, samlToken)
+        validateResponse3.status == HttpServletResponse.SC_NOT_FOUND
+
+        when: "try to get another token"
+        def samlResponse3 = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse2 = samlResponse3.getEntity(AuthenticateResponse).value
+        def samlToken2 = authResponse2.token.id
+        def validateResponse4 = cloud20.validateToken(adminToken, samlToken2)
+
+        then: "response contains appropriate content"
+        samlResponse3.status == HttpServletResponse.SC_OK
+        validateResponse4.status == HttpServletResponse.SC_OK
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
