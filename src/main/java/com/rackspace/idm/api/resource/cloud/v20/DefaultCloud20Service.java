@@ -587,6 +587,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
+            //update user call can not be used to update the domainId. Use addUserToDomain calls
+            user.setDomainId(null);
+
             if (user.getPassword() != null) {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
