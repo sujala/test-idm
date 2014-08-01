@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import spock.lang.Shared
+
 /**
  * Verify the operations that users can perform to update users (own account + others). Other test classes, in particular Cloud20IntegrationTest, perform some of these operations as well.
  * The goal is to migrate all integration tests regarding updating a user into this class.
@@ -19,6 +21,45 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
 
         then:
         serviceAdminUser instanceof User
+    }
+
+    def "updateUser can not change domainId"() {
+        setup:
+        def User newUserAdmin = createUserAdmin(specificationIdentityAdminToken)
+        def identityAdmin, newUserAdmin2, userManage, defaultUser
+
+        def originalDomainId = utils.createDomain()
+        (identityAdmin, newUserAdmin2, userManage, defaultUser) = utils.createUsers(originalDomainId)
+
+        User newUserAdmin2Change = cloud20.getUserById(specificationIdentityAdminToken, newUserAdmin2.id).getEntity(org.openstack.docs.identity.api.v2.User).value
+        newUserAdmin2Change.setDomainId(newUserAdmin.domainId)
+
+        when: "Try to update user admin domain as service admin"
+        def updateResultServiceAdmin =   cloud20.updateUser(specificationServiceAdminToken, newUserAdmin2Change.getId(), newUserAdmin2Change)
+
+        then: "not changed"
+        updateResultServiceAdmin.status == HttpStatus.OK.value()
+        updateResultServiceAdmin.getEntity(User.class).value.domainId == newUserAdmin2.domainId
+
+        when: "Try to update user admin domain as identity admin"
+        def updateResultIdentityAdmin =   cloud20.updateUser(specificationIdentityAdminToken, newUserAdmin2Change.getId(), newUserAdmin2Change)
+
+        then: "not changed"
+        updateResultIdentityAdmin.status == HttpStatus.OK.value()
+        updateResultIdentityAdmin.getEntity(User.class).value.domainId == newUserAdmin2.domainId
+
+        when: "Try to update user admin domain as user admin"
+        String userAdmin2Token = authenticate(newUserAdmin2.username);
+        def updateResultUserAdmin =   cloud20.updateUser(userAdmin2Token, newUserAdmin2Change.getId(), newUserAdmin2Change)
+
+        then: "not changed"
+        updateResultUserAdmin.status == HttpStatus.OK.value()
+        updateResultUserAdmin.getEntity(User.class).value.domainId == newUserAdmin2.domainId
+
+        cleanup:
+        deleteUserQuietly(newUserAdmin)
+        utils.deleteUsers(defaultUser, userManage, newUserAdmin2, identityAdmin)
+        utils.deleteDomain(originalDomainId)
     }
 
     /**
