@@ -146,7 +146,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
-        mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
+        mockDomainService.getDomainAdmins(_) >> [new User()].asList()
 
         when:
         def authInfo = service.processSamlResponse(samlResponse)

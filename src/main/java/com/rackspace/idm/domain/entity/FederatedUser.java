@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
@@ -15,6 +16,7 @@ import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 @Data
@@ -67,6 +69,13 @@ public class FederatedUser implements EndUser {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String domainId;
+
+    @DeleteNullValues
+    @LDAPField(attribute=LdapRepository.ATTR_GROUP_ID,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private HashSet<String> rsGroupId;
 
     /**
      * The issuer for this federated user
@@ -121,6 +130,13 @@ public class FederatedUser implements EndUser {
         } else {
             return ldapEntry.getDN();
         }
+    }
+
+    public HashSet<String> getRsGroupId() {
+        if (rsGroupId == null) {
+            rsGroupId = new HashSet<String>();
+        }
+        return rsGroupId;
     }
 
     public List<TenantRole> getRoles() {

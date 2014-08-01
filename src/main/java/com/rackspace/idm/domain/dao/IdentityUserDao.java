@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 
 public interface IdentityUserDao  extends GenericDao<BaseUser> {
     /**
@@ -37,4 +34,12 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
      * @return
      */
     public Iterable<EndUser> getEndUsersByDomainId(String domainId);
+
+    /**
+     * Get groups for an end user
+     *
+     * @param userId
+     * @return
+     */
+    Iterable<Group> getGroupsForEndUser(String userId);
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -13,6 +14,7 @@ public interface EndUser extends BaseUser {
     List<TenantRole> getRoles();
     String getCustomerId();
     String getId();
+    HashSet<String> getRsGroupId();
 
     /*
     These were added to allow conversion for userById service
