@@ -252,27 +252,12 @@ class DefaultMultifactorCloud20Test extends Specification {
         }
         def token = new UserScopeAccess()
         def userId = "userId"
-        MultiFactor enabledSettings = v2Factory.createMultiFactorSettings(true, null)
-        MultiFactor unlockSettings = v2Factory.createMultiFactorSettings(null, true)
 
         when:
         service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, null)
 
         then:
         thrown(BadRequestException)
-
-        when:
-        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, enabledSettings)
-
-        then:
-        thrown(ForbiddenException)
-
-        when:
-        caller.id = userId
-        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, unlockSettings)
-
-        then:
-        thrown(ForbiddenException)
     }
 
     def setupForMfaAuth(encodedSessionId, userRoles) {
