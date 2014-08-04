@@ -62,9 +62,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         then:
         response.status == 204
         userManagement.getUserById(userEntity.getExternalMultiFactorUserId()) == null
-
-        cleanup:
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "delete non-MFA user does not return an error through v2.0 delete user call"() {
@@ -94,9 +91,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         then:
         response.status == 204
         userManagement.getUserById(userEntity.getExternalMultiFactorUserId()) == null
-
-        cleanup:
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "delete non-MFA user does not return an error through v1.1 delete user call"() {

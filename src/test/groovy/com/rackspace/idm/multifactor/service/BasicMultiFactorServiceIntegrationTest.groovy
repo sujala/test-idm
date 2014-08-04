@@ -225,7 +225,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
             userRepository.deleteObject(userAdmin)
         }
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
@@ -265,7 +264,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
             userRepository.deleteObject(userAdmin)
         }
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
@@ -305,7 +303,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
             userRepository.deleteObject(userAdmin)
         }
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
@@ -342,7 +339,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         deleteUserQuietly(userAdmin)
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
@@ -391,7 +387,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         deleteUserQuietly(userAdmin)
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
 }

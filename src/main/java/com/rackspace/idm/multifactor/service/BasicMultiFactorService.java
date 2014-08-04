@@ -4,6 +4,7 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
 import com.rackspace.identity.multifactor.providers.*;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
@@ -18,6 +19,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.*;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -252,7 +254,18 @@ public class BasicMultiFactorService implements MultiFactorService {
                 if (StringUtils.hasText(phoneRsId)) {
                     phone = mobilePhoneDao.getById(phoneRsId);
                     phone.removeMember(user);
-                    mobilePhoneDao.updateObjectAsIs(phone);
+                    //delete the phone from the directory and external provider is no other links to phone exist
+                    if(CollectionUtils.isEmpty(phone.getMembers())) {
+                        mobilePhoneDao.deleteObject(phone);
+                        try {
+                            userManagement.deleteMobilePhone(phone.getExternalMultiFactorPhoneId());
+                        } catch(MultiFactorException e) {
+                            multiFactorConsistencyLogger.error(String.format("Error deleting phone '%s' from external provider. " +
+                                    "The phone has been removed from the directory but still exists in the external provider.", phone.getExternalMultiFactorPhoneId()));
+                        }
+                    } else {
+                        mobilePhoneDao.updateObjectAsIs(phone);
+                    }
                 }
             }
         } catch (Exception e) {

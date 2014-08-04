@@ -126,7 +126,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
@@ -187,7 +186,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | enableMfa | flagSettingsFile | status
@@ -286,7 +284,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (!responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
@@ -340,7 +337,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (responsePhoneId != null && !responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
@@ -393,7 +389,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
         }
-        if (responsePhoneId != null && !responsePhoneId.isEmpty()) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhoneId))
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
@@ -439,7 +434,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
         utils.deleteUser(identityAdmin)
     }
 

@@ -131,7 +131,6 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
 
         cleanup:
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.id))
     }
 
     def "when a MFA user's account is disabled, their Duo profile is removed"() {

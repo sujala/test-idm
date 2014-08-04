@@ -134,7 +134,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
 
         then:
         finalUserAdmin.getMultiFactorMobilePhoneRsId() == null
-        finalPhone.getMembers() == null
+        finalPhone == null
 
         cleanup:
         deleteObjectFromLdapQuietly(finalUserAdmin, finalPhone)

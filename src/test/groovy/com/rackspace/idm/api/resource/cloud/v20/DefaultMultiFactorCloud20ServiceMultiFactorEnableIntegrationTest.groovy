@@ -106,13 +106,11 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
                 deleteUserQuietly(userAdmin)
             }
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
         if (defaultUser != null) {
             if (multiFactorService.removeMultiFactorForUser(defaultUser.id)) { //remove duo profile
                 deleteUserQuietly(defaultUser)
             }
         }
-        if (defaultUserResponsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(defaultUserResponsePhone.getId()))
         if (userManager != null) {
             deleteUserQuietly(userManager)
         }

@@ -77,7 +77,6 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
             userRepository.deleteObject(userAdmin)
         }
-        if (phone != null) mobilePhoneRepository.deleteObject(phone)
     }
 
     /**
