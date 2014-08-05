@@ -246,33 +246,6 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | "Invalid json request body"
     }
 
-    @Unroll("Fails when caller already associated with a mobile phone: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Fails when caller already associated with a mobile phone"() {
-        setup:
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
-        def userAdmin = createUserAdmin()
-        String userAdminToken = authenticate(userAdmin.username)
-
-        def initialAddResponse = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, requestMobilePhone)
-        assert initialAddResponse.status == HttpStatus.SC_CREATED
-
-        when:
-        def secondResponse = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, requestMobilePhone, requestContentMediaType, acceptMediaType)
-
-        then:
-        assertOpenStackV2FaultResponse(secondResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_ALREADY_LINKED)
-
-        cleanup:
-        deleteUserQuietly(userAdmin)
-
-        where:
-        requestContentMediaType | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE
-    }
-
     def deletePhoneQuietly(MobilePhone mobilePhone) {
         if (mobilePhone != null && mobilePhone.id != null) {
             mobilePhoneRepository.deleteObject(mobilePhone)

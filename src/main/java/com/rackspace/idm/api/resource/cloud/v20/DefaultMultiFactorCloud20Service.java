@@ -63,6 +63,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_MISSING_PHONE_NUMBER = "Must provide a telephone number";
     static final String BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT = "Can only configure multifactor on own account";
     static final String BAD_REQUEST_MSG_ALREADY_LINKED = "Already associated with a mobile phone";
+    static final String BAD_REQUEST_MSG_MFA_ENABLED = "Cannot replace device with multifactor enabled";
     static final String BAD_REQUEST_MSG_INVALID_PHONE_NUMBER = "The provided phone number is invalid.";
     static final String BAD_REQUEST_MSG_INVALID_DEVICE = "The specified device is invalid";
     static final String BAD_REQUEST_MSG_ALREADY_VERIFIED = "The specified device has already been verified";
@@ -449,9 +450,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_MISSING_PHONE_NUMBER); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_PHONE_NUMBER);
         }
-        else if (user.getMultiFactorMobilePhoneRsId() != null) {
-            LOG.debug(BAD_REQUEST_MSG_ALREADY_LINKED); //logged as debug because this is a bad request, not an error in app
-            throw new BadRequestException(BAD_REQUEST_MSG_ALREADY_LINKED);
+        else if (user.getMultiFactorMobilePhoneRsId() != null && user.isMultiFactorEnabled()) {
+            LOG.debug(BAD_REQUEST_MSG_MFA_ENABLED); //logged as debug because this is a bad request, not an error in app
+            throw new BadRequestException(BAD_REQUEST_MSG_MFA_ENABLED);
         }
     }
 

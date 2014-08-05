@@ -111,25 +111,26 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         User user = userService.checkAndGetUserById(userId);
         if (user.getMultiFactorMobilePhoneRsId() != null) {
-            String errMsg = "User is already associated with a mobile phone";
-            LOG.warn(errMsg);
-            throw new IllegalStateException(errMsg);
+            // The user currently has a device on their account
+            if(user.isMultiFactorEnabled()) {
+                // The user currently has mfa enabled, return an error.
+                // If we replace the device now the user would have mfa enabled with an unvalidated phone
+                String errMsg = "Cannot replace device with multifactor enabled";
+                LOG.warn(errMsg);
+                throw new IllegalStateException(errMsg);
+            } else {
+                MobilePhone originalPhone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
+                user.setMultiFactorDeviceVerified(null);
+                user.setMultiFactorDevicePin(null);
+                user.setMultiFactorDevicePinExpiration(null);
+                MobilePhone newPhone = linkPhoneToUser(phoneNumber, user);
+                unlinkPhoneFromUser(originalPhone, user);
+                return newPhone;
+            }
+        } else {
+            return linkPhoneToUser(phoneNumber, user);
         }
 
-        MobilePhone mobilePhone = null;
-        try {
-            mobilePhone = createAndLinkMobilePhone(phoneNumber, user);
-        } catch (DuplicateException e) {
-            mobilePhone = getAndLinkMobilePhone(phoneNumber, user);
-        } catch (Exception ex) {
-            throw new SaveOrUpdateException("Error creating mobile phone", ex);
-        }
-
-        //now link user to the created/retrieved phone
-        user.setMultiFactorMobilePhoneRsId(mobilePhone.getId());
-        userService.updateUserForMultiFactor(user);
-
-        return mobilePhone;
     }
 
     @Override
@@ -246,38 +247,68 @@ public class BasicMultiFactorService implements MultiFactorService {
             emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 
-        //unlink phone from user.
-        try {
-            if (isPhoneUserMembershipEnabled()) {
-                //get and unlink phone (if exists)
-                MobilePhone phone = null;
-                if (StringUtils.hasText(phoneRsId)) {
-                    phone = mobilePhoneDao.getById(phoneRsId);
-                    phone.removeMember(user);
-                    //delete the phone from the directory and external provider is no other links to phone exist
-                    if(CollectionUtils.isEmpty(phone.getMembers())) {
-                        mobilePhoneDao.deleteObject(phone);
-                        try {
-                            userManagement.deleteMobilePhone(phone.getExternalMultiFactorPhoneId());
-                        } catch(MultiFactorException e) {
-                            multiFactorConsistencyLogger.error(String.format("Error deleting phone '%s' from external provider. " +
-                                    "The phone has been removed from the directory but still exists in the external provider.", phone.getExternalMultiFactorPhoneId()));
-                        }
-                    } else {
-                        mobilePhoneDao.updateObjectAsIs(phone);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            //eat the exception, but log it. This is a consistency issue where the phone will think some people are using it that are not, but will not cause an error in operation.
-            multiFactorConsistencyLogger.error(String.format("Error removing user '%s' from phone '%s' membership. The phone membership will" +
-                    "be inconsistent unless this is corrected. The user's DN should be removed from the phone's 'member' attribute.", userId, phoneRsId), e);
+        if (StringUtils.hasText(phoneRsId)) {
+            MobilePhone phone = mobilePhoneDao.getById(phoneRsId);
+            unlinkPhoneFromUser(phone, user);
         }
 
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.
         if (StringUtils.hasText(providerUserId)) {
             deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+        }
+    }
+
+    /**
+     * A utility method to add a phone to a user. This will attempt to first create the mobile phone in ldap.
+     * If the phone already exists it will then try to retrieve the phone from ldap and link the user to that phone.
+     * If all attempts to link the user to the requested phone number, an exception will be thrown.
+     *
+     */
+    private MobilePhone linkPhoneToUser(Phonenumber.PhoneNumber phoneNumber, User user) {
+        MobilePhone mobilePhone = null;
+        try {
+            mobilePhone = createAndLinkMobilePhone(phoneNumber, user);
+        } catch (DuplicateException e) {
+            mobilePhone = getAndLinkMobilePhone(phoneNumber, user);
+        } catch (Exception ex) {
+            throw new SaveOrUpdateException("Error creating mobile phone", ex);
+        }
+
+        //now link user to the created/retrieved phone
+        user.setMultiFactorMobilePhoneRsId(mobilePhone.getId());
+        userService.updateUserForMultiFactor(user);
+
+        return mobilePhone;
+    }
+
+    /**
+     * A utility method to remove a user from a mobile phone. This method will check to see if the mobile phone is now orphaned
+     * and delete the phone if so. If any errors occur while trying to delete the phone from duo or the directory, the error will be caught and logged.
+     *
+     */
+    private void unlinkPhoneFromUser(MobilePhone phone, User user) {
+        try {
+            if (isPhoneUserMembershipEnabled()) {
+                //get and unlink phone
+                phone.removeMember(user);
+                //delete the phone from the directory and external provider is no other links to phone exist
+                if(CollectionUtils.isEmpty(phone.getMembers())) {
+                    mobilePhoneDao.deleteObject(phone);
+                    try {
+                        userManagement.deleteMobilePhone(phone.getExternalMultiFactorPhoneId());
+                    } catch(MultiFactorException e) {
+                        multiFactorConsistencyLogger.error(String.format("Error deleting phone '%s' from external provider. " +
+                                "The phone has been removed from the directory but still exists in the external provider.", phone.getExternalMultiFactorPhoneId()));
+                    }
+                } else {
+                    mobilePhoneDao.updateObjectAsIs(phone);
+                }
+            }
+        } catch (Exception e) {
+            //eat the exception, but log it. This is a consistency issue where the phone will think some people are using it that are not, but will not cause an error in operation.
+            multiFactorConsistencyLogger.error(String.format("Error removing user '%s' from phone '%s' membership. The phone membership will" +
+                    "be inconsistent unless this is corrected. The user's DN should be removed from the phone's 'member' attribute.", user.getId(), phone.getId()), e);
         }
     }
 
