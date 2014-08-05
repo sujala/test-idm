@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
 
 public interface IdentityUserService {
@@ -20,7 +21,7 @@ public interface IdentityUserService {
      * @param userId
      * @return
      */
-    public User getProvisionedUserById(String userId);
+    User getProvisionedUserById(String userId);
 
     /**
      * Search for a federated user with the specified userId. Returns null if no federated user matches the userId.
@@ -28,7 +29,7 @@ public interface IdentityUserService {
      * @param userId
      * @return
      */
-    public FederatedUser getFederatedUserById(String userId);
+    FederatedUser getFederatedUserById(String userId);
 
     /**
      * Returns all federated and provisioned users associated with the specified domain.
@@ -36,5 +37,22 @@ public interface IdentityUserService {
      * @param domainId
      * @return
      */
-    public Iterable<EndUser> getEndUsersByDomainId(String domainId);
+    Iterable<EndUser> getEndUsersByDomainId(String domainId);
+
+    /**
+     * Returns all groups for a federated or provisioned user.
+     *
+     * @param userId
+     * @return
+     */
+    Iterable<Group> getGroupsForEndUser(String userId);
+
+    /**
+     * Returns the user associated with the specified id. The user identified by the userId must represent an EndUser.
+     * Throws NotFoundException if no enduser matches the specified userId
+     *
+     * @param userId
+     * @return
+     */
+    EndUser checkAndGetUserById(String userId);
 }

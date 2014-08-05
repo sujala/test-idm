@@ -10,6 +10,7 @@ import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,6 +30,9 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Autowired
     private LdapUserRepository userDao;
 
+    @Autowired
+    private LdapGroupRepository groupDao;
+
     public User getProvisionedUserById(String userId) {
         return searchForUserById(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
@@ -45,6 +49,22 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    @Override
+    public Iterable<Group> getGroupsForEndUser(String userId) {
+        getLogger().debug("Inside getGroupsForUser {}", userId);
+
+        List<Group> groups = new ArrayList<Group>();
+
+        EndUser user = getEndUserById(userId);
+
+        if(user != null){
+            for (String groupId : user.getRsGroupId()) {
+                groups.add(groupDao.getGroupById(groupId));
+            }
+        }
+        return groups;
     }
 
     private <T extends EndUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {

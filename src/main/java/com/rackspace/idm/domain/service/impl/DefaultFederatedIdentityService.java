@@ -59,6 +59,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     RoleService roleService;
 
     @Autowired
+    UserService userService;
+
+    @Autowired
+    GroupService groupService;
+
+    @Autowired
     private Configuration config;
 
     @Override
@@ -174,6 +180,10 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         userToCreate.setRegion(defaultRegion);
 
         List<TenantRole> tenantRoles = calculateRolesForNewUserRequest(request, domainUserAdmins);
+
+        for (String groupId : domainUserAdmins.get(0).getRsGroupId()) {
+            userToCreate.getRsGroupId().add(groupId);
+        }
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
         tenantService.addTenantRolesToUser(userToCreate, tenantRoles);

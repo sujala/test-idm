@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedTokenDao
@@ -102,6 +103,57 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+    }
+
+    def "initial user populated appropriately from saml - user admin group added to federated user"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        // add group to user admin
+        def group = utils.createGroup();
+        userService.addGroupToUser(group.id, userAdminEntity.id)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+
+        when: "retrieve user from backend"
+        FederatedUser fedUser = ldapFederatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "reflects current state including groups"
+        fedUser.id == authResponse.user.id
+        fedUser.username == username
+        fedUser.domainId == domainId
+        fedUser.email == email
+        fedUser.region == userAdminEntity.region
+        fedUser.rsGroupId.size() == 2
+        fedUser.rsGroupId.contains(group.id)
+
+        when: "check to make sure group shows up in list user groups call"
+        def listGroupsForUserResponse = cloud20.listGroupsForUser(utils.getServiceAdminToken(), authResponse.user.id)
+        def groups = listGroupsForUserResponse.getEntity(Groups).value
+
+        then:
+        groups.getGroup().size == 2
+        groups.group.findAll({it.id == group.id}).size() == 1
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        utils.deleteGroup(group)
     }
 
     def "initial user populated appropriately from saml with 1 role provided"() {

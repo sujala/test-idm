@@ -2743,9 +2743,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
 
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user = identityUserService.checkAndGetUserById(userId);
 
-            Iterable<Group> groups = userService.getGroupsForUser(user.getId());
+            Iterable<Group> groups = identityUserService.getGroupsForEndUser(user.getId());
 
             if (!groups.iterator().hasNext()) {
                 Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
