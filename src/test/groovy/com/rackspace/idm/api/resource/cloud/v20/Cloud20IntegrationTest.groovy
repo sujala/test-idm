@@ -3186,7 +3186,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         null       | 200
     }
 
-    def "Update a users domainId to an invalid domain returns 400" () {
+    def "Update a users domainId to an invalid domain returns doesn't change domain" () {
         given:
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -3207,7 +3207,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         createUser != null
-        updateUserResponse.status == 400
+        updateUserResponse.status == 200
+        updateUserResponse.getEntity(User).value.domainId == domainId
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)
