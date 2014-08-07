@@ -11,20 +11,16 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.util.StringUtils
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
-import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 /**
  * Tests the multifactor delete multifactor REST service
@@ -38,9 +34,6 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     private LdapUserRepository userRepository;
 
     @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
     private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
@@ -52,7 +45,6 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     UserScopeAccess userScopeAccess;
     org.openstack.docs.identity.api.v2.User userAdmin;
     String userAdminToken;
-    com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
     VerificationCode constantVerificationCode;
 
     /**
@@ -85,7 +77,6 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
             if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
             deleteUserQuietly(userAdmin)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "Verify that enabling multifactor expires existing token"() {
@@ -192,7 +183,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     @Unroll("Successfully reset up multifactor after removing it wth same phone number: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Successfully reset up multifactor after removing it wth same phone number"() {
         setup:
-        setUpAndEnableMultiFactor()
+        def responsePhone = setUpAndEnableMultiFactor()
         resetTokenExpiration()
         User retrievedUserAdmin = userRepository.getUserById(userAdmin.getId())
         MobilePhone originalPhone = mobilePhoneRepository.getById(retrievedUserAdmin.getMultiFactorMobilePhoneRsId())
@@ -204,16 +195,16 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone returnedXmlPhone = utils.addPhone(userAdminToken, userAdmin.id, newXmlPhone)
         MobilePhone newPhone = mobilePhoneRepository.getById(returnedXmlPhone.getId())
 
-        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
+        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, returnedXmlPhone.id)
         constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+        utils.verifyPhone(userAdminToken, userAdmin.id, returnedXmlPhone.id, constantVerificationCode)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
         resetTokenExpiration()
 
         then:
-        newPhone.externalMultiFactorPhoneId == originalPhone.externalMultiFactorPhoneId //the phones are not deleted in duo
-        newPhone.id == originalPhone.id //the phones are not deleted in ldap
+        newPhone.externalMultiFactorPhoneId != originalPhone.externalMultiFactorPhoneId //the phones ARE deleted in duo
+        newPhone.id != originalPhone.id //the phones ARE deleted in ldap
 
         finalUserAdmin.getMultiFactorDevicePinExpiration() == null
         finalUserAdmin.getMultiFactorDevicePin() == null
@@ -257,6 +248,76 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    @Unroll
+    def "phone is deleted when last link to phone is removed: #requestContentMediaType, #acceptMediaType"() {
+        setup:
+        def phone = setUpAndEnableMultiFactor(userAdminToken, userAdmin)
+        resetTokenExpiration(userScopeAccess)
+        def userAdmin2 = createUserAdmin()
+        def userAdminToken2 = authenticate(userAdmin2.username)
+        setUpAndEnableMultiFactor(userAdminToken2, userAdmin2, phone.number)
+        def userScopeAccess2 = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken2)
+        resetTokenExpiration(userScopeAccess2)
+
+        when: "delete mfa from the first user"
+        def response = cloud20.deleteMultiFactor(userAdminToken, userAdmin.id, requestContentMediaType, acceptMediaType)
+
+        then: "phone was not deleted"
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        mobilePhoneRepository.getById(phone.id) != null
+
+        when: "delete mfa from the other user"
+        response = cloud20.deleteMultiFactor(userAdminToken2, userAdmin2.id, requestContentMediaType, acceptMediaType)
+
+        then: "the phone was deleted"
+        response.getStatus() == HttpStatus.SC_NO_CONTENT
+        mobilePhoneRepository.getById(phone.id) == null
+
+        cleanup:
+        deleteUserQuietly(userAdmin2)
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll
+    def "phone is deleted when last link to phone is removed through user deletion: #requestContentMediaType, #acceptMediaType"() {
+        setup:
+        def phone = setUpAndEnableMultiFactor(userAdminToken, userAdmin)
+        resetTokenExpiration(userScopeAccess)
+        def userAdmin2 = createUserAdmin()
+        def userAdminToken2 = authenticate(userAdmin2.username)
+        setUpAndEnableMultiFactor(userAdminToken2, userAdmin2, phone.number)
+        def userScopeAccess2 = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken2)
+        resetTokenExpiration(userScopeAccess2)
+
+        when: "delete mfa from the first user"
+        utils.deleteUser(userAdmin)
+
+        then: "phone was not deleted"
+        mobilePhoneRepository.getById(phone.id) != null
+
+        when: "delete other mfa user"
+        utils.deleteUser(userAdmin2)
+
+        then: "the phone was deleted"
+        mobilePhoneRepository.getById(phone.id) == null
+
+        cleanup:
+        userAdmin = null
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
     def void verifyFinalUserState(User finalUserAdmin) {
         assert finalUserAdmin.getMultiFactorDevicePinExpiration() == null
         assert finalUserAdmin.getMultiFactorDevicePin() == null
@@ -267,26 +328,34 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     }
 
 
-    def void setUpAndEnableMultiFactor() {
-        setUpMultiFactorWithoutEnable()
-        utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
+    def setUpAndEnableMultiFactor(token = userAdminToken, user = userAdmin, phoneNumber = null) {
+        def phone = setUpMultiFactorWithoutEnable(token, user, phoneNumber)
+        utils.updateMultiFactor(token, user.id, v2Factory.createMultiFactorSettings(true))
+        return phone
     }
 
-    def void setUpMultiFactorWithoutEnable() {
-        setUpMultiFactorWithUnverifiedPhone()
-        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
+    def setUpMultiFactorWithoutEnable(token = userAdminToken, user = userAdmin, phoneNumber = null) {
+        def phone = setUpMultiFactorWithUnverifiedPhone(token, user, phoneNumber)
+        utils.sendVerificationCodeToPhone(token, user.id, phone.id)
         constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+        utils.verifyPhone(token, user.id, phone.id, constantVerificationCode)
+        return phone
     }
 
-    def void setUpMultiFactorWithUnverifiedPhone() {
-        responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
+    def setUpMultiFactorWithUnverifiedPhone(token = userAdminToken, user = userAdmin, phoneNumber = null) {
+        def phone
+        if(phoneNumber != null) {
+            phone = utils.addPhone(token, user.id, v2Factory.createMobilePhone(phoneNumber))
+        } else {
+            phone = utils.addPhone(token, user.id)
+        }
+        return phone
     }
 
-    def void resetTokenExpiration() {
+    def void resetTokenExpiration(scopeAccessToReset = userScopeAccess) {
         Date now = new Date()
         Date future = new Date(now.year + 1, now.month, now.day)
-        userScopeAccess.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(userScopeAccess)
+        scopeAccessToReset.setAccessTokenExp(future)
+        scopeAccessRepository.updateScopeAccess(scopeAccessToReset)
     }
 }

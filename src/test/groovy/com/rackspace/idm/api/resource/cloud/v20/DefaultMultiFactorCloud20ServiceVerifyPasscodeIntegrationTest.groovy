@@ -117,7 +117,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
             if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
             deleteUserQuietly(userAdmin)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     @Unroll("Initial auth returns 401 with encrypted sessionId in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")

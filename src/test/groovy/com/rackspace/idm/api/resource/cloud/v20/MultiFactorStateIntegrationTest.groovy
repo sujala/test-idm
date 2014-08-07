@@ -77,7 +77,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "when disabling mfa for user multiFactorState is updated to null"() {
@@ -112,7 +111,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "when deleting mfa for user multiFactorState is updated to null"() {
@@ -146,7 +144,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "mfa user with null mfa state will show as 'ACTIVE' in api calls"() {
@@ -194,7 +191,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
 
         where:
         acceptContentType | _
@@ -291,7 +287,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "user with mfaEnabled == false and a non-null mfa state in directory do not show mfa state on get user calls"() {
@@ -339,7 +334,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
 
         where:
         acceptContentType | _
@@ -388,7 +382,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "user-admin and user-manage should be able to mfa unlock user's in their domain"() {
@@ -455,7 +448,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         multiFactorService.removeMultiFactorForUser(defaultUser.id)  //remove duo profile
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def addPhone(token, user, verify=true) {
