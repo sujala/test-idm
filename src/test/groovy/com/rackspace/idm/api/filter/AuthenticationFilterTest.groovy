@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.filter
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.api.security.RequestContextHolder
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -20,6 +22,7 @@ class AuthenticationFilterTest extends Specification {
     @Shared def scopeAccess
     @Shared def filter
     @Shared def mfaService
+    @Shared def requestContextHolder
 
     def setup() {
         filter = new AuthenticationFilter()
@@ -33,6 +36,8 @@ class AuthenticationFilterTest extends Specification {
         scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
         mfaService = Mock(MultiFactorCloud20Service)
         filter.multiFactorCloud20Service = mfaService
+        requestContextHolder = Mock(RequestContextHolder)
+        filter.requestContextHolder = requestContextHolder
     }
 
     def "when multi-factor feature flag is false all requests to multi-factor are unmodified"() {
@@ -59,6 +64,7 @@ class AuthenticationFilterTest extends Specification {
 
         then:
         1 * mfaService.isMultiFactorEnabled() >> true
+        1 * requestContextHolder.getEndUser(_) >> new User()
         1 * mfaService.isMultiFactorEnabledForUser(_) >> false
         WebApplicationException exception = thrown()
         exception.response.status == 404
@@ -74,6 +80,7 @@ class AuthenticationFilterTest extends Specification {
 
         then:
         1 * mfaService.isMultiFactorEnabled() >> true
+        1 * requestContextHolder.getEndUser(_) >> new User()
         1 * mfaService.isMultiFactorEnabledForUser(_) >> true
         response == request
     }

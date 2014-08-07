@@ -246,30 +246,6 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | "Invalid json request body"
     }
 
-    @Unroll("Fails when provided user id does not match caller user id: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType ; userId=#userId")
-    def "Fails when provided user id does not match caller user id"() {
-        setup:
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
-        def userAdmin = createUserAdmin()
-        String userAdminToken = authenticate(userAdmin.username)
-
-        when:
-        def response = cloud20.addPhoneToUser(userAdminToken, userId, requestMobilePhone, requestContentMediaType, acceptMediaType)
-
-        then:
-        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, expectedResponse)
-
-        cleanup:
-        deleteUserQuietly(userAdmin)
-
-        where:
-        requestContentMediaType | acceptMediaType   | userId | expectedResponse
-        MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_XML_TYPE | "asdf1234" | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE | "asdf1234" | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT
-        MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE | "asdf1234" | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | "asdf1234" | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT
-    }
-
     @Unroll("Fails when caller already associated with a mobile phone: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Fails when caller already associated with a mobile phone"() {
         setup:

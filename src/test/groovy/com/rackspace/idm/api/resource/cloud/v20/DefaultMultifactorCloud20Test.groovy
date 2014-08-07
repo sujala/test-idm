@@ -7,6 +7,7 @@ import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId
+import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -45,6 +46,7 @@ class DefaultMultifactorCloud20Test extends Specification {
     def precedenceValidator
     def authorizationService
     def exceptionHandler
+    def requestContextHolder
 
     @Shared def v2Factory = new V2Factory()
 
@@ -81,6 +83,8 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.precedenceValidator = precedenceValidator
         authorizationService = Mock(AuthorizationService)
         service.authorizationService = authorizationService
+        requestContextHolder = Mock(RequestContextHolder)
+        service.requestContextHolder = requestContextHolder
     }
 
     def "isMultiFactorEnabled checks multifactor feature flag"() {
@@ -186,10 +190,12 @@ class DefaultMultifactorCloud20Test extends Specification {
     def "updateMultifactor unlock - allow unlocking another account account"() {
         User caller = new User().with {
             it.id = "callerId"
+            it.domainId = "domainId"
             it
         }
         User targetUser = new User().with {
             it.id = "targetId"
+            it.domainId = "domainId"
             it
         }
 
@@ -205,41 +211,11 @@ class DefaultMultifactorCloud20Test extends Specification {
         then:
         1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
         1 * userService.getUserByScopeAccess(token) >> caller
-        1 * authorizationService.hasUserAdminRole(_) >> false
-        1 * authorizationService.hasUserManageRole(_) >> false
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-        1 * userService.checkAndGetUserById(targetUser.id) >> targetUser
+        1 * requestContextHolder.checkAndGetUser(_) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
-        1 * multiFactorService.updateMultiFactorSettings(_,_)
-        response.status == HttpStatus.SC_NO_CONTENT
-    }
-
-    def "updateMultifactor unlock - allow unlocking another user in same domain"() {
-        User caller = new User().with {
-            it.id = "callerId"
-            it
-        }
-        User targetUser = new User().with {
-            it.id = "targetId"
-            it
-        }
-
-        UserScopeAccess token = new UserScopeAccess()
-
-        def authToken = "authToken"
-        UriInfo uriInfo = Mock();
-        MultiFactor settings = v2Factory.createMultiFactorSettings(null, true)
-
-        when:
-        def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings)
-
-        then:
-        1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
-        1 * userService.getUserByScopeAccess(token) >> caller
-        1 * authorizationService.hasUserAdminRole(_) >> true
+        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
+        1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.verifyDomain(_,_)
-        1 * userService.checkAndGetUserById(targetUser.id) >> targetUser
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
         1 * multiFactorService.updateMultiFactorSettings(_,_)
         response.status == HttpStatus.SC_NO_CONTENT
     }
@@ -252,12 +228,21 @@ class DefaultMultifactorCloud20Test extends Specification {
         }
         def token = new UserScopeAccess()
         def userId = "userId"
+        MultiFactor enabledSettings = v2Factory.createMultiFactorSettings(true, null)
+        MultiFactor unlockSettings = v2Factory.createMultiFactorSettings(null, true)
 
         when:
         service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, null)
 
         then:
         thrown(BadRequestException)
+
+        when:
+        caller.id = userId
+        service.validateUpdateMultiFactorSettingsRequest(caller, token, userId, unlockSettings)
+
+        then:
+        thrown(ForbiddenException)
     }
 
     def setupForMfaAuth(encodedSessionId, userRoles) {

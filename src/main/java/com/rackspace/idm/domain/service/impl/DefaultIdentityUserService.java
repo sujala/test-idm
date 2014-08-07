@@ -26,6 +26,19 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
+    public EndUser checkAndGetEndUserById(String userId) {
+        EndUser user = getEndUserById(userId);
+
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        return user;
+    }
+
+    @Override
     public User getProvisionedUserById(String userId) {
         return identityUserRepository.getProvisionedUserById(userId);
     }

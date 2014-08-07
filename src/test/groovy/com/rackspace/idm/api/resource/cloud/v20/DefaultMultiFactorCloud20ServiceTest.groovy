@@ -33,31 +33,4 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         then:
         defaultCloud20Service.getScopeAccessForValidToken(_) >> { throw new NotAuthenticatedException() }
     }
-
-    def "validateListDevicesForUser verifies the user is the same"() {
-        given:
-        def user = entityFactory.createUser().with {
-            it.id = id1
-            it
-        }
-        def userId = id2
-
-        when:
-        boolean exceptionThrown = false
-        try {
-            service.validateListDevicesForUser(user, userId)
-        } catch (ForbiddenException) {
-            exceptionThrown = true
-        }
-
-        then:
-        exceptionThrown == expectedResult
-
-        where:
-        id1     | id2   | expectedResult
-        "id"    | "id"  | false
-        "id"    | "not" | true
-    }
-
-
 }

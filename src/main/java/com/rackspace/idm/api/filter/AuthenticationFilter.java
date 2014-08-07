@@ -1,11 +1,12 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
+import com.rackspace.idm.api.security.DefaultRequestContextHolder;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -28,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -125,18 +128,15 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     //the request to pass through in order for the application server to return a 404.
                     //This is possible because the multifactor resource is not exposed when mfa is turned off.
                     if(!multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
+
                         //we need to check isMultiFactorEnabled here as well because the above call
                         //only checks for the case where mfa = true and beta = false. It could still be
                         //the case that mfa = true and beta = true.
                         if(multiFactorCloud20Service.isMultiFactorEnabled()) {
-                            BaseUser user;
-                            if(sa instanceof ImpersonatedScopeAccess) {
-                                ScopeAccess impersonatedScopeAccess = scopeAccessService.getScopeAccessByAccessToken(((ImpersonatedScopeAccess) sa).getImpersonatingToken());
-                                user = userService.getUserByScopeAccess(impersonatedScopeAccess);
-                            } else {
-                                user = userService.getUserByScopeAccess(sa);
-                            }
-                            if(!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
+
+                            // If multi-factor is in BETA then we need to verify that the user that we're
+                            // acting upon has the multi-factor beta role
+                            if (!doesUserInPathHaveMFABetaRole(path)) {
                                 throw new WebApplicationException(HttpServletResponse.SC_NOT_FOUND);
                             }
                         }
@@ -215,6 +215,31 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     private boolean isFoundationEnabled(){
         return config.getBoolean("feature.access.to.foundation.api", true);
+    }
+
+    private boolean doesUserInPathHaveMFABetaRole(String path) {
+        String userId = parseUserIdFromPath(path);
+        if (StringUtils.isBlank(userId)) {
+            return false;
+        }
+        User user = (User)requestContextHolder.getEndUser(userId);
+        if (user == null) {
+            return false;
+        }
+        return multiFactorCloud20Service.isMultiFactorEnabledForUser(user);
+    }
+
+    private String parseUserIdFromPath(String path) {
+        if (path != null) {
+            List<String> tokens = Arrays.asList(path.split("/"));
+            int index = tokens.indexOf("users");
+            if (index >= 0) {
+                if (index + 1 < tokens.size()) {
+                    return tokens.get(index + 1);
+                }
+            }
+        }
+        return null;
     }
 
 }

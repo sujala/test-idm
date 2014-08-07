@@ -60,6 +60,14 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     @Autowired
     private LdapScopeAccessRepository scopeAccessRepository;
 
+    UserScopeAccess serviceAdminScopeAccess
+    org.openstack.docs.identity.api.v2.User serviceAdmin;
+    String serviceAdminToken;
+
+    UserScopeAccess identityAdminScopeAccess
+    org.openstack.docs.identity.api.v2.User identityAdmin;
+    String idenityAdminToken;
+
     UserScopeAccess userScopeAccess;
     org.openstack.docs.identity.api.v2.User userAdmin;
     String userAdminToken;

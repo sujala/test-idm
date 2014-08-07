@@ -385,7 +385,7 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
     }
 
-    def listDevices(String token, String userId, MediaType accept = mediaType.accept, MediaType contentType = mediaType.contentType) {
+    def listDevices(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE, MediaType contentType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
