@@ -414,6 +414,41 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
+    def "federated users are limited within each IDP"() {
+        given:
+        //set the user limit low for lower overhead
+        staticIdmConfiguration.setProperty("maxNumberOfFederatedUsersInDomainPerIdp", 2)
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("samlUser")
+        def username2 = testUtils.getRandomUUID("samlUser")
+        def username3 = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        //fill the domain with the max allowed number of users
+        assert cloud20.samlAuthenticate(new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username1, expDays, domainId, null)).status == 200
+        assert cloud20.samlAuthenticate(new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username2, expDays, domainId, null)).status == 200
+
+        when: "try to exceed the limit under the current IDP"
+        def samlResponse = cloud20.samlAuthenticate(new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username3, expDays, domainId, null));
+
+        then: "the response is a failure"
+        samlResponse.status == 400
+
+        when: "try to create the same user under a different IDP (the limit is per IDP per domain)"
+        samlResponse = cloud20.samlAuthenticate(new SamlAssertionFactory().generateSamlAssertion(IDP_2_URI, username3, expDays, domainId, null, DEFAULT_FED_EMAIL, IDP_2_PRIVATE_KEY, IDP_2_PUBLIC_KEY));
+
+        then: "the request succeeds"
+        samlResponse.status == 200
+
+        cleanup:
+        deleteFederatedUserQuietly(username1)
+        deleteFederatedUserQuietly(username2)
+        deleteFederatedUserQuietly(username3)
+        utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
+    }
+
     /**
      * Verify that the response to the saml request contains the appropriate information, the persisted federated user has the specified 'expectedRbacRoles' rbac roles,
      * does NOT have the specified 'notExpectedRbacRoles' roles, and has the appropriate propagated roles.

@@ -281,6 +281,26 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return object;
     }
 
+    @Override
+    public int countObjects(Filter searchFilter, String dn) {
+        return countObjects(searchFilter, dn, SearchScope.SUB);
+    }
+
+    @Override
+    public int countObjects(Filter searchFilter, String dn, SearchScope scope) {
+        String loggerMsg = String.format("Doing search to count %s", entityType.toString());
+        getLogger().debug(loggerMsg);
+
+        SearchResult result = this.search(dn, scope, searchFilter, "dxentrycount");
+        String entryCountString = result.getSearchEntries().get(0).getAttribute("dxentrycount").getValues()[0];
+        getLogger().debug("Found - {} entries", entryCountString);
+
+        try {
+            return Integer.valueOf(entryCountString);
+        } catch(NumberFormatException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     @Override
     public void updateObjectAsIs(T object) {

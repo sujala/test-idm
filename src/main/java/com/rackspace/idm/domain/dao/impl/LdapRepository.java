@@ -348,6 +348,22 @@ public abstract class LdapRepository {
         return entry;
     }
 
+    protected SearchResult search(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+        SearchResult entry;
+        try {
+            entry = getAppInterface().search(baseDN, scope,
+                    searchFilter, attributes);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        } catch (LDAPSDKUsageException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        return entry;
+    }
+
     protected int getLdapPagingOffsetDefault() {
         return config.getInt("ldap.paging.offset.default");
     }

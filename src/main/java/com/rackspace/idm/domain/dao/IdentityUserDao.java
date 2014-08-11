@@ -28,6 +28,24 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
     public FederatedUser getFederatedUserById(String userId);
 
     /**
+     * Search for federated users with the specified domain id and identity provider name
+     *
+     * @param domainId
+     * @param idpName
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName);
+
+    /**
+     * Search for the number of federated users with the specified domain id and identity provider name
+     *
+     * @param domainId
+     * @param idpName
+     * @return
+     */
+    int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName);
+
+    /**
      * Search for end users with the specified domain id.
      *
      * @param domainId
