@@ -211,6 +211,7 @@ class RootServiceTest extends Specification {
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
     @Shared Paginator userPaginator
+    @Shared Paginator endUserPaginator
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
@@ -715,6 +716,11 @@ class RootServiceTest extends Specification {
     def mockUserPaginator(service) {
         userPaginator = Mock()
         service.userPaginator = userPaginator
+    }
+
+    def mockEndUserPaginator(service) {
+        endUserPaginator = Mock()
+        service.endUserPaginator = endUserPaginator
     }
 
     def mockDomainPaginator(service) {

@@ -248,11 +248,11 @@ public class UserConverterCloudV20 {
         return jaxbUser;
     }
 
-    public UserList toUserList(Iterable<com.rackspace.idm.domain.entity.User> users) {
+    public UserList toUserList(Iterable<? extends EndUser> users) {
 
         UserList list = objectFactory.createUserList();
 
-        for (com.rackspace.idm.domain.entity.User user : users) {
+        for (EndUser user : users) {
             list.getUser().add(this.toUser(user));
         }
 

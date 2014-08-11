@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 
 public interface IdentityUserService {
     /**
@@ -38,6 +35,30 @@ public interface IdentityUserService {
      * @return
      */
     Iterable<EndUser> getEndUsersByDomainId(String domainId);
+
+    /**
+     * Returns a page of federated and provisioned users associated with the specified domain.
+     *
+     * @param domainId
+     * @param offset
+     * @param limit
+     * @return
+     */
+    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit);
+
+    /**
+     * Returns a page of federated and provisioned users associated with the specified domain.
+     * Provisioned users are only returned if they are enabled.
+     *
+     * NOTE: all federated users are currently returned. This included federated users that
+     * are within a domain that is considered disabled (domain is disabled or all user-admins
+     * for domain are disabled). This will be fixed in a future story.
+     *
+     * @param offset
+     * @param limit
+     * @return
+     */
+    PaginatorContext<EndUser> getEnabledEndUsersPaged(int offset, int limit);
 
     /**
      * Returns all groups for a federated or provisioned user.
