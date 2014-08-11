@@ -671,19 +671,26 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
+
         Iterable<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
-        if (! scopeAccessList.iterator().hasNext()) {
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, clientId, authenticatedBy);
+
+        if (! scopeAccessList.iterator().hasNext() || mostRecent == null) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             if (authenticatedBy != null) {
                 scopeAccess.setAuthenticatedBy(authenticatedBy);
             }
             this.scopeAccessDao.addScopeAccess(user, scopeAccess);
+            deleteExpiredScopeAccessesExceptForMostRecent(scopeAccessList, scopeAccess);
             return scopeAccess;
         }
 
-        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
+        deleteExpiredScopeAccessesExceptForMostRecent(scopeAccessList, mostRecent);
 
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
+    }
 
+    private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {
         boolean exitDeletionRoutineOnError = authenticationTokenDeleteFailuresStopsCleanup();
         boolean ignoreDeletionFailures = ignoreAuthenticationTokenDeleteFailures();
         for (ScopeAccess scopeAccess : scopeAccessList) {
@@ -701,10 +708,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 }
             }
         }
-        if (authenticatedBy != null) {
-            mostRecent.setAuthenticatedBy(authenticatedBy);
-        }
-        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
     }
 
     /**

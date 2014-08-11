@@ -24,6 +24,18 @@ public interface ScopeAccessDao {
 
     ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername);
 
+    /**
+     * Return the most recent scope accesses object underneath the specified user that has the passed in clientId,
+     * and match all authenticatedBy strings passed in. If authenticated by is null or empty then the most
+     * recent scope access is returned regardless of its authenticated by state.
+     *
+     * @param object
+     * @param clientId
+     * @param authenticatedBy
+     * @return
+     */
+    ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy);
+
     Iterable<ScopeAccess> getScopeAccessesByUserId(String userId);
 
     Iterable<ScopeAccess> getScopeAccesses(UniqueId object);

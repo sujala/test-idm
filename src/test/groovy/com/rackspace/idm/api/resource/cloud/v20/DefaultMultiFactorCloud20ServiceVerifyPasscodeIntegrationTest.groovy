@@ -327,6 +327,36 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
     }
 
+    def "Verify that after disabling multifactor that new auth token does NOT have AUTHENTICATED_BY_PASSCODE"() {
+        setup:
+        setUpAndEnableMultiFactor()
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        when:
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, SimulatedPasscode.ALLOW_ALLOW.passcode)
+        Token mfaToken = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
+
+        then:
+        mfaAuthResponse.getStatus() == HttpStatus.SC_OK
+        mfaToken.id != null
+        mfaToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+        mfaToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
+
+        when: "Removing multifactor for user and re-authenticating"
+        multiFactorService.removeMultiFactorForUser(userAdmin.id)
+        def tokenResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        Token regularToken = tokenResponse.getEntity(AuthenticateResponse).value.token
+
+        then:
+        tokenResponse.status == HttpStatus.SC_OK
+        regularToken.id != null
+        !regularToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+        regularToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
+        mfaToken.id != regularToken.id
+    }
+
     def void setUpAndEnableMultiFactor() {
         setUpMultiFactorWithoutEnable()
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
