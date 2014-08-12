@@ -910,6 +910,12 @@ class RootServiceTest extends Specification {
         }
     }
 
+    def createUserScopeAccessWithAuthBy(String authBy) {
+        UserScopeAccess userScopeAccess = createUserScopeAccess()
+        userScopeAccess.getAuthenticatedBy().add(authBy)
+        return userScopeAccess
+    }
+
     def createUserScopeAccess() {
         return createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }

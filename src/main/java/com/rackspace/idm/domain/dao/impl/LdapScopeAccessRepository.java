@@ -9,7 +9,11 @@ import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess> implements ScopeAccessDao, DaoGetEntityType {
@@ -67,6 +71,29 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     @Override
     public ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId) {
         return getMostRecentScopeAccess(object, searchFilterGetScopeAccessesByClientId(clientId));
+    }
+
+    @Override
+    public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
+        Iterable<ScopeAccess> scopeAccessList = getObjects(searchFilterGetScopeAccessesByClientId(clientId), object.getUniqueId());
+
+        if (!scopeAccessList.iterator().hasNext()) {
+            return null;
+        }
+
+        ScopeAccess mostRecentScopeAccess = null;
+
+        boolean filterByAuthBy = authenticatedBy != null && authenticatedBy.size() > 0;
+
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (mostRecentScopeAccess == null || mostRecentScopeAccess.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
+                if (!filterByAuthBy || CollectionUtils.isEqualCollection(authenticatedBy, scopeAccess.getAuthenticatedBy())) {
+                    mostRecentScopeAccess = scopeAccess;
+                }
+            }
+        }
+
+        return mostRecentScopeAccess;
     }
 
     @Override
