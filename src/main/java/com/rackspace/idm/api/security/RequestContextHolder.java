@@ -1,25 +1,20 @@
 package com.rackspace.idm.api.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.User;
 
-@Component
-public class RequestContextHolder {
+public interface RequestContextHolder {
+    void setImpersonated(boolean flag);
 
-    @Autowired
-    private RequestContext requestContext;
+    boolean isImpersonated();
 
-    public void setImpersonated(boolean flag) {
-        requestContext.setImpersonated(flag);
-    }
+    void setEndUser(EndUser user);
 
-    /**
-     * This method returns 'true' when the request was made using an impersonated token.
-     *
-     * @return
-     */
-    public boolean isImpersonated() {
-        return requestContext.isImpersonated();
-    }
+    EndUser getEndUser(String userId);
 
+    EndUser checkAndGetEndUser(String userId);
+
+    User getUser(String userId);
+
+    User checkAndGetUser(String userId);
 }

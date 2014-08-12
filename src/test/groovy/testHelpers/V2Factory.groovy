@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
@@ -14,7 +15,9 @@ import org.openstack.docs.identity.api.v2.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import org.springframework.stereotype.Component
 
+import javax.xml.datatype.DatatypeConstants
 import javax.xml.datatype.DatatypeFactory
+import javax.xml.datatype.Duration
 import javax.xml.namespace.QName
 
 import static com.rackspace.idm.RaxAuthConstants.*
@@ -535,6 +538,14 @@ class V2Factory {
         new SecretQA().with {
             it.question = secretQuestion
             it.answer = secretAnswer
+            return it
+        }
+    }
+
+    def createBypassCode(seconds, numberOfCodes = null) {
+        new BypassCodes().with {
+            it.validityDuration = DatatypeFactory.newInstance().newDuration(seconds * 1000)
+            it.numberOfCodes = numberOfCodes
             return it
         }
     }

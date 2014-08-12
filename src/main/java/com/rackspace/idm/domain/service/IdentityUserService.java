@@ -16,6 +16,15 @@ public interface IdentityUserService {
     EndUser getEndUserById(String userId);
 
     /**
+     * Returns the user associated with the specified id. The user identified by the userId must represent an EndUser. Throws
+     * NotFoundException if no enduser matches the specified userId
+     *
+     * @param userId
+     * @return
+     */
+    EndUser checkAndGetEndUserById(String userId);
+
+    /**
      * Search for a provisioned user with the specified userId. Returns null if no provisioned user matches the userId.
      *
      * @param userId

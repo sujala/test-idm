@@ -86,24 +86,6 @@ class DefaultMultiFactorCloud20ServiceSendVerificationCodeIntegrationTest extend
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Fail with 403 when specify user other than oneself: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Fail with 403 when specify user other than oneself"() {
-        when:
-        def response = cloud20.sendVerificationCode(userAdminToken, "123456", responsePhone.id, requestContentMediaType, acceptMediaType)
-        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
-
-        then:
-        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_TARGET_ACCOUNT)
-        assertUserStateOnFailure(finalUserAdmin)
-
-        where:
-        requestContentMediaType         | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-    }
-
     @Unroll("Fail with 404 when device id not associated with user: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Fail with 404 when device id not associated with user"() {
         when:

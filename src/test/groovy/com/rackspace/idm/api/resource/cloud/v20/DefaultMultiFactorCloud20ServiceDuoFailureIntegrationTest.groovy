@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.providers.duo.domain.FailureResult
 import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
+import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.User
@@ -64,6 +65,9 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
     private UserManagement userManagement
 
     @Autowired
+    private RequestContextHolder requestContextHolder
+
+    @Autowired
     private SessionIdReaderWriter sessionIdReaderWriter
 
     @Autowired
@@ -117,6 +121,10 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         mockedUserManagement.createUser(_) >> {throw new RuntimeException("Error")}
         multiFactorService.userManagement = mockedUserManagement //set the service to the mock
 
+        RequestContextHolder mockRequestContextHolder = Mock(RequestContextHolder)
+        mockRequestContextHolder.checkAndGetUser(_) >> userAdminUser
+        multiFactorCloud20Service.requestContextHolder = mockRequestContextHolder
+
         when:
         Response.ResponseBuilder result = multiFactorCloud20Service.updateMultiFactorSettings(null, userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
         Response response = result.build()
@@ -125,7 +133,8 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR
 
         cleanup:
-        multiFactorService.userManagement = userManagement //reset to original service
+        multiFactorService.userManagement = userManagement
+        multiFactorCloud20Service.requestContextHolder = requestContextHolder//reset to original service
     }
 
     def "sendVerification: Fail with 500 when unexpected exception"() {
