@@ -809,6 +809,22 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.108) = {
 	description = "The state of a multifactor account"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.109) = {
+	name = rsDomainMultiFactorEnforcementLevel
+	ldap-names = rsDomainMultiFactorEnforcementLevel
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Whether the multi-factor is required to authenticate at this domain"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.110) = {
+	name = rsUserMultiFactorEnforcementLevel
+	ldap-names = rsUserMultiFactorEnforcementLevel
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Whether the multi-factor is required to authenticate"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -860,7 +876,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsMultiFactorDeviceVerified,
         rsExternalMultiFactorUserId,
         rsMultiFactorEnabled,
-        rsMultiFactorState
+        rsMultiFactorState,
+        rsUserMultiFactorEnforcementLevel
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -1203,7 +1220,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
     may-contain
         description,
         tenantRsId,
-        useMultiFactorAuthentication
+        useMultiFactorAuthentication,
+        rsDomainMultiFactorEnforcementLevel
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.28) = {
