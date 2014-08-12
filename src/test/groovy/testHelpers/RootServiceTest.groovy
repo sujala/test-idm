@@ -18,6 +18,7 @@ import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.email.EmailClient
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.dao.MobilePhoneDao
@@ -120,6 +121,7 @@ class RootServiceTest extends Specification {
 
     @Shared Configuration config
     @Shared AtomHopperClient atomHopperClient
+    @Shared EmailClient emailClient
     @Shared RSAClient rsaClient
     @Shared Validator validator
     @Shared Validator20 validator20
@@ -194,6 +196,7 @@ class RootServiceTest extends Specification {
     @Shared MultiFactorCloud20Service multiFactorCloud20Service;
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
+
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -744,6 +747,11 @@ class RootServiceTest extends Specification {
     def mockAtomHopperClient(service) {
         atomHopperClient = Mock()
         service.atomHopperClient = atomHopperClient
+    }
+
+    def mockEmailClient(service) {
+        emailClient = Mock()
+        service.emailClient = emailClient
     }
 
     def mockRSAClient(service) {

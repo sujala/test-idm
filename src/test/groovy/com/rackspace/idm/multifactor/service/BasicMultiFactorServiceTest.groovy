@@ -1,11 +1,16 @@
 package com.rackspace.idm.multifactor.service
 
+
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationService
+import com.rackspace.identity.multifactor.providers.ProviderPhone
+import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
-import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.MobilePhone
+import org.apache.commons.collections.CollectionUtils
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
@@ -27,8 +32,12 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         multiFactorAuthenticationService = Mock()
         multiFactorMobilePhoneVerification = Mock()
 
+
         mockMobilePhoneRepository(service)
         mockUserService(service)
+        mockScopeAccessService(service)
+        mockAtomHopperClient(service)
+        mockEmailClient(service)
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
         service.mobilePhoneVerification = multiFactorMobilePhoneVerification
@@ -120,4 +129,54 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         null                | true              | 1
     }
 
+    def "when enable mfa appropriate tokens are expired on user"() {
+        def user = entityFactory.createUser().with {
+            it.multiFactorMobilePhoneRsId = "id"
+            it.externalMultiFactorUserId = null
+            it.multifactorEnabled = false
+            it.multiFactorMobilePhoneRsId = "id"
+            it.multiFactorDeviceVerified = true
+            it
+        }
+
+        def MobilePhone phone = entityFactory.createMobilePhone()
+
+        List<List<String>> EXPECTED_AUTHENTICATEDBY_LIST_TO_NOT_REVOKE = Arrays.asList(
+                Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+                , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+                , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY)
+        );
+
+        def expirationExceptions
+
+        def mfaSettings = v2Factory.createMultiFactorSettings(true, false)
+
+        when: "enable mfa"
+        service.updateMultiFactorSettings(user.id, mfaSettings)
+
+        then: "appropriate tokens are requested to NOT be expired"
+        userService.checkAndGetUserById(user.id) >> user
+        mobilePhoneDao.getById(_) >> phone
+        multiFactorUserManagement.createUser(_) >> new ProviderUser() {
+            @Override
+            String getProviderId() {
+                return "123"
+            }
+        }
+        multiFactorUserManagement.linkMobilePhoneToUser(_, _) >> new ProviderPhone() {
+            @Override
+            String getProviderId() {
+                return "1234"
+            }
+
+            @Override
+            String getTelephoneNumber() {
+                return "1234"
+            }
+        }
+
+        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(user, _, false) >> { arguments -> expirationExceptions=arguments[1]}
+        expirationExceptions instanceof List
+        CollectionUtils.isEqualCollection(expirationExceptions, EXPECTED_AUTHENTICATEDBY_LIST_TO_NOT_REVOKE)
+    }
 }

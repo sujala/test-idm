@@ -113,10 +113,6 @@ public class Cloud10VersionResource {
         }
 
         try {
-            //if mfa is enabled (either globally or beta), and user has mfa enabled, we must throw some kind of exception
-            if (user != null && multiFactorCloud20Service.isMultiFactorEnabled() && user.isMultiFactorEnabled()) {
-                processAuthenticationForMFAUser(user, key);
-            }
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
@@ -159,23 +155,6 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
         }
 
-    }
-
-    /**
-     * v1.0 does NOT support MFA authentication. This method will throw an exception. The only question is which one.
-     *
-     * For Users who have MFA enabled and authenticate with v1.0 this method will:
-     * 1. Throw ForbiddenException if user provides correct api key credentials.
-     * 2. Throw NotAuthenticatedException, like they do if MFA wasn't enabled, if user provides incorrect credentials
-     *
-     * @throws ForbiddenException
-     * @throws NotAuthenticatedException
-     */
-    private void processAuthenticationForMFAUser(User user, String providedApiKey) {
-        authWithApiKeyCredentials.authenticate(user.getUsername(), providedApiKey);
-
-        //previous call would have thrown NotAuthenticatedException if auth was unsuccessful. Must therefore throw Forbidden
-        throw new ForbiddenException(MFA_USER_AUTH_FORBIDDEN_MESSAGE);
     }
 
     private String getCloudAuthClientId() {
