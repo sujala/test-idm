@@ -36,6 +36,25 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
     public Iterable<EndUser> getEndUsersByDomainId(String domainId);
 
     /**
+     * Search for end users with the specified domain id.
+     *
+     * @param domainId
+     * @param offset
+     * @param limit
+     * @return
+     */
+    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit);
+
+    /**
+     * Search for end users with the specified domain id.
+     *
+     * @param offset
+     * @param limit
+     * @return
+     */
+    PaginatorContext<EndUser> getEnabledEndUsersPaged(int offset, int limit);
+
+    /**
      * Get groups for an end user
      *
      * @param userId
