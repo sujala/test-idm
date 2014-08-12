@@ -172,8 +172,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private String getRegion(ScopeAccess token) {
         String region = null;
         BaseUser baseUser = userService.getUserByScopeAccess(token, false);
-        if (baseUser != null && baseUser instanceof User) {
-            User user = (User) baseUser;
+        if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
+            EndUser user = (EndUser) baseUser;
             region = user.getRegion();
         }
         return region;
