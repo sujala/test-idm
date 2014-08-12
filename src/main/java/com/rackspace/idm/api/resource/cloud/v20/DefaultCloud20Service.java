@@ -912,19 +912,22 @@ public class DefaultCloud20Service implements Cloud20Service {
                 restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
             }
             else {
-                //2-factor only applies when using a userAuth method (apikey or password)
+                boolean canUseMfaWithCredential = false;
                 UserAuthenticationFactor userAuthenticationFactor = null;
                 if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
                     userAuthenticationFactor = authWithPasswordCredentials;
+                    canUseMfaWithCredential = true;
                 } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                     userAuthenticationFactor = authWithApiKeyCredentials;
                 }
                 else {
                     throw new BadRequestException("Unknown credential type");
                 }
+
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
-                if (multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                    //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
                     return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
                     authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);

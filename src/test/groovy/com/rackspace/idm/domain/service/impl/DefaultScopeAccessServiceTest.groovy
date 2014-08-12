@@ -725,6 +725,60 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     }
 
+    @Unroll
+    def "expireAllTokensExceptTypeForEndUser: When various exceptions are provided, the right tokens are expired - authenticatedBy: #authenticatedBy | keepEmpty: #keepEmpty | expectedTokensNotExpired: #expectedTokensNotExpired" () {
+        given:
+        User user = new User()
+        user.id = "1"
+        user.uniqueId = "blah"
+        identityUserService.getEndUserById(_) >> user
+
+        //create tokens representing various scenarios. Set username/token to same value so can easily tell which token failed test (since only username/customerid printed for token)
+        def scopeAccessA = entityFactory.createUserToken().with {def id="A"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A"); return it}
+        def scopeAccessB = entityFactory.createUserToken().with {def id="B"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B"); return it}
+        def scopeAccessAB = entityFactory.createUserToken().with {def id="AB"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B"); return it}
+        def scopeAccessBA = entityFactory.createUserToken().with {def id="BA"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B", "A"); return it}
+        def scopeAccessABC = entityFactory.createUserToken().with {def id="ABC"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B", "C"); return it}
+        def scopeAccessEmpty = entityFactory.createUserToken().with {def id="Empty"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList(); return it}
+
+        List<UserScopeAccess> scopeAccessList = [scopeAccessA, scopeAccessB, scopeAccessAB, scopeAccessBA, scopeAccessABC, scopeAccessEmpty]
+
+        scopeAccessDao.getScopeAccesses(_) >> scopeAccessList
+
+        when:
+        service.expireAllTokensExceptTypeForEndUser(user, authenticatedBy, keepEmpty)
+
+        then:
+        /*
+         the tokens are created with expiration date 1 day from now. When a token is revoked, the expiration is set to "now".
+         If the test runs fast enough "now" will be the same for both the date we're checking here AND the date the token was
+         expired which could cause unexpected failures (since isExpired would return false if times are equal). To
+         avoid this, check if token is set to earlier than one ms from now.
+          */
+        DateTime expirationDateToCheck = new DateTime().plusMillis(1)
+        scopeAccessList.each {
+            if (expectedTokensNotExpired.contains(it.accessTokenString)) {
+                assert !it.isAccessTokenExpired(expirationDateToCheck)
+            }
+            else {
+                assert it.isAccessTokenExpired(expirationDateToCheck)
+            }
+        }
+
+        where:
+        authenticatedBy         | keepEmpty     | expectedTokensNotExpired
+        [["A"]]                 | false         | ["A"]
+        [["A"]]                 | true          | ["A", "Empty"]
+        [["C"]]                 | false         | []
+        [["A", "B"]]            | false         | ["AB", "BA"]
+        [["A", "B"]]            | true          | ["AB", "BA", "Empty"]
+        [["B", "A"]]            | false         | ["AB", "BA"]
+        [["B", "A", "C"]]       | false         | ["ABC"]
+        [["B", "C"]]            | false         | []
+        []                      | true          | ["Empty"]
+        []                      | false         | []
+    }
+
     def "atomHopper client is called when expiring a token" () {
         given:
         User user = new User()
