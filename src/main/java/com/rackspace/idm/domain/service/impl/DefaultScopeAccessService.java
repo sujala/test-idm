@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -171,8 +172,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private String getRegion(ScopeAccess token) {
         String region = null;
         BaseUser baseUser = userService.getUserByScopeAccess(token, false);
-        if (baseUser != null && baseUser instanceof User) {
-            User user = (User) baseUser;
+        if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
+            EndUser user = (EndUser) baseUser;
             region = user.getRegion();
         }
         return region;
@@ -395,13 +396,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            Date expireDate =  sa.getAccessTokenExp();
-            sa.setAccessTokenExpired();
-            this.scopeAccessDao.updateScopeAccess(sa);
-            if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
-                logger.warn("Sending token feed to atom hopper.");
-                atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
-            }
+            expireUserToken(user, sa);
         }
         logger.debug("Done expiring all tokens for user {}", username);
     }
@@ -423,15 +418,50 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            Date expireDate =  sa.getAccessTokenExp();
-            sa.setAccessTokenExpired();
-            this.scopeAccessDao.updateScopeAccess(sa);
-            if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
-                logger.warn("Sending token feed to atom hopper.");
-                atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
-            }
+            expireUserToken(user, sa);
         }
         logger.debug("Done expiring all tokens for user {}", userId);
+    }
+
+    private void expireUserToken(EndUser user, ScopeAccess sa) {
+        Date expireDate =  sa.getAccessTokenExp();
+        sa.setAccessTokenExpired();
+        this.scopeAccessDao.updateScopeAccess(sa);
+        if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
+            logger.warn("Sending token feed to atom hopper.");
+            atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
+        }
+    }
+
+    @Override
+    public void expireAllTokensExceptTypeForEndUser(EndUser user, List<List<String>> keepAuthenticatedByOptions, boolean keepEmpty) {
+        if (user == null || user.getUniqueId() == null) {
+            return;
+        }
+
+        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
+            List<String> tokenAuthBy = sa.getAuthenticatedBy();
+            boolean revoke = true;
+
+            //keep if empty and want to keep empty
+            if (keepEmpty && org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
+                revoke = false;
+            }
+
+            //see if token matches any of those we need to keep
+            if (!org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
+                for (List<String> keepAuthenticatedByOption : keepAuthenticatedByOptions) {
+                    if (org.apache.commons.collections4.CollectionUtils.isEqualCollection(tokenAuthBy, keepAuthenticatedByOption)) {
+                        revoke = false;
+                        break;
+                    }
+                }
+            }
+
+            if (revoke) {
+                expireUserToken(user, sa);
+            }
+        }
     }
 
     @Override
@@ -671,19 +701,26 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
+
         Iterable<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccesses(user);
-        if (! scopeAccessList.iterator().hasNext()) {
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, clientId, authenticatedBy);
+
+        if (! scopeAccessList.iterator().hasNext() || mostRecent == null) {
             UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
             if (authenticatedBy != null) {
                 scopeAccess.setAuthenticatedBy(authenticatedBy);
             }
             this.scopeAccessDao.addScopeAccess(user, scopeAccess);
+            deleteExpiredScopeAccessesExceptForMostRecent(scopeAccessList, scopeAccess);
             return scopeAccess;
         }
 
-        ScopeAccess mostRecent = scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
+        deleteExpiredScopeAccessesExceptForMostRecent(scopeAccessList, mostRecent);
 
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
+    }
 
+    private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {
         boolean exitDeletionRoutineOnError = authenticationTokenDeleteFailuresStopsCleanup();
         boolean ignoreDeletionFailures = ignoreAuthenticationTokenDeleteFailures();
         for (ScopeAccess scopeAccess : scopeAccessList) {
@@ -701,10 +738,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 }
             }
         }
-        if (authenticatedBy != null) {
-            mostRecent.setAuthenticatedBy(authenticatedBy);
-        }
-        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
     }
 
     /**

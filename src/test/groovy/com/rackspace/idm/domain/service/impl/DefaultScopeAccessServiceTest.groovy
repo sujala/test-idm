@@ -68,7 +68,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(user) >> [sa].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa_2
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa_2
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -125,7 +125,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
                 [ expired_sa ].asList()
         ] >> new ArrayList<ScopeAccess>()
 
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
@@ -144,7 +144,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
@@ -163,7 +163,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
 
@@ -183,7 +183,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
@@ -203,7 +203,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
 
@@ -224,7 +224,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa, expired_sa2 ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
@@ -244,7 +244,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa, expired_sa2 ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
 
@@ -263,7 +263,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
@@ -283,7 +283,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         user.setUniqueId(dn)
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> sa
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
         config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
 
@@ -324,7 +324,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def mostRecentScopeAccess = createUserScopeAccess("refreshOne", "userRsId", "clientId", refreshDate)
 
         scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> mostRecentScopeAccess
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
@@ -341,7 +341,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def mostRecentScopeAccess = createUserScopeAccess("expiredPne", "userRsId", "clientId", expiredDate)
 
         scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> mostRecentScopeAccess
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
@@ -358,7 +358,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def mostRecentScopeAccess = createUserScopeAccess("goodOne", "userRsId", "clientId", futureDate)
 
         scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> mostRecentScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> mostRecentScopeAccess
 
         when:
         service.getValidUserScopeAccessForClientId(user, "clientId", null)
@@ -370,7 +370,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     @Ignore
     def "getValidRackerScopeAccessForClientId provisions scopeAccess and adds it"() {
         given:
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> null
 
         when:
         service.getValidRackerScopeAccessForClientId(entityFactory.createUser(), "12345", null)
@@ -550,7 +550,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         //return valid user scope token
         UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> existingUserScopeAccess
         config.getString("cloudAuth.clientId") >> "clientId"
 
         def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
@@ -619,7 +619,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         //return valid user scope token
         UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> existingUserScopeAccess
         config.getString("cloudAuth.clientId") >> "clientId"
 
         def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
@@ -723,6 +723,60 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         0 * atomHopperClient.asyncTokenPost(_,_)
 
+    }
+
+    @Unroll
+    def "expireAllTokensExceptTypeForEndUser: When various exceptions are provided, the right tokens are expired - authenticatedBy: #authenticatedBy | keepEmpty: #keepEmpty | expectedTokensNotExpired: #expectedTokensNotExpired" () {
+        given:
+        User user = new User()
+        user.id = "1"
+        user.uniqueId = "blah"
+        identityUserService.getEndUserById(_) >> user
+
+        //create tokens representing various scenarios. Set username/token to same value so can easily tell which token failed test (since only username/customerid printed for token)
+        def scopeAccessA = entityFactory.createUserToken().with {def id="A"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A"); return it}
+        def scopeAccessB = entityFactory.createUserToken().with {def id="B"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B"); return it}
+        def scopeAccessAB = entityFactory.createUserToken().with {def id="AB"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B"); return it}
+        def scopeAccessBA = entityFactory.createUserToken().with {def id="BA"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B", "A"); return it}
+        def scopeAccessABC = entityFactory.createUserToken().with {def id="ABC"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B", "C"); return it}
+        def scopeAccessEmpty = entityFactory.createUserToken().with {def id="Empty"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList(); return it}
+
+        List<UserScopeAccess> scopeAccessList = [scopeAccessA, scopeAccessB, scopeAccessAB, scopeAccessBA, scopeAccessABC, scopeAccessEmpty]
+
+        scopeAccessDao.getScopeAccesses(_) >> scopeAccessList
+
+        when:
+        service.expireAllTokensExceptTypeForEndUser(user, authenticatedBy, keepEmpty)
+
+        then:
+        /*
+         the tokens are created with expiration date 1 day from now. When a token is revoked, the expiration is set to "now".
+         If the test runs fast enough "now" will be the same for both the date we're checking here AND the date the token was
+         expired which could cause unexpected failures (since isExpired would return false if times are equal). To
+         avoid this, check if token is set to earlier than one ms from now.
+          */
+        DateTime expirationDateToCheck = new DateTime().plusMillis(1)
+        scopeAccessList.each {
+            if (expectedTokensNotExpired.contains(it.accessTokenString)) {
+                assert !it.isAccessTokenExpired(expirationDateToCheck)
+            }
+            else {
+                assert it.isAccessTokenExpired(expirationDateToCheck)
+            }
+        }
+
+        where:
+        authenticatedBy         | keepEmpty     | expectedTokensNotExpired
+        [["A"]]                 | false         | ["A"]
+        [["A"]]                 | true          | ["A", "Empty"]
+        [["C"]]                 | false         | []
+        [["A", "B"]]            | false         | ["AB", "BA"]
+        [["A", "B"]]            | true          | ["AB", "BA", "Empty"]
+        [["B", "A"]]            | false         | ["AB", "BA"]
+        [["B", "A", "C"]]       | false         | ["ABC"]
+        [["B", "C"]]            | false         | []
+        []                      | true          | ["Empty"]
+        []                      | false         | []
     }
 
     def "atomHopper client is called when expiring a token" () {
@@ -935,7 +989,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> createUserScopeAccess()
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> createUserScopeAccess()
         0 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -961,7 +1015,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess, userScopeAccess].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> expireScopeAccess(createUserScopeAccess())
         1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -982,7 +1036,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [impersonatedScopeAccess].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> expireScopeAccess(createUserScopeAccess())
         1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
@@ -996,7 +1050,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> expireScopeAccess(createUserScopeAccessWithAuthBy("RSA"))
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
@@ -1014,7 +1068,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessDao.getScopeAccesses(_) >> [createScopeAccess()].asList()
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> expireScopeAccess(createUserScopeAccess())
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> expireScopeAccess(createUserScopeAccessWithAuthBy("RSA"))
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
@@ -1117,7 +1171,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def authedBy = ["PASSWORD"].asList()
         def range = getRange(defaultCloudAuthRackerExpirationSeconds, entropy)
 
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> null
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> null
 
         when:
         def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), clientId, authedBy)

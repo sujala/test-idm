@@ -1073,11 +1073,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
 
-                //if mfa is enabled (either globally or beta), and user has mfa enabled, we must throw some kind of exception
-                if (user != null && multiFactorCloud20Service.isMultiFactorEnabled() && user.isMultiFactorEnabled()) {
-                    processAuthenticationForMFAUser(user, apiKey);
-                }
-
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             }
 
@@ -1094,25 +1089,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
-    }
-
-    /**
-     * v1.1 does NOT support MFA authentication. This method will throw an exception. The only question is which one.
-     *
-     * For Users who have MFA enabled and authenticate with v1.1 this method will:
-     * 1. Throw ForbiddenException if user provides correct api key credentials.
-     * 2. Throw NotAuthenticatedException, like they do if MFA wasn't enabled, if user provides incorrect credentials
-     *
-     * @param user
-     * @param providedApiKey
-     * @throws ForbiddenException
-     * @throw NotAuthenticatedException
-     */
-    private void processAuthenticationForMFAUser(User user, String providedApiKey) {
-        UserAuthenticationResult authResult = authWithApiKeyCredentials.authenticate(user.getUsername(), providedApiKey);
-
-        //previous call would have thrown NotAuthenticatedException if auth was unsuccessful. Must therefore throw Forbidden
-        throw new ForbiddenException(MFA_USER_AUTH_FORBIDDEN_MESSAGE);
     }
 
     private void hideAdminUrls(List<OpenstackEndpoint> endpoints) {

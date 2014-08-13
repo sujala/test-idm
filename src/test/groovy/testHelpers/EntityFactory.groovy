@@ -10,6 +10,7 @@ import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
+import org.joda.time.DateTime
 import org.opensaml.xml.security.x509.X509Credential
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Specification
@@ -457,6 +458,20 @@ class EntityFactory extends Specification {
         new UserScopeAccess().with {
             it.accessTokenString = "ats"
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
+            return it
+        }
+    }
+
+    def createUserToken(String userRsId = UUID.randomUUID().toString(), String tokenString =  UUID.randomUUID().toString(), String clientId = UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {
+        def dn = "acessToken=$tokenString,cn=TOKENS,rsId=$userRsId,ou=users"
+
+        new UserScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.userRsId = userRsId
+            it.clientId = clientId
+            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.getAuthenticatedBy().addAll(authBy)
             return it
         }
     }

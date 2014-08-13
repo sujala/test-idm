@@ -52,6 +52,16 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
+        return searchForUsersByDomainIdPaged(domainId, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<EndUser> getEnabledEndUsersPaged(int offset, int limit) {
+        return searchForEnabledUsersPaged(ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
+    }
+
+    @Override
     public Iterable<Group> getGroupsForEndUser(String userId) {
         getLogger().debug("Inside getGroupsForUser {}", userId);
 
@@ -75,6 +85,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, userClassFilterList));
     }
 
+    private <T extends EndUser> PaginatorContext<T> searchForUsersByDomainIdPaged(String domainId, List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
+        return (PaginatorContext) getObjectsPaged(searchFilterGetUserByDomainId(domainId, userClassFilterList), offset, limit);
+    }
+
+    private <T extends EndUser> PaginatorContext<T> searchForEnabledUsersPaged(List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
+        return (PaginatorContext) getObjectsPaged(searchFilterGetEnabledUsers(userClassFilterList), offset, limit);
+    }
 
     @Override
     public String getBaseDn(){
@@ -107,6 +124,16 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return Filter.createANDFilter(
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId)
+        );
+    }
+
+    private Filter searchFilterGetEnabledUsers(List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                Filter.createORFilter(
+                    Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(true).toUpperCase()),
+                    Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENABLED))
+                )
         );
     }
 

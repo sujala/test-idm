@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
@@ -22,6 +23,7 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -37,9 +39,6 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
-/**
- * Tests the multifactor sendVerificationCode REST service
- */
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
@@ -129,8 +128,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
      *
      * @return
      */
-    @Unroll("Successfully enable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Successfully enable multifactor"() {
+    @Unroll
+    def "When successfully enable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()
@@ -159,33 +158,34 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.checkUsersMFAFlag(usersByDomainResponse, userAdmin.username, true)
         utils.checkUsersMFAFlag(usersListResponse, userAdmin.username, true)
 
-        when: "try to auth via 1.0 with correct API key should be forbidden when mfa enabled"
-        def auth10Response = cloud10.authenticate(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
-
-        then: "receive 403"
-        auth10Response.getEntity(String.class) == Cloud10VersionResource.MFA_USER_AUTH_FORBIDDEN_MESSAGE
-        auth10Response.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_FORBIDDEN
-
-        when: "try to auth via 1.1 with correct API key should be forbidden when mfa enabled"
-        def cred = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), finalUserAdmin.getApiKey())
-        def auth11Response403 = cloud11.authenticate(cred, requestContentMediaType, acceptMediaType)
-
-        then: "receive 403"
-        IdmAssert.assertV1AuthFaultResponse(auth11Response403, ForbiddenFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_FORBIDDEN, DefaultCloud11Service.MFA_USER_AUTH_FORBIDDEN_MESSAGE)
-
-        when: "try to auth via 1.1 with incorrect API key should return 401"
-        def cred2 = v1Factory.createUserKeyCredentials(finalUserAdmin.getUsername(), "abcd1234")
-        def auth11Response401 = cloud11.authenticate(cred2, requestContentMediaType, acceptMediaType)
-
-        then: "receive 401"
-        IdmAssert.assertV1AuthFaultResponse(auth11Response401, UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, AuthWithApiKeyCredentials.AUTH_FAILURE_MSG)
-
         where:
         requestContentMediaType | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    def "When successfully enable multifactor api key tokens are not revoked, but password tokens are"() {
+        setup:
+        addPhone()
+        verifyPhone()
+        User initialUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        def userByIdResponse = utils.getUserById(userAdmin.id, specificationIdentityAdminToken)
+        AuthenticateResponse apiTokenResponse = utils.authenticateApiKey(userByIdResponse, initialUserAdmin.apiKey)
+        String apiToken = apiTokenResponse.token.id
+        AuthenticateResponse pwdTokenResponse = utils.authenticate(userByIdResponse)
+        String pwdToken = pwdTokenResponse.token.id
+
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then:
+        cloud20.validateToken(specificationIdentityAdminToken, apiToken).status == HttpStatus.SC_OK
+        cloud20.validateToken(specificationIdentityAdminToken, pwdToken).status == HttpStatus.SC_NOT_FOUND
     }
 
     @Unroll("Successfully disable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")

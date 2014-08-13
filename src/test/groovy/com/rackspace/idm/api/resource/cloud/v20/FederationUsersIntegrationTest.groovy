@@ -25,8 +25,7 @@ import testHelpers.saml.SamlAssertionFactory
 
 import javax.servlet.http.HttpServletResponse
 
-import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
-import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
+import static com.rackspace.idm.Constants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationUsersIntegrationTest extends RootIntegrationTest {
@@ -58,6 +57,11 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
     ClientRole rbacRole2;
     ClientRole role1000;
 
+    def globalEndpoint
+    def lonGlobalEndpoint
+    def globalEndpointTemplateRegion = "ORD"
+    def lonGlobalEndpointTemplateRegion = "LON"
+
     def setup() {
         //expected to be pre-existing 1000 weight roles in default ldif
         rbacRole1 = roleService.getRoleByName(RBACROLE1_NAME)
@@ -67,6 +71,14 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         assert rbacRole1.rsWeight == 1000
         assert rbacRole2.rsWeight == 1000
         assert role1000.rsWeight == 1000
+
+        globalEndpoint = utils.createEndpointTemplate(true, null, "compute", globalEndpointTemplateRegion)
+        lonGlobalEndpoint = utils.createEndpointTemplate(true, null, "compute", lonGlobalEndpointTemplateRegion)
+    }
+
+    def cleanup() {
+        utils.deleteEndpointTemplate(globalEndpoint)
+        utils.deleteEndpointTemplate(lonGlobalEndpoint)
     }
 
     def "initial user populated appropriately from saml no roles provided"() {
@@ -457,6 +469,21 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         //TODO: Service catalog checks
         assert authResponse.serviceCatalog != null
         assert authResponse.serviceCatalog.service.size() > 0
+
+        def foundUSGlobalEndpoint = false
+        def foundLonGlobalEndpoint = false
+        String usTenantEndpoint = String.format("%s/%s", globalEndpoint.publicURL, userAdminEntity.mossoId)
+        String lonTenantEndpoint = String.format("%s/%s", lonGlobalEndpoint.publicURL, userAdminEntity.mossoId)
+        for (List publicUrls : authResponse.serviceCatalog.service.endpoint.publicURL) {
+            if (publicUrls.contains(usTenantEndpoint)) {
+                foundUSGlobalEndpoint = true
+            }
+            if (publicUrls.contains(lonTenantEndpoint)) {
+                foundUSGlobalEndpoint = true
+            }
+        }
+        assert foundUSGlobalEndpoint
+        assert !foundLonGlobalEndpoint
     }
 
     def "passing multiple saml requests with same info references same user"() {
