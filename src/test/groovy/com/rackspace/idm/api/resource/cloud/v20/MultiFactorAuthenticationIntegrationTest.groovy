@@ -100,7 +100,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
             if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
             deleteUserQuietly(userAdmin)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     /**
