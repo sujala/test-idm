@@ -199,6 +199,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Paginator<User> userPaginator;
 
     @Autowired
+    private Paginator<EndUser> endUserPaginator;
+
+    @Autowired
     private Paginator<ClientRole> applicationRolePaginator;
 
     @Autowired
@@ -912,19 +915,22 @@ public class DefaultCloud20Service implements Cloud20Service {
                 restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
             }
             else {
-                //2-factor only applies when using a userAuth method (apikey or password)
+                boolean canUseMfaWithCredential = false;
                 UserAuthenticationFactor userAuthenticationFactor = null;
                 if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
                     userAuthenticationFactor = authWithPasswordCredentials;
+                    canUseMfaWithCredential = true;
                 } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                     userAuthenticationFactor = authWithApiKeyCredentials;
                 }
                 else {
                     throw new BadRequestException("Unknown credential type");
                 }
+
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
-                if (multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                    //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
                     return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
                     authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
@@ -2925,36 +2931,37 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            User caller = getUser(scopeAccessByAccessToken);
+            BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             //if default user & NOT user-manage
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)
                     && !authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                List<User> users = new ArrayList<User>();
-                users.add(caller);
+                List<EndUser> users = new ArrayList<EndUser>();
+                //at this point, we know that the user is not a racker and can cast to an EndUser
+                users.add((EndUser) caller);
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
-            PaginatorContext<User> paginatorContext;
+            PaginatorContext<EndUser> paginatorContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                paginatorContext = this.userService.getAllEnabledUsersPaged(marker, limit);
+                paginatorContext = this.identityUserService.getEnabledEndUsersPaged(marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
-                    paginatorContext = this.userService.getAllUsersPagedWithDomain(domainId, marker, limit);
+                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(domainId, marker, limit);
                 } else {
                     throw new BadRequestException("User-admin has no domain");
                 }
             }
 
-            List<User> users = new ArrayList<User>();
+            List<EndUser> users = new ArrayList<EndUser>();
 
             // If role is identity:user-manage then we need to filter out the identity:user-admin
             if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                for (User user : paginatorContext.getValueList()) {
+                for (EndUser user : paginatorContext.getValueList()) {
                     if (!authorizationService.hasUserAdminRole(user)) {
                         users.add(user);
                     }
@@ -2963,7 +2970,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 users = paginatorContext.getValueList();
             }
 
-            String linkHeader = userPaginator.createLinkHeader(uriInfo, paginatorContext);
+            String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)

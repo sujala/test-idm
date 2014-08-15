@@ -62,6 +62,11 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
     public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
 
+    public static final List<List<String>> AUTHENTICATEDBY_LIST_TO_NOT_REVOKE_ON_MFA_ENABLEMENT = Arrays.asList(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+            , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+            , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY));
+
+
     @Autowired
     private UserService userService;
 
@@ -395,10 +400,18 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
-            scopeAccessService.expireAllTokensForUserById(user.getId());
+            revokeAllNonMFAAndMFAProtectedTokensForUser(user);
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
+    }
+
+    /**
+     * Revokes all the non-mfa tokens for the user, skipping those tokens issued by credentials that are NOT protected
+     * via MFA.
+     */
+    private void revokeAllNonMFAAndMFAProtectedTokensForUser(User user) {
+        scopeAccessService.expireAllTokensExceptTypeForEndUser(user, AUTHENTICATEDBY_LIST_TO_NOT_REVOKE_ON_MFA_ENABLEMENT, false);
     }
 
     private void disableMultiFactorForUser(User user) {

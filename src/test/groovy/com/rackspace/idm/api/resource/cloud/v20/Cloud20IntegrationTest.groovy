@@ -3262,9 +3262,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         validateApikeyResponse.status == 200
         validateApikeyResponse.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_APIKEY)
 
-        then: "validate password token states authenticated by apikey since it was created by an apikey"
+        then: "validate password token states authenticated by password since it was created by a password"
         validatePasswordResponse.status == 200
-        validatePasswordResponse.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_APIKEY)
+        validatePasswordResponse.getEntity(AuthenticateResponse).value.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
+
+        then: "Tokens are two separate tokens"
+        passwordResponse.token.id != apiKeyResponse.token.id
 
         cleanup:
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())

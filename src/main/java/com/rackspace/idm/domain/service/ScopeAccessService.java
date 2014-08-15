@@ -44,6 +44,25 @@ public interface ScopeAccessService {
 
     void expireAllTokensForUserById(String userId);
 
+    /**
+     * Expire all valid tokens for the user that do NOT have one of the specified authenticatedBy attribute. The token's authenticatedBy must
+     * only contain the specified value(s) in order to not be revoked. The order of the authenticated by does
+     * not matter. The boolean keepEmpty parameter specifies whether or not to revoke tokens which do not contain any value for authenticated by.
+     *
+     * <p>
+     *     For example, if the specified authenticatedBy=PASSCODE, PASSWORD then:
+     *     <ul>
+     *         <li>a token with 2 values for authenticatedBy (PASSWORD, PASSCODE) would NOT be revoked</li>
+     *         <li>a token with 1 values for authenticatedBy (PASSWORD) would be revoked</li>
+     *         <li>a token with 0 values for authenticatedBy would be revoked (this would NOT be revoked if keepEmpty is true)</li>
+     *     </ul>
+     * </p>
+     *
+     * @param user
+     * @param keepAuthenticatedByOptions
+     */
+    void expireAllTokensExceptTypeForEndUser(EndUser user, List<List<String>> keepAuthenticatedByOptions, boolean keepEmpty);
+
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
     ClientScopeAccess getApplicationScopeAccess(Application application);

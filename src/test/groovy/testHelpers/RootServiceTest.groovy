@@ -18,6 +18,7 @@ import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.email.EmailClient
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.dao.MobilePhoneDao
@@ -120,6 +121,7 @@ class RootServiceTest extends Specification {
 
     @Shared Configuration config
     @Shared AtomHopperClient atomHopperClient
+    @Shared EmailClient emailClient
     @Shared RSAClient rsaClient
     @Shared Validator validator
     @Shared Validator20 validator20
@@ -195,6 +197,7 @@ class RootServiceTest extends Specification {
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
 
+
     // Dao's
     @Shared ApplicationDao applicationDao
     @Shared ScopeAccessDao scopeAccessDao
@@ -211,6 +214,7 @@ class RootServiceTest extends Specification {
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
     @Shared Paginator userPaginator
+    @Shared Paginator endUserPaginator
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
@@ -717,6 +721,11 @@ class RootServiceTest extends Specification {
         service.userPaginator = userPaginator
     }
 
+    def mockEndUserPaginator(service) {
+        endUserPaginator = Mock()
+        service.endUserPaginator = endUserPaginator
+    }
+
     def mockDomainPaginator(service) {
         domainPaginator = Mock()
         service.domainPaginator = domainPaginator
@@ -744,6 +753,11 @@ class RootServiceTest extends Specification {
     def mockAtomHopperClient(service) {
         atomHopperClient = Mock()
         service.atomHopperClient = atomHopperClient
+    }
+
+    def mockEmailClient(service) {
+        emailClient = Mock()
+        service.emailClient = emailClient
     }
 
     def mockRSAClient(service) {
@@ -908,6 +922,12 @@ class RootServiceTest extends Specification {
             it.setLdapEntry(createLdapEntryWithDn(dn))
             return it
         }
+    }
+
+    def createUserScopeAccessWithAuthBy(String authBy) {
+        UserScopeAccess userScopeAccess = createUserScopeAccess()
+        userScopeAccess.getAuthenticatedBy().add(authBy)
+        return userScopeAccess
     }
 
     def createUserScopeAccess() {

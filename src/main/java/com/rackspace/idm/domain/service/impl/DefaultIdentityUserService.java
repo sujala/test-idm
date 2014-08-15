@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -51,6 +48,16 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return identityUserRepository.getEndUsersByDomainId(domainId);
+    }
+
+    @Override
+    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
+        return identityUserRepository.getEndUsersByDomainIdPaged(domainId, offset, limit);
+    }
+
+    @Override
+    public PaginatorContext<EndUser> getEnabledEndUsersPaged(int offset, int limit) {
+        return identityUserRepository.getEnabledEndUsersPaged(offset, limit);
     }
 
     @Override

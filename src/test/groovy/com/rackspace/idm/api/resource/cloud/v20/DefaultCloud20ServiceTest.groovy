@@ -521,7 +521,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.listUsers(headers, uriInfo(), authToken, null, null)
 
         then:
-        1 * userService.getUser(_) >> entityFactory.createUser()
+        1 * userService.getUserByScopeAccess(_) >> entityFactory.createUser()
     }
 
     def "listUsers (defaultUser caller) succeeds"() {
@@ -541,6 +541,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "listUsers (caller is admin or service admin) gets enabled paged users and returns list"() {
         given:
         mockUserConverter(service)
+        mockEndUserPaginator(service)
         allowUserAccess()
 
         authorizationService.authorizeCloudUser(_) >> false
@@ -550,16 +551,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUser(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
 
-        userPaginator.createLinkHeader(_, _) >> "link header"
+        endUserPaginator.createLinkHeader(_, _) >> "link header"
 
         when:
         def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
         def response2 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        2 * userService.getAllEnabledUsersPaged(_, _) >> userContextMock
+        2 * identityUserService.getEnabledEndUsersPaged(_, _) >> userContextMock
 
         response1.status == 200
         response2.status == 200
@@ -570,6 +571,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "listUsers (caller is userAdmin) gets paged users with domain filter and returns list"() {
         given:
         mockUserConverter(service)
+        mockEndUserPaginator(service)
         allowUserAccess()
 
         authorizationService.authorizeCloudUser(_) >> false
@@ -579,15 +581,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUser(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
 
-        userPaginator.createLinkHeader(_, _) >> "link header"
+        endUserPaginator.createLinkHeader(_, _) >> "link header"
 
         when:
         def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        userService.getAllUsersPagedWithDomain(_, _, _) >> { arg1, arg2, arg3 ->
+        identityUserService.getEndUsersByDomainIdPaged(_, _, _) >> { arg1, arg2, arg3 ->
             assert(arg1 == "domainId")
             return userContextMock
         }
@@ -599,6 +601,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "listUsers (caller is user manaage) gets paged users with domain filter and returns list"() {
         given:
         mockUserConverter(service)
+        mockEndUserPaginator(service)
         allowUserAccess()
 
         authorizationService.authorizeCloudUser(_) >> true
@@ -609,15 +612,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUser(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
 
-        userPaginator.createLinkHeader(_, _) >> "link header"
+        endUserPaginator.createLinkHeader(_, _) >> "link header"
 
         when:
         def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        userService.getAllUsersPagedWithDomain(_, _, _) >> { arg1, arg2, arg3 ->
+        identityUserService.getEndUsersByDomainIdPaged(_, _, _) >> { arg1, arg2, arg3 ->
             assert(arg1 == "domainId")
             return userContextMock
         }
@@ -638,7 +641,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
         authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
 
-        userService.getUser(_) >>> [
+        userService.getUserByScopeAccess(_) >>> [
                 entityFactory.createUser(),
                 entityFactory.createUser("username", null, null, "region")
         ]
