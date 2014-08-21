@@ -253,6 +253,9 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_STATE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorState;
 
+    @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String domainMultiFactorEnforcementLevel;
+
     private List<TenantRole> roles;
 
     public User() {
