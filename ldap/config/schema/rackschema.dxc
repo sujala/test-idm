@@ -825,6 +825,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.110) = {
 	description = "Whether the multi-factor is required to authenticate"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.114) = {
+    name = rsScope
+    ldap-names = rsScope
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "The scope of a scope access"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -990,7 +998,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
         clientId
     may-contain
         clientRCN,
-        rsType
+        rsType,
+        rsScope
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {

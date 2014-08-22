@@ -720,6 +720,33 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent);
     }
 
+    @Override
+    public ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope) {
+
+        ScopeAccess scopeAccessToAdd = null;
+
+        if (user instanceof User) {
+            User provisionedUser = (User)user;
+            UserScopeAccess userScopeAccess = new UserScopeAccess();
+            userScopeAccess.setUsername(provisionedUser.getUsername());
+            userScopeAccess.setUserRsId(provisionedUser.getId());
+            userScopeAccess.setClientId(clientId);
+            userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
+            userScopeAccess.setAccessTokenString(generateToken());
+            userScopeAccess.getAuthenticatedBy().addAll(authenticatedBy);
+            userScopeAccess.setScope(scope);
+            scopeAccessToAdd = userScopeAccess;
+        } else {
+            // We can fully implement this method for Federated Users and Rackers, but
+            // for now its just going to be an unsupported method.
+            throw new UnsupportedOperationException();
+        }
+
+        this.scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
+
+        return scopeAccessToAdd;
+    }
+
     private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {
         boolean exitDeletionRoutineOnError = authenticationTokenDeleteFailuresStopsCleanup();
         boolean ignoreDeletionFailures = ignoreAuthenticationTokenDeleteFailures();

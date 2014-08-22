@@ -30,11 +30,16 @@ public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
     }
 
     public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
+        String scope = null;
+        if (authenticationRequest.getScope() != null) {
+            scope = authenticationRequest.getScope().value();
+        }
         ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
         validator20.validateApiKeyCredentials(creds);
         String username = creds.getUsername();
         String key = creds.getApiKey();
-        return authenticate(username, key);
+        UserAuthenticationResult result = authenticate(username, key);
+        return new UserAuthenticationResult(result.getUser(), result.isAuthenticated(), result.getAuthenticatedBy(), scope);
     }
 
     /**

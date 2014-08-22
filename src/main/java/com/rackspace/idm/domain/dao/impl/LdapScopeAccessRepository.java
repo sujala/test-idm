@@ -75,7 +75,7 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
 
     @Override
     public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
-        Iterable<ScopeAccess> scopeAccessList = getObjects(searchFilterGetScopeAccessesByClientId(clientId), object.getUniqueId());
+        Iterable<ScopeAccess> scopeAccessList = getObjects(searchFilterGetScopeAccessesByClientIdNotScoped(clientId), object.getUniqueId());
 
         if (!scopeAccessList.iterator().hasNext()) {
             return null;
@@ -208,6 +208,19 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
                 .addEqualAttribute(ATTR_USER_RS_ID, userId).build();
+    }
+
+    private Filter searchFilterGetScopeAccessesByClientIdNotScoped(String clientId) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(
+                        Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTSCOPEACCESS),
+                        Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKERSCOPEACCESS),
+                        Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_PASSWORDRESETSCOPEACCESS),
+                        Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_USERSCOPEACCESS)
+                ),
+                Filter.createEqualityFilter(ATTR_CLIENT_ID, clientId),
+                Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_SCOPE))
+        );
     }
 
     private Filter searchFilterGetScopeAccessesByClientId(String clientId) {

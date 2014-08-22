@@ -5,13 +5,6 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 23/01/13
- * Time: 09:54
- * To change this template use File | Settings | File Templates.
- */
 class AuthWithPasswordCredentialsTest extends RootServiceTest {
 
     @Shared AuthWithPasswordCredentials service
@@ -21,10 +14,10 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
     }
 
     def setup() {
+        mockIdentityConfig(service)
         mockValidator20(service)
         mockScopeAccessService(service)
         mockUserService(service)
-        mockConfiguration(service)
     }
 
     def "authenticateForAuthResponse validates credentials"() {
@@ -59,13 +52,5 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
         response.impersonatedScopeAccess == null
         response.user == user
         response.userScopeAccess == scopeAccess
-    }
-
-    def "a clientId is returned by getCloudAuthClientId"() {
-        when:
-        service.getCloudAuthClientId();
-
-        then:
-        1 * config.getString("cloudAuth.clientId")
     }
 }

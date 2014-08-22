@@ -21,10 +21,10 @@ public class IdentityConfig {
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
     private static final String EMAIL_HOST = "email.host";
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
+    private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
+    private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
 
     //OPTIONAL PROPERTIES
-
-
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
     private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s'";
@@ -43,6 +43,8 @@ public class IdentityConfig {
         verifyAndLogProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
         verifyAndLogProperty(EMAIL_HOST, OPTIONAL);
         verifyAndLogProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
+        verifyAndLogProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
+        verifyAndLogProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
     }
 
     private void verifyAndLogProperty(String property, boolean required) {
@@ -76,5 +78,13 @@ public class IdentityConfig {
 
     public boolean isSendToOnlyRackspaceAddressesEnabled() {
         return config.getBoolean(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
+    }
+
+    public int getScopedTokenExpirationSeconds() {
+        return config.getInt(SCOPED_TOKEN_EXPIRATION_SECONDS);
+    }
+
+    public String getCloudAuthClientId() {
+        return config.getString(CLOUD_AUTH_CLIENT_ID);
     }
 }

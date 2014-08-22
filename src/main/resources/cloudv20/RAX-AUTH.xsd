@@ -27,6 +27,7 @@
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
+    <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -104,6 +105,12 @@
         <restriction base="xsd:string">
             <enumeration value="ACTIVE"/>
             <enumeration value="LOCKED"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="ScopeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="SETUP-MFA"/>
         </restriction>
     </simpleType>
 

@@ -269,10 +269,20 @@ class Cloud20Methods {
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password))
     }
 
+    def authenticatePasswordWithScope(String username, String password, String scope) {
+        initOnUse()
+        authenticate(v2Factory.createPasswordAuthenticationRequestWithScope(username, password, scope))
+    }
+
     def authenticateApiKey(username, apiKey, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def credentials = v2Factory.createApiKeyAuthenticationRequest(username, apiKey)
         resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
+    }
+
+    def authenticateApiKeyWithScope(String username, String apiKey, String scope) {
+        initOnUse()
+        authenticate(v2Factory.createApiKeyAuthenticationRequestWithScope(username, apiKey, scope))
     }
 
     def authenticate(request) {

@@ -74,6 +74,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ID_MISMATCH = "Id in url does not match id in body.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final String RBAC = "rbac";
+    public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
 
     public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
     public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
@@ -886,11 +887,21 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Check for domain in request
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = authenticationRequest.getDomain();
             if(domain != null) {
+                // Scoped tokens not supported here
+                if (authenticationRequest.getScope() != null) {
+                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                }
+
                 AuthenticateResponse auth = authenticateFederatedDomain(authenticationRequest, domain);
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             }
 
             if (multiFactorCloud20Service.isMultiFactorEnabled() && authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
+                // Scoped tokens not supported here
+                if (authenticationRequest.getScope() != null) {
+                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                }
+
                 //performing 2 factor auth. User must supply session-id header or request is invalid
                 List<String> sessionIdList = httpHeaders.getRequestHeader(MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
                 if (CollectionUtils.isEmpty(sessionIdList) || sessionIdList.size() != 1) {
@@ -906,6 +917,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             else if (authenticationRequest.getToken() != null) {
                 //TODO: What do when MFA token is provided...Should it just be refreshed similar to one-factor tokens?
+                // Scoped tokens not supported here
+                if (authenticationRequest.getScope() != null) {
+                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                }
+
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
                 /*
                 This call to restrictTenant (and its corresponding LDAP call) appears to be completely unnecessary as AuthWithToken performs similar calls (just with different
@@ -930,6 +946,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
                 if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                    // Scoped tokens not supported here
+                    if (authenticationRequest.getScope() != null) {
+                        throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                    }
+
                     //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
                     return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
@@ -1014,6 +1035,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             auth.setToken(convertedToken);
         } else {
             auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
+        }
+
+        // If this is a scoped token we clear out the service catalog
+        if (authenticationRequest.getScope() != null) {
+            auth.setServiceCatalog(null);
         }
 
         return auth;

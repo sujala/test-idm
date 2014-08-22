@@ -45,8 +45,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         given:
         String rsId = random
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
-        User user1 = new User()
-        User user2 = new User()
 
         when:
         ldapUserRepository.addUser(user)
@@ -58,15 +56,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         then:
         retrievedUser != null
         deletedUser == null
-
-        user1.equals(user2)
-        !user1.equals(retrievedUser)
-        !retrievedUser.equals(user1)
-        retrievedUser.equals(retrievedUser2)
-
-        user1.hashCode() == user2.hashCode()
-        user1.hashCode() != retrievedUser.hashCode()
-        retrievedUser.hashCode() == retrievedUser2.hashCode()
 
         retrievedUser.getPasswordLastUpdated() != null
         retrievedUser.getUserPassword() != null

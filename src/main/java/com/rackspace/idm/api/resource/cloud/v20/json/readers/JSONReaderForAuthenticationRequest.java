@@ -57,6 +57,7 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         prefixValues.put(AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH, RSA_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH, PASSCODE_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_DOMAIN_PATH, DOMAIN);
+        prefixValues.put(AUTH_RAX_AUTH_SCOPE_PATH, SCOPE);
 
         return read(inputStream, AUTH, prefixValues);
     }
