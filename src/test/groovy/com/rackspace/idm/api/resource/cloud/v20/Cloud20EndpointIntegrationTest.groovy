@@ -120,4 +120,75 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
+    def "disabled UK global endpoints are not displayed in created user's service catalog"() {
+        given:
+        staticIdmConfiguration.setProperty("cloud.region", "UK")
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def tenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(defaultUser, tenant, MOSSO_ROLE_ID)
+
+        defaultUser.defaultRegion = "LON"
+        utils.updateUser(defaultUser)
+
+        def endpointTemplate = utils.createEndpointTemplate(true, null, false, "compute", "LON")
+        def foundEndpoint = false
+
+        when:
+        AuthenticateResponse response = utils.authenticate(defaultUser)
+
+        then:
+        String tenantEndpoint = String.format("%s/%s", endpointTemplate.publicURL, tenant.id)
+        for (List publicUrls : response.serviceCatalog.service.endpoint.publicURL) {
+            if (publicUrls.contains(tenantEndpoint)) {
+                foundEndpoint = true
+            }
+        }
+
+        assert !foundEndpoint
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+        utils.deleteEndpointTemplate(endpointTemplate)
+        staticIdmConfiguration.reset()
+    }
+
+    def "disabled US global endpoints are not displayed in created user's service catalog"() {
+        given:
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def tenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(defaultUser, tenant, MOSSO_ROLE_ID)
+
+        defaultUser.defaultRegion = "ORD"
+        utils.updateUser(defaultUser)
+
+        def endpointTemplate = utils.createEndpointTemplate(true, null, false)
+
+        def foundEndpoint = false
+
+        when:
+        AuthenticateResponse response = utils.authenticate(defaultUser)
+
+        then:
+        String tenantEndpoint = String.format("%s/%s", endpointTemplate.publicURL, tenant.id)
+        for (List publicUrls : response.serviceCatalog.service.endpoint.publicURL) {
+            if (publicUrls.contains(tenantEndpoint)) {
+                foundEndpoint = true
+            }
+        }
+
+        assert !foundEndpoint
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+        utils.deleteEndpointTemplate(endpointTemplate)
+    }
+
 }
