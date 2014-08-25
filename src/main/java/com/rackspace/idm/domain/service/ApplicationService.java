@@ -26,6 +26,8 @@ public interface ApplicationService {
 
     Application getByName(String clientName);
 
+    Iterable<Application> getByType(String type);
+
     Application checkAndGetApplication(String applicationId);
 
     Application getClient(String customerId, String clientId);

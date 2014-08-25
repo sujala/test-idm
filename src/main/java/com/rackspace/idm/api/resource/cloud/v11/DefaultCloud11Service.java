@@ -111,6 +111,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private AuthWithApiKeyCredentials authWithApiKeyCredentials;
 
+    @Autowired
+    private ApplicationService applicationService;
+
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
         JAXBContext context = JAXBContext.newInstance(VersionChoice.class);
@@ -912,14 +915,42 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) {
-
         try {
             validator.validateBaseUrl(baseUrl);
             authenticateAndAuthorizeCloudAdminUser(request);
-            this.endpointService.addBaseUrl(this.endpointConverterCloudV11.toBaseUrlDO(baseUrl));
+            final CloudBaseUrl cloudBaseUrl = this.endpointConverterCloudV11.toBaseUrlDO(baseUrl);
+
+            // Keystone V3 compatibility
+            addBaseURLKeystoneV3Data(baseUrl, cloudBaseUrl);
+
+            // Save BaseURL
+            this.endpointService.addBaseUrl(cloudBaseUrl);
             return Response.status(HttpServletResponse.SC_CREATED).header("Location", request.getContextPath() + "/baseUrls/" + baseUrl.getId());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    private void addBaseURLKeystoneV3Data(BaseURL baseUrl, CloudBaseUrl cloudBaseUrl) {
+        try {
+            if (baseUrl.getServiceName() != null) {
+                final Application application = applicationService.getByName(baseUrl.getServiceName());
+                if (application != null) {
+                    cloudBaseUrl.setClientId(application.getClientId());
+                } else {
+                    throw new RuntimeException("[K3] There is no application with name '" + baseUrl.getServiceName() + "'.");
+                }
+            } else {
+                throw new RuntimeException("[K3] BaseURL '" + baseUrl.getAdminURL() + "' is not associated to a serviceName.");
+            }
+            cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString());
+            cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString());
+            cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString());
+        } catch (Exception e) {
+            logger.error("[K3] Impossible state.", e);
+            if (config.getBoolean("feature.DefaultCloud11Service.addBaseURLKeystoneV3Data.throwError", false)) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -91,6 +91,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
+    public Iterable<Application> getApplicationByType(String type) {
+        return getObjects(searchFilterGetApplicationByType(type));
+    }
+
+    @Override
     public Application getApplicationByClientId(String clientId) {
         return getObject(searchFilterGetApplicationByClientId(clientId));
     }
@@ -203,6 +208,13 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     private Filter searchFilterGetApplicationByName(String name) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
+    }
+
+    private Filter searchFilterGetApplicationByType(String type) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OPENSTACK_TYPE, type)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
     }

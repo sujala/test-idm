@@ -126,6 +126,26 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
     private String tenantAlias;
 
+    @LDAPField(attribute=LdapRepository.ATTR_INTERNAL_URL_ID,
+            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
+            filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
+    private String internalUrlId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PUBLIC_URL_ID,
+            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
+            filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
+    private String publicUrlId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_ADMIN_URL_ID,
+            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
+            filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
+    private String adminUrlId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID,
+            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
+            filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
+    private String clientId;
+
     @Override
     public String getAuditContext() {
         return String.format("baseUrl=%s", baseUrlId);

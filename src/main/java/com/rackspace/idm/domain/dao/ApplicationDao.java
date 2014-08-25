@@ -20,6 +20,8 @@ public interface ApplicationDao {
 
     Application getApplicationByName(String clientName);
 
+    Iterable<Application> getApplicationByType(String type);
+
     Application getApplicationByCustomerIdAndClientId(String customerId, String clientId);
     
     Application getApplicationByScope(String scope);

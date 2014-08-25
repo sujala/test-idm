@@ -260,7 +260,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
+            final CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
+
+            // Keystone V3 compatibility
+            addEndpointTemplateKeystoneV3Data(baseUrl, endpoint);
+
+            // Save the baseUrl
             this.endpointService.addBaseUrl(baseUrl);
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -275,6 +280,35 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.conflictExceptionResponse(dex.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void addEndpointTemplateKeystoneV3Data(CloudBaseUrl baseUrl, EndpointTemplate endpoint) {
+        try {
+            if (endpoint.getType() != null) {
+                final Iterable<Application> applications = applicationService.getByType(endpoint.getType());
+                if (applications != null && applications.iterator().hasNext()) {
+                    final Iterator<Application> it = applications.iterator();
+                    final Application application = it.next();
+                    if (!it.hasNext()) {
+                        baseUrl.setClientId(application.getClientId());
+                    } else {
+                        throw new RuntimeException("[K3] There is more then one application with type '" + endpoint.getType() + "'.");
+                    }
+                } else {
+                    throw new RuntimeException("[K3] There is no application with type '" +  endpoint.getType() + "'.");
+                }
+            } else {
+                throw new RuntimeException("[K3] EndpointTemplate '" + endpoint.getName() + "' is not associated to a type.");
+            }
+            baseUrl.setInternalUrlId(UUID.randomUUID().toString());
+            baseUrl.setPublicUrlId(UUID.randomUUID().toString());
+            baseUrl.setAdminUrlId(UUID.randomUUID().toString());
+        } catch (Exception e) {
+            logger.error("[K3] Impossible state.", e);
+            if (config.getBoolean("feature.DefaultCloud20Service.addEndpointTemplateKeystoneV3Data.throwError", false)) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -326,7 +360,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = objFactories.getOpenStackIdentityV2Factory();
             Role value = roleConverterCloudV20.toRoleFromClientRole(clientRole);
             return response.entity(openStackIdentityV2Factory.createRole(value).getValue());
-
         } catch (DuplicateException bre) {
             return exceptionHandler.conflictExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
@@ -392,7 +425,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantRole.getTenantIds().add(tenant.getTenantId());
 
             tenantService.addTenantRoleToUser(user, tenantRole);
-
 
             return Response.ok();
 
