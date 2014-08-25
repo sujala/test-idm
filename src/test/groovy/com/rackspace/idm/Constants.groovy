@@ -12,6 +12,7 @@ class Constants {
     static def DEFAULT_PASSWORD = "Password1"
     static def DEFAULT_API_KEY = "Password1"
 
+    static def SCOPE_SETUP_MFA = "SETUP-MFA"
 
     static def NAST_ROLE_ID = "5"
     static def MOSSO_ROLE_ID = "6"

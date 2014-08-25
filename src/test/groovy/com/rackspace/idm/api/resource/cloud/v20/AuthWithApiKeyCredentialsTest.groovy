@@ -14,7 +14,7 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
     }
 
     def setup() {
-        mockConfiguration(service)
+        mockIdentityConfig(service)
         mockUserService(service)
         mockScopeAccessService(service)
         mockValidator20(service)
@@ -53,13 +53,4 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
         result.userScopeAccess == scopeAccess
         result.user == user
     }
-
-    def "a clientId is returned by getCloudAuthClientId"() {
-        when:
-        service.getCloudAuthClientId();
-
-        then:
-        1 * config.getString("cloudAuth.clientId")
-    }
-
 }

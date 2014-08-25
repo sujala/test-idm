@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
@@ -81,6 +82,26 @@ class V2Factory {
         new AuthenticationRequest().with {
             it.setCredential(objFactory.createPasswordCredentials(credentials))
             it.setTenantName(tenantName)
+            return it
+        }
+    }
+
+    def createPasswordAuthenticationRequestWithScope(String username, String password, String scope) {
+        def credentials = createPasswordCredentialsRequiredUsername(username, password)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createPasswordCredentials(credentials))
+            it.scope = ScopeEnum.fromValue(scope)
+            return it
+        }
+    }
+
+    def createApiKeyAuthenticationRequestWithScope(String username, String apiKey, String scope) {
+        def credentials = createApiKeyCredentials(username, apiKey)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createCredential(credentials))
+            it.scope = ScopeEnum.fromValue(scope)
             return it
         }
     }

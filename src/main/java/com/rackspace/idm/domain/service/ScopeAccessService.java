@@ -10,6 +10,18 @@ import java.util.List;
 
 public interface ScopeAccessService {
 
+    /**
+     * Adds a scoped access token for a BaseUser
+     *
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @param expirationSeconds
+     * @param scope
+     * @return
+     */
+    ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope);
+
     void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 
     void addApplicationScopeAccess(Application application, ScopeAccess scopeAccess);

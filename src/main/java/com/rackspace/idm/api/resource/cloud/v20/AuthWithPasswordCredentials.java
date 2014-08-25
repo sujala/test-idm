@@ -27,6 +27,10 @@ public class AuthWithPasswordCredentials extends BaseUserAuthenticationFactor {
     }
 
     public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
+        String scope = null;
+        if (authenticationRequest.getScope() != null) {
+            scope = authenticationRequest.getScope().value();
+        }
         PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
         validator20.validatePasswordCredentials(creds);
         String username = creds.getUsername();
@@ -35,12 +39,14 @@ public class AuthWithPasswordCredentials extends BaseUserAuthenticationFactor {
         UserAuthenticationResult result = this.userService.authenticate(username, password);
         validateUserAuthenticationResult(result);
 
+        result = new UserAuthenticationResult(result.getUser(), result.isAuthenticated(), result.getAuthenticatedBy(), scope);
+
         /*
         For this use case the instanceof should always return true, but double check for backwards compatibility/refactor sake...
          */
         if (!(result.getUser() instanceof User)) {
             User user = userService.getUserByUsernameForAuthentication(creds.getUsername());
-            result = new UserAuthenticationResult(user, result.isAuthenticated(), result.getAuthenticatedBy());
+            result = new UserAuthenticationResult(user, result.isAuthenticated(), result.getAuthenticatedBy(), scope);
         }
         return result;
     }

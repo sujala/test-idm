@@ -208,6 +208,7 @@ public final class JSONConstants {
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
+    public static final String AUTH_RAX_AUTH_SCOPE_PATH = "auth.RAX-AUTH:scope";
     public static final String AUTH_PASSCODE_CREDENTIALS_PATH = "auth.passcodeCredentials";
     public static final String AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH = "auth.RAX-AUTH:passcodeCredentials";
 

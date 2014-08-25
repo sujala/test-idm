@@ -21,6 +21,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.service.IdentityUserService
@@ -120,6 +121,7 @@ import javax.ws.rs.core.UriInfo
 class RootServiceTest extends Specification {
 
     @Shared Configuration config
+    @Shared IdentityConfig identityConfig
     @Shared AtomHopperClient atomHopperClient
     @Shared EmailClient emailClient
     @Shared RSAClient rsaClient
@@ -456,6 +458,11 @@ class RootServiceTest extends Specification {
     def mockUserService(service) {
         userService = Mock()
         service.userService = userService
+    }
+
+    def mockIdentityConfig(service) {
+        identityConfig = Mock()
+        service.identityConfig = identityConfig
     }
     def mockMultiFactorService(service) {
         multiFactorService = Mock()
