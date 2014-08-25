@@ -106,18 +106,33 @@ public class DefaultDomainService implements DomainService {
 
     @Override
     public void addTenantToDomain(String tenantId, String domainId) {
-        Domain domain = getDomain(domainId);
+        final Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
         if(!domain.getEnabled())
             throw new ForbiddenException("Cannot add tenant to disabled domain");
 
-        tenantService.checkAndGetTenant(tenantId);
+        final Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-        List<String> tenantIds = setTenantIdList(domain, tenantId);
+        final List<String> tenantIds = setTenantIdList(domain, tenantId);
         tenantIds.add(tenantId);
         domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
         domainDao.updateDomain(domain);
+
+        // Keystone V3 compatibility
+        addTenantKeystoneV3Data(tenant, domainId);
+    }
+
+    private void addTenantKeystoneV3Data(Tenant tenant, String domainId) {
+        try {
+            tenant.setDomainId(domainId);
+            tenantService.updateTenant(tenant);
+        } catch (Exception e) {
+            logger.error("[K3] Impossible state.", e);
+            if (config.getBoolean("feature.DefaultDomainService.addTenantKeystoneV3Data.throwError", false)) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
