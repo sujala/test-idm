@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -30,17 +31,14 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultDomainServiceTestOld {
 
-    @InjectMocks
-    DefaultDomainService defaultDomainService = new DefaultDomainService();
     @Mock
     DomainDao domainDao;
-    @Mock
-    private TenantService tenantService;
 
-    @Before
-    public void setUp() throws Exception {
-        tenantService = mock(TenantService.class);
-    }
+    @Mock
+    TenantService tenantService;
+
+    @InjectMocks
+    DefaultDomainService defaultDomainService = new DefaultDomainService();
 
     @Test(expected = BadRequestException.class)
     public void addDomain_nullDomain_throwIllegalArgumentException() throws Exception {
@@ -116,12 +114,13 @@ public class DefaultDomainServiceTestOld {
     }
 
     @Test
-    public void addTenantsToDomain_validTenant_returns() throws Exception{
+    public void addTenantsToDomain_validTenant_returns() throws Exception {
         Domain domain = new Domain();
         domain.setDomainId("1");
         domain.setEnabled(true);
+        Tenant tenant = new Tenant();
         when(domainDao.getDomain(anyString())).thenReturn(domain);
-        when(tenantService.getTenant(anyString())).thenReturn(null);
+        when(tenantService.checkAndGetTenant(anyString())).thenReturn(tenant);
         defaultDomainService.addTenantToDomain(null, null);
     }
 

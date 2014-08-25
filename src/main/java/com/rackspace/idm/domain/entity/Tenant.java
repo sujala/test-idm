@@ -50,6 +50,9 @@ public class Tenant implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_V_ONE_DEFAULT, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private HashSet<String> v1Defaults;
 
+    @LDAPField(attribute = LdapRepository.ATTR_DOMAIN_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String domainId;
+
     public String getUniqueId() {
         if (ldapEntry == null) {
             return null;

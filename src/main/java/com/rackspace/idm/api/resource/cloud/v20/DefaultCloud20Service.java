@@ -449,7 +449,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                      org.openstack.docs.identity.api.v2.Tenant tenant) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            final ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
 
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
@@ -457,11 +458,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            // Our implmentation has the id and the name the same
+            // Our implementation has the id and the name the same
             tenant.setId(tenant.getName());
-            Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
+            final Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
+            // Saves the Tenant
             this.tenantService.addTenant(savedTenant);
+
+            // Keystone V3 compatibility
+            addTenantKeystoneV3Data(savedTenant, scopeAccess);
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String tenantId = savedTenant.getTenantId();
@@ -469,11 +474,26 @@ public class DefaultCloud20Service implements Cloud20Service {
             org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = objFactories.getOpenStackIdentityV2Factory();
             org.openstack.docs.identity.api.v2.Tenant value = this.tenantConverterCloudV20.toTenant(savedTenant);
             return Response.created(build).entity(openStackIdentityV2Factory.createTenant(value).getValue());
-
         } catch (DuplicateException de) {
             return exceptionHandler.tenantConflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void addTenantKeystoneV3Data(Tenant savedTenant, ScopeAccess scopeAccess) {
+        try {
+            final EndUser user = getUser(scopeAccess);
+            if (user != null && user.getDomainId() != null) {
+                domainService.addTenantToDomain(savedTenant.getTenantId(), user.getDomainId());
+            } else {
+                throw new RuntimeException("[K3] User '" + user.getId() + "' is not associated to a domainId.");
+            }
+        } catch (Exception e) {
+            logger.error("[K3] Impossible state.", e);
+            if (config.getBoolean("feature.DefaultCloud20Service.addTenantKeystoneV3Data.throwError", false)) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
