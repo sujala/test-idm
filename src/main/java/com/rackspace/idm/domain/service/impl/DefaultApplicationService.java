@@ -140,6 +140,11 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public Iterable<Application> getByType(String type) {
+        return applicationDao.getApplicationByType(type);
+    }
+
+    @Override
     public Application getClientByScope(String scope) {
         return applicationDao.getApplicationByScope(scope);
     }

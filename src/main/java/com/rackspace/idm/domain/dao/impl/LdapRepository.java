@@ -165,6 +165,11 @@ public abstract class LdapRepository {
     public static final String ATTR_MEMBER = "member";
     public static final String ATTR_COMMON_NAME = "cn";
 
+    // Keystone V3 compatibility attributes
+    public static final String ATTR_INTERNAL_URL_ID = "rsInternalUrlId";
+    public static final String ATTR_PUBLIC_URL_ID = "rsPublicUrlId";
+    public static final String ATTR_ADMIN_URL_ID = "rsAdminUrlId";
+
     // Definitions for LDAP DNs
     protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
     protected static final String EXTERNAL_PROVIDERS_USER_CONTAINER_NAME = "users";

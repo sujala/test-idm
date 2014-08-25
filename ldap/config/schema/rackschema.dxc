@@ -825,6 +825,30 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.110) = {
 	description = "Whether the multi-factor is required to authenticate"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.111) = {
+	name = rsInternalUrlId
+	ldap-names = rsInternalUrlId
+	equality = caseExactMatch
+	syntax = directoryString
+	description = "endpoint id for internal urls"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.112) = {
+	name = rsAdminUrlId
+	ldap-names = rsAdminUrlId
+	equality = caseExactMatch
+	syntax = directoryString
+	description = "endpoint id for admin urls"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.113) = {
+	name = rsPublicUrlId
+	ldap-names = rsPublicUrlId
+	equality = caseExactMatch
+	syntax = directoryString
+	description = "endpoint id for public urls"
+};
+
 schema set attribute (1.3.6.1.4.1.20988.2.1.114) = {
     name = rsScope
     ldap-names = rsScope
@@ -970,7 +994,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
         versionInfo,
         versionList,
         policyId,
-        rsTenantAlias
+        rsTenantAlias,
+        rsInternalUrlId,
+        rsPublicUrlId,
+        rsAdminUrlId,
+        clientId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
