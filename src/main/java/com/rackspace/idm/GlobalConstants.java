@@ -26,4 +26,6 @@ public final class GlobalConstants {
     public static final String MULTIFACTOR_CONSISTENCY_LOG_NAME = "multifactorConsistencyLogger";
     public static final String MOSSO = "MOSSO";
     public static final String NAST = "NAST";
+
+    public static final String SETUP_MFA_SCOPE = "SETUP-MFA";
 }

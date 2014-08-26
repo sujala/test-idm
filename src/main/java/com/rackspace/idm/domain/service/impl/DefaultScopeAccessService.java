@@ -872,6 +872,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public boolean isSetupMfaScopedToken(ScopeAccess scopeAccess) {
+        return scopeAccess == null ? false : GlobalConstants.SETUP_MFA_SCOPE.equals(scopeAccess.getScope());
+    }
+
+    @Override
     public Iterable<ScopeAccess> getScopeAccessesForUser(User user) {
         return scopeAccessDao.getScopeAccesses(user);
     }

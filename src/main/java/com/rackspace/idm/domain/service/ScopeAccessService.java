@@ -146,4 +146,5 @@ public interface ScopeAccessService {
      */
     ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, User userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType);
 
+    boolean isSetupMfaScopedToken(ScopeAccess scopeAccess);
  }
