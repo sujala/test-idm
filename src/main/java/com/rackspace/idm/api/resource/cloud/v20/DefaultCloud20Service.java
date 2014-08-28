@@ -3322,6 +3322,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             ScopeAccess sa = checkAndGetToken(tokenId);
+
+            if (scopeAccessService.isSetupMfaScopedToken(sa)) {
+                throw new NotFoundException("Token not found.");
+            }
+
             AuthenticateResponse access = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
@@ -3785,5 +3790,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public void setValidator(Validator validator) {
         this.validator = validator;
     }
+
+
 }
 

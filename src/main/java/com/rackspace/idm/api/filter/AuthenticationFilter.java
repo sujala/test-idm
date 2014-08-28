@@ -1,15 +1,13 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
-import com.rackspace.idm.api.security.DefaultRequestContextHolder;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -105,6 +103,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             }
 
             final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+
             if (authToken != null) {
                 //check for impersonation
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -120,9 +119,48 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     logger.info("Impersonating token {} with token {} ", authToken, newToken);
                     // Saves on a thread local variable
                     requestContextHolder.setImpersonated(true);
+                    sa = requestContextHolder.getEffectiveCallerScopeAccess(newToken);
+                } else {
+                    requestContextHolder.setEffectiveCallerScopeAccess(sa);
+                }
+
+                if (scopeAccessService.isSetupMfaScopedToken(sa) &&
+                        !path.contains("multi-factor")) {
+                    throwForbiddenErrorForMfaScopedToken();
                 }
 
                 if(path.contains("multi-factor")) {
+
+                    // MFA Scoped Tokens are only allowed to make multifactor calls
+                    // for a provisioned user that:
+                    //    1) Token matches the user being acted upon
+                    //    2) Does not already have multi-factor enabled
+                    //
+                    // If either of those conditions are NOT met then a
+                    // ForbiddenException is thrown.
+                    if (scopeAccessService.isSetupMfaScopedToken(sa)) {
+                        String userIdFromPath = parseUserIdFromPath(path);
+
+                        if (StringUtils.isBlank(userIdFromPath)) {
+                            throwForbiddenErrorForMfaScopedToken();
+                        }
+
+                        EndUser endUser = requestContextHolder.getEndUser(userIdFromPath);
+                        if (endUser == null || !(endUser instanceof User)) {
+                            throwForbiddenErrorForMfaScopedToken();
+                        }
+
+                        if (!(sa instanceof UserScopeAccess)) {
+                            throwForbiddenErrorForMfaScopedToken();
+                        }
+
+                        User user = (User)endUser;
+                        UserScopeAccess userScopeAccess = (UserScopeAccess)sa;
+
+                        if (user.isMultiFactorEnabled() || !user.getId().equalsIgnoreCase(userScopeAccess.getUserRsId())) {
+                            throwForbiddenErrorForMfaScopedToken();
+                        }
+                    }
 
                     //We first need to check if multifactor services are enabled. If they are disabled, we allow
                     //the request to pass through in order for the application server to return a 404.
@@ -242,4 +280,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         return null;
     }
 
+    private void throwForbiddenErrorForMfaScopedToken() {
+        String errMsg = "The scope of this token does not allow access to this resource";
+        logger.warn(errMsg);
+        throw new ForbiddenException(errMsg);
+    }
 }

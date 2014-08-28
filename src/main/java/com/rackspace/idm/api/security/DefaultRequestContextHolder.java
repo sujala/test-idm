@@ -1,8 +1,12 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +18,17 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
 
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
+
+    private static final String USER_ID = "UserId";
+    private static final String USER = "User";
+    private static final String TOKEN_STRING = "TokenString";
+    private static final String SCOPE_ACCESS = "ScopeAccess";
+    private static final String SPRING_CONTEXT_ERROR = "Spring request context error getting %s with %s = %s";
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void setImpersonated(boolean flag) {
@@ -51,6 +66,15 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
             endUser = identityUserService.getEndUserById(userId);
             requestContext.setEndUser(endUser);
         }
+
+        // This check is to verify the Spring Scope "Request" is working properly. This should never
+        // fail, but because it's obviously a security concern we should verify it.
+        if (endUser != null && !endUser.getId().equalsIgnoreCase(userId)) {
+            String errMsg = String.format(SPRING_CONTEXT_ERROR, USER, USER_ID, userId);
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
         return endUser;
     }
 
@@ -67,6 +91,15 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
             endUser = identityUserService.checkAndGetEndUserById(userId);
             requestContext.setEndUser(endUser);
         }
+
+        // This check is to verify the Spring Scope "Request" is working properly. This should never
+        // fail, but because it's obviously a security concern we should verify it.
+        if (!endUser.getId().equalsIgnoreCase(userId)) {
+            String errMsg = String.format(SPRING_CONTEXT_ERROR, USER, USER_ID, userId);
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
         return endUser;
     }
 
@@ -90,5 +123,40 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
     @Override
     public User checkAndGetUser(String userId) {
         return (User)checkAndGetEndUser(userId);
+    }
+
+    /**
+     * Gets the effective caller's ScopeAccess (token sent in X-AUTH header) from the Request Context.
+     *
+     * @param tokenString
+     * @return
+     */
+    @Override
+    public ScopeAccess getEffectiveCallerScopeAccess(String tokenString) {
+        ScopeAccess scopeAccess = requestContext.getCallerScopeAccess();
+
+        if (scopeAccess == null) {
+            scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString);
+            requestContext.setCallerScopeAccess(scopeAccess);
+        }
+
+        // This check is to verify the Spring Scope "Request" is working properly. This should never
+        // fail, but because it's obviously a security concern we should verify it.
+        if (scopeAccess != null && !scopeAccess.getAccessTokenString().equalsIgnoreCase(tokenString)) {
+            String errMsg = String.format(SPRING_CONTEXT_ERROR, SCOPE_ACCESS, TOKEN_STRING, tokenString);
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        return scopeAccess;
+    }
+
+    /**
+     * Sets the effective caller's ScopeAcess
+     * @param scopeAccess
+     */
+    @Override
+    public void setEffectiveCallerScopeAccess(ScopeAccess scopeAccess) {
+        requestContext.setCallerScopeAccess(scopeAccess);
     }
 }

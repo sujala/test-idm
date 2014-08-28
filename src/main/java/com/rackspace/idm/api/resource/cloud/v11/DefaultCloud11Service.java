@@ -169,6 +169,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
+
+            if (scopeAccessService.isSetupMfaScopedToken(sa)) {
+                throw new NotFoundException("Token not found.");
+            }
+
             userService.checkUserDisabledByScopeAccess(sa);
 
             if (sa instanceof ImpersonatedScopeAccess){
