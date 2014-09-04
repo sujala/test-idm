@@ -2503,3 +2503,21 @@ cn: rbacRole2
 rsId: 122776
 description: A random rbac role part II
 rsWeight: 1000
+
+dn: rsId=10010175,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4
+ ,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: nova:observer
+rsId: 10010175
+description: Nova Observer Role for Account User
+rsWeight: 1000
+
+dn: rsId=10010176,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4
+ ,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: nova:creator
+rsId: 10010176
+description: Nova Creator Role for Account User
+rsWeight: 1000
