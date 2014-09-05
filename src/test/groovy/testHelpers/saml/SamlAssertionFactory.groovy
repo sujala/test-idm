@@ -7,23 +7,18 @@ import org.opensaml.saml2.core.impl.ResponseMarshaller
 import org.opensaml.xml.util.XMLHelper
 import org.w3c.dom.Element
 
+import static com.rackspace.idm.Constants.*
+
 class SamlAssertionFactory {
 
-    private static final String PRIVATE_KEY = "saml.pkcs8"
-    private static final String PUBLIC_KEY = "saml.crt"
-
-    def generateSamlAssertion(issuer, subject, expirationDays, domain, roles) {
-       return  generateSamlAssertion(issuer, subject, expirationDays, domain, roles, Constants.DEFAULT_FED_EMAIL);
-    }
-
-    def generateSamlAssertion(issuer, subject, expirationDays, domain, roles, email) {
+    def generateSamlAssertion(issuer, subject, expirationDays, domain, roles, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY) {
         HashMap<String, List<String>> attributes = SamlAttributeFactory.createAttributes(domain, roles, email)
 
-        return generateSamlAssertion(issuer, subject, expirationDays, attributes)
+        return generateSamlAssertion(issuer, subject, expirationDays, attributes, privateKey, publicKey)
     }
 
-    def generateSamlAssertion(issuer, subject, expirationDays, Map<String, List<String>> attributes) {
-        SamlAssertionProducer producer = new SamlAssertionProducer(PRIVATE_KEY, PUBLIC_KEY);
+    def generateSamlAssertion(issuer, subject, expirationDays, Map<String, List<String>> attributes, privateKey, publicKey) {
+        SamlAssertionProducer producer = new SamlAssertionProducer(privateKey, publicKey);
 
         Response responseInitial = producer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationDays);
 

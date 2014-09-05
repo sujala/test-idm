@@ -26,6 +26,8 @@ public interface GenericDao<T> {
     Iterable<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit);
     PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
+    public int countObjects(Filter searchFilter, String dn);
+    public int countObjects(Filter searchFilter, String dn, SearchScope scope);
     void updateObject(T object);
 
     /**

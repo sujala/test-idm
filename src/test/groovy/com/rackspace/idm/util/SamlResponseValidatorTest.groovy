@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.SignatureValidationException
@@ -45,6 +46,7 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def mockConfig
     @Shared def mockDomainService
     @Shared def domainAdmin
+    @Shared def mockIdentityUserService
 
     @Shared EntityFactory entityFactory = new EntityFactory()
     @Shared ClientRole dummyRbacRole = entityFactory.createClientRole(ROLE_NAME, PrecedenceValidator.RBAC_ROLES_WEIGHT)
@@ -65,6 +67,7 @@ class SamlResponseValidatorTest extends Specification {
         mockPrecedenceValidator(samlResponseValidator)
         mockConfig(samlResponseValidator)
         mockDomainService(samlResponseValidator)
+        mockIdentityUserService(samlResponseValidator)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
         domainAdmin = new User().with {
             it.enabled = true
@@ -123,9 +126,11 @@ class SamlResponseValidatorTest extends Specification {
 
     def "validate correct saml response" (){
         given:
+        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", _) >> 1000
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
         def idp = createIdentityProvider()
 
         and:
@@ -543,9 +548,11 @@ class SamlResponseValidatorTest extends Specification {
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
 
+        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", _) >> 1000
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -612,6 +619,7 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderName(_, _) >> [].asList()
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -680,6 +688,7 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
@@ -725,6 +734,11 @@ class SamlResponseValidatorTest extends Specification {
     def mockDomainService(validator) {
         mockDomainService = Mock(DomainService)
         validator.domainService = mockDomainService
+    }
+
+    def mockIdentityUserService(validator) {
+        mockIdentityUserService = Mock(IdentityUserService)
+        validator.identityUserService = mockIdentityUserService
     }
 
     def createIdentityProvider() {

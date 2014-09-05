@@ -47,6 +47,16 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
+        return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, FEDERATED_USER_CLASS_FILTERS), getBaseDnWithIdpName(idpName));
+    }
+
+    @Override
+    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
+        return countObjects(searchFilterGetUserByDomainId(domainId, FEDERATED_USER_CLASS_FILTERS), getBaseDnWithIdpName(idpName));
+    }
+
+    @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
     }
@@ -135,6 +145,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                     Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENABLED))
                 )
         );
+    }
+
+    private String getBaseDnWithIdpName(String idpName) {
+        return String.format("ou=%s,ou=%s,%s", EXTERNAL_PROVIDERS_USER_CONTAINER_NAME, idpName, EXTERNAL_PROVIDERS_BASE_DN);
     }
 
     @Override

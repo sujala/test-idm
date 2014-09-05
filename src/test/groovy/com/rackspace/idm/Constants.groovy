@@ -48,5 +48,11 @@ class Constants {
 
     static def DEFAULT_IDP_NAME = "test"
     static def DEFAULT_IDP_URI = "http://test.rackspace.com"
+    static def DEFAULT_IDP_PRIVATE_KEY = "saml.pkcs8"
+    static def DEFAULT_IDP_PUBLIC_KEY = "saml.crt"
+    static def IDP_2_NAME = "identityqe"
+    static def IDP_2_URI = "http://identityqe.rackspace.com"
+    static def IDP_2_PUBLIC_KEY = "saml-qe-idp.crt"
+    static def IDP_2_PRIVATE_KEY = "saml-qe-idp.pkcs8"
     static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
 }

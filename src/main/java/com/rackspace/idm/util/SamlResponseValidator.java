@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
@@ -52,6 +53,9 @@ public class SamlResponseValidator {
 
     @Autowired
     DomainService domainService;
+
+    @Autowired
+    IdentityUserService identityUserService;
 
     /**
      * Validate the samlResponse contains the required data. In addition it verifies the specified issuer exists, the
@@ -212,6 +216,12 @@ public class SamlResponseValidator {
             throw new BadRequestException(String.format(DISABLED_DOMAIN_ERROR_MESSAGE, requestedDomain));
         }
 
+        int numberUsersInDomainAndIdp = identityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(requestedDomain, request.getIdentityProvider().getName());
+        if (numberUsersInDomainAndIdp >= getMaxNumberUsersPerDomainAndIdp()) {
+            String errMsg = String.format("Cannot create more than %d federated users for an account within an identity provider.", getMaxNumberUsersPerDomainAndIdp());
+            throw new BadRequestException(errMsg);
+        }
+
         request.getFederatedUser().setDomainId(domain.getDomainId());
     }
 
@@ -266,6 +276,10 @@ public class SamlResponseValidator {
 
     private boolean getDomainRestrictedToOneUserAdmin() {
         return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
+    }
+
+    private int getMaxNumberUsersPerDomainAndIdp() {
+        return config.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000);
     }
 
 }
