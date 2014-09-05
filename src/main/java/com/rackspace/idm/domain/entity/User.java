@@ -254,7 +254,7 @@ public class User implements EndUser {
     private String multiFactorState;
 
     @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String domainMultiFactorEnforcementLevel;
+    private String userMultiFactorEnforcementLevel;
 
     private List<TenantRole> roles;
 
@@ -319,5 +319,9 @@ public class User implements EndUser {
         }
 
         return roles;
+    }
+
+    public String getUserMultiFactorEnforcementLevelIfNullWillReturnDefault() {
+        return userMultiFactorEnforcementLevel == null ? GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT : userMultiFactorEnforcementLevel;
     }
 }

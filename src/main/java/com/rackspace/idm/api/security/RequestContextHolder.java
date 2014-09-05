@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -22,4 +23,6 @@ public interface RequestContextHolder {
     ScopeAccess getEffectiveCallerScopeAccess(String tokenString);
 
     void setEffectiveCallerScopeAccess(ScopeAccess scopeAccess);
+
+    Domain getEffectiveCallerDomain(String domainId);
 }

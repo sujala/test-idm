@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import org.slf4j.Logger;
@@ -22,10 +24,15 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
     @Autowired
     private ScopeAccessService scopeAccessService;
 
+    @Autowired
+    private DomainService domainService;
+
     private static final String USER_ID = "UserId";
     private static final String USER = "User";
     private static final String TOKEN_STRING = "TokenString";
     private static final String SCOPE_ACCESS = "ScopeAccess";
+    private static final String DOMAIN = "Domain";
+    private static final String DOMAIN_ID = "DomainId";
     private static final String SPRING_CONTEXT_ERROR = "Spring request context error getting %s with %s = %s";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -158,5 +165,30 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
     @Override
     public void setEffectiveCallerScopeAccess(ScopeAccess scopeAccess) {
         requestContext.setCallerScopeAccess(scopeAccess);
+    }
+
+    /**
+     * Gets the effective caller's Domain
+     * @param domainId
+     * @return
+     */
+    @Override
+    public Domain getEffectiveCallerDomain(String domainId) {
+        Domain domain = requestContext.getCallerDomain();
+
+        if (domain == null) {
+            domain = domainService.getDomain(domainId);
+            requestContext.setCallerDomain(domain);
+        }
+
+        // This check is to verify the Spring Scope "Request" is working properly. This should never
+        // fail, but because it's obviously a security concern we should verify it.
+        if (domain != null && !domain.getDomainId().equalsIgnoreCase(domainId)) {
+            String errMsg = String.format(SPRING_CONTEXT_ERROR, DOMAIN, DOMAIN_ID, domainId);
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        return domain;
     }
 }
