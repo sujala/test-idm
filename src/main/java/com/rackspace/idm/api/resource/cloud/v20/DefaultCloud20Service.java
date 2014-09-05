@@ -18,6 +18,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
@@ -75,6 +76,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final String RBAC = "rbac";
     public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
+    public static final String MUST_SETUP_MFA = "User must setup multi-factor";
 
     public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
     public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
@@ -225,6 +227,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -997,6 +1002,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
+                // If the auth request is Scoped to SETUP-MFA then we need to check the enforcement level
+                // on the user and the domain to make sure they need a scoped SETUP-MFA token else we'll
+                // throw a FORBIDDEN EXCEPTION.
+                if (authenticationRequest.getScope() != null) {
+                    checkIfSetupMfaScopeAllowed(authResult.getUser());
+                }
+
                 if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
                     // Scoped tokens not supported here
                     if (authenticationRequest.getScope() != null) {
@@ -1006,6 +1018,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
                     return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
+                    if (authenticationRequest.getScope() == null) {
+                        checkMfaEnforcement(authResult.getUser());
+                    }
                     authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
                     restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
                 }
@@ -3673,7 +3688,88 @@ public class DefaultCloud20Service implements Cloud20Service {
         return roleNames;
     }
 
+    /**
+     * This method checks to make sure that a user is allowed to request a token scoped
+     * to SETUP-MFA. This check consists of 5 parts:
+     * 1. The User is a provisioned User
+     * 2. The User CAN NOT already have MFA enabled
+     * 3. The User MUST have have access to MFA
+     * 4. The User CAN NOT have an OPTIONAL multi-factor enforcement level
+     * 5. If the User has DEFAULT for the multi-factor enforcement level then the
+     *    multi-factor enforcement level on the domain CAN NOT be OPTIONAL.
+     *
+     * @param baseUser
+     */
+    private void checkIfSetupMfaScopeAllowed(BaseUser baseUser) {
 
+        // The user MUST be a provisioned User
+        if (!(baseUser instanceof User)) {
+            throw new IllegalArgumentException();
+        }
+
+        User user = (User)baseUser;
+
+        // The User CAN NOT already be Multi-Factor Enabled
+        if (user.isMultiFactorEnabled()) {
+            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+        }
+
+        // The User MUST have access to Multi-Factor
+        if (!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
+            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+        }
+
+        // The User CAN NOT have a Multi-Factor Enforcement level of OPTIONAL
+        if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
+            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+        }
+
+        // If a User has a Multi-Factor Enforcement level of DEFAULT then the user's
+        // domain CAN NOT have a Multi-Factor Enforcment Level of OPTIONAL
+        if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
+
+            Domain domain = requestContextHolder.getEffectiveCallerDomain(user.getDomainId());
+
+            if (domain != null && GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional())) {
+                throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+            }
+        }
+    }
+
+    private void checkMfaEnforcement(BaseUser baseUser) {
+        // The user MUST be a provisioned User
+        if (!(baseUser instanceof User)) {
+            throw new IllegalArgumentException();
+        }
+
+        User user = (User)baseUser;
+
+        // If the user does NOT have access to multi-factor, then we don't
+        // need to check for mfa enforcement and normal auth can proceed
+        if (!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
+            return;
+        }
+
+        // If the user's mfa enforcement flag is OPTIONAL then normal auth
+        // can proceed.
+        if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
+            return;
+        }
+
+        // If a User has a Multi-Factor Enforcement level of DEFAULT and the user's domain
+        // has a Multi-Factor Enforcement Level of OPTIONAL then normal auth can proceed
+        if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
+
+            Domain domain = requestContextHolder.getEffectiveCallerDomain(user.getDomainId());
+
+            if (domain == null || GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional())) {
+                return;
+            }
+        }
+
+        // If all those checks fail we need to return a Forbidden Exception that tells the user they must setup Multi-Factor
+        throw new ForbiddenException(MUST_SETUP_MFA);
+    }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;

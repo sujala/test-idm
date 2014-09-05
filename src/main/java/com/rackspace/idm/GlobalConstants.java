@@ -28,4 +28,11 @@ public final class GlobalConstants {
     public static final String NAST = "NAST";
 
     public static final String SETUP_MFA_SCOPE = "SETUP-MFA";
+
+    public static final String USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT = "DEFAULT";
+    public static final String USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL = "OPTIONAL";
+    public static final String USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED = "REQUIRED";
+
+    public static final String DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL = "OPTIONAL";
+    public static final String DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED = "REQUIRED";
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -16,4 +17,5 @@ public class RequestContext {
     private boolean isImpersonated;
     private EndUser endUser;
     private ScopeAccess callerScopeAccess;
+    private Domain callerDomain;
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
@@ -73,5 +74,9 @@ public class Domain implements Auditable, UniqueId {
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public String getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional() {
+        return domainMultiFactorEnforcementLevel == null ? GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL : domainMultiFactorEnforcementLevel;
     }
 }
