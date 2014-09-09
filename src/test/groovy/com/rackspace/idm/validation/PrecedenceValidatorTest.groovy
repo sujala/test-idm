@@ -3,6 +3,7 @@ package com.rackspace.idm.validation
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.ForbiddenException
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class PrecedenceValidatorTest extends RootServiceTest {
@@ -36,7 +37,6 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         then:
         exceptionThrown == expectedResult
-
 
         where:
         first | second || expectedResult
@@ -223,6 +223,102 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         then:
         thrown(ForbiddenException)
+    }
+
+    @Unroll
+    def "hasGreaterAccess returns true if caller role has higher access level than target role"() {
+        expect:
+        service.hasGreaterAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("500", 500)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("1", 1)
+    }
+
+    @Unroll
+    def "hasGreaterAccess returns false if caller role has less than or equal access level than target role"() {
+        expect:
+        !service.hasGreaterAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("50", 50)
+        entityFactory.createClientRole("1", 1)   | entityFactory.createClientRole("1", 1)
+        entityFactory.createClientRole("1", 1)   | entityFactory.createClientRole("-1", -1)
+    }
+
+    @Unroll
+    def "hasGreaterOrEqualAccess returns true if caller role has same or higher access level than target role"() {
+        expect:
+        service.hasGreaterOrEqualAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("500", 500)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("0", 0)
+    }
+
+    @Unroll
+    def "hasGreaterOrEqualAccess returns false if caller role has lower access level than target role"() {
+        expect:
+        !service.hasGreaterOrEqualAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("50", 50)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("-5", -5)
+    }
+
+    @Unroll
+    def "verifyHasGreaterAccess does NOT throw Forbidden exception if caller role has higher access level than target role"() {
+        expect:
+        service.verifyHasGreaterAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("500", 500)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("1", 1)
+    }
+
+    @Unroll
+    def "verifyHasGreaterAccess throws ForbiddenException if caller role has less than or equal access level than target role"() {
+        when:
+        !service.verifyHasGreaterAccess(first, second)
+
+        then:
+        thrown(ForbiddenException)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("50", 50)
+        entityFactory.createClientRole("1", 1)   | entityFactory.createClientRole("1", 1)
+        entityFactory.createClientRole("1", 1)   | entityFactory.createClientRole("-1", -1)
+    }
+
+    @Unroll
+    def "verifyHasGreaterOrEqualAccess does NOT throw Forbidden exception if caller role has same or higher access level than target role"() {
+        expect:
+        service.verifyHasGreaterOrEqualAccess(first, second)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("500", 500)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("0", 0)
+    }
+
+    @Unroll
+    def "verifyHasGreaterOrEqualAccess throws ForbiddenException if caller role has lower access level than target role"() {
+        when:
+        !service.verifyHasGreaterOrEqualAccess(first, second)
+
+        then:
+        thrown(ForbiddenException)
+
+        where:
+        first | second
+        entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("50", 50)
+        entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("-5", -5)
     }
 
     def mockRoleService(service) {

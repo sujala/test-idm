@@ -24,6 +24,12 @@ public class IdentityConfig {
     private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
 
+    public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
+    public static final String IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP = "cloudAuth.serviceAdminRole";
+    public static final String IDENTITY_USER_ADMIN_ROLE_NAME_PROP = "cloudAuth.userAdminRole";
+    public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
+    public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
+
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
@@ -45,6 +51,12 @@ public class IdentityConfig {
         verifyAndLogProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
         verifyAndLogProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
         verifyAndLogProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
+
+        verifyAndLogProperty(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogProperty(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
     }
 
     private void verifyAndLogProperty(String property, boolean required) {
@@ -87,4 +99,14 @@ public class IdentityConfig {
     public String getCloudAuthClientId() {
         return config.getString(CLOUD_AUTH_CLIENT_ID);
     }
+
+    public String getIdentityUserAdminRoleName() { return config.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);}
+
+    public String getIdentityIdentityAdminRoleName() { return config.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);}
+
+    public String getIdentityServiceAdminRoleName() { return config.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);}
+
+    public String getIdentityDefaultUserRoleName() { return config.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);}
+
+    public String getIdentityUserManagerRoleName() { return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);}
 }

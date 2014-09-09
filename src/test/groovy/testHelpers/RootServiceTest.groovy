@@ -19,8 +19,8 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
-import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
@@ -102,7 +102,6 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.ObjectFactory
-import org.slf4j.Logger
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -198,7 +197,7 @@ class RootServiceTest extends Specification {
     @Shared MultiFactorCloud20Service multiFactorCloud20Service;
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
-
+    @Shared DefaultRequestContextHolder requestContextHolder
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -612,6 +611,11 @@ class RootServiceTest extends Specification {
     def mockRoleService(service) {
         roleService = Mock()
         service.roleService = roleService
+    }
+
+    def mockRequestContextHolder(service) {
+        requestContextHolder = Mock()
+        service.requestContextHolder = requestContextHolder
     }
 
     /*

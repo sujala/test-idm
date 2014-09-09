@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -45,4 +46,12 @@ public interface AuthorizationService {
     void setConfig(Configuration config);
 
     boolean hasIdentityAdminRole(EndUser user);
+
+    /**
+     * Convert an identity 'classification' role to a static enum that can be subsequently used for comparison/identification purposes
+     *
+     * @return
+     * @throws java.lang.IllegalArgumentException If the provided role is not an identity classification role
+     */
+    IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ClientRole identityTypeRole);
 }
