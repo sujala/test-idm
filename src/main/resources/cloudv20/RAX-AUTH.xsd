@@ -27,6 +27,7 @@
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
+    <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
@@ -212,6 +213,15 @@
                         When set to true, and the caller has appropriate permissions, this will unlock the user's account if
                         the user has multifactor enabled. When set to false or not provided, no change will be made to
                         the lock status of the user's account.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An enumeration indicating if user has required multifactor.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -703,5 +713,13 @@
             </annotation>
         </attribute>
     </complexType>
+
+    <simpleType name="UserMultiFactorEnforcementLevelEnum">
+        <restriction base="xsd:string">
+            <enumeration value="DEFAULT"/>
+            <enumeration value="REQUIRED"/>
+            <enumeration value="OPTIONAL"/>
+        </restriction>
+    </simpleType>
 
 </schema>

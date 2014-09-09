@@ -161,6 +161,11 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
         }
 
+        //display the user multifactor enforcement level if it's non-null regardless of the mfa setting
+        if (user.getUserMultiFactorEnforcementLevel() != null) {
+            outer.put(JSONConstants.RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL, user.getUserMultiFactorEnforcementLevel().toString());
+        }
+
         if (user.getOtherAttributes().size() != 0) {
             String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
             if (!StringUtils.isEmpty(password)) {

@@ -777,7 +777,15 @@ public class DefaultUserService implements UserService {
         User currentUser = userDao.getUserById(user.getId());
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
+        /*
+         some mfa properties on user should never be set via updateUser call (which is used by various front end services
+         such as updateUser, addUserToDomain, etc). To prevent inadvertent updating, just null them out here regardless
+         of the value so the Dao will skip them. The appropriate service in MultiFactorService should be used to appropriately
+         change these values
+         */
         user.setMultifactorEnabled(null);
+        user.setUserMultiFactorEnforcementLevel(null);
+
 
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setRsGroupId(currentUser.getRsGroupId());

@@ -2,6 +2,7 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
@@ -14,6 +15,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
+import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -66,6 +68,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY));
 
+    private final UserMultiFactorEnforcementLevelConverter userMultiFactorEnforcementLevelConverter = new UserMultiFactorEnforcementLevelConverter();
 
     @Autowired
     private UserService userService;
@@ -199,6 +202,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         handleMultiFactorUnlock(user, multiFactor);
         handleMultiFactorEnable(user, multiFactor);
+        handleMultiFactorUserEnforcementLevel(user, multiFactor);
     }
 
     private void handleMultiFactorUnlock(User user, MultiFactor multiFactor) {
@@ -226,6 +230,17 @@ public class BasicMultiFactorService implements MultiFactorService {
             } else {
                 disableMultiFactorForUser(user);
             }
+        }
+    }
+
+    private void handleMultiFactorUserEnforcementLevel(User user, MultiFactor multiFactor) {
+        UserMultiFactorEnforcementLevelEnum existingLevel = userMultiFactorEnforcementLevelConverter.convertTo(user.getUserMultiFactorEnforcementLevel(), null);
+
+        if (multiFactor.getUserMultiFactorEnforcementLevel() != null
+                && multiFactor.getUserMultiFactorEnforcementLevel() != existingLevel) {
+            //want to try and unlock user regardless of mfa enable/disable
+            user.setUserMultiFactorEnforcementLevel(userMultiFactorEnforcementLevelConverter.convertFrom(multiFactor.getUserMultiFactorEnforcementLevel()));
+            userService.updateUserForMultiFactor(user);
         }
     }
 

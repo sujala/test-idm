@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -65,6 +66,71 @@ public class PrecedenceValidator {
         }
     }
 
+    /**
+     * Throws Forbidden exception UNLESS the "caller" role has a higher access level than the "target" role based on standard levels of precedence
+     * for roles.
+     *
+     * @param identityRoleOfCaller
+     * @param identityRoleOfTarget
+     */
+    public void verifyHasGreaterAccess(ClientRole identityRoleOfCaller, ClientRole identityRoleOfTarget) {
+        Validate.notNull(identityRoleOfCaller);
+        Validate.notNull(identityRoleOfTarget);
+
+        if (!hasGreaterAccess(identityRoleOfCaller, identityRoleOfTarget)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+    }
+
+    /**
+     * Throws Forbidden exception UNLESS the "caller" role has a higher or equal access level than the "target" role based on standard levels of precedence
+     * for roles.
+     *
+     * @param identityRoleOfCaller
+     * @param identityRoleOfTarget
+     */
+    public void verifyHasGreaterOrEqualAccess(ClientRole identityRoleOfCaller, ClientRole identityRoleOfTarget) {
+        Validate.notNull(identityRoleOfCaller);
+        Validate.notNull(identityRoleOfTarget);
+
+        if (!hasGreaterOrEqualAccess(identityRoleOfCaller, identityRoleOfTarget)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+    }
+
+    /**
+     * Whether the "caller" role has a higher access level than the "target" role based on standard levels of precedence
+     * for roles.
+     *
+     * @param identityRoleOfCaller
+     * @param identityRoleOfTarget
+     */
+    public boolean hasGreaterAccess(ClientRole identityRoleOfCaller, ClientRole identityRoleOfTarget) {
+        Validate.notNull(identityRoleOfCaller);
+        Validate.notNull(identityRoleOfTarget);
+
+        //lesser weight means higher access level
+        return callerHasLowerWeight(identityRoleOfCaller.getRsWeight(), identityRoleOfTarget.getRsWeight());
+    }
+
+    /**
+     * Whether the "caller" role has a higher or equal access level than the "target" role based on standard levels of precedence
+     * for roles.
+     *
+     * @param identityRoleOfCaller
+     * @param identityRoleOfTarget
+     */
+    public boolean hasGreaterOrEqualAccess(ClientRole identityRoleOfCaller, ClientRole identityRoleOfTarget) {
+        Validate.notNull(identityRoleOfCaller);
+        Validate.notNull(identityRoleOfTarget);
+
+        int callerWeight = identityRoleOfCaller.getRsWeight();
+        int targetWeight = identityRoleOfTarget.getRsWeight();
+
+        //lesser weight means higher access level
+        return callerWeight == targetWeight || callerHasLowerWeight(callerWeight, targetWeight);
+    }
+
     public void verifyCallerRolePrecedenceForAssignment(User user, TenantRole role) {
         ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
         verifyCallerRolePrecedenceForAssignment(user, cRole);
@@ -104,8 +170,12 @@ public class PrecedenceValidator {
     }
 
     private void compareWeights(int callerWeight, int roleWeight) {
-        if (callerWeight >= roleWeight) {
+        if (!callerHasLowerWeight(callerWeight, roleWeight)) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
+    }
+
+    private boolean callerHasLowerWeight(int callerWeight, int roleWeight) {
+        return callerWeight < roleWeight;
     }
 }

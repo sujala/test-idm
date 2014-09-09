@@ -80,7 +80,26 @@ public interface MultiFactorCloud20Service {
     Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode);
 
     /**
-     * Updates multifactor settings on the specified user account.
+     * Modifies MFA settings on the specified user account. The method supports 3 types of requests:
+     *
+     * <ol>
+     *     <li>Unlocking a user <b>other than oneself</b> (must adhere to standard user precedence rules such as an identity:admin not being able to unlock another identity:admin)</li>
+     *     <li>Enabling MFA on user. Can do on self. If not doing on self, must adhere to standard user precedence rules</li>
+     *     <li>Setting MFA enforcement level on a user. Modified precedence rules in effect for this use:
+     *          <ul>
+     *              <li>Default users can NOT modify this setting at all.</li>
+     *              <li>identity:admin/identity:service-admin can modify this setting on standard lower precedence users, but not self</li>
+     *              <li>user-admins can modify this setting on self AND all user-admin/user-manage/default subusers within their domain</li>
+     *              <li>user-managers can modify this setting on self AND all user-admin/user-manage/default subusers within their domain</li>
+     *          </ul>
+     *     </li>
+     * </ol>
+     *
+     * A single request CAN include multiple changes as long as the authorization restrictions are met for both types of changes. For example,
+     * <ul>
+     *     <li>Allowed: As identity:admin unlock a user-admin AND set the user-admins enforcement level</li>
+     *     <li>NOT Allowed: As user-admin unlock my account AND set my enforcement level (denied because can not unlock own account)</li>
+     * </ul>
      *
      * @param uriInfo
      * @param authToken

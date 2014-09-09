@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private ApplicationService applicationService;
     @Autowired
     private Configuration config;
+    @Autowired
+    private IdentityConfig identityConfig;
     @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
@@ -370,6 +374,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
+    }
+
+    @Override
+    public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ClientRole identityTypeRole) {
+        Validate.notNull(identityTypeRole);
+
+        String userRoleName = identityTypeRole.getName();
+        if (identityConfig.getIdentityServiceAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.SERVICE_ADMIN;}
+        if (identityConfig.getIdentityIdentityAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.IDENTITY_ADMIN;}
+        if (identityConfig.getIdentityUserAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.USER_ADMIN;}
+        if (identityConfig.getIdentityUserManagerRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.USER_MANAGER;}
+        if (identityConfig.getIdentityDefaultUserRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.DEFAULT_USER;}
+
+        throw new IllegalArgumentException(String.format("Unrecognized identity classification role '%s'", userRoleName));
     }
 
     private boolean authorize(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
