@@ -22,7 +22,7 @@ public interface ScopeAccessDao {
 
     ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId);
 
-    ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername);
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId);
 
     /**
      * Return the most recent scope accesses object underneath the specified user that has the passed in clientId,
@@ -42,15 +42,35 @@ public interface ScopeAccessDao {
 
     Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user);
 
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId);
+
     /**
      * Return all the impersonated scope acesses objects underneath the specified user that are impersonating
-     * the specified impersonatingUsername
+     * the specified impersonatingUsername that do not have the impersonatingRsId attribute.
+     * This method is now deprecated due to the fact that impersonation tokens now have the impersonated user's rsId.
+     * Identifying impersonation tokens using the impersonated user's username is no longer valid due to the fact that
+     * federated users are now possible to be impersonated and their usernames are only unique within their IDP.
      *
      * @param user
      * @param impersonatingUsername
      * @return
      */
-    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername);
+    @Deprecated
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByUsername(BaseUser user, String impersonatingUsername);
+
+    /**
+     * Return the most recent impersonated scope acesses object underneath the specified user that are impersonating
+     * the specified impersonatingUsername that do not have the impersonatingRsId attribute.
+     * This method is now deprecated due to the fact that impersonation tokens now have the impersonated user's rsId.
+     * Identifying impersonation tokens using the impersonated user's username is no longer valid due to the fact that
+     * federated users are now possible to be impersonated and their usernames are only unique within their IDP.
+     *
+     * @param user
+     * @param impersonatingUsername
+     * @return
+     */
+    @Deprecated
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername);
 
     Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId);
 

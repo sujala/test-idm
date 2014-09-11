@@ -44,6 +44,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return searchForUserById(userId, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class);
     }
 
+    public FederatedUser getFederatedUserByUsernameAndIdpName(String username, String idpName) {
+        return searchForUserByUsername(username, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class, getBaseDnWithIdpName(idpName));
+    }
+
     @Override
     public EndUser getEndUserById(String userId) {
         return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
@@ -104,6 +108,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), SearchScope.SUB);
     }
 
+    private <T extends EndUser> T searchForUserByUsername(String username, List<Filter> userClassFilterList, Class<T> clazz, String baseDn) {
+        return (T) getObject(searchFilterGetUserByUsername(username, userClassFilterList), baseDn, SearchScope.SUB);
+    }
+
     private <T extends EndUser> Iterable<T> searchForUsersByDomainId(String domainId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, userClassFilterList));
     }
@@ -140,6 +148,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return Filter.createANDFilter(
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_ID, id)
+        );
+    }
+
+    private Filter searchFilterGetUserByUsername(String username, List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                Filter.createEqualityFilter(ATTR_UID, username)
         );
     }
 
