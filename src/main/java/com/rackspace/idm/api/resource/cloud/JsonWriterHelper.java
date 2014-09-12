@@ -150,6 +150,10 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
         }
 
+        if (user.getFederatedIdp() != null) {
+            outer.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
+        }
+
         if (isMultiFactorGloballyEnabled) {
             boolean mfaEnabledValue = user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled();
             outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, mfaEnabledValue);
