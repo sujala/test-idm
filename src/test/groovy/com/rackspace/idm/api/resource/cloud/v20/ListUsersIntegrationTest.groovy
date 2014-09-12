@@ -1,12 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlAssertionFactory
+
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 
@@ -180,6 +184,55 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         deleteFederatedUserQuietly(username)
         utils.deleteUser(disabledUser)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "list users contains federated IDP attribute for federated users: accept=#accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        when:
+        def listUsersResponse = cloud20.listUsers(serviceAdminToken, "0", "100000", accept)
+        def userList
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            userList = listUsersResponse.getEntity(UserList).value.user
+        } else {
+            userList = new JsonSlurper().parseText(listUsersResponse.getEntity(String))['users']
+        }
+        def federatedUser
+        for (def curUser : userList) {
+            if (curUser.id == authResponse.user.id) {
+                federatedUser = curUser
+            }
+        }
+
+        then:
+        listUsersResponse.status == 200
+        federatedUser != null
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            assert federatedUser.federatedIdp == DEFAULT_IDP_URI
+        } else {
+            assert federatedUser.'RAX-AUTH:federatedIdp' == DEFAULT_IDP_URI
+        }
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+
     }
 
     @Ignore("This test will currently fail due to federated users not being deleted when a domain is disabled. This test should pass once these updates are made")
