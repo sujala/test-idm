@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.api.security.DefaultRequestContextHolder;
+import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -39,6 +40,7 @@ public class AuthenticationFilterTests {
     Configuration configuration;
     AuthenticationFilter authenticationFilterWithMock;
     DefaultRequestContextHolder requestContextHolderMock;
+    RequestContext requestContextMock;
 
     @Before
     public void setUp() {
@@ -53,8 +55,12 @@ public class AuthenticationFilterTests {
         authFilter.setConfiguration(configuration);
         authenticationFilterWithMock = new AuthenticationFilter(scopeAccessServiceMock);
         authenticationFilterWithMock.setConfiguration(configuration);
+        requestContextMock = mock(RequestContext.class);
         requestContextHolderMock = mock(DefaultRequestContextHolder.class);
+        when(requestContextHolderMock.getRequestContext()).thenReturn(requestContextMock);
+
         authenticationFilterWithMock.setRequestContextHolder(requestContextHolderMock);
+        authFilter.setRequestContextHolder(requestContextHolderMock);
     }
 
     @Test

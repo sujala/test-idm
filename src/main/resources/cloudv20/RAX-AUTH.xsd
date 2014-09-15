@@ -94,6 +94,7 @@
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
+    <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
 
     <!-- Complex Types -->
     <complexType name="AuthenticatedBy">
@@ -262,6 +263,15 @@
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         A boolean indicating if domain is active or not.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="domainMultiFactorEnforcementLevel" type="RAX-AUTH:DomainMultiFactorEnforcementLevelEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An enumeration indicating if domain has required multifactor.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -648,6 +658,19 @@
         </complexContent>
     </complexType>
 
+    <complexType name="MultiFactorDomain">
+        <sequence/>
+        <attribute name="domainMultiFactorEnforcementLevel" type="RAX-AUTH:DomainMultiFactorEnforcementLevelEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether or not multifactor authentication should be enforced on this domain
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
     <simpleType name="StringList">
         <list itemType="xsd:string"/>
     </simpleType>
@@ -722,4 +745,10 @@
         </restriction>
     </simpleType>
 
+    <simpleType name="DomainMultiFactorEnforcementLevelEnum">
+        <restriction base="xsd:string">
+            <enumeration value="REQUIRED"/>
+            <enumeration value="OPTIONAL"/>
+        </restriction>
+    </simpleType>
 </schema>

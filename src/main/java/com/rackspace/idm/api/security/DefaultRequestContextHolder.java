@@ -1,12 +1,9 @@
 package com.rackspace.idm.api.security;
 
-import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,63 +12,43 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultRequestContextHolder implements RequestContextHolder {
 
+    /**
+     * The request context that is tied to the current thread.
+     */
+    @Getter
     @Autowired
     private RequestContext requestContext;
 
     @Autowired
     private IdentityUserService identityUserService;
 
-    @Autowired
-    private ScopeAccessService scopeAccessService;
-
-    @Autowired
-    private DomainService domainService;
-
     private static final String USER_ID = "UserId";
     private static final String USER = "User";
-    private static final String TOKEN_STRING = "TokenString";
-    private static final String SCOPE_ACCESS = "ScopeAccess";
-    private static final String DOMAIN = "Domain";
-    private static final String DOMAIN_ID = "DomainId";
     private static final String SPRING_CONTEXT_ERROR = "Spring request context error getting %s with %s = %s";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Override
-    public void setImpersonated(boolean flag) {
-        requestContext.setImpersonated(flag);
-    }
-
     /**
-     * This method returns 'true' when the request was made using an impersonated token.
+     * Checks the context to see if the user has already been loaded. If not, loads the user and sets it in the context
+     * for future retrieval.
      *
-     * @return
-     */
-    @Override
-    public boolean isImpersonated() {
-        return requestContext.isImpersonated();
-    }
-
-    /**
-     * Sets the End User (user being acted upon) in the Request Context
-     */
-    @Override
-    public void setEndUser(EndUser user) {
-        requestContext.setEndUser(user);
-    }
-
-    /**
-     * Gets the End User (user being acted upon) from the Request Context. Returns
-     * null if no user is associated with that id.
+     * <p>
+     *     Note: This is meant to be used against a single user only. As such, once the context has been loaded with the target user any
+     *     attempt to use this method to load a different user will result in an exception. This method exists more to support
+     *     refactoring existing service calls to start using the RequestContext and to start populating the request context
+     *     with more information.
+     * </p>
      *
+     * @param userId
      * @return
+     * @throws java.lang.IllegalStateException if the user stored in the context has a different userId than specified
      */
     @Override
-    public EndUser getEndUser(String userId) {
-        EndUser endUser = requestContext.getEndUser();
+    public EndUser getTargetEndUser(String userId) {
+        EndUser endUser = requestContext.getTargetEndUser();
         if (endUser == null) {
             endUser = identityUserService.getEndUserById(userId);
-            requestContext.setEndUser(endUser);
+            requestContext.setTargetEndUser(endUser);
         }
 
         // This check is to verify the Spring Scope "Request" is working properly. This should never
@@ -86,17 +63,28 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
     }
 
     /**
-     * Gets the End User (user being acted upon) from the Request Context. Throws a
-     * NotFoundException if no end user is associated with that id
+     * Checks the context to see if the user has already been loaded. If not, loads the user and sets it in the context
+     * for future retrieval.
      *
+     * <p>
+     *     Note: This is meant to be used against a single user only. As such, once the context has been loaded with the target user any
+     *     attempt to use this method to load a different user will result in an exception. This method exists more to support
+     *     refactoring existing service calls to start using the RequestContext and to start populating the request context
+     *     with more information.
+     * </p>
+     *
+     * @param userId
      * @return
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If there is no user in the context yet, and the specified userId is not found
+     * @throws java.lang.IllegalStateException if the user stored in the context has a different userId than specified
      */
     @Override
-    public EndUser checkAndGetEndUser(String userId) {
-        EndUser endUser = requestContext.getEndUser();
+    public EndUser getAndCheckTargetEndUser(String userId) {
+        EndUser endUser = requestContext.getTargetEndUser();
         if (endUser == null) {
             endUser = identityUserService.checkAndGetEndUserById(userId);
-            requestContext.setEndUser(endUser);
+            requestContext.setTargetEndUser(endUser);
         }
 
         // This check is to verify the Spring Scope "Request" is working properly. This should never
@@ -110,85 +98,13 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
         return endUser;
     }
 
-    /**
-     * Gets the User (user being acted upon) from the Request Context. Returns
-     * null if no user is associated with that id.
-     *
-     * @return
-     */
     @Override
-    public User getUser(String userId) {
-        return (User)getEndUser(userId);
+    public User getTargetUser(String userId) {
+        return (User) getTargetEndUser(userId);
     }
 
-    /**
-     * Gets the User (user being acted upon) from the Request Context. Throws a
-     * NotFoundException if no end user is associated with that id
-     *
-     * @return
-     */
     @Override
-    public User checkAndGetUser(String userId) {
-        return (User)checkAndGetEndUser(userId);
-    }
-
-    /**
-     * Gets the effective caller's ScopeAccess (token sent in X-AUTH header) from the Request Context.
-     *
-     * @param tokenString
-     * @return
-     */
-    @Override
-    public ScopeAccess getEffectiveCallerScopeAccess(String tokenString) {
-        ScopeAccess scopeAccess = requestContext.getCallerScopeAccess();
-
-        if (scopeAccess == null) {
-            scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString);
-            requestContext.setCallerScopeAccess(scopeAccess);
-        }
-
-        // This check is to verify the Spring Scope "Request" is working properly. This should never
-        // fail, but because it's obviously a security concern we should verify it.
-        if (scopeAccess != null && !scopeAccess.getAccessTokenString().equalsIgnoreCase(tokenString)) {
-            String errMsg = String.format(SPRING_CONTEXT_ERROR, SCOPE_ACCESS, TOKEN_STRING, tokenString);
-            logger.error(errMsg);
-            throw new IllegalStateException(errMsg);
-        }
-
-        return scopeAccess;
-    }
-
-    /**
-     * Sets the effective caller's ScopeAcess
-     * @param scopeAccess
-     */
-    @Override
-    public void setEffectiveCallerScopeAccess(ScopeAccess scopeAccess) {
-        requestContext.setCallerScopeAccess(scopeAccess);
-    }
-
-    /**
-     * Gets the effective caller's Domain
-     * @param domainId
-     * @return
-     */
-    @Override
-    public Domain getEffectiveCallerDomain(String domainId) {
-        Domain domain = requestContext.getCallerDomain();
-
-        if (domain == null) {
-            domain = domainService.getDomain(domainId);
-            requestContext.setCallerDomain(domain);
-        }
-
-        // This check is to verify the Spring Scope "Request" is working properly. This should never
-        // fail, but because it's obviously a security concern we should verify it.
-        if (domain != null && !domain.getDomainId().equalsIgnoreCase(domainId)) {
-            String errMsg = String.format(SPRING_CONTEXT_ERROR, DOMAIN, DOMAIN_ID, domainId);
-            logger.error(errMsg);
-            throw new IllegalStateException(errMsg);
-        }
-
-        return domain;
+    public User checkAndGetTargetUser(String userId) {
+        return (User) getAndCheckTargetEndUser(userId);
     }
 }

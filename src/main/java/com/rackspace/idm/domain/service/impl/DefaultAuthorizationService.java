@@ -312,6 +312,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifyUserManagedLevelAccess(EndUser user) {
+        ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(user);
+        IdentityUserTypeEnum userIdentityRole = getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
+        verifyUserManagedLevelAccess(userIdentityRole);
+    }
+
+    @Override
+    public void verifyUserManagedLevelAccess(IdentityUserTypeEnum userType) {
+        if (userType == null || !userType.hasAtLeastUserManagedAccessLevel()) {
+            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+        }
+    }
+
+    @Override
     public void verifyUserLevelAccess(ScopeAccess scopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
         verifyUserAccess(user);
@@ -388,6 +402,24 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (identityConfig.getIdentityDefaultUserRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.DEFAULT_USER;}
 
         throw new IllegalArgumentException(String.format("Unrecognized identity classification role '%s'", userRoleName));
+    }
+
+    public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser) {
+        if (baseUser == null) {
+            return null;
+        } else if (baseUser instanceof Racker) {
+            return null;
+        } else if (baseUser instanceof FederatedUser) {
+            return IdentityUserTypeEnum.DEFAULT_USER; //efficiency. Fed users are hardcoded to be default users
+        } else if (!(baseUser instanceof User)) {
+            throw new IllegalStateException(String.format("Unknown user type '%s'", baseUser.getClass().getName()));
+        }
+
+        User user = (User) baseUser;
+
+        ClientRole identityRole = applicationService.getUserIdentityRole(user);
+
+        return identityRole != null ? getIdentityTypeRoleAsEnum(identityRole) : null;
     }
 
     private boolean authorize(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {

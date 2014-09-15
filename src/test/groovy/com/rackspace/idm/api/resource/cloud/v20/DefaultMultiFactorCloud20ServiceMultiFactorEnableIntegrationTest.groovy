@@ -4,9 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
-import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource
-import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -16,9 +13,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
-import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
@@ -139,12 +134,13 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+        def userAdminTokenAPI = utils.getTokenFromApiKeyAuth(finalUserAdmin.username, finalUserAdmin.apiKey)
         def adminToken = utils.getServiceAdminToken()
         def userByIdResponse = cloud20.getUserById(adminToken, userAdmin.id, acceptMediaType)
         def userByUsername = cloud20.getUserByName(adminToken, userAdmin.username, acceptMediaType)
         def usersByEmailResponse = cloud20.getUsersByEmail(adminToken, userAdmin.email, acceptMediaType)
         def usersByDomainResponse = cloud20.getUsersByDomainId(adminToken, userAdmin.domainId, acceptMediaType)
-        def usersListResponse = cloud20.listUsers(adminToken, "0", "1000", acceptMediaType)
+        def usersListResponse = cloud20.listUsers(userAdminTokenAPI, "0", "1000", acceptMediaType)
 
         then:
         response.getStatus() == HttpStatus.SC_NO_CONTENT
@@ -188,8 +184,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         cloud20.validateToken(specificationIdentityAdminToken, pwdToken).status == HttpStatus.SC_NOT_FOUND
     }
 
-    @Unroll("Successfully disable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Successfully disable multifactor after it was enabled"() {
+    @Unroll
+    def "Successfully disable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()
@@ -200,16 +196,19 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         assert intialUserAdmin.isMultiFactorEnabled()
         assert intialUserAdmin.getExternalMultiFactorUserId() != null
 
+        String userAdminApiToken = utils.getTokenFromApiKeyAuth(intialUserAdmin.username, intialUserAdmin.apiKey)
+
         when:
         settings.setEnabled(false)
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
         def adminToken = utils.getServiceAdminToken()
+
         def userByIdResponse = cloud20.getUserById(adminToken, userAdmin.id, acceptMediaType)
         def userByUsername = cloud20.getUserByName(adminToken, userAdmin.username, acceptMediaType)
         def usersByEmailResponse = cloud20.getUsersByEmail(adminToken, userAdmin.email, acceptMediaType)
         def usersByDomainResponse = cloud20.getUsersByDomainId(adminToken, userAdmin.domainId, acceptMediaType)
-        def usersListResponse = cloud20.listUsers(adminToken, "0", "1000", acceptMediaType)
+        def usersListResponse = cloud20.listUsers(userAdminApiToken, "0", "1000", acceptMediaType)
 
         then:
         response.getStatus() == HttpStatus.SC_NO_CONTENT
@@ -249,8 +248,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Disable multifactor when not enable is no-op: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Disable multifactor when not enable is no-op"() {
+    @Unroll
+    def "Disable multifactor when not enable is no-op: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()
@@ -273,8 +272,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Can re-enable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Can re-enable multifactor"() {
+    @Unroll()
+    def "Can re-enable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()
@@ -307,8 +306,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Fail with 400 when multifactor phone not verified: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Fail with 400 when multifactor phone not verified"() {
+    @Unroll
+    def "Fail with 400 when multifactor phone not verified: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
@@ -332,8 +331,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Fail with 400 when no multifactor device on user account: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Fail with 400 when no multifactor device on user account"() {
+    @Unroll
+    def "Fail with 400 when no multifactor device on user account: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
 
@@ -356,8 +355,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    @Unroll("Enable multifactor when already enabled is no-op: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Enable multifactor when already enabled is no-op"() {
+    @Unroll()
+    def "Enable multifactor when already enabled is no-op: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()
@@ -393,8 +392,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
      *
      * @return
      */
-    @Unroll("Successfully enable multifactor when external account and phone already exists for user: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Successfully enable multifactor when external account and phone already exists for user"() {
+    @Unroll
+    def "Successfully enable multifactor when external account and phone already exists for user: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         addPhone()
         verifyPhone()

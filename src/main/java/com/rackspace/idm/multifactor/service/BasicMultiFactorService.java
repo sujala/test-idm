@@ -1,8 +1,10 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
@@ -18,8 +20,8 @@ import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -45,6 +47,9 @@ import java.util.List;
 @Component
 public class BasicMultiFactorService implements MultiFactorService {
     private static final Logger LOG = LoggerFactory.getLogger(BasicMultiFactorService.class);
+
+    public static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
+
     public static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     public static final String ERROR_MSG_PHONE_NOT_ASSOCIATED_WITH_USER = "Specified phone is not associated with user";
 
@@ -98,7 +103,16 @@ public class BasicMultiFactorService implements MultiFactorService {
     private EmailClient emailClient;
 
     @Autowired
+    private DomainService domainService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
+
+    @Autowired
     private Configuration config;
+
+    @Autowired
+    private TenantService tenantService;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -238,7 +252,6 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         if (multiFactor.getUserMultiFactorEnforcementLevel() != null
                 && multiFactor.getUserMultiFactorEnforcementLevel() != existingLevel) {
-            //want to try and unlock user regardless of mfa enable/disable
             user.setUserMultiFactorEnforcementLevel(userMultiFactorEnforcementLevelConverter.convertFrom(multiFactor.getUserMultiFactorEnforcementLevel()));
             userService.updateUserForMultiFactor(user);
         }
@@ -276,6 +289,49 @@ public class BasicMultiFactorService implements MultiFactorService {
         //the info in ldap has been removed.
         if (StringUtils.hasText(providerUserId)) {
             deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+        }
+    }
+
+    @Override
+    public void updateMultiFactorDomainSettings(String domainId, MultiFactorDomain multiFactorDomain) {
+        // Retrieve domain
+        final Domain domain = domainService.checkAndGetDomain(domainId);
+
+        // Update domain
+        final String previousState = domain.getDomainMultiFactorEnforcementLevel();
+        final DomainMultiFactorEnforcementLevelEnum newState = multiFactorDomain.getDomainMultiFactorEnforcementLevel();
+
+        if (!newState.value().equalsIgnoreCase(previousState)) {
+            domain.setDomainMultiFactorEnforcementLevel(newState.value());
+            domainService.updateDomain(domain);
+
+            // Revoke existing tokens when activated
+            if (newState == DomainMultiFactorEnforcementLevelEnum.REQUIRED) {
+                revokeAllMFAProtectedTokensByDomainId(domain);
+            }
+        }
+    }
+
+    /**
+     * Revokes all tokens issued for MFA protected credentials for users within the specified domain that
+     * <ol>
+     *     <li>Have access to MFA</li>
+     *     <li>MUST use MFA to login</li>
+     *     <li><Do not currently have MFA enabled./li>
+     * </ol>
+     *
+     * @param domain
+     */
+    private void revokeAllMFAProtectedTokensByDomainId(Domain domain) {
+        for(User user : identityUserService.getProvisionedUsersByDomainId(domain.getDomainId())) {
+            //only remove if user has access to MFA AND (does NOT have mfa enabled or is not required to use it)
+            if (!(user.isMultiFactorEnabled()
+                    || GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())
+                    ||  (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equals(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())
+                    && GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional()))
+            ) && isMultiFactorEnabledForUser(user)) {
+                revokeAllMFAProtectedTokensForUser(user);
+            }
         }
     }
 
@@ -446,7 +502,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
-            revokeAllNonMFAAndMFAProtectedTokensForUser(user);
+            revokeAllMFAProtectedTokensForUser(user);
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
@@ -456,7 +512,7 @@ public class BasicMultiFactorService implements MultiFactorService {
      * Revokes all the non-mfa tokens for the user, skipping those tokens issued by credentials that are NOT protected
      * via MFA.
      */
-    private void revokeAllNonMFAAndMFAProtectedTokensForUser(User user) {
+    private void revokeAllMFAProtectedTokensForUser(User user) {
         scopeAccessService.expireAllTokensExceptTypeForEndUser(user, AUTHENTICATEDBY_LIST_TO_NOT_REVOKE_ON_MFA_ENABLEMENT, false);
     }
 
@@ -558,4 +614,42 @@ public class BasicMultiFactorService implements MultiFactorService {
         return globalConfig.getBoolean(CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
     }
 
+    @Override
+    public boolean isMultiFactorGloballyEnabled() {
+        return isMultiFactorEnabled() && !isMultiFactorBetaEnabled();
+    }
+
+    @Override
+    public boolean isMultiFactorEnabled() {
+        return config.getBoolean("multifactor.services.enabled", false);
+    }
+
+    @Override
+    public boolean isMultiFactorEnabledForUser(BaseUser user) {
+        if(!isMultiFactorEnabled()) {
+            return false;
+        } else if(isMultiFactorBetaEnabled()) {
+            return userHasMultiFactorBetaRole(user);
+        } else {
+            return true;
+        }
+    }
+
+    private boolean isMultiFactorBetaEnabled() {
+        return config.getBoolean("multifactor.beta.enabled", false);
+    }
+
+    private boolean userHasMultiFactorBetaRole(BaseUser user) {
+        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
+
+        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
+            for(TenantRole role : userGlobalRoles) {
+                if(role.getName().equals(config.getString(MULTIFACTOR_BETA_ROLE_NAME))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

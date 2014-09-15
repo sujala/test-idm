@@ -156,7 +156,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
 
         when:
-        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, simulatedPasscode.ALLOW_ALLOW.passcode, requestContentMediaType, acceptMediaType)
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, simulatedPasscode.passcode, requestContentMediaType, acceptMediaType)
         Token token
         if (acceptMediaType == MediaType.APPLICATION_XML_TYPE) {
             token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token

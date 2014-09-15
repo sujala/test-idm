@@ -424,6 +424,13 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorSettings).put(ClientResponse)
     }
 
+    def updateMultiFactorDomainSettings(String token, String domainId, multiFactorDomainSettings, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId)
+                .path(SERVICE_PATH_MULTI_FACTOR)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(multiFactorDomainSettings).put(ClientResponse)
+    }
+
     def getBypassCodes(String token, String userId, bypassCodes, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
@@ -596,6 +603,11 @@ class Cloud20Methods {
     def deleteDomain(String token, String domainId) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def getDomain(String token, String domainId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def addTenantToDomain(String token, String domainId, String tenantId) {

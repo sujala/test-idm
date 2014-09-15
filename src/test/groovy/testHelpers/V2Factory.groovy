@@ -1,8 +1,10 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
@@ -553,7 +555,12 @@ class V2Factory {
         }
     }
 
-
+    def createMultiFactorDomainSettings(domainMfaEnforcementLevel = DomainMultiFactorEnforcementLevelEnum.OPTIONAL) {
+        new MultiFactorDomain().with {
+            it.domainMultiFactorEnforcementLevel = domainMfaEnforcementLevel
+            return it
+        }
+    }
 
     def createSecretQA(String secretQuestion, String secretAnswer) {
         new SecretQA().with {

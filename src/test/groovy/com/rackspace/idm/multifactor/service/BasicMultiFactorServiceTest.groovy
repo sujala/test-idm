@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service
 
-
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationService
 import com.rackspace.identity.multifactor.providers.ProviderPhone
@@ -8,7 +9,11 @@ import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.MobilePhone
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.TenantService
 import org.apache.commons.collections.CollectionUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -16,6 +21,9 @@ import testHelpers.RootServiceTest
 
 
 class BasicMultiFactorServiceTest extends RootServiceTest {
+    def betaRoleName = "mfaBetaRoleName"
+    def rolesWithoutMfaBetaRole
+    def rolesWithMfaBetaRole
 
     @Shared BasicMultiFactorService service
 
@@ -28,16 +36,32 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
     }
 
     def setup() {
+        rolesWithoutMfaBetaRole = []
+        rolesWithoutMfaBetaRole << new TenantRole().with {
+            it.name = ""
+            it
+        }
+        rolesWithMfaBetaRole = []
+        rolesWithMfaBetaRole << new TenantRole().with {
+            it.name = betaRoleName
+            it
+        }
+
         multiFactorUserManagement = Mock()
         multiFactorAuthenticationService = Mock()
         multiFactorMobilePhoneVerification = Mock()
-
+        tenantService = Mock()
 
         mockMobilePhoneRepository(service)
         mockUserService(service)
         mockScopeAccessService(service)
         mockAtomHopperClient(service)
         mockEmailClient(service)
+        mockDomainService(service)
+        mockIdentityUserService(service)
+        mockConfiguration(service)
+        mockTenantService(service)
+
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
         service.mobilePhoneVerification = multiFactorMobilePhoneVerification
@@ -179,4 +203,102 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         expirationExceptions instanceof List
         CollectionUtils.isEqualCollection(expirationExceptions, EXPECTED_AUTHENTICATEDBY_LIST_TO_NOT_REVOKE)
     }
+
+    def "updateMultiFactorDomainSettings: appropriate user tokens are revoked when set to required"() {
+        MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings(DomainMultiFactorEnforcementLevelEnum.REQUIRED)
+
+        String requiredDomainId = "requiredDomainId"
+        Domain requiredDomain = entityFactory.createDomain(requiredDomainId).with {it.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED; return it}
+
+        String optionalDomainId = "optionalDomainId"
+        Domain optionalDomain = entityFactory.createDomain(optionalDomainId).with {it.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL; return it}
+
+        User normalUser = entityFactory.createUser()
+        User userMfaOptional = entityFactory.createUser().with {it.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL; return it}
+        User userMfaRequired = entityFactory.createUser().with {it.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED; return it}
+        User userWithMfaEnabled = entityFactory.createUser().with {it.multifactorEnabled = true; return it}
+
+        config.getBoolean("multifactor.services.enabled", _) >> true
+
+        when: "update domain to required"
+        service.updateMultiFactorDomainSettings(optionalDomainId, settings)
+
+        then:
+        1 * domainService.checkAndGetDomain(optionalDomainId) >> optionalDomain //depend on this verifying domain exists
+        1 * domainService.updateDomain(optionalDomain)
+        1 * identityUserService.getProvisionedUsersByDomainId(optionalDomainId) >> [normalUser, userMfaOptional, userMfaRequired, userWithMfaEnabled ]
+        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(normalUser, _, _)
+        0 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userMfaOptional, _, _)
+        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userMfaRequired, _, _)
+        0 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userWithMfaEnabled, _, _)
+    }
+
+    def "updateMultiFactorDomainSettings: when setting to current enforcement value the domain is not updated"() {
+        String requiredDomainId = "requiredDomainId"
+        String optionalDomainId = "optionalDomainId"
+        Domain requiredDomain = entityFactory.createDomain(requiredDomainId).with {it.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED; return it}
+        Domain optionalDomain = entityFactory.createDomain(optionalDomainId).with {it.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL; return it}
+
+        when:
+        MultiFactorDomain requiredSettings = v2Factory.createMultiFactorDomainSettings(DomainMultiFactorEnforcementLevelEnum.REQUIRED)
+        service.updateMultiFactorDomainSettings(requiredDomainId, requiredSettings)
+
+        then:
+        domainService.checkAndGetDomain(requiredDomainId) >> requiredDomain
+        0 * domainService.updateDomain(requiredDomain)
+
+        when:
+        MultiFactorDomain optionalSettings = v2Factory.createMultiFactorDomainSettings(DomainMultiFactorEnforcementLevelEnum.OPTIONAL)
+        service.updateMultiFactorDomainSettings(optionalDomainId, optionalSettings)
+
+        then:
+        domainService.checkAndGetDomain(optionalDomainId) >> optionalDomain
+        0 * domainService.updateDomain(optionalDomain)
+    }
+
+    def "isMultiFactorEnabled checks multifactor feature flag"() {
+        when:
+        service.isMultiFactorEnabled()
+
+        then:
+        1 * config.getBoolean("multifactor.services.enabled", false)
+    }
+
+    def "isMultiFactorEnabledForUser returns false if multifactor services are disabled"() {
+        when:
+        def response = service.isMultiFactorEnabled()
+
+        then:
+        1 * config.getBoolean("multifactor.services.enabled", false) >> false
+        response == false
+    }
+
+    def "isMultiFactorEnabledForUser returns false if multifactor services are enabled and in beta and user does not have MFA beta role"() {
+        def user = new User()
+
+        when:
+        def response = service.isMultiFactorEnabledForUser(user)
+
+        then:
+        1 * config.getBoolean("multifactor.services.enabled", false) >> true
+        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
+        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
+        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithoutMfaBetaRole
+        response == false
+    }
+
+    def "isMultiFactorEnabledForUser returns true if multifactor services are enabled and in beta and user has MFA beta role"() {
+        def user = new User()
+
+        when:
+        def response = service.isMultiFactorEnabledForUser(user)
+
+        then:
+        1 * config.getBoolean("multifactor.services.enabled", false) >> true
+        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
+        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
+        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithMfaBetaRole
+        response == true
+    }
+
 }

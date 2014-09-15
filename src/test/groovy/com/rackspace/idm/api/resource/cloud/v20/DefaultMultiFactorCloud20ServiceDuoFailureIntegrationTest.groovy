@@ -122,7 +122,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         multiFactorService.userManagement = mockedUserManagement //set the service to the mock
 
         RequestContextHolder mockRequestContextHolder = Mock(RequestContextHolder)
-        mockRequestContextHolder.checkAndGetUser(_) >> userAdminUser
+        mockRequestContextHolder.checkAndGetTargetUser(_) >> userAdminUser
         multiFactorCloud20Service.requestContextHolder = mockRequestContextHolder
 
         when:

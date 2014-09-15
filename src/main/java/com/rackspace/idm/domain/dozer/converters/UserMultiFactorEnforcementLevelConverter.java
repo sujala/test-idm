@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dozer.converters;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum;
 import com.rackspace.idm.GlobalConstants;
 import org.dozer.DozerConverter;
