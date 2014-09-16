@@ -10,13 +10,17 @@
         </layout>
     </appender>
 
-    <!--<appender name="file" class="org.apache.log4j.-->
-
     <appender name="file" class="org.apache.log4j.rolling.RollingFileAppender">
-        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
-            <param name="fileNamePattern" value="/var/log/idm/idm.log.%d.zip"/>
+        <rollingPolicy class="org.apache.log4j.rolling.FixedWindowRollingPolicy">
+            <param name="fileNamePattern" value="/var/log/idm/idm.%i.log"/>
             <param name="activeFileName" value="/var/log/idm/idm.log"/>
+            <param name="maxIndex" value="12"/>
         </rollingPolicy>
+
+        <triggeringPolicy class="org.apache.log4j.rolling.SizeBasedTriggeringPolicy">
+            <param name="maxFileSize" value="5368709120"/>
+        </triggeringPolicy>
+
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %-5p [%c] %m %X{GUUID} %n"/>
         </layout>
