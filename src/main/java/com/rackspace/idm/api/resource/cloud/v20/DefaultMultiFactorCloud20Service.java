@@ -212,10 +212,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-
             User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
-
             validateVerifyVerificationCodeRequest(requester, user, userId, deviceId, verificationCode);
             multiFactorService.verifyPhoneForUser(userId, deviceId, new BasicPin(verificationCode.getCode()));
             return Response.status(Response.Status.NO_CONTENT);
