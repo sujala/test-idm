@@ -188,6 +188,8 @@ public final class JSONConstants {
 
     public static final String RAX_AUTH_MULTIFACTOR = "RAX-AUTH:multiFactor";
     public static final String MULTIFACTOR = "multiFactor";
+    public static final String RAX_AUTH_MULTIFACTOR_DOMAIN = "RAX-AUTH:multiFactorDomain";
+    public static final String MULTIFACTOR_DOMAIN = "multiFactorDomain";
     public static final String RAX_AUTH_PASSCODE_CREDENTIALS = "RAX-AUTH:passcodeCredentials";
     public static final String PASSCODE_CREDENTIALS = "passcodeCredentials";
 

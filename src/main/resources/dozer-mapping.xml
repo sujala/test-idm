@@ -19,6 +19,11 @@
                 <class-a>java.lang.String</class-a>
                 <class-b>com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum</class-b>
             </converter>
+
+            <converter type="com.rackspace.idm.domain.dozer.converters.DomainMultiFactorEnforcementLevelConverter">
+                <class-a>java.lang.String</class-a>
+                <class-b>com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum</class-b>
+            </converter>
         </custom-converters>
     </configuration>
 

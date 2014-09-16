@@ -140,8 +140,10 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
 
 
     static synchronized public void stopGrizzly() throws Exception {
-        jerseyTest.tearDown();
-        jerseyTest = null;
+        if (jerseyTest != null) {
+            jerseyTest.tearDown();
+            jerseyTest = null;
+        }
         resource = null;
     }
 

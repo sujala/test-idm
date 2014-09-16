@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private IdentityUserDao identityUserRepository;
+
+    @Autowired
+    private UserService userService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -58,6 +62,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return identityUserRepository.getEndUsersByDomainId(domainId);
+    }
+
+    @Override
+    public Iterable<User> getProvisionedUsersByDomainId(String domainId) {
+        return userService.getUsersWithDomain(domainId);
     }
 
     @Override

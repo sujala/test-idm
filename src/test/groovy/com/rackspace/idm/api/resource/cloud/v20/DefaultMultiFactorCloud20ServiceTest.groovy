@@ -1,7 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.security.RequestContext
+import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -19,6 +23,8 @@ import javax.ws.rs.core.Response
 class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     @Shared DefaultMultiFactorCloud20Service service
 
+    @Shared RequestContext requestContext
+
     def setupSpec() {
         service = new DefaultMultiFactorCloud20Service()
     }
@@ -35,6 +41,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         mockRequestContextHolder(service)
         mockAuthorizationService(service)
         mockApplicationService(service)
+        requestContext = Mock(RequestContext)
+
+        requestContextHolder.getRequestContext() >> requestContext
     }
 
     def "listDevicesForUser validates x-auth-token"() {
@@ -57,7 +66,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
         userService.getUserByScopeAccess(callerToken) >> caller
-        requestContextHolder.checkAndGetUser(target.id) >> target
+        requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
 
@@ -67,7 +76,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         then:
         //capture the exception that was thrown
         exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
-        capturedException instanceof ForbiddenException
+        assert capturedException instanceof ForbiddenException
 
         where:
         callerUserIdentityRoleType          |   targetUserIdentityRoleType
@@ -92,7 +101,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
         userService.getUserByScopeAccess(callerToken) >> caller
-        requestContextHolder.checkAndGetUser(target.id) >> target
+        requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
         applicationService.getUserIdentityRole(target) >> targetRole
@@ -116,9 +125,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         if an exception should be thrown, verify the exception handler is called with forbidden exception. Otherwise, verify a 204 is returned
          */
         if (validatorWouldThrowException) {
-            capturedException instanceof ForbiddenException
+            assert capturedException instanceof ForbiddenException
         } else {
-            responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
         }
 
         //verify the domain auth logic is called appropriately
@@ -160,7 +169,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
         userService.getUserByScopeAccess(callerToken) >> caller
-        requestContextHolder.checkAndGetUser(target.id) >> target
+        requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
         applicationService.getUserIdentityRole(target) >> targetRole
@@ -181,9 +190,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
             1 * authorizationService.verifyDomain(caller, target)
         }
         if (allowed) {
-            responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
         } else {
-            capturedException instanceof ForbiddenException
+            assert capturedException instanceof ForbiddenException
         }
 
         where:
@@ -205,7 +214,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
         userService.getUserByScopeAccess(callerToken) >> caller
-        requestContextHolder.checkAndGetUser(caller.id) >> caller
+        requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
 
@@ -217,9 +226,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         then:
         if (allowed) {
-            responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
         } else {
-            capturedException instanceof ForbiddenException
+            assert capturedException instanceof ForbiddenException
         }
 
         where:
@@ -230,4 +239,121 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         IdentityUserTypeEnum.USER_MANAGER   | true
         IdentityUserTypeEnum.DEFAULT_USER   | false
     }
+
+    @Unroll
+    def "updateMultiFactorDomainSettings() - Should #callerUserIdentityRoleType be able to change own domain when user MFA enforcement level set to #userEnforcementLevel? #allowed"() {
+        User caller = entityFactory.createUser().with{it.id = "caller"; it.userMultiFactorEnforcementLevel = userEnforcementLevel; return it}
+        ClientRole callerRole = entityFactory.createClientRole(callerUserIdentityRoleType.name())
+
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        SecurityContext secContext = new SecurityContext().with {it.callerToken = callerToken; it.effectiveCallerToken = callerToken; return it}
+        requestContext.getSecurityContext() >> secContext
+
+        MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
+
+        defaultCloud20Service.getScopeAccessForValidToken(callerToken.accessTokenString) >> callerToken
+        userService.getUserByScopeAccess(callerToken) >> caller
+        applicationService.getUserIdentityRole(caller) >> callerRole
+        authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
+        1 * authorizationService.verifyUserManagedLevelAccess(callerUserIdentityRoleType) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
+
+        def capturedException
+        exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
+
+        when: "update domain"
+        Response.ResponseBuilder responseBuilder = service.updateMultiFactorDomainSettings(null, callerToken.accessTokenString, caller.domainId, settings)
+
+        then:
+        if (allowed) {
+            1 * multiFactorService.updateMultiFactorDomainSettings(caller.domainId, settings)
+        }
+
+        if (allowed) {
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+            assert capturedException == null
+        } else {
+            assert capturedException instanceof ForbiddenException
+        }
+
+        where:
+        callerUserIdentityRoleType          | userEnforcementLevel                                          | allowed  | roleIsUserManagerOrHigher
+        IdentityUserTypeEnum.SERVICE_ADMIN  | null                                                          | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | null                                                          | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | null                                                          | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | null                                                          | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | null                                                          | false    | false
+        IdentityUserTypeEnum.SERVICE_ADMIN  | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | false
+        IdentityUserTypeEnum.SERVICE_ADMIN  | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | false
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | true     | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | true     | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false    | false
+    }
+
+    @Unroll
+    def "updateMultiFactorDomainSettings() - Should #callerUserIdentityRoleType be able to change OTHER domain when user MFA enforcement level set to #userEnforcementLevel? #allowed"() {
+        User caller = entityFactory.createUser().with{it.id = "caller"; it.userMultiFactorEnforcementLevel = userEnforcementLevel; return it}
+        ClientRole callerRole = entityFactory.createClientRole(callerUserIdentityRoleType.name())
+
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        SecurityContext secContext = new SecurityContext().with {it.callerToken = callerToken; it.effectiveCallerToken = callerToken; return it}
+        requestContext.getSecurityContext() >> secContext
+
+        MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
+
+        defaultCloud20Service.getScopeAccessForValidToken(callerToken.accessTokenString) >> callerToken
+        userService.getUserByScopeAccess(callerToken) >> caller
+        applicationService.getUserIdentityRole(caller) >> callerRole
+        authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
+        1 * authorizationService.verifyUserManagedLevelAccess(callerUserIdentityRoleType) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
+
+        def capturedException
+        exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
+
+        when: "update domain"
+        Response.ResponseBuilder responseBuilder = service.updateMultiFactorDomainSettings(null, callerToken.accessTokenString, "otherDomainId", settings)
+
+        then:
+        if (allowed) {
+            1 * multiFactorService.updateMultiFactorDomainSettings("otherDomainId", settings)
+        }
+
+        if (allowed) {
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+            assert capturedException == null
+        } else {
+            assert capturedException instanceof ForbiddenException
+        }
+
+        where:
+        callerUserIdentityRoleType          | userEnforcementLevel                                          | allowed  | roleIsUserManagerOrHigher
+        IdentityUserTypeEnum.SERVICE_ADMIN  | null                                                          | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | null                                                          | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | null                                                          | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | null                                                          | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | null                                                          | false    | false
+        IdentityUserTypeEnum.SERVICE_ADMIN  | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT   | false    | false
+        IdentityUserTypeEnum.SERVICE_ADMIN  | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | true     | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | true     | true
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED  | false    | false
+        IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false     | true
+        IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false     | true
+        IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false    | false
+    }
+
 }

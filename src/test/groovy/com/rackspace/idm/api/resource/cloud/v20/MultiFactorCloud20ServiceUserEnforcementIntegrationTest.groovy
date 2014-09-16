@@ -100,7 +100,7 @@ class MultiFactorCloud20ServiceUserEnforcementIntegrationTest extends RootConcur
 
         def response = cloud20.updateMultiFactorSettings(specificationIdentityAdminToken, userAdmin.id, invalidSettings.toString())
 
-        then: "changed setting and existing user admin token still works"
+        then: "get bad request"
         response.status == SC_BAD_REQUEST
 
         cleanup:

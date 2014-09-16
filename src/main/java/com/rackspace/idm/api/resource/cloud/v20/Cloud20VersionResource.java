@@ -56,6 +56,8 @@ public class Cloud20VersionResource {
     @Autowired
     private CloudMultifactorResource multifactorResource;
 
+    @Autowired
+    private CloudMultifactorDomainResource multifactorDomainResource;
 
     public Cloud20VersionResource() {
     }
@@ -1089,6 +1091,15 @@ public class Cloud20VersionResource {
     public CloudMultifactorResource getMultifactorResource() {
         if (multiFactorCloud20Service.isMultiFactorEnabled()) {
             return multifactorResource;
+        } else {
+            return null;
+        }
+    }
+
+    @Path("RAX-AUTH/domains/{domainId}/multi-factor")
+    public CloudMultifactorDomainResource getMultifactorDomainResource() {
+        if (multiFactorCloud20Service.isMultiFactorEnabled()) {
+            return multifactorDomainResource;
         } else {
             return null;
         }

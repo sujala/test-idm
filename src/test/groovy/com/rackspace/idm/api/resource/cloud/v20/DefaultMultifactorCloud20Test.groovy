@@ -40,8 +40,7 @@ class DefaultMultifactorCloud20Test extends Specification {
     def scopeAccessService
     def userService
     def sessionIdReaderWriter
-    def tenantService
-    def multiFactorService
+    MultiFactorService multiFactorService
     def defaultCloud20Service
     def precedenceValidator
     def authorizationService
@@ -52,8 +51,6 @@ class DefaultMultifactorCloud20Test extends Specification {
 
     def setup() {
         service = new DefaultMultiFactorCloud20Service()
-        tenantService = Mock(TenantService)
-        service.tenantService = tenantService
         config = Mock(Configuration)
         service.config = config
         user = new User()
@@ -73,8 +70,6 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.userService = userService
         sessionIdReaderWriter = Mock(SessionIdReaderWriter)
         service.sessionIdReaderWriter = sessionIdReaderWriter
-        tenantService = Mock(TenantService)
-        service.tenantService = tenantService
         multiFactorService = Mock(MultiFactorService)
         service.multiFactorService = multiFactorService
         defaultCloud20Service = Mock(DefaultCloud20Service)
@@ -87,48 +82,7 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.requestContextHolder = requestContextHolder
     }
 
-    def "isMultiFactorEnabled checks multifactor feature flag"() {
-        when:
-        service.isMultiFactorEnabled()
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false)
-    }
-
-    def "isMultiFactorEnabledForUser returns false if multifactor services are disabled"() {
-        when:
-        def response = service.isMultiFactorEnabled()
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> false
-        response == false
-    }
-
-    def "isMultiFactorEnabledForUser returns false if multifactor services are enabled and in beta and user does not have MFA beta role"() {
-        when:
-        def response = service.isMultiFactorEnabledForUser(user)
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
-        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
-        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithoutMfaBetaRole
-        response == false
-    }
-
-    def "isMultiFactorEnabledForUser returns true if multifactor services are enabled and in beta and user has MFA beta role"() {
-        when:
-        def response = service.isMultiFactorEnabledForUser(user)
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
-        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
-        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithMfaBetaRole
-        response == true
-    }
-
-    def "authenticateSecondFactor allows users without mfa beta role to authenticate when mfa services are fully open"() {
+    def "authenticateSecondFactor calls multifactor service to determine whether user has access to MFA"() {
         given:
         def encodedSessionId = "encodedSessionId"
         def cred = new PasscodeCredentials()
@@ -138,27 +92,11 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.authenticateSecondFactor(encodedSessionId, cred)
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> false
+        1 * multiFactorService.isMultiFactorEnabledForUser(_) >> true
         noExceptionThrown()
     }
 
-    def "authenticateSecondFactor does not throw an exception when mfa is in beta and user had mfa beta role"() {
-        given:
-        def encodedSessionId = "encodedSessionId"
-        def cred = new PasscodeCredentials()
-        setupForMfaAuth(encodedSessionId, rolesWithMfaBetaRole)
-
-        when:
-        service.authenticateSecondFactor(encodedSessionId, cred)
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
-        noExceptionThrown()
-    }
-
-    def "authenticateSecondFactor throws BadRequestException when mfa is in beta and user does not have mfa beta role"() {
+    def "authenticateSecondFactor throws BadRequestException when user does not have access to MFA"() {
         given:
         def encodedSessionId = "encodedSessionId"
         def cred = new PasscodeCredentials()
@@ -168,26 +106,11 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.authenticateSecondFactor(encodedSessionId, cred)
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
+        1 * multiFactorService.isMultiFactorEnabledForUser(_) >> false
         thrown(BadRequestException)
     }
 
-    def "authenticateSecondFactor throws BadRequestException when mfa is disabled for all users"() {
-        given:
-        def encodedSessionId = "encodedSessionId"
-        def cred = new PasscodeCredentials()
-        setupForMfaAuth(encodedSessionId, rolesWithMfaBetaRole)
-
-        when:
-        service.authenticateSecondFactor(encodedSessionId, cred)
-
-        then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> false
-        thrown(BadRequestException)
-    }
-
-    def "updateMultifactor unlock - allow unlocking another account account"() {
+    def "updateMultifactor unlock - allow unlocking another account"() {
         User caller = new User().with {
             it.id = "callerId"
             it.domainId = "domainId"
@@ -211,7 +134,7 @@ class DefaultMultifactorCloud20Test extends Specification {
         then:
         1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
         1 * userService.getUserByScopeAccess(token) >> caller
-        1 * requestContextHolder.checkAndGetUser(_) >> targetUser
+        1 * requestContextHolder.checkAndGetTargetUser(_) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
         1 * authorizationService.authorizeCloudUserAdmin(_) >> false
         1 * authorizationService.authorizeUserManageRole(_) >> true
@@ -259,7 +182,6 @@ class DefaultMultifactorCloud20Test extends Specification {
         }
         sessionIdReaderWriter.readEncoded(encodedSessionId) >> decodedSessionId
         userService.getUserById(userId) >> user
-        tenantService.getGlobalRolesForUser(user) >> userRoles
         def mfaAuthResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, "", "")
         multiFactorService.verifyPasscode(_, _) >> mfaAuthResponse
     }

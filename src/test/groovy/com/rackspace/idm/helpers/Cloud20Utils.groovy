@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -80,6 +81,20 @@ class Cloud20Utils {
         def response = methods.authenticateApiKey(user.username, apikey)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
+    }
+
+    def authenticateApiKey(String username, String apikey = DEFAULT_API_KEY) {
+        def response = methods.authenticateApiKey(username, apikey)
+        assert (response.status == SC_OK)
+        return response.getEntity(AuthenticateResponse).value
+    }
+
+    def getTokenFromApiKeyAuth(String username, String apikey = DEFAULT_API_KEY) {
+        def response = methods.authenticateApiKey(username, apikey)
+        assert (response.status == SC_OK)
+        def entity = response.getEntity(AuthenticateResponse).value
+        assert (entity != null)
+        return entity.token.id
     }
 
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
@@ -160,6 +175,15 @@ class Cloud20Utils {
         }
         def response = methods.deleteDomain(getServiceAdminToken(), domainId)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def Domain getDomain(domainId, String token=getServiceAdminToken()) {
+        def response = methods.getDomain(token, domainId)
+        assert (response.status == SC_OK)
+
+        def entity = response.getEntity(Domain)
+        assert (entity != null)
+        return entity
     }
 
     def getServiceAdminToken() {
@@ -442,8 +466,15 @@ class Cloud20Utils {
         methods.addCredential(getServiceAdminToken(), userId, passwordCred)
     }
 
-    def addApiKeyToUser(User user) {
-        def credentials = v1Factory.createApiKeyCredentials(user.username, testUtils.getRandomIntegerString())
+    def addApiKeyToUser(User user, String apiKey = DEFAULT_API_KEY) {
+        def credentials = v1Factory.createApiKeyCredentials(user.username, apiKey)
+        def response = methods.addApiKeyToUser(getServiceAdminToken(), user.id, credentials)
+        assert (response.status == SC_OK)
+        response.getEntity(ApiKeyCredentials)
+    }
+
+    def addApiKeyToUser(com.rackspace.idm.domain.entity.User user, String apiKey = DEFAULT_API_KEY) {
+        def credentials = v1Factory.createApiKeyCredentials(user.username, apiKey)
         def response = methods.addApiKeyToUser(getServiceAdminToken(), user.id, credentials)
         assert (response.status == SC_OK)
         response.getEntity(ApiKeyCredentials)
@@ -546,6 +577,11 @@ class Cloud20Utils {
 
     def updateMultiFactor(token, userId, MultiFactor settings) {
         def response = methods.updateMultiFactorSettings(token, userId, settings)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
+    }
+
+    def updateMultiFactorDomainSettings(token, domainId, MultiFactorDomain settings) {
+        def response = methods.updateMultiFactorDomainSettings(token, domainId, settings)
         assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 

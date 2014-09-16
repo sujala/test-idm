@@ -180,6 +180,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="multiFactor"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='MultiFactorDomain']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="multiFactorDomain"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='PasscodeCredentials']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passcodeCredentials"/>

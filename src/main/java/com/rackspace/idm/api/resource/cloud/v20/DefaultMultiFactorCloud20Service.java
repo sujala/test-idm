@@ -1,10 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason;
@@ -23,6 +20,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
@@ -53,16 +51,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- */
 @Component
 public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Service {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMultiFactorCloud20Service.class);
 
     static final String BAD_REQUEST_MSG_MISSING_PHONE_NUMBER = "Must provide a telephone number";
-    static final String BAD_REQUEST_MSG_INVALID_CALLER = "Invalid requestor.";
     static final String BAD_REQUEST_MSG_INVALID_TARGET_OWN_ACCOUNT = "Can not make this multifactor change on own account";
-    static final String BAD_REQUEST_MSG_ALREADY_LINKED = "Already associated with a mobile phone";
     static final String BAD_REQUEST_MSG_MFA_ENABLED = "Cannot replace device with multifactor enabled";
     static final String BAD_REQUEST_MSG_INVALID_PHONE_NUMBER = "The provided phone number is invalid.";
     static final String BAD_REQUEST_MSG_INVALID_DEVICE = "The specified device is invalid";
@@ -70,11 +64,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
-    static final String BAD_REQUEST_MSG_MULTIFACTOR_DISABLED = "User does not have multifactor enabled";
+    static final String FORBIDDEN_MSG_MULTIFACTOR_DISABLED = "You must have Multi-Factor Authentication set as optional or enabled for your profile to enforce Multi-Factor Authentication for the domain";
+    static final String BAD_REQUEST_MSG_MISSING_DOMAIN_MFA_SETTINGS = "Must provide domain multifactor enforcement level";
+    static final String BAD_REQUEST_MSG_INVALID_USER = "Invalid user";
 
     public static final String NOT_AUTHORIZED_ERROR_MSG = "Not Authorized";
-
-    static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
 
     private static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
     private static final String SESSION_ID_LIFETIME_PROP_NAME = "multifactor.sessionid.lifetime";
@@ -128,9 +122,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     private SessionIdReaderWriter sessionIdReaderWriter;
 
     @Autowired
-    private TenantService tenantService;
-
-    @Autowired
     private AuthorizationService authorizationService;
 
     @Autowired
@@ -144,6 +135,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private DomainService domainService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     private boolean isSelfCall(User caller, User user) {
         return caller.getId().equals(user.getId());
@@ -163,7 +160,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetUser(userId);
+
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
 
             validateAddPhoneToUserRequest(user, requestMobilePhone);
@@ -188,7 +186,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetUser(userId);
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+
             verifyAccessToOtherUser(token, requester, user);
 
             validateSendVerificationCodeRequest(deviceId);
@@ -213,10 +212,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetUser(userId);
+
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
 
-            validateVerifyVerificationCodeRequest(requester, userId, deviceId, verificationCode);
+            validateVerifyVerificationCodeRequest(requester, user, userId, deviceId, verificationCode);
             multiFactorService.verifyPhoneForUser(userId, deviceId, new BasicPin(verificationCode.getCode()));
             return Response.status(Response.Status.NO_CONTENT);
         } catch (MultiFactorDeviceNotAssociatedWithUserException ex) {
@@ -237,7 +237,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken); //will throw NotAuthorizedException if not found or expired
             User requester = (User) userService.getUserByScopeAccess(token); //will throw NotFoundException if not found
-            User user = requestContextHolder.checkAndGetUser(userId); //will throw NotFoundException if not found
+            User user = requestContextHolder.checkAndGetTargetUser(userId); //will throw NotFoundException if not found
 
             validateUpdateMultiFactorSettingsRequest(requester, token, user, multiFactor);
             multiFactorService.updateMultiFactorSettings(userId, multiFactor);
@@ -248,7 +248,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.error(String.format("Error updating multifactor settings on user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
-
     }
 
     @Override
@@ -256,7 +255,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetUser(userId);
+
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
 
             multiFactorService.removeMultiFactorForUser(userId);
@@ -397,16 +397,13 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return exceptionToThrow;
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
+    @Override
     public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
 
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetUser(userId);
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
 
             List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(user);
@@ -416,6 +413,82 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
         } catch (Exception ex) {
             LOG.error(String.format("Error listing devices on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
+        try {
+            final User user = (User)requestContextHolder.getTargetEndUser(userId);
+            final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            final User requester = (User) userService.getUserByScopeAccess(token);
+
+            validateGenerateBypassCodesRequest(authToken, user, token, requester);
+            final boolean isSelfService = isSelfCall(requester, user) && !requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest();
+
+            final Integer validSecs = getValidSecs(bypassCodes.getValidityDuration(), isSelfService);
+            final List<String> codes = new ArrayList<String>();
+            if (isSelfService) {
+                codes.addAll(multiFactorService.getSelfServiceBypassCodes(user, validSecs, bypassCodes.getNumberOfCodes()));
+            } else {
+                codes.add(multiFactorService.getBypassCode(user, validSecs));
+            }
+
+            final BypassCodes entity = new BypassCodes();
+            entity.getCodes().addAll(codes);
+            entity.setValidityDuration(dateHelper.getDurationFromSeconds(validSecs));
+
+            final Response.ResponseBuilder response = Response.ok();
+            response.entity(entity);
+            return response;
+        } catch (Exception ex) {
+            LOG.error(String.format("Error listing devices on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder updateMultiFactorDomainSettings(UriInfo uriInfo, String authToken, String domainId, MultiFactorDomain multiFactorDomain) {
+        try {
+            //verify correct props are provided
+            if (multiFactorDomain.getDomainMultiFactorEnforcementLevel() == null) {
+                throw new BadRequestException(BAD_REQUEST_MSG_MISSING_DOMAIN_MFA_SETTINGS);
+            }
+
+            //get the token
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            /*
+            this throws a NotFoundException (token not found) if the associated user or domain is disabled.
+             */
+            final User caller = (User) userService.getUserByScopeAccess(token);
+
+            // Verify user level
+            ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(caller);
+            IdentityUserTypeEnum requesterIdentityRole = authorizationService.getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
+            authorizationService.verifyUserManagedLevelAccess(requesterIdentityRole);
+
+            //if necessary, verify domain being changed is appropriate for user
+            if (requesterIdentityRole.isDomainBasedAccessLevel() && (caller.getDomainId() == null || !caller.getDomainId().equalsIgnoreCase(domainId))) {
+                throw new ForbiddenException(NOT_AUTHORIZED_ERROR_MSG);
+            }
+
+            /*
+            For a user-admin/user-manager to change the state of MFA on a domain, the caller must have MFA enabled or have his/her user enforcement set to OPTIONAL. This guarantees
+            that at least one user-admin/manager in the domain can continue to log-in after enabling domain level enforcement. Requiring it to disable
+            domain level enforcement is for consistency and to allow a user who may have mistakenly disable it on the domain to immediately re-enable it.
+             */
+            if (requesterIdentityRole.isDomainBasedAccessLevel() && !caller.isMultiFactorEnabled() && !GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(caller.getUserMultiFactorEnforcementLevel())) {
+                throw new ForbiddenException(FORBIDDEN_MSG_MULTIFACTOR_DISABLED);
+            }
+
+            //counting on this method to throw NotFoundException if domainId does not exist
+            multiFactorService.updateMultiFactorDomainSettings(domainId, multiFactorDomain);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error changing multi-factor settings on domain '%s'", domainId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -537,7 +610,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateVerifyVerificationCodeRequest(User requester, String userId, String deviceId, VerificationCode verificationCode) {
+    private void validateVerifyVerificationCodeRequest(User requester, User targetUser, String userId, String deviceId, VerificationCode verificationCode) {
         if (StringUtils.isBlank(deviceId)) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_DEVICE); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_DEVICE);
@@ -546,7 +619,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE);
         }
-        else if (requester.getMultiFactorMobilePhoneRsId() == null || !requester.getMultiFactorMobilePhoneRsId().equals(deviceId)) {
+        else if (targetUser.getMultiFactorMobilePhoneRsId() == null || !targetUser.getMultiFactorMobilePhoneRsId().equals(deviceId)) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_DEVICE); //logged as debug because this is a bad request, not an error in app
             throw new NotFoundException(BAD_REQUEST_MSG_INVALID_DEVICE);
         }
@@ -554,27 +627,17 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public boolean isMultiFactorGloballyEnabled() {
-        return isMultiFactorEnabled() && !isMultiFactorBetaEnabled();
+        return multiFactorService.isMultiFactorGloballyEnabled();
     }
 
     @Override
     public boolean isMultiFactorEnabled() {
-        return config.getBoolean("multifactor.services.enabled", false);
-    }
-
-    private boolean isMultiFactorBetaEnabled() {
-        return config.getBoolean("multifactor.beta.enabled", false);
+        return multiFactorService.isMultiFactorEnabled();
     }
 
     @Override
     public boolean isMultiFactorEnabledForUser(BaseUser user) {
-        if(!isMultiFactorEnabled()) {
-            return false;
-        } else if(isMultiFactorBetaEnabled()) {
-            return userHasMultiFactorBetaRole(user);
-        } else {
-            return true;
-        }
+        return multiFactorService.isMultiFactorEnabledForUser(user);
     }
 
     /**
@@ -606,42 +669,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return config.getInt(SESSION_ID_LIFETIME_PROP_NAME, SESSION_ID_LIFETIME_DEFAULT);
     }
 
-    private boolean userHasMultiFactorBetaRole(BaseUser user) {
-        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
-
-        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
-            for(TenantRole role : userGlobalRoles) {
-                if(role.getName().equals(config.getString(MULTIFACTOR_BETA_ROLE_NAME))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
-        final User user = (User)requestContextHolder.getEndUser(userId);
-        final boolean isSelfService = validateGenerateBypassCodesRequest(authToken, user);
-
-        final Integer validSecs = getValidSecs(bypassCodes.getValidityDuration(), isSelfService);
-        final List<String> codes = new ArrayList<String>();
-        if (isSelfService) {
-            codes.addAll(multiFactorService.getSelfServiceBypassCodes(user, validSecs, bypassCodes.getNumberOfCodes()));
-        } else {
-            codes.add(multiFactorService.getBypassCode(user, validSecs));
-        }
-
-        final BypassCodes entity = new BypassCodes();
-        entity.getCodes().addAll(codes);
-        entity.setValidityDuration(dateHelper.getDurationFromSeconds(validSecs));
-
-        final Response.ResponseBuilder response = Response.ok();
-        response.entity(entity);
-        return response;
-    }
-
     private Integer getValidSecs(Duration duration, boolean isSelfService) {
         final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_DURATION, BigInteger.valueOf(10800));
         if (duration == null) {
@@ -651,33 +678,28 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private boolean validateGenerateBypassCodesRequest(String authToken, User user) {
-        final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
-        final User requester = (User) userService.getUserByScopeAccess(token);
+    private void validateGenerateBypassCodesRequest(String authToken, User user, ScopeAccess token, User requester) {
+        if (user == null) {
+            throw new BadRequestException(BAD_REQUEST_MSG_INVALID_USER);
+        }
+
+        if (!isSelfCall(requester, user)) {
+            authorizationService.verifyUserManagedLevelAccess(token);
+            verifyAccessToOtherUser(token, requester, user);
+        }
 
         // Verify if the user is valid
         userService.validateUserIsEnabled(user);
-        if (!user.isMultiFactorEnabled()) {
-            throw new BadRequestException(BAD_REQUEST_MSG_MULTIFACTOR_DISABLED);
-        }
 
-        final String userId = user.getId();
-        if (userId != null && userId.equals(requester.getId())) {
-            // Self-service request
-            return !requestContextHolder.isImpersonated();
-        } else {
-            validateUserManagerLevel(token, requester, user);
-            return false;
+        //can only generate codes for mfa enabled users
+        if (!user.isMultiFactorEnabled()) {
+            throw new BadRequestException(FORBIDDEN_MSG_MULTIFACTOR_DISABLED);
         }
     }
 
-    private void validateUserManagerLevel(ScopeAccess token, User requester, User user) {
-        // Verify requester/user precedence level
-        authorizationService.verifyUserManagedLevelAccess(token);
-        precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-        if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
-            authorizationService.verifyDomain(requester, user);
-        }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
     }
 
 }

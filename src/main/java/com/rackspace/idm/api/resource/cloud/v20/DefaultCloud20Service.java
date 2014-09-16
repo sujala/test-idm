@@ -1002,13 +1002,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
-                // If the auth request is Scoped to SETUP-MFA then we need to check the enforcement level
-                // on the user and the domain to make sure they need a scoped SETUP-MFA token else we'll
-                // throw a FORBIDDEN EXCEPTION.
-                if (authenticationRequest.getScope() != null) {
-                    checkIfSetupMfaScopeAllowed(authResult.getUser());
-                }
-
                 if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
                     // Scoped tokens not supported here
                     if (authenticationRequest.getScope() != null) {
@@ -1018,9 +1011,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                     //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
                     return multiFactorCloud20Service.performMultiFactorChallenge((User) authResult.getUser(), authResult.getAuthenticatedBy());
                 } else {
-                    if (authenticationRequest.getScope() == null) {
+                    /*
+                    user requested "regular" token and provided correct initial credentials. Make sure they are not required to use MFA
+                    for that credential before issuing token
+                     */
+                    if (authenticationRequest.getScope() == null && canUseMfaWithCredential) {
                         checkMfaEnforcement(authResult.getUser());
                     }
+                    else if (authenticationRequest.getScope() != null) {
+                        // If the auth request is Scoped to SETUP-MFA then we need to check the enforcement level
+                        // on the user and the domain to make sure they require a scoped SETUP-MFA token before
+                        // issuing one. If not required, we'll throw a FORBIDDEN EXCEPTION.
+                        checkIfSetupMfaScopeAllowed(authResult.getUser());
+                    }
+
                     authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
                     restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
                 }
@@ -3725,10 +3729,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         // If a User has a Multi-Factor Enforcement level of DEFAULT then the user's
-        // domain CAN NOT have a Multi-Factor Enforcment Level of OPTIONAL
+        // domain CAN NOT have a Multi-Factor Enforcement Level of OPTIONAL
         if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
 
-            Domain domain = requestContextHolder.getEffectiveCallerDomain(user.getDomainId());
+            Domain domain = domainService.getDomain(user.getDomainId());
 
             if (domain != null && GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional())) {
                 throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -3760,7 +3764,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         // has a Multi-Factor Enforcement Level of OPTIONAL then normal auth can proceed
         if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
 
-            Domain domain = requestContextHolder.getEffectiveCallerDomain(user.getDomainId());
+            Domain domain = domainService.getDomain(user.getDomainId());
 
             if (domain == null || GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional())) {
                 return;

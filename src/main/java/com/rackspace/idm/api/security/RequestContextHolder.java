@@ -1,28 +1,44 @@
 package com.rackspace.idm.api.security;
 
-import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 
 public interface RequestContextHolder {
-    void setImpersonated(boolean flag);
+    /**
+     * Gets the End User (user being acted upon) from the Request Context. Returns
+     * null if no user is associated with that id.
+     *
+     * @return
+     */
+    EndUser getTargetEndUser(String userId);
 
-    boolean isImpersonated();
+    /**
+     * Gets the End User (user being acted upon) from the Request Context. Throws a
+     * NotFoundException if no end user is associated with that id
+     *
+     * @return
+     */
+    EndUser getAndCheckTargetEndUser(String userId);
 
-    void setEndUser(EndUser user);
+    /**
+     * Gets the User (user being acted upon) from the Request Context. Returns
+     * null if no user is associated with that id.
+     *
+     * @return
+     */
+    User getTargetUser(String userId);
 
-    EndUser getEndUser(String userId);
+    /**
+     * Gets the User (user being acted upon) from the Request Context. Throws a
+     * NotFoundException if no end user is associated with that id
+     *
+     * @return
+     */
+    User checkAndGetTargetUser(String userId);
 
-    EndUser checkAndGetEndUser(String userId);
-
-    User getUser(String userId);
-
-    User checkAndGetUser(String userId);
-
-    ScopeAccess getEffectiveCallerScopeAccess(String tokenString);
-
-    void setEffectiveCallerScopeAccess(ScopeAccess scopeAccess);
-
-    Domain getEffectiveCallerDomain(String domainId);
+    /**
+     * Return the request context. Must not return null.
+     * @return
+     */
+    RequestContext getRequestContext();
 }

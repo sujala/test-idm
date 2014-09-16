@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.User;
@@ -12,6 +13,15 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 /**
+ * <p>
+ * Acts as a bridge between the REST services exposed via the {@link com.rackspace.idm.api.resource.cloud.v20.CloudMultifactorResource} and
+ * {@link com.rackspace.idm.api.resource.cloud.v20.CloudMultifactorDomainResource} to the underlying multifactor business service
+ * {@link com.rackspace.idm.multifactor.service.MultiFactorService}.
+ * </p>
+ * <p>
+ * Authorizes and validates the REST requests before calling the appropriate underlying MultiFactorService
+ * to perform that actual business logic. Will then return the appropriate response to the REST request.
+ * </p>
  */
 public interface MultiFactorCloud20Service {
     static final String X_SESSION_ID_HEADER_NAME = "X-SessionId";
@@ -170,4 +180,16 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes);
+
+    /**
+     * Updates multifactor settings on the specified domain.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param domainId
+     * @param multiFactorDomain
+     * @return
+     */
+    Response.ResponseBuilder updateMultiFactorDomainSettings(UriInfo uriInfo, String authToken, String domainId, MultiFactorDomain multiFactorDomain);
+
 }

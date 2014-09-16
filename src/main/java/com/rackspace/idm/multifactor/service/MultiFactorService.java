@@ -2,8 +2,10 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.User;
 
@@ -144,4 +146,36 @@ public interface MultiFactorService {
      * @return
      */
     public List<String> getSelfServiceBypassCodes(User user, Integer validSecs, BigInteger numberOfCodes);
+
+    /**
+     * Update the multifactor settings on a domain
+     *
+     * @param domainId
+     * @param multiFactorDomain
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If domainId does not exist
+     */
+    void updateMultiFactorDomainSettings(String domainId, MultiFactorDomain multiFactorDomain);
+
+    /**
+     * Whether or not multi-factor services are enabled or not.
+     *
+     * Returns true if multi-factor status is either FULL or BETA otherwise returns FALSE.
+     */
+    boolean isMultiFactorEnabled();
+
+    /**
+     * Whether or not multi-factor services are enabled and multi-factor beta is disabled.
+     *
+     * Returns true if multi-factor services are enabled and multi-factor beta is disabled. Returns false otherwise.
+     */
+    public boolean isMultiFactorGloballyEnabled();
+
+    /**
+     * Whether or not multi-factor services are enabled or not for a given user.
+     *
+     * Returns true if multi-factor status is FULL, true if multi-factor status is BETA and user has
+     * multi-factor beta role, and false otherwise.
+     */
+    boolean isMultiFactorEnabledForUser(BaseUser user);
 }
