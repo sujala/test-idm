@@ -38,7 +38,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     @Override
     public Domain getDomain(String domainId) {
         if (StringUtils.isBlank(domainId)) {
-            getLogger().error(NULL_OR_EMPTY_DOMAIN_ID_PARAMETER);
             return null;
         }
         return getObject(searchByIdFilter(domainId));
