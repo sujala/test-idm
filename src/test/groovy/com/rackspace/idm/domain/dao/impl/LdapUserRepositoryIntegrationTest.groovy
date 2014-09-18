@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EncryptionService
+import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPException
+import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -17,6 +19,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     EncryptionService encryptionService;
 
     @Autowired Configuration config
+
+    @Autowired
+    CloudTestUtils cloudTestUtils
 
     @Shared def random
     @Shared def username
@@ -188,16 +193,16 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.deleteUser(username2)
     }
 
-    def "retrieving enabled users by groupId does not retrieve disabled users"() {
+    def "getEnabledUsersByGroupId pagination - retrieving enabled users by groupId does not retrieve disabled users"() {
         given:
-        String username1 = "enabledUse$random"
-        String username2 = "disabledUse$random"
-        String groupId =  (String)"group$random"
-        def user1 = createUser("1$random", username1, "domain$random", "email@email.com", true, "DFW", "Password1").with {
+        String enabledUserName = cloudTestUtils.getRandomUUID()
+        String disabledUsername =cloudTestUtils.getRandomUUID()
+        String groupId =  cloudTestUtils.getRandomUUID()
+        def user1 = createUser("1$random", enabledUserName, cloudTestUtils.getRandomUUID(), "email@email.com", true, "DFW", "Password1").with {
             it.rsGroupId = [groupId] as HashSet
             it
         }
-        def user2 = createUser("2$random", username2, "domain$random", "email@email.com", false, "DFW", "Password1").with {
+        def user2 = createUser("2$random", disabledUsername, cloudTestUtils.getRandomUUID(), "email@email.com", false, "DFW", "Password1").with {
             it.rsGroupId = [groupId] as HashSet
             it
         }
@@ -206,16 +211,76 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         ldapUserRepository.addUser(user2)
 
         when:
-        def userList = ldapUserRepository.getUsersByGroupId(groupId, 0, 1000).valueList
+        def userList = ldapUserRepository.getEnabledUsersByGroupId(groupId, 0, 1000).valueList
 
         then:
         userList != null
-        userList.username.contains(username1)
-        !userList.username.contains(username2)
+        userList.username.contains(enabledUserName)
+        !userList.username.contains(disabledUsername)
 
         cleanup:
-        ldapUserRepository.deleteUser(username1)
-        ldapUserRepository.deleteUser(username2)
+        ldapUserRepository.deleteUser(enabledUserName)
+        ldapUserRepository.deleteUser(disabledUsername)
+    }
+
+    def "getEnabledUsersByGroupId - retrieving enabled users by groupId does not retrieve disabled users"() {
+        given:
+        String enabledUserName = cloudTestUtils.getRandomUUID()
+        String disabledUsername =cloudTestUtils.getRandomUUID()
+        String groupId =  cloudTestUtils.getRandomUUID()
+        def user1 = createUser("1$random", enabledUserName, cloudTestUtils.getRandomUUID(), "email@email.com", true, "DFW", "Password1").with {
+            it.rsGroupId = [groupId] as HashSet
+            it
+        }
+        def user2 = createUser("2$random", disabledUsername, cloudTestUtils.getRandomUUID(), "email@email.com", false, "DFW", "Password1").with {
+            it.rsGroupId = [groupId] as HashSet
+            it
+        }
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+
+        when:
+        def userList = IteratorUtils.toList(ldapUserRepository.getEnabledUsersByGroupId(groupId).iterator())
+
+        then:
+        userList != null
+        userList.username.contains(enabledUserName)
+        !userList.username.contains(disabledUsername)
+
+        cleanup:
+        ldapUserRepository.deleteUser(enabledUserName)
+        ldapUserRepository.deleteUser(disabledUsername)
+    }
+
+    def "getDisabledUsersByGroupId - retrieving disabled users by groupId does not retrieve enabled users"() {
+        given:
+        String enabledUserName = cloudTestUtils.getRandomUUID()
+        String disabledUsername =cloudTestUtils.getRandomUUID()
+        String groupId =  cloudTestUtils.getRandomUUID()
+        def user1 = createUser("1$random", enabledUserName, cloudTestUtils.getRandomUUID(), "email@email.com", true, "DFW", "Password1").with {
+            it.rsGroupId = [groupId] as HashSet
+            it
+        }
+        def user2 = createUser("2$random", disabledUsername, cloudTestUtils.getRandomUUID(), "email@email.com", false, "DFW", "Password1").with {
+            it.rsGroupId = [groupId] as HashSet
+            it
+        }
+
+        ldapUserRepository.addUser(user1)
+        ldapUserRepository.addUser(user2)
+
+        when:
+        def userList = IteratorUtils.toList(ldapUserRepository.getDisabledUsersByGroupId(groupId).iterator())
+
+        then:
+        userList != null
+        !userList.username.contains(enabledUserName)
+        userList.username.contains(disabledUsername)
+
+        cleanup:
+        ldapUserRepository.deleteUser(enabledUserName)
+        ldapUserRepository.deleteUser(disabledUsername)
     }
 
     def "calling getUserByEmail returns the user"() {

@@ -324,7 +324,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public ClientRole getUserIdentityRole(User user) {
+    public ClientRole getUserIdentityRole(EndUser user) {
         List<ClientRole> result = new ArrayList<ClientRole>();
 
         logger.debug("getting identity:* role for user: {}", user);

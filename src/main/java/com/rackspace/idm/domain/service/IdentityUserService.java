@@ -85,4 +85,28 @@ public interface IdentityUserService {
      * @return
      */
     EndUser checkAndGetUserById(String userId);
+
+    /**
+     * Delete a user from a group. endUserId must resolve to EndUser. No-Op if no user is found for the given id
+     *
+     * @param groupId
+     * @param endUserId
+     */
+    void addGroupToEndUser(String groupId, String endUserId);
+
+    /**
+     * Remove a user from a group. endUserId must resolve to EndUser. No-Op if no user is found for the given id
+     *
+     * @param groupId
+     * @param endUserId
+     */
+    void removeGroupFromEndUser(String groupId, String endUserId);
+
+    /**
+     * Retrieve all the enabled end users that are associated with the specified group
+     *
+     * @param groupId
+     * @return
+     */
+    Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId);
 }

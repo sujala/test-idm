@@ -22,7 +22,7 @@ public interface UserDao {
 
     PaginatorContext<User> getEnabledUsers(int offset, int limit);
 
-    PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
+    PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit);
 
     PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit);
 
@@ -70,7 +70,15 @@ public interface UserDao {
 
     Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
 
-    Iterable<User> getUsersByGroupId(String groupId);
+    Iterable<User> getEnabledUsersByGroupId(String groupId);
+
+    /**
+     * Retrieve disabled users associated with the specified groupid
+     *
+     * @param groupId
+     * @return
+     */
+    Iterable<User> getDisabledUsersByGroupId(String groupId);
 
     void addGroupToUser(String userId, String groupId);
 

@@ -31,6 +31,8 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+import javax.servlet.http.HttpServletResponse
+
 class Cloud20IntegrationTest extends RootIntegrationTest {
     Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
 
@@ -2238,6 +2240,34 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteAdminResponses.status == 204
         deleteGroupResponse.status == 204
         deleteDomainResponse.status == 204
+    }
+
+    def "Trying to delete group with enabled users causes BadRequest"(){
+        given:
+        String username = "groupUserAdmin" + getRandomUUID()
+        String domainId = "myGroupDomain" + getRandomUUID()
+
+        def userAdminForCreate = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, "displayName", "email@rackspace.com", true, "ORD", domainId, "Password1"))
+        def userAdmin = userAdminForCreate.getEntity(User).value
+
+        def groupName =  getRandomUUID()
+        def groupResponse = cloud20.createGroup(serviceAdminToken, v1Factory.createGroup(groupName,groupName))
+        def group = groupResponse.getEntity(Group).value
+        def addUserToGroupResponse = cloud20.addUserToGroup(serviceAdminToken, group.id, userAdmin.id)
+
+        when:
+        //Delete Group with enabled user
+        def deleteGroupResponse = cloud20.deleteGroup(serviceAdminToken, group.id)
+
+        then:
+        deleteGroupResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        when: "delete user-admin"
+        def deleteAdminResponses = cloud20.deleteUser(serviceAdminToken, userAdmin.id)
+        def deleteGroupResponseAfterAdminDeleted = cloud20.deleteGroup(serviceAdminToken, group.id)
+
+        then:
+        deleteGroupResponseAfterAdminDeleted.status == HttpServletResponse.SC_NO_CONTENT
     }
 
     def "we can create a role when specifying propagate values"() {
