@@ -431,12 +431,18 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Iterable<User> getUsersByGroupId(String groupId) {
-        logger.debug("Getting All Users: {} - {}", groupId);
+    public Iterable<User> getEnabledUsersByGroupId(String groupId) {
+        logger.debug("Getting All Enabled Users: {} - {}", groupId);
 
-        return this.userDao.getUsersByGroupId(groupId);
+        return this.userDao.getEnabledUsersByGroupId(groupId);
     }
 
+    @Override
+    public Iterable<User> getDisabledUsersByGroupId(String groupId) {
+        logger.debug("Getting All Disabled Users: {} - {}", groupId);
+
+        return this.userDao.getDisabledUsersByGroupId(groupId);
+    }
 
     @Override
     public Racker getRackerByRackerId(String rackerId) {
@@ -719,11 +725,11 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit) {
+    public PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit) {
 
         logger.debug("Getting Users in Group {}", groupId);
 
-        PaginatorContext<User> context = userDao.getUsersByGroupId(groupId, offset, limit);
+        PaginatorContext<User> context = userDao.getEnabledUsersByGroupId(groupId, offset, limit);
 
         logger.debug("Got All Users paged");
 

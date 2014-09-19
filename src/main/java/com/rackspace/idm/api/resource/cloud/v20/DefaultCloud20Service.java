@@ -2842,12 +2842,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             Group group = groupService.checkAndGetGroupById(groupId);
 
             User caller = userService.getUserByAuthToken(authToken);
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user = identityUserService.checkAndGetUserById(userId);
 
             if (authorizationService.hasDefaultUserRole(user)) {
                 throw new BadRequestException("Cannot add Sub-Users directly to a Group, must assign their Parent User.");
@@ -2858,15 +2857,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
                 if (authorizationService.hasUserAdminRole(user)) {
-                    List<User> subUsers = userService.getSubUsers(user);
-
-                    for (User subUser : subUsers) {
-                        userService.addGroupToUser(groupId, subUser.getId());
-                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
+                    Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+                    for (EndUser subUser : subUsers) {
+                        if (!user.getId().equalsIgnoreCase(subUser.getId())) {
+                            identityUserService.addGroupToEndUser(groupId, subUser.getId());
+                        }
                     }
                 }
-                userService.addGroupToUser(groupId, userId);
-                atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
+                //i guess the purpose here is to add the group to the user-admin last...
+                identityUserService.addGroupToEndUser(groupId, user.getId());
             }
             return Response.noContent();
         } catch (Exception e) {
@@ -2885,7 +2884,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Invalid user id");
             }
 
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user = identityUserService.checkAndGetUserById(userId);
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
             boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
 
@@ -2898,15 +2897,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (isUserAdmin) {
-                List<User> subUsers = userService.getSubUsers(user);
-
-                for (User subUser : subUsers) {
-                    userService.deleteGroupFromUser(groupId, subUser.getId());
-                    atomHopperClient.asyncPost(subUser, AtomHopperConstants.GROUP);
+                Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+                for (EndUser subUser : subUsers) {
+                    if (!user.getId().equalsIgnoreCase(subUser.getId())) {
+                        identityUserService.removeGroupFromEndUser(groupId, subUser.getId());
+                    }
                 }
             }
-            userService.deleteGroupFromUser(groupId, userId);
-            atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP);
+            //i guess the purpose here is to remove the group from the user-admin last...
+            identityUserService.removeGroupFromEndUser(groupId, user.getId());
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
@@ -2918,7 +2917,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             groupService.checkAndGetGroupById(groupId);
-            PaginatorContext<User> users = userService.getUsersByGroupId(groupId, marker, limit);
+            PaginatorContext<User> users = userService.getEnabledUsersByGroupId(groupId, marker, limit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getValueList())).getValue());
         } catch (Exception e) {

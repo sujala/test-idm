@@ -61,4 +61,12 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
      * @return
      */
     Iterable<Group> getGroupsForEndUser(String userId);
+
+    /**
+     * Get all enabled end users that are associated with the specified group
+     *
+     * @param groupId
+     * @return
+     */
+    Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId);
 }

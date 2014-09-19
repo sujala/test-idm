@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation;
 
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -53,7 +54,7 @@ public class PrecedenceValidator {
         compareWeights(userIdentityRole.getRsWeight(), clientRole.getRsWeight());
     }
 
-    public void verifyCallerPrecedenceOverUser(User caller, User user) {
+    public void verifyCallerPrecedenceOverUser(User caller, EndUser user) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller);
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole != null) {

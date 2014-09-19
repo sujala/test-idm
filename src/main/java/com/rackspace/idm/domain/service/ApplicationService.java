@@ -68,5 +68,5 @@ public interface ApplicationService {
 
     void softDeleteApplication(Application application);
 
-    ClientRole getUserIdentityRole(User user);
+    ClientRole getUserIdentityRole(EndUser user);
 }

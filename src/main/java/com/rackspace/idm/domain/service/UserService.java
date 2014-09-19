@@ -41,7 +41,15 @@ public interface UserService {
 
     Iterable<User> getUsersWithDomainAndEnabledFlag(String domainId, Boolean enabled);
 
-    Iterable<User> getUsersByGroupId(String groupId);
+    Iterable<User> getEnabledUsersByGroupId(String groupId);
+
+    /**
+     * Get all disabled users associated with specified groupId
+     *
+     * @param groupId
+     * @return
+     */
+    Iterable<User> getDisabledUsersByGroupId(String groupId);
 
     String generateApiKey();
     
@@ -127,7 +135,7 @@ public interface UserService {
 
     PaginatorContext<User> getUsersWithDomainAndRole(String domainId, String roleId, int offset, int limit);
 
-    PaginatorContext<User> getUsersByGroupId(String groupId, int offset, int limit);
+    PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit);
 
     void setValidator(Validator validator);
 
