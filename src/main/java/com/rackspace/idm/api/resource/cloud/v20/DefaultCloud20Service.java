@@ -968,7 +968,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
+    public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
         AuthenticateResponse auth;
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
         // Remove Admin URLs if non admin token

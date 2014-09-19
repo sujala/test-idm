@@ -24,6 +24,7 @@ class AuthWithTokenTest extends RootServiceTest {
         mockUserService(service)
         mockScopeAccessService(service)
         mockTenantService(service)
+        mockIdentityUserService(service)
     }
 
     def "authenticate throws a bad request when token is blank"() {
@@ -46,24 +47,6 @@ class AuthWithTokenTest extends RootServiceTest {
 
         then:
         thrown(BadRequestException)
-    }
-
-    def "authenticate retrieves the scopeAccess for the token in the request"() {
-        given:
-        passTenantAccess()
-
-        def authRequestWithTenantId = v2Factory.createAuthenticationRequest("tokenId", "tenantId", "")
-        def authRequestWithTenantName = v2Factory.createAuthenticationRequest("tokenId", "", "tenantName")
-        def authRequestWithBoth = v2Factory.createAuthenticationRequest("tokenId", "tenantId", "tenantName")
-
-        when:
-        service.authenticate(authRequestWithTenantId)
-        service.authenticate(authRequestWithTenantName)
-        service.authenticate(authRequestWithBoth)
-
-        then:
-        3 * scopeAccessService.getScopeAccessByAccessToken("tokenId") >> createUserScopeAccess()
-        3 * userService.checkAndGetUserById(_) >> entityFactory.createUser()
     }
 
     def "authenticate gets impersonated scopeAccess; throws NotAuthorizedException when token is expired"() {
@@ -103,7 +86,7 @@ class AuthWithTokenTest extends RootServiceTest {
         def scopeAccess = createUserScopeAccess()
 
         scopeAccessService.getScopeAccessByAccessToken("tokenId") >> impScopeAccess
-        userService.checkAndGetUserById(_) >> user
+        identityUserService.checkAndGetUserById(_) >> user
 
         when:
         def result = service.authenticate(authRequest)
@@ -152,7 +135,7 @@ class AuthWithTokenTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken("tokenId") >> scopeAccess
-        1 * userService.checkAndGetUserById(_) >> user
+        1 * identityUserService.checkAndGetUserById(_) >> user
         result != null
         result.impersonatedScopeAccess == null
         result.userScopeAccess == scopeAccess
@@ -209,7 +192,7 @@ class AuthWithTokenTest extends RootServiceTest {
 
     def "a user is returned by getUserByIdForAuthenciation if user is found"() {
         given:
-        userService.checkAndGetUserById("id") >> entityFactory.createUser()
+        identityUserService.checkAndGetUserById("id") >> entityFactory.createUser()
 
         when:
         def result = service.getUserByIdForAuthentication("id")
@@ -221,7 +204,7 @@ class AuthWithTokenTest extends RootServiceTest {
 
     def "if user is not found getUserByidForAuthentication throws NotAuthenticatedException"() {
         given:
-        userService.checkAndGetUserById("id") >> { throw new NotFoundException() }
+        identityUserService.checkAndGetUserById("id") >> { throw new NotFoundException() }
 
         when:
         service.getUserByIdForAuthentication("id")
