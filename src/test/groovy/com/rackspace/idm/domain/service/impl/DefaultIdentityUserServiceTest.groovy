@@ -11,7 +11,6 @@ class DefaultIdentityUserServiceTest extends Specification {
     @Shared DefaultIdentityUserService service
 
     IdentityUserDao identityUserRepository;
-    AtomHopperClient atomHopperClient;
 
     EntityFactory entityFactory = new EntityFactory()
 
@@ -23,9 +22,6 @@ class DefaultIdentityUserServiceTest extends Specification {
     def setup() {
         identityUserRepository = Mock(IdentityUserDao)
         service.identityUserRepository = identityUserRepository
-
-        atomHopperClient = Mock(AtomHopperClient)
-        service.atomHopperClient = atomHopperClient
     }
 
     def "Add Group to user includes feed event"() {
@@ -39,7 +35,6 @@ class DefaultIdentityUserServiceTest extends Specification {
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
         1 * identityUserRepository.updateObject(user)
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP)
         user.getRsGroupId().contains(groupid)
     }
 
@@ -53,7 +48,6 @@ class DefaultIdentityUserServiceTest extends Specification {
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
         0 * identityUserRepository.updateObject(user)
-        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP)
         user.getRsGroupId().contains(groupid)
     }
 
@@ -68,7 +62,6 @@ class DefaultIdentityUserServiceTest extends Specification {
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
         1 * identityUserRepository.updateObject(user)
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP)
         !user.getRsGroupId().contains(groupid)
     }
 
@@ -83,7 +76,6 @@ class DefaultIdentityUserServiceTest extends Specification {
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
         0 * identityUserRepository.updateObject(user)
-        0 * atomHopperClient.asyncPost(user, AtomHopperConstants.GROUP)
         !user.getRsGroupId().contains(groupid)
     }
 
