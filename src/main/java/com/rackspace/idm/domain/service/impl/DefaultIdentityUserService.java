@@ -17,9 +17,6 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Autowired
     private IdentityUserDao identityUserRepository;
 
-    @Autowired
-    private AtomHopperClient atomHopperClient;
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -96,10 +93,6 @@ public class DefaultIdentityUserService implements IdentityUserService {
             logger.debug("Adding groupId {} to user {}", groupId, endUserId);
             user.getRsGroupId().add(groupId);
             identityUserRepository.updateObject(user);
-            if (user instanceof User) {
-                //we don't send fed user create events, so won't send update events
-                atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
-            }
             logger.debug("Added groupId {} to user {}", groupId, endUserId);
         }
     }
@@ -117,10 +110,6 @@ public class DefaultIdentityUserService implements IdentityUserService {
             logger.debug("Removing groupId {} from user {}", groupId, endUserId);
             user.getRsGroupId().remove(groupId);
             identityUserRepository.updateObject(user);
-            if (user instanceof User) {
-                //we don't send fed user create events, so won't send update events
-                atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
-            }
             logger.debug("Removed groupId {} from user {}", groupId, endUserId);
         }
     }

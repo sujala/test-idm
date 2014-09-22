@@ -2861,11 +2861,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                     for (EndUser subUser : subUsers) {
                         if (!user.getId().equalsIgnoreCase(subUser.getId())) {
                             identityUserService.addGroupToEndUser(groupId, subUser.getId());
+                            if (user instanceof User) {
+                                //we don't send fed user create events, so won't send update events
+                                atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
+                            }
                         }
                     }
                 }
                 //i guess the purpose here is to add the group to the user-admin last...
                 identityUserService.addGroupToEndUser(groupId, user.getId());
+                if (user instanceof User) {
+                    //we don't send fed user create events, so won't send update events
+                    atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
+                }
             }
             return Response.noContent();
         } catch (Exception e) {
@@ -2901,11 +2909,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 for (EndUser subUser : subUsers) {
                     if (!user.getId().equalsIgnoreCase(subUser.getId())) {
                         identityUserService.removeGroupFromEndUser(groupId, subUser.getId());
+                        if (user instanceof User) {
+                            //we don't send fed user create events, so won't send update events
+                            atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
+                        }
                     }
                 }
             }
             //i guess the purpose here is to remove the group from the user-admin last...
             identityUserService.removeGroupFromEndUser(groupId, user.getId());
+            if (user instanceof User) {
+                //we don't send fed user create events, so won't send update events
+                atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP);
+            }
             return Response.noContent();
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);

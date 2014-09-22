@@ -3568,6 +3568,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
 
         then:
+        1 * atomHopperClient.asyncPost(_, _)
         1 * identityUserService.addGroupToEndUser(_, _)
         response.build().status == 204
     }
@@ -3587,6 +3588,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", user.id)
 
         then:
+        2 * atomHopperClient.asyncPost(_, _)
         2 * identityUserService.addGroupToEndUser(_, _)
         response.build().status == 204
     }
@@ -3606,6 +3608,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", user.id)
 
         then:
+        0 * atomHopperClient.asyncPost(_, _)
         0 * identityUserService.addGroupToEndUser(_, _)
         response.build().status == 204
     }
@@ -3625,6 +3628,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", user.id)
 
         then:
+        1 * atomHopperClient.asyncPost(_, _)
         1 * identityUserService.removeGroupFromEndUser("1", user.id)
         response.build().status == 204
     }
@@ -3644,6 +3648,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", user.id)
 
         then:
+        2 * atomHopperClient.asyncPost(_, _)
         2 * identityUserService.removeGroupFromEndUser(_, _)
         response.build().status == 204
     }
