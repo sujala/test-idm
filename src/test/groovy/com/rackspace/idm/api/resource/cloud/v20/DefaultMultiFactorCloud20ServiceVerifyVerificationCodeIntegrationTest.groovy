@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -75,8 +76,10 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
 
     def cleanup() {
         deleteUserQuietly(userAdmin)
-        MobilePhone ldapPhone = mobilePhoneRepository.getById(responsePhone.getId())
-        mobilePhoneRepository.deleteObject(ldapPhone)
+        if (responsePhone != null) {
+            MobilePhone ldapPhone = mobilePhoneRepository.getById(responsePhone.getId())
+            mobilePhoneRepository.deleteObject(ldapPhone)
+        }
     }
 
     /**
@@ -86,8 +89,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
      */
     @Unroll("Successfully verify verification code: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Successfully verify verification code"() {
-        setup:
-
         when:
         def verifyVerificationCodeResponse = cloud20.verifyVerificationCode(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -109,10 +110,75 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    def "verifyVerificationCode - User admin can add a phone, send a verification code, and verify the code on a subuser"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User defaultUser = createDefaultUser(userAdminToken)
+        def defPhone = utils.addPhone(userAdminToken, defaultUser.id)
+        cloud20.sendVerificationCode(userAdminToken, defaultUser.id, defPhone.id)
+        def verCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+
+        when:
+        def verifyVerificationCodeResponse = cloud20.verifyVerificationCode(userAdminToken, defaultUser.id, defPhone.id, verCode)
+        User finalDefaultUser = userRepository.getUserById(defaultUser.getId())
+
+        then:
+        verifyVerificationCodeResponse.getStatus() == HttpStatus.SC_NO_CONTENT
+        finalDefaultUser.getMultiFactorDevicePinExpiration() == null
+        finalDefaultUser.getMultiFactorDevicePin() == null
+        finalDefaultUser.getMultiFactorDeviceVerified()
+        !finalDefaultUser.getMultifactorEnabled()
+
+        cleanup:
+        deleteUserQuietly(defaultUser)
+    }
+
+    def "verifyVerificationCode - User manager can add a phone, send a verification code, and verify the code on a subuser"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userManager = createDefaultUser(userAdminToken)
+        utils.addRoleToUser(userManager, Constants.USER_MANAGE_ROLE_ID, userAdminToken)
+        def userManagerToken = authenticate(userManager.username)
+
+        org.openstack.docs.identity.api.v2.User defaultUser = createDefaultUser(userAdminToken)
+        def defPhone = utils.addPhone(userManagerToken, defaultUser.id)
+        cloud20.sendVerificationCode(userManagerToken, defaultUser.id, defPhone.id)
+        def verCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+
+        when:
+        def verifyVerificationCodeResponse = cloud20.verifyVerificationCode(userManagerToken, defaultUser.id, defPhone.id, verCode)
+        User finalDefaultUser = userRepository.getUserById(defaultUser.getId())
+
+        then:
+        verifyVerificationCodeResponse.getStatus() == HttpStatus.SC_NO_CONTENT
+        finalDefaultUser.getMultiFactorDevicePinExpiration() == null
+        finalDefaultUser.getMultiFactorDevicePin() == null
+        finalDefaultUser.getMultiFactorDeviceVerified()
+        !finalDefaultUser.getMultifactorEnabled()
+
+        cleanup:
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userManager)
+    }
+
+    def "verifyVerificationCode - identity admin can add a phone, send a verification code, and verify the code on another user"() {
+        setup:
+        responsePhone = utils.addPhone(specificationIdentityAdminToken, userAdmin.id)
+        cloud20.sendVerificationCode(specificationIdentityAdminToken, userAdmin.id, responsePhone.id)
+        def verCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+
+        when:
+        def verifyVerificationCodeResponse = cloud20.verifyVerificationCode(specificationIdentityAdminToken, userAdmin.id, responsePhone.id, verCode)
+        User finalUser = userRepository.getUserById(userAdmin.getId())
+
+        then:
+        verifyVerificationCodeResponse.getStatus() == HttpStatus.SC_NO_CONTENT
+        finalUser.getMultiFactorDevicePinExpiration() == null
+        finalUser.getMultiFactorDevicePin() == null
+        finalUser.getMultiFactorDeviceVerified()
+        !finalUser.getMultifactorEnabled()
+    }
+
     @Unroll("Fail with 404 when device id not associated with user: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Fail with 404 when device id not associated with user"() {
-        setup:
-
         when:
         def response = cloud20.verifyVerificationCode(userAdminToken, userAdmin.id, "nonExistantId", constantVerificationCode, requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -124,8 +190,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         !finalUserAdmin.getMultiFactorDeviceVerified()
         !finalUserAdmin.getMultifactorEnabled()
 
-        cleanup:
-
         where:
         requestContentMediaType         | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
@@ -136,8 +200,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
 
     @Unroll("Fail with 400 when invalid pin provided: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Fail with 400 when invalid pin provided"() {
-        setup:
-
         when:
         def response = cloud20.verifyVerificationCode(userAdminToken, userAdmin.id, responsePhone.id, v2Factory.createVerificationCode("invalidcode"), requestContentMediaType, acceptMediaType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -148,8 +210,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         finalUserAdmin.getMultiFactorDevicePin() == constantVerificationCode.getCode()
         !finalUserAdmin.getMultiFactorDeviceVerified()
         !finalUserAdmin.getMultifactorEnabled()
-
-        cleanup:
 
         where:
         requestContentMediaType         | acceptMediaType
@@ -177,8 +237,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         finalUserAdmin.getMultiFactorDevicePin() == constantVerificationCode.getCode()
         !finalUserAdmin.getMultiFactorDeviceVerified()
         !finalUserAdmin.getMultifactorEnabled()
-
-        cleanup:
 
         where:
         requestContentMediaType         | acceptMediaType
