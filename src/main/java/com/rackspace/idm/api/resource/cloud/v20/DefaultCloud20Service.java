@@ -2255,11 +2255,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         domainService.checkAndGetDomain(domainId);
-        Iterable<User> users;
+        Iterable<EndUser> users;
         if (enabled == null) {
-            users = domainService.getUsersByDomainId(domainId);
+            users = identityUserService.getEndUsersByDomainId(domainId);
         } else {
-            users = domainService.getUsersByDomainIdAndEnabledFlag(domainId, Boolean.valueOf(enabled));
+            users = identityUserService.getEndUsersByDomainIdAndEnabledFlag(domainId, Boolean.valueOf(enabled));
         }
 
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());

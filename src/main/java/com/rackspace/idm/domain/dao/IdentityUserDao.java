@@ -36,6 +36,14 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
     public Iterable<EndUser> getEndUsersByDomainId(String domainId);
 
     /**
+     * Search for end users with the specified domain id and enabled attribute
+     *
+     * @param domainId
+     * @return
+     */
+    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
+
+    /**
      * Search for end users with the specified domain id.
      *
      * @param domainId
