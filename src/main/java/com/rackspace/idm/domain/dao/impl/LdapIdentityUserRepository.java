@@ -55,6 +55,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(domainId, enabled));
+    }
+
+    @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
         return searchForUsersByDomainIdPaged(domainId, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
     }
@@ -135,12 +140,37 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         );
     }
 
+    private Filter searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        //only query for federated users if you are searching for enabled users
+        if(enabled) {
+            return Filter.createORFilter(searchFilterGetFederatedUsersByDomainId(domainId), searchFilterGetUserByDomainIdAndEnabledFlag(domainId, enabled));
+        } else {
+            return searchFilterGetUserByDomainIdAndEnabledFlag(domainId, enabled);
+        }
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createANDFilter(PROVISIONED_USER_CLASS_FILTER),
+                Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+        );
+    }
+
+    private Filter searchFilterGetFederatedUsersByDomainId(String domainId) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createANDFilter(FEDERATED_USER_CLASS_FILTER)
+        );
+    }
+
+
     private Filter searchFilterGetEnabledEndUsersByGroupId(String groupId) {
         return Filter.createORFilter(searchFilterGetEnabledUserByGroupId(groupId), searchFilterGetFederatedUsersByGroupId(groupId));
 
     }
 
-        private Filter searchFilterGetEnabledUserByGroupId(String groupId) {
+    private Filter searchFilterGetEnabledUserByGroupId(String groupId) {
         return Filter.createANDFilter(
                 Filter.createEqualityFilter(ATTR_GROUP_ID, groupId),
                 Filter.createANDFilter(PROVISIONED_USER_CLASS_FILTER),

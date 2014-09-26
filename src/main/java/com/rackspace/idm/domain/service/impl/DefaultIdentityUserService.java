@@ -53,6 +53,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return identityUserRepository.getEndUsersByDomainIdAndEnabledFlag(domainId, enabled);
+    }
+
+    @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
         return identityUserRepository.getEndUsersByDomainIdPaged(domainId, offset, limit);
     }

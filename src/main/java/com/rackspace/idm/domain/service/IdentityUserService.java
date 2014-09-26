@@ -46,6 +46,17 @@ public interface IdentityUserService {
     Iterable<EndUser> getEndUsersByDomainId(String domainId);
 
     /**
+     * Returns all federated and provisioned users associated with the specified domain based on their
+     * enabled attribute. Note: Federated users do not have an enabled attribute. If the federated user
+     * exists in the directory, then the user is enabled.
+     *
+     * @param domainId
+     * @param enabled
+     * @return
+     */
+    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
+
+    /**
      * Returns a page of federated and provisioned users associated with the specified domain.
      *
      * @param domainId

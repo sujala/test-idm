@@ -195,6 +195,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
+    def getUsersByDomainIdAndEnabledFlag(String token, String domainId, boolean enabled, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).queryParam("enabled", "" + enabled).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def updateUser(String token, String userId, user, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestMediaType).entity(user).post(ClientResponse)
