@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -69,6 +71,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return userService.getUsersWithDomain(domainId);
     }
 
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return identityUserRepository.getEndUsersByDomainIdAndEnabledFlag(domainId, enabled);
+    }
+
     @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
         return identityUserRepository.getEndUsersByDomainIdPaged(domainId, offset, limit);
@@ -96,4 +102,45 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
         return user;
     }
+
+    /**
+     * Adds the group to the end user. After adding will send atom hopper event
+     * @param groupId
+     * @param endUserId
+     *
+     */
+    @Override
+    public void addGroupToEndUser(String groupId, String endUserId) {
+        EndUser user = getEndUserById(endUserId);
+        if (user != null && !user.getRsGroupId().contains(groupId)) {
+            logger.debug("Adding groupId {} to user {}", groupId, endUserId);
+            user.getRsGroupId().add(groupId);
+            identityUserRepository.updateObject(user);
+            logger.debug("Added groupId {} to user {}", groupId, endUserId);
+        }
+    }
+
+    /**
+     * Removes the group from the end user. After removing will send atom hopper event
+     * @param groupId
+     * @param endUserId
+     *
+     */
+    @Override
+    public void removeGroupFromEndUser(String groupId, String endUserId) {
+        EndUser user = getEndUserById(endUserId);
+        if (user != null && user.getRsGroupId().contains(groupId)) {
+            logger.debug("Removing groupId {} from user {}", groupId, endUserId);
+            user.getRsGroupId().remove(groupId);
+            identityUserRepository.updateObject(user);
+            logger.debug("Removed groupId {} from user {}", groupId, endUserId);
+        }
+    }
+
+    @Override
+    public Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId) {
+        logger.debug("Getting All Users: {} - {}", groupId);
+        return identityUserRepository.getEnabledEndUsersByGroupId(groupId);
+    }
+
 }

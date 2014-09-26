@@ -1,9 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
@@ -24,6 +22,9 @@ public class AuthWithToken {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -65,7 +66,9 @@ public class AuthWithToken {
 
         authResponseTuple.setUser(getUserByIdForAuthentication(authResponseTuple.getUserScopeAccess().getUserRsId()));
 
-        scopeAccessService.updateExpiredUserScopeAccess(authResponseTuple.getUser(), sa.getClientId(), null);
+        if(!(authResponseTuple.getUser() instanceof FederatedUser)) {
+            scopeAccessService.updateExpiredUserScopeAccess((User) authResponseTuple.getUser(), sa.getClientId(), null);
+        }
 
         if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
             String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
@@ -81,11 +84,11 @@ public class AuthWithToken {
         return authResponseTuple;
     }
 
-    User getUserByIdForAuthentication(String id) {
-        User user = null;
+    EndUser getUserByIdForAuthentication(String id) {
+        EndUser user = null;
 
         try {
-            user = userService.checkAndGetUserById(id);
+            user = identityUserService.checkAndGetUserById(id);
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);

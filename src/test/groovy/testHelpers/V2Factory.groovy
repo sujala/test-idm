@@ -68,6 +68,20 @@ class V2Factory {
         }
     }
 
+    def createTokenAuthenticationRequest(String tokenId, String tenantId, String tenantName) {
+        def token = new TokenForAuthenticationRequest().with {
+            it.id = tokenId
+            return it
+        }
+
+        return new AuthenticationRequest().with {
+            it.tenantId = tenantId
+            it.tenantName = tenantName
+            it.token = token
+            return it
+        }
+    }
+
     def createPasswordAuthenticationRequestWithTenantId(String username, String password, String tenantId) {
         def credentials = createPasswordCredentialsRequiredUsername(username, password)
 
