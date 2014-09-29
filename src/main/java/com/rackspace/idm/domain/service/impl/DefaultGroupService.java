@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -35,6 +36,8 @@ public class DefaultGroupService implements GroupService {
     private Configuration config;
     @Autowired
     private UserService userService;
+    @Autowired
+    IdentityUserService identityUserService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -141,14 +144,13 @@ public class DefaultGroupService implements GroupService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        for (User user : defaultUserService.getUsersByGroupId(groupId)) {
-            if (user.getEnabled()) {
-                throw new BadRequestException("Cannot delete a group with users in it.");
-            }
+        if (identityUserService.getEnabledEndUsersByGroupId(groupId).iterator().hasNext()) {
+            throw new BadRequestException("Cannot delete a group with users in it.");
         }
 
-        for (User user : defaultUserService.getUsersByGroupId(groupId)) {
-            userService.deleteGroupFromUser(grpId, user.getId());
+        //Remove group from disabled users. Only need to update disabled provisioned users since fed users are always enabled.
+        for (User user : defaultUserService.getDisabledUsersByGroupId(groupId)) {
+            identityUserService.removeGroupFromEndUser(grpId, user.getId());
         }
         groupDao.deleteGroup(groupId);
     }

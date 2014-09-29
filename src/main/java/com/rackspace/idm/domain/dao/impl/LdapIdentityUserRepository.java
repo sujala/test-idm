@@ -31,6 +31,9 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     private LdapUserRepository userDao;
 
     @Autowired
+    private LdapFederatedUserRepository fedUserDao;
+
+    @Autowired
     private LdapGroupRepository groupDao;
 
     public User getProvisionedUserById(String userId) {
@@ -62,6 +65,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(domainId, enabled));
+    }
+
+    @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
         return searchForUsersByDomainIdPaged(domainId, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
     }
@@ -85,6 +93,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
             }
         }
         return groups;
+    }
+
+    @Override
+    public Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId) {
+        return (Iterable) getObjects(searchFilterGetEnabledEndUsersByGroupId(groupId));
     }
 
     private <T extends EndUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
@@ -135,6 +148,51 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId)
         );
+    }
+
+    private Filter searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        //only query for federated users if you are searching for enabled users
+        if(enabled) {
+            return Filter.createORFilter(searchFilterGetFederatedUsersByDomainId(domainId), searchFilterGetUserByDomainIdAndEnabledFlag(domainId, enabled));
+        } else {
+            return searchFilterGetUserByDomainIdAndEnabledFlag(domainId, enabled);
+        }
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createANDFilter(PROVISIONED_USER_CLASS_FILTER),
+                Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+        );
+    }
+
+    private Filter searchFilterGetFederatedUsersByDomainId(String domainId) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createANDFilter(FEDERATED_USER_CLASS_FILTER)
+        );
+    }
+
+
+    private Filter searchFilterGetEnabledEndUsersByGroupId(String groupId) {
+        return Filter.createORFilter(searchFilterGetEnabledUserByGroupId(groupId), searchFilterGetFederatedUsersByGroupId(groupId));
+
+    }
+
+    private Filter searchFilterGetEnabledUserByGroupId(String groupId) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_GROUP_ID, groupId),
+                Filter.createANDFilter(PROVISIONED_USER_CLASS_FILTER),
+                Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
+        );
+    }
+
+    private Filter searchFilterGetFederatedUsersByGroupId(String groupId) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_GROUP_ID, groupId),
+                Filter.createANDFilter(FEDERATED_USER_CLASS_FILTER)
+                );
     }
 
     private Filter searchFilterGetEnabledUsers(List<Filter> userClassFilterList) {
@@ -194,7 +252,14 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     @Override
     public void updateObject(BaseUser object) {
-        throw new UnsupportedOperationException("Not supported");
+        if (object instanceof User) {
+            userDao.updateObject((User) object);
+        }
+        else if (object instanceof FederatedUser) {
+            fedUserDao.updateObject((FederatedUser) object);
+        } else {
+            throw new UnsupportedOperationException("Not supported");
+        }
     }
 
     @Override

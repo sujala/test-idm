@@ -384,6 +384,10 @@ class EntityFactory extends Specification {
         return createUser("username", "id", "domainId", "region")
     }
 
+    def createRandomUser(username = Cloud20Utils.createRandomString(), String id = Cloud20Utils.createRandomString()) {
+        return createUser(username, id, "domainId", "region").with {it.uniqueId = null; return it}
+    }
+
     def createFederatedToken(FederatedUser user, String tokenStr=Cloud20Utils.createRandomString(), Date expiration = new Date())   {
         new UserScopeAccess().with {
             it.userRsId = user.id

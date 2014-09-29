@@ -359,6 +359,187 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
+    @Unroll
+    def "list users in domain returns federated and provisioned users: accept = #accept"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def username = testUtils.getRandomUUID("userForSaml")
+        def username2 = testUtils.getRandomUUID("userForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion2 = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
+        def userAdmin, userAdmin2, users, users2
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        when: "list users with domain id (not specifying enabled flag)"
+        def response = cloud20.getUsersByDomainId(serviceAdminToken, domainId, accept)
+
+        then: "the request was successful"
+        response.status == 200
+        def userList
+        def userIds
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            userList = response.getEntity(UserList).value.user
+            userIds = userList.id
+        } else {
+            userList = new JsonSlurper().parseText(response.getEntity(String))['users']
+            userIds = userList['id']
+        }
+
+        and: "returns the federated user for the domain"
+        def federatedUser
+        for (def curUser : userList) {
+            if (curUser.id == authResponse.user.id) {
+                federatedUser = curUser
+            }
+        }
+        userIds.contains(authResponse.user.id)
+
+        and: "federated user has the RAX-AUTH:federatedIdp attribute"
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            assert federatedUser.federatedIdp == DEFAULT_IDP_URI
+        } else {
+            assert federatedUser.'RAX-AUTH:federatedIdp' == DEFAULT_IDP_URI
+        }
+
+        and: "returns the provisioned user for the domain"
+        userIds.contains(userAdmin.id)
+
+        and: "does not return the provisioned user in the other domain"
+        !userIds.contains(authResponse2.user.id)
+
+        and: "does not return the federated user in the other domain"
+        !userIds.contains(userAdmin2.id)
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        deleteFederatedUserQuietly(username2)
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "list users in domain and with enabled returns federated and provisioned users: accept = #accept"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def username = testUtils.getRandomUUID("userForSaml")
+        def username2 = testUtils.getRandomUUID("userForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion2 = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
+        def userAdmin, userAdmin2, users, users2
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        when: "list users with domain id"
+        def response = cloud20.getUsersByDomainIdAndEnabledFlag(serviceAdminToken, domainId, true, accept)
+
+        then: "the request was successful"
+        response.status == 200
+        def userList
+        def userIds
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            userList = response.getEntity(UserList).value.user
+            userIds = userList.id
+        } else {
+            userList = new JsonSlurper().parseText(response.getEntity(String))['users']
+            userIds = userList['id']
+        }
+
+        and: "returns the federated user for the domain"
+        def federatedUser
+        for (def curUser : userList) {
+            if (curUser.id == authResponse.user.id) {
+                federatedUser = curUser
+            }
+        }
+        userIds.contains(authResponse.user.id)
+
+        and: "federated user has the RAX-AUTH:federatedIdp attribute"
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            assert federatedUser.federatedIdp == DEFAULT_IDP_URI
+        } else {
+            assert federatedUser.'RAX-AUTH:federatedIdp' == DEFAULT_IDP_URI
+        }
+
+        and: "returns the provisioned user for the domain"
+        userIds.contains(userAdmin.id)
+
+        and: "does not return the provisioned user in the other domain"
+        !userIds.contains(authResponse2.user.id)
+
+        and: "does not return the federated user in the other domain"
+        !userIds.contains(userAdmin2.id)
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        deleteFederatedUserQuietly(username2)
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "list users in domain returns enabled or disabled users based on enabled flag"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def disabledUser = utils.createUser(userAdminToken)
+        utils.disableUser(disabledUser)
+
+        when: "list disabled users with domain id"
+        def response = cloud20.getUsersByDomainIdAndEnabledFlag(utils.getServiceAdminToken(), domainId, false)
+        def userList = response.getEntity(UserList).value.user
+
+        then: "the disabled user was returned"
+        userList.id.contains(disabledUser.id)
+
+        and: "the enabled user was not returned"
+        !userList.id.contains(userAdmin.id)
+
+        when: "list enabled users with domain id"
+        response = cloud20.getUsersByDomainIdAndEnabledFlag(utils.getServiceAdminToken(), domainId, true)
+        userList = response.getEntity(UserList).value.user
+
+        then: "the disabled user was not returned"
+        !userList.id.contains(disabledUser.id)
+
+        and: "the enabled user was returned"
+        userList.id.contains(userAdmin.id)
+
+        cleanup:
+        utils.deleteUser(disabledUser)
+        utils.deleteUsers(users)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
