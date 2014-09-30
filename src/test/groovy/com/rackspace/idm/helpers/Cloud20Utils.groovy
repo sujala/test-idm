@@ -308,7 +308,7 @@ class Cloud20Utils {
     }
 
     def impersonateWithRacker(user, expireTime = 10800) {
-        def auth = authenticateRacker(RACKER, RACKER_PASSWORD)
+        def auth = authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
         def response = methods.impersonate(auth.token.id, user, expireTime)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)

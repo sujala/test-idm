@@ -146,6 +146,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     def "impersonating user - racker with no impersonate role - feature flag = false" () {
         given:
+        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", false)
         def localDefaultUser = utils.createUser(userAdminToken)
 
         when:
