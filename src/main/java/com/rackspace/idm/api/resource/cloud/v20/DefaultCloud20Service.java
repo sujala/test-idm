@@ -755,9 +755,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(user.getUsername())) {
                 userDO.setUsername(retrievedUser.getUsername());
             }
-            ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessForUser(retrievedUser);
             if (userDO.getRegion() != null && updateRegion) {
-                defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
+                defaultRegionService.validateDefaultRegion(userDO.getRegion(), retrievedUser);
             }
 
             userService.updateUser(userDO);
