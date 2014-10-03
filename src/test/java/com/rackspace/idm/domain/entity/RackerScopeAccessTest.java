@@ -26,14 +26,14 @@ public class RackerScopeAccessTest {
 
     @Test
     public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
-        rackerScopeAccess.setLdapEntry(null);
+        rackerScopeAccess.setUniqueId(null);
         String result = rackerScopeAccess.getUniqueId();
         assertThat("ldap entry", result, equalTo(null));
     }
 
     @Test
     public void getUniqueId_ldapEntryNotNull_returnsUniqueId() throws Exception {
-        rackerScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
+        rackerScopeAccess.setUniqueId("uniqueId");
         String result = rackerScopeAccess.getUniqueId();
         assertThat("ldap entry", result, equalTo("uniqueId"));
     }

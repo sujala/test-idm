@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
@@ -148,7 +146,7 @@ public class AuthenticationServiceTests {
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         usa.setUserRsId(username);
-        usa.setLdapEntry(new ReadOnlyEntry("accessToken=12345,cn=TOKENS,o=org", new Attribute("name", "value")));
+        usa.setUniqueId("accessToken=12345,cn=TOKENS,o=org");
         return usa;
     }
 

@@ -11,7 +11,6 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -192,10 +191,8 @@ public class DefaultUserServiceTestOld {
 
     @Test
     public void getUserByAuthToken_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
-        ReadOnlyEntry readOnlyEntry = mock(ReadOnlyEntry.class);
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
         when(scopeAccessService.getScopeAccessByAccessToken("authToken")).thenReturn(scopeAccess);
-        when(scopeAccess.getLDAPEntry()).thenReturn(readOnlyEntry);
         defaultUserService.getUserByAuthToken("authToken");
         verify(scopeAccessService).getScopeAccessByAccessToken("authToken");
     }

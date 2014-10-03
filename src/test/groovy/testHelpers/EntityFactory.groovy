@@ -470,7 +470,7 @@ class EntityFactory extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.setUniqueId(dn)
             it.getAuthenticatedBy().addAll(authBy)
             return it
         }

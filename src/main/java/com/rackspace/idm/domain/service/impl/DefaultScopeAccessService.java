@@ -814,11 +814,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public String getUserIdForParent(ScopeAccess scopeAccess) {
-        return scopeAccessDao.getUserIdForParent(scopeAccess);
-    }
-
-    @Override
     public UserScopeAccess createInstanceOfUserScopeAccess(User user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUsername(user.getUsername());

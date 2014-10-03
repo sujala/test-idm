@@ -5,14 +5,10 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -130,16 +126,11 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     public String getClientIdForParent(ScopeAccess scopeAccess) {
         String parentDn = null;
         try {
-            parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
+            parentDn = new DN(scopeAccess.getUniqueId()).getParentString();
         } catch (LDAPException e) {
             //noop
         }
         return parseDNForClientId(parentDn);
-    }
-
-    @Override
-    public String getUserIdForParent(ScopeAccess scopeAccess) {
-        return scopeAccess.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
     }
 
     private String parseDNForClientId(String parentDn) {

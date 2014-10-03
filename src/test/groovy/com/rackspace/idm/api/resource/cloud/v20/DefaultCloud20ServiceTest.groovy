@@ -14,7 +14,6 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.validation.Validator20
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 
@@ -634,9 +633,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
 
         def mock = Mock(ScopeAccess)
-        mock.getLDAPEntry() >> createLdapEntry()
+        mock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
         scopeAccessMock = Mock()
-        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessMock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
         authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
@@ -4232,17 +4231,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
-    }
-
-    def createLdapEntry(String dn) {
-        dn = dn ? dn : "accessToken=token,cn=TOKENS,rsId=id,ou=users"
-
-        def mock = Mock(ReadOnlyEntry)
-        mock.getDN() >> dn
-        mock.getAttributeValue(_) >> { arg ->
-            return arg[0]
-        }
-        return mock
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {

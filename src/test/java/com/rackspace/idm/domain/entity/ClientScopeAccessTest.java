@@ -34,7 +34,7 @@ public class ClientScopeAccessTest {
 
     @Test
     public void getUniqueId_ldapEntryExists_returnsDn() throws Exception {
-        clientScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        clientScopeAccess.setUniqueId("uniqueId");
         assertThat("returns dn",clientScopeAccess.getUniqueId(),equalTo("uniqueId"));
     }
 

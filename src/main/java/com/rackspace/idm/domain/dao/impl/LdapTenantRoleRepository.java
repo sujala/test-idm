@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
-import com.rsa.cryptoj.c.T;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -202,7 +201,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     private String getSearchDnForScopeAccess(ScopeAccess scopeAccess) {
         String userDn;
         try {
-            userDn = getBaseDnForScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
+            userDn = getBaseDnForScopeAccess(new DN(scopeAccess.getUniqueId()).getParent()).toString();
         } catch (Exception ex) {
             throw new IllegalStateException();
         }

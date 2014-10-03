@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,14 +25,8 @@ public class UserScopeAccessTest {
     }
 
     @Test
-    public void getLDAPEntry_returnsLdapEntry() throws Exception {
-        ReadOnlyEntry result = userScopeAccess.getLDAPEntry();
-        assertThat("ldap entry", result, equalTo(null));
-    }
-
-    @Test
     public void getUniqueId_ldapEntryNotNull_returnsUniqueId() throws Exception {
-        userScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
+        userScopeAccess.setUniqueId("uniqueId");
         String result = userScopeAccess.getUniqueId();
         assertThat("unique id", result, equalTo("uniqueId"));
     }

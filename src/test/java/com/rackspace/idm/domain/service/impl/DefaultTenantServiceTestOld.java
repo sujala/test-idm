@@ -12,7 +12,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.RDN;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,9 +110,8 @@ public class DefaultTenantServiceTestOld {
         DN parent = new DN("dn=hello");
         DN dn = new DN(new RDN("rdn=foo"),parent);
         Entry entry = new Entry(dn);
-        Entry readOnlyEntry = new ReadOnlyEntry(entry);
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
-        when(scopeAccess.getLDAPEntry()).thenReturn((ReadOnlyEntry) readOnlyEntry);
+        when(scopeAccess.getUniqueId()).thenReturn(entry.getDN());
         when(tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(new ArrayList<TenantRole>());
 
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
@@ -250,9 +248,7 @@ public class DefaultTenantServiceTestOld {
     }
 
     public ScopeAccess getScopeAccess() {
-        Entry entry = new Entry("id=1234,ou=here,o=path,dc=blah");
-        ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry(entry);
-        when(scopeAccess.getLDAPEntry()).thenReturn(readOnlyEntry);
+        when(scopeAccess.getUniqueId()).thenReturn("id=1234,ou=here,o=path,dc=blah");
         return scopeAccess;
     }
 
