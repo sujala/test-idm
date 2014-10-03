@@ -769,8 +769,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
-        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return userService.getUser(uid);
+        return userService.getUser(scopeAccessByAccessToken.getUsername());
     }
 
     @Override

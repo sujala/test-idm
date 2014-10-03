@@ -98,7 +98,6 @@ import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.validation.ObjectConverter
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.ObjectFactory
@@ -848,7 +847,7 @@ class RootServiceTest extends Specification {
         new ScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -866,7 +865,7 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -888,7 +887,7 @@ class RootServiceTest extends Specification {
             it.username = username
             it.impersonatingUsername = impUsername
             it.impersonatingToken = impToken
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -907,7 +906,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -930,7 +929,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.rackerId = rackerId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -961,7 +960,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -978,10 +977,6 @@ class RootServiceTest extends Specification {
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
-    }
-
-    def createLdapEntryWithDn(String dn) {
-        return new ReadOnlyEntry(dn)
     }
 
     def allowUserAccess() {

@@ -36,14 +36,14 @@ public class ImpersonatedScopeAccessTest {
 
     @Test
     public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
-        impersonatedScopeAccess.setLdapEntry(null);
+        impersonatedScopeAccess.setUniqueId(null);
         String result = impersonatedScopeAccess.getUniqueId();
         assertThat("unique id", result, equalTo(null));
     }
 
     @Test
     public void getUniqueId_ldapEntryNotNull_returnsLdapEntryGetDn() throws Exception {
-        impersonatedScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        impersonatedScopeAccess.setUniqueId("uniqueId");
         String result = impersonatedScopeAccess.getUniqueId();
         assertThat("unique id", result, equalTo("uniqueId"));
     }

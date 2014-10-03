@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.joda.time.DateTime;
@@ -13,8 +12,9 @@ import java.util.Date;
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
 public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String refreshTokenString;
@@ -29,16 +29,6 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken {
     @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getAccessTokenString() {
         return super.getAccessTokenString();
-    }
-
-    @Override
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        }
-        else {
-            return ldapEntry.getDN();
-        }
     }
 
     @Override

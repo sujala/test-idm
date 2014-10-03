@@ -4,7 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
-import org.dozer.Mapper;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
 import org.slf4j.Logger;
@@ -20,15 +19,13 @@ import java.util.List;
 
 @Component
 public class TokenConverterCloudV20 {
-    @Autowired
-    private Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
     public Token toToken(ScopeAccess scopeAccess) {
-        return toToken(scopeAccess, scopeAccess.getRoles());
+        return toToken(scopeAccess, null);
     }
 
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {

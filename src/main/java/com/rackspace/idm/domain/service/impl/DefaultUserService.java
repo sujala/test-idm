@@ -490,8 +490,7 @@ public class DefaultUserService implements UserService {
             return null;
         }
 
-        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return getUser(uid);
+        return getUser(scopeAccessByAccessToken.getUsername());
     }
 
     @Override

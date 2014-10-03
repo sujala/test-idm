@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +38,7 @@ public class PasswordResetScopeAccessTest {
 
     @Test
     public void getUniqueId_ldapEntryIsNotNull_returnsDn() throws Exception {
-        passwordResetScopeAccess.setLdapEntry(new ReadOnlyEntry("dn",new Attribute[0]));
+        passwordResetScopeAccess.setUniqueId("dn");
         assertThat("returns dn", passwordResetScopeAccess.getUniqueId(), equalTo("dn"));
     }
 
