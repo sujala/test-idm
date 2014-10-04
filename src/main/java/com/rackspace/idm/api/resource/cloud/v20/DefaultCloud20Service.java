@@ -2268,10 +2268,25 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+
+        ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        User caller = (User) userService.getUserByScopeAccess(token);
+        ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(caller);
+        IdentityUserTypeEnum requesterIdentityRole = authorizationService.getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
+        if (requesterIdentityRole.isDomainBasedAccessLevel() && (caller.getDomainId() == null || !caller.getDomainId().equalsIgnoreCase(domainId))) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
         Domain domain = domainService.checkAndGetDomain(domainId);
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain value = this.domainConverterCloudV20.toDomain(domain);
+
+        if (requesterIdentityRole.isDomainBasedAccessLevel()) {
+            value.setDescription(null);
+            value.setName(null);
+        }
+
         return Response.ok(objectFactory.createDomain(value).getValue());
     }
 
