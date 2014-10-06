@@ -4,8 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
@@ -21,6 +21,7 @@ import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.util.StringUtils
 import spock.lang.Unroll
@@ -52,7 +53,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapScopeAccessRepository scopeAccessRepository;
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     UserScopeAccess serviceAdminScopeAccess
     org.openstack.docs.identity.api.v2.User serviceAdmin;

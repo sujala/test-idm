@@ -13,4 +13,6 @@ public interface BaseUser extends UniqueId, Auditable {
     String getDomainId();
 
     boolean isDisabled();
+
+    String getUsername();
 }

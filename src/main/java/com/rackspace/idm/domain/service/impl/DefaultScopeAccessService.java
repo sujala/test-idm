@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import java.util.*;
 
@@ -49,7 +50,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
+    @Qualifier("scopeAccessDao")
     private ScopeAccessDao scopeAccessDao;
+
     @Autowired
     private UserService userService;
     @Autowired

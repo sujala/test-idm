@@ -3,8 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapDomainRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
@@ -13,10 +13,9 @@ import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVer
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
 import testHelpers.RootIntegrationTest
-import testHelpers.V2Factory
 
 import static com.rackspace.idm.Constants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
@@ -35,7 +34,10 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
     def static FULL_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagFull.xml"
     def static BETA_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagBeta.xml"
 
-    @Autowired LdapScopeAccessRepository scopeAccessRepository
+    @Autowired
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
+
     @Autowired LdapUserRepository userRepository
     @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
     @Autowired LdapDomainRepository domainRepository

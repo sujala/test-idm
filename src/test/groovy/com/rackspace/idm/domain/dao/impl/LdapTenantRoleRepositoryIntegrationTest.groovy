@@ -2,14 +2,14 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.ClientConflictException
-import com.rackspace.idm.helpers.CloudTestUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
-import spock.lang.Specification
 import testHelpers.RootIntegrationTest
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -25,7 +25,8 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     private LdapUserRepository userRepository
 
     @Autowired
-    private LdapScopeAccessRepository scopeAccessRepository
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired
     private LdapFederatedUserRepository federatedUserRepository
