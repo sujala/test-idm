@@ -1,11 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
@@ -22,7 +23,8 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
     private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
-    private LdapScopeAccessRepository scopeAccessRepository;
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired
     private IdentityUserService userService

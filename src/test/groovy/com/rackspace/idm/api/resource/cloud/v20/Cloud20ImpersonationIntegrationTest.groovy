@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -15,6 +15,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -56,7 +57,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     DefaultScopeAccessService scopeAccessService
 
     @Autowired
-    LdapScopeAccessRepository scopeAccessRepository
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired
     Configuration config
@@ -464,7 +466,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         //now reset the token expiration time to the specified lifetime
         UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(defaultUserToken)
         token.setAccessTokenExp(tokenExpirationDate.toDate())
-        scopeAccessRepository.updateObject(token)
+        scopeAccessRepository.updateScopeAccess(token)
 
         return defaultUser
     }
