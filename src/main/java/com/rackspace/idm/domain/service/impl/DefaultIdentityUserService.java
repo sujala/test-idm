@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -20,6 +21,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IdentityProviderDao identityProviderDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -44,6 +48,40 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public User getProvisionedUserById(String userId) {
         return identityUserRepository.getProvisionedUserById(userId);
+    }
+
+    @Override
+    public FederatedUser getFederatedUserByUsernameAndIdentityProviderName(String username, String idpName) {
+        return identityUserRepository.getFederatedUserByUsernameAndIdpName(username, idpName);
+    }
+
+    @Override
+    public FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderName(String username, String idpName) {
+        FederatedUser user = getFederatedUserByUsernameAndIdentityProviderName(username, idpName);
+
+        if (user == null) {
+            String errMsg = String.format("Federated user %s not found for IDP with name %s", username, idpName);
+            throw new NotFoundException(errMsg);
+        }
+
+        return user;
+    }
+
+    @Override
+    public FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderUri(String username, String idpUri) {
+        IdentityProvider idp = identityProviderDao.getIdentityProviderByUri(idpUri);
+
+        FederatedUser user = null;
+        if(idp != null) {
+            user = getFederatedUserByUsernameAndIdentityProviderName(username, idp.getName());
+        }
+
+        if (user == null) {
+            String errMsg = String.format("Federated user %s not found for IDP with URI %s", username, idpUri);
+            throw new NotFoundException(errMsg);
+        }
+
+        return user;
     }
 
     @Override

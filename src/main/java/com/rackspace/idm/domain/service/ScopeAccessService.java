@@ -133,7 +133,7 @@ public interface ScopeAccessService {
 
     String getUserIdForParent(ScopeAccess scopeAccessByAccessToken);
 
-    UserScopeAccess createInstanceOfUserScopeAccess(User user, String clientId, String clientRCN);
+    UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN);
 
     /**
      * Processes an impersonation request and returns an appropriate ImpersonatedScopeAccess.
@@ -144,7 +144,7 @@ public interface ScopeAccessService {
      * @param impersonatorType
      * @return
      */
-    ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, User userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType);
+    ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, EndUser userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType);
 
     boolean isSetupMfaScopedToken(ScopeAccess scopeAccess);
  }

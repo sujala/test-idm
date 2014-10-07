@@ -2288,17 +2288,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockTokenConverter(service)
         mockUserConverter(service)
-        allowImpersonatedAccess()
+        def scopeAccess = createImpersonatedScopeAccess()
+        def impersonatedToken = createUserScopeAccess()
+        scopeAccessService.getScopeAccessByAccessToken(scopeAccess.accessTokenString) >> scopeAccess
+        scopeAccessService.getScopeAccessByAccessToken(scopeAccess.impersonatingToken) >> impersonatedToken
 
         def impersonator = entityFactory.createUser()
         def user = entityFactory.createUser()
 
         when:
-        service.validateToken(headers, authToken, "tokenId", "tenantId")
+        service.validateToken(headers, scopeAccess.accessTokenString, scopeAccess.accessTokenString, "tenantId")
 
         then:
         1 * userService.getUserByScopeAccess(_) >> impersonator
-        1 * userService.getUser(_) >> user
+        1 * identityUserService.getEndUserById(_) >> user
         1 * tenantService.getTenantRolesForUser(user) >> [].asList()
         1 * tenantService.getGlobalRolesForUser(impersonator) >> [].asList()
     }

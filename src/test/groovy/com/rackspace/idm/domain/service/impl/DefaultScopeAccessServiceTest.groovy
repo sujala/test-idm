@@ -457,7 +457,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
                 listAll,
         ]
 
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >>> [
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >>> [
                 scopeAccessFour,
         ]
 
@@ -507,12 +507,14 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
                 otherUserList
         ].asList().flatten()
 
-        scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUser(_, impersonatingUser) >> [
+        scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUserByRsId(_, _) >> [
                 expiredList,
                 listWithValid
         ].asList().flatten()
 
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, impersonatingUser) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUserByUsername(_, _) >> [].asList()
 
         when: "optimize is turned off"
         ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
@@ -600,7 +602,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             return it
         }
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting second of three expired tokens"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
@@ -632,7 +634,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [scopeAccessFour].asList()
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting valid token"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
