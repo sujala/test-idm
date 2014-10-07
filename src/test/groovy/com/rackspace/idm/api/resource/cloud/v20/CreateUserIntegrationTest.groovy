@@ -11,6 +11,7 @@ import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -424,6 +425,33 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.deleteUser(identityAdminToken, user.id)
         utils.deleteGroup(group)
+    }
+
+    @Unroll
+    def "test feature flag for adding expired tokens on user create: addTokens = #addTokens"() {
+        given:
+        staticIdmConfiguration.setProperty(DefaultUserService.ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, addTokens)
+        def domainId = utils.createDomain()
+        def username = "user" + testUtils.getRandomUUID()
+
+        when:
+        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
+
+        then:
+        def userTokens = scopeAccessService.getScopeAccessListByUserId(user.id)
+        if(addTokens) {
+            assert userTokens.iterator().hasNext()
+        } else {
+            assert !userTokens.iterator().hasNext()
+        }
+
+        cleanup:
+        utils.deleteUser(user)
+
+        where:
+        addTokens   | _
+        true        | _
+        false       | _
     }
 
 }

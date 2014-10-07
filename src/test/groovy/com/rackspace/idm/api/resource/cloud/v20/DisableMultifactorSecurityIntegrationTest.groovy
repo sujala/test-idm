@@ -315,9 +315,13 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     def resetAndGetToken(user) {
         user = userRepository.getUserById(user.id)
         def token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-        resetTokenExpiration(token.accessTokenString)
-        token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-        return token.accessTokenString
+        if(token != null) {
+            resetTokenExpiration(token.accessTokenString)
+            token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
+            return token.accessTokenString
+        } else {
+            return utils.getToken(user.username)
+        }
     }
 
 }

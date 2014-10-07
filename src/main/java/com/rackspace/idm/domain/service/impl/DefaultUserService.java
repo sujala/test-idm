@@ -42,6 +42,8 @@ public class DefaultUserService implements UserService {
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
     static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
+    static final String ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG = "add.expired.tokens.user.create";
+    static final boolean ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG_DEFAULT_VALUE = false;
     static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -234,15 +236,17 @@ public class DefaultUserService implements UserService {
     }
 
     private void addExpiredScopeAccessesForUser(User user) {
-        //Every user by default has the idm application provisioned for them
-        logger.info("Adding User Scope Access for Idm to user {}", user);
-        UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
-        this.scopeAccessService.addUserScopeAccess(user, usa);
+        if(config.getBoolean(ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG_DEFAULT_VALUE)) {
+            //Every user by default has the idm application provisioned for them
+            logger.info("Adding User Scope Access for Idm to user {}", user);
+            UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
+            this.scopeAccessService.addUserScopeAccess(user, usa);
 
-        //Every user by default has the cloud auth application provisioned for them
-        UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
-        this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
-        logger.info("Added User Scope Access for Idm to user {}", user);
+            //Every user by default has the cloud auth application provisioned for them
+            UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+            this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
+            logger.info("Added User Scope Access for Idm to user {}", user);
+        }
     }
 
     /**
