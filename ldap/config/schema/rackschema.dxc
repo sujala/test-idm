@@ -857,6 +857,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.114) = {
     description = "The scope of a scope access"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.115) = {
+    name = impersonatingRsId
+    ldap-names = impersonatingRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The associated rsId of a user being impersonated."
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1243,7 +1251,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.26) = {
         rackerId,
         accessToken,
         accessTokenExp,
-        impersonatingToken
+        impersonatingToken,
+        impersonatingRsId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {

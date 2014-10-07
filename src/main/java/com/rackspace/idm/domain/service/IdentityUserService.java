@@ -31,6 +31,37 @@ public interface IdentityUserService {
     User getProvisionedUserById(String userId);
 
     /**
+     * Search for a federated user with the specified username within the specified idp. Returns null if no user was found.
+     *
+     * @param username
+     * @param idpName
+     * @return
+     */
+    FederatedUser getFederatedUserByUsernameAndIdentityProviderName(String username, String idpName);
+
+    /**
+     * Search for a federated user with the specified username within the specified idp. Throws NotFoundException if the user is not found.
+     * This does not distinguish between an invalid idp name and an invalid username. The message in the exception will simply specify that the
+     * user was not found.
+     *
+     * @param username
+     * @param idpName
+     * @return
+     */
+    FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderName(String username, String idpName);
+
+    /**
+     * Search for a federated user with the specified username within the specified idp. Throws NotFoundException if the user is not found.
+     * This does not distinguish between an invalid idp URI and an invalid username. The message in the exception will simply specify that the
+     * user was not found.
+     *
+     * @param username
+     * @param idpUri
+     * @return
+     */
+    FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderUri(String username, String idpUri);
+
+    /**
      * Search for a federated user with the specified userId. Returns null if no federated user matches the userId.
      *
      * @param userId

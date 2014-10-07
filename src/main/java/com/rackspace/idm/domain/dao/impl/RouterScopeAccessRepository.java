@@ -82,8 +82,13 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     }
 
     @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername) {
-        return getRouteByUsername(user.getUsername()).getMostRecentImpersonatedScopeAccessForUser(user, impersonatingUsername);
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
+        return getRouteByUsername(user.getUsername()).getMostRecentImpersonatedScopeAccessForUserOfUser(user, impersonatingUsername);
+    }
+
+    @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId) {
+        return getRouteByUsername(user.getUsername()).getMostRecentImpersonatedScopeAccessForUserRsId(user, impersonatingRsId);
     }
 
     @Override
@@ -117,8 +122,13 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     }
 
     @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
-        return getRouteByUsername(user.getUsername()).getAllImpersonatedScopeAccessForUserOfUser(user, impersonatingUsername);
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId) {
+        return getRouteByUsername(user.getUsername()).getAllImpersonatedScopeAccessForUserOfUserByRsId(user, impersonatingRsId);
+    }
+
+    @Override
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByUsername(BaseUser user, String impersonatingUsername) {
+        return getRouteByUsername(user.getUsername()).getAllImpersonatedScopeAccessForUserOfUserByRsId(user, impersonatingUsername);
     }
 
     @Override

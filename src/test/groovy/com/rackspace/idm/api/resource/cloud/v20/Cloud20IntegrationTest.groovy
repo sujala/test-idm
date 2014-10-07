@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
+import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
@@ -2836,7 +2837,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         when:
         def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "domain$username", password)).getEntity(User).value
-        def rackerAuth = cloud20.authenticateRacker(racker, rackerPassword)
+        def rackerAuth = cloud20.authenticateRacker(Constants.RACKER_IMPERSONATE, Constants.RACKER_IMPERSONATE_PASSWORD)
         AuthenticateResponse response = rackerAuth.getEntity(AuthenticateResponse).value
         def token = response.token.id
         def userForImpersonation = new User().with {
@@ -2859,7 +2860,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         validateResponse.status == 200
         def validateEntity = validateResponse.getEntity(AuthenticateResponse).value
-        validateEntity.any.attributes.nodes[0].value.contains(racker)
+        validateEntity.any.attributes.nodes[0].value.contains(Constants.RACKER_IMPERSONATE)
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)
