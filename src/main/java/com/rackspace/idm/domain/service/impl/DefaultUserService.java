@@ -267,7 +267,8 @@ public class DefaultUserService implements UserService {
         // This doesn't happen today because there is business logic to ensure these cases don't happen.
         // We want to eventually remove that. A user should be able to be assigned any role.
         //
-        if (authorizationService.hasServiceAdminRole(caller)) {
+        final boolean hasServiceAdminRole = authorizationService.hasServiceAdminRole(caller);
+        if (hasServiceAdminRole) {
             if (StringUtils.isNotBlank(user.getDomainId())) {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
@@ -295,6 +296,9 @@ public class DefaultUserService implements UserService {
                 attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
                 attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
             }
+        } else if (!hasServiceAdminRole) {
+            // Just identity admins and service admins can set 'tokenFormat'
+            user.setTokenFormat(null);
         }
 
         if (authorizationService.hasUserAdminRole(caller) || authorizationService.hasUserManageRole(caller)) {
@@ -794,7 +798,6 @@ public class DefaultUserService implements UserService {
          */
         user.setMultifactorEnabled(null);
         user.setUserMultiFactorEnforcementLevel(null);
-
 
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setRsGroupId(currentUser.getRsGroupId());

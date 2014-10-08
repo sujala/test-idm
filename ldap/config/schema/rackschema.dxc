@@ -865,6 +865,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.115) = {
     description = "The associated rsId of a user being impersonated."
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.116) = {
+    name = rsTokenFormat
+    ldap-names = rsTokenFormat
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The format of the tokens that will be issued"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -917,7 +925,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsExternalMultiFactorUserId,
         rsMultiFactorEnabled,
         rsMultiFactorState,
-        rsUserMultiFactorEnforcementLevel
+        rsUserMultiFactorEnforcementLevel,
+        rsTokenFormat
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {

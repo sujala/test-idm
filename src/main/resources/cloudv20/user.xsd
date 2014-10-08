@@ -62,6 +62,8 @@
         <attribute ref="RAX-AUTH:multiFactorState" use="optional"/>
         <attribute ref="RAX-AUTH:userMultiFactorEnforcementLevel" use="optional"/>
         <attribute ref="RAX-AUTH:federatedIdp" use="optional"/>
+        <attribute ref="RAX-AUTH:tokenFormat" use="optional"/>
+
         <attribute ref="OS-KSADM:password" use="optional"/>
 
         <attribute name="id" type="xsd:ID" use="required">
