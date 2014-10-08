@@ -256,6 +256,9 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userMultiFactorEnforcementLevel;
 
+    @LDAPField(attribute = LdapRepository.OBJECTCLASS_TOKEN_FORMAT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String tokenFormat;
+
     private List<TenantRole> roles;
 
     public User() {

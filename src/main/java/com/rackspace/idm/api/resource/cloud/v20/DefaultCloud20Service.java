@@ -686,9 +686,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             boolean isUpdatingSelf = caller.getId().equals(userId);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
+
+            // Just identity admins and service admins can update 'tokenFormat'
+            if (!callerIsIdentityAdmin && !callerIsServiceAdmin) {
+                user.setTokenFormat(null);
+            }
 
             String domainId = user.getDomainId();
             if(StringUtils.isNotBlank(domainId)){

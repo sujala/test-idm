@@ -29,6 +29,7 @@
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
     <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
+    <attribute name="tokenFormat" type="RAX-AUTH:TokenFormatEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -751,4 +752,13 @@
             <enumeration value="OPTIONAL"/>
         </restriction>
     </simpleType>
+
+    <simpleType name="TokenFormatEnum">
+        <restriction base="xsd:string">
+            <enumeration value="DEFAULT"/>
+            <enumeration value="UUID"/>
+            <enumeration value="AE"/>
+        </restriction>
+    </simpleType>
+
 </schema>

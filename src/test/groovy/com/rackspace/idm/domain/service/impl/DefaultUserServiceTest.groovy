@@ -403,6 +403,53 @@ class DefaultUserServiceTest extends RootServiceTest {
         0 * domainService.addTenantToDomain(_,_)
     }
 
+    def "Token format is reset if the caller is not service or identity admin"() {
+        given:
+        def caller = Mock(User)
+        def user = Mock(User)
+        authorizationService.hasIdentityAdminRole(caller) >> false
+        authorizationService.hasServiceAdminRole(caller) >> false
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller, false)
+
+        then:
+        1 * user.setTokenFormat(null)
+    }
+
+    def "Token format is not reset if the caller is service admin"() {
+        given:
+        def caller = Mock(User)
+        def user = Mock(User)
+        authorizationService.hasServiceAdminRole(caller) >> true
+
+        mockRoleService.getIdentityAdminRole() >> new ClientRole()
+        user.getRoles() >> new ArrayList<TenantRole>()
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller, false)
+
+        then:
+        0 * user.setTokenFormat(null)
+    }
+
+    def "Token format is not reset if the caller is identity admin"() {
+        given:
+        def caller = Mock(User)
+        def user = Mock(User)
+        authorizationService.hasIdentityAdminRole(caller) >> true
+
+        user.getDomainId() >> "123"
+        mockRoleService.getUserAdminRole() >> new ClientRole()
+        user.getRoles() >> new ArrayList<TenantRole>()
+
+        when:
+        service.setUserDefaultsBasedOnCaller(user, caller, false)
+
+        then:
+        0 * user.setTokenFormat(null)
+    }
+
     def "Set user defaults based on caller if caller is identity:service-admin (super-admin)"() {
         given:
         def caller = this.createUser(null, true, domainId)

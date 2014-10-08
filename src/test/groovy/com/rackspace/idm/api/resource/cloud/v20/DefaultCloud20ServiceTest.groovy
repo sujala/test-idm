@@ -1,4 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 
@@ -2860,6 +2862,79 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * atomHopperClient.asyncPost(_,_)
+    }
+
+    def "Update token format as a identity admin doesn't reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudIdentityAdmin(_) >> true
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        0 * userInput.setTokenFormat(_)
+    }
+
+    def "Update token format as a service admin doesn't reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        0 * userInput.setTokenFormat(_)
+    }
+
+    def "Update token format as a non service/identity admin reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        1 * userInput.setTokenFormat(null)
     }
 
     def "Disabling a disabled user does not send an atom feed"(){
