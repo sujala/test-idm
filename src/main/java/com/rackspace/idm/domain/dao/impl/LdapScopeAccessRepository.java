@@ -49,8 +49,18 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
-        return getObjects(searchFilterGetAllImpersonatedScopeAccessesForUser(impersonatingUsername), user.getUniqueId());
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByUsername(BaseUser user, String impersonatingUsername) {
+        return getObjects(searchFilterGetAllImpersonatedScopeAccessesForUserUsername(impersonatingUsername), user.getUniqueId());
+    }
+
+    @Override
+    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId) {
+        return getObjects(searchFilterGetAllImpersonatedScopeAccessesForUserRsId(impersonatingRsId), user.getUniqueId());
+    }
+
+    @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
+        return getMostRecentScopeAccess(user, searchFilterGetAllImpersonatedScopeAccessesForUserUsername(impersonatingUsername));
     }
 
     @Override
@@ -59,8 +69,8 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUser(BaseUser user, String impersonatingUsername) {
-        return getMostRecentScopeAccess(user, searchFilterGetAllImpersonatedScopeAccessesForUser(impersonatingUsername));
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId) {
+        return getMostRecentScopeAccess(user, searchFilterGetAllImpersonatedScopeAccessesForUserRsId(impersonatingRsId));
     }
 
     @Override
@@ -163,7 +173,6 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         }
 
         return mostRecentScopeAccess;
-
     }
 
     private Filter searchFilterGetAllImpersonatedScopeAccess() {
@@ -171,10 +180,18 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS).build();
     }
 
-    private Filter searchFilterGetAllImpersonatedScopeAccessesForUser(String impersonatingUsername) {
+    private Filter searchFilterGetAllImpersonatedScopeAccessesForUserRsId(String impersonatingRsId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS)
-                .addEqualAttribute(ATTR_IMPERSONATING_USERNAME, impersonatingUsername).build();
+                .addEqualAttribute(ATTR_IMPERSONATING_RS_ID, impersonatingRsId).build();
+    }
+
+    private Filter searchFilterGetAllImpersonatedScopeAccessesForUserUsername(String impersonatingUsername) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS),
+                Filter.createEqualityFilter(ATTR_IMPERSONATING_USERNAME, impersonatingUsername),
+                Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_IMPERSONATING_RS_ID))
+        );
     }
 
     private Filter searchFilterGetScopeAccesses() {

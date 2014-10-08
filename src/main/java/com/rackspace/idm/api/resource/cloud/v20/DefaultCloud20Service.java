@@ -2175,14 +2175,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator20.validateImpersonationRequestForService(impersonationRequest);
                 impersonator = this.userService.getUserById(((UserScopeAccess)callerScopeAccess).getUserRsId());
             } else {
-                //this shouldn't really happen do to verification that user is racker or identity admin, but just in case.
+                //this shouldn't really happen due to verification that user is racker or identity admin, but just in case.
                 // TODO: Should be a 403 rather than 401, but this is how it has been historically
                 logger.warn(String.format("Invalid impersonation request. Unrecognized token type '%s'", callerScopeAccess));
                 throw new NotAuthorizedException("User does not have access");
             }
 
             //validate the user being impersonated can be found and is allowed to be impersonated
-            User user = userService.checkAndGetUserByName(impersonationRequest.getUser().getUsername());
+            EndUser user;
+            if(StringUtils.isNotBlank(impersonationRequest.getUser().getFederatedIdp())){
+                user = identityUserService.checkAndGetFederatedUserByUsernameAndIdentityProviderUri(impersonationRequest.getUser().getUsername(), impersonationRequest.getUser().getFederatedIdp());
+            } else {
+                user = userService.checkAndGetUserByName(impersonationRequest.getUser().getUsername());
+            }
+
             if (!isValidImpersonatee(user)) {
                 throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
             }
@@ -2266,10 +2272,25 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+
+        ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        User caller = (User) userService.getUserByScopeAccess(token);
+        ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(caller);
+        IdentityUserTypeEnum requesterIdentityRole = authorizationService.getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
+        if (requesterIdentityRole.isDomainBasedAccessLevel() && (caller.getDomainId() == null || !caller.getDomainId().equalsIgnoreCase(domainId))) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
         Domain domain = domainService.checkAndGetDomain(domainId);
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain value = this.domainConverterCloudV20.toDomain(domain);
+
+        if (requesterIdentityRole.isDomainBasedAccessLevel()) {
+            value.setDescription(null);
+            value.setName(null);
+        }
+
         return Response.ok(objectFactory.createDomain(value).getValue());
     }
 
@@ -2829,7 +2850,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public boolean isValidImpersonatee(User user) {
+    public boolean isValidImpersonatee(EndUser user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user);
         for (TenantRole role : tenantRolesForUser) {
             String name = role.getName();
@@ -3397,7 +3418,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
-                    user = userService.getUser(isa.getImpersonatingUsername());
+
+                    ScopeAccess impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(isa.getImpersonatingToken());
+                    if (impersonatedToken == null || impersonatedToken.isAccessTokenExpired(new DateTime())) {
+                        throw new NotFoundException("Token not found.");
+                    } else if (impersonatedToken instanceof UserScopeAccess) {
+                        user = identityUserService.getEndUserById(((UserScopeAccess) impersonatedToken).getUserRsId());
+                    } else {
+                        //the only type of scope access that can be impersonated is a UserScopeAccess, if we get here then this is probably bad data
+                        throw new IllegalStateException("Unrecognized type of token being impersonated " + impersonatedToken.getClass().getSimpleName());
+                    }
+
                     roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));

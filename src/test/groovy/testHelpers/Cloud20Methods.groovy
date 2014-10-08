@@ -110,9 +110,9 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
     }
 
-    def validateToken(authToken, token) {
+    def validateToken(authToken, token, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TOKENS).path(token).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(TOKENS).path(token).header(X_AUTH_TOKEN, authToken).accept(accept).get(ClientResponse)
     }
 
     def getUserByName(String token, String name, MediaType mediaType = APPLICATION_XML_TYPE) {
@@ -640,24 +640,17 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post ClientResponse
     }
 
-    def impersonate(String token, User user, Integer expireTime) {
+    def impersonate(String token, User user, Integer expireTime = 10800) {
         initOnUse()
         def request = new ImpersonationRequest().with {
             it.user = new User().with {
                 it.username = user.username
+                if(user.federatedIdp != null) {
+                    it.federatedIdp = user.federatedIdp
+                }
                 it
             }
             it.expireInSeconds = expireTime
-            it
-        }
-        resource.path(path20).path(RAX_AUTH).path("impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
-    }
-
-    def impersonate(String token, User user) {
-        initOnUse()
-        def request = new ImpersonationRequest().with {
-            it.user = user
-            it.expireInSeconds = 10800
             it
         }
         resource.path(path20).path(RAX_AUTH).path("impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)

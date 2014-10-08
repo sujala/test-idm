@@ -16,6 +16,7 @@ import org.joda.time.DateTime;
  */
 @Getter
 @Setter
+@Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
 public class ImpersonatedScopeAccess extends ScopeAccess {
 
@@ -31,6 +32,9 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
 
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingUsername;
+
+    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String impersonatingRsId;
 
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_TOKEN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingToken;
