@@ -78,9 +78,9 @@ abstract class DefaultAeTokenServiceBaseIntegrationTest extends Specification {
         ScopeAccess impersonatedUserToken = aeTokenService.unmarshallToken(toValidate.impersonatingToken)
         assert impersonatedUserToken instanceof UserScopeAccess
         UserScopeAccess usaImpersonatedUserToken = (UserScopeAccess) impersonatedUserToken
-        assert impersonatedUserToken.username == original.impersonatingUsername
-        assert impersonatedUserToken.accessTokenExp == original.accessTokenExp
-        assert impersonatedUserToken.authenticatedBy.size() == 0 //TODO: should be "IMPERSONATED" or something..
+        assert usaImpersonatedUserToken.username == original.impersonatingUsername
+        assert usaImpersonatedUserToken.accessTokenExp == original.accessTokenExp
+        assert usaImpersonatedUserToken.authenticatedBy.size() == 1
     }
 
     def void validateWebSafeToken(String webSafeToken) {
