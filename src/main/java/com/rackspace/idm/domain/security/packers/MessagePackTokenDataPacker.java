@@ -81,6 +81,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_FEDERATION, 3);
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_PASSCODE, 4);
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_RSAKEY, 5);
+        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION, 6);
         for (String key : AUTH_BY_MARSHALL.keySet()) {
             AUTH_BY_UNMARSHALL.put(AUTH_BY_MARSHALL.get(key), key);
         }
@@ -236,10 +237,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //user info
         packingItems.add(user.getId()); //TODO: Switch to using userids for both impersonator, and impersonatee
-        packingItems.add(scopeAccess.getImpersonatingUsername());
-
-        //imp token info (alternative to this could be generating this token on the fly whenever impersonation token is used)
-//        packingItems.add(scopeAccess.getImpersonatingToken());
+        packingItems.add(scopeAccess.getImpersonatingRsId());
 
         return packingItems;
     }
@@ -258,30 +256,31 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setAuthenticatedBy(decompressAuthenticatedBy(safeRead(unpacker, Integer[].class)));
             scopeAccess.setScope(decompressScope(safeRead(unpacker, Integer.class)));
 
-            //user info
-            String userId = safeRead(unpacker, String.class);
-            User user = identityUserService.getProvisionedUserById(userId);
-            scopeAccess.setUsername(user.getUsername());
+            //populate impersonator user info
+            String impersonatorId = safeRead(unpacker, String.class);
+            User impersonator = identityUserService.getProvisionedUserById(impersonatorId);
+            scopeAccess.setUsername(impersonator.getUsername());
 
-            scopeAccess.setImpersonatingUsername(safeRead(unpacker, String.class));
-
-            //impersonated user token
-            User impersonatedUser = provisionedUserService.getUser(scopeAccess.getImpersonatingUsername());
+            //populate impersonator information
+            String impersonatedUserId = safeRead(unpacker, String.class);
+            EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);
             if (impersonatedUser == null) {
                 throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_IMPERSONATED_DATA_CONTENTS, String.format("Impersonated user '%s' not found.", scopeAccess.getImpersonatingUsername()));
             }
+            scopeAccess.setImpersonatingRsId(impersonatedUserId);
+            scopeAccess.setImpersonatingUsername(impersonatedUser.getUsername());
+
+            //generate dynamic ae token for the user being impersonated
             UserScopeAccess usa = new UserScopeAccess();
             usa.setUserRsId(impersonatedUser.getId());
             usa.setUsername(impersonatedUser.getUsername());
-            usa.setAuthenticatedBy(null); //TODO: should be "IMPERSONATED" or something.. need to get in service api?
+            usa.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
             usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             aeTokenService.marshallTokenForUser(impersonatedUser, usa);
             scopeAccess.setImpersonatingToken(usa.getAccessTokenString());
 
-            //scopeAccess.setImpersonatingToken(safeRead(unpacker, String.class));
-
             // DN
-            scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(userId, webSafeToken));
+            scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));

@@ -30,8 +30,7 @@ class DefaultAeTokenServiceProvisionedUserImpersonationIntegrationTest extends D
 
         identityUserService.getProvisionedUserById(impersonatorUser.id) >> impersonatorUser
         identityUserService.getProvisionedUserById(impersonatedUser.id) >> impersonatedUser
-
-        userService.getUser(impersonatedUser.getUsername()) >> impersonatedUser
+        identityUserService.getEndUserById(impersonatedUser.id) >> impersonatedUser
     }
 
     def "marshall/unmarshall fully populated provisioned user impersonation token for provisioned user"() {
@@ -59,6 +58,7 @@ class DefaultAeTokenServiceProvisionedUserImpersonationIntegrationTest extends D
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.impersonatingUsername = impersonatedUser.username
+            it.impersonatingRsId = impersonatedUser.id
             it.username = impersonatorUser.username
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
@@ -86,6 +86,7 @@ class DefaultAeTokenServiceProvisionedUserImpersonationIntegrationTest extends D
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.impersonatingUsername = impersonatedUser.username
+            it.impersonatingRsId = impersonatedUser.id
             it.username = impersonatorUser.username
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
@@ -154,6 +155,7 @@ class DefaultAeTokenServiceProvisionedUserImpersonationIntegrationTest extends D
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.impersonatingUsername = impersonated.username
+            it.impersonatingRsId = impersonated.id
             it.username = impersonator.username
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.getAuthenticatedBy().addAll(authBy)
