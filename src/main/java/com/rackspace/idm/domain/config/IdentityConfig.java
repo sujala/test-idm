@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -30,11 +31,15 @@ public class IdentityConfig {
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
 
+    private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
+    private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT = "UUID";
+
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
     private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s'";
     private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required";
+
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
 
     @Autowired
@@ -97,16 +102,31 @@ public class IdentityConfig {
     }
 
     public String getCloudAuthClientId() {
-        return config.getString(CLOUD_AUTH_CLIENT_ID);
+      return config.getString(CLOUD_AUTH_CLIENT_ID);
     }
 
-    public String getIdentityUserAdminRoleName() { return config.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);}
+    public String getIdentityUserAdminRoleName() {
+        return config.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
+    }
 
-    public String getIdentityIdentityAdminRoleName() { return config.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);}
+    public String getIdentityIdentityAdminRoleName() {
+        return config.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
+    }
 
-    public String getIdentityServiceAdminRoleName() { return config.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);}
+    public String getIdentityServiceAdminRoleName() {
+        return config.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
+    }
 
-    public String getIdentityDefaultUserRoleName() { return config.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);}
+    public String getIdentityDefaultUserRoleName() {
+        return config.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
+    }
 
-    public String getIdentityUserManagerRoleName() { return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);}
+    public String getIdentityUserManagerRoleName() {
+        return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
+    }
+
+    public String getIdentityProvisionedTokenFormat() {
+        return config.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT);
+    }
+
 }

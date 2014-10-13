@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.security;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
 import com.rackspace.idm.domain.security.packers.TokenDataPacker;
 import org.apache.commons.lang.Validate;
@@ -39,6 +41,12 @@ public class DefaultAeTokenService implements AeTokenService {
 
     @Autowired
     private AuthenticatedMessageProvider authenticatedMessageProvider;
+
+    @Override
+    public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
+        final boolean isProvisionedUser = object instanceof User && scopeAccess instanceof UserScopeAccess;
+        return isProvisionedUser;
+    }
 
     @Override
     public String marshallTokenForUser(BaseUser user, ScopeAccess token) {

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.security;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 
@@ -25,4 +26,13 @@ public interface AeTokenService {
      * @throws UnmarshallTokenException if an error is encountered unmarshalling the token
      */
     ScopeAccess unmarshallToken(String webSafeToken);
+
+    /**
+     * Verify marshall/unmarshall support for a set of object and scopeAccess
+     *
+     * @param object
+     * @param scopeAccess
+     * @return
+     */
+    boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess);
 }
