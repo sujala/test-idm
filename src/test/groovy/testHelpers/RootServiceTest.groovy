@@ -24,6 +24,7 @@ import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
@@ -222,6 +223,7 @@ class RootServiceTest extends Specification {
     @Shared AuthWithToken authWithToken
     @Shared AuthWithPasswordCredentials authWithPasswordCredentials
     @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
+    @Shared TokenFormatSelector tokenFormatSelector
 
     @Shared def jaxbMock
 
@@ -805,6 +807,11 @@ class RootServiceTest extends Specification {
         openStackIdentityV2Factory = Mock()
         jaxbObjectFactories.getOpenStackIdentityV2Factory() >> openStackIdentityV2Factory
         service.jaxbObjectFactories = jaxbObjectFactories
+    }
+
+    def mockTokenFormatSelector(service) {
+        tokenFormatSelector = Mock()
+        service.tokenFormatSelector = tokenFormatSelector
     }
 
     /*
