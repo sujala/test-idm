@@ -1,10 +1,8 @@
 package com.rackspace.idm.domain.security;
 
 import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
 import com.rackspace.idm.domain.security.packers.TokenDataPacker;
 import org.apache.commons.lang.Validate;
@@ -42,10 +40,29 @@ public class DefaultAeTokenService implements AeTokenService {
     @Autowired
     private AuthenticatedMessageProvider authenticatedMessageProvider;
 
+    @Autowired
+    LdapIdentityProviderRepository identityProviderRepository;
+
+    /**
+     * Returns whether the service support creating tokens of the specified type against the specified user.
+     *
+     * @param object
+     * @param scopeAccess
+     * @return
+     */
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
-        final boolean isProvisionedUser = object instanceof User && scopeAccess instanceof UserScopeAccess;
-        return isProvisionedUser;
+        final boolean isProvisionedUser = object instanceof User;
+        final boolean isFederatedUser = object instanceof FederatedUser;
+        final boolean isImpersonationToken = scopeAccess instanceof ImpersonatedScopeAccess;
+        final boolean isUserToken = scopeAccess instanceof UserScopeAccess;
+
+        //ae service supports
+        // - federated and provisioned user "regular" tokens
+        // - provisioned users creating "impersonation" tokens (against fed/provisioned users)
+
+        return (isProvisionedUser && (isImpersonationToken || isUserToken))
+                || (isFederatedUser && isUserToken);
     }
 
     @Override
@@ -156,11 +173,19 @@ public class DefaultAeTokenService implements AeTokenService {
         if (user instanceof User) {
             User user1 = (User) user;
             return calculateProvisionedUserTokenDN(user1.getId(), webSafeToken);
+        } else if (user instanceof FederatedUser) {
+            FederatedUser user1 = (FederatedUser) user;
+            IdentityProvider provider = identityProviderRepository.getIdentityProviderByUri(user1.getFederatedIdpUri());
+            return calculateFederatedUserTokenDN(user1.getUsername(), provider.getName(), webSafeToken);
         }
         throw new RuntimeException("Unsupported user type '" + user.getClass());
     }
 
     private String calculateProvisionedUserTokenDN(String userRsId, String webSafeToken) {
         return String.format("accessToken=%s,cn=TOKENS,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", webSafeToken, userRsId);
+    }
+
+    private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
+        return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
     }
 }

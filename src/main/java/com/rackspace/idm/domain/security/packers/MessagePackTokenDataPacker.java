@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.security.packers;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AeTokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
@@ -36,7 +37,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final byte VERSION_0 = 0;
 
     private static final byte TOKEN_TYPE_PROVISIONED_USER = 0;
-    private static final byte TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_USER = 1;
+    private static final byte TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER = 1;
+    private static final byte TOKEN_TYPE_FEDERATED_USER = 2;
 
     private static final Map<String, Integer> AUTH_BY_MARSHALL = new HashMap<String, Integer>();
     private static final Map<Integer, String> AUTH_BY_UNMARSHALL = new HashMap<Integer, String>();
@@ -69,6 +71,9 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     @Autowired
     private UserService provisionedUserService;
 
+    @Autowired
+    LdapIdentityProviderRepository identityProviderRepository;
+
     /*
     This adds circular reference since AeTOkenService needs the message packer...
      */
@@ -99,8 +104,11 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         if (token instanceof UserScopeAccess && user instanceof User) {
             packingItems.add(TOKEN_TYPE_PROVISIONED_USER);
             packingItems.addAll(packProvisionedUserToken((User) user, (UserScopeAccess) token));
+        } else if (token instanceof UserScopeAccess && user instanceof FederatedUser) {
+            packingItems.add(TOKEN_TYPE_FEDERATED_USER);
+            packingItems.addAll(packFederatedUserToken((FederatedUser) user, (UserScopeAccess) token));
         } else if (token instanceof ImpersonatedScopeAccess && user instanceof User) {
-            packingItems.add(TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_USER);
+            packingItems.add(TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER);
             packingItems.addAll(packProvisionedUserImpersonationToken((User) user, (ImpersonatedScopeAccess) token));
         } else {
             throw new UnsupportedOperationException("Unsupported " + user.getClass().getSimpleName() + " token:" + token.getClass().getSimpleName());
@@ -138,7 +146,9 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             if (type == TOKEN_TYPE_PROVISIONED_USER) {
                 token = unPackProvisionedUserToken(webSafeToken, unpacker);
-            } else if (type == TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_USER) {
+            } else if (type == TOKEN_TYPE_FEDERATED_USER) {
+                token = unPackFederatedUserToken(webSafeToken, unpacker);
+            } else if (type == TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER) {
                 token = unpackProvisionedUserImpersonationToken(webSafeToken, unpacker);
             } else {
                 throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_SCHEME, String.format("Unrecognized data packing scheme '%s'", type));
@@ -215,6 +225,61 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return scopeAccess;
     }
 
+    private List<Object> packFederatedUserToken(FederatedUser user, UserScopeAccess scopeAccess) {
+        //validate additional user specific stuff for this packing strategy
+        Validate.notNull(user.getUsername(), "username required");
+        Validate.notNull(user.getId(), "user id required");
+        Validate.isTrue(user.getUsername().equals(scopeAccess.getUsername()), "Token username must match user username");
+        Validate.isTrue(user.getId().equals(scopeAccess.getUserRsId()), "Token userId must match user userId");
+
+        List<Object> packingItems = new ArrayList<Object>();
+
+        //packed version format (for future use...)
+        packingItems.add(VERSION_0);
+
+        // Timestamps
+        packingItems.add(scopeAccess.getAccessTokenExp().getTime());
+        packingItems.add(scopeAccess.getCreateTimestamp().getTime());
+
+        // ScopeAccess
+        packingItems.add(compressAuthenticatedBy(scopeAccess.getAuthenticatedBy()));
+
+        // UserScopeAccess
+        packingItems.add(scopeAccess.getUserRsId());
+
+        return packingItems;
+    }
+
+    private ScopeAccess unPackFederatedUserToken(String webSafeToken, Unpacker unpacker) throws IOException {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+
+        //packed version format (for future use...)
+        byte version = unpacker.readByte();
+        if (version == VERSION_0) {
+            // Timestamps
+            scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
+            scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
+
+            // ScopeAccess
+            scopeAccess.setAuthenticatedBy(decompressAuthenticatedBy(safeRead(unpacker, Integer[].class)));
+
+            // UserScopeAccess
+            scopeAccess.setUserRsId(safeRead(unpacker, String.class));
+
+            // DN
+            //TODO: Make this more efficient!
+            FederatedUser user = identityUserService.getFederatedUserById(scopeAccess.getUserRsId());
+            IdentityProvider idp = identityProviderRepository.getIdentityProviderByUri(user.getFederatedIdpUri());
+
+            scopeAccess.setUniqueId(calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
+            scopeAccess.setClientId(getCloudAuthClientId());
+            scopeAccess.setUsername(user.getUsername());
+        } else {
+            throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
+        }
+        return scopeAccess;
+    }
+
     private List<Object> packProvisionedUserImpersonationToken(User user, ImpersonatedScopeAccess scopeAccess) {
         //validate additional user specific stuff for this packing strategy
         Validate.notNull(user.getUsername(), "username required");
@@ -236,7 +301,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         packingItems.add(compressScope(scopeAccess.getScope()));
 
         //user info
-        packingItems.add(user.getId()); //TODO: Switch to using userids for both impersonator, and impersonatee
+        packingItems.add(user.getId());
         packingItems.add(scopeAccess.getImpersonatingRsId());
 
         return packingItems;
@@ -345,6 +410,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     private String calculateProvisionedUserTokenDN(String userRsId, String webSafeToken) {
         return String.format("accessToken=%s,cn=TOKENS,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", webSafeToken, userRsId);
+    }
+
+    private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
+        return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
     }
 
     private String getCloudAuthClientId() {

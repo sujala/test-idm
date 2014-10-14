@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
+import com.rackspace.idm.domain.security.TokenFormat
 import com.unboundid.util.LDAPSDKUsageException
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -49,6 +50,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockApplicationService(service)
         mockIdentityUserService(service)
+        mockTokenFormatSelector(service)
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
@@ -453,6 +455,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def listWithValid = [ scopeAccessThree, scopeAccessFour].asList()
         def listAll = expiredList + listWithValid
 
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
+
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >>> [
                 listAll,
         ]
@@ -516,6 +520,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUserByUsername(_, _) >> [].asList()
 
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
+
         when: "optimize is turned off"
         ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
 
@@ -566,6 +572,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting second of three expired tokens"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
@@ -603,6 +610,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting second of three expired tokens"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
@@ -635,6 +643,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [scopeAccessFour].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting valid token"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)

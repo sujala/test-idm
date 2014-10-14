@@ -9,16 +9,14 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class RouterScopeAccessRepository implements ScopeAccessDao {
-
-    private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-fA-F]{8}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{12}-{0,1}");
-
     private final AEScopeAccessDao aeScopeAccessDao;
     private final UUIDScopeAccessDao uuidScopeAccessDao;
 
@@ -26,7 +24,7 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     private LdapUserRepository ldapUserRepository;
 
     @Autowired
-    private IdentityConfig identityConfig;
+    private TokenFormatSelector tokenFormatSelector;
 
     public RouterScopeAccessRepository(AEScopeAccessDao aeScopeAccessDao, UUIDScopeAccessDao uuidScopeAccessDao) {
         this.aeScopeAccessDao = aeScopeAccessDao;
@@ -50,19 +48,7 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     }
 
     private ScopeAccessDao getRouteByBaseUser(BaseUser user) {
-        if (user instanceof User && TokenFormatEnum.AE.value().equals(getTokenFormat((User) user))) {
-            return aeScopeAccessDao;
-        } else {
-            return uuidScopeAccessDao;
-        }
-    }
-
-    private String getTokenFormat(User user) {
-        if (user.getTokenFormat() == null || user.getTokenFormat().equals(TokenFormatEnum.DEFAULT)) {
-            return identityConfig.getIdentityProvisionedTokenFormat();
-        } else {
-            return user.getTokenFormat();
-        }
+        return getRouteByTokenFormat(tokenFormatSelector.formatForNewToken(user));
     }
 
     private ScopeAccessDao getRouteByUserId(String userId) {
@@ -76,10 +62,15 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     private ScopeAccessDao getRouteForExistingScopeAccess(String accessToken) {
         if (accessToken == null || accessToken.length() < 1) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        } else if (UUID_PATTERN.matcher(accessToken).matches()) {
-            return uuidScopeAccessDao;
-        } else {
+        }
+        return getRouteByTokenFormat(tokenFormatSelector.formatForExistingToken(accessToken));
+    }
+
+    private ScopeAccessDao getRouteByTokenFormat(TokenFormat tokenFormat) {
+        if (tokenFormat == TokenFormat.AE) {
             return aeScopeAccessDao;
+        } else {
+            return uuidScopeAccessDao;
         }
     }
 

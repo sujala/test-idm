@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.encrypters.KeyCzarAuthenticatedMessageProvider
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
 import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.UserService
@@ -26,14 +27,14 @@ abstract class DefaultAeTokenServiceBaseIntegrationTest extends Specification {
     @Shared IdentityUserService identityUserService
     @Shared MessagePackTokenDataPacker dataPacker
     @Shared KeyCzarAuthenticatedMessageProvider amProvider
+    @Shared KeyCzarCrypterLocator crypterLocator
     @Shared UserService userService
 
     def setupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        String pathLocation = resource.getFile().getAbsolutePath();
+        crypterLocator = new ClasspathKeyCzarCrypterLocator();
+        crypterLocator.setKeysClassPathLocation("/com/rackspace/idm/api/resource/cloud/v20/keys")
 
         config = new PropertiesConfiguration()
-        config.setProperty(KeyCzarAuthenticatedMessageProvider.SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, pathLocation)
         config.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
 
         identityUserService = Mock()
@@ -47,7 +48,7 @@ abstract class DefaultAeTokenServiceBaseIntegrationTest extends Specification {
         dataPacker.aeTokenService = aeTokenService
 
         amProvider = new KeyCzarAuthenticatedMessageProvider()
-        amProvider.config = config
+        amProvider.keyCzarCrypterLocator = crypterLocator
 
         aeTokenService.tokenDataPacker = dataPacker
         aeTokenService.authenticatedMessageProvider = amProvider

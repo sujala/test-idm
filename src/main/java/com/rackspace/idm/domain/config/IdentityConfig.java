@@ -31,7 +31,7 @@ public class IdentityConfig {
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
 
-    private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
+    public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT = "UUID";
 
     //OPTIONAL PROPERTIES

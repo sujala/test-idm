@@ -7,6 +7,9 @@ import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.AeTokenService;
+import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -71,6 +74,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private AtomHopperClient atomHopperClient;
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private TokenFormatSelector tokenFormatSelector;
+
+    @Autowired
+    private AeTokenService aeTokenService;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
@@ -193,7 +202,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         DateTime desiredImpersonationTokenExpiration = calculateDesiredImpersonationTokenExpiration(impersonationRequest, impersonatorType, requestInstant);
 
-        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
+        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(impersonator, userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
 
         //get the most recent scope access prior to cleaning up since the most recent could be expired (and will be removed by subsequent clean up code)
         ImpersonatedScopeAccess mostRecent;
@@ -1056,25 +1065,46 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * is greater than the remaining lifetime of the user's token, a new user
      * token must be generated with the lifetime set to the default lifetime of a user token.
      */
-    private UserScopeAccess getUserScopeAccessForImpersonationRequest(EndUser user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
-        //get the latest user scope access for this user
-        UserScopeAccess latestScopeAccessForUser;
-        if(user instanceof FederatedUser) {
-            latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
-        } else {
-            latestScopeAccessForUser = (UserScopeAccess) getMostRecentDirectScopeAccessForUserByClientId((User) user, getCloudAuthClientId());
-        }
+    private UserScopeAccess getUserScopeAccessForImpersonationRequest(BaseUser impersonator, EndUser user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
+        UserScopeAccess scopeAccessForImpersonation = null;
 
-        //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
-        DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
+        //format of underlying user token is based on the impersonator, not the user being impersonated
+        TokenFormat tFormat = tokenFormatSelector.formatForNewToken(impersonator);
 
-        UserScopeAccess scopeAccessForImpersonation;
-        if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
-            //user token is expired or it's lifetime is before the requested
-            // impersonation expiration so must create a new token for the user.
-            scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
+        if (tFormat == TokenFormat.UUID) {
+            UserScopeAccess latestScopeAccessForUser = null;
+
+            //get the latest user scope access for this user
+            if(user instanceof FederatedUser) {
+                latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
+            } else {
+                latestScopeAccessForUser = (UserScopeAccess) getMostRecentDirectScopeAccessForUserByClientId((User) user, getCloudAuthClientId());
+            }
+
+            //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
+            DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
+
+            if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
+                //user token is expired or it's lifetime is before the requested
+                // impersonation expiration so must create a new token for the user.
+                scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
+            } else {
+                scopeAccessForImpersonation = latestScopeAccessForUser;
+            }
+        } else if (tFormat == TokenFormat.AE) {
+            scopeAccessForImpersonation = new UserScopeAccess();
+            scopeAccessForImpersonation.setAccessTokenExp(desiredImpersonationTokenExpiration.toDate());
+            scopeAccessForImpersonation.setUsername(user.getUsername());
+            scopeAccessForImpersonation.setUserRsId(user.getId());
+            scopeAccessForImpersonation.setClientId(getCloudAuthClientId());
+            scopeAccessForImpersonation.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
+            if (aeTokenService.supportsCreatingTokenFor(user, scopeAccessForImpersonation)) {
+                aeTokenService.marshallTokenForUser(user, scopeAccessForImpersonation); //populates access token string
+            } else {
+                throw new UnsupportedOperationException(String.format("AE Token service does not support creating impersonation tokens against users of type '%s'", user.getClass().getSimpleName()));
+            }
         } else {
-            scopeAccessForImpersonation = latestScopeAccessForUser;
+            throw new IllegalStateException(String.format("Unknown impersonation token format for user '%s'", impersonator.getUsername()));
         }
 
         return scopeAccessForImpersonation;
