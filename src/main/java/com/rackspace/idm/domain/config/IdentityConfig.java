@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.config;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -33,6 +32,11 @@ public class IdentityConfig {
 
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT = "UUID";
+
+    private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
+    private static final String IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT =  "UUID";
+    private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
+    private static final String IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT = "cloud-identity-tokens-ae";
 
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
@@ -127,6 +131,14 @@ public class IdentityConfig {
 
     public String getIdentityProvisionedTokenFormat() {
         return config.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT);
+    }
+
+    public String getIdentityRackerTokenFormat() {
+        return config.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT);
+    }
+
+    public String getIdentityRackerAETokenRole() {
+        return config.getString(IDENTITY_RACKER_AE_TOKEN_ROLE, IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT);
     }
 
 }

@@ -39,6 +39,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final byte TOKEN_TYPE_PROVISIONED_USER = 0;
     private static final byte TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER = 1;
     private static final byte TOKEN_TYPE_FEDERATED_USER = 2;
+    private static final byte TOKEN_TYPE_RACKER = 3;
 
     private static final Map<String, Integer> AUTH_BY_MARSHALL = new HashMap<String, Integer>();
     private static final Map<Integer, String> AUTH_BY_UNMARSHALL = new HashMap<Integer, String>();
@@ -110,6 +111,9 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         } else if (token instanceof ImpersonatedScopeAccess && user instanceof User) {
             packingItems.add(TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER);
             packingItems.addAll(packProvisionedUserImpersonationToken((User) user, (ImpersonatedScopeAccess) token));
+        } else if (token instanceof RackerScopeAccess && user instanceof Racker) {
+            packingItems.add(TOKEN_TYPE_RACKER);
+            packingItems.addAll(packRackerToken(((Racker) user), (RackerScopeAccess) token));
         } else {
             throw new UnsupportedOperationException("Unsupported " + user.getClass().getSimpleName() + " token:" + token.getClass().getSimpleName());
         }
@@ -145,11 +149,13 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             byte type = unpacker.readByte();
 
             if (type == TOKEN_TYPE_PROVISIONED_USER) {
-                token = unPackProvisionedUserToken(webSafeToken, unpacker);
+                token = unpackProvisionedUserToken(webSafeToken, unpacker);
             } else if (type == TOKEN_TYPE_FEDERATED_USER) {
-                token = unPackFederatedUserToken(webSafeToken, unpacker);
+                token = unpackFederatedUserToken(webSafeToken, unpacker);
             } else if (type == TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER) {
                 token = unpackProvisionedUserImpersonationToken(webSafeToken, unpacker);
+            } else if (type == TOKEN_TYPE_RACKER) {
+                token = unpackRackerToken(webSafeToken, unpacker);
             } else {
                 throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_SCHEME, String.format("Unrecognized data packing scheme '%s'", type));
             }
@@ -195,7 +201,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return packingItems;
     }
 
-    private ScopeAccess unPackProvisionedUserToken(String webSafeToken, Unpacker unpacker) throws IOException {
+    private ScopeAccess unpackProvisionedUserToken(String webSafeToken, Unpacker unpacker) throws IOException {
         UserScopeAccess scopeAccess = new UserScopeAccess();
 
         //packed version format (for future use...)
@@ -250,7 +256,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return packingItems;
     }
 
-    private ScopeAccess unPackFederatedUserToken(String webSafeToken, Unpacker unpacker) throws IOException {
+    private ScopeAccess unpackFederatedUserToken(String webSafeToken, Unpacker unpacker) throws IOException {
         UserScopeAccess scopeAccess = new UserScopeAccess();
 
         //packed version format (for future use...)
@@ -353,6 +359,56 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return scopeAccess;
     }
 
+    private List<Object> packRackerToken(Racker racker, RackerScopeAccess scopeAccess) {
+        //validate additional user specific stuff for this packing strategy
+        Validate.notNull(racker.getRackerId(), "rackerId required");
+        Validate.isTrue(racker.getRackerId().equals(scopeAccess.getRackerId()), "Token rackerId must match racker rackerId");
+
+        List<Object> packingItems = new ArrayList<Object>();
+
+        //packed version format (for future use...)
+        packingItems.add(VERSION_0);
+
+        // Timestamps
+        packingItems.add(scopeAccess.getAccessTokenExp().getTime());
+        packingItems.add(scopeAccess.getCreateTimestamp().getTime());
+
+        // ScopeAccess
+        packingItems.add(compressAuthenticatedBy(scopeAccess.getAuthenticatedBy()));
+        packingItems.add(compressScope(scopeAccess.getScope()));
+
+        // RackerScopeAccess
+        packingItems.add(scopeAccess.getRackerId());
+
+        return packingItems;
+    }
+
+    private ScopeAccess unpackRackerToken(String webSafeToken, Unpacker unpacker) throws IOException {
+        RackerScopeAccess scopeAccess = new RackerScopeAccess();
+
+        //packed version format (for future use...)
+        byte version = unpacker.readByte();
+        if (version == VERSION_0) {
+            // Timestamps
+            scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
+            scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
+
+            // ScopeAccess
+            scopeAccess.setAuthenticatedBy(decompressAuthenticatedBy(safeRead(unpacker, Integer[].class)));
+            scopeAccess.setScope(decompressScope(safeRead(unpacker, Integer.class)));
+
+            // RackerScopeAccess
+            scopeAccess.setRackerId(safeRead(unpacker, String.class));
+
+            // DN
+            scopeAccess.setUniqueId(calculateRackerTokenDN(scopeAccess.getRackerId(), webSafeToken));
+            scopeAccess.setClientId(getCloudAuthClientId());
+        } else {
+            throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
+        }
+        return scopeAccess;
+    }
+
     private <T> T safeRead(Unpacker unpacker, Class<T> clazz) throws IOException {
         return unpacker.trySkipNil() ? null : unpacker.read(clazz);
     }
@@ -414,6 +470,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
         return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
+    }
+
+    private String calculateRackerTokenDN(String rackerId, String webSafeToken) {
+        return String.format("accessToken=%s,cn=TOKENS,rackerId=%s,ou=rackers,o=rackspace,dc=rackspace,dc=com", webSafeToken, rackerId);
     }
 
     private String getCloudAuthClientId() {

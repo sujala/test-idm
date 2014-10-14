@@ -56,13 +56,17 @@ public class DefaultAeTokenService implements AeTokenService {
         final boolean isFederatedUser = object instanceof FederatedUser;
         final boolean isImpersonationToken = scopeAccess instanceof ImpersonatedScopeAccess;
         final boolean isUserToken = scopeAccess instanceof UserScopeAccess;
+        // final boolean isRackerUser = object instanceof Racker && scopeAccess instanceof RackerScopeAccess;
+        final boolean isRackerUser = false;
 
-        //ae service supports
+        // AE service supports
         // - federated and provisioned user "regular" tokens
         // - provisioned users creating "impersonation" tokens (against fed/provisioned users)
+        // - racker users creating "racker" tokens
 
         return (isProvisionedUser && (isImpersonationToken || isUserToken))
-                || (isFederatedUser && isUserToken);
+                || (isFederatedUser && isUserToken)
+                || isRackerUser;
     }
 
     @Override
@@ -177,6 +181,8 @@ public class DefaultAeTokenService implements AeTokenService {
             FederatedUser user1 = (FederatedUser) user;
             IdentityProvider provider = identityProviderRepository.getIdentityProviderByUri(user1.getFederatedIdpUri());
             return calculateFederatedUserTokenDN(user1.getUsername(), provider.getName(), webSafeToken);
+        } else if (user instanceof Racker) {
+            return calculateRackerUserTokenDN(((Racker) user).getRackerId(), webSafeToken);
         }
         throw new RuntimeException("Unsupported user type '" + user.getClass());
     }
@@ -188,4 +194,9 @@ public class DefaultAeTokenService implements AeTokenService {
     private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
         return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
     }
+
+    private String calculateRackerUserTokenDN(String rackerId, String webSafeToken) {
+        return String.format("accessToken=%s,cn=TOKENS,rackerId=%s,ou=rackers,o=rackspace,dc=rackspace,dc=com", webSafeToken, rackerId);
+    }
+
 }
