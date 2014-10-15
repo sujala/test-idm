@@ -10,7 +10,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 
-class DefaultAeTokenServiceProvisionedUserImpersonationIntegrationTest extends DefaultAeTokenServiceBaseIntegrationTest {
+class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
     @Shared User impersonatorUser;
     @Shared User impersonatedUser;
 

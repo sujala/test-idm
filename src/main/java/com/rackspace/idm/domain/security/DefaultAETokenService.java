@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
-public class DefaultAeTokenService implements AeTokenService {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultAeTokenService.class);
+public class DefaultAETokenService implements AETokenService {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultAETokenService.class);
 
     private static final byte ENCRYPTION_SCHEME_KEYCZAR = 0;
 

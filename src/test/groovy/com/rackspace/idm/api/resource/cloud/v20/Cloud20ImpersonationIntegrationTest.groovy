@@ -9,7 +9,7 @@ import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.security.AeTokenService
+import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
@@ -76,7 +76,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
-    AeTokenService aeTokenService;
+    AETokenService aeTokenService;
 
     @Autowired
     TokenFormatSelector tokenFormatSelector;
