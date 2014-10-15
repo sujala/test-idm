@@ -81,6 +81,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Autowired
     private AeTokenService aeTokenService;
 
+    @Autowired
+    @Qualifier("revokeTokenService")
+    private RevokeTokenService revokeTokenService;
+
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
@@ -436,22 +440,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void expireAccessToken(String tokenString) {
-        logger.debug("Expiring access token {}", tokenString);
-        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(tokenString);
-        if (scopeAccess == null) {
-            return;
-        }
-
-        Date expireDate;
-        expireDate =  scopeAccess.getAccessTokenExp();
-        scopeAccess.setAccessTokenExpired();
-        this.scopeAccessDao.updateScopeAccess(scopeAccess);
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        if(user != null && user instanceof User && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
-            logger.warn("Sending token feed to atom hopper.");
-            atomHopperClient.asyncTokenPost((User) user, tokenString);
-        }
-        logger.debug("Done expiring access token {}", tokenString);
+        revokeTokenService.revokeToken(tokenString);
     }
 
     @Override
@@ -477,18 +466,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            expireUserToken(user, sa);
-        }
-        logger.debug("Done expiring all tokens for user {}", username);
-    }
+        revokeTokenService.revokeAllTokensForEndUser(user);
 
-    private boolean isExpired(Date date) {
-        if(date != null){
-            return date.before(new Date());
-        }else{
-            return true;
-        }
+        logger.debug("Done expiring all tokens for user {}", username);
     }
 
     @Override
@@ -499,20 +479,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            expireUserToken(user, sa);
-        }
-        logger.debug("Done expiring all tokens for user {}", userId);
-    }
+        revokeTokenService.revokeAllTokensForEndUser(user);
 
-    private void expireUserToken(EndUser user, ScopeAccess sa) {
-        Date expireDate =  sa.getAccessTokenExp();
-        sa.setAccessTokenExpired();
-        this.scopeAccessDao.updateScopeAccess(sa);
-        if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
-            logger.warn("Sending token feed to atom hopper.");
-            atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
-        }
+        logger.debug("Done expiring all tokens for user {}", userId);
     }
 
     @Override
@@ -541,7 +510,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
 
             if (revoke) {
-                expireUserToken(user, sa);
+                revokeTokenService.revokeToken(user, sa);
             }
         }
     }
