@@ -14,13 +14,12 @@ import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.joda.time.DateTime
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
 
-abstract class DefaultAeTokenServiceBaseIntegrationTest extends Specification {
-    @Shared DefaultAeTokenService aeTokenService;
+abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
+    @Shared DefaultAETokenService aeTokenService;
     @Shared EntityFactory entityFactory = new EntityFactory()
 
     @Shared Configuration config
@@ -39,7 +38,7 @@ abstract class DefaultAeTokenServiceBaseIntegrationTest extends Specification {
 
         identityUserService = Mock()
         userService = Mock()
-        aeTokenService = new DefaultAeTokenService()
+        aeTokenService = new DefaultAETokenService()
 
         dataPacker = new MessagePackTokenDataPacker()
         dataPacker.config = config

@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.security.packers;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.security.AeTokenService;
+import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -76,10 +76,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     LdapIdentityProviderRepository identityProviderRepository;
 
     /*
-    This adds circular reference since AeTOkenService needs the message packer...
+    This adds circular reference since AETokenService needs the message packer...
      */
     @Autowired
-    private AeTokenService aeTokenService;
+    private AETokenService aeTokenService;
 
     static {
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_PASSWORD, 1);

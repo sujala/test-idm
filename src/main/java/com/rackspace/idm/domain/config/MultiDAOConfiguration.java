@@ -24,7 +24,7 @@ public class MultiDAOConfiguration {
 
     @Bean(name = "aeScopeAccessDao")
     @Autowired
-    public AEScopeAccessDao getAeScopeAccessDao() {
+    public AEScopeAccessDao getAEScopeAccessDao() {
         return new AEScopeAccessRepository();
     }
 

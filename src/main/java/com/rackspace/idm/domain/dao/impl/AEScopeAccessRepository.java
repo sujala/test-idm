@@ -5,7 +5,7 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.security.AeTokenService;
+import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.exception.IdmException;
@@ -23,7 +23,7 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(AEScopeAccessRepository.class);
 
     @Autowired
-    private AeTokenService aeTokenService;
+    private AETokenService aeTokenService;
 
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {

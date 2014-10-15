@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
 import spock.lang.Shared
 import spock.lang.Unroll
 
-class DefaultAeTokenServiceProvisionedUserIntegrationTest extends DefaultAeTokenServiceBaseIntegrationTest {
+class DefaultAETokenServiceProvisionedUserIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
     @Shared User hardCodedUser;
 
     def setupSpec() {

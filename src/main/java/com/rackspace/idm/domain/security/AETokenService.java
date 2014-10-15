@@ -4,7 +4,7 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 
-public interface AeTokenService {
+public interface AETokenService {
     /**
      * Take in a token and generate a web safe representation of it. The user/token must not be null and the user related information in the token (userRsId, username) must match that
      * of the provided user or an error will be thrown. The token is expected to have an expiration date.

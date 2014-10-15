@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 import org.keyczar.util.Base64Coder
 import spock.lang.Shared
 
-class DefaultAeTokenServiceIntegrationTest extends DefaultAeTokenServiceBaseIntegrationTest {
+class DefaultAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
     @Shared User hardCodedUser;
 
     def setupSpec() {
@@ -65,21 +65,21 @@ class DefaultAeTokenServiceIntegrationTest extends DefaultAeTokenServiceBaseInte
 
         then:
         UnmarshallTokenException ex = thrown()
-        ex.errorCode == DefaultAeTokenService.ERROR_CODE_UNMARSHALL_INVALID_BASE64
+        ex.errorCode == DefaultAETokenService.ERROR_CODE_UNMARSHALL_INVALID_BASE64
 
         when: "not enough data"
         aeTokenService.unmarshallToken(Base64Coder.encodeWebSafe("0".bytes));
 
         then:
         ex = thrown()
-        ex.errorCode == DefaultAeTokenService.ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME
+        ex.errorCode == DefaultAETokenService.ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME
 
         when: "invalid encryption scheme"
         aeTokenService.unmarshallToken(Base64Coder.encodeWebSafe("b".bytes))
 
         then:
         ex = thrown()
-        ex.errorCode == DefaultAeTokenService.ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME
+        ex.errorCode == DefaultAETokenService.ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME
 
         when: "invalid data packing scheme"
         //little fragile and coupled to internal methods to attempt to cause this error
@@ -87,13 +87,13 @@ class DefaultAeTokenServiceIntegrationTest extends DefaultAeTokenServiceBaseInte
 
         then:
         ex = thrown()
-        ex.errorCode == DefaultAeTokenService.ERROR_CODE_UNMARSHALL_INVALID_DATAPACKING_SCHEME
+        ex.errorCode == DefaultAETokenService.ERROR_CODE_UNMARSHALL_INVALID_DATAPACKING_SCHEME
 
         when: "invalid data packed"
         //little fragile and coupled to internal methods to attempt to cause this error
         byte[] packedBytes = "abcd".bytes
         byte[] dataBytes = new byte[1 + packedBytes.length];
-        dataBytes[0] = DefaultAeTokenService.DATA_PACKING_SCHEME_MESSAGE_PACK;
+        dataBytes[0] = DefaultAETokenService.DATA_PACKING_SCHEME_MESSAGE_PACK;
         System.arraycopy(packedBytes, 0, dataBytes, 1, packedBytes.length)
         aeTokenService.unmarshallToken(Base64Coder.encodeWebSafe(aeTokenService.secureTokenData(dataBytes)));
 
