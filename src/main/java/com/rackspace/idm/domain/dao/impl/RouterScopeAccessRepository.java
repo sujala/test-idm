@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AEScopeAccessDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;

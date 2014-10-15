@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.security.AeTokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
