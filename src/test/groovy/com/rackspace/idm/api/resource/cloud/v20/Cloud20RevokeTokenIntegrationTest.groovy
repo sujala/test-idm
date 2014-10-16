@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static org.apache.http.HttpStatus.*
+import static org.apache.http.HttpStatus.SC_NOT_FOUND
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
 
 class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
