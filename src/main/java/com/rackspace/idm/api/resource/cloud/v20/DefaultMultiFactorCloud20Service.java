@@ -405,7 +405,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             verifyAccessToOtherUser(token, requester, user);
 
             List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(user);
-            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, requester));
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, user));
 
         } catch (IllegalStateException ex) {
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
