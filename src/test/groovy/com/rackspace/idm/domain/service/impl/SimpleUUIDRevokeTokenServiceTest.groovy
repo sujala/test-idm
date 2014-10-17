@@ -8,9 +8,9 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
-class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
+class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
 
-    @Shared LdapUUIDRevokeTokenService service = new LdapUUIDRevokeTokenService()
+    @Shared SimpleUUIDTokenRevocationService service = new SimpleUUIDTokenRevocationService()
     @Shared UUIDScopeAccessDao uuidScopeAccessDao;
 
     @Shared def randomness = UUID.randomUUID()
@@ -54,7 +54,7 @@ class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForEndUser(user.id)
+        service.revokeAllTokensForBaseUser(user.id)
 
         then:
         2 * atomHopperClient.asyncTokenPost(_,_)
@@ -72,7 +72,7 @@ class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForEndUser(user.id)
+        service.revokeAllTokensForBaseUser(user.id)
 
         then:
         0 * atomHopperClient.asyncTokenPost(_,_)
@@ -93,7 +93,7 @@ class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForEndUser(user)
+        service.revokeAllTokensForBaseUser(user)
 
         then:
         2 * atomHopperClient.asyncTokenPost(_,_)
@@ -111,7 +111,7 @@ class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForEndUser(user)
+        service.revokeAllTokensForBaseUser(user)
 
         then:
         0 * atomHopperClient.asyncTokenPost(_,_)
@@ -138,7 +138,7 @@ class LdapUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> scopeAccessList
 
         when:
-        service.revokeTokensForEndUser(user, authenticatedBy)
+        service.revokeTokensForBaseUser(user, authenticatedBy)
 
         then:
         /*

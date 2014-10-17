@@ -15,7 +15,6 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,8 +79,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private AETokenService aeTokenService;
 
     @Autowired
-    @Qualifier("revokeTokenService")
-    private RevokeTokenService revokeTokenService;
+    @Qualifier("tokenRevocationService")
+    private TokenRevocationService tokenRevocationService;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
@@ -438,7 +437,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void expireAccessToken(String tokenString) {
-        revokeTokenService.revokeToken(tokenString);
+        tokenRevocationService.revokeToken(tokenString);
     }
 
     @Override
@@ -464,7 +463,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        revokeTokenService.revokeAllTokensForEndUser(user);
+        tokenRevocationService.revokeAllTokensForBaseUser(user);
 
         logger.debug("Done expiring all tokens for user {}", username);
     }
@@ -477,7 +476,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        revokeTokenService.revokeAllTokensForEndUser(user);
+        tokenRevocationService.revokeAllTokensForBaseUser(user);
 
         logger.debug("Done expiring all tokens for user {}", userId);
     }
@@ -508,7 +507,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
 
             if (revoke) {
-                revokeTokenService.revokeToken(user, sa);
+                tokenRevocationService.revokeToken(user, sa);
             }
         }
     }

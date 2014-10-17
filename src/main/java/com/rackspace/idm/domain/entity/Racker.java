@@ -62,4 +62,9 @@ public class Racker implements BaseUser {
     public String getDomainId(){
         return null;
     }
+
+    @Override
+    public String getId() {
+        return getRackerId();
+    }
 }

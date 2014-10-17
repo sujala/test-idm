@@ -13,7 +13,6 @@ public interface EndUser extends BaseUser {
     String getDomainId();
     List<TenantRole> getRoles();
     String getCustomerId();
-    String getId();
     HashSet<String> getRsGroupId();
 
     /*

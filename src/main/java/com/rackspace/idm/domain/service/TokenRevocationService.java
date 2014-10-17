@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.entity.User;
 import java.util.List;
 import java.util.Set;
 
-public interface RevokeTokenService {
+public interface TokenRevocationService {
     /**
      * Revoke the specified token if it is valid (not expired).
      * <p>
@@ -55,7 +55,7 @@ public interface RevokeTokenService {
      * @param userId
      * @param authenticatedByList
      */
-    void revokeTokensForEndUser(String userId, List<Set<String>> authenticatedByList);
+    void revokeTokensForBaseUser(String userId, List<Set<String>> authenticatedByList);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated), which used the specified authentication methods.
@@ -74,7 +74,7 @@ public interface RevokeTokenService {
      * @param user
      * @param authenticatedByList
      */
-    void revokeTokensForEndUser(EndUser user, List<Set<String>> authenticatedByList);
+    void revokeTokensForBaseUser(BaseUser user, List<Set<String>> authenticatedByList);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated),
@@ -84,7 +84,7 @@ public interface RevokeTokenService {
      *
      * @param userId
      */
-    void revokeAllTokensForEndUser(String userId);
+    void revokeAllTokensForBaseUser(String userId);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated),
@@ -93,7 +93,7 @@ public interface RevokeTokenService {
      * </p>
      * @param user
      */
-    void revokeAllTokensForEndUser(EndUser user);
+    void revokeAllTokensForBaseUser(BaseUser user);
 
     /**
      * Whether the specified token has been revoked.

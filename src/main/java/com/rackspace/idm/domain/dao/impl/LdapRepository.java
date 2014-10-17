@@ -46,6 +46,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_PROPERTY = "rsProperty";
     public static final String OBJECTCLASS_EXTERNALPROVIDER = "rsExternalProvider";
     public static final String OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE = "rsMultiFactorMobilePhone";
+    public static final String OBJECTCLASS_TOKEN_REVOCATION_RECORD = "rsTokenRevocationRecord";
 
     public static final String OBJECTCLASS_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL = "rsDomainMultiFactorEnforcementLevel";
     public static final String OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL = "rsUserMultiFactorEnforcementLevel";
@@ -198,6 +199,7 @@ public abstract class LdapRepository {
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
+    protected static final String TOKEN_REVOCATION_BASE_DN = "o=revocation,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";

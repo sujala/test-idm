@@ -7,8 +7,7 @@ import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.RevokeTokenService;
-import com.rackspace.idm.domain.service.UUIDRevokeTokenService;
+import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -22,8 +21,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Simple in the sense that it goes against a single backend persistence mechanism for UUID token revocation.
+ */
 @Component
-public class LdapUUIDRevokeTokenService implements UUIDRevokeTokenService {
+public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationService {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -110,13 +112,14 @@ public class LdapUUIDRevokeTokenService implements UUIDRevokeTokenService {
 
 
     @Override
-    public void revokeTokensForEndUser(String userId, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(String userId, List<Set<String>> authenticatedByList) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForEndUser(user, authenticatedByList);
+        revokeTokensForBaseUser(user, authenticatedByList);
     }
 
     @Override
-    public void revokeTokensForEndUser(EndUser user, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(BaseUser user, List<Set<String>> authenticatedByList) {
         if (user == null) return;
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
@@ -130,13 +133,14 @@ public class LdapUUIDRevokeTokenService implements UUIDRevokeTokenService {
     }
 
     @Override
-    public void revokeAllTokensForEndUser(String userId) {
+    public void revokeAllTokensForBaseUser(String userId) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeAllTokensForEndUser(user);
+        revokeAllTokensForBaseUser(user);
     }
 
     @Override
-    public void revokeAllTokensForEndUser(EndUser user) {
+    public void revokeAllTokensForBaseUser(BaseUser user) {
         if (user == null) return;
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
