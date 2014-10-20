@@ -1,18 +1,14 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
-import com.rackspace.idm.domain.entity.LdapTokenRevocationRecord;
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TokenRevocationRecord;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * In-memory revocation storage mechanism for demonstration purposes only to swap out persistence store.
@@ -34,8 +30,8 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     }
 
     @Override
-    public TokenRevocationRecord addUserTrrRecord(String targetUserId, List<Set<String>> authenticatedBy) {
-        BasicTokenRevocationRecord trr = BasicTokenRevocationRecord.createUserTrr(targetUserId, new Date(), authenticatedBy);
+    public TokenRevocationRecord addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        BasicTokenRevocationRecord trr = BasicTokenRevocationRecord.createUserTrr(targetUserId, new Date(), authenticatedByMethodGroups);
         List<TokenRevocationRecord> userRevList = userTRRs.get(targetUserId);
         if (userRevList == null) {
             userRevList = new ArrayList<TokenRevocationRecord>();
@@ -61,12 +57,12 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
             for (TokenRevocationRecord trr : userTrrs) {
                 if (trr.getTargetCreatedBefore().after(token.getCreateTimestamp())) {
                     //need to check auth by
-                    List<Set<String>> authBySets = trr.getTargetAuthenticatedBy();
+                    List<AuthenticatedByMethodGroup> authBySets = trr.getTargetAuthenticatedByMethodGroups();
 
-                    for (Set<String> authBySet : authBySets) {
+                    for (AuthenticatedByMethodGroup authByGroup : authBySets) {
                         //if trr contains wildcard or explicitly the token's auth by set, it matches
-                        if (CollectionUtils.isEqualCollection(TokenRevocationRecord.AUTHENTICATED_BY_WILDCARD_SET, authBySet)
-                                || CollectionUtils.isEqualCollection(authBySet, token.getAuthenticatedBy())) {
+                        if (authByGroup.matches(AuthenticatedByMethodGroup.ALL)
+                                ||  authByGroup.matches(AuthenticatedByMethodGroup.getGroup(token.getAuthenticatedBy()))) {
                             trrList.add(trr);
                             break;
                         }
@@ -94,7 +90,7 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
         String targetToken;
         String targetIssuedToId;
         Date targetCreatedBefore;
-        List<Set<String>> targetAuthenticatedBy;
+        List<AuthenticatedByMethodGroup> targetAuthenticatedByMethodGroups;
 
         private static BasicTokenRevocationRecord createTokenTrr(String targetToken) {
             BasicTokenRevocationRecord trr = new BasicTokenRevocationRecord();
@@ -106,7 +102,7 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
             return trr;
         }
 
-        private static BasicTokenRevocationRecord createUserTrr(String targetIssuedToId, Date targetCreatedBefore, List<Set<String>> targetAuthenticatedBy) {
+        private static BasicTokenRevocationRecord createUserTrr(String targetIssuedToId, Date targetCreatedBefore, List<AuthenticatedByMethodGroup> targetAuthenticatedByMethodGroups) {
             BasicTokenRevocationRecord trr = new BasicTokenRevocationRecord();
 
             trr.id = UUID.randomUUID().toString();
@@ -114,14 +110,12 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
 
             trr.targetIssuedToId = targetIssuedToId;
             trr.targetCreatedBefore = targetCreatedBefore;
-            if (targetAuthenticatedBy != null) {
-                trr.targetAuthenticatedBy = targetAuthenticatedBy;
+            if (targetAuthenticatedByMethodGroups != null) {
+                trr.targetAuthenticatedByMethodGroups = targetAuthenticatedByMethodGroups;
             } else {
-                targetAuthenticatedBy = new ArrayList<Set<String>>();
+                targetAuthenticatedByMethodGroups = new ArrayList<AuthenticatedByMethodGroup>();
             }
             return trr;
         }
     }
-
-
 }

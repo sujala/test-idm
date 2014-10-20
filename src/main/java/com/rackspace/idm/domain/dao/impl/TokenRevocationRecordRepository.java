@@ -6,13 +6,13 @@ import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.util.StaticUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Responsible for storing and retrieving TRRs to/from CA LDAP repository
@@ -42,11 +42,11 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
     }
 
     @Override
-    public TokenRevocationRecord addUserTrrRecord(String targetUserId, List<Set<String>> authenticatedBy) {
+    public TokenRevocationRecord addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         LdapTokenRevocationRecord trr = new LdapTokenRevocationRecord();
         trr.setId(getNextId());
         trr.setTargetIssuedToId(targetUserId);
-        trr.setTargetAuthenticatedBy(authenticatedBy);
+        trr.setTargetAuthenticatedByMethodGroups(authenticatedByMethodGroups);
         trr.setTargetCreatedBefore(new Date());
 
         addObject(trr);
@@ -82,24 +82,6 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
         return super.getUuid();
     }
 
-    private boolean isRevoked(ImpersonatedScopeAccess token) {
-        String userId;
-        if (StringUtils.isNotBlank(token.getRackerId())) {
-            userId = token.getRackerId();
-        } else if (StringUtils.isNotBlank(token.getUsername())) {
-            //must be a provisioned user
-            User user = userDao.getUserByUsername(token.getUsername());
-            if (user == null) {
-                return true; //no user returned for token. Consider it revoked;
-            }
-            userId = user.getId();
-        } else {
-            return true; //if neither rackerId OR username is populated, token not tied to a user so consider it revoked.
-        }
-
-        return countObjects(searchForRevokedUserToken(userId, token), getBaseDn(), SearchScope.SUB) > 0;
-    }
-
     private Filter searchForRevokedUserToken(String userId, ScopeAccess accessToken) {
         return Filter.createORFilter(searchForRevocationByToken(accessToken)
                 , searchForRevocationByUserWithWildcardTokenFilter(userId, accessToken.getAuthenticatedBy(), accessToken.getCreateTimestamp()));
@@ -118,11 +100,16 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
     }
 
     private Filter searchForRevocationByUserWithWildcardTokenFilter(String userId, List<String> authenticatedBy, Date tokenExpiration) {
-        LdapSearchBuilder builder = new LdapSearchBuilder();
-        for (String authByValue : authenticatedBy) {
-            builder.addEqualAttribute(ATTR_RS_TYPE, authByValue);
+        Filter authByExactMatchesFilter;
+        if (CollectionUtils.isNotEmpty(authenticatedBy)) {
+            LdapSearchBuilder builder = new LdapSearchBuilder();
+            String flattenedAuthBy = StringUtils.join(authenticatedBy, ",");
+            builder.addEqualAttribute(ATTR_RS_TYPE, flattenedAuthBy);
+            authByExactMatchesFilter = builder.build();
+        } else {
+            //if no auth by provided in token, limit to those TRRs that have <empty> set
+            authByExactMatchesFilter = Filter.createEqualityFilter(ATTR_RS_TYPE, LdapTokenRevocationRecord.AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE);
         }
-        Filter authByExactMatchesFilter = builder.build();
 
         Filter authByOrFilter = Filter.createORFilter(
                 Filter.createEqualityFilter(ATTR_RS_TYPE, TokenRevocationRecord.AUTHENTICATED_BY_WILDCARD_VALUE),

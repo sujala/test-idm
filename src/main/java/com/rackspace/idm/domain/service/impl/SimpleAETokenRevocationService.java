@@ -1,18 +1,20 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
+import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for ae token revocation.
@@ -28,7 +30,13 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     private AETokenService aeTokenService;
 
     @Autowired
+    private UUIDTokenRevocationService uuidTokenRevocationService;
+
+    @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public boolean supportsRevokingFor(UniqueId obj, ScopeAccess sa) {
@@ -51,23 +59,39 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
-    public void revokeTokensForBaseUser(String userId, List<Set<String>> authenticatedByList) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, authenticatedByList);
+    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, authenticatedByMethodGroups);
+
+        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
+            uuidTokenRevocationService.revokeTokensForBaseUser(userId, authenticatedByMethodGroups);
+        }
     }
 
     @Override
-    public void revokeTokensForBaseUser(BaseUser user, List<Set<String>> authenticatedByList) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByList);
+    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByMethodGroups);
+
+        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
+            uuidTokenRevocationService.revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+        }
     }
 
     @Override
     public void revokeAllTokensForBaseUser(String userId) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, TokenRevocationRecord.AUTHENTICATED_BY_ALL_TOKENS_LIST);
+        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, Arrays.asList(AuthenticatedByMethodGroup.ALL));
+
+        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
+            uuidTokenRevocationService.revokeAllTokensForBaseUser(userId);
+        }
     }
 
     @Override
     public void revokeAllTokensForBaseUser(BaseUser user) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), TokenRevocationRecord.AUTHENTICATED_BY_ALL_TOKENS_LIST);
+        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), Arrays.asList(AuthenticatedByMethodGroup.ALL));
+
+        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
+            uuidTokenRevocationService.revokeAllTokensForBaseUser(user);
+        }
     }
 
     @Override

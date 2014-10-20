@@ -28,6 +28,7 @@ import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
@@ -198,6 +199,7 @@ class RootServiceTest extends Specification {
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
     @Shared DefaultRequestContextHolder requestContextHolder
+    @Shared TokenRevocationService tokenRevocationService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -617,6 +619,11 @@ class RootServiceTest extends Specification {
     def mockRequestContextHolder(service) {
         requestContextHolder = Mock()
         service.requestContextHolder = requestContextHolder
+    }
+
+    def mockTokenRevocationService(service) {
+        tokenRevocationService = Mock()
+        service.tokenRevocationService = tokenRevocationService
     }
 
     /*

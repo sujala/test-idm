@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TokenRevocationRecord;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Interface for backend persistence mechanisms for token revocation records (TRR). Must NOT be tied to any specific mechanism (e.g LDAP),
@@ -12,7 +12,8 @@ import java.util.Set;
  */
 public interface TokenRevocationRecordPersistenceStrategy {
     /**
-     * Add a token TRR
+     * Add a token TRR to revoke the specified token string. Returns a TokenRevocationRecord representing the request
+     * that contains an ID that can subsequently be used to retrieve the request at a later date.
      *
      * @param tokenStr
      * @return
@@ -20,13 +21,15 @@ public interface TokenRevocationRecordPersistenceStrategy {
     TokenRevocationRecord addTokenTrrRecord(String tokenStr);
 
     /**
-     * Add a user TRR
+     * Add a user TRR to revoke all previously issued tokens to the specified user matching one of the authentication
+     * method groups supplied.
+     *
      *
      * @param targetUserId
      * @param authenticatedBy
      * @return
      */
-    TokenRevocationRecord addUserTrrRecord(String targetUserId, List<Set<String>> authenticatedBy);
+    TokenRevocationRecord addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedBy);
 
     /**
      * Retrieve the specified record, or null, if not found.

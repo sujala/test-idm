@@ -2,8 +2,8 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.entity.TokenRevocationRecord
 import com.rackspace.idm.domain.security.AETokenService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -118,14 +118,14 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         !revocationService.isTokenRevoked(sa)
 
         when: "expire all api tokens"
-        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationRecord.AUTHENTICATED_BY_API_TOKENS_LIST)
+        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_API_TOKENS)
 
         then: "password token is not revoked"
         !revocationService.isTokenRevoked(token)
         !revocationService.isTokenRevoked(sa)
 
         when: "expire all password tokens"
-        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationRecord.AUTHENTICATED_BY_PASSWORD_TOKENS_LIST)
+        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS)
 
         then: "password token is expired"
         revocationService.isTokenRevoked(token)

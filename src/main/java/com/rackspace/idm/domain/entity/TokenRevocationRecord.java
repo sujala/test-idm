@@ -6,14 +6,6 @@ import java.util.*;
 
 public interface TokenRevocationRecord {
     public static final String AUTHENTICATED_BY_WILDCARD_VALUE = "*";
-    public static final Set<String> AUTHENTICATED_BY_WILDCARD_SET = new HashSet<String>(Arrays.asList(AUTHENTICATED_BY_WILDCARD_VALUE));
-    public static final List<Set<String>> AUTHENTICATED_BY_ALL_TOKENS_LIST = Arrays.asList(TokenRevocationRecord.AUTHENTICATED_BY_WILDCARD_SET);
-
-    public static final Set<String> AUTHENTICATED_BY_PASSWORD_SET = new HashSet<String>(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
-    public static final List<Set<String>> AUTHENTICATED_BY_PASSWORD_TOKENS_LIST = Arrays.asList(TokenRevocationRecord.AUTHENTICATED_BY_PASSWORD_SET);
-
-    public static final Set<String> AUTHENTICATED_BY_API_SET = new HashSet<String>(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY));
-    public static final List<Set<String>> AUTHENTICATED_BY_API_TOKENS_LIST = Arrays.asList(TokenRevocationRecord.AUTHENTICATED_BY_API_SET);
 
     String getId();
 
@@ -25,7 +17,7 @@ public interface TokenRevocationRecord {
 
     java.util.Date getTargetCreatedBefore();
 
-    List<Set<String>> getTargetAuthenticatedBy();
+    List<AuthenticatedByMethodGroup> getTargetAuthenticatedByMethodGroups();
 
     void setId(String id);
 
@@ -36,10 +28,9 @@ public interface TokenRevocationRecord {
     void setTargetCreatedBefore(java.util.Date accessTokenExp);
 
     /**
-     * A set that contains the single value "*" means matches all tokens. An empty set means match tokens without any
-     * authenticated by.
+     * A list of authentication groups that define which tokens should be revoked.
      *
-     * @param authenticatedBy
+     * @param authenticatedByMethodGroups
      */
-    void setTargetAuthenticatedBy(List<Set<String>> authenticatedBy);
+    void setTargetAuthenticatedByMethodGroups(List<AuthenticatedByMethodGroup> authenticatedByMethodGroups);
 }

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.UniqueId;
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 
 @Component(value = "tokenRevocationService")
 public class RouterTokenRevocationService implements TokenRevocationService {
@@ -92,15 +92,15 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     }
 
     @Override
-    public void revokeTokensForBaseUser(String userId, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForBaseUser(user, authenticatedByList);
+        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForBaseUser(BaseUser user, List<Set<String>> authenticatedByList) {
-        getRouteByBaseUser(user).revokeTokensForBaseUser(user, authenticatedByList);
+    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        getRouteByBaseUser(user).revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override

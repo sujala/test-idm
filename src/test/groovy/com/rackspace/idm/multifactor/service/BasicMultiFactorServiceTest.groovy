@@ -9,11 +9,13 @@ import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import org.apache.commons.collections.CollectionUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -50,7 +52,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         multiFactorUserManagement = Mock()
         multiFactorAuthenticationService = Mock()
         multiFactorMobilePhoneVerification = Mock()
-        tenantService = Mock()
 
         mockMobilePhoneRepository(service)
         mockUserService(service)
@@ -61,6 +62,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         mockIdentityUserService(service)
         mockConfiguration(service)
         mockTenantService(service)
+        mockTokenRevocationService(service)
 
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
@@ -199,9 +201,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
             }
         }
 
-        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(user, _, false) >> { arguments -> expirationExceptions=arguments[1]}
-        expirationExceptions instanceof List
-        CollectionUtils.isEqualCollection(expirationExceptions, EXPECTED_AUTHENTICATEDBY_LIST_TO_NOT_REVOKE)
+        1 * tokenRevocationService.revokeTokensForBaseUser(user, _) >> { arguments -> expirationExceptions=arguments[1]}
+        expirationExceptions.size() == 1
+        AuthenticatedByMethodGroup.PASSWORD.matches(expirationExceptions.get(0))
     }
 
     def "updateMultiFactorDomainSettings: appropriate user tokens are revoked when set to required"() {
@@ -227,10 +229,10 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         1 * domainService.checkAndGetDomain(optionalDomainId) >> optionalDomain //depend on this verifying domain exists
         1 * domainService.updateDomain(optionalDomain)
         1 * identityUserService.getProvisionedUsersByDomainId(optionalDomainId) >> [normalUser, userMfaOptional, userMfaRequired, userWithMfaEnabled ]
-        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(normalUser, _, _)
-        0 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userMfaOptional, _, _)
-        1 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userMfaRequired, _, _)
-        0 * scopeAccessService.expireAllTokensExceptTypeForEndUser(userWithMfaEnabled, _, _)
+        1 * tokenRevocationService.revokeTokensForBaseUser(normalUser, _)
+        0 * tokenRevocationService.revokeTokensForBaseUser(userMfaOptional, _)
+        1 * tokenRevocationService.revokeTokensForBaseUser(userMfaRequired, _)
+        0 * tokenRevocationService.revokeTokensForBaseUser(userWithMfaEnabled, _)
     }
 
     def "updateMultiFactorDomainSettings: when setting to current enforcement value the domain is not updated"() {

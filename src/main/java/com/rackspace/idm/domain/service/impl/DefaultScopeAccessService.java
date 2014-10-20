@@ -482,37 +482,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void expireAllTokensExceptTypeForEndUser(EndUser user, List<List<String>> keepAuthenticatedByOptions, boolean keepEmpty) {
-        if (user == null || user.getUniqueId() == null) {
-            return;
-        }
-
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            List<String> tokenAuthBy = sa.getAuthenticatedBy();
-            boolean revoke = true;
-
-            //keep if empty and want to keep empty
-            if (keepEmpty && org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
-                revoke = false;
-            }
-
-            //see if token matches any of those we need to keep
-            if (!org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
-                for (List<String> keepAuthenticatedByOption : keepAuthenticatedByOptions) {
-                    if (org.apache.commons.collections4.CollectionUtils.isEqualCollection(tokenAuthBy, keepAuthenticatedByOption)) {
-                        revoke = false;
-                        break;
-                    }
-                }
-            }
-
-            if (revoke) {
-                tokenRevocationService.revokeToken(user, sa);
-            }
-        }
-    }
-
-    @Override
     public ScopeAccess getAccessTokenByAuthHeader(String authHeader) {
         logger.debug("Getting access token by auth header {}", authHeader);
         final String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
