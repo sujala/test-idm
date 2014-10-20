@@ -1,26 +1,25 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.UniqueId;
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
-import com.rackspace.idm.domain.service.AERevokeTokenService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.RevokeTokenService;
-import com.rackspace.idm.domain.service.UUIDRevokeTokenService;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.TokenRevocationService;
+import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 
-@Component(value = "revokeTokenService")
-public class RouterRevokeTokenService implements RevokeTokenService {
-    private final AERevokeTokenService aeRevokeTokenService;
-    private final UUIDRevokeTokenService uuidRevokeTokenService;
+@Component(value = "tokenRevocationService")
+public class RouterTokenRevocationService implements TokenRevocationService {
+    private final AETokenRevocationService aeTokenRevocationService;
+    private final UUIDTokenRevocationService uuidRevokeTokenService;
 
     @Autowired
     private TokenFormatSelector tokenFormatSelector;
@@ -29,20 +28,20 @@ public class RouterRevokeTokenService implements RevokeTokenService {
     private IdentityUserService identityUserService;
 
     @Autowired
-    public RouterRevokeTokenService(AERevokeTokenService aeRevokeTokenService, UUIDRevokeTokenService uuidRevokeTokenService) {
-        this.aeRevokeTokenService = aeRevokeTokenService;
+    public RouterTokenRevocationService(AETokenRevocationService aeTokenRevocationService, UUIDTokenRevocationService uuidRevokeTokenService) {
+        this.aeTokenRevocationService = aeTokenRevocationService;
         this.uuidRevokeTokenService = uuidRevokeTokenService;
     }
 
-    private RevokeTokenService getRouteByUniqueIdAndScopeAccess(UniqueId object, ScopeAccess scopeAccess) {
-        if (aeRevokeTokenService.supportsRevokingFor(object, scopeAccess)) {
+    private TokenRevocationService getRouteByUniqueIdAndScopeAccess(UniqueId object, ScopeAccess scopeAccess) {
+        if (aeTokenRevocationService.supportsRevokingFor(object, scopeAccess)) {
             return getRouteByUniqueId(object);
         } else {
             return uuidRevokeTokenService;
         }
     }
 
-    private RevokeTokenService getRouteByUniqueId(UniqueId object) {
+    private TokenRevocationService getRouteByUniqueId(UniqueId object) {
         if (object instanceof BaseUser) {
             return getRouteByBaseUser((BaseUser) object);
         } else {
@@ -50,28 +49,28 @@ public class RouterRevokeTokenService implements RevokeTokenService {
         }
     }
 
-    private RevokeTokenService getRouteByBaseUser(BaseUser user) {
+    private TokenRevocationService getRouteByBaseUser(BaseUser user) {
         return getRouteByTokenFormat(tokenFormatSelector.formatForNewToken(user));
     }
 
-    private RevokeTokenService getRouteByUserId(String userId) {
+    private TokenRevocationService getRouteByUserId(String userId) {
         return getRouteByBaseUser(identityUserService.getEndUserById(userId));
     }
 
-    private RevokeTokenService getRouteForExistingScopeAccess(ScopeAccess scopeAccess) {
+    private TokenRevocationService getRouteForExistingScopeAccess(ScopeAccess scopeAccess) {
         return getRouteForExistingScopeAccess(scopeAccess.getAccessTokenString());
     }
 
-    private RevokeTokenService getRouteForExistingScopeAccess(String accessToken) {
+    private TokenRevocationService getRouteForExistingScopeAccess(String accessToken) {
         if (accessToken == null || accessToken.length() < 1) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
         return getRouteByTokenFormat(tokenFormatSelector.formatForExistingToken(accessToken));
     }
 
-    private RevokeTokenService getRouteByTokenFormat(TokenFormat tokenFormat) {
+    private TokenRevocationService getRouteByTokenFormat(TokenFormat tokenFormat) {
         if (tokenFormat == TokenFormat.AE) {
-            return aeRevokeTokenService;
+            return aeTokenRevocationService;
         } else {
             return uuidRevokeTokenService;
         }
@@ -93,25 +92,27 @@ public class RouterRevokeTokenService implements RevokeTokenService {
     }
 
     @Override
-    public void revokeTokensForEndUser(String userId, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForEndUser(user, authenticatedByList);
+        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForEndUser(EndUser user, List<Set<String>> authenticatedByList) {
-        getRouteByBaseUser(user).revokeTokensForEndUser(user, authenticatedByList);
+    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        getRouteByBaseUser(user).revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeAllTokensForEndUser(String userId) {
+    public void revokeAllTokensForBaseUser(String userId) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeAllTokensForEndUser(user);
+        revokeAllTokensForBaseUser(user);
     }
 
     @Override
-    public void revokeAllTokensForEndUser(EndUser user) {
-        getRouteByBaseUser(user).revokeAllTokensForEndUser(user);
+    public void revokeAllTokensForBaseUser(BaseUser user) {
+        getRouteByBaseUser(user).revokeAllTokensForBaseUser(user);
     }
 
     @Override

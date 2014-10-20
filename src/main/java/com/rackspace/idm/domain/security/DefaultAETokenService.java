@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
 import com.rackspace.idm.domain.security.packers.TokenDataPacker;
+import com.rackspace.idm.domain.service.AETokenRevocationService;
 import org.apache.commons.lang.Validate;
 import org.keyczar.exceptions.Base64DecodingException;
 import org.keyczar.util.Base64Coder;
@@ -42,6 +43,9 @@ public class DefaultAETokenService implements AETokenService {
 
     @Autowired
     LdapIdentityProviderRepository identityProviderRepository;
+
+    @Autowired
+    private AETokenRevocationService aeTokenRevocationService;
 
     /**
      * Returns whether the service support creating tokens of the specified type against the specified user.
@@ -109,6 +113,15 @@ public class DefaultAETokenService implements AETokenService {
         ScopeAccess scopeAccess = unpackTokenData(webSafeToken, dataBytes);
 
         return scopeAccess;
+    }
+
+    @Override
+    public ScopeAccess unmarshallTokenAndCheckRevoked(String webSafeToken) {
+        ScopeAccess access = unmarshallToken(webSafeToken);
+        if (aeTokenRevocationService.isTokenRevoked(access)) {
+            return null;
+        }
+        return access;
     }
 
     private byte[] secureTokenData(byte[] dataBytes) {

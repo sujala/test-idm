@@ -46,7 +46,7 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
     @Override
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         try {
-            return aeTokenService.unmarshallToken(accessToken);
+            return aeTokenService.unmarshallTokenAndCheckRevoked(accessToken);
         } catch (UnmarshallTokenException e) {
             LOGGER.error("Error unmarshalling the token: " + accessToken, e);
             return null;

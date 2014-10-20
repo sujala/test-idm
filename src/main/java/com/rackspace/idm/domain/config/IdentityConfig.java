@@ -33,6 +33,9 @@ public class IdentityConfig {
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT = "UUID";
 
+    private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
+    private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE = true;
+
     private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
     private static final String IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT =  "UUID";
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
@@ -139,6 +142,10 @@ public class IdentityConfig {
 
     public String getIdentityRackerAETokenRole() {
         return config.getString(IDENTITY_RACKER_AE_TOKEN_ROLE, IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT);
+    }
+
+    public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
+        return config.getBoolean(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE);
     }
 
 }

@@ -15,4 +15,11 @@ public interface BaseUser extends UniqueId, Auditable {
     boolean isDisabled();
 
     String getUsername();
+
+    /**
+     * The unique identifier (e.g. - rsId) for the user. This is different than the "uniqueId" as that has been used to refer
+     * to the DN of ldap entries which is NOT what we want.
+     * @return
+     */
+    String getId();
 }

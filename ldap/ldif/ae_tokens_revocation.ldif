@@ -1,0 +1,7 @@
+version: 1
+
+dn: o=revocation,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: revocation
+description: Defines container for token revocation records

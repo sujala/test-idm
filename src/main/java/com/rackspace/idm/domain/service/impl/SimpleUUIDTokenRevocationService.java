@@ -2,15 +2,12 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.RevokeTokenService;
-import com.rackspace.idm.domain.service.UUIDRevokeTokenService;
+import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.UnrecognizedAuthenticationMethodException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -20,10 +17,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
+/**
+ * Simple in the sense that it goes against a single backend persistence mechanism for UUID token revocation.
+ */
 @Component
-public class LdapUUIDRevokeTokenService implements UUIDRevokeTokenService {
+public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationService {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -108,35 +107,60 @@ public class LdapUUIDRevokeTokenService implements UUIDRevokeTokenService {
         scopeAccessDao.updateScopeAccess(scopeAccess);
     }
 
-
     @Override
-    public void revokeTokensForEndUser(String userId, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForEndUser(user, authenticatedByList);
+        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForEndUser(EndUser user, List<Set<String>> authenticatedByList) {
+    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         if (user == null) return;
 
+        //first determine in need to revoke all
+        boolean revokeAll = false;
+        for (AuthenticatedByMethodGroup revokeAuthBy : authenticatedByMethodGroups) {
+            if (revokeAuthBy.matches(AuthenticatedByMethodGroup.ALL)) {
+                revokeAll = true;
+            }
+        }
+
+        /*
+        for every token, loop through to see if it matches one of the groups being revoked.
+         */
+        DateTime now = new DateTime();
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            List<String> tokenAuthBy = sa.getAuthenticatedBy();
-            for (Set<String> revokeAuthBy : authenticatedByList) {
-                if (CollectionUtils.isEqualCollection(tokenAuthBy, revokeAuthBy)) {
-                    revokeToken(user, sa);
+            if (sa.isAccessTokenExpired(now)) {
+                //no point revoking token already expired
+                continue;
+            }
+            else if (revokeAll) {
+                revokeToken(user, sa);
+            } else {
+                try {
+                    AuthenticatedByMethodGroup tokenAuthBy  = AuthenticatedByMethodGroup.getGroup(sa.getAuthenticatedBy());
+                    for (AuthenticatedByMethodGroup revokeAuthBy : authenticatedByMethodGroups) {
+                        if (revokeAuthBy.matches(tokenAuthBy)) {
+                            revokeToken(user, sa);
+                        }
+                    }
+                } catch (UnrecognizedAuthenticationMethodException e) {
+                    LOG.error("Error attempting to revoke token - unknown authBy", e);
                 }
             }
         }
     }
 
     @Override
-    public void revokeAllTokensForEndUser(String userId) {
+    public void revokeAllTokensForBaseUser(String userId) {
+        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeAllTokensForEndUser(user);
+        revokeAllTokensForBaseUser(user);
     }
 
     @Override
-    public void revokeAllTokensForEndUser(EndUser user) {
+    public void revokeAllTokensForBaseUser(BaseUser user) {
         if (user == null) return;
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
