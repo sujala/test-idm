@@ -770,7 +770,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
         String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return userService.getUser(uid);
+        return identityUserService.getProvisionedUserById(uid);
     }
 
     @Override
@@ -906,7 +906,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         rsa = scopeAccessService.getValidRackerScopeAccessForClientId((Racker) user, getCloudAuthClientId(), authenticatedBy);
 
         usa = new UserScopeAccess();
-        usa.setUsername(rsa.getRackerId());
         usa.setAccessTokenExp(rsa.getAccessTokenExp());
         usa.setAccessTokenString(rsa.getAccessTokenString());
         usa.setAuthenticatedBy(authenticatedBy);

@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.FullToken;
@@ -98,11 +99,12 @@ public class AuthConverterCloudV11TestOld {
 
     @Test
     public void toCloudV11TokenJaxb_createsToken_succeeds() throws Exception {
+        User user = new User();
+        user.setUsername("username");
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername("username");
         userScopeAccess.setAccessTokenString("token");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        FullToken token = authConverterCloudV11.toCloudV11TokenJaxb(userScopeAccess, "requestUrl");
+        FullToken token = authConverterCloudV11.toCloudV11TokenJaxb(userScopeAccess, "requestUrl", user);
         assertThat("token id", token.getId(), equalTo("token"));
         assertThat("token userId", token.getUserId(), equalTo("username"));
         assertThat("token url", token.getUserURL(), equalTo("requestUrlusers/username"));
@@ -110,10 +112,11 @@ public class AuthConverterCloudV11TestOld {
 
     @Test
     public void toCloudV11TokenJaxb_tokenExpIsNull_returnsToken() throws Exception {
+        User user = new User();
+        user.setUsername("username");
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername("username");
         userScopeAccess.setAccessTokenString("token");
-        FullToken token = authConverterCloudV11.toCloudV11TokenJaxb(userScopeAccess, "requestUrl");
+        FullToken token = authConverterCloudV11.toCloudV11TokenJaxb(userScopeAccess, "requestUrl", user);
         assertThat("token id", token.getId(), equalTo("token"));
         assertThat("token userId", token.getUserId(), equalTo("username"));
         assertThat("token url", token.getUserURL(), equalTo("requestUrlusers/username"));

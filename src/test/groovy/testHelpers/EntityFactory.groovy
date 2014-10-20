@@ -393,7 +393,6 @@ class EntityFactory extends Specification {
             it.userRsId = user.id
             it.accessTokenString = tokenStr
             it.accessTokenExp = expiration
-            it.username = user.username
             it.clientId = "fakeClientId"
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it

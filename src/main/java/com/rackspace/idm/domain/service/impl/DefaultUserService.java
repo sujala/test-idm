@@ -491,7 +491,7 @@ public class DefaultUserService implements UserService {
         }
 
         String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return getUser(uid);
+        return identityUserService.getProvisionedUserById(uid);
     }
 
     @Override
@@ -813,10 +813,6 @@ public class DefaultUserService implements UserService {
             }
         }
 
-        for (ScopeAccess scopeAccess : scopeAccessService.getScopeAccessListByUserId(user.getId())) {
-            ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
-            scopeAccessService.updateScopeAccess(scopeAccess);
-        }
         logger.info("Updated User: {}", user);
     }
 
@@ -908,7 +904,14 @@ public class DefaultUserService implements UserService {
                 user = impersonatingRacker;
                 ((Racker)user).setEnabled(true);
             } else {
-                user = getUser(impersonatedScopeAccess.getUsername());
+                if(StringUtils.isNotBlank(impersonatedScopeAccess.getUserRsId())) {
+                    //first try the user's ID
+                    user = identityUserService.getEndUserById(impersonatedScopeAccess.getUserRsId());
+                } else {
+                    //else, fall back to the deprecated username attribute
+                    //The username is no longer being set but will be on older tokens
+                    user = getUser(impersonatedScopeAccess.getUsername());
+                }
             }
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
@@ -918,7 +921,7 @@ public class DefaultUserService implements UserService {
             }
             else {
                 //will be a "provisioned" user (User)
-                user = getUser(userScopeAccess.getUsername());
+                user = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
             }
         } else if (scopeAccess instanceof ClientScopeAccess) {
             return null;
@@ -936,7 +939,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    private void checkUserDisabled(BaseUser user){
+    public void checkUserDisabled(BaseUser user) {
         String exMsg = "Token not found.";
         if( user.isDisabled() ){
             throw new NotFoundException(exMsg);
@@ -1018,14 +1021,6 @@ public class DefaultUserService implements UserService {
         }
         return false;
 	}
-
-    @Override
-    public void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess) {
-        if(scopeAccess instanceof UserScopeAccess){
-            BaseUser user = getUser(((UserScopeAccess) scopeAccess).getUsername());
-            checkUserDisabled(user);
-        }
-    }
 
     protected List<User> filterUsersForRole(List<User> users, String roleId) {
         List<User> result = new ArrayList<User>();

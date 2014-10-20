@@ -254,8 +254,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
             isOwner = requestingScopeAccess.getClientId().equals(
                     targetScopeAccess.getClientId());
         } else if (targetScopeAccess instanceof UserScopeAccess) {
-            isOwner = ((UserScopeAccess) requestingScopeAccess).getUsername()
-                    .equals(((UserScopeAccess) targetScopeAccess).getUsername());
+            isOwner = ((UserScopeAccess) requestingScopeAccess).getUserRsId()
+                    .equals(((UserScopeAccess) targetScopeAccess).getUserRsId());
         } else if (targetScopeAccess instanceof RackerScopeAccess) {
             isOwner = ((RackerScopeAccess) requestingScopeAccess).getRackerId()
                     .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());

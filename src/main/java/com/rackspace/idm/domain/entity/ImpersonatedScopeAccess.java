@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 /**
@@ -26,6 +27,10 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
 
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String userRsId;
+
+    @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingUsername;
 
@@ -53,14 +58,6 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
 
     private DateTime userPasswordExpirationDate;
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public DateTime getUserPasswordExpirationDate() {
         return userPasswordExpirationDate;
     }
@@ -71,8 +68,13 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
 
     @Override
     public String getAuditContext() {
-        final String format = "User(username=%s,impersonating=%s)";
-        return String.format(format, this.getUsername(), this.getImpersonatingUsername());
+        if(StringUtils.isNotBlank(this.getRackerId())) {
+            final String format = "User(rackerId=%s,impersonating=%s)";
+            return String.format(format, this.getRackerId(), this.getImpersonatingUsername());
+        } else {
+            final String format = "User(userRsId=%s,impersonating=%s)";
+            return String.format(format, this.getUserRsId(), this.getImpersonatingUsername());
+        }
     }
 
     public String getRackerId() {

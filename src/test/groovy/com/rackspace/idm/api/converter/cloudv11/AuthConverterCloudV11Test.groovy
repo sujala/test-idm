@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv11
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspacecloud.docs.auth.api.v1.FullToken
 import org.joda.time.DateTime
@@ -32,19 +33,17 @@ class AuthConverterCloudV11Test extends RootServiceTest{
 
     def "Verify that converter displays correct created date for scopeAccess"(){
         given:
-
         def date = new Date()
-
+        def user = new User()
         def sa = new UserScopeAccess().with {
             it.accessTokenString = "token"
             it.accessTokenExp = new Date().plus(1)
-            it.username = "username"
             it.createTimestamp = date
             return it
         }
 
         when:
-        FullToken result = converter.toCloudV11TokenJaxb(sa, "requestUrl")
+        FullToken result = converter.toCloudV11TokenJaxb(sa, "requestUrl", user)
 
         then:
         result.created != null

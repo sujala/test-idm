@@ -64,9 +64,9 @@ public class DefaultAuthorizationServiceTestOld {
     public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfUserScopeAccessAndUsernamesMatch_returnsTrue() throws Exception {
         ScopeAccess targetScopeAccess = new UserScopeAccess();
         targetScopeAccess.setClientId("123");
-        ((UserScopeAccess) targetScopeAccess).setUsername("jsmith");
+        ((UserScopeAccess) targetScopeAccess).setUserRsId("jsmith");
         ScopeAccess requestingScopeAccess = new UserScopeAccess();
-        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        ((UserScopeAccess) requestingScopeAccess).setUserRsId("jsmith");
         requestingScopeAccess.setClientId("123");
         assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
     }
@@ -135,10 +135,10 @@ public class DefaultAuthorizationServiceTestOld {
     public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfUserScopeAccessAndUsernamesDoNotMatch_returnsFalse() throws Exception {
         ScopeAccess targetScopeAccess = new UserScopeAccess();
         targetScopeAccess.setClientId("4");
-        ((UserScopeAccess) targetScopeAccess).setUsername("rclements");
+        ((UserScopeAccess) targetScopeAccess).setUserRsId("rclements");
         ScopeAccess requestingScopeAccess = new UserScopeAccess();
         requestingScopeAccess.setClientId("456");
-        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        ((UserScopeAccess) requestingScopeAccess).setUserRsId("jsmith");
         assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(false));
     }
 

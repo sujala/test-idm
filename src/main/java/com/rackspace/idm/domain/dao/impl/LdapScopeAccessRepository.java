@@ -149,7 +149,7 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
 
     @Override
     public String getUserIdForParent(ScopeAccess scopeAccess) {
-        return scopeAccess.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+        return scopeAccess.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_USER_RS_ID);
     }
 
     private String parseDNForClientId(String parentDn) {

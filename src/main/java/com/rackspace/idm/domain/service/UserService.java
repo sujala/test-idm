@@ -172,5 +172,5 @@ public interface UserService {
      */
     void validateUserIsEnabled(User user);
 
-    void checkUserDisabledByScopeAccess(ScopeAccess scopeAccess);
+    void checkUserDisabled(BaseUser user);
 }
