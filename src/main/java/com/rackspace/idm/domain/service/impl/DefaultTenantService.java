@@ -15,6 +15,7 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -51,6 +52,7 @@ public class DefaultTenantService implements TenantService {
     @Autowired
     private TenantRoleDao tenantRoleDao;
 
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
 

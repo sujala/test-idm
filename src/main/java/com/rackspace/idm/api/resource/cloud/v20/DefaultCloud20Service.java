@@ -45,6 +45,7 @@ import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -141,6 +142,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private CloudKsGroupBuilder cloudKsGroupBuilder;
 
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
 

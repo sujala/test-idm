@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -25,6 +26,7 @@ import java.util.List;
 public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationService {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
 
