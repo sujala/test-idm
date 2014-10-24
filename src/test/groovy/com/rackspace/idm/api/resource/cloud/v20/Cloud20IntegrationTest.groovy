@@ -95,6 +95,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared SCOPE = SearchScope.SUB
 
     @Shared def USER_FOR_AUTH
+    @Shared def USER_FOR_AUTH_ID
     @Shared def USER_FOR_AUTH_PWD
 
     @Shared def defaultUserRoleId = "2"
@@ -132,6 +133,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
         testUser = cloud20.getUserByName(serviceAdminToken, "admin$sharedRandom").getEntity(User).value
         USER_FOR_AUTH = testUser.username
+        USER_FOR_AUTH_ID = testUser.id
         USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
@@ -302,7 +304,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         def scopeAccessTwo = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
-        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(userRsId=$USER_FOR_AUTH_ID))", "*")
 
         then:
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
@@ -314,11 +316,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, scopeAccessOne.token.id)
 
-        def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+        def allUsersScopeAccessBefore = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(userRsId=$USER_FOR_AUTH_ID))", "*")
 
         def scopeAccessTwo = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
-        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(uid=$USER_FOR_AUTH))", "*")
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=UserScopeAccess)(userRsId=$USER_FOR_AUTH_ID))", "*")
 
         then:
         allUsersScopeAccessBefore.getEntryCount() + 1 == allUsersScopeAccessAfter.getEntryCount()
@@ -356,7 +358,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         setTokenInRefreshWindow(USER_FOR_AUTH, secondScopeAccess.token.id)
         def thirdScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
-        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=authQE))", "*")
+        def allUsersScopeAccessAfter = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=authQE))", "*")
 
         then:
         !thirdScopeAccess.token.id.equals(secondScopeAccess.token.id)
@@ -3427,7 +3429,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def deleteUsersTokens(String uid) {
-        def result = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$uid))")
+        def result = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$uid))")
         for (SearchResultEntry entry in result.getSearchEntries()) {
             connPools.getAppConnPool().delete(entry.getDN())
         }
@@ -3435,7 +3437,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def expireToken(String uid, String accessToken, int hoursOffset) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID)(accessToken=$accessToken))","*")
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID)(accessToken=$accessToken))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenExpired(new DateTime())) {
@@ -3447,7 +3449,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def expireTokens(String uid, int hoursOffset) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH))","*")
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenExpired(new DateTime())) {
@@ -3459,7 +3461,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def setTokenValid(String uid) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID))","*")
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenExpired(new DateTime())) {
@@ -3471,7 +3473,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def setTokenInRefreshWindow(String uid, String accessToken) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(accessToken=$accessToken))","*")
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(accessToken=$accessToken))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {
@@ -3483,7 +3485,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def setTokensInRefreshWindow(String uid) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(uid=$USER_FOR_AUTH)(clientId=$CLOUD_CLIENT_ID))","*")
+        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {

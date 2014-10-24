@@ -251,10 +251,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ImpersonatedScopeAccess scopeAccessToUse;
         if(!(userBeingImpersonated instanceof FederatedUser)) {
             //create a shiny new token
-            ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userTokenForImpersonation, desiredImpersonationTokenExpiration);
+            ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration);
 
             if (mostRecent != null) {
-                scopeAccessToAdd.setUsername(mostRecent.getUsername());
+                if(impersonator instanceof Racker) {
+                    scopeAccessToAdd.setUserRsId(((Racker) impersonator).getRackerId());
+                } else if(impersonator instanceof EndUser) {
+                    scopeAccessToAdd.setUserRsId(((EndUser) impersonator).getId());
+                }
                 scopeAccessToAdd.setClientId(mostRecent.getClientId());
                 scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
                 if (!mostRecent.isAccessTokenExpired(new DateTime())) {
@@ -280,7 +284,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     || desiredImpersonationTokenExpiration.isAfter(new DateTime(mostRecent.getAccessTokenExp()))) {
                 //create a new impersonation token if the most recent impersonation token for this user is expired or
                 //will expired before the requested time
-                ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userTokenForImpersonation, desiredImpersonationTokenExpiration);
+                ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration);
 
                 logger.info(ADDING_SCOPE_ACCESS, scopeAccessToAdd);
                 scopeAccessDao.addScopeAccess(impersonator, scopeAccessToAdd);
@@ -352,21 +356,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * @param impersonationTokenExpirationDate
      * @return
      */
-    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate) {
+    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, EndUser userBeingImpersonated, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate) {
         String clientId = getCloudAuthClientId();
 
         ImpersonatedScopeAccess newImpersonatedScopeAccess = new ImpersonatedScopeAccess();
         if (impersonator instanceof Racker) {
             newImpersonatedScopeAccess.setRackerId(((Racker) impersonator).getRackerId());
-            newImpersonatedScopeAccess.setUsername(((Racker) impersonator).getRackerId());
         } else {
-            newImpersonatedScopeAccess.setUsername(((User) impersonator).getUsername());
+            //federated users are not allowed to impersonate so safe to cast to user at this point
+            newImpersonatedScopeAccess.setUserRsId(((User) impersonator).getId());
         }
         newImpersonatedScopeAccess.setClientId(clientId);
         newImpersonatedScopeAccess.setAccessTokenString(this.generateToken());
         newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
         newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
-        newImpersonatedScopeAccess.setImpersonatingUsername(userTokenForImpersonation.getUsername());
+        newImpersonatedScopeAccess.setImpersonatingUsername(userBeingImpersonated.getUsername());
         newImpersonatedScopeAccess.setImpersonatingRsId(userTokenForImpersonation.getUserRsId());
 
         return newImpersonatedScopeAccess;
@@ -798,7 +802,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (user instanceof User) {
             User provisionedUser = (User)user;
             UserScopeAccess userScopeAccess = new UserScopeAccess();
-            userScopeAccess.setUsername(provisionedUser.getUsername());
             userScopeAccess.setUserRsId(provisionedUser.getId());
             userScopeAccess.setClientId(clientId);
             userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -860,7 +863,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
 
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername(user.getUsername());
         userScopeAccess.setUserRsId(user.getId());
         userScopeAccess.setClientId(clientId);
         userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -891,7 +893,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
-        usa.setUsername(user.getUsername());
         usa.setUserRsId(user.getId());
         usa.setUserRCN(user.getCustomerId());
         usa.setClientId(clientId);
@@ -906,7 +907,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
-        scopeAccessToAdd.setUsername(scopeAccess.getUsername());
         scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());

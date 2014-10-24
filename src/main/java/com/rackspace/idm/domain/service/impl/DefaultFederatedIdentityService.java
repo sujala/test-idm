@@ -241,7 +241,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         token.setUserRsId(user.getId());
         token.setAccessTokenString(generateToken());
         token.setAccessTokenExp(requestedExpirationDate.toDate());
-        token.setUsername(user.getUsername());
         token.setClientId(getCloudAuthClientId());
         token.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);
 
