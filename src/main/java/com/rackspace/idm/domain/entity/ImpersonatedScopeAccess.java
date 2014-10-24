@@ -2,13 +2,9 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.Data;
-<<<<<<< HEAD
 import lombok.Getter;
 import lombok.Setter;
-=======
 import org.apache.commons.lang.StringUtils;
->>>>>>> upstream/master
 import org.joda.time.DateTime;
 
 /**
@@ -20,7 +16,6 @@ import org.joda.time.DateTime;
  */
 @Getter
 @Setter
-@Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
 public class ImpersonatedScopeAccess extends ScopeAccess {
 

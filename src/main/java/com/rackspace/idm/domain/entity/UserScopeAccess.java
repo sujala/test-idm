@@ -38,37 +38,6 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     }
 
     private DateTime userPasswordExpirationDate;
-<<<<<<< HEAD
-=======
-    
-    @Override
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    @Override
-    public void setRefreshTokenString(String refreshTokenString) {
-        this.refreshTokenString = refreshTokenString;
-    }
-
-    @Override
-    public Date getRefreshTokenExp() {
-        return refreshTokenExp;
-    }
-
-    @Override
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
-
-    public String getUserRCN() {
-        return userRCN;
-    }
-
-    public void setUserRCN(String userRCN) {
-        this.userRCN = userRCN;
-    }
->>>>>>> upstream/master
 
     @Override
     public void setRefreshTokenExpired() {

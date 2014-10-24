@@ -776,12 +776,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
-<<<<<<< HEAD
-        return userService.getUser(scopeAccessByAccessToken.getUsername());
-=======
+//TODO: Fix this as the getUserIdForParent was removed
+//        return userService.getUser(scopeAccessByAccessToken.getUsername());
         String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
         return identityUserService.getProvisionedUserById(uid);
->>>>>>> upstream/master
     }
 
     @Override

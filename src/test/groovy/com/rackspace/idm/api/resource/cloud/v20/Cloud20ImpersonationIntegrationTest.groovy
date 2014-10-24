@@ -980,9 +980,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
     }
 
-<<<<<<< HEAD
-=======
-    def "creating an impersonation token no longer sets the username on the token"() {
+   def "creating an impersonation token no longer sets the username on the token"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForImpersonate")
@@ -1034,41 +1032,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteDomain(domainId)
     }
 
-    /**
-     * Choose random values for the key properties and verify the inviolable rule is never broken - that the impersonation token
-     * must always expire on or before the user token. Do this 20 times to provide additional assurances regardless of the property
-     * values, the user token won't expire first.
-     */
-    @Unroll("impersonate user random - maxServiceImpRequestAllowed=#maxServiceImpRequestAllowed; userTokenLifetimeSeconds=#userTokenLifetimeSeconds; requestedImpersonationTokenLifetimeSeconds=#requestedImpersonationTokenLifetimeSeconds")
-    def "impersonate user random"() {
-        given:
-        def now = new DateTime()
-
-        staticIdmConfiguration.setProperty(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME, maxServiceImpRequestAllowed)
-
-        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
-        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, false)
-
-        when:
-        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
-        def actualImpersonationTokenExpirationDate = new DateTime(impersonatedScopeAccess.accessTokenExp)
-
-        //auth as user to get the latest user token
-        ScopeAccess actualUserTokenUsed = getMostRecentTokenForUser(localDefaultUser)
-        DateTime actualUserTokenUsedExpirationDate = new DateTime(actualUserTokenUsed.accessTokenExp)
-
-        then: "impersonation token will expire on or before user token"
-        impersonatedScopeAccess.impersonatingToken == actualUserTokenUsed.accessTokenString
-        (actualImpersonationTokenExpirationDate.isBefore(actualUserTokenUsedExpirationDate) || actualImpersonationTokenExpirationDate.isEqual(actualUserTokenUsedExpirationDate))
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-
-        where:
-        [maxServiceImpRequestAllowed, userTokenLifetimeSeconds, requestedImpersonationTokenLifetimeSeconds] << impersonateRandomDataProvider(20)
-    }
-
->>>>>>> upstream/master
     def impersonateRandomDataProvider(int iterations) {
         List vals = new ArrayList();
 
