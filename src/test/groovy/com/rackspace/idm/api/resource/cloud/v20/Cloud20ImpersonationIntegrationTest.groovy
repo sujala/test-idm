@@ -980,6 +980,95 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
     }
 
+<<<<<<< HEAD
+=======
+    def "creating an impersonation token no longer sets the username on the token"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userForImpersonate")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def identityAdmin = utils.getUserByName(IDENTITY_ADMIN_USERNAME)
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+
+        when: "impersonate a user using a provisioned user"
+        def response = cloud20.impersonate(utils.getIdentityAdminToken(), userAdmin)
+        def tokenId = response.getEntity(ImpersonationResponse).token.id
+        def tokenEntity = scopeAccessService.getScopeAccessByAccessToken(tokenId)
+
+        then: "the token stored in the directory has a userRsId attribute"
+        tokenEntity.userRsId == identityAdmin.id
+
+        and: "the token stored in the directory does not have a username attribute"
+        tokenEntity.username == null
+
+        when: "validate to token to verify that is works correctly"
+        def validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
+
+        then:
+        validateResponse.status == 200
+
+        when: "impersonate a user using a racker"
+        response = cloud20.impersonate(rackerToken, userAdmin)
+        tokenId = response.getEntity(ImpersonationResponse).token.id
+        tokenEntity = scopeAccessService.getScopeAccessByAccessToken(tokenId)
+
+        then: "the token stored in the directory has a rackerId attribute"
+        tokenEntity.rackerId == RACKER_IMPERSONATE
+
+        and: "the token stored in the directory does not have a userRsId attribute"
+        tokenEntity.userRsId == null
+
+        and: "the token stored in the directory does not have a username attribute"
+        tokenEntity.username == null
+
+        when: "validate to token to verify that is works correctly"
+        validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
+
+        then:
+        validateResponse.status == 200
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    /**
+     * Choose random values for the key properties and verify the inviolable rule is never broken - that the impersonation token
+     * must always expire on or before the user token. Do this 20 times to provide additional assurances regardless of the property
+     * values, the user token won't expire first.
+     */
+    @Unroll("impersonate user random - maxServiceImpRequestAllowed=#maxServiceImpRequestAllowed; userTokenLifetimeSeconds=#userTokenLifetimeSeconds; requestedImpersonationTokenLifetimeSeconds=#requestedImpersonationTokenLifetimeSeconds")
+    def "impersonate user random"() {
+        given:
+        def now = new DateTime()
+
+        staticIdmConfiguration.setProperty(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME, maxServiceImpRequestAllowed)
+
+        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
+        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, false)
+
+        when:
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
+        def actualImpersonationTokenExpirationDate = new DateTime(impersonatedScopeAccess.accessTokenExp)
+
+        //auth as user to get the latest user token
+        ScopeAccess actualUserTokenUsed = getMostRecentTokenForUser(localDefaultUser)
+        DateTime actualUserTokenUsedExpirationDate = new DateTime(actualUserTokenUsed.accessTokenExp)
+
+        then: "impersonation token will expire on or before user token"
+        impersonatedScopeAccess.impersonatingToken == actualUserTokenUsed.accessTokenString
+        (actualImpersonationTokenExpirationDate.isBefore(actualUserTokenUsedExpirationDate) || actualImpersonationTokenExpirationDate.isEqual(actualUserTokenUsedExpirationDate))
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+
+        where:
+        [maxServiceImpRequestAllowed, userTokenLifetimeSeconds, requestedImpersonationTokenLifetimeSeconds] << impersonateRandomDataProvider(20)
+    }
+
+>>>>>>> upstream/master
     def impersonateRandomDataProvider(int iterations) {
         List vals = new ArrayList();
 

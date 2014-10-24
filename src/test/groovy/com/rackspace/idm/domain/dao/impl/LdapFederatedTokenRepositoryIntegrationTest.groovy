@@ -79,7 +79,6 @@ class LdapFederatedTokenRepositoryIntegrationTest extends Specification {
         token.setUserRsId(user.getId());
         token.setAccessTokenString(testUtils.getRandomUUID());
         token.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
-        token.setUsername(user.getUsername());
         token.setClientId(configuration.getString("cloudAuth.clientId"));
         token.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
 

@@ -1531,6 +1531,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUser(_) >> user
         userService.checkAndGetUserById(_) >> user
+        identityUserService.getProvisionedUserById(_) >> user
 
         when:
         def response = service.getSecretQAs(authToken,"id").build()
@@ -1550,6 +1551,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUser(_) >> user
         userService.checkAndGetUserById(_) >> user
+        identityUserService.getProvisionedUserById(_) >> user
 
         when:
         def response = service.createSecretQA(authToken,"1", v1Factory.createSecretQA()).build()
@@ -1694,7 +1696,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = Mock(User)
 
         userService.checkAndGetUserById(_) >> user
-        userService.getUser(_) >> caller
+        identityUserService.getProvisionedUserById(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
@@ -2600,7 +2602,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getUserAdminsForUser(authToken, "userId")
 
         then:
-        1 * userService.getUser(_) >> caller
+        1 * identityUserService.getProvisionedUserById(_) >> caller
         1 * userService.checkAndGetUserById(_) >> user
 
         then:
@@ -2619,7 +2621,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getUserAdminsForUser(authToken, "userId")
 
         then:
-        1 * userService.getUser(_) >> caller
+        1 * identityUserService.getProvisionedUserById(_) >> caller
         1 * userService.checkAndGetUserById(_) >> user
 
         then:
@@ -4216,7 +4218,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * userService.checkAndGetUserById(_) >> user
-        1 * userService.getUser(_) >> caller
+        1 * identityUserService.getProvisionedUserById(_) >> caller
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
         1 * authorizationService.isSelf(_, _) >> false
         result.build().status == 200
@@ -4234,7 +4236,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * authorizationService.verifyUserLevelAccess(_)
         1 * userService.checkAndGetUserById(_) >> user
-        1 * userService.getUser(_) >> caller
+        1 * identityUserService.getProvisionedUserById(_) >> caller
         1 * authorizationService.isSelf(_, _) >> false
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
         result.build().status == 403

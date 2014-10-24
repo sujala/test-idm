@@ -25,9 +25,6 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
 
-    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
-    private String username;
-
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
@@ -41,6 +38,37 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     }
 
     private DateTime userPasswordExpirationDate;
+<<<<<<< HEAD
+=======
+    
+    @Override
+    public String getRefreshTokenString() {
+        return refreshTokenString;
+    }
+
+    @Override
+    public void setRefreshTokenString(String refreshTokenString) {
+        this.refreshTokenString = refreshTokenString;
+    }
+
+    @Override
+    public Date getRefreshTokenExp() {
+        return refreshTokenExp;
+    }
+
+    @Override
+    public void setRefreshTokenExp(Date refreshTokenExp) {
+        this.refreshTokenExp = refreshTokenExp;
+    }
+
+    public String getUserRCN() {
+        return userRCN;
+    }
+
+    public void setUserRCN(String userRCN) {
+        this.userRCN = userRCN;
+    }
+>>>>>>> upstream/master
 
     @Override
     public void setRefreshTokenExpired() {
@@ -63,8 +91,8 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
 
     @Override
     public String getAuditContext() {
-        final String format = "User(username=%s,customerId=%s)";
-        return String.format(format, this.getUsername(), this.getUserRCN());
+        final String format = "User(userRsId=%s,customerId=%s)";
+        return String.format(format, this.getUserRsId(), this.getUserRCN());
     }
 
 }

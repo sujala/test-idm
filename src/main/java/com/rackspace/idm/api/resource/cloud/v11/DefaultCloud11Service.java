@@ -71,6 +71,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     private UserConverterCloudV11 userConverterCloudV11;
     @Autowired
     private UserService userService;
+    @Autowired
+    private IdentityUserService identityUserService;
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -176,14 +178,13 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException("Token not found.");
             }
 
-            userService.checkUserDisabledByScopeAccess(sa);
-
             if (sa instanceof ImpersonatedScopeAccess){
                 UserScopeAccess usa = getUserFromImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
-                if(usa.isAccessTokenExpired(new DateTime())){
+                if(usa == null || usa.isAccessTokenExpired(new DateTime())) {
                     throw new NotFoundException("Token not found");
                 }
-                return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
+                EndUser user = identityUserService.getEndUserById(usa.getUserRsId());
+                return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl, user)).getValue());
             }
 
             if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
@@ -192,7 +193,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = (UserScopeAccess) sa;
 
-            User user = null;
+            EndUser tokenUser = identityUserService.getEndUserById(usa.getUserRsId());
+            userService.checkUserDisabled(tokenUser);
+
+            EndUser user = null;
 
             if (!validator.isBlank(belongsTo)) {
                 switch (userType) {
@@ -215,12 +219,14 @@ public class DefaultCloud11Service implements Cloud11Service {
                     throw new UserDisabledException(user.getUsername());
                 }
 
-                if (!user.getUsername().equals(usa.getUsername())) {
+                if (!user.getId().equals(usa.getUserRsId())) {
                     throw new NotAuthorizedException("Username or api key invalid");
                 }
+            } else {
+                user = tokenUser;
             }
 
-            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
+            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl, user)).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -231,7 +237,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(scopeAccess.getAccessTokenString());
         usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-        usa.setUsername(scopeAccess.getImpersonatingUsername());
+        usa.setUserRsId(scopeAccess.getImpersonatingRsId());
         usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
         return usa;
     }

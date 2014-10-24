@@ -90,7 +90,6 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
             it.userRsId = userId
             it.accessTokenString = tokenStr
             it.accessTokenExp = expiration
-            it.username = username
             it.clientId = "fakeClientId"
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
