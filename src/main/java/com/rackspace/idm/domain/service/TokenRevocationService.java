@@ -50,7 +50,7 @@ public interface TokenRevocationService {
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_MFA_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD_PASSCODE));
 
     /**
-     * Revoke the specified token if it is valid (not expired).
+     * Revoke the specified token if it is valid (not expired) and has not been revoked previously.
      * <p>
      *     If a valid user token is revoked, an atom hopper feed event must be sent to announce the token revocation
      * </p>
@@ -60,7 +60,7 @@ public interface TokenRevocationService {
     void revokeToken(String tokenString);
 
     /**
-     * Revoke the specified token if it is valid (not expired).
+     * Revoke the specified token if it is valid (not expired) and has not been revoked previously.
      * <p>
      *     If a valid user token is revoked, an atom hopper feed event must be sent to announce the token revocation
      * </p>
@@ -69,7 +69,7 @@ public interface TokenRevocationService {
     void revokeToken(ScopeAccess tokenString);
 
     /**
-     * Revoke the specified token if it is valid (not expired).
+     * Revoke the specified token if it is valid (not expired) and has not been revoked previously.
      * <p>
      *     If a valid user token is revoked, an atom hopper feed event must be sent to announce the token revocation
      * </p>

@@ -4,6 +4,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.TokenRevocationService
+import com.rackspace.idm.domain.service.UserService
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -25,14 +26,18 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
 
     @Shared UserDao userDao
 
+    @Shared UserService userService
+
     EntityFactory entityFactory = new EntityFactory()
 
     def setup() {
         aeTokenService = Mock()
         userDao = Mock()
+        userService = Mock()
 
         revocationService.userDao = userDao
         revocationService.aeTokenService = aeTokenService
+        revocationService.userService = userService
     }
 
     def "revokeToken - token based revocation"() {
@@ -40,9 +45,15 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
             it.createTimestamp = new DateTime().minusHours(1).toDate()
             return it
         }
+        def user = entityFactory.createUser().with {
+            it.id = sa.userRsId
+            return it
+        }
+
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
+        userService.getUserByScopeAccess(_,_) >> user
 
         expect:
         !revocationService.isTokenRevoked(token)
