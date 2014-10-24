@@ -66,11 +66,7 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
                 that A DEFECT be created for this
                  */
                 BaseUser user = userService.getUserByScopeAccess(scopeAccess, true);
-                if (user != null) {
-                    revokeToken(user, scopeAccess);
-                } else {
-                    revokeTokenInternal(scopeAccess);
-                }
+                revokeToken(user, scopeAccess);
             } catch (NotFoundException e) {
                 revokeTokenInternal(scopeAccess);
                 throw e;
@@ -83,7 +79,7 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
                 behavior (see Cloud20RevokeTokenIntegrationTest) so need to maintain this behavior..for now. Will request
                 that A DEFECT be created for this
                  */
-            BaseUser user = userService.getUserByScopeAccess(scopeAccess, true);
+            userService.getUserByScopeAccess(scopeAccess, true);
             LOG.debug("Revoking access token was not required. Already expired {}", scopeAccess);
         }
     }
