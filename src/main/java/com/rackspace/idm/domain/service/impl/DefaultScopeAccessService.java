@@ -1032,7 +1032,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         } else if (tFormat == TokenFormat.AE) {
             scopeAccessForImpersonation = new UserScopeAccess();
             scopeAccessForImpersonation.setAccessTokenExp(desiredImpersonationTokenExpiration.toDate());
-            scopeAccessForImpersonation.setUsername(user.getUsername());
             scopeAccessForImpersonation.setUserRsId(user.getId());
             scopeAccessForImpersonation.setClientId(getCloudAuthClientId());
             scopeAccessForImpersonation.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);

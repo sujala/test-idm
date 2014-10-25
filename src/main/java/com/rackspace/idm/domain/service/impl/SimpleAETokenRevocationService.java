@@ -189,19 +189,10 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     private boolean isTokenRevokedInternal(ImpersonatedScopeAccess token) {
-        String userId;
-        if (StringUtils.isNotBlank(token.getRackerId())) {
-            userId = token.getRackerId();
-        } else if (StringUtils.isNotBlank(token.getUsername())) {
-            //TODO: Once impersonation tokens are fixed to specify userid change to it.
-            //must be a provisioned user
-            User user = userDao.getUserByUsername(token.getUsername());
-            if (user == null) {
-                return true; //no user returned for token. Consider it revoked;
-            }
-            userId = user.getId();
-        } else {
-            return true; //if neither rackerId OR username is populated, token not tied to a user so consider it revoked.
+        String userId = token.getIssuedToUserId();
+
+        if (userId == null) {
+            throw new IllegalStateException("Impersonation token does not contain an issued to user");
         }
 
         return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(

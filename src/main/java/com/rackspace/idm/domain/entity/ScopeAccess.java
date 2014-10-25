@@ -21,9 +21,6 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
     @LDAPDNField
     private String uniqueId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_UID)
-    private String username;
-
     @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String clientId;
 

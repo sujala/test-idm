@@ -13,7 +13,7 @@ import java.util.Date;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
+public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserScopeAccess {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -64,4 +64,8 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
         return String.format(format, this.getUserRsId(), this.getUserRCN());
     }
 
+    @Override
+    public String getIssuedToUserId() {
+        return getUserRsId();
+    }
 }

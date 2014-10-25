@@ -27,10 +27,7 @@ class DefaultAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseInte
         thrown(IllegalArgumentException)
 
         when: "null user"
-        UserScopeAccess originalUSA = createProvisionedUserToken(hardCodedUser).with {
-            it.username = null
-            return it
-        }
+        UserScopeAccess originalUSA = createProvisionedUserToken(hardCodedUser)
         aeTokenService.marshallTokenForUser(null, originalUSA)
 
         then:
@@ -107,7 +104,6 @@ class DefaultAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseInte
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.userRsId = user.id
-            it.username = user.username
             it.userRCN = "userRCN"
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"

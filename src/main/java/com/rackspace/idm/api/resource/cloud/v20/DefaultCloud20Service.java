@@ -776,10 +776,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
-//TODO: Fix this as the getUserIdForParent was removed
-//        return userService.getUser(scopeAccessByAccessToken.getUsername());
-        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return identityUserService.getProvisionedUserById(uid);
+        User user = null;
+        /*
+         * existing code appears to have returned null if the specified token was not associated with a provisioned user
+         * (e.g. was a federated
+         * user, racker, or a non-user based token).
+         *
+         */
+        if (scopeAccessByAccessToken instanceof BaseUserScopeAccess) {
+            String userId = ((BaseUserScopeAccess)scopeAccessByAccessToken).getIssuedToUserId();
+            user = identityUserService.getProvisionedUserById(userId);
+        }
+
+        return user;
     }
 
     @Override

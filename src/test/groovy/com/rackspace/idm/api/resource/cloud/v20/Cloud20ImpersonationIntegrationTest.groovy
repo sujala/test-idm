@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -66,7 +67,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     DefaultUserService userService
 
     @Autowired
-    DefaultScopeAccessService scopeAccessService
+    ScopeAccessService scopeAccessService
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -406,7 +407,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         and: "user token based on impersonating token"
         UserScopeAccess userScopeAccess = (UserScopeAccess) aeTokenService.unmarshallToken(impersonatedScopeAccess.impersonatingToken);
         userScopeAccess.accessTokenString == impersonatedScopeAccess.impersonatingToken
-        userScopeAccess.username == impersonatedScopeAccess.impersonatingUsername
         userScopeAccess.userRsId == impersonatedScopeAccess.impersonatingRsId
         userScopeAccess.accessTokenExp == impersonatedScopeAccess.accessTokenExp
 

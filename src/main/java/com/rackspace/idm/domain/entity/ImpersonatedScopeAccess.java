@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
-public class ImpersonatedScopeAccess extends ScopeAccess {
+public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserScopeAccess {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -26,12 +26,19 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
 
+    /**
+     * @deprecated use {@link #getIssuedToUserId()}
+     */
+    @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
+    /**
+     * @deprecated use {@link #getImpersonatingRsId()}
+     */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingUsername;
@@ -61,4 +68,17 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
         }
     }
 
+    /**
+     * For impersonated tokens either the rackerId OR the userRsId should be set (mutually exclusive). In existing code the
+     * rackerId appears to take precedence in the off change that both are set.
+     * @return
+     */
+    @Override
+    public String getIssuedToUserId() {
+        if (StringUtils.isNotBlank(getRackerId())) {
+            return getRackerId();
+        } else {
+            return getUserRsId();
+        }
+    }
 }

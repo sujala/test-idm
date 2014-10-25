@@ -16,13 +16,11 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
 
     def setupSpec() {
        impersonatorUser = entityFactory.createUser().with {
-            it.username = RandomStringUtils.random(16)
             it.id = UUID.randomUUID().toString().replaceAll("-", "")
             it.username = "impersonator"
             return it
         }
         impersonatedUser = entityFactory.createUser().with {
-            it.username = RandomStringUtils.random(16)
             it.id = UUID.randomUUID().toString().replaceAll("-", "")
             it.username = "impersonated"
             return it
@@ -57,9 +55,8 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
-            it.impersonatingUsername = impersonatedUser.username
             it.impersonatingRsId = impersonatedUser.id
-            it.username = impersonatorUser.username
+            it.userRsId = impersonatorUser.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
@@ -85,9 +82,8 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
-            it.impersonatingUsername = impersonatedUser.username
             it.impersonatingRsId = impersonatedUser.id
-            it.username = impersonatorUser.username
+            it.userRsId = impersonatorUser.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
@@ -119,9 +115,9 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
 
 
     def "marshallTokenForUser(provisioned user) - errors thrown appropriately"() {
-        when: "null impersonator username in token"
+        when: "null impersonator userId in token"
         ImpersonatedScopeAccess impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
-            it.username = null
+            it.userRsId = null
             return it
         }
         aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
@@ -129,9 +125,9 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         then:
         thrown(IllegalArgumentException)
 
-        when: "null impersonated username in token"
+        when: "null impersonated userId in token"
         impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
-            it.impersonatingUsername = null
+            it.impersonatingRsId = null
             return it
         }
         aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
@@ -139,9 +135,9 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         then:
         thrown(IllegalArgumentException)
 
-        when: "token username does not match provided user"
+        when: "token userId does not match provided user"
         impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
-            it.username += "blah"
+            it.userRsId += "blah"
             return it
         }
         aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
@@ -154,9 +150,8 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         new ImpersonatedScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.impersonatingUsername = impersonated.username
             it.impersonatingRsId = impersonated.id
-            it.username = impersonator.username
+            it.userRsId = impersonator.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.getAuthenticatedBy().addAll(authBy)
             return it

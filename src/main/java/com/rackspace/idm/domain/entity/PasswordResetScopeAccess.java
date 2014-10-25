@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS ,requestAllAttributes=true)
-public class PasswordResetScopeAccess extends ScopeAccess {
+public class PasswordResetScopeAccess extends ScopeAccess implements BaseUserScopeAccess {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -34,5 +34,10 @@ public class PasswordResetScopeAccess extends ScopeAccess {
     public String getAuditContext() {
         final String format = "PasswordReset(username=%s)";
         return String.format(format, getUsername());
+    }
+
+    @Override
+    public String getIssuedToUserId() {
+        return getUserRsId();
     }
 }

@@ -498,10 +498,19 @@ public class DefaultUserService implements UserService {
             return null;
         }
 
-        //TODO: Fix this because getUserIdForParent was removed in ae_tokens
-//        return getUser(scopeAccessByAccessToken.getUsername());
-        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return identityUserService.getProvisionedUserById(uid);
+        User user = null;
+        /*
+         * existing code appears to have returned null if the specified token was not associated with a provisioned user
+         * (e.g. was a federated
+         * user, racker, or a non-user based token).
+         *
+         */
+        if (scopeAccessByAccessToken instanceof BaseUserScopeAccess) {
+            String userId = ((BaseUserScopeAccess)scopeAccessByAccessToken).getIssuedToUserId();
+            user = identityUserService.getProvisionedUserById(userId);
+        }
+
+        return user;               
     }
 
     @Override
