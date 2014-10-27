@@ -46,4 +46,29 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         try { endpointDao.deleteBaseUrl(String.valueOf(baseUrlId)) } catch (Exception e) {}
     }
 
+    void "Test if 'cloud11Service.addBaseURL(...)' adds V3 internal attributes even if the service lookup fails"() {
+        given:
+        def request = mock(HttpServletRequest)
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn('Basic YXV0aDphdXRoMTIz')
+
+        def baseUrlId = 500 + (int) (Math.random() * 10000000);
+
+        when:
+        def BaseURL baseURL = new BaseURL()
+        baseURL.setId(baseUrlId)
+        baseURL.setServiceName(UUID.randomUUID().toString()) // Random serviceName
+        baseURL.setPublicURL('http://localhost')
+        cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
+
+        def data = endpointDao.getBaseUrlById(String.valueOf(baseUrlId))
+
+        then:
+        data.adminUrlId != null
+        data.publicUrlId != null
+        data.internalUrlId != null
+
+        cleanup:
+        try { endpointDao.deleteBaseUrl(String.valueOf(baseUrlId)) } catch (Exception e) {}
+    }
+
 }
