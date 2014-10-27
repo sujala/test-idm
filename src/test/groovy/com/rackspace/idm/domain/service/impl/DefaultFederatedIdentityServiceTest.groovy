@@ -280,7 +280,6 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         new UserScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = new DateTime().toDate()
-            it.username = username
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);
             return it
         }

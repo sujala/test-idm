@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -66,7 +67,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     DefaultUserService userService
 
     @Autowired
-    DefaultScopeAccessService scopeAccessService
+    ScopeAccessService scopeAccessService
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -406,7 +407,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         and: "user token based on impersonating token"
         UserScopeAccess userScopeAccess = (UserScopeAccess) aeTokenService.unmarshallToken(impersonatedScopeAccess.impersonatingToken);
         userScopeAccess.accessTokenString == impersonatedScopeAccess.impersonatingToken
-        userScopeAccess.username == impersonatedScopeAccess.impersonatingUsername
         userScopeAccess.userRsId == impersonatedScopeAccess.impersonatingRsId
         userScopeAccess.accessTokenExp == impersonatedScopeAccess.accessTokenExp
 
@@ -978,6 +978,58 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUser(provUserWithSameUsername)
         utils.deleteUsers(users)
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
+    }
+
+   def "creating an impersonation token no longer sets the username on the token"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userForImpersonate")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def identityAdmin = utils.getUserByName(IDENTITY_ADMIN_USERNAME)
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+
+        when: "impersonate a user using a provisioned user"
+        def response = cloud20.impersonate(utils.getIdentityAdminToken(), userAdmin)
+        def tokenId = response.getEntity(ImpersonationResponse).token.id
+        def tokenEntity = scopeAccessService.getScopeAccessByAccessToken(tokenId)
+
+        then: "the token stored in the directory has a userRsId attribute"
+        tokenEntity.userRsId == identityAdmin.id
+
+        and: "the token stored in the directory does not have a username attribute"
+        tokenEntity.username == null
+
+        when: "validate to token to verify that is works correctly"
+        def validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
+
+        then:
+        validateResponse.status == 200
+
+        when: "impersonate a user using a racker"
+        response = cloud20.impersonate(rackerToken, userAdmin)
+        tokenId = response.getEntity(ImpersonationResponse).token.id
+        tokenEntity = scopeAccessService.getScopeAccessByAccessToken(tokenId)
+
+        then: "the token stored in the directory has a rackerId attribute"
+        tokenEntity.rackerId == RACKER_IMPERSONATE
+
+        and: "the token stored in the directory does not have a userRsId attribute"
+        tokenEntity.userRsId == null
+
+        and: "the token stored in the directory does not have a username attribute"
+        tokenEntity.username == null
+
+        when: "validate to token to verify that is works correctly"
+        validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
+
+        then:
+        validateResponse.status == 200
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
     }
 
     def impersonateRandomDataProvider(int iterations) {

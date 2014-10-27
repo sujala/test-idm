@@ -136,13 +136,13 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         user.uniqueId = "blah"
         identityUserService.getEndUserById(_) >> user
 
-        //create tokens representing various scenarios. Set username/token to same value so can easily tell which token failed test (since only username/customerid printed for token)
-        def scopeAccessA = entityFactory.createUserToken().with {def id="A"; it.username = id; it.accessTokenString = id; it.authenticatedBy = A.authenticatedByMethodsAsValues; return it}
-        def scopeAccessB = entityFactory.createUserToken().with {def id="B"; it.username = id; it.accessTokenString = id; it.authenticatedBy = B.authenticatedByMethodsAsValues; return it}
-        def scopeAccessAB = entityFactory.createUserToken().with {def id="AB"; it.username = id; it.accessTokenString = id; it.authenticatedBy = AB.authenticatedByMethodsAsValues; return it}
-        def scopeAccessBA = entityFactory.createUserToken().with {def id="BA"; it.username = id; it.accessTokenString = id; it.authenticatedBy = BA.authenticatedByMethodsAsValues; return it}
-        def scopeAccessABC = entityFactory.createUserToken().with {def id="ABC"; it.username = id; it.accessTokenString = id; it.authenticatedBy = ABC.authenticatedByMethodsAsValues; return it}
-        def scopeAccessEmpty = entityFactory.createUserToken().with {def id="Empty"; it.username = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList(); return it}
+        //create tokens representing various scenarios. Set username/token to same value so can easily tell which token failed test (since only userRsId/customerid printed for token)
+        def scopeAccessA = entityFactory.createUserToken().with {def id="A"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = A.authenticatedByMethodsAsValues; return it}
+        def scopeAccessB = entityFactory.createUserToken().with {def id="B"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = B.authenticatedByMethodsAsValues; return it}
+        def scopeAccessAB = entityFactory.createUserToken().with {def id="AB"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = AB.authenticatedByMethodsAsValues; return it}
+        def scopeAccessBA = entityFactory.createUserToken().with {def id="BA"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = BA.authenticatedByMethodsAsValues; return it}
+        def scopeAccessABC = entityFactory.createUserToken().with {def id="ABC"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = ABC.authenticatedByMethodsAsValues; return it}
+        def scopeAccessEmpty = entityFactory.createUserToken().with {def id="Empty"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList(); return it}
 
         List<UserScopeAccess> scopeAccessList = [scopeAccessA, scopeAccessB, scopeAccessAB, scopeAccessBA, scopeAccessABC, scopeAccessEmpty]
 

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
@@ -55,7 +56,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
 
     def void validateUserScopeAccessesEqual(UserScopeAccess original, UserScopeAccess toValidate) {
-        assert toValidate.username == original.username
         assert toValidate.userRsId == original.userRsId
         assert toValidate.clientId == original.clientId
         assert toValidate.accessTokenString == original.accessTokenString
@@ -65,8 +65,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     }
 
     def void validateImpersonationScopeAccessesEqual(ImpersonatedScopeAccess original, ImpersonatedScopeAccess toValidate) {
-        assert toValidate.username == original.username
-        assert toValidate.impersonatingUsername == original.impersonatingUsername
         assert toValidate.scope == original.scope
         assert toValidate.clientId == original.clientId
         assert toValidate.accessTokenString == original.accessTokenString
@@ -78,9 +76,10 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         ScopeAccess impersonatedUserToken = aeTokenService.unmarshallToken(toValidate.impersonatingToken)
         assert impersonatedUserToken instanceof UserScopeAccess
         UserScopeAccess usaImpersonatedUserToken = (UserScopeAccess) impersonatedUserToken
-        assert usaImpersonatedUserToken.username == original.impersonatingUsername
+        assert usaImpersonatedUserToken.userRsId == original.impersonatingRsId
         assert usaImpersonatedUserToken.accessTokenExp == original.accessTokenExp
         assert usaImpersonatedUserToken.authenticatedBy.size() == 1
+        assert usaImpersonatedUserToken.authenticatedBy.get(0) == AuthenticatedByMethodEnum.IMPERSONATION.value
     }
 
     def void validateWebSafeToken(String webSafeToken) {
@@ -94,7 +93,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.userRsId = user.id
-            it.username = user.username
             it.userRCN = "userRCN"
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"

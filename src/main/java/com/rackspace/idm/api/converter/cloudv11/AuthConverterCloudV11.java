@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.FullToken;
@@ -42,12 +44,13 @@ public class AuthConverterCloudV11 {
         return auth;
     }
 
-    public FullToken toCloudV11TokenJaxb(UserScopeAccess usa, String requestUrl) {
+    public FullToken toCloudV11TokenJaxb(UserScopeAccess usa, String requestUrl, EndUser user) {
         FullToken token = objFactory.createFullToken();
 
         token.setId(usa.getAccessTokenString());
-        token.setUserId(usa.getUsername());
-        token.setUserURL(requestUrl + "users/" + usa.getUsername());
+        //v1.1 treats the username as the user's ID
+        token.setUserId(user.getUsername());
+        token.setUserURL(requestUrl + "users/" + user.getUsername());
 
         try {
             if (usa.getAccessTokenExp() != null) {

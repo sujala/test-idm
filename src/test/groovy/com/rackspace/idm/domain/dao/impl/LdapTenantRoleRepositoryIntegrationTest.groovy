@@ -247,7 +247,6 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
             it.userRsId = user.id
             it.accessTokenString = tokenStr
             it.accessTokenExp = new DateTime().plusDays(1).toDate()
-            it.username = user.username
             it.clientId = "clientId"
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it

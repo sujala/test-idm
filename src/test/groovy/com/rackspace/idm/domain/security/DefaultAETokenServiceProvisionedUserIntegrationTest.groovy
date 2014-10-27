@@ -47,7 +47,6 @@ class DefaultAETokenServiceProvisionedUserIntegrationTest extends DefaultAEToken
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.userRsId = hardCodedUser.id
-            it.username = hardCodedUser.username
             it.userRCN = "RCN-000-000-001" //take from sample data
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "RACKSPACE"
@@ -76,7 +75,6 @@ class DefaultAETokenServiceProvisionedUserIntegrationTest extends DefaultAEToken
             it.accessTokenString = null
             it.accessTokenExp = new Date()
             it.userRsId = hardCodedUser.id
-            it.username = hardCodedUser.username
             it.userRCN = null
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = null
@@ -120,18 +118,8 @@ class DefaultAETokenServiceProvisionedUserIntegrationTest extends DefaultAEToken
     }
 
     def "marshallTokenForUser(provisioned user) - errors thrown appropriately"() {
-        when: "null username in token"
-        UserScopeAccess originalUSA = createProvisionedUserToken(hardCodedUser).with {
-            it.username = null
-            return it
-        }
-        aeTokenService.marshallTokenForUser(hardCodedUser, originalUSA)
-
-        then:
-        thrown(IllegalArgumentException)
-
         when: "null userId in token"
-        originalUSA = createProvisionedUserToken(hardCodedUser).with {
+        UserScopeAccess originalUSA = createProvisionedUserToken(hardCodedUser).with {
             it.userRsId = null
             return it
         }
@@ -150,9 +138,9 @@ class DefaultAETokenServiceProvisionedUserIntegrationTest extends DefaultAEToken
         then:
         thrown(IllegalArgumentException)
 
-        when: "token username does not match provided user"
+        when: "token userId does not match provided user id"
         originalUSA = createProvisionedUserToken(hardCodedUser).with {
-            it.username += "blah"
+            it.userRsId += "blah"
             return it
         }
         aeTokenService.marshallTokenForUser(hardCodedUser, originalUSA)

@@ -45,6 +45,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private Configuration config;
     @Autowired
     private RSAClient rsaClient;
+    @Autowired
+    private IdentityUserService identityUserService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -208,8 +210,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
                     .getUserPasswordExpirationDate();
 
             // TODO: consider getting from user dao
+            EndUser userEntity = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
             User user = new User();
-            user.setUsername(userScopeAccess.getUsername());
+            user.setUsername(userEntity.getUsername());
             user.setCustomerId(userScopeAccess.getUserRCN());
 
             authData.setUser(user);
@@ -305,16 +308,20 @@ public class DefaultAuthenticationService implements AuthenticationService {
             }
 
             if (scopeAccess instanceof UserScopeAccess) {
-                String username = ((UserScopeAccess) scopeAccess).getUsername();
                 String userId = ((UserScopeAccess) scopeAccess).getUserRsId();
                 User user = this.userService.getUserById(userId);
-                if (user == null || user.isDisabled()) {
-                    String errMsg = String.format("User %S is disabled", username);
+                if (user == null) {
+                    // this should never happen. If we are able to load the scope access for a user,
+                    // then the user should exist in the directory.
+                    String errMsg = String.format("User %S is disabled", userId);
+                    logger.info(errMsg);
+                    throw new UserDisabledException(errMsg);
+                } else if (user.isDisabled()) {
+                    String errMsg = String.format("User %S is disabled", user.getUsername());
                     logger.info(errMsg);
                     throw new UserDisabledException(errMsg);
                 }
                 ((UserScopeAccess) scopeAccess).setUserRsId(userId);
-                ((UserScopeAccess) scopeAccess).setUsername(username);
             }
 
             int expirationSeconds;
@@ -372,12 +379,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (scopeAccess == null) {
             // provision scopeAccess with defaults
-            scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
-            scopeAccessToAdd.setUsername(scopeAccess.getUsername());
             scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRcn());

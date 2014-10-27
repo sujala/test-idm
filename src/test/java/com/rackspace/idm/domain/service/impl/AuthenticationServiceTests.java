@@ -81,24 +81,6 @@ public class AuthenticationServiceTests {
     }
 
     @Test
-    public void shouldGetAuthDataFromToken_WhenTokenBelongsToUser() {
-        //setup
-        final ScopeAccess scopeAccess = getFakeUserScopeAccess();
-
-        EasyMock.expect(mockScopeAccessService.loadScopeAccessByAccessToken(tokenVal)).andReturn(scopeAccess);
-        PowerMockito.when(mockTenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoles);
-
-        EasyMock.replay(mockScopeAccessService);
-
-        final AuthData authData = authenticationService.getAuthDataFromToken(tokenVal);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getRefreshToken());
-        Assert.assertNotNull(authData.getUser());
-        Assert.assertEquals(tenantRoles, authData.getUser().getRoles());
-    }
-
-    @Test
     public void shouldGetAuthDataFromToken_WhenTokenBelongsToApplication() {
         //setup
         final ScopeAccess scopeAccess = getFakeClientScopeAccess();
@@ -141,11 +123,10 @@ public class AuthenticationServiceTests {
         usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         usa.setRefreshTokenString(refreshTokenVal);
         usa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setUsername(username);
         usa.setUserRCN(customerId);
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
-        usa.setUserRsId(username);
+        usa.setUserRsId(uniqueId);
         usa.setUniqueId("accessToken=12345,cn=TOKENS,o=org");
         return usa;
     }

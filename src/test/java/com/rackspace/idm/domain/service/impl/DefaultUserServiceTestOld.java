@@ -68,6 +68,8 @@ public class DefaultUserServiceTestOld {
     private PropertiesService propertiesService;
     @Mock
     private DomainService domainService;
+    @Mock
+    private IdentityUserService identityUserService;
 
     private Validator validator;
 
@@ -293,9 +295,10 @@ public class DefaultUserServiceTestOld {
     public void getUserByScopeAccess_userScopeAccess_returnsUser() throws Exception {
         User user = new User();
         user.setEnabled(true);
+        String userId = "userId";
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
+        when(scopeAccess.getUserRsId()).thenReturn(userId);
+        when(identityUserService.getEndUserById(userId)).thenReturn(user);
         when(domainService.getDomain(anyString())).thenReturn(null);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
         assertThat("user", (User)result, equalTo(user));
@@ -310,8 +313,9 @@ public class DefaultUserServiceTestOld {
     @Test (expected = NotFoundException.class)
     public void getUserByScopeAccess_userNotFound_throwsNotFound() throws Exception {
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(null);
+        String userId = "userRsId";
+        when(scopeAccess.getUserRsId()).thenReturn(userId);
+        when(identityUserService.getEndUserById(userId)).thenReturn(null);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 
@@ -319,9 +323,10 @@ public class DefaultUserServiceTestOld {
     public void getUserByScopeAccess_userDisabled_throwsNotFound() throws Exception {
         User user = new User();
         user.setEnabled(false);
+        String userId = "userRsId";
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
+        when(scopeAccess.getUserRsId()).thenReturn(userId);
+        when(identityUserService.getEndUserById(userId)).thenReturn(null);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 

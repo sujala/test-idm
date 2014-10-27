@@ -68,6 +68,39 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         [ accept, contentType ] << contentTypePermutations()
     }
 
+    def "Get devices for sub-user returns correct value for user"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        utils.addPhone(defaultUserToken, defaultUser.id)
+        def user = userRepository.getUserById(defaultUser.id)
+        user.multiFactorDeviceVerified = true
+        userRepository.updateUser(user)
+
+        when: "list devices for user with self"
+        def phoneList = utils.listDevices(defaultUser, defaultUserToken)
+
+        then: "the verified flag is set correctly"
+        phoneList != null
+        phoneList.mobilePhone.size() == 1
+        phoneList.mobilePhone[0].verified == true
+
+        when: "list devices for a user with a different device verified flag"
+        phoneList = utils.listDevices(defaultUser, userAdminToken)
+
+        then: "the verified flag is set correctly"
+        phoneList != null
+        phoneList.mobilePhone.size() == 1
+        phoneList.mobilePhone[0].verified == true
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
     @Unroll
     def "Get devices for user returns empty devices accept: #accept contentType: #contentType"() {
         given:

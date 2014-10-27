@@ -13,7 +13,7 @@ import java.util.Date;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
+public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserScopeAccess {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -24,9 +24,6 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
-
-    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
-    private String username;
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
@@ -63,8 +60,12 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
 
     @Override
     public String getAuditContext() {
-        final String format = "User(username=%s,customerId=%s)";
-        return String.format(format, this.getUsername(), this.getUserRCN());
+        final String format = "User(userRsId=%s,customerId=%s)";
+        return String.format(format, this.getUserRsId(), this.getUserRCN());
     }
 
+    @Override
+    public String getIssuedToUserId() {
+        return getUserRsId();
+    }
 }

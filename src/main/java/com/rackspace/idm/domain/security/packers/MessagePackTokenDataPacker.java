@@ -177,9 +177,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     private List<Object> packProvisionedUserToken(User user, UserScopeAccess scopeAccess) {
         //validate additional user specific stuff for this packing strategy
-        Validate.notNull(user.getUsername(), "username required");
         Validate.notNull(user.getId(), "user id required");
-        Validate.isTrue(user.getUsername().equals(scopeAccess.getUsername()), "Token username must match user username");
         Validate.isTrue(user.getId().equals(scopeAccess.getUserRsId()), "Token userId must match user userId");
 
         List<Object> packingItems = new ArrayList<Object>();
@@ -221,10 +219,6 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // DN
             scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
-
-            //retrieve username from CA
-            User user = identityUserService.getProvisionedUserById(scopeAccess.getUserRsId());
-            scopeAccess.setUsername(user.getUsername());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
@@ -233,9 +227,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     private List<Object> packFederatedUserToken(FederatedUser user, UserScopeAccess scopeAccess) {
         //validate additional user specific stuff for this packing strategy
-        Validate.notNull(user.getUsername(), "username required");
         Validate.notNull(user.getId(), "user id required");
-        Validate.isTrue(user.getUsername().equals(scopeAccess.getUsername()), "Token username must match user username");
         Validate.isTrue(user.getId().equals(scopeAccess.getUserRsId()), "Token userId must match user userId");
 
         List<Object> packingItems = new ArrayList<Object>();
@@ -279,7 +271,6 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             scopeAccess.setUniqueId(calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
-            scopeAccess.setUsername(user.getUsername());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
@@ -288,10 +279,9 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     private List<Object> packProvisionedUserImpersonationToken(User user, ImpersonatedScopeAccess scopeAccess) {
         //validate additional user specific stuff for this packing strategy
-        Validate.notNull(user.getUsername(), "username required");
         Validate.notNull(user.getId(), "user id required");
-        Validate.isTrue(user.getUsername().equals(scopeAccess.getUsername()), "Token username must match user username");
-        Validate.isTrue(StringUtils.isNotBlank(scopeAccess.getImpersonatingUsername()), "Impersonating username required");
+        Validate.isTrue(user.getId().equals(scopeAccess.getIssuedToUserId()), "specified token not issued to specified user");
+        Validate.notNull(scopeAccess.getImpersonatingRsId(), "impersonating user required");
 
         List<Object> packingItems = new ArrayList<Object>();
 
@@ -329,22 +319,19 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             //populate impersonator user info
             String impersonatorId = safeRead(unpacker, String.class);
-            User impersonator = identityUserService.getProvisionedUserById(impersonatorId);
-            scopeAccess.setUsername(impersonator.getUsername());
+            scopeAccess.setUserRsId(impersonatorId);
 
-            //populate impersonator information
+            //populate impersonated information
             String impersonatedUserId = safeRead(unpacker, String.class);
-            EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);
-            if (impersonatedUser == null) {
-                throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_IMPERSONATED_DATA_CONTENTS, String.format("Impersonated user '%s' not found.", scopeAccess.getImpersonatingUsername()));
-            }
             scopeAccess.setImpersonatingRsId(impersonatedUserId);
-            scopeAccess.setImpersonatingUsername(impersonatedUser.getUsername());
 
             //generate dynamic ae token for the user being impersonated
+            EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);
+            if (impersonatedUser == null) {
+                throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_IMPERSONATED_DATA_CONTENTS, String.format("Impersonated user '%s' not found.", scopeAccess.getIssuedToUserId()));
+            }
             UserScopeAccess usa = new UserScopeAccess();
             usa.setUserRsId(impersonatedUser.getId());
-            usa.setUsername(impersonatedUser.getUsername());
             usa.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
             usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             aeTokenService.marshallTokenForUser(impersonatedUser, usa);
