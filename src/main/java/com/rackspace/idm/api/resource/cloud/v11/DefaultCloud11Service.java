@@ -938,6 +938,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private void addBaseURLKeystoneV3Data(BaseURL baseUrl, CloudBaseUrl cloudBaseUrl) {
         try {
+            cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+            cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+            cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
             if (baseUrl.getServiceName() != null) {
                 final Application application = applicationService.getByName(baseUrl.getServiceName());
                 if (application != null) {
@@ -948,9 +951,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             } else {
                 throw new RuntimeException("[K3] BaseURL '" + baseUrl.getAdminURL() + "' is not associated to a serviceName.");
             }
-            cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString());
-            cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString());
-            cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString());
         } catch (Exception e) {
             logger.error("[K3] Impossible state.", e);
             if (config.getBoolean("feature.DefaultCloud11Service.addBaseURLKeystoneV3Data.throwError", false)) {
