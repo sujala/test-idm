@@ -55,4 +55,33 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         try { endpointDao.deleteBaseUrl(String.valueOf(templateId)) } catch (Exception e) {}
     }
 
+    void "Test if 'cloud20Service.addEndpointTemplate(...)' adds V3 internal attributes even if the service lookup fails"() {
+        given:
+        def mockUriInfo = mock(UriInfo)
+        def mockUriBuilder = mock(UriBuilder)
+        when(mockUriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder)
+        when(mockUriBuilder.path(anyString())).thenReturn(mockUriBuilder)
+        when(mockUriBuilder.build()).thenReturn(new URI('http://localhost'))
+
+        def templateId = 500 + (int) (Math.random() * 10000000);
+
+        when:
+        def EndpointTemplate template = new EndpointTemplate()
+        template.setType(UUID.randomUUID().toString())  // Random type
+        template.setName(UUID.randomUUID().toString())
+        template.setPublicURL('http://localhost')
+        template.setId(templateId)
+        cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
+
+        def data = endpointDao.getBaseUrlById(String.valueOf(templateId))
+
+        then:
+        data.adminUrlId != null
+        data.publicUrlId != null
+        data.internalUrlId != null
+
+        cleanup:
+        try { endpointDao.deleteBaseUrl(String.valueOf(templateId)) } catch (Exception e) {}
+    }
+
 }
