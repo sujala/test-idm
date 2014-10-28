@@ -1,8 +1,11 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.security.AETokenService
+import com.rackspace.idm.domain.service.UUIDTokenRevocationService
 import org.joda.time.DateTime
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -12,6 +15,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
     @Shared SimpleAETokenRevocationService service = new SimpleAETokenRevocationService()
     @Shared TokenRevocationRecordPersistenceStrategy tokenRevocationRecordPersistenceStrategy;
     @Shared AETokenService aeTokenService;
+    @Shared UUIDTokenRevocationService uuidTokenRevocationService
 
     @Shared def expiredDate
     @Shared def futureDate
@@ -24,9 +28,13 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
     def setup() {
         mockAtomHopperClient(service)
         mockUserService(service)
+        mockIdentityConfig(service)
 
         tokenRevocationRecordPersistenceStrategy = Mock()
         service.tokenRevocationRecordPersistenceStrategy = tokenRevocationRecordPersistenceStrategy
+
+        uuidTokenRevocationService = Mock()
+        service.uuidTokenRevocationService = uuidTokenRevocationService
 
         aeTokenService = Mock()
         service.aeTokenService = aeTokenService
@@ -66,7 +74,84 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         then:
         0 * atomHopperClient.asyncTokenPost(user,token)
+    }
 
+    def "revokeTokensForBaseUser - analagous UUID revoke called as appropriate" () {
+        given:
+        User user = new User()
+        user.id = "1"
+
+        List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
+        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user.id, _)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
+        service.revokeTokensForBaseUser(user, Collections.EMPTY_LIST)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
+        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user.id, _)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
+        service.revokeTokensForBaseUser(user, Collections.EMPTY_LIST)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+    }
+
+    def "revokeAllTokensForBaseUser - analagous UUID revoke called as appropriate" () {
+        given:
+        User user = new User()
+        user.id = "1"
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
+        service.revokeAllTokensForBaseUser(user.id)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user.id)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
+        service.revokeAllTokensForBaseUser(user)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
+        service.revokeAllTokensForBaseUser(user.id)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user.id)
+
+        when:
+        identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
+        service.revokeAllTokensForBaseUser(user)
+
+        then:
+        1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
+        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
     }
 
 }
