@@ -1,0 +1,55 @@
+### Rackspace organization:
+
+dn: o=rackspace
+changetype: add
+objectClass: Organization
+objectClass: ndsLoginProperties
+objectClass: Top
+objectClass: ndsContainerLoginProperties
+o: rackspace
+
+
+### Users and Groups organization units:
+
+dn: ou=Groups,o=rackspace
+changetype: add
+objectClass: organizationalUnit
+objectClass: ndsLoginProperties
+objectClass: Top
+objectClass: ndsContainerLoginProperties
+ou: Groups
+
+dn: ou=Users,o=rackspace
+changetype: add
+objectClass: organizationalUnit
+objectClass: ndsLoginProperties
+objectClass: Top
+objectClass: ndsContainerLoginProperties
+ou: Users
+
+
+### ACL for eDirectory:
+
+dn: o=rackspace
+changetype: modify
+add: ACL
+ACL: 1#subtree#[Public]#[Entry Rights]
+-
+
+dn: o=rackspace
+changetype: modify
+add: ACL
+ACL: 3#subtree#[Public]#[All Attributes Rights]
+-
+
+dn: cn=LDAP Server - localhost,dc=rackspace,dc=com
+changetype: modify
+replace: ldapDerefAlias
+ldapDerefAlias: TRUE
+-
+
+dn: cn=LDAP Server - localhost,dc=rackspace,dc=com
+changetype: modify
+replace: ldapDerefAliasOnAuth
+ldapDerefAliasOnAuth: FALSE
+-
