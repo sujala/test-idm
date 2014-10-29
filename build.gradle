@@ -221,6 +221,16 @@ task zipLdap(type: Zip) {
     from "ldap"
 }
 
+task zipEdirLdif(type: Zip) {
+    classifier = 'edir-ldif'
+    from "edir/ldif"
+}
+
+task zipEdirConfig(type: Zip) {
+    classifier = 'edir-config'
+    from "edir/config"
+}
+
 idea {
     module {
         sourceDirs += file(generatedSrc)
@@ -273,6 +283,8 @@ jettyRunWar {
 artifacts {
     archives zipConfig
     archives zipLdap
+    archives zipEdirLdif
+    archives zipEdirConfig
     archives zipResources
     archives jar
 }
@@ -423,6 +435,8 @@ zipConfig.dependsOn copyBaseConfig
 copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
 war.dependsOn zipLdap
+war.dependsOn zipEdirLdif
+war.dependsOn zipEdirConfig
 jettyRun.dependsOn copyBaseConfig
 
 delombokJava.dependsOn jaxb
