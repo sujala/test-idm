@@ -60,8 +60,7 @@ public class DefaultAETokenService implements AETokenService {
         final boolean isFederatedUser = object instanceof FederatedUser;
         final boolean isImpersonationToken = scopeAccess instanceof ImpersonatedScopeAccess;
         final boolean isUserToken = scopeAccess instanceof UserScopeAccess;
-        // final boolean isRackerUser = object instanceof Racker && scopeAccess instanceof RackerScopeAccess;
-        final boolean isRackerUser = false;
+        final boolean isRackerUser = object instanceof Racker && scopeAccess instanceof RackerScopeAccess;
 
         // AE service supports
         // - federated and provisioned user "regular" tokens

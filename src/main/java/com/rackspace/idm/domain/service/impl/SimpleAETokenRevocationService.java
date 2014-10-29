@@ -179,6 +179,8 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
             return isTokenRevokedInternal((UserScopeAccess) token);
         } else if (token instanceof ImpersonatedScopeAccess) {
             return isTokenRevokedInternal((ImpersonatedScopeAccess) token);
+        } else if (token instanceof RackerScopeAccess) {
+            return false; // TODO: Racker revocation
         }
         throw new IllegalArgumentException(String.format("Unsupported scope access '%s'", token.getClass().getSimpleName()));
     }

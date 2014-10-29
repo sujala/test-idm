@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -180,6 +181,27 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         } else {
             return utils10.getToken(user.username)
         }
+    }
+
+    def "auth and validate with racker token 'test.ae'"() {
+        given:
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def response
+        def rackerToken
+
+        when: "auth v2.0"
+        response = cloud20.authenticateRacker('test.ae', 'password')
+        rackerToken = response.getEntity(AuthenticateResponse).value.token.id
+
+        then:
+        response.status == 200
+        rackerToken.length() > 32
+
+        when: "validate v2.0"
+        response = cloud20.validateToken(identityAdminToken, rackerToken)
+
+        then:
+        response.status == 200
     }
 
 }
