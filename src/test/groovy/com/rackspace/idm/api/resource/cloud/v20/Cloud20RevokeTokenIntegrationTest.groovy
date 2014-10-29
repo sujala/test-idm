@@ -2,6 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.TokenRevocationService
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -14,6 +18,12 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
     @Shared def users, defaultUser
+
+    @Autowired
+    TokenRevocationService tokenRevocationService;
+
+    @Autowired
+    IdentityUserService identityUserService
 
     @Unroll
     def "Revoke other user's token; tokenFormat: #tokenFormat" () {
@@ -91,5 +101,49 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
         where:
         tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+    }
+
+    def "Revoke user's tokens by id when set to AE will also revoke all UUID" () {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
+        def identityAdmin = utils.createIdentityAdmin()
+        def uuidToken = utils.getToken(identityAdmin.username)
+
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
+        def aeToken = utils.getToken(identityAdmin.username)
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        when: "revoke all tokens by userid"
+        tokenRevocationService.revokeAllTokensForBaseUser(identityAdmin.id)
+
+        then:
+        cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
+        cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUsers(identityAdmin)
+    }
+
+    def "Revoke user's tokens by user when set to AE will also revoke all UUID" () {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
+        def identityAdmin = utils.createIdentityAdmin()
+        def uuidToken = utils.getToken(identityAdmin.username)
+
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
+        def aeToken = utils.getToken(identityAdmin.username)
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        def user = identityUserService.getProvisionedUserById(identityAdmin.id)
+
+        when: "revoke all tokens by user"
+        tokenRevocationService.revokeAllTokensForBaseUser(user)
+
+        then:
+        cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
+        cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUsers(identityAdmin)
     }
 }
