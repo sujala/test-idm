@@ -292,6 +292,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private void addEndpointTemplateKeystoneV3Data(CloudBaseUrl baseUrl, EndpointTemplate endpoint) {
         try {
+            baseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+            baseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+            baseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
             if (endpoint.getType() != null) {
                 final Iterable<Application> applications = applicationService.getByType(endpoint.getType());
                 if (applications != null && applications.iterator().hasNext()) {
@@ -308,9 +311,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else {
                 throw new RuntimeException("[K3] EndpointTemplate '" + endpoint.getName() + "' is not associated to a type.");
             }
-            baseUrl.setInternalUrlId(UUID.randomUUID().toString());
-            baseUrl.setPublicUrlId(UUID.randomUUID().toString());
-            baseUrl.setAdminUrlId(UUID.randomUUID().toString());
         } catch (Exception e) {
             logger.error("[K3] Impossible state.", e);
             if (config.getBoolean("feature.DefaultCloud20Service.addEndpointTemplateKeystoneV3Data.throwError", false)) {
