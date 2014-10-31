@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,13 +22,13 @@ import java.util.List;
 public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapTokenRevocationRecord> implements TokenRevocationRecordPersistenceStrategy {
 
     @Override
-    public Iterable<LdapTokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(String userId, ScopeAccess token) {
-        return getObjects(searchForRevokedUserToken(userId, token), getBaseDn(), SearchScope.SUB);
+    public Iterable<LdapTokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
+        return getObjects(searchForRevokedToken(token), getBaseDn(), SearchScope.SUB);
     }
 
     @Override
-    public boolean doesActiveTokenRevocationRecordExistMatchingToken(String userId, ScopeAccess token) {
-        return countObjects(searchForRevokedUserToken(userId, token), getBaseDn(), SearchScope.SUB) > 0;
+    public boolean doesActiveTokenRevocationRecordExistMatchingToken(Token token) {
+        return countObjects(searchForRevokedToken(token), getBaseDn(), SearchScope.SUB) > 0;
     }
 
     @Override
@@ -82,9 +83,15 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
         return super.getUuid();
     }
 
-    private Filter searchForRevokedUserToken(String userId, ScopeAccess accessToken) {
-        return Filter.createORFilter(searchForRevocationByToken(accessToken)
-                , searchForRevocationByUserWithWildcardTokenFilter(userId, accessToken.getAuthenticatedBy(), accessToken.getCreateTimestamp()));
+    private Filter searchForRevokedToken(Token accessToken) {
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(searchForRevocationByToken(accessToken));
+
+        //add user token TRR search if is user token
+        if (accessToken instanceof BaseUserToken) {
+            filters.add(searchForRevocationByUserWithWildcardTokenFilter(((BaseUserToken)accessToken).getIssuedToUserId(), accessToken.getAuthenticatedBy(), accessToken.getCreateTimestamp()));
+        }
+        return Filter.createORFilter(filters);
     }
 
     private Filter searchByIdFilter(String rsId) {
@@ -93,7 +100,7 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD).build();
     }
 
-    private Filter searchForRevocationByToken(ScopeAccess accessToken) {
+    private Filter searchForRevocationByToken(Token accessToken) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ACCESS_TOKEN, accessToken.getAccessTokenString())
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD).build();

@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
+import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
 import org.joda.time.DateTime
@@ -31,16 +33,22 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 
     @Shared UserService userService
 
+    @Shared TokenFormatSelector tokenFormatSelector
+
     EntityFactory entityFactory = new EntityFactory()
 
     def setup() {
         aeTokenService = Mock()
         userDao = Mock()
         userService = Mock()
+        tokenFormatSelector = Mock()
 
-        revocationService.userDao = userDao
         revocationService.aeTokenService = aeTokenService
         revocationService.userService = userService
+        revocationService.tokenFormatSelector = tokenFormatSelector
+
+        tokenFormatSelector.formatForExistingToken(_) >> TokenFormat.AE
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.AE
     }
 
     def "revokeToken - token based revocation"() {

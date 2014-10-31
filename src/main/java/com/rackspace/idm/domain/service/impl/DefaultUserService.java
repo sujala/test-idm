@@ -505,8 +505,8 @@ public class DefaultUserService implements UserService {
          * user, racker, or a non-user based token).
          *
          */
-        if (scopeAccessByAccessToken instanceof BaseUserScopeAccess) {
-            String userId = ((BaseUserScopeAccess)scopeAccessByAccessToken).getIssuedToUserId();
+        if (scopeAccessByAccessToken instanceof BaseUserToken) {
+            String userId = ((BaseUserToken)scopeAccessByAccessToken).getIssuedToUserId();
             user = identityUserService.getProvisionedUserById(userId);
         }
 

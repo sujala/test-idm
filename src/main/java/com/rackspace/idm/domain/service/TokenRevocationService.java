@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public interface TokenRevocationService {
     /**
@@ -56,6 +55,7 @@ public interface TokenRevocationService {
      * </p>
      *
      * @param tokenString
+     * @throws java.lang.UnsupportedOperationException if the service does not support this particular type of token
      */
     void revokeToken(String tokenString);
 
@@ -64,19 +64,30 @@ public interface TokenRevocationService {
      * <p>
      *     If a valid user token is revoked, an atom hopper feed event must be sent to announce the token revocation
      * </p>
-     * @param tokenString
+     * @param token
+     * @throws java.lang.UnsupportedOperationException if the service does not support this particular type of token
      */
-    void revokeToken(ScopeAccess tokenString);
+    void revokeToken(Token token);
 
     /**
      * Revoke the specified token if it is valid (not expired) and has not been revoked previously.
      * <p>
      *     If a valid user token is revoked, an atom hopper feed event must be sent to announce the token revocation
      * </p>
+     * <p>
+     * The inclusion of the user argument is unnecessary (and potentially inconsistent with the scope access). This method
+     * is provided SOLELY for efficiency reasons so the underlying implementation does not have to retrieve the user from
+     * the backend in order to send the cloud feed event. This leaks implementation, but given performance needs and the
+     * desire to not do a ton of refactoring at once, this method was added. If the calling method does NOT already have
+     * the user object loaded, it is highly recommended to call the {@link #revokeToken(com.rackspace.idm.domain.entity.Token)}
+     * instead.
+     *
+     * </p>
      * @param user
-     * @param scopeAccess
+     * @param token
+     * @throws java.lang.UnsupportedOperationException if the service does not support this particular type of token
      */
-    void revokeToken(BaseUser user, ScopeAccess scopeAccess);
+    void revokeToken(BaseUser user, Token token);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated), which used the specified authentication methods.
@@ -145,6 +156,7 @@ public interface TokenRevocationService {
      * Whether the specified token has been revoked.
      *
      * @param token
+     * @throws java.lang.UnsupportedOperationException if the service does not support this particular type of token
      * @return
      */
     boolean isTokenRevoked(String token);
@@ -153,7 +165,18 @@ public interface TokenRevocationService {
      * Whether the specified token has been revoked.
      *
      * @param token
+     * @throws java.lang.IllegalArgumentException If supplied token is null
+     * @throws java.lang.UnsupportedOperationException if the service does not support this particular type of token
+     *
      * @return
      */
-    boolean isTokenRevoked(ScopeAccess token);
+    boolean isTokenRevoked(Token token);
+
+    /**
+     * Whether the service supports revoking the specified token.
+     *
+     * @param sa
+     * @return
+     */
+    boolean supportsRevokingFor(Token sa);
 }

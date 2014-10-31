@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.joda.time.DateTime;
@@ -13,7 +12,7 @@ import java.util.Date;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserScopeAccess {
+public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField

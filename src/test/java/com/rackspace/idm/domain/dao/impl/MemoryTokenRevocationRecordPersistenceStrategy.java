@@ -1,9 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TokenRevocationRecord;
+import com.rackspace.idm.domain.entity.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,23 +46,25 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     }
 
     @Override
-    public synchronized Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(String userId, ScopeAccess token) {
+    public synchronized Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
         List<TokenRevocationRecord> trrList = new ArrayList<TokenRevocationRecord>();
 
         //look for userId ones that match the token
-        List<TokenRevocationRecord> userTrrs = userTRRs.get(userId);
-        if (userTrrs != null) {
-            for (TokenRevocationRecord trr : userTrrs) {
-                if (trr.getTargetCreatedBefore().after(token.getCreateTimestamp())) {
-                    //need to check auth by
-                    List<AuthenticatedByMethodGroup> authBySets = trr.getTargetAuthenticatedByMethodGroups();
+        if (token instanceof BaseUserToken) {
+            List<TokenRevocationRecord> userTrrs = userTRRs.get(((BaseUserToken) token).getIssuedToUserId());
+            if (userTrrs != null) {
+                for (TokenRevocationRecord trr : userTrrs) {
+                    if (trr.getTargetCreatedBefore().after(token.getCreateTimestamp())) {
+                        //need to check auth by
+                        List<AuthenticatedByMethodGroup> authBySets = trr.getTargetAuthenticatedByMethodGroups();
 
-                    for (AuthenticatedByMethodGroup authByGroup : authBySets) {
-                        //if trr contains wildcard or explicitly the token's auth by set, it matches
-                        if (authByGroup.matches(AuthenticatedByMethodGroup.ALL)
-                                ||  authByGroup.matches(AuthenticatedByMethodGroup.getGroup(token.getAuthenticatedBy()))) {
-                            trrList.add(trr);
-                            break;
+                        for (AuthenticatedByMethodGroup authByGroup : authBySets) {
+                            //if trr contains wildcard or explicitly the token's auth by set, it matches
+                            if (authByGroup.matches(AuthenticatedByMethodGroup.ALL)
+                                    || authByGroup.matches(AuthenticatedByMethodGroup.getGroup(token.getAuthenticatedBy()))) {
+                                trrList.add(trr);
+                                break;
+                            }
                         }
                     }
                 }
@@ -78,8 +78,8 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     }
 
     @Override
-    public synchronized boolean doesActiveTokenRevocationRecordExistMatchingToken(String userId, ScopeAccess token) {
-        return getActiveTokenRevocationRecordsMatchingToken(userId, token).iterator().hasNext();
+    public synchronized boolean doesActiveTokenRevocationRecordExistMatchingToken(Token token) {
+        return getActiveTokenRevocationRecordsMatchingToken(token).iterator().hasNext();
     }
 
     @Getter
