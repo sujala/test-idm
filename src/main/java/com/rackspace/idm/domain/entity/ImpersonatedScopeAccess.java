@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
-public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserScopeAccess {
+public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField

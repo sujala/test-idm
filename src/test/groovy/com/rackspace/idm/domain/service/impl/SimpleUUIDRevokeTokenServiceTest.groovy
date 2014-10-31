@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.security.TokenFormat
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -36,9 +37,12 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockUserService(service)
         mockIdentityUserService(service)
+        mockTokenFormatSelector(service)
 
         uuidScopeAccessDao = Mock()
         service.scopeAccessDao = uuidScopeAccessDao
+
+        tokenFormatSelector.formatForExistingToken(_) >> TokenFormat.UUID
     }
 
     def "revokeAllTokensForEndUser(id) - atomHopper client is called when expiring all tokens for user" () {

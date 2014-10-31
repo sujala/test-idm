@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Token;
 import com.rackspace.idm.domain.entity.TokenRevocationRecord;
 
 import java.util.List;
@@ -54,18 +55,16 @@ public interface TokenRevocationRecordPersistenceStrategy {
      *     a racker token, impersonation token, regular user token, etc in order to determine the user. This could change if ScopeAccess is
      *     modified to provide a consistent 'userId' that can be retrieved off the token.
      * </p>
-     * @param userId
      * @param token
      * @return
      */
-    Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(String userId, ScopeAccess token);
+    Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token);
 
     /**
-     * Whether a TRR exists such that it would be returned by the {@link #getActiveTokenRevocationRecordsMatchingToken(String, ScopeAccess)}
+     * Whether a TRR exists such that it would be returned by the {@link #getActiveTokenRevocationRecordsMatchingToken(Token)}
      *
-     * @param userId
      * @param token
      * @return
      */
-    boolean doesActiveTokenRevocationRecordExistMatchingToken(String userId, ScopeAccess token);
+    boolean doesActiveTokenRevocationRecordExistMatchingToken(Token token);
 }

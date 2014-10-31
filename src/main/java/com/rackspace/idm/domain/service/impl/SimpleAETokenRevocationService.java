@@ -3,16 +3,17 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
-import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
+import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +43,6 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     private UUIDTokenRevocationService uuidTokenRevocationService;
 
     @Autowired
-    private UserDao userDao;
-
-    @Autowired
     private IdentityConfig identityConfig;
 
     @Lazy
@@ -54,9 +52,13 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private TokenFormatSelector tokenFormatSelector;
+
     @Override
-    public boolean supportsRevokingFor(UniqueId obj, ScopeAccess sa) {
-        return false;
+    public boolean supportsRevokingFor(Token token) {
+        //must be a ScopeAccess instance due to need to integrate with legacy services that expect ScopeAccess instances
+        return token != null && token instanceof ScopeAccess && (token instanceof BaseUserToken)  && tokenFormatSelector.formatForExistingToken(token.getAccessTokenString()) == TokenFormat.AE;
     }
 
     @Override
@@ -75,14 +77,20 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
-    public void revokeToken(ScopeAccess token) {
+    public void revokeToken(Token token) {
         if (token == null) {
             return;
+        } else if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
+
         boolean tokenWasRevoked = revokeTokenIfNecessary(token);
-        if (tokenWasRevoked) {
+
+        //only send revoke token for user based tokens.
+        if (tokenWasRevoked && token instanceof BaseUserToken && token instanceof ScopeAccess) {
             try {
-                BaseUser user = userService.getUserByScopeAccess(token, false);
+                //need to cast token to ScopeAccess to integrate with user service.
+                BaseUser user = userService.getUserByScopeAccess((ScopeAccess)token, false);
                 sendRevokeTokenFeedIfNecessary(user, token);
             } catch (NotFoundException e) {
                 //ignore
@@ -91,13 +99,16 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
-    public void revokeToken(BaseUser user, ScopeAccess token) {
+    public void revokeToken(BaseUser user, Token token) {
         if (token == null) {
             return;
+        } else if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
+
         LOG.debug("Revoking access token {}", token);
         boolean tokenWasRevoked = revokeTokenIfNecessary(token);
-        if (tokenWasRevoked) {
+        if (tokenWasRevoked && token instanceof BaseUserToken && token instanceof ScopeAccess) {
             //we just add a new record - regardless of whether there's already an existing record covering this token.
             tokenRevocationRecordPersistenceStrategy.addTokenTrrRecord(token.getAccessTokenString());
             sendRevokeTokenFeedIfNecessary(user, token);
@@ -105,7 +116,7 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
         LOG.debug("Done revoking access token {}", token.getAccessTokenString());
     }
 
-    private boolean revokeTokenIfNecessary(ScopeAccess token) {
+    private boolean revokeTokenIfNecessary(Token token) {
         if (isTokenValid(token)) {
             tokenRevocationRecordPersistenceStrategy.addTokenTrrRecord(token.getAccessTokenString());
             return true;
@@ -113,11 +124,11 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
         return false;
     }
 
-    private boolean isTokenValid(ScopeAccess token) {
+    private boolean isTokenValid(Token token) {
         return token.getAccessTokenExp().after(new Date()) && !isTokenRevoked(token);
     }
 
-    private void sendRevokeTokenFeedIfNecessary(BaseUser user, ScopeAccess token) {
+    private void sendRevokeTokenFeedIfNecessary(BaseUser user, Token token) {
         if (user != null && user instanceof User) {
             sendRevokeTokenFeedEvent((User) user, token.getAccessTokenString());
         }
@@ -174,31 +185,13 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
-    public boolean isTokenRevoked(ScopeAccess token) {
-        if (token instanceof UserScopeAccess) {
-            return isTokenRevokedInternal((UserScopeAccess) token);
-        } else if (token instanceof ImpersonatedScopeAccess) {
-            return isTokenRevokedInternal((ImpersonatedScopeAccess) token);
-        } else if (token instanceof RackerScopeAccess) {
-            return false; // TODO: Racker revocation
+    public boolean isTokenRevoked(Token token) {
+        Validate.notNull(token);
+
+        if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
-        throw new IllegalArgumentException(String.format("Unsupported scope access '%s'", token.getClass().getSimpleName()));
-    }
-
-    private boolean isTokenRevokedInternal(UserScopeAccess token) {
-        return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(
-                token.getUserRsId(), token);
-    }
-
-    private boolean isTokenRevokedInternal(ImpersonatedScopeAccess token) {
-        String userId = token.getIssuedToUserId();
-
-        if (userId == null) {
-            throw new IllegalStateException("Impersonation token does not contain an issued to user");
-        }
-
-        return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(
-                userId, token);
+        return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(token);
     }
 
     private void sendRevokeTokenFeedEvent(User user, String tokenString) {

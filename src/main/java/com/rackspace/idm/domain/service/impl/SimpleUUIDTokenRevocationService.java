@@ -1,14 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.UnrecognizedAuthenticationMethodException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +26,8 @@ import java.util.List;
 
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for UUID token revocation.
+ *
+ * When revoking tokens, updates the expiration date on all applicable tokens to immediately expire
  */
 @Component
 public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationService {
@@ -39,22 +46,32 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     @Autowired
     private IdentityUserService identityUserService;
 
-    public void revokeToken(String token) {
-        LOG.debug("Revoking access token {}", token);
+    @Autowired
+    private TokenFormatSelector tokenFormatSelector;
 
-        final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(token);
-        if (scopeAccess == null) {
+    @Override
+    public boolean supportsRevokingFor(Token sa) {
+        return sa != null && (sa instanceof ScopeAccess) && tokenFormatSelector.formatForExistingToken(sa.getAccessTokenString()) == TokenFormat.UUID;
+    }
+
+    public void revokeToken(String token) {
+        if (StringUtils.isBlank(token)) {
             return;
         }
 
+        LOG.debug("Revoking access token {}", token);
+        final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(token);
         revokeToken(scopeAccess);
     }
 
     @Override
-    public void revokeToken(ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
+    public void revokeToken(Token token) {
+        if (token == null) {
             return;
+        } else if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
+        ScopeAccess scopeAccess =  (ScopeAccess) token;
 
         if (scopeAccess.getAccessTokenExp().after(new Date())) {
             try {
@@ -85,10 +102,13 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     }
 
     @Override
-    public void revokeToken(BaseUser user, ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
+    public void revokeToken(BaseUser user, Token token) {
+        if (token == null) {
             return;
+        } else if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
+        ScopeAccess scopeAccess =  (ScopeAccess) token;
 
         LOG.debug("Revoking access token {}", scopeAccess);
         if (scopeAccess.getAccessTokenExp().after(new Date())) {
@@ -152,7 +172,7 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
 
     @Override
     public void revokeAllTokensForBaseUser(String userId) {
-        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
+        //TODO: expand this to support rackers. Original implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
         revokeAllTokensForBaseUser(user);
     }
@@ -173,8 +193,14 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     }
 
     @Override
-    public boolean isTokenRevoked(ScopeAccess token) {
-        return token.isAccessTokenExpired(new DateTime());
+    public boolean isTokenRevoked(Token token) {
+        Validate.notNull(token);
+
+        if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
+        }
+
+        return token.isAccessTokenExpired();
     }
 
     private void sendRevokeTokenFeedEvent(User user, String tokenString) {

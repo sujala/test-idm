@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
         postEncodeMethod="doPostEncode")
-public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
+public class ScopeAccess implements Auditable, UniqueId, Token {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -51,16 +51,19 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
         return authenticatedBy;
     }
 
-    @Override
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
-    @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
                 || this.accessTokenExp == null
                 || new DateTime(this.accessTokenExp).isBefore(time);
+    }
+
+    @Override
+    public boolean isAccessTokenExpired() {
+        return isAccessTokenExpired(new DateTime());
     }
 
     public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){

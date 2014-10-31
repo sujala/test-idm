@@ -10,7 +10,7 @@ import java.util.Date;
 
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
-public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserScopeAccess {
+public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField

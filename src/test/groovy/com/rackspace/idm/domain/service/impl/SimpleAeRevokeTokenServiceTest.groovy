@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.security.AETokenService
+import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.UUIDTokenRevocationService
 import org.joda.time.DateTime
 import spock.lang.Shared
@@ -29,6 +30,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockUserService(service)
         mockIdentityConfig(service)
+        mockTokenFormatSelector(service)
 
         tokenRevocationRecordPersistenceStrategy = Mock()
         service.tokenRevocationRecordPersistenceStrategy = tokenRevocationRecordPersistenceStrategy
@@ -38,6 +40,8 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         aeTokenService = Mock()
         service.aeTokenService = aeTokenService
+
+        tokenFormatSelector.formatForExistingToken(_) >> TokenFormat.AE
     }
 
     def "revokeToken(tokenString) - atomHopper client is called when expiring a token" () {
