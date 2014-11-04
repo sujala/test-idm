@@ -20,6 +20,7 @@ import spock.lang.Shared
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
@@ -269,7 +270,7 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticatePassword(String username, String password) {
+    def authenticatePassword(String username, String password=DEFAULT_PASSWORD) {
         initOnUse()
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password))
     }

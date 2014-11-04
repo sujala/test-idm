@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -18,6 +21,9 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
+
+    @Autowired
+    LdapScopeAccessRepository ldapScopeAccessRepository
 
     enum GetTokenVersion {
         v20,
@@ -202,6 +208,164 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 200
+    }
+
+    @Unroll
+    def "auth and validate '#authTokenFormat' tokens to verify content"() {
+        given:
+        def response
+        def authToken
+        def responseToken
+
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        setUserTokenFormat(userAdmin, authTokenFormat)
+        utils.addApiKeyToUser(userAdmin)
+
+        when: "racker auth v2.0"
+        response = cloud20.authenticateRacker(authTokenFormat == TokenFormatEnum.AE ? 'test.ae' : 'test.racker', 'password')
+        authToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        authTokenFormat == TokenFormatEnum.AE ? authToken.token.id.length() > 32 : authToken.token.id.length() == 32
+
+        when: "racker validate v2.0"
+        response = cloud20.validateToken(identityAdminToken, authToken.token.id)
+        responseToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        compareTwoTokens(authToken, responseToken)
+
+        when: "user auth v2.0"
+        response = cloud20.authenticatePassword(userAdmin.username)
+        authToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        authTokenFormat == TokenFormatEnum.AE ? authToken.token.id.length() > 32 : authToken.token.id.length() == 32
+
+        when: "user validate v2.0"
+        response = cloud20.validateToken(identityAdminToken, authToken.token.id)
+        responseToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        compareTwoTokens(authToken, responseToken)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        authTokenFormat << [TokenFormatEnum.AE, TokenFormatEnum.UUID]
+    }
+
+    def compareTwoTokens(authToken, responseToken) {
+        ObjectMapper mapper = new ObjectMapper()
+
+        def authJson = mapper.writeValueAsString(authToken)
+        Map authMap = mapper.readValue(authJson, Map)
+
+        def responseJson = mapper.writeValueAsString(responseToken)
+        Map responseMap = mapper.readValue(responseJson, Map)
+
+        return compareTwoTokenMaps(authMap, responseMap)
+    }
+
+    def compareTwoTokenMaps(authMap, responseMap) {
+        boolean check = true;
+
+        for (String key : authMap.keySet()) {
+            def authValue = authMap.get(key)
+            def responseValue = responseMap.get(key)
+            check = check && compareTwoTokenValues(authValue, responseValue)
+        }
+
+        return check;
+    }
+
+    def compareTwoTokenValues(authValue, responseValue) {
+        if (authValue != null && responseValue != null) { // Some fields are empty on auth or validate
+            if (authValue instanceof Map) {
+                return compareTwoTokenMaps((Map) authValue, (Map) responseValue)
+            } else if (authValue instanceof List) {
+                boolean check = true
+                for (int i=0; i<((List) authValue).size(); i++) {
+                    check = check && compareTwoTokenValues(((List) authValue).get(i), ((List) responseValue).get(i))
+                }
+                return check
+            } else {
+                return authValue.equals(responseValue)
+            }
+        } else {
+            return true
+        }
+    }
+
+    def "verify revoke UUID tokens when AE token config is set"() {
+        given:
+        def response
+        def authToken
+        def uuidToken
+
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        utils.addApiKeyToUser(userAdmin)
+
+        when: "user auth v2.0 (using UUID)"
+        response = cloud20.authenticatePassword(userAdmin.username)
+        authToken = response.getEntity(AuthenticateResponse).value
+        uuidToken = authToken.token.id
+
+        then:
+        response.status == 200
+        uuidToken.length() == 32
+
+        when: "revoking token after setting AE token"
+        setUserTokenFormat(userAdmin, TokenFormatEnum.AE)
+        response = cloud20.revokeUserToken(utils.getIdentityAdminToken(), uuidToken)
+
+        then: "it should still revoke it"
+        response.status == 204
+        ldapScopeAccessRepository.getScopeAccessByAccessToken(uuidToken).accessTokenExpired
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "authenticating with AE token and tenantName"() {
+        given:
+        def mossoId = testUtils.getRandomInteger()
+        def username = testUtils.getRandomUUID("user")
+        def apiKey = "0987654231"
+        def user = v1Factory.createUser(username, apiKey, mossoId)
+        def createdUser = cloud11.createUser(user).getEntity(com.rackspacecloud.docs.auth.api.v1.User)
+        def apiUser = cloud20.getUserByName(utils.getServiceAdminToken(), username).getEntity(org.openstack.docs.identity.api.v2.User).value
+        setUserTokenFormat(apiUser, TokenFormatEnum.AE)
+
+        def scopeAccess = cloud20.authenticateApiKey(username, apiKey).getEntity(AuthenticateResponse).value
+        def authRequestContent = v2Factory.createAuthenticationRequest(scopeAccess.token.id, null, mossoId.toString())
+
+        when:
+        def authResponse = cloud20.authenticate(authRequestContent)
+        def scopeAccessResponse = authResponse.getEntity(AuthenticateResponse).value
+        def ldapTokens = ldapScopeAccessRepository.getScopeAccessesByUserId(apiUser.id)
+
+        then:
+        authResponse.status == 200
+        compareTwoTokens(scopeAccess, scopeAccessResponse)
+        !ldapTokens.iterator().hasNext()
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), createdUser.id)
     }
 
 }
