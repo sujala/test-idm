@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.math.RandomUtils
 import org.apache.log4j.Logger
@@ -29,7 +30,7 @@ import java.util.regex.Pattern
 import static com.rackspace.idm.Constants.*
 
 /**
- * Impersonation tests. Those test referring to use cases refer to: https://one.rackspace.com/display/~robe4218/D-17537+Invalid+Impersonation+Tokens
+ * Impersonation tests.
  */
 class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest {
     private static final Logger LOG = Logger.getLogger(Cloud20ImpersonationIntegrationTest.class)
@@ -957,6 +958,81 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         disableUser << [false, true]
     }
 
+    def "impersonate user sets user token authBy to impersonated, sets impersonated token authBy to callers token"() {
+        given:
+        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().minusDays(1))
+
+        when:
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
+        ScopeAccess actualUserTokenUsed = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
+
+        then: "impersonation token has authBy of caller"
+        //caller is the service admin, whose token was created with password authentication
+        CollectionUtils.isEqualCollection(impersonatedScopeAccess.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
+
+        and: "user token is set to impersonation"
+        CollectionUtils.isEqualCollection(actualUserTokenUsed.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION))
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+    }
+
+    def "impersonated user gets new token with authBy set to impersonated if no 'impersonation' tokens exist for that user"() {
+        given:
+        //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
+        // validity. but token does not have authBy set
+        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
+        def initialToken = getMostRecentTokenForUser(localDefaultUser)
+
+        when:
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
+        ScopeAccess actualUserTokenUsed = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
+
+        then: "impersonation token has authBy of caller"
+        //caller is the service admin, whose token was created with password authentication
+        CollectionUtils.isEqualCollection(impersonatedScopeAccess.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
+
+        and: "user token is set to impersonation"
+        CollectionUtils.isEqualCollection(actualUserTokenUsed.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION))
+
+        and:
+        def latestToken = getMostRecentTokenForUser(localDefaultUser)
+        impersonatedScopeAccess.impersonatingToken == latestToken.accessTokenString
+        initialToken.accessTokenString != latestToken.accessTokenString
+        scopeAccessRepository.getScopeAccessesByUserId(localDefaultUser.id).iterator().count {it != null} == 2
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+    }
+
+    def "impersonation token re-uses existing 'impersonation' user token when possible"() {
+        given:
+        //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
+        // validity AND token has authBy set to "IMPERSONATION"
+        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23), false, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION))
+        def initialToken = getMostRecentTokenForUser(localDefaultUser)
+
+        when:
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
+        ScopeAccess actualUserTokenUsed = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
+
+        then: "impersonation token has authBy of caller"
+        //caller is the service admin, whose token was created with password authentication
+        CollectionUtils.isEqualCollection(impersonatedScopeAccess.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
+
+        and: "user token is set to impersonation"
+        CollectionUtils.isEqualCollection(actualUserTokenUsed.authenticatedBy, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION))
+
+        and:
+        def latestToken = getMostRecentTokenForUser(localDefaultUser)
+        impersonatedScopeAccess.impersonatingToken == latestToken.accessTokenString
+        initialToken.accessTokenString == latestToken.accessTokenString
+        scopeAccessRepository.getScopeAccessesByUserId(localDefaultUser.id).iterator().count {it != null} == 1
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+    }
+
     /**
      * Impersonate the specified user. THe impersonation token should be requested with the given expiration time in seconds
      * @param user
@@ -988,7 +1064,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         return response
     }
 
-    def User createUserWithTokenExpirationDate(DateTime tokenExpirationDate, boolean disableUserAtEnd = false) {
+    def User createUserWithTokenExpirationDate(DateTime tokenExpirationDate, boolean disableUserAtEnd = false, List<String> tokenAuthBy = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD)) {
         User defaultUser = utils.createUser(userAdminToken)
 
         //make sure all tokens are expired (they should be, but verify just the same)
@@ -1005,6 +1081,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         //now reset the token expiration time to the specified lifetime
         UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(defaultUserToken)
         token.setAccessTokenExp(tokenExpirationDate.toDate())
+        token.setAuthenticatedBy(tokenAuthBy)
         scopeAccessRepository.updateObject(token)
 
         return defaultUser
