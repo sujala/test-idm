@@ -2212,7 +2212,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
             }
 
-            ImpersonatedScopeAccess impersonatedToken = scopeAccessService.processImpersonatedScopeAccessRequest(impersonator, user, impersonationRequest, impersonatorType);
+            ImpersonatedScopeAccess impersonatedToken = scopeAccessService.processImpersonatedScopeAccessRequest(impersonator, user, impersonationRequest, impersonatorType, callerScopeAccess.getAuthenticatedBy());
             ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(impersonatedToken);
             return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
         } catch (Exception ex) {

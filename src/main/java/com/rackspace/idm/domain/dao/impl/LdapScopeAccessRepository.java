@@ -74,31 +74,18 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
     }
 
     @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy) {
+        return getMostRecentScopeAccessWithAuthBy(user, searchFilterGetAllImpersonatedScopeAccessesForUserRsId(impersonatingRsId), authenticatedBy);
+    }
+
+    @Override
     public ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId) {
         return getMostRecentScopeAccess(object, searchFilterGetScopeAccessesByClientId(clientId));
     }
 
     @Override
     public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
-        Iterable<ScopeAccess> scopeAccessList = getObjects(searchFilterGetScopeAccessesByClientIdNotScoped(clientId), object.getUniqueId());
-
-        if (!scopeAccessList.iterator().hasNext()) {
-            return null;
-        }
-
-        ScopeAccess mostRecentScopeAccess = null;
-
-        boolean filterByAuthBy = authenticatedBy != null && authenticatedBy.size() > 0;
-
-        for (ScopeAccess scopeAccess : scopeAccessList) {
-            if (mostRecentScopeAccess == null || mostRecentScopeAccess.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
-                if (!filterByAuthBy || CollectionUtils.isEqualCollection(authenticatedBy, scopeAccess.getAuthenticatedBy())) {
-                    mostRecentScopeAccess = scopeAccess;
-                }
-            }
-        }
-
-        return mostRecentScopeAccess;
+        return getMostRecentScopeAccessWithAuthBy(object, searchFilterGetScopeAccessesByClientIdNotScoped(clientId), authenticatedBy);
     }
 
     @Override
@@ -169,6 +156,28 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (mostRecentScopeAccess == null || mostRecentScopeAccess.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
                 mostRecentScopeAccess = scopeAccess;
+            }
+        }
+
+        return mostRecentScopeAccess;
+    }
+
+    private ScopeAccess getMostRecentScopeAccessWithAuthBy(UniqueId object, Filter filter, List<String> authenticatedBy) throws NotFoundException {
+        Iterable<ScopeAccess> scopeAccessList = getObjects(filter, object.getUniqueId());
+
+        if (!scopeAccessList.iterator().hasNext()) {
+            return null;
+        }
+
+        ScopeAccess mostRecentScopeAccess = null;
+
+        boolean filterByAuthBy = authenticatedBy != null && authenticatedBy.size() > 0;
+
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (mostRecentScopeAccess == null || mostRecentScopeAccess.getAccessTokenExp().before(scopeAccess.getAccessTokenExp())) {
+                if (!filterByAuthBy || CollectionUtils.isEqualCollection(authenticatedBy, scopeAccess.getAuthenticatedBy())) {
+                    mostRecentScopeAccess = scopeAccess;
+                }
             }
         }
 

@@ -201,7 +201,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * Creates and saves a new impersonation token to use against the user and cleans up any expired scope accesses.
      */
     @Override
-    public ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, EndUser userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType) {
+    public ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, EndUser userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType, List<String> impersonatorAuthByMethods) {
         DateTime requestInstant = new DateTime();
 
         DateTime desiredImpersonationTokenExpiration = calculateDesiredImpersonationTokenExpiration(impersonationRequest, impersonatorType, requestInstant);
@@ -215,7 +215,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             //Note: it is possible that the federated user's token that is being impersonated could have been deleted.
             //    This is not a major concern because the impersonating token will then become invalid and eventually be
             //    cleaned up.
-            mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(impersonator, userBeingImpersonated.getId());
+            mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(impersonator, userBeingImpersonated.getId(), impersonatorAuthByMethods);
         } else {
             /*
             The user is a provisioned user. This means that there might be existing impersonation tokens in the directory that do not have the
@@ -234,9 +234,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
             //1) Search for an impersonating scope access with an impersonatingRsId equal to the user being impersonated rsId
             //2) If scope access tokens are found, find the most recent from them
-            mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(impersonator, userBeingImpersonated.getId());
+            mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(impersonator, userBeingImpersonated.getId(), impersonatorAuthByMethods);
             if(mostRecent == null) {
-                //3) No scope access found, fall back to searching by username
+                //3) Legacy - No scope access found, fall back to searching by username and not trying to match on auth by
+                //TODO: delete this in 2.11+ codebase as by then all tokens will have the user rsid and auth by set
                 mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserOfUser(impersonator, userBeingImpersonated.getUsername());
             }
         }
@@ -258,7 +259,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         the scope access rdn). Ultimately, this means there's no point in making the deleteScopeAccess in this block
         fail safe since we'd just get an error on the add anyway.
 
-        If the purpose is to limit the number of valid impresonation tokens against a given user, we should introduce refresh
+        If the purpose is to limit the number of valid impersonation tokens against a given user, we should introduce refresh
         windows or whatnot for impersonated tokens and return existing impersonated tokens
         rather than always creating a new one and deleting the old. Within refresh windows new ones should be created with NEW token strings.
 
@@ -267,7 +268,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ImpersonatedScopeAccess scopeAccessToUse;
         if(!(userBeingImpersonated instanceof FederatedUser)) {
             //create a shiny new token
-            ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration);
+            ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration, impersonatorAuthByMethods);
 
             if (mostRecent != null) {
                 if(impersonator instanceof Racker) {
@@ -300,7 +301,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     || desiredImpersonationTokenExpiration.isAfter(new DateTime(mostRecent.getAccessTokenExp()))) {
                 //create a new impersonation token if the most recent impersonation token for this user is expired or
                 //will expired before the requested time
-                ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration);
+                ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration, impersonatorAuthByMethods);
 
                 logger.info(ADDING_SCOPE_ACCESS, scopeAccessToAdd);
                 scopeAccessDao.addScopeAccess(impersonator, scopeAccessToAdd);
@@ -311,7 +312,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 scopeAccessToUse = mostRecent;
             }
         }
-
 
         return scopeAccessToUse;
     }
@@ -372,7 +372,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * @param impersonationTokenExpirationDate
      * @return
      */
-    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, EndUser userBeingImpersonated, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate) {
+    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, EndUser userBeingImpersonated, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate, List<String> impersonatorAuthByMethods) {
         String clientId = getCloudAuthClientId();
 
         ImpersonatedScopeAccess newImpersonatedScopeAccess = new ImpersonatedScopeAccess();
@@ -388,6 +388,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
         newImpersonatedScopeAccess.setImpersonatingUsername(userBeingImpersonated.getUsername());
         newImpersonatedScopeAccess.setImpersonatingRsId(userTokenForImpersonation.getUserRsId());
+        newImpersonatedScopeAccess.setAuthenticatedBy(new ArrayList<String>(impersonatorAuthByMethods));
 
         return newImpersonatedScopeAccess;
     }
@@ -999,7 +1000,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     /**
-     * Upon creation, impersonated token lifetimes must be set to the requested (or default) expiration. If this
+     * Retrieve the user token to which the impersonation token will be linked. Upon creation, impersonated token
+     * lifetimes must be set to the requested (or default) expiration. If this
      * is greater than the remaining lifetime of the user's token, a new user
      * token must be generated with the lifetime set to the default lifetime of a user token.
      */
@@ -1010,26 +1012,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         TokenFormat tFormat = tokenFormatSelector.formatForNewToken(impersonator);
 
         if (tFormat == TokenFormat.UUID) {
-            UserScopeAccess latestScopeAccessForUser = null;
-
-            //get the latest user scope access for this user
-            if(user instanceof FederatedUser) {
-                latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
-            } else {
-                latestScopeAccessForUser = (UserScopeAccess) getMostRecentDirectScopeAccessForUserByClientId((User) user, getCloudAuthClientId());
-            }
+            //get the latest user scope access created solely for impersonation for this user
+            UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
 
             //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
             DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
 
             if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
-                //user token is expired or it's lifetime is before the requested
-                // impersonation expiration so must create a new token for the user.
+                //existing user token is expired or it will expire before the requested
+                // impersonation expiration so we must create a new token for the user.
                 scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
             } else {
                 scopeAccessForImpersonation = latestScopeAccessForUser;
             }
         } else if (tFormat == TokenFormat.AE) {
+            //always create a new user token
             scopeAccessForImpersonation = new UserScopeAccess();
             scopeAccessForImpersonation.setAccessTokenExp(desiredImpersonationTokenExpiration.toDate());
             scopeAccessForImpersonation.setUserRsId(user.getId());
@@ -1054,10 +1051,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int tokenLifetimeInSeconds = getDefaultCloudAuthTokenExpirationSeconds();
         DateTime expiration = now.plusSeconds(tokenLifetimeInSeconds);
         newUserScopeAccess.setAccessTokenExp(expiration.toDate());
-        if(user instanceof FederatedUser) {
-            //currently, only federated users have new tokens created for impersonation with an 'authenticatedBy' set to IMPERSONATION
-            newUserScopeAccess.setAuthenticatedBy(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
-        }
+        newUserScopeAccess.setAuthenticatedBy(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
         addUserScopeAccess(user, newUserScopeAccess);
 
         return newUserScopeAccess;
