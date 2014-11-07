@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -100,6 +101,52 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
         revocationService.isTokenRevoked(sa)
     }
 
+    def "revokeAllTokensForUser(userId) - revoke all user based revocation does not revoke impersonation tokens"() {
+        def sa = entityFactory.createUserToken().with {
+            it.createTimestamp = new DateTime().minusHours(1).toDate()
+            it.authenticatedBy = Arrays.asList(AuthenticatedByMethodEnum.IMPERSONATION.value)
+            return it
+        }
+
+        String token = sa.accessTokenString
+
+        aeTokenService.unmarshallToken(token) >> sa
+
+        expect:
+        !revocationService.isTokenRevoked(token)
+        !revocationService.isTokenRevoked(sa)
+
+        when:
+        revocationService.revokeAllTokensForBaseUser(sa.userRsId)
+
+        then:
+        !revocationService.isTokenRevoked(token)
+        !revocationService.isTokenRevoked(sa)
+    }
+
+    def "revokeTokensForBaseUser(userId, Impersonation) - can revoke impersonation user tokens via user TRR"() {
+        def sa = entityFactory.createUserToken().with {
+            it.createTimestamp = new DateTime().minusHours(1).toDate()
+            it.authenticatedBy = Arrays.asList(AuthenticatedByMethodEnum.IMPERSONATION.value)
+            return it
+        }
+
+        String token = sa.accessTokenString
+
+        aeTokenService.unmarshallToken(token) >> sa
+
+        expect:
+        !revocationService.isTokenRevoked(token)
+        !revocationService.isTokenRevoked(sa)
+
+        when:
+        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_IMPERSONATION_TOKENS)
+
+        then:
+        revocationService.isTokenRevoked(token)
+        revocationService.isTokenRevoked(sa)
+    }
+
     def "revokeAllTokensForUser(BaseUser) - user based revocation"() {
         def sa = entityFactory.createUserToken().with {
             it.createTimestamp = new DateTime().minusHours(1).toDate()
@@ -172,7 +219,7 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
             boolean shouldBeExpired = false
             expireTypes.each {
                 authBy ->
-                    if (authBy.matches(AuthenticatedByMethodGroup.ALL)
+                    if ((authBy.matches(AuthenticatedByMethodGroup.ALL) && !token.getAuthenticatedBy().contains(AuthenticatedByMethodEnum.IMPERSONATION.value))
                             || authBy.matches(AuthenticatedByMethodGroup.getGroup(token.getAuthenticatedBy()))) {
                         shouldBeExpired = true
                     }
