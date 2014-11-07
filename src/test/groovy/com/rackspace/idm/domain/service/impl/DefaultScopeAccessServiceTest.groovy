@@ -456,17 +456,17 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
                 listAll,
         ]
 
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >>> [
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >>> [
                 scopeAccessFour,
         ]
 
         when:
-        ImpersonatedScopeAccess returned = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess returned = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then:
         3 * scopeAccessDao.deleteScopeAccess(_)
         1 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
 
         returned.accessTokenString.equals(existingValidImpersonationTokenString)
     }
@@ -484,7 +484,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         //return valid user scope token
         UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
         config.getString("cloudAuth.clientId") >> "clientId"
 
         def impersonatedUser = entityFactory.createUser(impersonatingUser, "userId", "domainId", "region")
@@ -511,12 +511,12 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
                 listWithValid
         ].asList().flatten()
 
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUserByUsername(_, _) >> [].asList()
 
         when: "optimize is turned off"
-        ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then: "all expired tokens are deleted regardless of user"
         1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> false
@@ -526,7 +526,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         nonOptResult.accessTokenString.equals(nonExpiredTokenStr)
 
         when: "optimize is turned on"
-        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then: "all expired tokens are deleted regardless of user"
         1 * config.getBoolean(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, _) >> true
@@ -567,7 +567,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
 
         when: "exception encountered deleting second of three expired tokens"
-        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then: "no attempt is made to delete the other expired tokens or the valid token, and exception is bubbled"
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
@@ -589,7 +589,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         //return valid user scope token
         UserScopeAccess existingUserScopeAccess = createUserScopeAccess("userScope", "userid", "clientId", new DateTime().plusDays(5).toDate())
-        scopeAccessDao.getMostRecentScopeAccessByClientId(_, _) >> existingUserScopeAccess
+        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
         config.getString("cloudAuth.clientId") >> "clientId"
 
         def impersonatedUser = entityFactory.createUser("username", "userId", "domainId", "region")
@@ -601,10 +601,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             return it
         }
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
 
         when: "exception encountered deleting second of three expired tokens"
-        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then: "no attempt is made to delete third expired token, but valid token is still deleted, scope access added and no exception thrown"
         config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
@@ -633,10 +633,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [scopeAccessFour].asList()
-        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsId(_, _) >> scopeAccessFour
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
 
         when: "exception encountered deleting valid token"
-        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE)
+        ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
 
         then: "no attempt is made to delete third expired token, but valid token is deleted and no exception thrown"
         1 * scopeAccessDao.deleteScopeAccess(_) >> {throw exceptionToThrow }

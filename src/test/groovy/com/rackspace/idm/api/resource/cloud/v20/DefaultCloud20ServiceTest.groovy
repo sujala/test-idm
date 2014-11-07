@@ -1599,7 +1599,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyRackerOrIdentityAdminAccess(_)
-        1 * scopeAccessService.processImpersonatedScopeAccessRequest(_, _, _, _) >> impersonatedToken
+        1 * scopeAccessService.processImpersonatedScopeAccessRequest(_, _, _, _, _) >> impersonatedToken
         responseBuilder.build().status == 200
     }
 
