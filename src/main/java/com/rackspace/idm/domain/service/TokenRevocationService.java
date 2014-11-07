@@ -14,7 +14,7 @@ public interface TokenRevocationService {
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_NULL_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.NULL));
 
     /**
-     * Static constant defining ALL tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
+     * Static constant defining ALL tokens (except "impersonation" user tokens) that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
      * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_ALL_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.ALL));

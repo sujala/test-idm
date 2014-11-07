@@ -8,6 +8,10 @@ import java.util.Collections;
 import java.util.List;
 
 public final class AuthenticatedByMethodGroup {
+    /**
+     * Includes ALL authenticatedBy methods <b>except</b> impersonation, which are a special class and must be specified
+     * separately
+     */
     public static final AuthenticatedByMethodGroup ALL = new AuthenticatedByMethodGroup();
     public static final AuthenticatedByMethodGroup NULL = getGroup(AuthenticatedByMethodEnum.NULL);
     public static final AuthenticatedByMethodGroup APIKEY = getGroup(AuthenticatedByMethodEnum.APIKEY);

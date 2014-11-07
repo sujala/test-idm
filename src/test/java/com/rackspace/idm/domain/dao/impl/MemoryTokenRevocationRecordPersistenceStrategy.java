@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.entity.*;
 import lombok.Getter;
@@ -49,6 +50,8 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     public synchronized Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
         List<TokenRevocationRecord> trrList = new ArrayList<TokenRevocationRecord>();
 
+        boolean isTokenImpersonation = token != null && token.getAuthenticatedBy() != null && token.getAuthenticatedBy().contains(AuthenticatedByMethodEnum.IMPERSONATION.getValue()) ? true : false;
+
         //look for userId ones that match the token
         if (token instanceof BaseUserToken) {
             List<TokenRevocationRecord> userTrrs = userTRRs.get(((BaseUserToken) token).getIssuedToUserId());
@@ -60,7 +63,7 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
 
                         for (AuthenticatedByMethodGroup authByGroup : authBySets) {
                             //if trr contains wildcard or explicitly the token's auth by set, it matches
-                            if (authByGroup.matches(AuthenticatedByMethodGroup.ALL)
+                            if ((!isTokenImpersonation && authByGroup.matches(AuthenticatedByMethodGroup.ALL))
                                     || authByGroup.matches(AuthenticatedByMethodGroup.getGroup(token.getAuthenticatedBy()))) {
                                 trrList.add(trr);
                                 break;

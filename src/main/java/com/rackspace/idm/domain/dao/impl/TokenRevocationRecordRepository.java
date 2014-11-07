@@ -108,7 +108,10 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
 
     private Filter searchForRevocationByUserWithWildcardTokenFilter(String userId, List<String> authenticatedBy, Date tokenExpiration) {
         Filter authByExactMatchesFilter;
+        boolean isTokenForImpersonation = false;
+
         if (CollectionUtils.isNotEmpty(authenticatedBy)) {
+            isTokenForImpersonation = authenticatedBy.contains(AuthenticatedByMethodEnum.IMPERSONATION.getValue());
             LdapSearchBuilder builder = new LdapSearchBuilder();
             String flattenedAuthBy = StringUtils.join(authenticatedBy, ",");
             builder.addEqualAttribute(ATTR_RS_TYPE, flattenedAuthBy);
@@ -118,10 +121,26 @@ public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapT
             authByExactMatchesFilter = Filter.createEqualityFilter(ATTR_RS_TYPE, LdapTokenRevocationRecord.AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE);
         }
 
-        Filter authByOrFilter = Filter.createORFilter(
-                Filter.createEqualityFilter(ATTR_RS_TYPE, TokenRevocationRecord.AUTHENTICATED_BY_WILDCARD_VALUE),
-                authByExactMatchesFilter
-        );
+        /*
+        if checking on revocation of an impersonation token, the TRR must explicitly specify IMPERSONATION. Wildcard not allowed. An unsupported
+        edge case is if the token's authBy is multivalued with IMPERSONATION and something else (e.g. PASSWORD). This is NOT supported. IMPERSONATION
+        authBy can not be combined with any other authBy.
+
+        However, in such a case, if a TRR explicitly specified both authBy values (not just a wildcard, or IMPERSONATION and a wildcard), the
+        token would ultimately be considered revoked since the filter would match.
+         */
+        Filter authByOrFilter = null;
+        if (!isTokenForImpersonation) {
+            /*
+            if not checking an impersonation token, all authBy fields can be matched via the 'wildcard'
+             */
+            authByOrFilter = Filter.createORFilter(
+                    Filter.createEqualityFilter(ATTR_RS_TYPE, TokenRevocationRecord.AUTHENTICATED_BY_WILDCARD_VALUE),
+                    authByExactMatchesFilter
+            );
+        } else {
+            authByOrFilter = authByExactMatchesFilter;
+        }
 
         Filter baseFilter = Filter.createANDFilter(
                 Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD),
