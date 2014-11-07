@@ -22,7 +22,26 @@ public interface ScopeAccessDao {
 
     ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId);
 
+    /**
+     * @deprecated Use {@link #getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(com.rackspace.idm.domain.entity.BaseUser, String, java.util.List)}
+     */
+    @Deprecated
     ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId);
+
+    /**
+     * <p>Return the most recent impersonated scope access underneath the specified user for the specified impersonated user
+     * that has the passed in clientId, and match all authenticatedBy strings passed in.
+     * </p>
+     * <p>If authenticated by is null or empty then the most
+     * recent scope access is returned regardless of its authenticated by state.
+     *</p>
+     *
+     * @param user
+     * @param impersonatingRsId
+     * @param authenticatedBy
+     * @return
+     */
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy);
 
     /**
      * Return the most recent scope accesses object underneath the specified user that has the passed in clientId,

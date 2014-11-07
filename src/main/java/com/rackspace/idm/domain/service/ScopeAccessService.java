@@ -135,7 +135,7 @@ public interface ScopeAccessService {
      * @param impersonatorType
      * @return
      */
-    ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, EndUser userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType);
+    ImpersonatedScopeAccess processImpersonatedScopeAccessRequest(BaseUser impersonator, EndUser userBeingImpersonated, ImpersonationRequest impersonationRequest, ImpersonatorType impersonatorType, List<String> impersonatorAuthByMethods);
 
     boolean isSetupMfaScopedToken(ScopeAccess scopeAccess);
  }
