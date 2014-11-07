@@ -84,6 +84,11 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
     }
 
     @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy) {
+        return null;
+    }
+
+    @Override
     public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
         return null;
     }
