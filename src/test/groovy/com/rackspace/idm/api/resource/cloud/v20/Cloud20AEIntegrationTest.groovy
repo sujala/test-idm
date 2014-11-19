@@ -11,6 +11,8 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+import javax.ws.rs.core.MediaType
+
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
@@ -106,6 +108,77 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should return the same as the 'UUID' token"
         defaultToken.token.id == uuidToken.token.id
+
+        when: "validating an 'AE' token"
+        def aeTokenValidate = utils.validateToken(aeToken.token.id)
+
+        then: "should be valid"
+        aeTokenValidate.token.id == aeToken.token.id
+
+        when: "validating an 'UUID' token"
+        def uuidTokenValidate = utils.validateToken(uuidToken.token.id)
+
+        then: "should be valid"
+        uuidTokenValidate.token.id == uuidToken.token.id
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "retrieve and update AE token for a user using JSON"() {
+        given:
+        def domainId = utils.createDomain()
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        def retrievedUser
+        def userList
+        def userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when: "retrieving an 'null' tokenFormat"
+        def nullToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+        userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+
+        then: "should default to UUID tokens"
+        nullToken.token.id.length() == 32
+        retrievedUser.user['RAX-AUTH:tokenFormat'] == null
+        userList.users[0]['RAX-AUTH:tokenFormat'] == null
+
+        when: "retrieving an 'AE' tokenFormat"
+        utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "AE"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
+        def aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+        userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+
+        then: "should be bigger then 32 characters (UUID tokens)"
+        aeToken.token.id.length() > 32
+        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'AE'
+        userList.users[0]['RAX-AUTH:tokenFormat'] == 'AE'
+
+        when: "retrieving an 'UUID' tokenFormat"
+        utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "UUID"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
+        def uuidToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+        userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+
+        then: "should return the same original 'null' token"
+        uuidToken.token.id == nullToken.token.id
+        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'UUID'
+        userList.users[0]['RAX-AUTH:tokenFormat'] == 'UUID'
+
+        when: "retrieving an 'DEFAULT' tokenFormat"
+        utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "DEFAULT"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
+        def defaultToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+        userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
+
+        then: "should return the same as the 'UUID' token"
+        defaultToken.token.id == uuidToken.token.id
+        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'DEFAULT'
+        userList.users[0]['RAX-AUTH:tokenFormat'] == 'DEFAULT'
 
         when: "validating an 'AE' token"
         def aeTokenValidate = utils.validateToken(aeToken.token.id)
