@@ -30,7 +30,7 @@ public class JSONWriterForUserForCreate extends JSONWriterForEntity<UserForCreat
         prefixValues.put(USER_PASSWORD_PATH, OS_KSADM_PASSWORD);
         prefixValues.put(USER_DEFAULT_REGION_PATH, RAX_AUTH_DEFAULT_REGION);
         prefixValues.put(USER_DOMAIN_ID_PATH, RAX_AUTH_DOMAIN_ID);
-
+        prefixValues.put(USER_TOKEN_FORMAT_PATH, RAX_AUTH_TOKEN_FORMAT);
         write(user, entityStream, prefixValues);
     }
 }
