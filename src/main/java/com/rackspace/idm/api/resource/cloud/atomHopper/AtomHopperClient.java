@@ -4,16 +4,15 @@ import com.rackspace.docs.core.event.DC;
 import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.core.event.Region;
 import com.rackspace.docs.core.event.V1Element;
+import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.Validate;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -28,6 +27,7 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +107,6 @@ public class AtomHopperClient {
             logger.error("unable to setup SSL trust manager: {}", e.getMessage());
             httpClient = new DefaultHttpClient();
         }
-
     }
 
     @Async
@@ -125,6 +124,29 @@ public class AtomHopperClient {
             postToken(user, atomHopperHelper.getAuthToken(), revokedToken);
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
+        }
+    }
+
+    @Async
+    public void asyncPostUserTrr(BaseUser user, TokenRevocationRecord trr) {
+        Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+        postUserTrr(user, trr);
+    }
+
+    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) {
+        Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+        try {
+            String authToken = atomHopperHelper.getAuthToken();
+            final UsageEntry entry = createUserTrrEntry(user, trr);
+            final Writer writer = marshalEntry(entry);
+            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                logger.warn("Failed to create feed for user TRR: " + errorMsg);
+            }
+            atomHopperHelper.entityConsume(response.getEntity());
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception posting User TRR: " + e);
         }
     }
 
@@ -193,7 +215,7 @@ public class AtomHopperClient {
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
         final Writer writer = new StringWriter();
-        final JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class);
+        final JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class);
         final Marshaller marshaller = jc.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
         marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new AHNamespaceMapper());
@@ -260,7 +282,72 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
-    private UsageEntry createUsageEntry(Object cloudIdentityType, EventType eventType, String id, String resourceId, String resourceName, String title, String tenantId) throws DatatypeConfigurationException {
+    /**
+     * @param user
+     * @param trr
+     * @return
+     *
+     * @throws java.lang.IllegalArgumentException if one of the authenticatedByMethodGroups contains an auth method not
+     * recognized by feed schema or error creating date for token creation date
+     */
+    private UsageEntry createUserTrrEntry(BaseUser user, TokenRevocationRecord trr) {
+        logger.debug("Creating user trr entry ...");
+        Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+
+        final com.rackspace.docs.event.identity.trr.user.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.trr.user.CloudIdentityType();
+        cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.trr.user.ResourceTypes.TRR_USER);
+        cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+
+        final List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
+        for (TenantRole tenantRole : tenantRoles) {
+            if (tenantRole.getTenantIds() != null) {
+                for (String tenantId : tenantRole.getTenantIds()) {
+                    cloudIdentityType.getTenants().add(tenantId);
+                }
+            }
+        }
+
+        //set creation date
+        //TODO: Fix xjc binding to do the conversion automatically so the datatypes on generated pojos are DateTime
+        final GregorianCalendar c = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        c.setTime(trr.getTargetCreatedBefore());
+        try {
+            final XMLGregorianCalendar creationDateCal = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+            cloudIdentityType.setTokenCreationDate(creationDateCal);
+        } catch (DatatypeConfigurationException e) {
+            logger.error("Error creating calendar instance to set token creation date", e);
+            throw new IllegalStateException("Error creating User TRR Event", e);
+        }
+
+        //create authByLists
+        for (AuthenticatedByMethodGroup authenticatedByMethodGroup : trr.getTargetAuthenticatedByMethodGroups()) {
+            if (authenticatedByMethodGroup.isAllAuthenticatedByMethods()) {
+                cloudIdentityType.getTokenAuthenticatedBy().clear();
+                break;
+            }
+            List<String> authByValues = authenticatedByMethodGroup.getAuthenticatedByMethodsAsValues();
+            com.rackspace.docs.event.identity.trr.user.CloudIdentityType.TokenAuthenticatedBy tab = new com.rackspace.docs.event.identity.trr.user.CloudIdentityType.TokenAuthenticatedBy();
+            for (String authByValue : authByValues) {
+                try {
+                    ValuesEnum val = ValuesEnum.valueOf(authByValue); //throws IllegalArgumentException if can't be converted to enum
+                    tab.getValues().add(val);
+                } catch (IllegalArgumentException e) {
+                    String message = String.format("Error converting User TRR to feed event. Invalid authMethod '%s'", authByValue);
+                    logger.error(message, e);
+                    throw new IllegalStateException(message, e);
+                }
+            }
+            cloudIdentityType.getTokenAuthenticatedBy().add(tab);
+        }
+
+        final String id = UUID.randomUUID().toString();
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, user.getId(), null, AtomHopperConstants.IDENTITY_USER_TRR_EVENT, null);
+        logger.debug("Created user trr entry with id: " + id);
+        return usageEntry;
+    }
+
+    private UsageEntry createUsageEntry(Object cloudIdentityType, EventType eventType, String id, String resourceId, String resourceName, String title, String tenantId) {
         final V1Element v1Element = new V1Element();
         v1Element.setType(eventType);
         v1Element.setResourceId(resourceId);
@@ -275,8 +362,14 @@ public class AtomHopperClient {
         c.setTime(new Date());
         c.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        final XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-        v1Element.setEventTime(now);
+        try {
+            final XMLGregorianCalendar now = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+            v1Element.setEventTime(now);
+        } catch (DatatypeConfigurationException e) {
+            logger.error("Error creating calendar instance to set token creation date", e);
+            throw new IllegalStateException("Error creating feed entry", e);
+        }
+
         v1Element.setId(id);
 
         final UsageContent usageContent = new UsageContent();

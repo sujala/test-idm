@@ -10,6 +10,7 @@ public enum AuthenticatedByMethodEnum {
     ,IMPERSONATION("IMPERSONATION")
     ,PASSCODE("PASSCODE")
     ,RSAKEY("RSAKEY")
+    ,SYSTEM("SYSTEM") //auto created by system. Should not be exposed externally
     ;
 
     String value;

@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
 import org.joda.time.DateTime
@@ -34,6 +35,8 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 
     @Shared UserService userService
 
+    @Shared IdentityUserService identityUserService
+
     @Shared TokenFormatSelector tokenFormatSelector
 
     EntityFactory entityFactory = new EntityFactory()
@@ -43,10 +46,12 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
         userDao = Mock()
         userService = Mock()
         tokenFormatSelector = Mock()
+        identityUserService = Mock()
 
         revocationService.aeTokenService = aeTokenService
         revocationService.userService = userService
         revocationService.tokenFormatSelector = tokenFormatSelector
+        revocationService.identityUserService = identityUserService
 
         tokenFormatSelector.formatForExistingToken(_) >> TokenFormat.AE
         tokenFormatSelector.formatForNewToken(_) >> TokenFormat.AE
@@ -88,6 +93,7 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
+        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
 
         expect:
         !revocationService.isTokenRevoked(token)
@@ -110,6 +116,7 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 
         String token = sa.accessTokenString
 
+        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
         aeTokenService.unmarshallToken(token) >> sa
 
         expect:
@@ -133,6 +140,7 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 
         String token = sa.accessTokenString
 
+        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
         aeTokenService.unmarshallToken(token) >> sa
 
         expect:
@@ -179,9 +187,16 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
             it.authenticatedBy = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             return it
         }
+
+        def user = entityFactory.createUser().with {
+            it.id = sa.userRsId
+            return it
+        }
+
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
+        identityUserService.getBaseUserById(user.id) >> user
 
         expect:
         !revocationService.isTokenRevoked(token)
@@ -205,6 +220,11 @@ class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
     @Unroll
     def "revokeTokensForBaseUser(userId) - when revoke (#expireTypes) only those tokens revoked"() {
         def userId = UUID.randomUUID().toString();
+        def user = entityFactory.createUser().with {
+            it.id = userId
+            return it
+        }
+        identityUserService.getBaseUserById(user.id) >> user
 
         def List<ScopeAccess> tokens = createTokenAssortment(userId)
 

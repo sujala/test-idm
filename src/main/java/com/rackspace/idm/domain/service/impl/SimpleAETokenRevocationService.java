@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
@@ -51,6 +52,9 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Autowired
     private TokenFormatSelector tokenFormatSelector;
@@ -136,20 +140,14 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
 
     @Override
     public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, authenticatedByMethodGroups);
-
-        //TODO: Add feed event for User TRR
-
-        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeTokensForBaseUser(userId, authenticatedByMethodGroups);
-        }
+        BaseUser user = identityUserService.getBaseUserById(userId);
+        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
     }
 
     @Override
     public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByMethodGroups);
-
-        //TODO: Add feed event for User TRR
+        TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByMethodGroups);
+        sendUserTrrFeedEventIfNecessary(user, trr);
 
         if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
             uuidTokenRevocationService.revokeTokensForBaseUser(user, authenticatedByMethodGroups);
@@ -158,20 +156,14 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
 
     @Override
     public void revokeAllTokensForBaseUser(String userId) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(userId, Arrays.asList(AuthenticatedByMethodGroup.ALL));
-
-        //TODO: Add feed event for User TRR
-
-        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeAllTokensForBaseUser(userId);
-        }
+        BaseUser user = identityUserService.getBaseUserById(userId);
+        revokeAllTokensForBaseUser(user);
     }
 
     @Override
     public void revokeAllTokensForBaseUser(BaseUser user) {
-        tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), Arrays.asList(AuthenticatedByMethodGroup.ALL));
-
-        //TODO: Add feed event for User TRR
+        TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), Arrays.asList(AuthenticatedByMethodGroup.ALL));
+        sendUserTrrFeedEventIfNecessary(user, trr);
 
         if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
             uuidTokenRevocationService.revokeAllTokensForBaseUser(user);
@@ -198,6 +190,19 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
         if (user != null) {
             LOG.warn("Sending token feed to atom hopper.");
             atomHopperClient.asyncTokenPost(user, tokenString);
+        }
+    }
+
+    private void sendUserTrrFeedEventIfNecessary(BaseUser user, TokenRevocationRecord trr) {
+        if (user != null && user instanceof User) {
+            sendUserTrrFeedEvent((User) user, trr);
+        }
+    }
+
+    private void sendUserTrrFeedEvent(User user, TokenRevocationRecord trr) {
+        if (user != null) {
+            LOG.warn("Sending User TRR event to atom hopper.");
+            atomHopperClient.asyncPostUserTrr(user, trr);
         }
     }
 }

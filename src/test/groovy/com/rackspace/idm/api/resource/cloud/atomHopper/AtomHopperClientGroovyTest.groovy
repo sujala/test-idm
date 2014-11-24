@@ -1,12 +1,20 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.docs.event.identity.trr.user.CloudIdentityType
+import com.rackspace.docs.event.identity.trr.user.ValuesEnum
+import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.TokenRevocationRecord
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.CryptHelper
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -217,6 +225,64 @@ class AtomHopperClientGroovyTest extends Specification {
         1 * httpClient.execute(_) >> response
         1 * response.entity >> enty
         1 * atomHopperHelper.entityConsume(_)
+    }
+
+    def "create feed event for user TRR" () {
+        given:
+        setupMock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+
+        defaultUserService.getGroupsForUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString("atom.hopper.region") >> "GLOBAL"
+        config.getString("atom.hopper.dataCenter") >> "GLOBAL"
+        config.getString(AtomHopperConstants.ATOM_HOPPER_URL) >> "http://10.4.39.67:8888/namespace/feed"
+
+        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+
+        TokenRevocationRecord trr = new MemoryTokenRevocationRecordPersistenceStrategy.BasicTokenRevocationRecord()
+        trr.setTargetCreatedBefore(new Date())
+        trr.setTargetIssuedToId(user.id)
+
+        when:
+        trr.setTargetAuthenticatedByMethodGroups(TokenRevocationService.AUTH_BY_LIST_ALL_TOKENS)
+        UsageEntry entry = client.createUserTrrEntry(user, trr)
+
+        then:
+        entry.getContent().getEvent().getAny().get(0) instanceof CloudIdentityType
+        CloudIdentityType trrEntry = (CloudIdentityType) entry.getContent().getEvent().getAny().get(0);
+        CollectionUtils.isEmpty(trrEntry.tokenAuthenticatedBy)
+
+        when: "have single auth by in single set"
+        trr.setTargetAuthenticatedByMethodGroups(TokenRevocationService.AUTH_BY_LIST_API_TOKENS)
+        entry = client.createUserTrrEntry(user, trr)
+
+        then:
+        entry.getContent().getEvent().getAny().get(0) instanceof CloudIdentityType
+        CloudIdentityType trrEntry2 = (CloudIdentityType) entry.getContent().getEvent().getAny().get(0);
+        trrEntry2.tokenAuthenticatedBy.get(0).values.contains(ValuesEnum.APIKEY)
+
+        when: "have multiple auth by in single set"
+        trr.setTargetAuthenticatedByMethodGroups(Arrays.asList(AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.PASSWORD, AuthenticatedByMethodEnum.PASSCODE)))
+        entry = client.createUserTrrEntry(user, trr)
+
+        then:
+        entry.getContent().getEvent().getAny().get(0) instanceof CloudIdentityType
+        CloudIdentityType trrEntry3 = (CloudIdentityType) entry.getContent().getEvent().getAny().get(0);
+        CollectionUtils.isEqualCollection(trrEntry3.tokenAuthenticatedBy.get(0).values, Arrays.asList(ValuesEnum.PASSWORD, ValuesEnum.PASSCODE))
+
+        when: "have single auth by in multiple sets"
+        trr.setTargetAuthenticatedByMethodGroups(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD, AuthenticatedByMethodGroup.APIKEY))
+        entry = client.createUserTrrEntry(user, trr)
+
+        then:
+        entry.getContent().getEvent().getAny().get(0) instanceof CloudIdentityType
+        CloudIdentityType trrEntry4 = (CloudIdentityType) entry.getContent().getEvent().getAny().get(0);
+        CollectionUtils.isEqualCollection(trrEntry4.tokenAuthenticatedBy.get(0).values, Arrays.asList(ValuesEnum.PASSWORD))
+        CollectionUtils.isEqualCollection(trrEntry4.tokenAuthenticatedBy.get(1).values, Arrays.asList(ValuesEnum.APIKEY))
     }
 
     def createTenantRole(String name, String roleRsId, String description) {

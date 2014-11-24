@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
-import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -18,7 +18,7 @@ import spock.lang.Specification
  */
 class AtomHopperHelperTest extends Specification{
     @Shared AtomHopperHelper atomHopperHelper
-    @Shared Configuration config
+    @Shared IdentityConfig identityConfig
     @Shared UserService userService
     @Shared ScopeAccessService scopeAccessService
 
@@ -26,47 +26,20 @@ class AtomHopperHelperTest extends Specification{
         atomHopperHelper = new AtomHopperHelper();
     }
 
-    def "Get Auth Token expired token" (){
-        given:
-        setupMock()
-        config.getString(_) >> "auth"
-        User user = new User()
-        user.uniqueId = "1"
-        userService.getUser(_) >> user
-        ScopeAccess scopeAccess = new ScopeAccess();
-        Date expiredDate = new Date()
-        expiredDate.minus(1)
-        scopeAccess.setAccessTokenExp(expiredDate)
-        scopeAccess.setClientId("1")
-        scopeAccess.setAccessTokenString("token")
-        scopeAccessService.getScopeAccessForUser(_) >> scopeAccess
-        UserScopeAccess scopeAccess2 = new UserScopeAccess()
-        Date date = new Date()
-        scopeAccess2.setAccessTokenExp(date.plus(1))
-        scopeAccess2.setClientId("1")
-        scopeAccess2.setAccessTokenString("token")
-        scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> scopeAccess2
-
-        when:
-        String token = atomHopperHelper.getAuthToken()
-
-        then:
-        token != null;
-    }
-
     def "Get Auth Token good token" (){
         given:
         setupMock()
-        config.getString(_) >> "auth"
+        identityConfig.getGaUsername() >> "auth"
+        identityConfig.getCloudAuthClientId() >> "aclient"
         User user = new User()
         user.uniqueId = "1"
         userService.getUser(_) >> user
-        ScopeAccess scopeAccess = new ScopeAccess();
+        ScopeAccess scopeAccess = new UserScopeAccess();
         Date date = new Date()
         scopeAccess.setAccessTokenExp(date.plus(1))
         scopeAccess.setClientId("1")
         scopeAccess.setAccessTokenString("token")
-        scopeAccessService.getScopeAccessForUser(_) >> scopeAccess
+        scopeAccessService.getValidUserScopeAccessForClientId(_, _, _) >> scopeAccess
 
         when:
         String token = atomHopperHelper.getAuthToken()
@@ -76,8 +49,8 @@ class AtomHopperHelperTest extends Specification{
     }
 
     def setupMock(){
-        config = Mock()
-        atomHopperHelper.config = config
+        identityConfig = Mock()
+        atomHopperHelper.identityConfig = identityConfig
         userService = Mock()
         atomHopperHelper.userService = userService
         scopeAccessService = Mock()

@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
+import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
@@ -31,6 +33,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         mockUserService(service)
         mockIdentityConfig(service)
         mockTokenFormatSelector(service)
+        mockIdentityUserService(service)
 
         tokenRevocationRecordPersistenceStrategy = Mock()
         service.tokenRevocationRecordPersistenceStrategy = tokenRevocationRecordPersistenceStrategy
@@ -84,6 +87,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
+        identityUserService.getBaseUserById(_) >> user
 
         List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
 
@@ -93,7 +97,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user.id, _)
+        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
@@ -109,7 +113,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user.id, _)
+        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
@@ -120,10 +124,61 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         0 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
     }
 
+    def "revokeTokensForBaseUser - atom hopper trr event sent appropriately based on user type" () {
+        given:
+        List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
+
+        when:
+        Racker racker = new Racker()
+        racker.rackerId = "1"
+        service.revokeTokensForBaseUser(racker, authenticatedByMethodGroups)
+
+        then:
+        0 * atomHopperClient.asyncPostUserTrr(_,_)
+
+        when:
+        identityUserService.getBaseUserById(racker.rackerId) >> racker
+        service.revokeTokensForBaseUser(racker.rackerId, authenticatedByMethodGroups)
+
+        then:
+        0 * atomHopperClient.asyncPostUserTrr(_,_)
+
+        when:
+        User user = new User()
+        user.id = "1"
+        service.revokeTokensForBaseUser(user, authenticatedByMethodGroups)
+
+        then:
+        1 * atomHopperClient.asyncPostUserTrr(_,_)
+
+        when:
+        identityUserService.getBaseUserById(user.id) >> user
+        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+
+        then:
+        1 * atomHopperClient.asyncPostUserTrr(_,_)
+
+        when:
+        FederatedUser federatedUser = new FederatedUser()
+        federatedUser.id = "1"
+        service.revokeTokensForBaseUser(federatedUser, authenticatedByMethodGroups)
+
+        then:
+        0 * atomHopperClient.asyncPostUserTrr(_,_)
+
+        when:
+        identityUserService.getBaseUserById(federatedUser.id) >> federatedUser
+        service.revokeTokensForBaseUser(federatedUser.id, authenticatedByMethodGroups)
+
+        then:
+        0 * atomHopperClient.asyncPostUserTrr(_,_)
+    }
+
     def "revokeAllTokensForBaseUser - analagous UUID revoke called as appropriate" () {
         given:
         User user = new User()
         user.id = "1"
+        identityUserService.getBaseUserById(_) >> user
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
@@ -131,7 +186,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user.id)
+        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
@@ -147,7 +202,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user.id)
+        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false

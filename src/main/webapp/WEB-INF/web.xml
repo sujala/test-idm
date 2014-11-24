@@ -5,7 +5,7 @@
 
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>classpath:app-config.xml</param-value>
+		<param-value>classpath:/app-config.xml</param-value>
 	</context-param>
 
 	<!--
@@ -120,11 +120,15 @@
 
     <filter-mapping>
         <filter-name>ldapLoggingFilter</filter-name>
-        <url-pattern>/cloud/v1*</url-pattern>
+        <url-pattern>/cloud/v1.0/*</url-pattern>
     </filter-mapping>
     <filter-mapping>
         <filter-name>ldapLoggingFilter</filter-name>
-        <url-pattern>/cloud/v2*</url-pattern>
+        <url-pattern>/cloud/v1.1/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>ldapLoggingFilter</filter-name>
+        <url-pattern>/cloud/v2.0/*</url-pattern>
     </filter-mapping>
 
     <filter-mapping>
