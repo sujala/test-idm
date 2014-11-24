@@ -210,8 +210,23 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
+    public List<User> getDomainSuperAdmins(String domainId) {
+        return filterSuperAdmins(userService.getUsersWithDomain(domainId));
+    }
+
+    @Override
     public List<User> getEnabledDomainAdmins(String domainId) {
         return filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true));
+    }
+
+    private List<User> filterSuperAdmins(Iterable<User> userList) {
+        List<User> superAdmins = new ArrayList<User>();
+        for (User user : userList) {
+            if (authorizationService.hasServiceAdminRole(user) || authorizationService.hasIdentityAdminRole(user)) {
+                superAdmins.add(user);
+            }
+        }
+        return superAdmins;
     }
 
     private List<User> filterUserAdmins(Iterable<User> userList) {

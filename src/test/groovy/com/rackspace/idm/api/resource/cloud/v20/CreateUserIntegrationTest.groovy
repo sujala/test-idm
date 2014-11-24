@@ -426,4 +426,49 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteGroup(group)
     }
 
+    def "create identity admin with no domain creates a domain for the user"() {
+        given:
+        def username = "identityAdmin" + testUtils.getRandomUUID()
+
+        when:
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+
+        then:
+        user.domainId != null
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(user.domainId)
+    }
+
+    def "create identity admin with a domain ID creates the domain if it does not exist"() {
+        given:
+        def username = "identityAdmin" + testUtils.getRandomUUID()
+        def domainId = testUtils.getRandomUUID()
+
+        when: "load the domain to verify that it does not exist"
+        def getDomainResponse = cloud20.getDomain(utils.getServiceAdminToken(), domainId)
+
+        then: "the domain does not exist"
+        getDomainResponse.status == 404
+
+        when: "create the user with the domain ID"
+        def user = utils.createUser(utils.getServiceAdminToken(), username, domainId)
+
+        then: "the domain was added to the user"
+        user.domainId == domainId
+        def loadedUser = utils.getUserById(user.id, utils.getServiceAdminToken())
+        loadedUser.domainId == domainId
+
+        when: "load the domain again to verify that it was created (not just added to the user)"
+        def domain = utils.getDomain(domainId)
+
+        then: "the domain was created"
+        domain.id == domainId
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+    }
+
 }
