@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -9,15 +11,22 @@ import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
+import spock.lang.Unroll
 
-class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
-    @Shared User impersonatorUser;
+class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
+    @Shared User impersonatorProvisionedUser;
+    @Shared Racker impersonatorRackerUser;
     @Shared User impersonatedUser;
 
     def setupSpec() {
-       impersonatorUser = entityFactory.createUser().with {
+        impersonatorProvisionedUser = entityFactory.createUser().with {
             it.id = UUID.randomUUID().toString().replaceAll("-", "")
-            it.username = "impersonator"
+            it.username = "impersonatorProvisionedUser"
+            return it
+        }
+        impersonatorRackerUser = entityFactory.createRacker().with {
+            it.rackerId = UUID.randomUUID().toString().replaceAll("-", "")
+            it.username = "impersonatorRackerUser"
             return it
         }
         impersonatedUser = entityFactory.createUser().with {
@@ -26,12 +35,11 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
             return it
         }
 
-        identityUserService.getProvisionedUserById(impersonatorUser.id) >> impersonatorUser
-        identityUserService.getProvisionedUserById(impersonatedUser.id) >> impersonatedUser
         identityUserService.getEndUserById(impersonatedUser.id) >> impersonatedUser
     }
 
-    def "marshall/unmarshall fully populated provisioned user impersonation token for provisioned user"() {
+    @Unroll
+    def "marshall/unmarshall fully populated impersonation token for impersonator of type #methodDesc"() {
         ImpersonatedScopeAccess originalSA = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             return it
@@ -49,9 +57,15 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         then:
         unmarshalledScopeAccess instanceof ImpersonatedScopeAccess
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
+
+        where:
+        impersonatorUser | methodDesc
+        impersonatorProvisionedUser | "Provisioned User"
+        impersonatorRackerUser | "Racker"
     }
 
-    def "marshallTokenForUser() - maximize length"() {
+    @Unroll
+    def "maximize length of marshalling impersonation token for impersonator of type #methodDesc"() {
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
@@ -76,9 +90,15 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         then:
         unmarshalledScopeAccess instanceof ImpersonatedScopeAccess
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
+
+        where:
+        impersonatorUser | methodDesc
+        impersonatorProvisionedUser | "Provisioned User"
+        impersonatorRackerUser | "Racker"
     }
 
-    def "marshallTokenForUser() - with generated impersonated user token"() {
+    @Unroll
+    def "marshallTokenForUser() - regenerates impersonation token for impersonator of type #methodDesc"() {
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
@@ -108,13 +128,20 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
         when: "unmarshall"
         ScopeAccess unmarshalledScopeAccess = aeTokenService.unmarshallToken(webSafeToken)
 
-        then:
+        then: "retrieved token contains new impersonating token"
         unmarshalledScopeAccess instanceof ImpersonatedScopeAccess
+        originalSA.impersonatingToken != ((ImpersonatedScopeAccess) unmarshalledScopeAccess).impersonatingToken
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
+
+        where:
+        impersonatorUser | methodDesc
+        impersonatorProvisionedUser | "Provisioned User"
+        impersonatorRackerUser | "Racker"
     }
 
 
-    def "marshallTokenForUser(provisioned user) - errors thrown appropriately"() {
+    @Unroll
+    def "marshall impersonated scope access with impersonator of type #methodDesc - errors thrown appropriately"() {
         when: "null impersonator userId in token"
         ImpersonatedScopeAccess impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
             it.userRsId = null
@@ -144,9 +171,14 @@ class DefaultAETokenServiceProvisionedUserImpersonationIntegrationTest extends D
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        impersonatorUser | methodDesc
+        impersonatorProvisionedUser | "Provisioned User"
+        impersonatorRackerUser | "Racker"
     }
 
-    def createImpersonatedToken(User impersonator, User impersonated, String tokenString =  UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {
+    def createImpersonatedToken(BaseUser impersonator, User impersonated, String tokenString =  UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {
         new ImpersonatedScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
