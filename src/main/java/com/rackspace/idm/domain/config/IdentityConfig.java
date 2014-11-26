@@ -41,6 +41,9 @@ public class IdentityConfig {
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT = "cloud-identity-tokens-ae";
 
+    private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
+    private static final String KEYCZAR_DN_DEFAULT = "ou=keyinfo,o=keystore,dc=rackspace,dc=com";
+
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
@@ -146,6 +149,10 @@ public class IdentityConfig {
 
     public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
         return config.getBoolean(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE);
+    }
+
+    public String getKeyCzarDN() {
+        return config.getString(KEYCZAR_DN_CONFIG, KEYCZAR_DN_DEFAULT);
     }
 
 }
