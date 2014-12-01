@@ -65,6 +65,9 @@ public class LdapLoggingFilter extends OncePerRequestFilter {
     @Autowired
     private AuthorizationService authorizationService;
 
+    public LdapLoggingFilter() {
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

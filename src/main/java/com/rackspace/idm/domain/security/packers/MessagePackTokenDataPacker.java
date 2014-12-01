@@ -88,6 +88,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_PASSCODE, 4);
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_RSAKEY, 5);
         AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION, 6);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.SYSTEM.getValue(), 7);
         for (String key : AUTH_BY_MARSHALL.keySet()) {
             AUTH_BY_UNMARSHALL.put(AUTH_BY_MARSHALL.get(key), key);
         }

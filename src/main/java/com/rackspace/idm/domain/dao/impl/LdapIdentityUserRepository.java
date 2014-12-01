@@ -7,6 +7,7 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public EndUser getEndUserById(String userId) {
         return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    @Override
+    public BaseUser getBaseUserById(String userId) {
+        return searchForUserById(userId, ALLUSER_CLASS_FILTERS, BaseUser.class);
     }
 
     @Override
@@ -104,7 +110,7 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return (Iterable) getObjects(searchFilterGetEnabledEndUsersByGroupId(groupId));
     }
 
-    private <T extends EndUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
+    private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), SearchScope.SUB);
     }
 
@@ -145,9 +151,41 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     private Filter searchFilterGetUserById(String id, List<Filter> userClassFilterList) {
+        List<Filter> idMatchFilters = new ArrayList<Filter>();
+        if (userClassFilterList.contains(RACKER_USER_CLASS_FILTER)) {
+            idMatchFilters.add(getRackerFilter(id));
+        }
+
+        if (userClassFilterList.contains(PROVISIONED_USER_CLASS_FILTER) || userClassFilterList.contains(FEDERATED_USER_CLASS_FILTER)) {
+            idMatchFilters.add(getEndUserFilter(userClassFilterList, id));
+        }
+
+        if (CollectionUtils.isEmpty(idMatchFilters)) {
+            throw new IllegalArgumentException("Must provide at least one userClassFilter");
+        }
+
+        return Filter.createORFilter(idMatchFilters);
+    }
+
+    private Filter getRackerFilter(String rackerId) {
         return Filter.createANDFilter(
-                Filter.createORFilter(userClassFilterList),
-                Filter.createEqualityFilter(ATTR_ID, id)
+                RACKER_USER_CLASS_FILTER,
+                Filter.createEqualityFilter(ATTR_RACKER_ID, rackerId)
+        );
+    }
+
+    private Filter getEndUserFilter(List<Filter> userClassFilterList, String userId) {
+        List<Filter> endUserFilters = new ArrayList<Filter>();
+        if (userClassFilterList.contains(PROVISIONED_USER_CLASS_FILTER)) {
+            endUserFilters.add(PROVISIONED_USER_CLASS_FILTER);
+        }
+        if (userClassFilterList.contains(FEDERATED_USER_CLASS_FILTER)) {
+            endUserFilters.add(FEDERATED_USER_CLASS_FILTER);
+        }
+
+        return Filter.createANDFilter(
+                Filter.createORFilter(endUserFilters),
+                Filter.createEqualityFilter(ATTR_ID, userId)
         );
     }
 

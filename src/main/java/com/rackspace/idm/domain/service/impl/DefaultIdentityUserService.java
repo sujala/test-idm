@@ -28,6 +28,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
+    public BaseUser getBaseUserById(String userId) {
+        return identityUserRepository.getBaseUserById(userId);
+    }
+
+    @Override
     public EndUser getEndUserById(String userId) {
         return identityUserRepository.getEndUserById(userId);
     }

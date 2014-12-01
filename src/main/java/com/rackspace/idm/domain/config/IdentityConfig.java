@@ -15,6 +15,8 @@ public class IdentityConfig {
     private static final String LOCALHOST = "localhost";
 
     //REQUIRED PROPERTIES
+    private static final String GA_USERNAME = "ga.username";
+
     private static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
     private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
@@ -58,6 +60,8 @@ public class IdentityConfig {
     @PostConstruct
     private void verifyConfigs() {
         // Verify and Log Required Values
+        verifyAndLogProperty(GA_USERNAME, REQUIRED);
+
         verifyAndLogProperty(EMAIL_FROM_EMAIL_ADDRESS, REQUIRED);
         verifyAndLogProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
         verifyAndLogProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
@@ -81,6 +85,10 @@ public class IdentityConfig {
         } else {
             logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty));
         }
+    }
+
+    public String getGaUsername() {
+        return config.getString(GA_USERNAME);
     }
 
     public String getEmailFromAddress() {
