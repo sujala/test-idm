@@ -269,6 +269,23 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         removeDomainFromUser(SERVICE_ADMIN_2_USERNAME)
     }
 
+    def "update domain does not require domain ID to be within the body of the request"() {
+        given:
+        def domainId = utils.createDomain()
+        def domainData = v2Factory.createDomain(domainId, testUtils.getRandomUUID("domain"))
+        utils.createDomain(domainData)
+        def domain = v2Factory.createDomain(domainId, testUtils.getRandomUUID()).with {
+            it.id = null
+            it
+        }
+
+        when: "update the domain without the domain ID in the body"
+        def response = cloud20.updateDomain(utils.getIdentityAdminToken(), domainId, domain)
+
+        then: "success"
+        response.status == 200
+    }
+
     def removeDomainFromUser(username) {
         def user = userService.checkAndGetUserByName(username)
         user.setDomainId(null)

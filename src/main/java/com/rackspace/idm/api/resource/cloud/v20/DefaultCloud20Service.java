@@ -2283,11 +2283,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
         if(IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
-            List<User> superAdmins = domainService.getDomainSuperAdmins(domain.getId());
+            List<User> superAdmins = domainService.getDomainSuperAdmins(domainId);
             if(containsServiceAdmin(superAdmins)) {
                 throw new ForbiddenException("Cannot modify a domain containing a service admin");
             }
-            if(containsIdentityAdmin(superAdmins) && caller.getDomainId() != null && !caller.getDomainId().equals(domain.getId())) {
+            if(containsIdentityAdmin(superAdmins) && caller.getDomainId() != null && !caller.getDomainId().equals(domainId)) {
                 throw new ForbiddenException("Cannot modify a domain containing an identity admin when you are not in the domain");
             }
         }
