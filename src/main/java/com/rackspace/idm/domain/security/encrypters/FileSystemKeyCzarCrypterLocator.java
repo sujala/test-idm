@@ -6,9 +6,7 @@ import org.apache.commons.configuration.Configuration;
 import org.keyczar.Crypter;
 import org.keyczar.exceptions.KeyczarException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
 public class FileSystemKeyCzarCrypterLocator implements KeyCzarCrypterLocator {
     public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME;
     public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT;
@@ -53,4 +51,5 @@ public class FileSystemKeyCzarCrypterLocator implements KeyCzarCrypterLocator {
             throw new InitializationException("Error initializing AE Token Service crypter", e);
         }
     }
+
 }

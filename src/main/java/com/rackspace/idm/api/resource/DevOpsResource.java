@@ -3,13 +3,13 @@ package com.rackspace.idm.api.resource;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Map;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -44,4 +44,29 @@ public class DevOpsResource {
     public Response getLog(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("logName") String logName) {
         return devOpsService.getLdapLog(uriInfo, authToken, logName).build();
     }
+
+    /**
+     * Retrieves the current node state for KeyCzar cached keys.
+     *
+     * @return The metadata format is JSON only since it is just for internal use.
+     */
+    @GET
+    @Path("/keystore/meta")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response getKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return devOpsService.getKeyMetadata(authToken).build();
+    }
+
+    /**
+     * Reset the KeyCzar cache.
+     *
+     * @return The metadata format is JSON only since it is just for internal use.
+     */
+    @PUT
+    @Path("/keystore/meta")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response resetKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return devOpsService.resetKeyMetadata(authToken).build();
+    }
+
 }

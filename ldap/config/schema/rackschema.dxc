@@ -873,6 +873,29 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.116) = {
     description = "The format of the tokens that will be issued"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.3.1.2) = {
+    name = rsKeyData
+    ldap-names = rsKeyData
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "The JSON key data"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.3.1.3) = {
+    name = rsKeyVersion
+    ldap-names = rsKeyVersion
+    syntax = integer
+    description = "The key version"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.3.1.4) = {
+    name = rsKeyTimestamp
+    ldap-names = rsKeyTimestamp
+    equality = generalizedTimeMatch
+    syntax = generalizedTime
+    description = "The key timestamp"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1431,4 +1454,30 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.38) = {
                 accessToken,
                 accessTokenExp,
                 rsType
+};
+
+schema set object-class (1.3.6.1.4.1.20988.3.2.1) = {
+        name = rsKeyMetadata
+        ldap-names = rsKeyMetadata
+        subclass-of top
+        kind = structural
+        must-contain
+                cn,
+                rsKeyData
+        may-contain
+                description,
+                rsKeyTimestamp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.3.2.2) = {
+        name = rsKeyDescriptor
+        ldap-names = rsKeyDescriptor
+        subclass-of top
+        kind = structural
+        must-contain
+                rsKeyVersion,
+                rsKeyData
+        may-contain
+                description,
+                rsKeyTimestamp
 };
