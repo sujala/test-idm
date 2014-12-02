@@ -27,12 +27,12 @@ public class LdapKeyVersion implements KeyVersion, UniqueId {
     )
     private Integer version;
 
-    @LDAPField(attribute= LdapRepository.ATTR_KEY_TIMESTAMP,
+    @LDAPField(attribute= LdapRepository.ATTR_KEY_CREATED,
             objectClass=LdapRepository.OBJECTCLASS_KEY_DESCRIPTOR,
             filterUsage=FilterUsage.ALWAYS_ALLOWED,
             requiredForEncode=false
     )
-    private Date timestamp;
+    private Date created;
 
     @LDAPField(attribute= LdapRepository.ATTR_KEY_DATA,
             objectClass=LdapRepository.OBJECTCLASS_KEY_DESCRIPTOR,

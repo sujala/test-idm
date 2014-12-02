@@ -4,5 +4,5 @@ import java.util.Date;
 
 public interface KeyMetadata {
     String getData();
-    Date getTimestamp();
+    Date getCreated();
 }

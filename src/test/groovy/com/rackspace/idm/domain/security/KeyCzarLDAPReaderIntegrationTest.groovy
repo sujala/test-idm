@@ -18,13 +18,11 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         def info = cacheableKeyCzarCrypterLocator.getCacheInfo()
 
         when:
-        def data = new ObjectMapper().readValue(response.getEntity(String), Map)
+        def data = new ObjectMapper().readValue(response.getEntity(String), Map).get('metadata')
 
         then:
         response.status == 200
-        info.get('size') == data.get('size')
-        info.get('updated') == data.get('updated')
-        info.get('retrieved') != data.get('retrieved')
+        info.getSize() == data.get('size')
     }
 
     def "test update metadata cache info"() {
@@ -34,8 +32,8 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         def response2 = devops.forceUpdateInfo(utils.getServiceAdminToken())
 
         when:
-        def data1 = new ObjectMapper().readValue(response1.getEntity(String), Map)
-        def data2 = new ObjectMapper().readValue(response2.getEntity(String), Map)
+        def data1 = new ObjectMapper().readValue(response1.getEntity(String), Map).get('metadata')
+        def data2 = new ObjectMapper().readValue(response2.getEntity(String), Map).get('metadata')
 
         then:
         response1.status == 200

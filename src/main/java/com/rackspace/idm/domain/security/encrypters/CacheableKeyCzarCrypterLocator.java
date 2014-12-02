@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.security.encrypters;
 
-import java.util.Map;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata;
 
 public interface CacheableKeyCzarCrypterLocator extends KeyCzarCrypterLocator {
     /**
@@ -13,5 +13,5 @@ public interface CacheableKeyCzarCrypterLocator extends KeyCzarCrypterLocator {
      *
      * @return
      */
-    Map<String, Object> getCacheInfo();
+    KeyMetadata getCacheInfo();
 }

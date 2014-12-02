@@ -1,8 +1,11 @@
 package com.rackspace.idm.domain.security.encrypters.keyczar;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyVersionStatusEnum;
 import org.keyczar.exceptions.KeyczarException;
 import org.keyczar.interfaces.KeyczarReader;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.*;
 
 public class InMemoryKeyCzarReader implements KeyczarReader {
@@ -11,16 +14,7 @@ public class InMemoryKeyCzarReader implements KeyczarReader {
     private final Map<Integer, KeyVersion> versionMap;
     private final org.keyczar.KeyMetadata kcMetaData;
     private final Date retrieved;
-    private final Map info;
-
-    // Info data
-    private static final String UPDATED = "updated";
-    private static final String RETRIEVED = "retrieved";
-    private static final String SIZE = "size";
-    private static final String VERSION = "version";
-    private static final String STATUS = "status";
-    private static final String CREATED = "created";
-    private static final String KEYS = "keys";
+    private final com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata info;
 
     public InMemoryKeyCzarReader(KeyMetadata metadata, List<KeyVersion> versions) {
         this.retrieved = new Date();
@@ -36,26 +30,22 @@ public class InMemoryKeyCzarReader implements KeyczarReader {
         }
         versionMap = Collections.unmodifiableMap(versionsHashMap);
 
-        // Stores info data.
-        final Map<String, Object> infoMap = new HashMap<String, Object>();
-        Date timestamp = metadata.getTimestamp();
-        infoMap.put(UPDATED, timestamp == null ? null : timestamp.toGMTString());
-        infoMap.put(RETRIEVED, retrieved.toGMTString());
-        infoMap.put(SIZE, kcMetaData.getVersions().size());
-
-        final List<Map<String, Object>> keys = new ArrayList<Map<String, Object>>();
-        for (org.keyczar.KeyVersion version: kcMetaData.getVersions()) {
-            timestamp = versionMap.get(version.getVersionNumber()).getTimestamp();
-
-            final Map<String, Object> key = new HashMap<String, Object>();
-            key.put(VERSION, version.getVersionNumber());
-            key.put(STATUS, version.getStatus().toString());
-            key.put(CREATED, timestamp == null ? null : timestamp.toGMTString());
-            keys.add(key);
+        // Creates info data.
+        info = new com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata();
+        info.setCreated(convertDate(metadata.getCreated()));
+        info.setRetrieved(convertDate(retrieved));
+        info.setSize(kcMetaData.getVersions().size());
+        for (org.keyczar.KeyVersion idx: kcMetaData.getVersions()) {
+            final com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyVersion data = new com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyVersion();
+            final KeyVersion version = versionMap.get(idx.getVersionNumber());
+            data.setCreated(convertDate(version.getCreated()));
+            data.setVersion(idx.getVersionNumber());
+            try {
+                data.setStatus(KeyVersionStatusEnum.fromValue(idx.getStatus().toString().toUpperCase()));
+            } catch (Exception e) {
+            }
+            info.getKey().add(data);
         }
-        infoMap.put(KEYS, keys);
-
-        info = Collections.unmodifiableMap(infoMap);
     }
 
     @Override
@@ -75,8 +65,21 @@ public class InMemoryKeyCzarReader implements KeyczarReader {
         return metadata.getData();
     }
 
-    public Map<String, Object> getMetadataInfo() {
+    public com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata getMetadataInfo() {
         return info;
+    }
+
+    private XMLGregorianCalendar convertDate(Date date) {
+        if (date == null) {
+            return null;
+        }
+        try {
+            final GregorianCalendar cal = new GregorianCalendar();
+            cal.setTime(date);
+            return DatatypeFactory.newInstance().newXMLGregorianCalendar(cal);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

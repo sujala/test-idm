@@ -11,7 +11,6 @@ import org.keyczar.exceptions.KeyczarException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Map;
 
 public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator {
 
@@ -58,7 +57,7 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
     }
 
     @Override
-    public Map<String, Object> getCacheInfo() {
+    public com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata getCacheInfo() {
         return memorizedCrypterCache.get().inMemoryKeyCzarReader.getMetadataInfo();
     }
 

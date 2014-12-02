@@ -5,5 +5,5 @@ import java.util.Date;
 public interface KeyVersion {
     Integer getVersion();
     String getData();
-    Date getTimestamp();
+    Date getCreated();
 }

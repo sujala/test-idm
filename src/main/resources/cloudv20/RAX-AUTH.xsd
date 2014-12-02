@@ -761,4 +761,29 @@
         </restriction>
     </simpleType>
 
+    <element name="metadata" type="RAX-AUTH:KeyMetadata" />
+
+    <simpleType name="KeyVersionStatusEnum">
+        <restriction base="xsd:string">
+            <enumeration value="PRIMARY"/>
+            <enumeration value="ACTIVE"/>
+            <enumeration value="INACTIVE"/>
+        </restriction>
+    </simpleType>
+
+    <complexType name="KeyMetadata">
+        <sequence>
+            <element name="key" type="RAX-AUTH:KeyVersion" minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+        <attribute name="created" type="xsd:dateTime" use="optional" />
+        <attribute name="retrieved" type="xsd:dateTime" use="required" />
+        <attribute name="size" type="xsd:int" use="required" />
+    </complexType>
+
+    <complexType name="KeyVersion">
+        <attribute name="created" type="xsd:dateTime" use="optional" />
+        <attribute name="version" type="xsd:int" use="required" />
+        <attribute name="status" type="RAX-AUTH:KeyVersionStatusEnum" use="required" />
+    </complexType>
+
 </schema>
