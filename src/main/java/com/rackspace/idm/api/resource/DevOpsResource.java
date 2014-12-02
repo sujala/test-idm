@@ -9,7 +9,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Map;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -52,7 +51,6 @@ public class DevOpsResource {
      */
     @GET
     @Path("/keystore/meta")
-    @Produces({MediaType.APPLICATION_JSON})
     public Response getKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
         return devOpsService.getKeyMetadata(authToken).build();
     }
@@ -64,7 +62,6 @@ public class DevOpsResource {
      */
     @PUT
     @Path("/keystore/meta")
-    @Produces({MediaType.APPLICATION_JSON})
     public Response resetKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
         return devOpsService.resetKeyMetadata(authToken).build();
     }

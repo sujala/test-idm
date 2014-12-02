@@ -59,7 +59,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_KEY_METADATA = "rsKeyMetadata";
     public static final String ATTR_KEY_DATA = "rsKeyData";
     public static final String ATTR_KEY_VERSION = "rsKeyVersion";
-    public static final String ATTR_KEY_TIMESTAMP = "rsKeyTimestamp";
+    public static final String ATTR_KEY_CREATED = "rsKeyCreated";
 
     public static final String ATTR_ID = "rsId";
 

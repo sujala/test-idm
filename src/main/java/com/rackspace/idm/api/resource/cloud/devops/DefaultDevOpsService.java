@@ -73,14 +73,16 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder getKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        return Response.ok().entity(cacheableKeyCzarCrypterLocator.getCacheInfo());
+        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
     }
 
     @Override
     public Response.ResponseBuilder resetKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         cacheableKeyCzarCrypterLocator.resetCache();
-        return Response.ok().entity(cacheableKeyCzarCrypterLocator.getCacheInfo());
+        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
     }
 
     private File getLogParentDir() {
