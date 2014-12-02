@@ -24,16 +24,9 @@ public class DefaultAETokenService implements AETokenService {
 
     private static final byte DATA_PACKING_SCHEME_MESSAGE_PACK = 0;
 
-    public static final String ERROR_CODE_MARSHALL_PACKING_EXCEPTION = "AEM-0001";
-    public static final String ERROR_CODE_MARSHALL_INVALID_SCOPE_EXCEPTION = "AEM-0003";
-
-    public static final String ERROR_CODE_UNMARSHALL_UNPACKING_EXCEPTION = "AEM-0000";
     public static final String ERROR_CODE_UNMARSHALL_INVALID_BASE64 = "AEU-0001";
     public static final String ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME = "AEU-0002";
     public static final String ERROR_CODE_UNMARSHALL_INVALID_DATAPACKING_SCHEME = "AEU-0003";
-    public static final String ERROR_CODE_UNMARSHALL_INVALID_DATAPACKING_VERSION = "AEU-0004";
-    public static final String ERROR_CODE_UNMARSHALL_INVALID_DATA_CONTENTS = "AEU-0005";
-    public static final String ERROR_CODE_UNMARSHALL_INVALID_SCOPE_DATA_CONTENTS = "AEU-0006";
 
     @Autowired
     private TokenDataPacker tokenDataPacker;
@@ -60,16 +53,18 @@ public class DefaultAETokenService implements AETokenService {
         final boolean isFederatedUser = object instanceof FederatedUser;
         final boolean isImpersonationToken = scopeAccess instanceof ImpersonatedScopeAccess;
         final boolean isUserToken = scopeAccess instanceof UserScopeAccess;
-        final boolean isRackerUser = object instanceof Racker && scopeAccess instanceof RackerScopeAccess;
+        final boolean isRackerUser = object instanceof Racker;
+        final boolean isRackerToken = scopeAccess instanceof RackerScopeAccess;
+
 
         // AE service supports
         // - federated and provisioned user "regular" tokens
-        // - provisioned users creating "impersonation" tokens (against fed/provisioned users)
+        // - provisioned users & rackers creating "impersonation" tokens (against fed/provisioned users)
         // - racker users creating "racker" tokens
 
         return (isProvisionedUser && (isImpersonationToken || isUserToken))
                 || (isFederatedUser && isUserToken)
-                || isRackerUser;
+                || (isRackerUser && (isImpersonationToken || isRackerToken));
     }
 
     @Override

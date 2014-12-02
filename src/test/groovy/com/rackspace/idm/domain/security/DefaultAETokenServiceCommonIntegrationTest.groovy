@@ -1,14 +1,15 @@
 package com.rackspace.idm.domain.security
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
-import org.joda.time.DateTime
 import org.keyczar.util.Base64Coder
 import spock.lang.Shared
 
-class DefaultAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
+/**
+ * Tests common error scenarios with generating ae tokens.
+ */
+class DefaultAETokenServiceCommonIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
     @Shared User hardCodedUser;
 
     def setupSpec() {
@@ -99,16 +100,4 @@ class DefaultAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseInte
         ex.errorCode == MessagePackTokenDataPacker.ERROR_CODE_UNPACK_INVALID_DATA_CONTENTS
     }
 
-    def createProvisionedUserToken(User user, String tokenString =  UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {
-        new UserScopeAccess().with {
-            it.accessTokenString = tokenString
-            it.accessTokenExp = expiration
-            it.userRsId = user.id
-            it.userRCN = "userRCN"
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
-            it.clientRCN = "clientRCN"
-            it.getAuthenticatedBy().addAll(authBy)
-            return it
-        }
-    }
 }

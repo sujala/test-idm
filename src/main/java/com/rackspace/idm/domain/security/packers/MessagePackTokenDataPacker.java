@@ -40,6 +40,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final byte TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER = 1;
     private static final byte TOKEN_TYPE_FEDERATED_USER = 2;
     private static final byte TOKEN_TYPE_RACKER = 3;
+    private static final byte TOKEN_TYPE_RACKER_IMPERSONATING_ENDUSER = 4;
 
     private static final Map<String, Integer> AUTH_BY_MARSHALL = new HashMap<String, Integer>();
     private static final Map<Integer, String> AUTH_BY_UNMARSHALL = new HashMap<Integer, String>();
@@ -53,9 +54,6 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     public static final String ERROR_CODE_PACKING_INVALID_SCOPE_EXCEPTION = "MPP-0002";
     public static final String ERROR_CODE_PACKING_INVALID_AUTHENTICATEDBY_EXCEPTION = "MPP-0003";
 
-    public static final String ERROR_CODE_UNPACKING_EXCEPTION = "MPU-0000";
-    public static final String ERROR_CODE_UNMARSHALL_INVALID_BASE64 = "MPU-0001";
-    public static final String ERROR_CODE_UNMARSHALL_INVALID_ENCRYPTION_SCHEME = "MPU-0002";
     public static final String ERROR_CODE_UNPACK_INVALID_DATAPACKING_SCHEME = "MPU-0003";
     public static final String ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION = "MPU-0004";
     public static final String ERROR_CODE_UNPACK_INVALID_DATA_CONTENTS = "MPU-0005";
@@ -115,6 +113,9 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         } else if (token instanceof RackerScopeAccess && user instanceof Racker) {
             packingItems.add(TOKEN_TYPE_RACKER);
             packingItems.addAll(packRackerToken(((Racker) user), (RackerScopeAccess) token));
+        } else if (token instanceof ImpersonatedScopeAccess && user instanceof Racker) {
+            packingItems.add(TOKEN_TYPE_RACKER_IMPERSONATING_ENDUSER);
+            packingItems.addAll(packRackerImpersonationToken((Racker) user, (ImpersonatedScopeAccess) token));
         } else {
             throw new UnsupportedOperationException("Unsupported " + user.getClass().getSimpleName() + " token:" + token.getClass().getSimpleName());
         }
@@ -155,6 +156,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
                 token = unpackFederatedUserToken(webSafeToken, unpacker);
             } else if (type == TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER) {
                 token = unpackProvisionedUserImpersonationToken(webSafeToken, unpacker);
+            } else if (type == TOKEN_TYPE_RACKER_IMPERSONATING_ENDUSER) {
+                token = unpackRackerImpersonationToken(webSafeToken, unpacker);
             } else if (type == TOKEN_TYPE_RACKER) {
                 token = unpackRackerToken(webSafeToken, unpacker);
             } else {
@@ -340,6 +343,75 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             // DN
             scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(impersonatorId, webSafeToken));
+            scopeAccess.setClientId(getCloudAuthClientId());
+        } else {
+            throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
+        }
+        return scopeAccess;
+    }
+
+    private List<Object> packRackerImpersonationToken(Racker user, ImpersonatedScopeAccess scopeAccess) {
+        //validate additional user specific stuff for this packing strategy
+        Validate.notNull(user.getId(), "user id required");
+        Validate.isTrue(user.getId().equals(scopeAccess.getIssuedToUserId()), "specified token not issued to specified user");
+        Validate.notNull(scopeAccess.getImpersonatingRsId(), "impersonating user required");
+
+        List<Object> packingItems = new ArrayList<Object>();
+
+        //packed version format (for future use...)
+        packingItems.add(VERSION_0);
+
+        // Timestamps
+        packingItems.add(scopeAccess.getAccessTokenExp().getTime());
+        packingItems.add(scopeAccess.getCreateTimestamp().getTime());
+
+        //Auth info
+        packingItems.add(compressAuthenticatedBy(scopeAccess.getAuthenticatedBy()));
+        packingItems.add(compressScope(scopeAccess.getScope()));
+
+        //user info
+        packingItems.add(user.getId());
+        packingItems.add(scopeAccess.getImpersonatingRsId());
+
+        return packingItems;
+    }
+
+    private ScopeAccess unpackRackerImpersonationToken(String webSafeToken, Unpacker unpacker) throws IOException {
+        ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
+
+        //packed version format (for future use...)
+        byte version = unpacker.readByte();
+        if (version == VERSION_0) {
+            // Timestamps
+            scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
+            scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
+
+            //Auth info
+            scopeAccess.setAuthenticatedBy(decompressAuthenticatedBy(safeRead(unpacker, Integer[].class)));
+            scopeAccess.setScope(decompressScope(safeRead(unpacker, Integer.class)));
+
+            //populate impersonator user info
+            String impersonatorId = safeRead(unpacker, String.class);
+            scopeAccess.setUserRsId(impersonatorId);
+
+            //populate impersonated information
+            String impersonatedUserId = safeRead(unpacker, String.class);
+            scopeAccess.setImpersonatingRsId(impersonatedUserId);
+
+            //generate dynamic ae token for the user being impersonated
+            EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);
+            if (impersonatedUser == null) {
+                throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_IMPERSONATED_DATA_CONTENTS, String.format("Impersonated user '%s' not found.", scopeAccess.getIssuedToUserId()));
+            }
+            UserScopeAccess usa = new UserScopeAccess();
+            usa.setUserRsId(impersonatedUser.getId());
+            usa.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
+            usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
+            aeTokenService.marshallTokenForUser(impersonatedUser, usa);
+            scopeAccess.setImpersonatingToken(usa.getAccessTokenString());
+
+            // DN
+            scopeAccess.setUniqueId(calculateRackerTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));

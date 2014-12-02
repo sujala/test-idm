@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.security
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.idm.domain.entity.Racker
+import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -54,6 +56,27 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         aeTokenService.authenticatedMessageProvider = amProvider
     }
 
+    def void validateScopeAccessesEqual(ScopeAccess original, ScopeAccess toValidate) {
+        assert original.getClass() == toValidate.getClass()
+        if (original instanceof RackerScopeAccess) {
+            validateRackerScopeAccessesEqual((RackerScopeAccess) original, (RackerScopeAccess) toValidate)
+        } else if (original instanceof UserScopeAccess) {
+            validateUserScopeAccessesEqual((UserScopeAccess) original, (UserScopeAccess) toValidate)
+        } else if (original instanceof ImpersonatedScopeAccess) {
+            validateImpersonationScopeAccessesEqual((ImpersonatedScopeAccess) original, (ImpersonatedScopeAccess) toValidate)
+        } else {
+            assert 1 != 1
+        }
+    }
+
+    def void validateRackerScopeAccessesEqual(RackerScopeAccess original, RackerScopeAccess toValidate) {
+        assert toValidate.rackerId == original.rackerId
+        assert toValidate.clientId == original.clientId
+        assert toValidate.accessTokenString == original.accessTokenString
+        assert toValidate.accessTokenExp == original.accessTokenExp
+        assert CollectionUtils.isEqualCollection(toValidate.authenticatedBy, original.authenticatedBy)
+        assert toValidate.getUniqueId() == original.getUniqueId()
+    }
 
     def void validateUserScopeAccessesEqual(UserScopeAccess original, UserScopeAccess toValidate) {
         assert toValidate.userRsId == original.userRsId
@@ -94,6 +117,18 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = user.id
             it.userRCN = "userRCN"
+            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientRCN = "clientRCN"
+            it.getAuthenticatedBy().addAll(authBy)
+            return it
+        }
+    }
+
+    def createRackerToken(Racker user, String tokenString =  UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {
+        new RackerScopeAccess().with {
+            it.accessTokenString = tokenString
+            it.accessTokenExp = expiration
+            it.rackerId = user.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)
