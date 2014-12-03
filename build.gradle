@@ -172,7 +172,6 @@ dependencies {
     testCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.not-yet-commons-ssl:0.3.11_1'
 
     compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1407178553210-SNAPSHOT'
-    compile 'com.rackspace:keystone:2014.2-1403292294236'
 }
 
 task copyConfig(type: Copy) {
