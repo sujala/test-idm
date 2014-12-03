@@ -149,7 +149,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "list users with service admin token"
-        def listUsersResponse = cloud20.listUsers(serviceAdminToken, "0", "100000")
+        def listUsersResponse = cloud20.listUsers(serviceAdminToken, "0", "100000000")
 
         then: "request is successful"
         listUsersResponse.status == 200
@@ -165,7 +165,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         !userList.user.id.contains(disabledUser.id)
 
         when: "list users with identity admin token"
-        listUsersResponse = cloud20.listUsers(identityAdminToken, "0", "100000")
+        listUsersResponse = cloud20.listUsers(identityAdminToken, "0", "100000000")
 
         then: "request is successful"
         listUsersResponse.status == 200

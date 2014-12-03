@@ -392,22 +392,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void addUser_identityAdminWithDomain_returns400() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/users");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, uberToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,
-                "<user username=\"serviceAdminD1\"\n" +
-                        "    email=\"domainxml@example.com\"\n" +
-                        "    enabled=\"true\"\n" +
-                        "    ns1:password=\"Password1\"\n" +
-                        "    rax-auth:domainId=\"135792468\"\n" +
-                        "    xmlns:rax-auth=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
-                        "    xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
-                        "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" />");
-
-        assertThat("response code", clientResponse.getStatus(), equalTo(400));
-    }
-
-    @Test
     public void addUser_userAdminWithoutDomain_returns400() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/users");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,

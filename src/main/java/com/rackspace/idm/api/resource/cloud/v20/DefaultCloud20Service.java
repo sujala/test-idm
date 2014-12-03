@@ -2297,8 +2297,24 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        BaseUser caller = userService.getUserByScopeAccess(scopeAccess);
+        authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
+
+        IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+        if(IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
+            List<User> superAdmins = domainService.getDomainSuperAdmins(domainId);
+            if(containsServiceAdmin(superAdmins)) {
+                throw new ForbiddenException("Cannot modify a domain containing a service admin");
+            }
+            if(containsIdentityAdmin(superAdmins) && caller.getDomainId() != null && !caller.getDomainId().equals(domainId)) {
+                throw new ForbiddenException("Cannot modify a domain containing an identity admin when you are not in the domain");
+            }
+        }
+
         Domain domainDO = domainService.checkAndGetDomain(domainId);
+
+
         setDomainEmptyValues(domain, domainId);
         validateDomain(domain, domainId);
 
@@ -2316,6 +2332,24 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
+    }
+
+    boolean containsServiceAdmin(List<User> users) {
+        for(User user : users) {
+            if(authorizationService.hasServiceAdminRole(user)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean containsIdentityAdmin(List<User> users) {
+        for(User user : users) {
+            if(authorizationService.hasIdentityAdminRole(user)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void validateDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
@@ -2384,16 +2418,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
         Domain domain = domainService.checkAndGetDomain(domainId);
         if (!domain.getEnabled()) {
             throw new ForbiddenException("Cannot add users to a disabled domain.");
         }
 
         User userDO = userService.checkAndGetUserById(userId);
+        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(userDO);
 
-        if (isServiceAdminOrIdentityAdmin(userDO)) {
-            throw new ForbiddenException("Cannot add domains to admins or service-admins.");
+        //service admins can only update other service admins and identity admins
+        if(IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
+            authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
         }
 
         List<TenantRole> roles = userDO.getRoles();
