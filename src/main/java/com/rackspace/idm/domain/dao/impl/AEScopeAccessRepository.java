@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AEScopeAccessDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
@@ -25,9 +26,16 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
     @Autowired
     private AETokenService aeTokenService;
 
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
-        return aeTokenService.supportsCreatingTokenFor(object, scopeAccess);
+        if (identityConfig.getFeatureAETokensEncrypt()) {
+            return aeTokenService.supportsCreatingTokenFor(object, scopeAccess);
+        } else {
+            return false;
+        }
     }
 
     @Override

@@ -26,6 +26,10 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
     @Override
     public TokenFormat formatForNewToken(BaseUser user) {
+        if (!identityConfig.getFeatureAETokensEncrypt()) {
+            return TokenFormat.UUID;
+        }
+
         // Provisioned user
         if (user instanceof User) {
             final TokenFormatEnum userSpecified = ((User)user).getTokenFormatAsEnum();
@@ -57,7 +61,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
     @Override
     public TokenFormat formatForExistingToken(String accessToken) {
-        if (UUID_PATTERN.matcher(accessToken).matches()) {
+        if (!identityConfig.getFeatureAETokensDecrypt() || UUID_PATTERN.matcher(accessToken).matches()) {
             return TokenFormat.UUID;
         } else {
             return TokenFormat.AE;

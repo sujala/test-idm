@@ -46,6 +46,9 @@ public class IdentityConfig {
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
     private static final String KEYCZAR_DN_DEFAULT = "ou=keyinfo,o=keystore,dc=rackspace,dc=com";
 
+    private static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
+    private static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
+
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
@@ -161,6 +164,14 @@ public class IdentityConfig {
 
     public String getKeyCzarDN() {
         return config.getString(KEYCZAR_DN_CONFIG, KEYCZAR_DN_DEFAULT);
+    }
+
+    public boolean getFeatureAETokensEncrypt() {
+        return config.getBoolean(FEATURE_AE_TOKENS_ENCRYPT, true);
+    }
+
+    public boolean getFeatureAETokensDecrypt() {
+        return getFeatureAETokensEncrypt() || config.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
     }
 
 }
