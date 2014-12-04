@@ -235,7 +235,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(scopeAccess.getAccessTokenString());
         usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-        usa.setUserRsId(scopeAccess.getImpersonatingRsId());
+        usa.setUserRsId(scopeAccess.getRsImpersonatingRsId());
         usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
         return usa;
     }

@@ -26,7 +26,7 @@ public interface ScopeAccessDao {
      * @deprecated Use {@link #getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(com.rackspace.idm.domain.entity.BaseUser, String, java.util.List)}
      */
     @Deprecated
-    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId);
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String rsImpersonatingRsId);
 
     /**
      * <p>Return the most recent impersonated scope access underneath the specified user for the specified impersonated user
@@ -37,11 +37,11 @@ public interface ScopeAccessDao {
      *</p>
      *
      * @param user
-     * @param impersonatingRsId
+     * @param rsImpersonatingRsId
      * @param authenticatedBy
      * @return
      */
-    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy);
+    ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String rsImpersonatingRsId, List<String> authenticatedBy);
 
     /**
      * Return the most recent scope accesses object underneath the specified user that has the passed in clientId,
@@ -61,11 +61,11 @@ public interface ScopeAccessDao {
 
     Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user);
 
-    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId);
+    Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String rsImpersonatingRsId);
 
     /**
      * Return all the impersonated scope acesses objects underneath the specified user that are impersonating
-     * the specified impersonatingUsername that do not have the impersonatingRsId attribute.
+     * the specified impersonatingUsername that do not have the rsImpersonatingRsId attribute.
      * This method is now deprecated due to the fact that impersonation tokens now have the impersonated user's rsId.
      * Identifying impersonation tokens using the impersonated user's username is no longer valid due to the fact that
      * federated users are now possible to be impersonated and their usernames are only unique within their IDP.
@@ -79,7 +79,7 @@ public interface ScopeAccessDao {
 
     /**
      * Return the most recent impersonated scope acesses object underneath the specified user that are impersonating
-     * the specified impersonatingUsername that do not have the impersonatingRsId attribute.
+     * the specified impersonatingUsername that do not have the rsImpersonatingRsId attribute.
      * This method is now deprecated due to the fact that impersonation tokens now have the impersonated user's rsId.
      * Identifying impersonation tokens using the impersonated user's username is no longer valid due to the fact that
      * federated users are now possible to be impersonated and their usernames are only unique within their IDP.
