@@ -26,6 +26,7 @@ public interface DomainService {
     Iterable<User> getUsersByDomainId(String domainId);
     Iterable<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
     List<User> getDomainAdmins(String domainId);
+    List<User> getDomainSuperAdmins(String domainId);
     List<User> getEnabledDomainAdmins(String domainId);
     Domain checkAndGetDomain(String domainId);
     String createNewDomain(String domainId);

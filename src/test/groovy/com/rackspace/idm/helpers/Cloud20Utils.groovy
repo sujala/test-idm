@@ -602,8 +602,12 @@ class Cloud20Utils {
 
     def createDomain(Domain domain) {
         def response = methods.addDomain(getServiceAdminToken(), domain)
-        assert (response.status == SC_OK)
-        response.getEntity(Domain).value
+        assert (response.status == SC_CREATED)
+    }
+
+    def addUserToDomain(token = getServiceAdminToken(), userId, domainId) {
+        def response = methods.addUserToDomain(token, userId, domainId)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def createTenant(Tenant tenant) {

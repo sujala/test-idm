@@ -264,9 +264,10 @@ public class DefaultUserService implements UserService {
         // We want to eventually remove that. A user should be able to be assigned any role.
         //
         if (authorizationService.hasServiceAdminRole(caller)) {
-            if (StringUtils.isNotBlank(user.getDomainId())) {
-                throw new BadRequestException("Identity-admin cannot be created with a domain");
+            if (StringUtils.isBlank(user.getDomainId())) {
+                user.setDomainId(getDomainUUID());
             }
+
 
             attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
@@ -311,6 +312,10 @@ public class DefaultUserService implements UserService {
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
+    }
+
+    private String getDomainUUID() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**
