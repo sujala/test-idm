@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
@@ -589,6 +590,14 @@ class V2Factory {
             it.validityDuration = DatatypeFactory.newInstance().newDuration(seconds * 1000)
             it.numberOfCodes = numberOfCodes
             return it
+        }
+    }
+
+    def createDomain(id, name) {
+        new Domain().with {
+            it.id = id
+            it.name = name
+            it
         }
     }
 }

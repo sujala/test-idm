@@ -157,11 +157,6 @@
         <url-pattern>/cloud/v2.0/*</url-pattern>
     </filter-mapping>
 
-    <servlet-mapping>
-        <servlet-name>keystone</servlet-name>
-        <url-pattern>/cloud/v3/*</url-pattern>
-    </servlet-mapping>
-
 	<listener>
 		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
 	</listener>
@@ -198,32 +193,6 @@
 	<servlet>
         <servlet-name>DelegatePassThroughServlet</servlet-name>
         <servlet-class>com.rackspace.idm.web.DelegatePassThroughServlet</servlet-class>
-    </servlet>
-
-    <servlet>
-        <servlet-name>keystone</servlet-name>
-        <servlet-class>com.xhaus.modjy.ModjyJServlet</servlet-class>
-        <init-param>
-            <param-name>app_import_name</param-name>
-            <param-value>application.handler</param-value>
-        </init-param>
-        <init-param>
-            <param-name>cache_callables</param-name>
-            <param-value>1</param-value>
-        </init-param>
-        <init-param>
-            <param-name>reload_on_mod</param-name>
-            <param-value>1</param-value>
-        </init-param>
-        <init-param>
-            <param-name>log_level</param-name>
-            <param-value>debug</param-value>
-        </init-param>
-        <init-param>
-            <param-name>load_site_packages</param-name>
-            <param-value>0</param-value>
-        </init-param>
-        <load-on-startup>1</load-on-startup>
     </servlet>
 
 	<servlet-mapping>
