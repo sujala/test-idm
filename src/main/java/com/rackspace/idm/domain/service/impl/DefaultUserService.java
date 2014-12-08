@@ -269,9 +269,10 @@ public class DefaultUserService implements UserService {
         //
         final boolean hasServiceAdminRole = authorizationService.hasServiceAdminRole(caller);
         if (hasServiceAdminRole) {
-            if (StringUtils.isNotBlank(user.getDomainId())) {
-                throw new BadRequestException("Identity-admin cannot be created with a domain");
+            if (StringUtils.isBlank(user.getDomainId())) {
+                user.setDomainId(getDomainUUID());
             }
+
 
             attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
@@ -319,6 +320,10 @@ public class DefaultUserService implements UserService {
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
+    }
+
+    private String getDomainUUID() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**

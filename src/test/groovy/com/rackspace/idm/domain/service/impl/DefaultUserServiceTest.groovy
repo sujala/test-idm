@@ -468,21 +468,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
-    def "Set user defaults based on caller throws exception if caller is identity:service-admin and user has domain specified"() {
-        given:
-        def caller = this.createUser(null, true, domainId)
-        def user = this.createUser(null, true, domainId)
-        mockRoles()
-
-        authorizationService.hasServiceAdminRole(_) >> true
-
-        when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
-
-        then:
-        thrown(BadRequestException)
-    }
-
     def "Set user defaults based on caller if caller is identity:admin"() {
         given:
         def caller = this.createUser(null, true, null)
