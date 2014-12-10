@@ -16,4 +16,5 @@ public interface TokenFormatSelector {
      * Returns the format of the supplied token
      */
     TokenFormat formatForExistingToken(String tokenString);
+
 }
