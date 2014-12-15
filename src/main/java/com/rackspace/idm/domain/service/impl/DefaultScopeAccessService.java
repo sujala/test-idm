@@ -195,7 +195,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         //get the most recent scope access prior to cleaning up since the most recent could be expired (and will be removed by subsequent clean up code)
         ImpersonatedScopeAccess mostRecent;
         if(userBeingImpersonated instanceof FederatedUser) {
-            //impersonation tokens impersonating federated users should always have the impersonatingRsId attribute
+            //impersonation tokens impersonating federated users should always have the rsImpersonatingRsId attribute
             //Note: it is possible that the federated user's token that is being impersonated could have been deleted.
             //    This is not a major concern because the impersonating token will then become invalid and eventually be
             //    cleaned up.
@@ -203,20 +203,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         } else {
             /*
             The user is a provisioned user. This means that there might be existing impersonation tokens in the directory that do not have the
-            impersonatingRsId attribute and only the impersonated user's username (attribute impersonatingUsername). We will use the following
+            rsImpersonatingRsId attribute and only the impersonated user's username (attribute impersonatingUsername). We will use the following
             steps to try to find the most recent impersonating scope access for the user.
 
-            1) Search for an impersonating scope access with an impersonatingRsId equal to the impersonated user's rsId
+            1) Search for an impersonating scope access with an rsImpersonatingRsId equal to the impersonated user's rsId
             2) If scope access tokens are found, find the most recent from them
             3) If no scope access is found, we will need to search for scope access tokens that match the impersonated user's username.
             This is complicated by the fact that federated users can also have the same username.
-                a) Search for impersonating scope access tokens with no impersonatingRsId attribute and impersonatingUsername equal to
-                the impersonated user's username. By limiting our search for tokens that do not have the impersonatingRsId attribute
+                a) Search for impersonating scope access tokens with no rsImpersonatingRsId attribute and impersonatingUsername equal to
+                the impersonated user's username. By limiting our search for tokens that do not have the rsImpersonatingRsId attribute
                 we prevent finding impersonation tokens for federated users.
                 b) Find the most recent token from this list of tokens
              */
 
-            //1) Search for an impersonating scope access with an impersonatingRsId equal to the user being impersonated rsId
+            //1) Search for an impersonating scope access with an rsImpersonatingRsId equal to the user being impersonated rsId
             //2) If scope access tokens are found, find the most recent from them
             mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(impersonator, userBeingImpersonated.getId(), impersonatorAuthByMethods);
             if(mostRecent == null) {
@@ -305,7 +305,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         We will need to clean up scope access tokens in two ways.
         1) Clean up all scope access tokens with impersonatedRsId equal to impersonated user's rsId
         2) Clean up all scope access tokens with impersonatedUsername equal to impersonated user's username that do not
-        have the impersonatingRsId attribute.
+        have the rsImpersonatingRsId attribute.
          */
 
         Iterable<ScopeAccess> scopeAccessToCheckForExpired;
@@ -371,7 +371,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
         newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
         newImpersonatedScopeAccess.setImpersonatingUsername(userBeingImpersonated.getUsername());
-        newImpersonatedScopeAccess.setImpersonatingRsId(userTokenForImpersonation.getUserRsId());
+        newImpersonatedScopeAccess.setRsImpersonatingRsId(userTokenForImpersonation.getUserRsId());
         newImpersonatedScopeAccess.setAuthenticatedBy(new ArrayList<String>(impersonatorAuthByMethods));
 
         return newImpersonatedScopeAccess;
