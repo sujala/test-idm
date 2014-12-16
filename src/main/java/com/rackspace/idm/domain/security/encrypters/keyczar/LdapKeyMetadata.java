@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.security.encrypters.keyczar;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.entity.Auditable;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
@@ -14,7 +15,7 @@ import java.util.Date;
 @Setter
 @Getter
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_KEY_METADATA)
-public class LdapKeyMetadata implements KeyMetadata, UniqueId {
+public class LdapKeyMetadata implements KeyMetadata, UniqueId, Auditable {
 
     @LDAPDNField
     private String uniqueId;
@@ -40,5 +41,10 @@ public class LdapKeyMetadata implements KeyMetadata, UniqueId {
             requiredForEncode=true
     )
     private String data;
+
+    @Override
+    public String getAuditContext() {
+        return LdapRepository.ATTR_COMMON_NAME + "=" + name;
+    }
 
 }

@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
@@ -200,6 +201,7 @@ class RootServiceTest extends Specification {
     @Shared RoleService roleService
     @Shared DefaultRequestContextHolder requestContextHolder
     @Shared TokenRevocationService tokenRevocationService
+    @Shared CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -455,6 +457,11 @@ class RootServiceTest extends Specification {
     def mockAuthorizationService(service) {
         authorizationService = Mock()
         service.authorizationService = authorizationService
+    }
+
+    def mockCacheableKeyCzarCrypterLocator(service) {
+        cacheableKeyCzarCrypterLocator = Mock()
+        service.cacheableKeyCzarCrypterLocator = cacheableKeyCzarCrypterLocator
     }
 
     def mockUserService(service) {
