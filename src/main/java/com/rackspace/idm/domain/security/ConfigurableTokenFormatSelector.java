@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
         if (user instanceof User) {
             final TokenFormatEnum userSpecified = ((User)user).getTokenFormatAsEnum();
             if (userSpecified == null || userSpecified == TokenFormatEnum.DEFAULT) {
-                return getDefaultProvisionedTokenFormat(user);
+                return identityConfig.getIdentityProvisionedTokenFormat();
             }
             switch (userSpecified) {
                 case AE:
@@ -42,7 +43,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
                 case UUID:
                     return TokenFormat.UUID;
                 default:
-                    return getDefaultProvisionedTokenFormat(user);
+                    return identityConfig.getIdentityProvisionedTokenFormat();
             }
         }
 
@@ -52,8 +53,14 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
             if (ldapAuthRepository.getRackerRoles(racker.getRackerId()).contains(identityConfig.getIdentityRackerAETokenRole())) {
                 return TokenFormat.AE;
             } else {
-                return convertToTokenFormat(identityConfig.getIdentityRackerTokenFormat());
+                return identityConfig.getIdentityRackerTokenFormat();
             }
+        }
+
+        //if federated user
+        if (user instanceof FederatedUser) {
+            final FederatedUser federatedUser = (FederatedUser) user;
+            return identityConfig.getIdentityFederatedUserTokenFormatForIdp(federatedUser.getFederatedIdpUri());
         }
 
         return TokenFormat.UUID;
@@ -67,18 +74,4 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
             return TokenFormat.AE;
         }
     }
-
-    private TokenFormat getDefaultProvisionedTokenFormat(BaseUser user) {
-        return convertToTokenFormat(identityConfig.getIdentityProvisionedTokenFormat());
-    }
-
-    private TokenFormat convertToTokenFormat(String strFormat) {
-        for (TokenFormat tokenFormat : TokenFormat.values()) {
-            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
-                return tokenFormat;
-            }
-        }
-        return TokenFormat.UUID;
-    }
-
 }
