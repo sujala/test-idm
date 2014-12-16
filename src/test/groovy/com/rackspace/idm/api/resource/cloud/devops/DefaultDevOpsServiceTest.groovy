@@ -30,9 +30,23 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
         1 * userService.reEncryptUsers()
     }
 
+    def "Verify that reset key metadata is invoked"() {
+        given:
+        setupMocks()
+        allowUserAccess()
+
+        when:
+        service.resetKeyMetadata("token")
+
+        then:
+        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+        1 * cacheableKeyCzarCrypterLocator.resetCache()
+    }
+
     def setupMocks() {
         mockAuthorizationService(service)
         mockUserService(service)
         mockScopeAccessService(service)
+        mockCacheableKeyCzarCrypterLocator(service)
     }
 }

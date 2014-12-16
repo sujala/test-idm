@@ -13,20 +13,19 @@ public class KeyCzarKeyMetadataRepository extends LdapGenericRepository<LdapKeyM
     @Autowired
     private IdentityConfig config;
 
-    private static final Filter filter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_KEY_METADATA).build();
-
     @Override
     public String getBaseDn() {
         return config.getKeyCzarDN();
     }
 
-    private String getMetadataDN(String metaName) {
-        return String.format("%s=%s,%s", ATTR_COMMON_NAME, metaName, getBaseDn());
-    }
-
     @Override
     public LdapKeyMetadata getKeyMetadataByName(String metaName) {
-        return getObject(filter, getMetadataDN(metaName), SearchScope.BASE);
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_KEY_METADATA)
+                .addEqualAttribute(ATTR_COMMON_NAME, metaName)
+                .build();
+
+        return getObject(filter, getBaseDn(), SearchScope.ONE);
     }
 
 }
