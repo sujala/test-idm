@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,6 +10,7 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -16,6 +18,7 @@ import javax.ws.rs.core.MediaType
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
+import static org.apache.http.HttpStatus.SC_OK
 
 @ContextConfiguration(locations = ["classpath:app-config.xml"
         , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
@@ -26,6 +29,12 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     LdapScopeAccessRepository ldapScopeAccessRepository
+
+    @Autowired
+    IdentityConfig config;
+
+    @Autowired
+    Cloud20Methods methods
 
     enum GetTokenVersion {
         v20,
@@ -439,6 +448,70 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.deleteUser(utils.getServiceAdminToken(), createdUser.id)
+    }
+
+    def "test global flag combinations"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def retrievedUser
+        def userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        retrievedUser = utils.getUserById(userAdmin.id)
+        retrievedUser.tokenFormat = TokenFormatEnum.AE
+        utils.updateUser(retrievedUser)
+
+        def aeTokenOriginal, aeToken, aeTokenValidateOriginal, aeTokenValidate, response
+
+        when: "all features are enabled"
+        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'true')
+        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'true')
+        aeTokenOriginal = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
+
+        then: "should be bigger then 32 characters (UUID tokens)"
+        config.getFeatureAETokensEncrypt() == true
+        config.getFeatureAETokensDecrypt() == true
+        aeTokenOriginal.token.id.length() > 32
+        aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
+
+        when: "creation of tokens is disable (but reading is enable)"
+        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'false')
+        aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        aeTokenValidate = utils.validateToken(aeToken.token.id)
+        aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
+
+        then: "should be equal to 32 (UUID tokens) but it still decrypt the original one"
+        config.getFeatureAETokensEncrypt() == false
+        aeToken.token.id.length() == 32
+        aeTokenValidate.token.id == aeToken.token.id
+        aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
+
+        when: "creation and reading of tokens is disable"
+        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'false')
+        aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        aeTokenValidate = utils.validateToken(aeToken.token.id)
+        response = methods.validateToken(utils.getServiceAdminToken(), aeTokenOriginal.token.id)
+
+        then:
+        config.getFeatureAETokensDecrypt() == false
+        response.status != SC_OK
+        aeToken.token.id.length() == 32
+        aeTokenValidate.token.id == aeToken.token.id
+
+        when: "creation is enable, reading is always enable"
+        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'true')
+        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'false')
+
+        then:
+        config.getFeatureAETokensEncrypt() == true
+        config.getFeatureAETokensDecrypt() == true
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
     }
 
 }
