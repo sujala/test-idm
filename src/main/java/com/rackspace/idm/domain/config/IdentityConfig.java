@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.domain.security.TokenFormat;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Iterator;
 
 @Component
 public class IdentityConfig {
@@ -37,6 +39,21 @@ public class IdentityConfig {
 
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
     private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE = true;
+
+    /**
+     * The property controlling the token format to use for IDPs that do not have an explicit format specified via the
+     * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
+     */
+    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
+    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE = "UUID";
+
+    /**
+     * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
+     * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
+     * is used.
+     */
+    public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
+    public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
 
     private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
     private static final String IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT =  "UUID";
@@ -79,6 +96,8 @@ public class IdentityConfig {
         verifyAndLogProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
+
+        logFederatedTokenFormatOverrides();
     }
 
     private void verifyAndLogProperty(String property, boolean required) {
@@ -87,6 +106,16 @@ public class IdentityConfig {
             logger.error(String.format(PROPERTY_ERROR_MESSAGE, property));
         } else {
             logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty));
+        }
+    }
+
+    private void logFederatedTokenFormatOverrides() {
+        Iterator<String> fedOverrideUris = config.getKeys(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX);
+        while (fedOverrideUris.hasNext()) {
+            String fedOverrideProperty = fedOverrideUris.next();
+            String fedUri = fedOverrideProperty.substring(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX.length()+1); //add 1 to skip '.'
+            TokenFormat tf = getIdentityFederatedUserTokenFormatForIdp(fedUri);
+            logger.warn(String.format("Federated Provider Token Format Override: Identity provider '%s' will receive '%s' formatted tokens",fedUri, tf.name()));
         }
     }
 
@@ -146,12 +175,20 @@ public class IdentityConfig {
         return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
     }
 
-    public String getIdentityProvisionedTokenFormat() {
-        return config.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT);
+    public TokenFormat getIdentityProvisionedTokenFormat() {
+        return convertToTokenFormat(config.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT));
     }
 
-    public String getIdentityRackerTokenFormat() {
-        return config.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT);
+    public TokenFormat getIdentityRackerTokenFormat() {
+        return convertToTokenFormat(config.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT));
+    }
+
+    public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
+        return convertToTokenFormat(config.getString(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE));
+    }
+
+    public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
+        return convertToTokenFormat(config.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
     }
 
     public String getIdentityRackerAETokenRole() {
@@ -174,4 +211,12 @@ public class IdentityConfig {
         return getFeatureAETokensEncrypt() || config.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
     }
 
+    private TokenFormat convertToTokenFormat(String strFormat) {
+        for (TokenFormat tokenFormat : TokenFormat.values()) {
+            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
+                return tokenFormat;
+            }
+        }
+        return TokenFormat.UUID;
+    }
 }
