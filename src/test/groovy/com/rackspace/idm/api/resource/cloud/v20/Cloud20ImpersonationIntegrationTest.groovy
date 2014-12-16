@@ -760,11 +760,11 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     /**
-     * This test case shows that impersonation tokens that do not have an impersonatingRsId attribute are not valid to use for federated users
+     * This test case shows that impersonation tokens that do not have an rsImpersonatingRsId attribute are not valid to use for federated users
      * even if the impersonatingUsername on the token matches the federated user's username. These tokens are tokens created before the
-     * impersonatingRsId attribute was added and should only be considered valid for provisioned users.
+     * rsImpersonatingRsId attribute was added and should only be considered valid for provisioned users.
      */
-    def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the impersonatingRsId attribute)"() {
+    def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -788,8 +788,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
         def impersonationTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersonationToken)
 
-        when: "delete the impersonatingRsId attribute on the created impersonation token and impersonate the federated user"
-        impersonationTokenEntity.impersonatingRsId = null
+        when: "delete the rsImpersonatingRsId attribute on the created impersonation token and impersonate the federated user"
+        impersonationTokenEntity.rsImpersonatingRsId = null
         scopeAccessService.updateScopeAccess(impersonationTokenEntity)
         //we want to try to impersonate the federated user but with a shorter expiration time than the expiration time
         //for the impersonation token created for the provisioned user. If we do not do this, then we would create
@@ -811,9 +811,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonationToken3 != impersonationToken2
         impersonationToken3 == impersonationToken
 
-        and: "the impersonation token for the provisioned user has the impersonatingRsId attribute updated to the user's ID"
+        and: "the impersonation token for the provisioned user has the rsImpersonatingRsId attribute updated to the user's ID"
         def impersonationTokenEntity2 = scopeAccessService.getScopeAccessByAccessToken(impersonationToken3)
-        impersonationTokenEntity2.impersonatingRsId == provUserWithSameUsername.id
+        impersonationTokenEntity2.rsImpersonatingRsId == provUserWithSameUsername.id
 
         cleanup:
         deleteFederatedUserQuietly(username)
