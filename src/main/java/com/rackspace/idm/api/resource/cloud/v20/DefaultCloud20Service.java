@@ -3410,9 +3410,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            final ScopeAccess requestingScopeAccess = getScopeAccessForValidToken(authToken);
+            final ScopeAccess sa = getToken(tokenId);
 
-            ScopeAccess sa = checkAndGetToken(tokenId);
+            // User can validate his own token (B-80571:TK-165775).
+            if (!authorizationService.authorizeAsRequestorOrOwner(sa, requestingScopeAccess)) {
+                authorizationService.verifyIdentityAdminLevelAccess(requestingScopeAccess);
+            }
+            checkToken(sa, tokenId);
 
             if (scopeAccessService.isSetupMfaScopedToken(sa)) {
                 throw new NotFoundException("Token not found.");
@@ -3605,14 +3610,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     ScopeAccess checkAndGetToken(String tokenId) {
-        ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        return checkToken(getToken(tokenId), tokenId);
+    }
 
+    ScopeAccess getToken(String tokenId) {
+        return this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
+    }
+
+    ScopeAccess checkToken(ScopeAccess sa, String tokenId) {
         if (sa == null) {
             String errMsg = String.format("Token %s not found", tokenId);
             logger.warn(errMsg);
             throw new NotFoundException("Token not found.");
         }
-
         return sa;
     }
 
