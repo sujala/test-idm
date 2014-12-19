@@ -408,7 +408,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         and: "user token based on impersonating token"
         UserScopeAccess userScopeAccess = (UserScopeAccess) aeTokenService.unmarshallToken(impersonatedScopeAccess.impersonatingToken);
         userScopeAccess.accessTokenString == impersonatedScopeAccess.impersonatingToken
-        userScopeAccess.userRsId == impersonatedScopeAccess.impersonatingRsId
+        userScopeAccess.userRsId == impersonatedScopeAccess.rsImpersonatingRsId
         userScopeAccess.accessTokenExp == impersonatedScopeAccess.accessTokenExp
 
         where:

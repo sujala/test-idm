@@ -69,7 +69,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
-            it.impersonatingRsId = impersonatedUser.id
+            it.rsImpersonatingRsId = impersonatedUser.id
             it.userRsId = impersonatorUser.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
@@ -102,7 +102,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
-            it.impersonatingRsId = impersonatedUser.id
+            it.rsImpersonatingRsId = impersonatedUser.id
             it.userRsId = impersonatorUser.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
@@ -154,7 +154,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
 
         when: "null impersonated userId in token"
         impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
-            it.impersonatingRsId = null
+            it.rsImpersonatingRsId = null
             return it
         }
         aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
@@ -182,7 +182,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         new ImpersonatedScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.impersonatingRsId = impersonated.id
+            it.rsImpersonatingRsId = impersonated.id
             it.userRsId = impersonator.id
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.getAuthenticatedBy().addAll(authBy)

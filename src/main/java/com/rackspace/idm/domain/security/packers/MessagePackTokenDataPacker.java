@@ -285,7 +285,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         //validate additional user specific stuff for this packing strategy
         Validate.notNull(user.getId(), "user id required");
         Validate.isTrue(user.getId().equals(scopeAccess.getIssuedToUserId()), "specified token not issued to specified user");
-        Validate.notNull(scopeAccess.getImpersonatingRsId(), "impersonating user required");
+        Validate.notNull(scopeAccess.getRsImpersonatingRsId(), "impersonating user required");
 
         List<Object> packingItems = new ArrayList<Object>();
 
@@ -302,7 +302,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //user info
         packingItems.add(user.getId());
-        packingItems.add(scopeAccess.getImpersonatingRsId());
+        packingItems.add(scopeAccess.getRsImpersonatingRsId());
 
         return packingItems;
     }
@@ -327,7 +327,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             //populate impersonated information
             String impersonatedUserId = safeRead(unpacker, String.class);
-            scopeAccess.setImpersonatingRsId(impersonatedUserId);
+            scopeAccess.setRsImpersonatingRsId(impersonatedUserId);
 
             //generate dynamic ae token for the user being impersonated
             EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);
@@ -354,7 +354,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         //validate additional user specific stuff for this packing strategy
         Validate.notNull(user.getId(), "user id required");
         Validate.isTrue(user.getId().equals(scopeAccess.getIssuedToUserId()), "specified token not issued to specified user");
-        Validate.notNull(scopeAccess.getImpersonatingRsId(), "impersonating user required");
+        Validate.notNull(scopeAccess.getRsImpersonatingRsId(), "impersonating user required");
 
         List<Object> packingItems = new ArrayList<Object>();
 
@@ -371,7 +371,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //user info
         packingItems.add(user.getId());
-        packingItems.add(scopeAccess.getImpersonatingRsId());
+        packingItems.add(scopeAccess.getRsImpersonatingRsId());
 
         return packingItems;
     }
@@ -396,7 +396,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             //populate impersonated information
             String impersonatedUserId = safeRead(unpacker, String.class);
-            scopeAccess.setImpersonatingRsId(impersonatedUserId);
+            scopeAccess.setRsImpersonatingRsId(impersonatedUserId);
 
             //generate dynamic ae token for the user being impersonated
             EndUser impersonatedUser = identityUserService.getEndUserById(impersonatedUserId);

@@ -99,7 +99,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         ScopeAccess impersonatedUserToken = aeTokenService.unmarshallToken(toValidate.impersonatingToken)
         assert impersonatedUserToken instanceof UserScopeAccess
         UserScopeAccess usaImpersonatedUserToken = (UserScopeAccess) impersonatedUserToken
-        assert usaImpersonatedUserToken.userRsId == original.impersonatingRsId
+        assert usaImpersonatedUserToken.userRsId == original.rsImpersonatingRsId
         assert usaImpersonatedUserToken.accessTokenExp == original.accessTokenExp
         assert usaImpersonatedUserToken.authenticatedBy.size() == 1
         assert usaImpersonatedUserToken.authenticatedBy.get(0) == AuthenticatedByMethodEnum.IMPERSONATION.value

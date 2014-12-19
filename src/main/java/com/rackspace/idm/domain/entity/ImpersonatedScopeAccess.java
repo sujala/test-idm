@@ -37,7 +37,7 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
     private String userRsId;
 
     /**
-     * @deprecated use {@link #getImpersonatingRsId()}
+     * @deprecated use {@link #getRsImpersonatingRsId()}
      */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
