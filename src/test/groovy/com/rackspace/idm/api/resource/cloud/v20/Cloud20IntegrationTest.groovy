@@ -3416,6 +3416,34 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         true        | 400
     }
 
+    def "user can validate his own token (B-80571:TK-165775)"() {
+        given:
+        def username = "username" + getRandomUUID()
+
+        def createUser = cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(username, "display", "$username@email.com", true, null, null, DEFAULT_PASSWORD))
+        assert (createUser.status == 201)
+
+        def getUserResponse = cloud20.getUserByName(identityAdminToken, username)
+        assert (getUserResponse.status == 200)
+        def userEntity = getUserResponse.getEntity(User).value
+
+        def authPasswordResponse = cloud20.authenticatePassword(username, DEFAULT_PASSWORD)
+        assert (authPasswordResponse.status == 200)
+
+        def authToken = authPasswordResponse.getEntity(AuthenticateResponse).value.token.id
+        def validateResponse
+
+        when: "user validates his own token"
+        validateResponse = cloud20.validateToken(authToken, authToken)
+
+        then: "validate token is validated"
+        validateResponse.status == 200
+        validateResponse.getEntity(AuthenticateResponse).value.user.name == username
+
+        cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

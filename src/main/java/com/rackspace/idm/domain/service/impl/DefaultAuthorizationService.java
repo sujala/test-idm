@@ -245,24 +245,24 @@ public class DefaultAuthorizationService implements AuthorizationService {
         logger.debug("Authorizing as Requestor or Owner");
 
         boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccess
+                && requestingScopeAccess != null
                 && requestingScopeAccess.getClientId().equalsIgnoreCase(
                 targetScopeAccess.getClientId());
 
         boolean isOwner = false;
 
-        if (targetScopeAccess instanceof ClientScopeAccess) {
+        if (targetScopeAccess instanceof ClientScopeAccess && requestingScopeAccess != null) {
             isOwner = requestingScopeAccess.getClientId().equals(
                     targetScopeAccess.getClientId());
-        } else if (targetScopeAccess instanceof UserScopeAccess) {
+        } else if (targetScopeAccess instanceof UserScopeAccess && requestingScopeAccess instanceof UserScopeAccess) {
             isOwner = ((UserScopeAccess) requestingScopeAccess).getUserRsId()
                     .equals(((UserScopeAccess) targetScopeAccess).getUserRsId());
-        } else if (targetScopeAccess instanceof RackerScopeAccess) {
+        } else if (targetScopeAccess instanceof RackerScopeAccess && requestingScopeAccess instanceof RackerScopeAccess) {
             isOwner = ((RackerScopeAccess) requestingScopeAccess).getRackerId()
                     .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());
         }
 
-        logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
-                isOwner);
+        logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor, isOwner);
         return (isRequestor || isOwner);
     }
 
