@@ -242,7 +242,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void validateToken_asDefaultUser_returns403() throws Exception {
         String token = authenticate("kurtDefaultUser", "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + token);
+        WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
@@ -283,7 +283,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void checkToken_asDefaultUser_returns403() throws Exception {
         String token = authenticate("kurtDefaultUser", "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + token);
+        WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
