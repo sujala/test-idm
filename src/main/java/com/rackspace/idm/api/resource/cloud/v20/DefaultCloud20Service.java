@@ -3410,14 +3410,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
-            final ScopeAccess requestingScopeAccess = getScopeAccessForValidToken(authToken);
-            final ScopeAccess sa = getToken(tokenId);
-
             // User can validate his own token (B-80571:TK-165775).
-            if (!authorizationService.authorizeAsRequestorOrOwner(sa, requestingScopeAccess)) {
-                authorizationService.verifyIdentityAdminLevelAccess(requestingScopeAccess);
+            if (!StringUtils.equals(authToken, tokenId)) {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             }
-            checkToken(sa, tokenId);
+
+            final ScopeAccess sa = checkAndGetToken(tokenId);
 
             if (scopeAccessService.isSetupMfaScopedToken(sa)) {
                 throw new NotFoundException("Token not found.");
