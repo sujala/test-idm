@@ -1634,7 +1634,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
+            Exception e = ex;
+            if (ex instanceof ForbiddenException || ex instanceof NotFoundException) {
+                // [B-82794] Modify [Get User] API Error Message
+                logger.warn("Obfuscated exception", ex);
+                e = new NotFoundException("User not found");
+            }
+            return exceptionHandler.exceptionResponse(e);
         }
     }
 
