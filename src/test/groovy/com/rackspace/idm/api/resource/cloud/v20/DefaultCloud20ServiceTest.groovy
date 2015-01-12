@@ -4281,6 +4281,40 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
     }
 
+    def "[B-82794] Verify if the API error is properly obfuscated"() {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+        userService.getUserByScopeAccess(_, false) >> caller
+
+        def result
+
+        when:
+        identityUserService.getEndUserById("notfound") >> null
+        result = service.getUserById(headers, authToken, "notfound")
+
+        then:
+        result.build().status == 404
+
+        when:
+        identityUserService.getEndUserById("forbidden") >> user
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        authorizationService.verifyDomain(caller, user) >> { throw new ForbiddenException() }
+        result = service.getUserById(headers, authToken, "forbidden")
+
+        then:
+        result.build().status == 404
+
+        when:
+        authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.hasUserManageRole(caller) >> false
+        result = service.getUserById(headers, authToken, "nomatch")
+
+        then:
+        result.build().status == 404
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
