@@ -26,6 +26,11 @@ public class KeyCzarKeyVersionRepository extends LdapGenericRepository<LdapKeyVe
         return ATTR_KEY_VERSION;
     }
 
+    @Override
+    public String[] getSearchAttributes() {
+        return ATTR_KEY_SEARCH_ATTRIBUTES;
+    }
+
     private String getKeyVersionsBaseDN(String metadataName) {
         return String.format("%s=%s,%s", ATTR_COMMON_NAME, metadataName, getBaseDn());
     }

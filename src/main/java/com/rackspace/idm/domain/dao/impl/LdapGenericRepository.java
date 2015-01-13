@@ -106,7 +106,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public PaginatorContext<T> getObjectsPaged(Filter searchFilter, String dn, SearchScope scope, int offset, int limit) {
         getLogger().debug("Getting " + entityType.toString() + " paged");
 
-        SearchRequest searchRequest = new SearchRequest(dn, scope, searchFilter);
+        SearchRequest searchRequest = new SearchRequest(dn, scope, searchFilter, getSearchAttributes());
         PaginatorContext<T> context = paginator.createSearchRequest(getSortAttribute(), searchRequest, offset, limit);
 
         List<T> objects = new ArrayList<T>();
