@@ -645,7 +645,7 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post ClientResponse
     }
 
-    def impersonate(String token, User user, Integer expireTime = 10800) {
+    def impersonate(String token, User user, Integer expireTime = 10800, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def request = new ImpersonationRequest().with {
             it.user = new User().with {
@@ -658,7 +658,7 @@ class Cloud20Methods {
             it.expireInSeconds = expireTime
             it
         }
-        resource.path(path20).path(RAX_AUTH).path("impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("impersonation-tokens").header(X_AUTH_TOKEN, token).accept(accept).type(requestType).entity(request).post(ClientResponse)
     }
 
     def revokeUserToken(String token, String tokenToRevoke) {

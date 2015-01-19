@@ -243,4 +243,8 @@ public final class JSONConstants {
 
     public static final String RAX_AUTH_BYPASS_CODES = "RAX-AUTH:bypassCodes";
     public static final String BYPASS_CODES = "bypassCodes";
+
+    public static final String RAX_AUTH_IMPERSONATION_FEDERATED_IDP_PATH = "impersonation.user.federatedIdp";
+
+    public static final String RAX_AUTH_IMPERSONATION_PATH = "impersonation";
 }
