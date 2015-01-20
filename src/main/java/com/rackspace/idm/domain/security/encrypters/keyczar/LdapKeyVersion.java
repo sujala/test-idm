@@ -2,10 +2,8 @@ package com.rackspace.idm.domain.security.encrypters.keyczar;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPDNField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +25,7 @@ public class LdapKeyVersion implements KeyVersion, UniqueId {
     )
     private Integer version;
 
-    @LDAPField(attribute= LdapRepository.ATTR_KEY_CREATED,
+    @LDAPField(attribute= LdapRepository.ATTR_CREATED_DATE,
             objectClass=LdapRepository.OBJECTCLASS_KEY_DESCRIPTOR,
             filterUsage=FilterUsage.ALWAYS_ALLOWED,
             requiredForEncode=false
