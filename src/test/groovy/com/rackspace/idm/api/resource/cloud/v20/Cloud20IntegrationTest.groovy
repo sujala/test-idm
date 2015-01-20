@@ -3416,8 +3416,11 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         true        | 400
     }
 
-    def "user can validate his own token (B-80571:TK-165775)"() {
+    @Unroll
+    def "user can validate his own token (B-80571:TK-165775) - flag: #flag"() {
         given:
+        staticIdmConfiguration.setProperty(DefaultCloud20Service.FEATURE_USER_TOKEN_SELF_VALIDATION, flag)
+
         def username = "username" + getRandomUUID()
 
         def createUser = cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(username, "display", "$username@email.com", true, null, null, DEFAULT_PASSWORD))
@@ -3431,17 +3434,41 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         assert (authPasswordResponse.status == 200)
 
         def authToken = authPasswordResponse.getEntity(AuthenticateResponse).value.token.id
+
+        def username2 = "username" + getRandomUUID()
+
+        createUser = cloud20.createUser(authToken, v2Factory.createUserForCreate(username2, "display", "$username@email.com", true, null, userEntity.domainId, DEFAULT_PASSWORD))
+        assert (createUser.status == 201)
+
+        getUserResponse = cloud20.getUserByName(identityAdminToken, username2)
+        assert (getUserResponse.status == 200)
+        def userEntity2 = getUserResponse.getEntity(User).value
+
+        authPasswordResponse = cloud20.authenticatePassword(username2, DEFAULT_PASSWORD)
+        assert (authPasswordResponse.status == 200)
+
+        authToken = authPasswordResponse.getEntity(AuthenticateResponse).value.token.id
+
         def validateResponse
 
         when: "user validates his own token"
         validateResponse = cloud20.validateToken(authToken, authToken)
 
         then: "validate token is validated"
-        validateResponse.status == 200
-        validateResponse.getEntity(AuthenticateResponse).value.user.name == username
+        if (flag) {
+            validateResponse.status == 200
+            validateResponse.getEntity(AuthenticateResponse).value.user.name == username2
+        } else {
+            // User cannot validate his own token when future flag is off (B-80571:TK-171274)
+            validateResponse.status == 403
+        }
 
         cleanup:
+        cloud20.deleteUser(serviceAdminToken, userEntity2.getId())
         cloud20.deleteUser(serviceAdminToken, userEntity.getId())
+
+        where:
+        flag << [true, false]
     }
 
     def authAndExpire(String username, String password) {

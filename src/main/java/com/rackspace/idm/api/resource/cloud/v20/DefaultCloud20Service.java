@@ -80,6 +80,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
     public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
+    public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
+    public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -3409,9 +3411,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
         try {
-            //TODO: This token can be a Racker, Service or User of Proper Level
+            // Feature flag to enable self-validating tokens (B-80571:TK-171274).
+            final boolean selfValidate = config.getBoolean(FEATURE_USER_TOKEN_SELF_VALIDATION, FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE);
+            final boolean sameToken = StringUtils.equals(authToken, tokenId);
+
             // User can validate his own token (B-80571:TK-165775).
-            if (!StringUtils.equals(authToken, tokenId)) {
+            if (!(selfValidate && sameToken)) {
+                //TODO: This token can be a Racker, Service or User of Proper Level
                 authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             }
 
