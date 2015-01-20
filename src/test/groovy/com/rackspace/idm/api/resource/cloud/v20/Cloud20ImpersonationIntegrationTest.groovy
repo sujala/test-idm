@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import groovy.json.JsonSlurper
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.math.RandomUtils
@@ -25,6 +26,7 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.saml.SamlAssertionFactory
 
+import javax.ws.rs.core.MediaType
 import java.util.regex.Pattern
 
 import static com.rackspace.idm.Constants.*
@@ -367,7 +369,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonationResponse.status == 404
     }
 
-    def "impersonate federated user as identity admin"() {
+    @Unroll
+    def "impersonate federated user as identity admin: request=#requestContentType accept=#acceptContentType"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -382,12 +385,11 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def federatedUser = utils.getUserById(authResponse.getUser().getId())
 
         when: "impersonate the federated user"
-        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser, 10800, requestContentType, acceptContentType)
 
         then: "the request was successful"
         impersonationResponse.status == 200
-        def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
-        def impersonationTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersonationToken)
+        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
 
         and: "the impersonation token is referencing a new token under the federated user"
         impersonationTokenEntity.impersonatingToken != null
@@ -399,9 +401,17 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-    def "impersonate federated user as racker"() {
+    @Unroll
+    def "impersonate federated user as racker: request=#requestContentType accept=#acceptContentType"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -417,12 +427,11 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
 
         when: "impersonate the federated user"
-        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
+        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser, 10800, requestContentType, acceptContentType)
 
         then: "the request was successful"
         impersonationResponse.status == 200
-        def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
-        def impersonationTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersonationToken)
+        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
 
         and: "the impersonation token is referencing a new token under the federated user"
         impersonationTokenEntity.impersonatingToken != null
@@ -434,6 +443,13 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def "impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
@@ -1139,6 +1155,17 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
         userScopeAccess.setAccessTokenExp(tokenExp)
         scopeAccessRepository.updateScopeAccess(userScopeAccess)
+    }
+
+    def getScopeAccessFromImpersonationResponse(response, contentType) {
+        def impersonationToken
+        if(MediaType.APPLICATION_XML_TYPE == contentType) {
+            impersonationToken = response.getEntity(ImpersonationResponse).token.id
+        } else {
+            def responseString = response.getEntity(String)
+            impersonationToken = new JsonSlurper().parseText(responseString).access.token.id
+        }
+        return scopeAccessService.getScopeAccessByAccessToken(impersonationToken)
     }
 
 }

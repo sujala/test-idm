@@ -48,10 +48,14 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
                 JSONObject jsonImpersonation = (JSONObject) parser.parse(outer.get(JSONConstants.RAX_AUTH_IMPERSONATION).toString());
                 JSONObject jsonUser = (JSONObject) parser.parse(jsonImpersonation.get(JSONConstants.USER).toString());
                 Object username = jsonUser.get(JSONConstants.USERNAME);
+                Object federatedIdp = jsonUser.get(JSONConstants.RAX_AUTH_FEDERATED_IDP);
 
                 User user = new User();
                 if (username != null) {
                     user.setUsername(username.toString());
+                }
+                if (federatedIdp != null) {
+                    user.setFederatedIdp(federatedIdp.toString());
                 }
 
                 Object expireInSecondsObject = jsonImpersonation.get(JSONConstants.IMPERSONATION_EXPIRE_IN_SECONDS);
