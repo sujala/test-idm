@@ -245,6 +245,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         logger.debug("Authorizing as Requestor or Owner");
 
         boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccess
+                && targetScopeAccess != null
                 && requestingScopeAccess != null
                 && requestingScopeAccess.getClientId().equalsIgnoreCase(
                 targetScopeAccess.getClientId());

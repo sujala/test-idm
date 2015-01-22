@@ -266,3 +266,118 @@ rsId: 250
 rsPropagate: TRUE
 rsWeight: 500
 
+dn: rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+preferredLanguage: en_US
+uid: keystone_mfa_user_admin
+userPassword:: e1NTSEE1MTJ9Nk5tV3hlUFpQSTEwMWd4TDNGdXlvRURFOTV5QVd2SFBRT29kWTkvRVlteDVMM01PMUJPQUE4aHhUQzU5a3ZPTWdJbTNNbUJ5bHpGeG94aE5IdlhOOEFUcTkrZz0=
+enabled: TRUE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20150115221701.943Z
+rsApiKey:: cBoF/yUr7bFU8DrFOGNiEw==
+rsDomainId: 78543995
+rsExternalMultiFactorUserId: DUMEPCV67EA3I30G0TBM
+rsId: d8f1b8df14c844d9919aee4e19a2f6f9
+rsMossoId: 78543995
+rsMultiFactorDeviceVerified: TRUE
+rsMultiFactorEnabled: TRUE
+rsMultiFactorMobilePhoneRsId: fb6c00852e404263b745419dd761d968
+rsMultiFactorState: ACTIVE
+rsNastId: MossoCloudFS_78543995
+rsRegion: ORD
+timeZone: America/Chicago
+
+dn: cn=TOKENS,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=5,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543995
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: roleRsId=6,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543995
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: roleRsId=3,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: rsId=78543995,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsDomain
+cn: 78543995
+description: Default Domain
+enabled: TRUE
+rsId: 78543995
+tenantRsId: 78543995
+tenantRsId: MossoCloudFS_78543995
+
+dn: rsId=78543995,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: 78543995
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+enabled: TRUE
+rsDomainId: 78543995
+rsId: 78543995
+tenantDisplayName: 78543995
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543995,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: MossoCloudFS_78543995
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+enabled: TRUE
+rsDomainId: 78543995
+rsId: MossoCloudFS_78543995
+tenantDisplayName: MossoCloudFS_78543995
+vOneDefault: 111
+vOneDefault: 103
+
+dn: telephoneNumber=\+1 201-555-0104,ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: top
+objectClass: groupOfNames
+objectClass: rsMultiFactorMobilePhone
+cn: +1 201-555-0104
+member: rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace,dc=com
+telephoneNumber: +1 201-555-0104
+rsExternalMultiFactorPhoneId: DP1GRI1GJU52GWCOI2N6
+rsId: fb6c00852e404263b745419dd761d968
+
