@@ -424,6 +424,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(user, sharedRandom)
 
         then:
+        scopeAccessOne.getUsername().equals("username")
         scopeAccessOne.getUserRsId().equals("id")
         scopeAccessOne.getClientId().equals(sharedRandom)
         scopeAccessOne.getAccessTokenString() != null

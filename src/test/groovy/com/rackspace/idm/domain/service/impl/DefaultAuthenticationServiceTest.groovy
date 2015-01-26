@@ -32,6 +32,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         mockUserService(service)
         mockInputValidator(service)
         mockRSAClient(service)
+        mockIdentityUserService(service)
 
         expiredDate = new DateTime().minusHours(1).toDate()
         refreshDate = new DateTime().plusHours(refreshWindowHours - 1).toDate()
@@ -202,7 +203,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
         applicationService.authenticate(_, _) >> authResult
         userService.getUserByScopeAccess(_) >> user
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
-        userService.getUserById(_) >> user
+        identityUserService.getEndUserById(_) >> user
 
         when:
         def returned = service.getTokens(credentials, new DateTime())
@@ -271,7 +272,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
 
         applicationService.authenticate(_, _) >> caResult
         scopeAccessService.getScopeAccessByRefreshToken(_) >> scopeAccess
-        userService.getUserById(_) >> entityFactory.createUser()
+        identityUserService.getEndUserById(_) >> entityFactory.createUser()
 
         when:
         service.getTokens(credentials , new DateTime())

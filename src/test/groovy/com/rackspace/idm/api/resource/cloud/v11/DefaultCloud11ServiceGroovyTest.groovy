@@ -341,6 +341,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         def usa = service.getUserFromImpersonatedScopeAccess(sa)
 
         then:
+        usa.username == username
         usa.accessTokenString == token
         usa.accessTokenExp == expiredDate
         usa.createTimestamp == createdDate

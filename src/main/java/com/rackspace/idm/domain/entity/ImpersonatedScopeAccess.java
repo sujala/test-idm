@@ -24,12 +24,19 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
 
+    /**
+     * @deprecated Use userRsId to uniquely identify the impersonator
+     */
+    @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
+    /**
+     * @deprecated use rsImpersonatingRsId to uniquely identify the user being impersonated
+     */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingUsername;
@@ -85,10 +92,12 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
         this.rackerId = rackerId;
     }
 
+    @Deprecated
     public String getImpersonatingUsername() {
         return impersonatingUsername;
     }
 
+    @Deprecated
     public void setImpersonatingUsername(String impersonatingUsername) {
         this.impersonatingUsername = impersonatingUsername;
     }

@@ -247,4 +247,11 @@ public final class JSONConstants {
     public static final String RAX_AUTH_IMPERSONATION_FEDERATED_IDP_PATH = "impersonation.user.federatedIdp";
 
     public static final String RAX_AUTH_IMPERSONATION_PATH = "impersonation";
+
+    public static final String AUTHENTICATE_RESPONSE_DEFAULT_REGION_PATH = "access.user.defaultRegion";
+    public static final String AUTHENTICATE_RESPONSE_RAX_AUTH_DEFAULT_REGION_PATH = "access.user.RAX-AUTH:defaultRegion";
+    public static final String AUTHENTICATE_RESPONSE_AUTHENTICATED_BY_PATH = "access.token.authenticatedBy";
+    public static final String AUTHENTICATE_RESPONSE_RAX_AUTH_AUTHENTICATED_BY_PATH = "access.token.RAX-AUTH:authenticatedBy";
+
+
 }

@@ -9,6 +9,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.User;
@@ -60,6 +61,10 @@ public class DefaultCloud11Service implements Cloud11Service {
     private AuthConverterCloudV11 authConverterCloudV11;
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Autowired
     private EndpointConverterCloudV11 endpointConverterCloudV11;
     @Autowired
@@ -177,11 +182,22 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (sa instanceof ImpersonatedScopeAccess){
+                //create a dynamic non-persisted scope access for the user being impersonated based on data in the impersonated token
                 UserScopeAccess usa = getUserFromImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
                 if(usa == null || usa.isAccessTokenExpired(new DateTime())) {
                     throw new NotFoundException("Token not found");
                 }
-                EndUser user = identityUserService.getEndUserById(usa.getUserRsId());
+
+                //to support 2.9.x tokens that do NOT include userId (just username)
+                EndUser user = null;
+                if (usa.getUserRsId() != null) {
+                    user = identityUserService.getEndUserById(usa.getUserRsId());
+                } else {
+                    //is from a 2.9.x impersonation token that only contains impersonating username (not impersonatingUserRsId). Only
+                    //should be supported for provisioned users.
+                    user = userService.getUser(usa.getUsername());
+                }
+
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl, user)).getValue());
             }
 
@@ -235,7 +251,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(scopeAccess.getAccessTokenString());
         usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-        usa.setUserRsId(scopeAccess.getRsImpersonatingRsId());
+        usa.setUsername(scopeAccess.getImpersonatingUsername());
+        usa.setUserRsId(scopeAccess.getRsImpersonatingRsId()); //will be null for 2.9.1 tokens
         usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
         return usa;
     }
