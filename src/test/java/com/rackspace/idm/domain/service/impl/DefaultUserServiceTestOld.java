@@ -301,7 +301,9 @@ public class DefaultUserServiceTestOld {
         String userId = "userId";
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUserRsId()).thenReturn(userId);
+        when(scopeAccess.getUsername()).thenReturn("username");
         when(identityUserService.getEndUserById(userId)).thenReturn(user);
+        when(userDao.getUserByUsername("username")).thenReturn(user);
         when(domainService.getDomain(anyString())).thenReturn(null);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
         assertThat("user", (User)result, equalTo(user));
@@ -319,6 +321,8 @@ public class DefaultUserServiceTestOld {
         String userId = "userRsId";
         when(scopeAccess.getUserRsId()).thenReturn(userId);
         when(identityUserService.getEndUserById(userId)).thenReturn(null);
+        when(scopeAccess.getUsername()).thenReturn("username");
+        when(userDao.getUserByUsername("username")).thenReturn(null);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 
@@ -330,6 +334,8 @@ public class DefaultUserServiceTestOld {
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUserRsId()).thenReturn(userId);
         when(identityUserService.getEndUserById(userId)).thenReturn(null);
+        when(scopeAccess.getUsername()).thenReturn("username");
+        when(userDao.getUserByUsername("username")).thenReturn(user);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 

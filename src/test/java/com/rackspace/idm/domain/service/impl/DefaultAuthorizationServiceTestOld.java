@@ -65,8 +65,10 @@ public class DefaultAuthorizationServiceTestOld {
         ScopeAccess targetScopeAccess = new UserScopeAccess();
         targetScopeAccess.setClientId("123");
         ((UserScopeAccess) targetScopeAccess).setUserRsId("jsmith");
+        ((UserScopeAccess) targetScopeAccess).setUsername("jsmith");
         ScopeAccess requestingScopeAccess = new UserScopeAccess();
         ((UserScopeAccess) requestingScopeAccess).setUserRsId("jsmith");
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
         requestingScopeAccess.setClientId("123");
         assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
     }
@@ -136,9 +138,11 @@ public class DefaultAuthorizationServiceTestOld {
         ScopeAccess targetScopeAccess = new UserScopeAccess();
         targetScopeAccess.setClientId("4");
         ((UserScopeAccess) targetScopeAccess).setUserRsId("rclements");
+        ((UserScopeAccess) targetScopeAccess).setUsername("rclements");
         ScopeAccess requestingScopeAccess = new UserScopeAccess();
         requestingScopeAccess.setClientId("456");
         ((UserScopeAccess) requestingScopeAccess).setUserRsId("jsmith");
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
         assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(false));
     }
 

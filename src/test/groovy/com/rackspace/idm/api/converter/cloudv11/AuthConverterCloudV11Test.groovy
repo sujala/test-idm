@@ -38,6 +38,7 @@ class AuthConverterCloudV11Test extends RootServiceTest{
         def sa = new UserScopeAccess().with {
             it.accessTokenString = "token"
             it.accessTokenExp = new Date().plus(1)
+            it.username = "username"
             it.createTimestamp = date
             return it
         }

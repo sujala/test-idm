@@ -129,6 +129,7 @@ public class AuthenticationServiceTests {
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         usa.setUserRsId(uniqueId);
+        usa.setUsername(username);
         usa.setLdapEntry(new ReadOnlyEntry("accessToken=12345,cn=TOKENS,o=org", new Attribute("name", "value")));
         return usa;
     }

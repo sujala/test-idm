@@ -38,6 +38,7 @@ class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootConcurrentI
         //seed the repo with an expired token
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setUserRsId(specificationIdentityAdmin.getId());
+        userScopeAccess.setUsername(specificationIdentityAdmin.username);
         userScopeAccess.setClientId(CLIENT_ID);
         userScopeAccess.setAccessTokenString(UUID.randomUUID().toString().replaceAll('-', ""));
         userScopeAccess.setAccessTokenExp(new DateTime().minusDays(1).toDate());  //yesterday

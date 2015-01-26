@@ -818,6 +818,20 @@ public class DefaultUserService implements UserService {
             }
         }
 
+        /*
+        TODO: Delete this. It is only here for backward compatibility with 2.9.x tokens which depends
+        on username in tokens. Once all nodes updated to 2.10.x, 2.9.x is dead and buried  (and we know we're not going back),
+        we can delete this update code.
+         */
+        for (ScopeAccess scopeAccess : scopeAccessService.getScopeAccessListByUserId(user.getId())) {
+            if (scopeAccess instanceof UserScopeAccess
+                    && !user.getUsername().equals(((UserScopeAccess) scopeAccess).getUsername())) {
+                //update the scope access with the updated username
+                ((UserScopeAccess) scopeAccess).setUsername(user.getUsername());
+                scopeAccessService.updateScopeAccess(scopeAccess);
+            }
+        }
+
         logger.info("Updated User: {}", user);
     }
 
@@ -913,8 +927,7 @@ public class DefaultUserService implements UserService {
                     //first try the user's ID
                     user = identityUserService.getEndUserById(impersonatedScopeAccess.getUserRsId());
                 } else {
-                    //else, fall back to the deprecated username attribute
-                    //The username is no longer being set but will be on older tokens
+                    //else, fall back to the deprecated username attribute to support v2.9.x imp tokens
                     user = getUser(impersonatedScopeAccess.getUsername());
                 }
             }

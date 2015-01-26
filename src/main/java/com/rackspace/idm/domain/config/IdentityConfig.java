@@ -37,6 +37,9 @@ public class IdentityConfig {
     private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required";
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
 
+    public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
+    public static final boolean FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT = false;
+
     @Autowired
     private Configuration config;
 
@@ -109,4 +112,6 @@ public class IdentityConfig {
     public String getIdentityDefaultUserRoleName() { return config.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);}
 
     public String getIdentityUserManagerRoleName() { return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);}
+
+    public boolean allowFederatedImpersonation() { return config.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);}
 }

@@ -244,6 +244,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     def getFederatedToken(EndUser user, tokenStr = testUtils.getRandomUUID("token")) {
         new UserScopeAccess().with {
             it.userRsId = user.id
+            it.username = user.username
             it.accessTokenString = tokenStr
             it.accessTokenExp = new DateTime().plusDays(1).toDate()
             it.clientId = "clientId"

@@ -20,6 +20,13 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
 
+    /**
+     * @deprecated Use the {@link #userRsId} property in lieu of this
+     */
+    @Deprecated
+    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private String username;
+
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
@@ -62,6 +69,22 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     @Override
     public void setRefreshTokenExp(Date refreshTokenExp) {
         this.refreshTokenExp = refreshTokenExp;
+    }
+
+    /**
+     * @deprecated Use {@link #getUserRsId()}
+     */
+    @Deprecated
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * @deprecated Use {@link #setUserRsId(String)}
+     */
+    @Deprecated
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getUserRCN() {

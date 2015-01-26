@@ -141,6 +141,7 @@ public class UserServiceTests {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setClientId(clientId);
         usa.setClientRCN(clientRCN);
+        usa.setUsername(username);
         usa.setUserRCN(userRCN);
         usa.setUserRsId(userRsId);
         return usa;
