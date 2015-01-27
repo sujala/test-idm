@@ -1,7 +1,12 @@
 version: 1
 
-dn: o=revocation,dc=rackspace,dc=com
-objectClass: top
+dn: o=tokens,dc=rackspace,dc=com
 objectClass: organizationalUnit
-ou: revocation
+objectClass: top
+ou: tokens
+
+dn: ou=TRRs,o=tokens,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: TRRs
 description: Defines container for token revocation records

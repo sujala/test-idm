@@ -206,7 +206,7 @@ public abstract class LdapRepository {
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
-    protected static final String TOKEN_REVOCATION_BASE_DN = "o=revocation,dc=rackspace,dc=com";
+    protected static final String TOKEN_REVOCATION_BASE_DN = "ou=TRRs,o=tokens,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";
