@@ -61,7 +61,7 @@ public class IdentityConfig {
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT = "cloud-identity-tokens-ae";
 
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
-    private static final String KEYCZAR_DN_DEFAULT = "ou=keyinfo,o=keystore,dc=rackspace,dc=com";
+    private static final String KEYCZAR_DN_DEFAULT = "ou=keystore,o=configuration,dc=rackspace,dc=com";
 
     private static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
     private static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
