@@ -1,8 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
+import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,6 +32,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Autowired
     LdapFederatedUserRepository ldapFederatedUserRepository
+
+    @Autowired
+    LdapScopeAccessRepository scopeAccessDao
 
     def "Validate user token" () {
         when:
@@ -220,6 +228,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def "trying to validate an impersonation token for deleted federated user token returns 404"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -253,10 +262,12 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
     }
 
     def "impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -294,11 +305,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
     }
 
     @Unroll
     def "validate impersonation token for federated user contains user's IDP acceptContentType=#accept"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -331,11 +344,90 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
 
         where:
         accept | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    /*
+     * In 2.10.x the username property in tokens has been deprecated in favor of using the userRsId property. These tests
+     * verify that 2.10.x can correctly use tokens that match the following:
+     * <ol>
+     *     <li>Tokens that contain both username and userRsId (2.9.x and earlier format)</li>
+     *     <li>Tokens that only contain userRsId (2.11.x or later will remove the population of username)</li>
+     * </ol>
+     *
+     * Furthermore, 2.10.x MUST produce tokens that contain both username and userRsId in order to be backward compatible
+     * with 2.9.x (whose code expects both username and userId to be populated)
+     *
+     */
+    def "validate token with userid and username populated"() {
+        def saToken = utils.getServiceAdminToken()
+        def (userAdmin, users) = utils.createUserAdmin()
+        AuthenticateResponse auth = utils.authenticate(userAdmin)
+
+        def tokenId = auth.token.id
+
+        when:
+        def rawResponse = cloud20.validateToken(saToken, tokenId, type)
+        assert rawResponse.status == HttpStatus.SC_OK
+        AuthenticateResponse valResponse = getResponseEntity(AuthenticateResponse, type, rawResponse)
+
+        then:
+        valResponse.user.id == userAdmin.id
+        valResponse.user.name == userAdmin.username
+        valResponse.token.id == tokenId
+
+        where:
+        type | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "validate token with userid populated and null username"() {
+        def saToken = utils.getServiceAdminToken()
+        def (userAdmin, users) = utils.createUserAdmin()
+        AuthenticateResponse auth = utils.authenticate(userAdmin)
+        UserScopeAccess origToken = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
+
+        //null out the username
+        origToken.username = null
+        scopeAccessDao.updateObjectAsIs(origToken)
+
+        when:
+        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
+
+        then:
+        token != null
+        token.username == null
+        token.userRsId != null
+
+        when:
+        def rawResponse = cloud20.validateToken(saToken, token.accessTokenString, type)
+        assert rawResponse.status == HttpStatus.SC_OK
+        AuthenticateResponse valResponse = getResponseEntity(AuthenticateResponse, type, rawResponse)
+
+        then:
+        valResponse.user.id == userAdmin.id
+        valResponse.user.name == userAdmin.username
+        valResponse.token.id == token.accessTokenString
+
+        where:
+        type | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def getResponseEntity(Class type, MediaType responseFormat, ClientResponse response) {
+        def result = response.getEntity(type)
+        if (responseFormat == MediaType.APPLICATION_XML_TYPE) {
+            return result.value
+        } else {
+            return result;
+        }
     }
 
     def deleteFederatedUserQuietly(username) {
@@ -349,5 +441,4 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
             LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
         }
     }
-
 }

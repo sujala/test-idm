@@ -1,10 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
+import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspacecloud.docs.auth.api.v1.AuthData
+import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 
 import static org.apache.http.HttpStatus.*
 
 class Cloud11TokenIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    ScopeAccessService scopeAccessService
 
     def "Authenticate user within a disable domain should return 403" () {
         given:
@@ -41,4 +48,23 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         utils.deleteTenantById(user.nastId)
         utils.deleteDomain(domainId)
     }
+
+    /**
+     *  2.10.x MUST produce tokens that contain both username and userRsId in order to be backward compatible
+     * with 2.9.x (whose code expects both username and userId to be populated).
+     *
+     */
+    def "auth produces token with populated userRsId and username"() {
+        def user = utils11.createUser()
+        AuthData authData = utils11.authenticateWithKey(user.id, user.key)
+
+        when:
+        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(authData.token.id)
+
+        then:
+        token != null
+        token.username != null
+        token.userRsId != null
+    }
+
 }

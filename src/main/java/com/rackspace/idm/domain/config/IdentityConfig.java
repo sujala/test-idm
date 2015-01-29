@@ -74,6 +74,9 @@ public class IdentityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
 
+    public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
+    public static final boolean FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT = false;
+
     @Autowired
     private Configuration config;
 
@@ -211,6 +214,10 @@ public class IdentityConfig {
         return getFeatureAETokensEncrypt() || config.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
     }
 
+    public boolean allowFederatedImpersonation() {
+        return config.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);
+    }
+
     private TokenFormat convertToTokenFormat(String strFormat) {
         for (TokenFormat tokenFormat : TokenFormat.values()) {
             if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
@@ -219,4 +226,5 @@ public class IdentityConfig {
         }
         return TokenFormat.UUID;
     }
+
 }
