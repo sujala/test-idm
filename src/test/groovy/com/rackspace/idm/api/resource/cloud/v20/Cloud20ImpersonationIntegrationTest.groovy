@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -92,6 +93,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     @Autowired
     Configuration config
+
+    @Autowired
+    IdentityConfig identityConfig
 
     def setup() {
     }
@@ -402,6 +406,54 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         return config.getInt(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_RACKER_MAX_SECONDS_PROP_NAME);
     }
 
+    /**
+     * The format of the impersonated token and the linked user token is based upon the token format of the impersonator.
+     * The token format of the user being impersonated is irrelevant.
+     *
+     */
+    def "impersonating user with different token format than impersonator uses impersonator tokenFormat: #impersonatorFormat: #impersonatedFormat; #impersonatedFormat"() {
+        given:
+        def iAdmin = utils.createUser(specificationServiceAdminToken)
+        iAdmin.setTokenFormat(impersonatorFormat)
+        utils.updateUser(iAdmin)
+
+        def iAdminToken = utils.getToken(iAdmin.username)
+
+        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusSeconds(-1 * ONE_HOUR_IN_SECONDS))
+        localDefaultUser.setTokenFormat(impersonatedFormat)
+        utils.updateUser(localDefaultUser)
+
+        def expectedTokenFormat = tokenFormatFromTokenFormatEnum(impersonatorFormat)
+
+        when:  "impersonate user"
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds(), iAdminToken)
+
+        then: "get appropriate tokens format back"
+        impersonatedScopeAccess.accessTokenString != null
+        impersonatedScopeAccess.impersonatingToken != null
+
+        //both tokens should be based on impersonator, not impersonated
+        tokenFormatSelector.formatForExistingToken(impersonatedScopeAccess.accessTokenString) == expectedTokenFormat
+        tokenFormatSelector.formatForExistingToken(impersonatedScopeAccess.impersonatingToken) == expectedTokenFormat
+
+        where:
+        impersonatorFormat      | impersonatedFormat
+        TokenFormatEnum.AE      | TokenFormatEnum.AE
+        TokenFormatEnum.UUID    | TokenFormatEnum.UUID
+        TokenFormatEnum.AE      | TokenFormatEnum.UUID
+        TokenFormatEnum.UUID    | TokenFormatEnum.AE
+    }
+
+    def TokenFormat tokenFormatFromTokenFormatEnum(TokenFormatEnum tokenFormatEnum) {
+        switch (tokenFormatEnum) {
+            case TokenFormatEnum.AE:
+                return TokenFormat.AE;
+            case TokenFormatEnum.UUID:
+                return TokenFormat.UUID;
+            default:
+                throw new IllegalArgumentException("Straight conversion possible. Must use defaults.")
+        }
+    }
 
     /* *******************
     AE only tests

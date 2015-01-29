@@ -2,12 +2,17 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
+import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.rackspace.idm.domain.security.TokenFormat
+import com.rsa.cryptoj.c.uu
 import com.unboundid.util.LDAPSDKUsageException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Ignore
 import spock.lang.Shared
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -28,6 +33,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     @Shared def dn = "accessToken=123456,cn=TOKENS,rsId=12345,ou=users,o=rackspace"
     @Shared def searchDn = "rsId=12345,ou=users,o=rackspace"
 
+    private ScopeAccessDao uuidScopeAccessDao;
+
     @Shared def expiredDate
     @Shared def refreshDate
     @Shared def futureDate
@@ -41,6 +48,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def setup() {
+        uuidScopeAccessDao = Mock(UUIDScopeAccessDao)
+
         mockConfiguration(service)
         mockAtomHopperClient(service)
         mockAuthHeaderHelper(service)
@@ -51,6 +60,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockApplicationService(service)
         mockIdentityUserService(service)
         mockTokenFormatSelector(service)
+        service.uuidScopeAccessDao = uuidScopeAccessDao
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
@@ -471,7 +481,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         3 * scopeAccessDao.deleteScopeAccess(_)
         1 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
+        1 * uuidScopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
 
         returned.accessTokenString.equals(existingValidImpersonationTokenString)
     }

@@ -57,6 +57,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private ScopeAccessDao scopeAccessDao;
 
     @Autowired
+    @Qualifier("uuidScopeAccessDao")
+    private ScopeAccessDao uuidScopeAccessDao;
+
+    @Autowired
     private UserService userService;
     @Autowired
     private TenantService tenantService;
@@ -1019,8 +1023,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         TokenFormat tFormat = tokenFormatSelector.formatForNewToken(impersonator);
 
         if (tFormat == TokenFormat.UUID) {
-            //get the latest user scope access created solely for impersonation for this user
-            UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
+            //get the latest UUID user scope access created solely for impersonation for this user
+            UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) uuidScopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
 
             //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
             DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
@@ -1028,7 +1032,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
                 //existing user token is expired or it will expire before the requested
                 // impersonation expiration so we must create a new token for the user.
-                scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
+                scopeAccessForImpersonation = createNewUUIDUserTokenForImpersonation(user);
             } else {
                 scopeAccessForImpersonation = latestScopeAccessForUser;
             }
@@ -1051,15 +1055,25 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccessForImpersonation;
     }
 
-    private UserScopeAccess createNewUserTokenForImpersonation(EndUser user) {
+    /**
+     * Explicitly create a UUID based token.
+     *
+     * @param user
+     * @return
+     */
+    private UserScopeAccess createNewUUIDUserTokenForImpersonation(EndUser user) {
         DateTime now = new DateTime();
 
         UserScopeAccess newUserScopeAccess = createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+
         int tokenLifetimeInSeconds = getDefaultCloudAuthTokenExpirationSeconds();
         DateTime expiration = now.plusSeconds(tokenLifetimeInSeconds);
         newUserScopeAccess.setAccessTokenExp(expiration.toDate());
         newUserScopeAccess.setAuthenticatedBy(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
-        addUserScopeAccess(user, newUserScopeAccess);
+
+        logger.info(ADDING_SCOPE_ACCESS, newUserScopeAccess);
+        uuidScopeAccessDao.addScopeAccess(user, newUserScopeAccess);
+        logger.info(ADDED_SCOPE_ACCESS, newUserScopeAccess);
 
         return newUserScopeAccess;
     }
