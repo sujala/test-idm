@@ -278,6 +278,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
 
     def createFederatedToken(String tokenString, String username) {
         new UserScopeAccess().with {
+            it.username = username
             it.accessTokenString = tokenString
             it.accessTokenExp = new DateTime().toDate()
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);

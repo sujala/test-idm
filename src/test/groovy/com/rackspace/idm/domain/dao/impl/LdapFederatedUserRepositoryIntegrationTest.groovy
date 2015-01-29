@@ -88,6 +88,7 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
     def createFederatedToken(String userId, String username, String tokenStr, Date expiration, String idpName)   {
         new UserScopeAccess().with {
             it.userRsId = userId
+            it.username = username
             it.accessTokenString = tokenStr
             it.accessTokenExp = expiration
             it.clientId = "fakeClientId"

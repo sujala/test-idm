@@ -127,6 +127,7 @@ public class AuthenticationServiceTests {
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         usa.setUserRsId(uniqueId);
+        usa.setUsername(username);
         usa.setUniqueId("accessToken=12345,cn=TOKENS,o=org");
         return usa;
     }

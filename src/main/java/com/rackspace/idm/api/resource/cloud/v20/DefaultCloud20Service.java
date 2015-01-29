@@ -19,6 +19,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
@@ -98,6 +99,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
@@ -2211,6 +2215,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             //validate the user being impersonated can be found and is allowed to be impersonated
             EndUser user;
             if(StringUtils.isNotBlank(impersonationRequest.getUser().getFederatedIdp())){
+                if (!identityConfig.allowFederatedImpersonation()) {
+                    throw new ForbiddenException("Impersonating federated users is not currently enabled.");
+                }
                 user = identityUserService.checkAndGetFederatedUserByUsernameAndIdentityProviderUri(impersonationRequest.getUser().getUsername(), impersonationRequest.getUser().getFederatedIdp());
             } else {
                 user = userService.checkAndGetUserByName(impersonationRequest.getUser().getUsername());
@@ -3494,7 +3501,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                     if (impersonatedToken == null || impersonatedToken.isAccessTokenExpired(new DateTime())) {
                         throw new NotFoundException("Token not found.");
                     } else if (impersonatedToken instanceof UserScopeAccess) {
-                        user = identityUserService.getEndUserById(((UserScopeAccess) impersonatedToken).getUserRsId());
+                        UserScopeAccess usaImpersonatedToken = (UserScopeAccess) impersonatedToken;
+                        if (StringUtils.isNotBlank(usaImpersonatedToken.getUserRsId())) {
+                            user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
+                        } else {
+                            //failsafe feature just in case the linked userscopeaccess doesn't contain username. It should always
+                            //even in 2.9.x, but being paranoid here...
+                            user = userService.getUser(usaImpersonatedToken.getUsername());
+                        }
                     } else {
                         //the only type of scope access that can be impersonated is a UserScopeAccess, if we get here then this is probably bad data
                         throw new IllegalStateException("Unrecognized type of token being impersonated " + impersonatedToken.getClass().getSimpleName());

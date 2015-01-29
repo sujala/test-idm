@@ -69,6 +69,7 @@ public class UserApplicationResource extends ParentResource {
         //TODO: probably should be in the application service. Refactor when get chance
         UserScopeAccess sa = new UserScopeAccess();
         sa.setUserRsId(user.getId());
+        sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(application.getClientId());
         sa.setClientRCN(application.getRcn());
