@@ -76,11 +76,8 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
-        DN dn = new DN("cn=rdn,dc=parent");
-        Attribute attribute = new Attribute("name");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
+        token.setUniqueId("cn=rdn,dc=parent");
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
@@ -88,10 +85,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccessAndFails_stillPasses() throws Exception {
-        Entry entry = new Entry("junk");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
@@ -99,9 +93,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_rolesNull_returnsEmptyList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
@@ -109,9 +101,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_rolesEmpty_returnsEmptyList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(new ArrayList<TenantRole>());
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
@@ -119,9 +109,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_roleHasTenantIdAndIdNotValid_doesNotAddTenantToList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
         role.getTenantIds().add("123");
         List<TenantRole> roles = new ArrayList<TenantRole>();
@@ -134,9 +122,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_noTenantIds_doesNotCallTenantServiceMethod() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
         role.getTenantIds().clear();
         List<TenantRole> roles = new ArrayList<TenantRole>();
@@ -148,9 +134,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_tenantIdsNull_doesNotCallTenantServiceMethod() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
@@ -161,9 +145,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_rolesEmpty_doesNotCallTenantServiceMethod() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
@@ -172,9 +154,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_endpointNull_returnsEmptyList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
         role.getTenantIds().add("123");
@@ -197,9 +177,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_baseUrlsListEmpty_returnsEmptyList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
         role.getTenantIds().add("123");
@@ -221,9 +199,7 @@ public class DefaultScopeAccessServiceTestOld {
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_tenantsEmpty_returnsEmptyList() throws Exception {
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
 
         TenantRole role = new TenantRole();
         role.getTenantIds().add("123");

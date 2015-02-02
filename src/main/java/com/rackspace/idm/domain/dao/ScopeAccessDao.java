@@ -95,5 +95,4 @@ public interface ScopeAccessDao {
 
     String getClientIdForParent(ScopeAccess scopeAccess);
 
-    String getUserIdForParent(ScopeAccess scopeAccess);
 }

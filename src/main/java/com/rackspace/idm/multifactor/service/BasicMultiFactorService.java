@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -69,10 +70,6 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
     public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
 
-    public static final List<List<String>> AUTHENTICATEDBY_LIST_TO_NOT_REVOKE_ON_MFA_ENABLEMENT = Arrays.asList(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
-            , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE)
-            , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY));
-
     private final UserMultiFactorEnforcementLevelConverter userMultiFactorEnforcementLevelConverter = new UserMultiFactorEnforcementLevelConverter();
 
     @Autowired
@@ -93,6 +90,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Autowired
     private Configuration globalConfig;
 
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
 
@@ -113,6 +111,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private TokenRevocationService tokenRevocationService;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -513,7 +514,8 @@ public class BasicMultiFactorService implements MultiFactorService {
      * via MFA.
      */
     private void revokeAllMFAProtectedTokensForUser(User user) {
-        scopeAccessService.expireAllTokensExceptTypeForEndUser(user, AUTHENTICATEDBY_LIST_TO_NOT_REVOKE_ON_MFA_ENABLEMENT, false);
+        //only revoke password tokens
+        tokenRevocationService.revokeTokensForBaseUser(user, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS);
     }
 
     private void disableMultiFactorForUser(User user) {

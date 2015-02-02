@@ -1,5 +1,7 @@
 package com.rackspace.idm;
 
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum;
+
 /**
  * Add globally-used constants here.
  * 
@@ -15,12 +17,42 @@ public final class GlobalConstants {
     public static final String USER_TIME_ZONE_DEFAULT = "America/Chicago";
 
     public static final String RACKSPACE_DOMAIN = "RACKSPACE";
-    public static final String AUTHENTICATED_BY_PASSWORD = "PASSWORD";
-    public static final String AUTHENTICATED_BY_RSAKEY = "RSAKEY";
-    public static final String AUTHENTICATED_BY_APIKEY = "APIKEY";
-    public static final String AUTHENTICATED_BY_PASSCODE = "PASSCODE";
-    public static final String AUTHENTICATED_BY_FEDERATION= "FEDERATED";
-    public static final String AUTHENTICATED_BY_IMPERSONATION = "IMPERSONATION";
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.PASSWORD}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_PASSWORD = AuthenticatedByMethodEnum.PASSWORD.getValue();
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.RSAKEY}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_RSAKEY = AuthenticatedByMethodEnum.RSAKEY.getValue();
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.APIKEY}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_APIKEY = AuthenticatedByMethodEnum.APIKEY.getValue();
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.PASSCODE}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_PASSCODE = AuthenticatedByMethodEnum.PASSCODE.getValue();
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.FEDERATION}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_FEDERATION= AuthenticatedByMethodEnum.FEDERATION.getValue();
+
+    /**
+     * @deprecated - Use associated {@link AuthenticatedByMethodEnum.IMPERSONATION}
+     */
+    @Deprecated
+    public static final String AUTHENTICATED_BY_IMPERSONATION = AuthenticatedByMethodEnum.IMPERSONATION.getValue();
 
     public static final String TENANT_ALIAS_PATTERN = "{tenant}";
 

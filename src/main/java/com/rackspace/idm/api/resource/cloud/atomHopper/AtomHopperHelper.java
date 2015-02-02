@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.atomHopper;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
@@ -15,35 +18,30 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 1/9/13
- * Time: 6:26 PM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 public class AtomHopperHelper {
     @Autowired
-    private Configuration config;
+    private IdentityConfig identityConfig;
     @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
     private UserService userService;
 
-    private ObjectFactory objectFactory = new ObjectFactory();
+    private static final List<String> AUTH_BY_SYSTEM_LIST = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodEnum.SYSTEM.getValue()));
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public String getAuthToken() throws IOException, JAXBException {
+    public String getAuthToken() {
         logger.warn("Getting admin token ...");
-        User user = userService.getUser(config.getString("ga.username"));
-        ScopeAccess access = scopeAccessService.getScopeAccessForUser(user);
-        String clientId = access.getClientId();
-        if(access.getAccessTokenExp().before(new Date())){
-            access = scopeAccessService.updateExpiredUserScopeAccess(user, clientId, null);
-        }
+        User user = userService.getUser(identityConfig.getGaUsername());
+        ScopeAccess access = scopeAccessService.getValidUserScopeAccessForClientId(user,
+                identityConfig.getCloudAuthClientId(), AUTH_BY_SYSTEM_LIST);
+
         return access.getAccessTokenString();
     }
 
@@ -51,10 +49,6 @@ public class AtomHopperHelper {
         if(entity != null){
             EntityUtils.consume(entity);
         }
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
     }
 
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {

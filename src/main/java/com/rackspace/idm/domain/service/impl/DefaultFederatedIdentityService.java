@@ -255,7 +255,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         authData.setUser(user);
         authData.setEndpoints(endpoints);
 
-        token.setRoles(tenantRoles);
         user.setRoles(tenantRoles);
 
         return authData;

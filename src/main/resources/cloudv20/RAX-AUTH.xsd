@@ -29,6 +29,7 @@
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
     <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
+    <attribute name="tokenFormat" type="RAX-AUTH:TokenFormatEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -751,4 +752,38 @@
             <enumeration value="OPTIONAL"/>
         </restriction>
     </simpleType>
+
+    <simpleType name="TokenFormatEnum">
+        <restriction base="xsd:string">
+            <enumeration value="DEFAULT"/>
+            <enumeration value="UUID"/>
+            <enumeration value="AE"/>
+        </restriction>
+    </simpleType>
+
+    <element name="metadata" type="RAX-AUTH:KeyMetadata" />
+
+    <simpleType name="KeyVersionStatusEnum">
+        <restriction base="xsd:string">
+            <enumeration value="PRIMARY"/>
+            <enumeration value="ACTIVE"/>
+            <enumeration value="INACTIVE"/>
+        </restriction>
+    </simpleType>
+
+    <complexType name="KeyMetadata">
+        <sequence>
+            <element name="key" type="RAX-AUTH:KeyVersion" minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+        <attribute name="created" type="xsd:dateTime" use="optional" />
+        <attribute name="retrieved" type="xsd:dateTime" use="required" />
+        <attribute name="size" type="xsd:int" use="required" />
+    </complexType>
+
+    <complexType name="KeyVersion">
+        <attribute name="created" type="xsd:dateTime" use="optional" />
+        <attribute name="version" type="xsd:int" use="required" />
+        <attribute name="status" type="RAX-AUTH:KeyVersionStatusEnum" use="required" />
+    </complexType>
+
 </schema>

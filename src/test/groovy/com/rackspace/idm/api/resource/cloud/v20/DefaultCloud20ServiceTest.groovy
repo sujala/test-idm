@@ -1,4 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 
@@ -14,7 +16,6 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.validation.Validator20
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 
@@ -634,9 +635,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
 
         def mock = Mock(ScopeAccess)
-        mock.getLDAPEntry() >> createLdapEntry()
+        mock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
         scopeAccessMock = Mock()
-        scopeAccessMock.getLDAPEntry() >> createLdapEntry()
+        scopeAccessMock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
 
         scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
         authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
@@ -2865,6 +2866,79 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(_,_)
     }
 
+    def "Update token format as a identity admin doesn't reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudIdentityAdmin(_) >> true
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        0 * userInput.setTokenFormat(_)
+    }
+
+    def "Update token format as a service admin doesn't reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        0 * userInput.setTokenFormat(_)
+    }
+
+    def "Update token format as a non service/identity admin reset the data"() {
+        given:
+        allowUserAccess()
+        authorizationService.authorizeCloudIdentityAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        UserForCreate userInput = Mock(UserForCreate)
+        userInput.getId() >> "2"
+
+        User user = Mock(User)
+        user.getId() >> "2"
+
+        User caller = Mock(User)
+        caller.getId() >> "123"
+
+        userService.checkAndGetUserById("2") >> user;
+        userService.getUserByAuthToken(authToken) >> caller;
+
+        when:
+        service.updateUser(headers, authToken, "2", userInput)
+
+        then:
+        1 * userInput.setTokenFormat(null)
+    }
+
     def "Disabling a disabled user does not send an atom feed"(){
         given:
         allowUserAccess()
@@ -4207,6 +4281,40 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
     }
 
+    def "[B-82794] Verify if the API error is properly obfuscated"() {
+        given:
+        allowUserAccess()
+        User user = entityFactory.createUser()
+        User caller = entityFactory.createUser()
+        userService.getUserByScopeAccess(_, false) >> caller
+
+        def result
+
+        when:
+        identityUserService.getEndUserById("notfound") >> null
+        result = service.getUserById(headers, authToken, "notfound")
+
+        then:
+        result.build().status == 404
+
+        when:
+        identityUserService.getEndUserById("forbidden") >> user
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        authorizationService.verifyDomain(caller, user) >> { throw new ForbiddenException() }
+        result = service.getUserById(headers, authToken, "forbidden")
+
+        then:
+        result.build().status == 404
+
+        when:
+        authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.hasUserManageRole(caller) >> false
+        result = service.getUserById(headers, authToken, "nomatch")
+
+        then:
+        result.build().status == 404
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
@@ -4243,17 +4351,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
-    }
-
-    def createLdapEntry(String dn) {
-        dn = dn ? dn : "accessToken=token,cn=TOKENS,rsId=id,ou=users"
-
-        def mock = Mock(ReadOnlyEntry)
-        mock.getDN() >> dn
-        mock.getAttributeValue(_) >> { arg ->
-            return arg[0]
-        }
-        return mock
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {

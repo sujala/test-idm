@@ -69,7 +69,7 @@ objectClass: Person
 objectClass: ndsLoginProperties
 objectClass: Top
 cn: test.impersonate
-sn: racker
+sn: impersonate
 uid: test.impersonate
 groupMembership: cn=cloud-identity-impersonate,ou=Groups,o=rackspace
 userPassword:: cGFzc3dvcmQ=
@@ -83,6 +83,27 @@ objectClass: Person
 objectClass: ndsLoginProperties
 objectClass: Top
 cn: test.nogroup
-sn: racker
+sn: nogroup
 uid: test.nogroup
+userPassword:: cGFzc3dvcmQ=
+
+
+### Creates "cloud-identity-ae-tokens" group and "test.ae" user with AE tokens enabled:
+
+dn: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace
+changetype: add
+objectClass: groupOfNames
+objectClass: Top
+cn: cloud-identity-ae-tokens
+
+dn: cn=test.ae,ou=Users,o=rackspace
+changetype: add
+objectClass: Person
+objectClass: ndsLoginProperties
+objectClass: Top
+sn: ae
+cn: test.ae
+uid: test.ae
+groupMembership: cn=team-cloud-identity,ou=Groups,o=rackspace
+groupMembership: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace
 userPassword:: cGFzc3dvcmQ=

@@ -1,9 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
@@ -14,6 +13,7 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
@@ -40,7 +40,8 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapScopeAccessRepository scopeAccessRepository;
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     UserScopeAccess userScopeAccess;
     org.openstack.docs.identity.api.v2.User userAdmin;

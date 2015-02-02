@@ -46,6 +46,7 @@ import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -147,6 +148,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private CloudKsGroupBuilder cloudKsGroupBuilder;
 
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
 
@@ -692,9 +694,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             boolean isUpdatingSelf = caller.getId().equals(userId);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
+
+            // Just identity admins and service admins can update 'tokenFormat'
+            if (!callerIsIdentityAdmin && !callerIsServiceAdmin) {
+                user.setTokenFormat(null);
+            }
 
             String domainId = user.getDomainId();
             if(StringUtils.isNotBlank(domainId)){
@@ -761,9 +769,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(user.getUsername())) {
                 userDO.setUsername(retrievedUser.getUsername());
             }
-            ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessForUser(retrievedUser);
             if (userDO.getRegion() != null && updateRegion) {
-                defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
+                defaultRegionService.validateDefaultRegion(userDO.getRegion(), retrievedUser);
             }
 
             userService.updateUser(userDO);
@@ -775,8 +782,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     User getUser(ScopeAccess scopeAccessByAccessToken) {
-        String uid = scopeAccessService.getUserIdForParent(scopeAccessByAccessToken);
-        return identityUserService.getProvisionedUserById(uid);
+        User user = null;
+        /*
+         * existing code appears to have returned null if the specified token was not associated with a provisioned user
+         * (e.g. was a federated
+         * user, racker, or a non-user based token).
+         *
+         */
+        if (scopeAccessByAccessToken instanceof BaseUserToken) {
+            String userId = ((BaseUserToken)scopeAccessByAccessToken).getIssuedToUserId();
+            user = identityUserService.getProvisionedUserById(userId);
+        }
+
+        return user;
     }
 
     @Override
@@ -1622,7 +1640,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
+            Exception e = ex;
+            if (ex instanceof ForbiddenException || ex instanceof NotFoundException) {
+                // [B-82794] Modify [Get User] API Error Message
+                logger.warn("Obfuscated exception", ex);
+                e = new NotFoundException("User not found");
+            }
+            return exceptionHandler.exceptionResponse(e);
         }
     }
 

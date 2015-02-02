@@ -1,13 +1,20 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.security.AETokenService
+import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -23,6 +30,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -65,19 +73,32 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     DefaultUserService userService
 
     @Autowired
-    DefaultScopeAccessService scopeAccessService
+    ScopeAccessService scopeAccessService
 
     @Autowired
-    LdapScopeAccessRepository scopeAccessRepository
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired
     LdapFederatedUserRepository ldapFederatedUserRepository
+
+    @Autowired
+    AETokenService aeTokenService;
+
+    @Autowired
+    TokenFormatSelector tokenFormatSelector;
 
     @Autowired
     LdapScopeAccessRepository scopeAccessDao
 
     @Autowired
     Configuration config
+
+    @Autowired
+    IdentityConfig identityConfig
+
+    def setup() {
+    }
 
     def setupSpec() {
         userAdmin = createUserAdmin()
@@ -93,10 +114,16 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    def "impersonating a disabled user should be possible"() {
+    def void assertValidTokenFormat(String tokenString, TokenFormat expectedFormat) {
+        assert tokenFormatSelector.formatForExistingToken(tokenString) == expectedFormat
+    }
+
+    @Unroll
+    def "impersonating a disabled user should be possible with token format: #tokenFormat"() {
         given:
         def localDefaultUser = utils.createUser(userAdminToken)
         utils.disableUser(localDefaultUser)
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
 
         when:
         def token = utils.getImpersonatedToken(specificationIdentityAdmin, localDefaultUser)
@@ -105,9 +132,201 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         then:
         response != null
         response.token.id != null
+        assertValidTokenFormat(response.token.id, tokenFormat)
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+
+        where:
+        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+    }
+
+    @Unroll
+    def "impersonate - impersonation request greater than max service user token lifetime throws exception"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+        //get new impersonator token with this format
+        def token = utils.getToken(specificationIdentityAdmin.username)
+
+        def now = new DateTime()
+
+        //request the maximum impersonation lifetime
+        def requestedImpersonationTokenLifetimeSeconds = serviceImpersonatorTokenMaxLifetimeInSeconds() + ONE_HOUR_IN_SECONDS
+
+        //make sure the user token expires before this maximum
+        Integer userTokenLifetimeSeconds =  requestedImpersonationTokenLifetimeSeconds - ONE_HOUR_IN_SECONDS
+        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
+        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate)
+
+        when:
+        def response = impersonateUserAsIdentityAdminForTokenLifetimeRawResponse(localDefaultUser, requestedImpersonationTokenLifetimeSeconds, token)
+
+        then: "throws error"
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response, BadRequestFault, 400, Pattern.compile("Expire in element cannot be more than \\d*"))
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+
+        where:
+        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+    }
+
+    @Unroll
+    def "UUID - impersonate - impersonation request greater than max racker user token lifetime throws exception"() {
+        given:
+        //get new impersonator token with this format
+        def token = utils.getToken(specificationIdentityAdmin.username)
+        def now = new DateTime()
+
+        //request the maximum impersonation lifetime
+        def requestedImpersonationTokenLifetimeSeconds = rackerImpersonatorTokenMaxLifetimeInSeconds() + ONE_HOUR_IN_SECONDS
+
+        //make sure the user token expires before this maximum
+        Integer userTokenLifetimeSeconds =  requestedImpersonationTokenLifetimeSeconds - ONE_HOUR_IN_SECONDS
+        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
+        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate)
+
+        when:
+        def response = impersonateUserAsRackerForTokenLifetimeRawResponse(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
+
+        then: "throws error"
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response, BadRequestFault, 400, Pattern.compile("Expire in element cannot be more than \\d*"))
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+    }
+
+    @Unroll
+    def "impersonate federated user as identity admin; tokenFormat = #tokenFormat, request=#requestContentType, accept=#acceptContentType"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlToken = authResponse.token.id
+        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+
+        when: "impersonate the federated user"
+        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then: "the request has the correct format"
+        impersonationResponse.status == 200
+        def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
+        assertValidTokenFormat(impersonationToken, tokenFormat)
+
+        when: "impersonate the federated user again"
+        impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser, 10800, requestContentType, acceptContentType)
+
+        then: "the request was successful"
+        impersonationResponse.status == 200
+        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
+
+        and: "the impersonation token is referencing a new token under the federated user"
+        impersonationTokenEntity.impersonatingToken != null
+        def impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(impersonationTokenEntity.impersonatingToken)
+        impersonatedToken.authenticatedBy.size() == 1
+        impersonatedToken.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION)
+        impersonatedToken.accessTokenString != samlToken
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        requestContentType              | acceptContentType               | tokenFormat
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | TokenFormat.UUID
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | TokenFormat.UUID
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | TokenFormat.UUID
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | TokenFormat.UUID
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | TokenFormat.AE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | TokenFormat.AE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | TokenFormat.AE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | TokenFormat.AE
+    }
+
+    @Unroll
+    def "impersonate federated user as racker: request=#requestContentType, accept=#acceptContentType"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlToken = authResponse.token.id
+        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+
+        when: "impersonate the federated user"
+        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser, 10800, requestContentType, acceptContentType)
+
+        then: "the request was successful"
+        impersonationResponse.status == 200
+        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
+
+        and: "the impersonation token is referencing a new token under the federated user"
+        impersonationTokenEntity.impersonatingToken != null
+        def impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(impersonationTokenEntity.impersonatingToken)
+        impersonatedToken.authenticatedBy.size() == 1
+        impersonatedToken.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION)
+        impersonatedToken.accessTokenString != samlToken
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    /**
+     * Choose random values for the key properties and verify the inviolable rule is never broken - that the impersonation token
+     * must always expire on or before the user token. Do this 20 times to provide additional assurances regardless of the property
+     * values, the user token won't expire first.
+     */
+    @Unroll
+    def "impersonate user random - maxServiceImpRequestAllowed=#maxServiceImpRequestAllowed; userTokenLifetimeSeconds=#userTokenLifetimeSeconds; requestedImpersonationTokenLifetimeSeconds=#requestedImpersonationTokenLifetimeSeconds"() {
+        given:
+        def now = new DateTime()
+
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+        staticIdmConfiguration.setProperty(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME, maxServiceImpRequestAllowed)
+
+        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
+        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, false)
+
+        when:
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
+        def actualImpersonationTokenExpirationDate = new DateTime(impersonatedScopeAccess.accessTokenExp)
+
+        //auth as user to get the latest user token
+        String userToken = impersonatedScopeAccess.getImpersonatingToken()
+        ScopeAccess actualUserTokenUsed = scopeAccessService.getScopeAccessByAccessToken(userToken)
+        DateTime actualUserTokenUsedExpirationDate = new DateTime(actualUserTokenUsed.accessTokenExp)
+
+        then: "impersonation token will expire on or before user token"
+        impersonatedScopeAccess.impersonatingToken == actualUserTokenUsed.accessTokenString
+        (actualImpersonationTokenExpirationDate.isBefore(actualUserTokenUsedExpirationDate) || actualImpersonationTokenExpirationDate.isEqual(actualUserTokenUsedExpirationDate))
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+
+        where:
+        [maxServiceImpRequestAllowed, userTokenLifetimeSeconds, requestedImpersonationTokenLifetimeSeconds, tokenFormat] << impersonateRandomDataProvider(20)
     }
 
     def "impersonating a disabled user - with racker" () {
@@ -187,7 +406,97 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         return config.getInt(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_RACKER_MAX_SECONDS_PROP_NAME);
     }
 
+    /**
+     * The format of the impersonated token and the linked user token is based upon the token format of the impersonator.
+     * The token format of the user being impersonated is irrelevant.
+     *
+     */
+    def "impersonating user with different token format than impersonator uses impersonator tokenFormat: #impersonatorFormat: #impersonatedFormat; #impersonatedFormat"() {
+        given:
+        def iAdmin = utils.createUser(specificationServiceAdminToken)
+        iAdmin.setTokenFormat(impersonatorFormat)
+        utils.updateUser(iAdmin)
 
+        def iAdminToken = utils.getToken(iAdmin.username)
+
+        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusSeconds(-1 * ONE_HOUR_IN_SECONDS))
+        localDefaultUser.setTokenFormat(impersonatedFormat)
+        utils.updateUser(localDefaultUser)
+
+        def expectedTokenFormat = tokenFormatFromTokenFormatEnum(impersonatorFormat)
+
+        when:  "impersonate user"
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds(), iAdminToken)
+
+        then: "get appropriate tokens format back"
+        impersonatedScopeAccess.accessTokenString != null
+        impersonatedScopeAccess.impersonatingToken != null
+
+        //both tokens should be based on impersonator, not impersonated
+        tokenFormatSelector.formatForExistingToken(impersonatedScopeAccess.accessTokenString) == expectedTokenFormat
+        tokenFormatSelector.formatForExistingToken(impersonatedScopeAccess.impersonatingToken) == expectedTokenFormat
+
+        where:
+        impersonatorFormat      | impersonatedFormat
+        TokenFormatEnum.AE      | TokenFormatEnum.AE
+        TokenFormatEnum.UUID    | TokenFormatEnum.UUID
+        TokenFormatEnum.AE      | TokenFormatEnum.UUID
+        TokenFormatEnum.UUID    | TokenFormatEnum.AE
+    }
+
+    def TokenFormat tokenFormatFromTokenFormatEnum(TokenFormatEnum tokenFormatEnum) {
+        switch (tokenFormatEnum) {
+            case TokenFormatEnum.AE:
+                return TokenFormat.AE;
+            case TokenFormatEnum.UUID:
+                return TokenFormat.UUID;
+            default:
+                throw new IllegalArgumentException("Straight conversion possible. Must use defaults.")
+        }
+    }
+
+    /* *******************
+    AE only tests
+    ************************* */
+    def "impersonate user using ae tokens"() {
+        given:
+        def iAdmin = utils.createUser(specificationServiceAdminToken)
+        iAdmin.setTokenFormat(TokenFormatEnum.AE)
+        utils.updateUser(iAdmin)
+
+        def iAdminToken = utils.getToken(iAdmin.username)
+
+        def now = new DateTime()
+
+        Integer userTokenLifetimeSeconds =  -1 * ONE_HOUR_IN_SECONDS
+        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
+
+        def requestedImpersonationTokenLifetimeSeconds = serviceImpersonatorTokenMaxLifetimeInSeconds()
+
+        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, disableUser)
+
+        when:  "impersonate user"
+        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, requestedImpersonationTokenLifetimeSeconds, iAdminToken)
+
+        then: "get AE tokens back"
+        impersonatedScopeAccess.accessTokenString != null
+        impersonatedScopeAccess.accessTokenString.length() > 32
+        impersonatedScopeAccess.impersonatingToken != null
+        impersonatedScopeAccess.impersonatingToken.length() > 32
+
+        and: "user token based on impersonating token"
+        UserScopeAccess userScopeAccess = (UserScopeAccess) aeTokenService.unmarshallToken(impersonatedScopeAccess.impersonatingToken);
+        userScopeAccess.accessTokenString == impersonatedScopeAccess.impersonatingToken
+        userScopeAccess.userRsId == impersonatedScopeAccess.rsImpersonatingRsId
+        userScopeAccess.accessTokenExp == impersonatedScopeAccess.accessTokenExp
+
+        where:
+        disableUser << [false, true]
+    }
+
+    /* *******************
+    UUID only tests
+    ************************* */
     @Unroll
     def "ability to impersonate federated user depends on feature flag : featureFlagAllows=#federatedImpersonationAllowed"() {
         given:
@@ -221,7 +530,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    def "impersonate user with existing user token lifetime later than impersonation request"() {
+    def "UUID - impersonate user with existing user token lifetime later than impersonation request"() {
         given:
         def now = new DateTime()
 
@@ -251,7 +560,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    def "impersonate user with existing user token lifetime less than impersonation request"() {
+    def "UUID - impersonate user with existing user token lifetime less than impersonation request"() {
         given:
         def now = new DateTime()
 
@@ -292,7 +601,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    def "impersonate user with only expired user tokens"() {
+    def "UUID - impersonate user with only expired user tokens"() {
         given:
         def now = new DateTime()
 
@@ -329,7 +638,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    def "impersonate user with no user tokens"() {
+    def "UUID - impersonate user with no user tokens - uuid tokens"() {
         given:
         def now = new DateTime()
 
@@ -359,6 +668,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         //verify a new token was issued whose expiration date is after the impersonation token
         actualUserTokenUsedExpirationDate.isAfter(actualImpersonationTokenExpirationDate)
+        tokenFormatSelector.formatForExistingToken(impersonatedScopeAccess.impersonatingToken) == TokenFormat.UUID
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
@@ -367,130 +677,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         disableUser << [false, true]
     }
 
-    def "impersonate with invalid IDP returns 404"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-
-        when:
-        federatedUser.federatedIdp = "invalid"
-        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
-
-        then:
-        impersonationResponse.status == 404
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-    }
-
-    def "impersonate with invalid username returns 404"() {
-        given:
-        def federatedUser = v2Factory.createUser().with {
-            it.federatedIdp = DEFAULT_IDP_URI
-            it.username = "invalid"
-            it
-        }
-
-        when:
-        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
-
-        then:
-        impersonationResponse.status == 404
-    }
-
-    @Unroll
-    def "impersonate federated user as identity admin: request=#requestContentType accept=#acceptContentType"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-
-        when: "impersonate the federated user"
-        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser, 10800, requestContentType, acceptContentType)
-
-        then: "the request was successful"
-        impersonationResponse.status == 200
-        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
-
-        and: "the impersonation token is referencing a new token under the federated user"
-        impersonationTokenEntity.impersonatingToken != null
-        def impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(impersonationTokenEntity.impersonatingToken)
-        impersonatedToken.authenticatedBy.size() == 1
-        impersonatedToken.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION)
-        impersonatedToken.accessTokenString != samlToken
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-
-        where:
-        requestContentType              | acceptContentType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-    }
-
-    @Unroll
-    def "impersonate federated user as racker: request=#requestContentType accept=#acceptContentType"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
-
-        when: "impersonate the federated user"
-        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser, 10800, requestContentType, acceptContentType)
-
-        then: "the request was successful"
-        impersonationResponse.status == 200
-        def impersonationTokenEntity = getScopeAccessFromImpersonationResponse(impersonationResponse, acceptContentType)
-
-        and: "the impersonation token is referencing a new token under the federated user"
-        impersonationTokenEntity.impersonatingToken != null
-        def impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(impersonationTokenEntity.impersonatingToken)
-        impersonatedToken.authenticatedBy.size() == 1
-        impersonatedToken.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION)
-        impersonatedToken.accessTokenString != samlToken
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-
-        where:
-        requestContentType              | acceptContentType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-    }
-
-    def "impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
+    def "UUID Only - impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -543,7 +730,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
-    def "a federated user cannot get an impersonated token when authenticating with saml"() {
+    def "UUID Only - a federated user cannot get an impersonated token when authenticating with saml"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -579,7 +766,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
-    def "authenticating as a federated user deletes expired federated tokens"() {
+    def "UUID Only - authenticating as a federated user deletes expired federated tokens"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -636,7 +823,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
-    def "federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
+    def "UUID - federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -688,7 +875,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * even if the impersonatingUsername on the token matches the federated user's username. These tokens are tokens created before the
      * rsImpersonatingRsId attribute was added and should only be considered valid for provisioned users.
      */
-    def "impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
+    def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -745,7 +932,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
-    def "impersonating a federated user only cleans up tokens for the federated user"() {
+    def "UUID - impersonating a federated user only cleans up tokens for the federated user"() {
         given:
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
@@ -800,6 +987,52 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUser(provUserWithSameUsername)
         utils.deleteUsers(users)
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
+    }
+
+
+    /* *****************
+    TOKEN FORMAT INDEPENDENT
+    ******************** */
+
+
+    def "impersonate with invalid IDP returns 404"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+
+        when:
+        federatedUser.federatedIdp = "invalid"
+        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then:
+        impersonationResponse.status == 404
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "impersonate with invalid username returns 404"() {
+        given:
+        def federatedUser = v2Factory.createUser().with {
+            it.federatedIdp = DEFAULT_IDP_URI
+            it.username = "invalid"
+            it
+        }
+
+        when:
+        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then:
+        impersonationResponse.status == 404
     }
 
     def "impersonating a provisioned user only cleans up tokens for the provisioned user"() {
@@ -859,7 +1092,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
     }
 
-    def "creating an impersonation token still sets the username on the token"() {
+   def "creating an impersonation token still sets the username on the token"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForImpersonate")
@@ -896,7 +1129,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         and: "the token stored in the directory does not have a userRsId attribute"
         tokenEntity.userRsId == null
 
-        and: "the token stored in the directory does not have a username attribute"
+        and: "the token stored in the directory still have a username attribute"
         tokenEntity.username == RACKER_IMPERSONATE
 
         when: "validate to token to verify that is works correctly"
@@ -911,42 +1144,12 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteDomain(domainId)
     }
 
-    /**
-     * Choose random values for the key properties and verify the inviolable rule is never broken - that the impersonation token
-     * must always expire on or before the user token. Do this 20 times to provide additional assurances regardless of the property
-     * values, the user token won't expire first.
-     */
-    @Unroll("impersonate user random - maxServiceImpRequestAllowed=#maxServiceImpRequestAllowed; userTokenLifetimeSeconds=#userTokenLifetimeSeconds; requestedImpersonationTokenLifetimeSeconds=#requestedImpersonationTokenLifetimeSeconds")
-    def "impersonate user random"() {
-        given:
-        def now = new DateTime()
-
-        staticIdmConfiguration.setProperty(DefaultScopeAccessService.TOKEN_IMPERSONATED_BY_SERVICE_MAX_SECONDS_PROP_NAME, maxServiceImpRequestAllowed)
-
-        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
-        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, false)
-
-        when:
-        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
-        def actualImpersonationTokenExpirationDate = new DateTime(impersonatedScopeAccess.accessTokenExp)
-
-        //auth as user to get the latest user token
-        ScopeAccess actualUserTokenUsed = getMostRecentTokenForUser(localDefaultUser)
-        DateTime actualUserTokenUsedExpirationDate = new DateTime(actualUserTokenUsed.accessTokenExp)
-
-        then: "impersonation token will expire on or before user token"
-        impersonatedScopeAccess.impersonatingToken == actualUserTokenUsed.accessTokenString
-        (actualImpersonationTokenExpirationDate.isBefore(actualUserTokenUsedExpirationDate) || actualImpersonationTokenExpirationDate.isEqual(actualUserTokenUsedExpirationDate))
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-
-        where:
-        [maxServiceImpRequestAllowed, userTokenLifetimeSeconds, requestedImpersonationTokenLifetimeSeconds] << impersonateRandomDataProvider(20)
-    }
-
     def impersonateRandomDataProvider(int iterations) {
         List vals = new ArrayList();
+
+        //tokenFormat
+        List<TokenFormat> tokenFormats = Arrays.asList(TokenFormat.UUID, TokenFormat.AE);
+
 
         for (int i=0; i<iterations; i++) {
             List innerList = new ArrayList<>()
@@ -954,36 +1157,10 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
             innerList.add(maxServiceImpRequestAllowed)  //maxServiceImpRequestAllowed
             innerList.add(RandomUtils.nextInt(24*ONE_HOUR_IN_SECONDS))  //userTokenLifetimeSeconds
             innerList.add(RandomUtils.nextInt(maxServiceImpRequestAllowed) + 1)  //requestedImpersonationTokenLifetimeSeconds
-
+            innerList.add(tokenFormats.get(RandomUtils.nextInt(1)))
             vals.add(innerList)
         }
         return vals
-    }
-
-    @Unroll
-    def "impersonate - impersonation request greater than max service user token lifetime throws exception"() {
-        given:
-        def now = new DateTime()
-
-        //request the maximum impersonation lifetime
-        def requestedImpersonationTokenLifetimeSeconds = serviceImpersonatorTokenMaxLifetimeInSeconds() + ONE_HOUR_IN_SECONDS
-
-        //make sure the user token expires before this maximum
-        Integer userTokenLifetimeSeconds =  requestedImpersonationTokenLifetimeSeconds - ONE_HOUR_IN_SECONDS
-        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
-        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate, disableUser)
-
-        when:
-        def response = impersonateUserAsIdentityAdminForTokenLifetimeRawResponse(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
-
-        then: "throws error"
-        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response, BadRequestFault, 400, Pattern.compile("Expire in element cannot be more than \\d*"))
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-
-        where:
-        disableUser << [false, true]
     }
 
     @Unroll
@@ -1230,8 +1407,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * @param impersonatedTokenLifetime
      * @return
      */
-    def ImpersonatedScopeAccess impersonateUserForTokenLifetime(User user, Integer impersonationTokenExpireInSeconds) {
-        ImpersonationResponse impersonationResponse = utils.impersonate(specificationIdentityAdminToken, user, impersonationTokenExpireInSeconds)
+    def ImpersonatedScopeAccess impersonateUserForTokenLifetime(User user, Integer impersonationTokenExpireInSeconds, impersonatorToken = specificationIdentityAdminToken) {
+        ImpersonationResponse impersonationResponse = utils.impersonate(impersonatorToken, user, impersonationTokenExpireInSeconds)
 
         //get impersonation scope access
         ImpersonatedScopeAccess isa = scopeAccessService.getScopeAccessByAccessToken(impersonationResponse.token.id)
@@ -1244,7 +1421,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * @param impersonatedTokenLifetime
      * @return
      */
-    def impersonateUserAsIdentityAdminForTokenLifetimeRawResponse(User user, Integer impersonationTokenExpireInSeconds) {
+    def impersonateUserAsIdentityAdminForTokenLifetimeRawResponse(User user, Integer impersonationTokenExpireInSeconds, impersonatorToken = specificationIdentityAdminToken) {
         def response = cloud20.impersonate(specificationIdentityAdminToken, user, impersonationTokenExpireInSeconds)
         return response
     }
@@ -1272,8 +1449,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         //now reset the token expiration time to the specified lifetime
         UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(defaultUserToken)
         token.setAccessTokenExp(tokenExpirationDate.toDate())
+
         token.setAuthenticatedBy(tokenAuthBy)
-        scopeAccessRepository.updateObject(token)
+        scopeAccessRepository.updateScopeAccess(token)
 
         return defaultUser
     }

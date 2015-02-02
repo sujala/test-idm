@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.joda.time.DateTime;
@@ -16,10 +15,11 @@ import java.util.List;
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
         postEncodeMethod="doPostEncode")
-public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
+public class ScopeAccess implements Auditable, UniqueId, Token {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String clientId;
@@ -42,9 +42,6 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_SCOPE, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String scope;
 
-    //tokens can have roles that they are restricted to
-    private List<TenantRole> roles;
-
     public ScopeAccess() {}
 
     public List<String> getAuthenticatedBy() {
@@ -54,29 +51,19 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
         return authenticatedBy;
     }
 
-    public ReadOnlyEntry getLDAPEntry() {
-        return ldapEntry;
-    }
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        }
-        else {
-            return ldapEntry.getDN();
-        }
-    }
-
-    @Override
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
-    @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
                 || this.accessTokenExp == null
                 || new DateTime(this.accessTokenExp).isBefore(time);
+    }
+
+    @Override
+    public boolean isAccessTokenExpired() {
+        return isAccessTokenExpired(new DateTime());
     }
 
     public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
@@ -90,10 +77,6 @@ public class ScopeAccess implements Auditable, HasAccessToken, UniqueId {
     public String getAuditContext() {
         final String format = "ScopeAccess(clientId=%s)";
         return String.format(format, getClientId());
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
     }
 
     @Override

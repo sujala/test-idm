@@ -2,11 +2,17 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
+import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
+import com.rackspace.idm.domain.security.TokenFormat
+import com.rsa.cryptoj.c.uu
 import com.unboundid.util.LDAPSDKUsageException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Ignore
 import spock.lang.Shared
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -27,6 +33,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     @Shared def dn = "accessToken=123456,cn=TOKENS,rsId=12345,ou=users,o=rackspace"
     @Shared def searchDn = "rsId=12345,ou=users,o=rackspace"
 
+    private ScopeAccessDao uuidScopeAccessDao;
+
     @Shared def expiredDate
     @Shared def refreshDate
     @Shared def futureDate
@@ -40,6 +48,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def setup() {
+        uuidScopeAccessDao = Mock(UUIDScopeAccessDao)
+
         mockConfiguration(service)
         mockAtomHopperClient(service)
         mockAuthHeaderHelper(service)
@@ -49,6 +59,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockEndpointService(service)
         mockApplicationService(service)
         mockIdentityUserService(service)
+        mockTokenFormatSelector(service)
+        service.uuidScopeAccessDao = uuidScopeAccessDao
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
@@ -453,6 +465,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def listWithValid = [ scopeAccessThree, scopeAccessFour].asList()
         def listAll = expiredList + listWithValid
 
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
+
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >>> [
                 listAll,
         ]
@@ -467,7 +481,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         3 * scopeAccessDao.deleteScopeAccess(_)
         1 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
+        1 * uuidScopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_, _, _) >> existingUserScopeAccess
 
         returned.accessTokenString.equals(existingValidImpersonationTokenString)
     }
@@ -515,6 +529,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUserOfUserByUsername(_, _) >> [].asList()
+
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "optimize is turned off"
         ImpersonatedScopeAccess nonOptResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
@@ -566,6 +582,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUser(_, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting second of three expired tokens"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
@@ -603,6 +620,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [ scopeAccessOne, scopeAccessTwo, scopeAccessThree, scopeAccessFour, scopeAccessFive, scopeAccessSix].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting second of three expired tokens"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
@@ -635,6 +653,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getAllImpersonatedScopeAccessForUser(_) >> [scopeAccessFour].asList()
         scopeAccessDao.getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(_, _, _) >> scopeAccessFour
+        tokenFormatSelector.formatForNewToken(_) >> TokenFormat.UUID
 
         when: "exception encountered deleting valid token"
         ImpersonatedScopeAccess optResult = service.processImpersonatedScopeAccessRequest(impersonator, impersonatedUser, request, ImpersonatorType.SERVICE, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
@@ -643,188 +662,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.deleteScopeAccess(_) >> {throw exceptionToThrow }
         RuntimeException ex = thrown()
         ex == exceptionToThrow
-    }
-
-    def "atomHopper client is called when expiring all tokens for user" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        userService.getUser(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-        scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
-
-        when:
-        service.expireAllTokensForUser("someName")
-
-        then:
-        2 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    def "atomHopper client is not called when tokens for user are already expired" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        userService.getUsersByUsername(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
-
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
-
-        when:
-        service.expireAllTokensForUser("someName")
-
-        then:
-        0 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    def "atomHopper client is called when expiring all tokens for user by id" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        identityUserService.getEndUserById(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", refreshDate)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-        scopeAccessTwo.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
-
-        when:
-        service.expireAllTokensForUserById("1")
-
-        then:
-        2 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    def "atomHopper client is not called when tokens for user by id are already expired" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        identityUserService.getEndUserById(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
-        def scopeAccessTwo = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
-
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
-
-        when:
-        service.expireAllTokensForUserById("1")
-
-        then:
-        0 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    @Unroll
-    def "expireAllTokensExceptTypeForEndUser: When various exceptions are provided, the right tokens are expired - authenticatedBy: #authenticatedBy | keepEmpty: #keepEmpty | expectedTokensNotExpired: #expectedTokensNotExpired" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        user.uniqueId = "blah"
-        identityUserService.getEndUserById(_) >> user
-
-        //create tokens representing various scenarios. Set username/token to same value so can easily tell which token failed test (since only username/customerid printed for token)
-        def scopeAccessA = entityFactory.createUserToken().with {def id="A"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A"); return it}
-        def scopeAccessB = entityFactory.createUserToken().with {def id="B"; it.userRsId= id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B"); return it}
-        def scopeAccessAB = entityFactory.createUserToken().with {def id="AB"; it.userRsId= id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B"); return it}
-        def scopeAccessBA = entityFactory.createUserToken().with {def id="BA"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("B", "A"); return it}
-        def scopeAccessABC = entityFactory.createUserToken().with {def id="ABC"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList("A","B", "C"); return it}
-        def scopeAccessEmpty = entityFactory.createUserToken().with {def id="Empty"; it.userRsId = id; it.accessTokenString = id; it.authenticatedBy = Arrays.asList(); return it}
-
-        List<UserScopeAccess> scopeAccessList = [scopeAccessA, scopeAccessB, scopeAccessAB, scopeAccessBA, scopeAccessABC, scopeAccessEmpty]
-
-        scopeAccessDao.getScopeAccesses(_) >> scopeAccessList
-
-        when:
-        service.expireAllTokensExceptTypeForEndUser(user, authenticatedBy, keepEmpty)
-
-        then:
-        /*
-         the tokens are created with expiration date 1 day from now. When a token is revoked, the expiration is set to "now".
-         If the test runs fast enough "now" will be the same for both the date we're checking here AND the date the token was
-         expired which could cause unexpected failures (since isExpired would return false if times are equal). To
-         avoid this, check if token is set to earlier than one ms from now.
-          */
-        DateTime expirationDateToCheck = new DateTime().plusMillis(1)
-        scopeAccessList.each {
-            if (expectedTokensNotExpired.contains(it.accessTokenString)) {
-                assert !it.isAccessTokenExpired(expirationDateToCheck)
-            }
-            else {
-                assert it.isAccessTokenExpired(expirationDateToCheck)
-            }
-        }
-
-        where:
-        authenticatedBy         | keepEmpty     | expectedTokensNotExpired
-        [["A"]]                 | false         | ["A"]
-        [["A"]]                 | true          | ["A", "Empty"]
-        [["C"]]                 | false         | []
-        [["A", "B"]]            | false         | ["AB", "BA"]
-        [["A", "B"]]            | true          | ["AB", "BA", "Empty"]
-        [["B", "A"]]            | false         | ["AB", "BA"]
-        [["B", "A", "C"]]       | false         | ["ABC"]
-        [["B", "C"]]            | false         | []
-        []                      | true          | ["Empty"]
-        []                      | false         | []
-    }
-
-    def "atomHopper client is called when expiring a token" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        userService.getUserByScopeAccess(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", futureDate)
-
-        scopeAccessOne.getAccessTokenExp() >> new DateTime().plusHours(6).toDate()
-
-        scopeAccessDao.getScopeAccessByAccessToken(_) >> scopeAccessOne
-
-        when:
-        service.expireAccessToken("someToken")
-
-        then:
-        1 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    def "atomHopper client is not called when expiring a token that is already expired" () {
-        given:
-        User user = new User()
-        user.id = "1"
-        userService.getUserByScopeAccess(_) >> user
-
-        def scopeAccessOne = createUserScopeAccess("tokenString", "userRsId", "clientId", expiredDate)
-
-        scopeAccessDao.getScopeAccessByAccessToken(_) >> scopeAccessOne
-
-        when:
-        service.expireAccessToken("someToken")
-
-        then:
-        0 * atomHopperClient.asyncTokenPost(_,_)
-
-    }
-
-    def "isExpired with null date"() {
-        when:
-        service.isExpired(null)
-        then:
-        true
-
     }
 
     def "updateExpiredRackerScopeAccess adds new scopeAccess, deletes existing expired scopeAccess, and returns new scopeAccess"() {

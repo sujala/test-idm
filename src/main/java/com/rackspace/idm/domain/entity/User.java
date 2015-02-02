@@ -1,9 +1,11 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.DN;
@@ -256,7 +258,12 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userMultiFactorEnforcementLevel;
 
+    @LDAPField(attribute = LdapRepository.OBJECTCLASS_TOKEN_FORMAT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String tokenFormat;
+
     private List<TenantRole> roles;
+
+    TokenFormatConverter tfEnumConverter = new TokenFormatConverter();
 
     public User() {
     }
@@ -282,6 +289,10 @@ public class User implements EndUser {
             this.userPassword = password;
             this.password = password;
         }
+    }
+
+    public TokenFormatEnum getTokenFormatAsEnum() {
+        return tfEnumConverter.convertTo(tokenFormat, null);
     }
 
     @Override

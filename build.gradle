@@ -19,7 +19,7 @@ buildscript {
 }
 
 group = 'com.rackspace'
-featureVersion = '2.10.1'
+featureVersion = '2.11.0'
 buildVersion = System.currentTimeMillis()
 gitRevision = "git rev-parse HEAD".execute().text.trim()
 
@@ -158,6 +158,7 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '17.0'
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.9'
     compile group: 'org.keyczar', name: 'keyczar', version: '0.71g'
+    compile group: 'org.msgpack', name: 'msgpack', version: '0.6.11'
 
     testCompile group: 'org.spockframework', name: 'spock-core', version:'0.7-groovy-1.8'
     testCompile group: 'org.spockframework', name: 'spock-spring', version:'0.7-groovy-1.8'

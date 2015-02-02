@@ -7,21 +7,23 @@ import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.AETokenService;
+import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import javax.xml.ws.handler.MessageContext;
 import java.util.*;
 
 @Component
@@ -51,7 +53,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
+    @Qualifier("scopeAccessDao")
     private ScopeAccessDao scopeAccessDao;
+
+    @Autowired
+    @Qualifier("uuidScopeAccessDao")
+    private ScopeAccessDao uuidScopeAccessDao;
+
     @Autowired
     private UserService userService;
     @Autowired
@@ -64,10 +72,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private ApplicationService applicationService;
     @Autowired
     private Configuration config;
+
+    @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private TokenFormatSelector tokenFormatSelector;
+
+    @Autowired
+    private AETokenService aeTokenService;
+
+    @Autowired
+    @Qualifier("tokenRevocationService")
+    private TokenRevocationService tokenRevocationService;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
@@ -190,7 +210,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         DateTime desiredImpersonationTokenExpiration = calculateDesiredImpersonationTokenExpiration(impersonationRequest, impersonatorType, requestInstant);
 
-        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
+        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(impersonator, userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
 
         //get the most recent scope access prior to cleaning up since the most recent could be expired (and will be removed by subsequent clean up code)
         ImpersonatedScopeAccess mostRecent;
@@ -432,22 +452,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void expireAccessToken(String tokenString) {
-        logger.debug("Expiring access token {}", tokenString);
-        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(tokenString);
-        if (scopeAccess == null) {
-            return;
-        }
-
-        Date expireDate;
-        expireDate =  scopeAccess.getAccessTokenExp();
-        scopeAccess.setAccessTokenExpired();
-        this.scopeAccessDao.updateScopeAccess(scopeAccess);
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        if(user != null && user instanceof User && !StringUtils.isBlank(scopeAccess.getAccessTokenString()) && !isExpired(expireDate)){
-            logger.warn("Sending token feed to atom hopper.");
-            atomHopperClient.asyncTokenPost((User) user, tokenString);
-        }
-        logger.debug("Done expiring access token {}", tokenString);
+        tokenRevocationService.revokeToken(tokenString);
     }
 
     @Override
@@ -473,18 +478,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            expireUserToken(user, sa);
-        }
-        logger.debug("Done expiring all tokens for user {}", username);
-    }
+        tokenRevocationService.revokeAllTokensForBaseUser(user);
 
-    private boolean isExpired(Date date) {
-        if(date != null){
-            return date.before(new Date());
-        }else{
-            return true;
-        }
+        logger.debug("Done expiring all tokens for user {}", username);
     }
 
     @Override
@@ -495,51 +491,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            expireUserToken(user, sa);
-        }
+        tokenRevocationService.revokeAllTokensForBaseUser(user);
+
         logger.debug("Done expiring all tokens for user {}", userId);
-    }
-
-    private void expireUserToken(EndUser user, ScopeAccess sa) {
-        Date expireDate =  sa.getAccessTokenExp();
-        sa.setAccessTokenExpired();
-        this.scopeAccessDao.updateScopeAccess(sa);
-        if(!StringUtils.isBlank(sa.getAccessTokenString()) && !isExpired(expireDate)){
-            logger.warn("Sending token feed to atom hopper.");
-            atomHopperClient.asyncTokenPost(user, sa.getAccessTokenString());
-        }
-    }
-
-    @Override
-    public void expireAllTokensExceptTypeForEndUser(EndUser user, List<List<String>> keepAuthenticatedByOptions, boolean keepEmpty) {
-        if (user == null || user.getUniqueId() == null) {
-            return;
-        }
-
-        for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {
-            List<String> tokenAuthBy = sa.getAuthenticatedBy();
-            boolean revoke = true;
-
-            //keep if empty and want to keep empty
-            if (keepEmpty && org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
-                revoke = false;
-            }
-
-            //see if token matches any of those we need to keep
-            if (!org.apache.commons.collections4.CollectionUtils.isEmpty(tokenAuthBy)) {
-                for (List<String> keepAuthenticatedByOption : keepAuthenticatedByOptions) {
-                    if (org.apache.commons.collections4.CollectionUtils.isEqualCollection(tokenAuthBy, keepAuthenticatedByOption)) {
-                        revoke = false;
-                        break;
-                    }
-                }
-            }
-
-            if (revoke) {
-                expireUserToken(user, sa);
-            }
-        }
     }
 
     @Override
@@ -892,11 +846,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public String getUserIdForParent(ScopeAccess scopeAccess) {
-        return scopeAccessDao.getUserIdForParent(scopeAccess);
-    }
-
-    @Override
     public UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUsername(user.getUsername());
@@ -1067,34 +1016,64 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * is greater than the remaining lifetime of the user's token, a new user
      * token must be generated with the lifetime set to the default lifetime of a user token.
      */
-    private UserScopeAccess getUserScopeAccessForImpersonationRequest(EndUser user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
-        //get the latest user scope access created solely for impersonation for this user
-        UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
+    private UserScopeAccess getUserScopeAccessForImpersonationRequest(BaseUser impersonator, EndUser user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
+        UserScopeAccess scopeAccessForImpersonation = null;
 
-        //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
-        DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
+        //format of underlying user token is based on the impersonator, not the user being impersonated
+        TokenFormat tFormat = tokenFormatSelector.formatForNewToken(impersonator);
 
-        UserScopeAccess scopeAccessForImpersonation;
-        if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
-            //existing user token is expired or it will expire before the requested
-            // impersonation expiration so we must create a new token for the user.
-            scopeAccessForImpersonation = createNewUserTokenForImpersonation(user);
+        if (tFormat == TokenFormat.UUID) {
+            //get the latest UUID user scope access created solely for impersonation for this user
+            UserScopeAccess latestScopeAccessForUser = (UserScopeAccess) uuidScopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(user, getCloudAuthClientId(), Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
+
+            //get the expiration time of this token. If user doesn't have current token, mark yesterday as the expiration time
+            DateTime curUserTokenExpiration = latestScopeAccessForUser != null ? new DateTime(latestScopeAccessForUser.getAccessTokenExp()) : requestInstant.minusDays(1);
+
+            if (curUserTokenExpiration.isBefore(requestInstant) || curUserTokenExpiration.isBefore(desiredImpersonationTokenExpiration)) {
+                //existing user token is expired or it will expire before the requested
+                // impersonation expiration so we must create a new token for the user.
+                scopeAccessForImpersonation = createNewUUIDUserTokenForImpersonation(user);
+            } else {
+                scopeAccessForImpersonation = latestScopeAccessForUser;
+            }
+        } else if (tFormat == TokenFormat.AE) {
+            //always create a new user token
+            scopeAccessForImpersonation = new UserScopeAccess();
+            scopeAccessForImpersonation.setAccessTokenExp(desiredImpersonationTokenExpiration.toDate());
+            scopeAccessForImpersonation.setUserRsId(user.getId());
+            scopeAccessForImpersonation.setClientId(getCloudAuthClientId());
+            scopeAccessForImpersonation.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
+            if (aeTokenService.supportsCreatingTokenFor(user, scopeAccessForImpersonation)) {
+                aeTokenService.marshallTokenForUser(user, scopeAccessForImpersonation); //populates access token string
+            } else {
+                throw new UnsupportedOperationException(String.format("AE Token service does not support creating impersonation tokens against users of type '%s'", user.getClass().getSimpleName()));
+            }
         } else {
-            scopeAccessForImpersonation = latestScopeAccessForUser;
+            throw new IllegalStateException(String.format("Unknown impersonation token format for user '%s'", impersonator.getUsername()));
         }
 
         return scopeAccessForImpersonation;
     }
 
-    private UserScopeAccess createNewUserTokenForImpersonation(EndUser user) {
+    /**
+     * Explicitly create a UUID based token.
+     *
+     * @param user
+     * @return
+     */
+    private UserScopeAccess createNewUUIDUserTokenForImpersonation(EndUser user) {
         DateTime now = new DateTime();
 
         UserScopeAccess newUserScopeAccess = createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
+
         int tokenLifetimeInSeconds = getDefaultCloudAuthTokenExpirationSeconds();
         DateTime expiration = now.plusSeconds(tokenLifetimeInSeconds);
         newUserScopeAccess.setAccessTokenExp(expiration.toDate());
         newUserScopeAccess.setAuthenticatedBy(Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION));
-        addUserScopeAccess(user, newUserScopeAccess);
+
+        logger.info(ADDING_SCOPE_ACCESS, newUserScopeAccess);
+        uuidScopeAccessDao.addScopeAccess(user, newUserScopeAccess);
+        logger.info(ADDED_SCOPE_ACCESS, newUserScopeAccess);
 
         return newUserScopeAccess;
     }

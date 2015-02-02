@@ -1,9 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.Region;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -50,8 +47,8 @@ public class DefaultRegionService {
         checkDefaultRegion(defaultRegion, regions);
     }
 
-    public void validateDefaultRegion(String defaultRegion, ScopeAccess usa) {
-        Set<String> regions = this.getDefaultRegionsForUser(usa);
+    public void validateDefaultRegion(String defaultRegion, User user) {
+        Set<String> regions = this.getDefaultRegionsForUser(user);
         checkDefaultRegion(defaultRegion, regions);
     }
 
@@ -72,8 +69,8 @@ public class DefaultRegionService {
         }
     }
 
-    public Set<String> getDefaultRegionsForUser(ScopeAccess usa) {
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+    public Set<String> getDefaultRegionsForUser(User user) {
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         for (OpenstackEndpoint endpoint : endpoints) {
             baseUrls.addAll(endpoint.getBaseUrls());

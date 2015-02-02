@@ -1,19 +1,15 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
-import spock.lang.Shared
-import testHelpers.ConcurrentStageTaskRunner
+import org.springframework.beans.factory.annotation.Qualifier
 import testHelpers.MultiStageTask
 import testHelpers.MultiStageTaskFactory
-import testHelpers.RootIntegrationTest
 
 /**
  */
@@ -22,7 +18,9 @@ class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootConcurrentI
 
     @Autowired DefaultScopeAccessService scopeAccessService
 
-    @Autowired LdapScopeAccessRepository saRepository
+    @Autowired
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao saRepository
 
     @Autowired DefaultUserService userService;
 

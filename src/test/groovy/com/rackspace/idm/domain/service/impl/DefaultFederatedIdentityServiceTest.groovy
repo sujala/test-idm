@@ -161,7 +161,6 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         1 * mockTenantService.addTenantRolesToUser(_,_)
 
         authInfo.token != null
-        authInfo.token.roles == roles
         authInfo.endpoints == endpoints
         authInfo.user.username == USERNAME
         ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI
@@ -197,7 +196,6 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         1 * mockTenantService.getRbacRolesForUser(_) >> Collections.EMPTY_LIST
 
         authInfo.token != null
-        authInfo.token.roles == roles
         authInfo.endpoints == endpoints
         authInfo.user == user
         ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI

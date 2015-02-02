@@ -1,5 +1,6 @@
 package com.rackspace.idm.helpers
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
@@ -38,6 +39,7 @@ import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
 @Component
@@ -324,8 +326,8 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    def updateUser(user) {
-        def response = methods.updateUser(getServiceAdminToken(), user.id, user)
+    def updateUser(user, userId = user.id, MediaType requestMediaType = APPLICATION_XML_TYPE) {
+        def response = methods.updateUser(getServiceAdminToken(), userId, user, APPLICATION_XML_TYPE, requestMediaType)
         assert (response.status == SC_OK)
         response.getEntity(User).value
     }
@@ -492,10 +494,14 @@ class Cloud20Utils {
         response.getEntity(CredentialListType).value
     }
 
-    def getUserById(String id, String token=getServiceAdminToken()){
-        def response = methods.getUserById(token, id)
+    def getUserById(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+        def response = methods.getUserById(token, id, mediaType)
         assert (response.status == SC_OK)
-        response.getEntity(User).value
+        if (mediaType == APPLICATION_XML_TYPE) {
+            return response.getEntity(User).value
+        } else {
+            return new ObjectMapper().readValue(response.getEntity(String), Map)
+        }
     }
 
     def getUserByName(String username, String token=getServiceAdminToken()){
@@ -511,11 +517,15 @@ class Cloud20Utils {
         users
     }
 
-    def getUsersByEmail(String email, String token=getServiceAdminToken()){
-        def response = methods.getUsersByEmail(token, email)
+    def getUsersByEmail(String email, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+        def response = methods.getUsersByEmail(token, email, mediaType)
         assert (response.status == SC_OK)
-        List<User> users = response.getEntity(UserList).value.user
-        users
+        if (mediaType == APPLICATION_XML_TYPE) {
+            List<User> users = response.getEntity(UserList).value.user
+            return users
+        } else {
+            return new ObjectMapper().readValue(response.getEntity(String), Map)
+        }
     }
 
     def getUserByEmail(String email, String token=getServiceAdminToken()){

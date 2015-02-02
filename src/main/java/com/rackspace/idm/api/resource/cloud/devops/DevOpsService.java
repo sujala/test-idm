@@ -24,4 +24,22 @@ public interface DevOpsService {
      * @return
      */
     Response.ResponseBuilder getLdapLog(UriInfo uriInfo, String authToken, String logName);
+
+    /**
+     * Retrieves the current node state for KeyCzar cached keys.
+     *
+     * @param authToken
+     *
+     * @return metadata map.
+     */
+    Response.ResponseBuilder getKeyMetadata(String authToken);
+
+    /**
+     * Reset the KeyCzar cache.
+     *
+     * @param authToken
+     *
+     * @return metadata map.
+     */
+    Response.ResponseBuilder resetKeyMetadata(String authToken);
 }

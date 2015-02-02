@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
@@ -14,18 +14,20 @@ import org.joda.time.DateTime;
  * Time: 12:14 PM
  * To change this template use File | Settings | File Templates.
  */
-@Data
+@Getter
+@Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
-public class ImpersonatedScopeAccess extends ScopeAccess {
+public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
 
     /**
-     * @deprecated Use userRsId to uniquely identify the impersonator
+     * @deprecated use {@link #getIssuedToUserId()}
      */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
@@ -35,7 +37,7 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
     private String userRsId;
 
     /**
-     * @deprecated use rsImpersonatingRsId to uniquely identify the user being impersonated
+     * @deprecated use {@link #getRsImpersonatingRsId()}
      */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
@@ -53,25 +55,7 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
         return super.getAccessTokenString();
     }
 
-    @Override
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        }
-        else {
-            return ldapEntry.getDN();
-        }
-    }
-
     private DateTime userPasswordExpirationDate;
-
-    public DateTime getUserPasswordExpirationDate() {
-        return userPasswordExpirationDate;
-    }
-
-    public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
-        this.userPasswordExpirationDate = userPasswordExpirationDate;
-    }
 
     @Override
     public String getAuditContext() {
@@ -84,33 +68,17 @@ public class ImpersonatedScopeAccess extends ScopeAccess {
         }
     }
 
-    public String getRackerId() {
-        return rackerId;
-    }
-
-    public void setRackerId(String rackerId) {
-        this.rackerId = rackerId;
-    }
-
-    @Deprecated
-    public String getImpersonatingUsername() {
-        return impersonatingUsername;
-    }
-
-    @Deprecated
-    public void setImpersonatingUsername(String impersonatingUsername) {
-        this.impersonatingUsername = impersonatingUsername;
-    }
-
-    public String getImpersonatingToken() {
-        return impersonatingToken;
-    }
-
-    public void setImpersonatingToken(String impersonatingToken) {
-        this.impersonatingToken = impersonatingToken;
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
+    /**
+     * For impersonated tokens either the rackerId OR the userRsId should be set (mutually exclusive). In existing code the
+     * rackerId appears to take precedence in the off change that both are set.
+     * @return
+     */
+    @Override
+    public String getIssuedToUserId() {
+        if (StringUtils.isNotBlank(getRackerId())) {
+            return getRackerId();
+        } else {
+            return getUserRsId();
+        }
     }
 }

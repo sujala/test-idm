@@ -170,6 +170,10 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL, user.getUserMultiFactorEnforcementLevel().toString());
         }
 
+        if (user.getTokenFormat() != null) {
+            outer.put(JSONConstants.RAX_AUTH_TOKEN_FORMAT, user.getTokenFormat().value());
+        }
+
         if (user.getOtherAttributes().size() != 0) {
             String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
             if (!StringUtils.isEmpty(password)) {

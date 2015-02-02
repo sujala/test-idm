@@ -1,18 +1,22 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
+@Getter
+@Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
+public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String refreshTokenString;
@@ -39,73 +43,11 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
         return super.getAccessTokenString();
     }
 
-    @Override
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        }
-        else {
-            return ldapEntry.getDN();
-        }
-    }
-
     private DateTime userPasswordExpirationDate;
-    
-    @Override
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    @Override
-    public void setRefreshTokenString(String refreshTokenString) {
-        this.refreshTokenString = refreshTokenString;
-    }
-
-    @Override
-    public Date getRefreshTokenExp() {
-        return refreshTokenExp;
-    }
-
-    @Override
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
-
-    /**
-     * @deprecated Use {@link #getUserRsId()}
-     */
-    @Deprecated
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * @deprecated Use {@link #setUserRsId(String)}
-     */
-    @Deprecated
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getUserRCN() {
-        return userRCN;
-    }
-
-    public void setUserRCN(String userRCN) {
-        this.userRCN = userRCN;
-    }
 
     @Override
     public void setRefreshTokenExpired() {
         this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
-    public DateTime getUserPasswordExpirationDate() {
-        return userPasswordExpirationDate;
-    }
-
-    public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
-        this.userPasswordExpirationDate = userPasswordExpirationDate;
     }
 
     public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
@@ -128,19 +70,8 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
         return String.format(format, this.getUserRsId(), this.getUserRCN());
     }
 
-    public void setUserRsId(String userRsId) {
-        this.userRsId = userRsId;
-    }
-
-    public String getUserRsId() {
-        return userRsId;
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
-    }
-
-    public ReadOnlyEntry getLDAPEntry() {
-        return ldapEntry;
+    @Override
+    public String getIssuedToUserId() {
+        return getUserRsId();
     }
 }

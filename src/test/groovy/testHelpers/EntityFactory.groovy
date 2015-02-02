@@ -475,7 +475,7 @@ class EntityFactory extends Specification {
             it.userRsId = userRsId
             it.username = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.setUniqueId(dn)
             it.getAuthenticatedBy().addAll(authBy)
             return it
         }

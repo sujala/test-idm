@@ -4,6 +4,15 @@ import com.rackspace.idm.domain.entity.*;
 
 public interface IdentityUserService {
     /**
+     * Returns the user associated with the specified id. The user identified by the userId must represent an BaseUser. Returns null if no
+     * enduser matches the specified userId
+     *
+     * @param userId
+     * @return
+     */
+    BaseUser getBaseUserById(String userId);
+
+    /**
      * Returns the user associated with the specified id. The user identified by the userId must represent an EndUser. Returns null if no
      * enduser matches the specified userId
      *

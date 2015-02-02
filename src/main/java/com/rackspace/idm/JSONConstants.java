@@ -236,6 +236,11 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH = "user.RAX-AUTH:multiFactorEnabled";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH = "user.RAX-AUTH:multiFactorState";
 
+    public static final String USER_RAX_AUTH_TOKEN_FORMAT_PATH = "user.RAX-AUTH:tokenFormat";
+    public static final String TOKEN_FORMAT = "tokenFormat";
+    public static final String USER_TOKEN_FORMAT_PATH = "user.tokenFormat";
+    public static final String RAX_AUTH_TOKEN_FORMAT = "RAX-AUTH:tokenFormat";
+
     public static final String USER_PASSWORD_PATH = "user.password";
     public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
     public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX-KSGRP:groups";
@@ -252,6 +257,5 @@ public final class JSONConstants {
     public static final String AUTHENTICATE_RESPONSE_RAX_AUTH_DEFAULT_REGION_PATH = "access.user.RAX-AUTH:defaultRegion";
     public static final String AUTHENTICATE_RESPONSE_AUTHENTICATED_BY_PATH = "access.token.authenticatedBy";
     public static final String AUTHENTICATE_RESPONSE_RAX_AUTH_AUTHENTICATED_BY_PATH = "access.token.RAX-AUTH:authenticatedBy";
-
 
 }

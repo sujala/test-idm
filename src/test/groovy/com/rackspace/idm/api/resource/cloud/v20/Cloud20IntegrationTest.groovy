@@ -1152,11 +1152,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response << [
                 cloud20.createUser(defaultUserToken, v2Factory.createUserForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 cloud20.updateUser(defaultUserToken, userAdmin.getId(), v2Factory.createUserForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
-                cloud20.getUserById(defaultUserToken, userAdmin.getId()),
-                cloud20.getUserById(defaultUserToken, identityAdmin.getId()),
-                cloud20.getUserById(defaultUserToken, serviceAdmin.getId()),
-                cloud20.getUserById(userAdminToken, identityAdmin.getId()),
-                cloud20.getUserById(userAdminToken, serviceAdmin.getId()),
                 cloud20.getUserByName(defaultUserToken, userAdmin.getUsername()),
                 cloud20.getUserByName(defaultUserToken, identityAdmin.getUsername()),
                 cloud20.getUserByName(defaultUserToken, serviceAdmin.getUsername()),
@@ -1174,6 +1169,22 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.createQuestion(defaultUserToken, v1Factory.createQuestion()),
                 cloud20.updateQuestion(defaultUserToken, "id", v1Factory.createQuestion()),
                 cloud20.deleteQuestion(defaultUserToken, "id"),
+        ]
+    }
+
+    @Unroll
+    def 'forbidden but obfuscated operations for users'() {
+        expect:
+        // [B-82794] Modify [Get User] API Error Message
+        response.status == 404
+
+        where:
+        response << [
+                cloud20.getUserById(defaultUserToken, userAdmin.getId()),
+                cloud20.getUserById(defaultUserToken, identityAdmin.getId()),
+                cloud20.getUserById(defaultUserToken, serviceAdmin.getId()),
+                cloud20.getUserById(userAdminToken, identityAdmin.getId()),
+                cloud20.getUserById(userAdminToken, serviceAdmin.getId())
         ]
     }
 

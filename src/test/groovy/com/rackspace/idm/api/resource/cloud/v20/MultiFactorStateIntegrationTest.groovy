@@ -2,9 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
@@ -14,6 +14,7 @@ import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 
@@ -38,7 +39,9 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired ScopeAccessService scopeAccessService
 
-    @Autowired LdapScopeAccessRepository scopeAccessRepository
+    @Autowired
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired UserDao userDao
 

@@ -1,15 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
+
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import com.sun.jersey.api.client.ClientResponse
-import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
@@ -52,7 +52,9 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired ScopeAccessService scopeAccessService
 
-    @Autowired LdapScopeAccessRepository scopeAccessRepository
+    @Autowired
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     @Autowired RoleService roleService
 

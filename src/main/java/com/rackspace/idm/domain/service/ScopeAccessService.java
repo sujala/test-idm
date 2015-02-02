@@ -48,32 +48,25 @@ public interface ScopeAccessService {
      */
     void deleteExpiredTokensQuietly(EndUser user);
 
+    /**
+     * @deprecated Use appropriate method from TokenRevocationService
+     */
+    @Deprecated
     void expireAccessToken(String tokenString);
 
     void expireAllTokensForClient(String clientId);
 
+    /**
+     * @deprecated Use appropriate method from TokenRevocationService
+     */
+    @Deprecated
     void expireAllTokensForUser(String username);
 
-    void expireAllTokensForUserById(String userId);
-
     /**
-     * Expire all valid tokens for the user that do NOT have one of the specified authenticatedBy attribute. The token's authenticatedBy must
-     * only contain the specified value(s) in order to not be revoked. The order of the authenticated by does
-     * not matter. The boolean keepEmpty parameter specifies whether or not to revoke tokens which do not contain any value for authenticated by.
-     *
-     * <p>
-     *     For example, if the specified authenticatedBy=PASSCODE, PASSWORD then:
-     *     <ul>
-     *         <li>a token with 2 values for authenticatedBy (PASSWORD, PASSCODE) would NOT be revoked</li>
-     *         <li>a token with 1 values for authenticatedBy (PASSWORD) would be revoked</li>
-     *         <li>a token with 0 values for authenticatedBy would be revoked (this would NOT be revoked if keepEmpty is true)</li>
-     *     </ul>
-     * </p>
-     *
-     * @param user
-     * @param keepAuthenticatedByOptions
+     * @deprecated Use appropriate method from TokenRevocationService
      */
-    void expireAllTokensExceptTypeForEndUser(EndUser user, List<List<String>> keepAuthenticatedByOptions, boolean keepEmpty);
+    @Deprecated
+    void expireAllTokensForUserById(String userId);
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
@@ -130,8 +123,6 @@ public interface ScopeAccessService {
     int getTokenExpirationSeconds(int value);
 
     String getClientIdForParent(ScopeAccess scopeAccess);
-
-    String getUserIdForParent(ScopeAccess scopeAccessByAccessToken);
 
     UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN);
 

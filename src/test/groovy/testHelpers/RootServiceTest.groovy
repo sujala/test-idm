@@ -24,9 +24,12 @@ import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
@@ -98,7 +101,6 @@ import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.validation.ObjectConverter
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.ObjectFactory
@@ -198,6 +200,8 @@ class RootServiceTest extends Specification {
     @Shared MultiFactorService multiFactorService;
     @Shared RoleService roleService
     @Shared DefaultRequestContextHolder requestContextHolder
+    @Shared TokenRevocationService tokenRevocationService
+    @Shared CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -223,6 +227,7 @@ class RootServiceTest extends Specification {
     @Shared AuthWithToken authWithToken
     @Shared AuthWithPasswordCredentials authWithPasswordCredentials
     @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
+    @Shared TokenFormatSelector tokenFormatSelector
 
     @Shared def jaxbMock
 
@@ -454,6 +459,11 @@ class RootServiceTest extends Specification {
         service.authorizationService = authorizationService
     }
 
+    def mockCacheableKeyCzarCrypterLocator(service) {
+        cacheableKeyCzarCrypterLocator = Mock()
+        service.cacheableKeyCzarCrypterLocator = cacheableKeyCzarCrypterLocator
+    }
+
     def mockUserService(service) {
         userService = Mock()
         service.userService = userService
@@ -616,6 +626,11 @@ class RootServiceTest extends Specification {
     def mockRequestContextHolder(service) {
         requestContextHolder = Mock()
         service.requestContextHolder = requestContextHolder
+    }
+
+    def mockTokenRevocationService(service) {
+        tokenRevocationService = Mock()
+        service.tokenRevocationService = tokenRevocationService
     }
 
     /*
@@ -808,6 +823,11 @@ class RootServiceTest extends Specification {
         service.jaxbObjectFactories = jaxbObjectFactories
     }
 
+    def mockTokenFormatSelector(service) {
+        tokenFormatSelector = Mock()
+        service.tokenFormatSelector = tokenFormatSelector
+    }
+
     /*
         Miscellaneous methods
      */
@@ -848,7 +868,7 @@ class RootServiceTest extends Specification {
         new ScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -866,7 +886,7 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -888,7 +908,7 @@ class RootServiceTest extends Specification {
             it.username = username
             it.impersonatingUsername = impUsername
             it.impersonatingToken = impToken
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -907,7 +927,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -930,7 +950,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.rackerId = rackerId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -961,7 +981,7 @@ class RootServiceTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
-            it.setLdapEntry(createLdapEntryWithDn(dn))
+            it.uniqueId = dn
             return it
         }
     }
@@ -978,10 +998,6 @@ class RootServiceTest extends Specification {
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }
-    }
-
-    def createLdapEntryWithDn(String dn) {
-        return new ReadOnlyEntry(dn)
     }
 
     def allowUserAccess() {

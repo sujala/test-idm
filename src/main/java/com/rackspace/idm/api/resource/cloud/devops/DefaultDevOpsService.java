@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -14,6 +15,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -23,7 +25,6 @@ import java.io.IOException;
 @Component
 public class DefaultDevOpsService implements DevOpsService {
     private static final Logger LOG = Logger.getLogger(DefaultDevOpsService.class);
-
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -36,6 +37,9 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private Configuration globalConfig;
+
+    @Autowired
+    private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
 
     @Override
     @Async
@@ -66,6 +70,21 @@ public class DefaultDevOpsService implements DevOpsService {
         }
     }
 
+    @Override
+    public Response.ResponseBuilder getKeyMetadata(String authToken) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+    }
+
+    @Override
+    public Response.ResponseBuilder resetKeyMetadata(String authToken) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        cacheableKeyCzarCrypterLocator.resetCache();
+        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+    }
+
     private File getLogParentDir() {
         String logFileDir = globalConfig.getString(LdapLoggingFilter.UNBOUNDID_LOG_LOCATION_PROP_NAME, LdapLoggingFilter.UNBOUNDID_LOG_LOCATION_DEFAULT);
         File logDir = new File(logFileDir);
@@ -79,7 +98,6 @@ public class DefaultDevOpsService implements DevOpsService {
         }
         return logDir;
     }
-
 
     private boolean isLdapLoggingAllowed() {
         return globalConfig.getBoolean(LdapLoggingFilter.UNBOUND_LOG_ALLOW_PROP_NAME, LdapLoggingFilter.UNBOUND_LOG_ALLOW_DEFAULT);

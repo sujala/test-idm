@@ -94,6 +94,11 @@ class Cloud11Utils {
         response.getEntity(AuthData)
     }
 
+    def getToken(def username, def key = DEFAULT_API_KEY) {
+        def authData = authenticateWithKey(username, key)
+        return authData.token.id
+    }
+
     def addBaseUrl(id=testUtils.getRandomInteger(), serviceName="serviceName", region="ORD", enabled=true, defaul=true, publicURL="http://public.com/v1", adminURL="http://adminURL.com/v1", internalURL="http://internalURL.com/v1", userType="NAST") {
         def baseUrl = v1Factory.createBaseUrl(id,serviceName, region, enabled, defaul, publicURL, adminURL, internalURL)
         baseUrl.userType = userType

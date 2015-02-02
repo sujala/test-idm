@@ -1,11 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -27,7 +28,8 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
-    private LdapScopeAccessRepository scopeAccessRepository;
+    @Qualifier("scopeAccessDao")
+    ScopeAccessDao scopeAccessRepository
 
     def serviceAdmin1, identityAdmin1, userAdmin1Domain1, userAdmin2Domain1, userManage1Domain1, userManage2Domain1, defaultUser1Domain1, defaultUser2Domain1
     def serviceAdmin2, identityAdmin2, userAdmin1Domain2, userAdmin2Domain2, userManage1Domain2, userManage2Domain2, defaultUser1Domain2, defaultUser2Domain2
@@ -313,9 +315,13 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     def resetAndGetToken(user) {
         user = userRepository.getUserById(user.id)
         def token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-        resetTokenExpiration(token.accessTokenString)
-        token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-        return token.accessTokenString
+        if(token != null) {
+            resetTokenExpiration(token.accessTokenString)
+            token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
+            return token.accessTokenString
+        } else {
+            return utils.getToken(user.username)
+        }
     }
 
 }
