@@ -190,14 +190,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                     throw new NotFoundException("Token not found");
                 }
 
-                //to support 2.9.x tokens that do NOT include userId (just username)
-                EndUser user = null;
-                if (usa.getUserRsId() != null) {
-                    user = identityUserService.getEndUserById(usa.getUserRsId());
-                } else {
-                    //is from a 2.9.x impersonation token that only contains impersonating username (not impersonatingUserRsId). Only
-                    //should be supported for provisioned users.
-                    user = userService.getUser(usa.getUsername());
+                EndUser user = identityUserService.getEndUserById(usa.getUserRsId());
+                if (user == null) {
+                    logger.debug(String.format("User being impersonated with rsId = '%s' was not found", usa.getUserRsId()));
+                    throw new NotFoundException("Token not found");
                 }
 
                 return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl, user)).getValue());
@@ -253,8 +249,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(scopeAccess.getAccessTokenString());
         usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-        usa.setUsername(scopeAccess.getImpersonatingUsername());
-        usa.setUserRsId(scopeAccess.getRsImpersonatingRsId()); //will be null for 2.9.1 tokens
+        usa.setUserRsId(scopeAccess.getRsImpersonatingRsId());
         usa.setCreateTimestamp(scopeAccess.getCreateTimestamp());
         return usa;
     }

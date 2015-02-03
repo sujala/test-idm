@@ -209,25 +209,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
             DateTime passwordExpirationDate = userScopeAccess
                     .getUserPasswordExpirationDate();
 
-            /**
-             * Believe this is only used by foundation api (e.g. - no longer live), but changing to be on safe side.
-             *
-             * 2.9.x code assumed used the username and assumed the user is a provisioned user
-             * (User entity) rather than a federated user. However, in 2.10.x the user may be a federated or provisioned
-             * user. While all 2.9.x and 2.10.x tokens should populate the userRsId property on the token, if it doesn't
-             * for some reason, default back to 2.9.x behavior which assumes it's a User.
-             */
-            if (org.apache.commons.lang.StringUtils.isNotBlank(userScopeAccess.getUserRsId())) {
-                EndUser userEntity = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
-                authData.setUser(userEntity);
-            } else {
-                //only here for backward compatibility w/ 2.9.x tokens
-                User user = new User();
-                user.setUsername(userScopeAccess.getUsername());
-                user.setCustomerId(userScopeAccess.getUserRCN());
-                authData.setUser(user);
-            }
-
+            EndUser userEntity = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
+            authData.setUser(userEntity);
             authData.setPasswordExpirationDate(passwordExpirationDate);
         }
 
@@ -385,12 +368,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (scopeAccess == null) {
             // provision scopeAccess with defaults
-            scopeAccessToAdd.setUsername(user.getUsername());
             scopeAccessToAdd.setUserRsId(user.getId());
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRcn());
         } else {
-            scopeAccessToAdd.setUsername(scopeAccess.getUsername()); //only here for backward compatibility with 2.9.x tokens
             scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRcn());

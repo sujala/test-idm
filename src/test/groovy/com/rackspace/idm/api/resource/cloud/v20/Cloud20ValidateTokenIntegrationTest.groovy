@@ -352,58 +352,11 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
-    /*
-     * In 2.10.x the username property in tokens has been deprecated in favor of using the userRsId property. These tests
-     * verify that 2.10.x can correctly use tokens that match the following:
-     * <ol>
-     *     <li>Tokens that contain both username and userRsId (2.9.x and earlier format)</li>
-     *     <li>Tokens that only contain userRsId (2.11.x or later will remove the population of username)</li>
-     * </ol>
-     *
-     * Furthermore, 2.10.x MUST produce tokens that contain both username and userRsId in order to be backward compatible
-     * with 2.9.x (whose code expects both username and userId to be populated)
-     *
-     */
-    def "validate token with userid and username populated"() {
+    def "validate token with userid populated"() {
         def saToken = utils.getServiceAdminToken()
         def (userAdmin, users) = utils.createUserAdmin()
         AuthenticateResponse auth = utils.authenticate(userAdmin)
-
-        def tokenId = auth.token.id
-
-        when:
-        def rawResponse = cloud20.validateToken(saToken, tokenId, type)
-        assert rawResponse.status == HttpStatus.SC_OK
-        AuthenticateResponse valResponse = getResponseEntity(AuthenticateResponse, type, rawResponse)
-
-        then:
-        valResponse.user.id == userAdmin.id
-        valResponse.user.name == userAdmin.username
-        valResponse.token.id == tokenId
-
-        where:
-        type | _
-        MediaType.APPLICATION_XML_TYPE | _
-        MediaType.APPLICATION_JSON_TYPE | _
-    }
-
-    def "validate token with userid populated and null username"() {
-        def saToken = utils.getServiceAdminToken()
-        def (userAdmin, users) = utils.createUserAdmin()
-        AuthenticateResponse auth = utils.authenticate(userAdmin)
-        UserScopeAccess origToken = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
-
-        //null out the username
-        origToken.username = null
-        scopeAccessDao.updateObjectAsIs(origToken)
-
-        when:
         UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
-
-        then:
-        token != null
-        token.username == null
-        token.userRsId != null
 
         when:
         def rawResponse = cloud20.validateToken(saToken, token.accessTokenString, type)
