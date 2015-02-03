@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
-import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -1092,7 +1091,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
     }
 
-   def "creating an impersonation token still sets the username on the token"() {
+   def "creating an impersonation token sets the impresonating username to hardcoded value"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForImpersonate")
@@ -1109,8 +1108,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         then: "the token stored in the directory has a userRsId attribute"
         tokenEntity.userRsId == identityAdmin.id
 
-        and: "the token stored in the directory has a username attribute"
-        tokenEntity.username == identityAdmin.username
+        and: "the token stored in the directory has the hardcoded username attribute"
+        tokenEntity.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
 
         when: "validate to token to verify that is works correctly"
         def validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
@@ -1129,8 +1128,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         and: "the token stored in the directory does not have a userRsId attribute"
         tokenEntity.userRsId == null
 
-        and: "the token stored in the directory still have a username attribute"
-        tokenEntity.username == RACKER_IMPERSONATE
+        and: "the token stored in the directory still have a hardcoded impersonating username attribute"
+        tokenEntity.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
 
         when: "validate to token to verify that is works correctly"
         validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
@@ -1270,7 +1269,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      *
      * Must be able to validate these tokens
      */
-    def "impersonated token contains both username and userid for both impersonator and impersonated and linked token contains both"() {
+    def "impersonated token contains userid for both impersonator and impersonated"() {
         given:
         def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
 
@@ -1280,91 +1279,19 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         then: "impersonation token has username and userid set for impersonator and impersonated"
         //caller is the identity admin, whose token was created with password authentication
-        impersonatedScopeAccess.username != null
         impersonatedScopeAccess.userRsId != null
 
-        impersonatedScopeAccess.impersonatingUsername != null
+        impersonatedScopeAccess.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
         impersonatedScopeAccess.rsImpersonatingRsId != null
 
-        and: "linked user token contains username/userid"
-        actualUserTokenUsed.username != null
+        and: "linked user token contains userid"
         actualUserTokenUsed.userRsId != null
 
         when:
         AuthenticateResponse authResponse = utils.validateToken(impersonatedScopeAccess.accessTokenString)
 
         then:
-        authResponse.user.name == impersonatedScopeAccess.impersonatingUsername
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-    }
-
-    /**
-     * In 2.11.x or later the impersonation token and linked user tokens will no longer contain username. Verify that code
-     * can handle tokens that do not contain this information.
-     */
-    def "can validate impersonation tokens without username"() {
-        given:
-        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
-
-        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
-        UserScopeAccess actualUserTokenUsed = (UserScopeAccess) scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
-
-        //null out the username
-        actualUserTokenUsed.username = null
-        scopeAccessDao.updateObjectAsIs(actualUserTokenUsed)
-
-        impersonatedScopeAccess.username = null
-        impersonatedScopeAccess.impersonatingUsername = "-" //ldap schema requires this to be non-null, so just fill with junk to verify not used
-        scopeAccessDao.updateObjectAsIs(impersonatedScopeAccess)
-
-        when: "validate in v2.0"
-        AuthenticateResponse authResponse = utils.validateToken(impersonatedScopeAccess.accessTokenString)
-
-        then:
-        authResponse.user.name == localDefaultUser.username //response should still contain impersonating username
-
-        when: "validate in v1.1"
-        def rawResponse = cloud11.validateToken(impersonatedScopeAccess.accessTokenString)
-        assert rawResponse.status == HttpStatus.SC_OK
-        com.rackspacecloud.docs.auth.api.v1.Token valResponse = rawResponse.getEntity(com.rackspacecloud.docs.auth.api.v1.Token) //the service actually returns a FullToken, but Jaxb wants to unmarshall it as the Token class
-
-        then:
-        valResponse.id == impersonatedScopeAccess.accessTokenString //response should still contain username
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-    }
-
-    /**
-     * In 2.10.x we must support tokens issued via 2.9.x which will only contain usernames for (username/impersonatingUsername).
-     */
-    def "can validate impersonation tokens with usernames, but not userIds"() {
-        given:
-        def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
-
-        ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
-        UserScopeAccess actualUserTokenUsed = (UserScopeAccess) scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
-
-        //null out the userIds from impersonation token
-        impersonatedScopeAccess.userRsId = null
-        impersonatedScopeAccess.rsImpersonatingRsId = null
-        scopeAccessDao.updateObjectAsIs(impersonatedScopeAccess)
-
-        when: "validate in v2.0"
-        AuthenticateResponse authResponse = utils.validateToken(impersonatedScopeAccess.accessTokenString)
-
-        then:
-        authResponse.user.name == localDefaultUser.username //response should still contain impersonating username
-
-        when: "validate in v1.1"
-        def rawResponse = cloud11.validateToken(impersonatedScopeAccess.accessTokenString)
-        assert rawResponse.status == HttpStatus.SC_OK
-        com.rackspacecloud.docs.auth.api.v1.Token valResponse = rawResponse.getEntity(com.rackspacecloud.docs.auth.api.v1.Token) //the service actually returns a FullToken, but Jaxb wants to unmarshall it as the Token class
-
-        then:
-        valResponse.id == impersonatedScopeAccess.accessTokenString //response should still contain username
+        authResponse.user.name == localDefaultUser.username
 
         cleanup:
         utils.deleteUsers(localDefaultUser)

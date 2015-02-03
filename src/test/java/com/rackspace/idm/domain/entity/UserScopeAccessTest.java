@@ -66,7 +66,6 @@ public class UserScopeAccessTest {
     @Test
     public void getAuditContext_returnsStringFormatContext() throws Exception {
         userScopeAccess.setUserRsId("userRsId");
-        userScopeAccess.setUsername("username");
         userScopeAccess.setUserRCN("RCN");
         String result = userScopeAccess.getAuditContext();
         assertThat("audit context", result, equalTo("User(userRsId=userRsId,customerId=RCN)"));

@@ -275,14 +275,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             ImpersonatedScopeAccess scopeAccessToAdd = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration, impersonatorAuthByMethods);
 
             if (mostRecent != null) {
-                if(impersonator instanceof Racker) {
-                    scopeAccessToAdd.setUserRsId(((Racker) impersonator).getRackerId());
-                } else if(impersonator instanceof EndUser) {
-                    scopeAccessToAdd.setUserRsId(((EndUser) impersonator).getId());
-                }
-                scopeAccessToAdd.setUsername(mostRecent.getUsername());
+                scopeAccessToAdd.setUserRsId(impersonator.getId());
                 scopeAccessToAdd.setClientId(mostRecent.getClientId());
-                scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
                 if (!mostRecent.isAccessTokenExpired(new DateTime())) {
                     scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
                     try {
@@ -383,17 +377,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ImpersonatedScopeAccess newImpersonatedScopeAccess = new ImpersonatedScopeAccess();
         if (impersonator instanceof Racker) {
             newImpersonatedScopeAccess.setRackerId(((Racker) impersonator).getRackerId());
-            newImpersonatedScopeAccess.setUsername(((Racker) impersonator).getRackerId());
         } else {
             //federated users are not allowed to impersonate so safe to cast to user at this point
             newImpersonatedScopeAccess.setUserRsId(((User) impersonator).getId());
-            newImpersonatedScopeAccess.setUsername(((User) impersonator).getUsername());
         }
+
         newImpersonatedScopeAccess.setClientId(clientId);
         newImpersonatedScopeAccess.setAccessTokenString(this.generateToken());
         newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
         newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
-        newImpersonatedScopeAccess.setImpersonatingUsername(userBeingImpersonated.getUsername());
         newImpersonatedScopeAccess.setRsImpersonatingRsId(userTokenForImpersonation.getUserRsId());
         newImpersonatedScopeAccess.setAuthenticatedBy(new ArrayList<String>(impersonatorAuthByMethods));
 
@@ -760,7 +752,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (user instanceof User) {
             User provisionedUser = (User)user;
             UserScopeAccess userScopeAccess = new UserScopeAccess();
-            userScopeAccess.setUsername(provisionedUser.getUsername());
             userScopeAccess.setUserRsId(provisionedUser.getId());
             userScopeAccess.setClientId(clientId);
             userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -822,7 +813,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
 
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUsername(user.getUsername());
         userScopeAccess.setUserRsId(user.getId());
         userScopeAccess.setClientId(clientId);
         userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
@@ -848,7 +838,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
-        usa.setUsername(user.getUsername());
         usa.setUserRsId(user.getId());
         usa.setUserRCN(user.getCustomerId());
         usa.setClientId(clientId);
@@ -863,7 +852,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
-        scopeAccessToAdd.setUsername(scopeAccess.getUsername()); //only here to be backward compatible with 2.9.x tokens
         scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());

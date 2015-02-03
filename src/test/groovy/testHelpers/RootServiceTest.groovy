@@ -905,8 +905,6 @@ class RootServiceTest extends Specification {
         new ImpersonatedScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.username = username
-            it.impersonatingUsername = impUsername
             it.impersonatingToken = impToken
             it.uniqueId = dn
             return it
@@ -994,7 +992,6 @@ class RootServiceTest extends Specification {
         new UserScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = new DateTime().plusDays(1).toDate()
-            it.username = username
             it.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
             return it
         }

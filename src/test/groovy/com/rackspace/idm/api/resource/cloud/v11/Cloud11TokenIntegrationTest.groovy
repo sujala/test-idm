@@ -50,11 +50,10 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
     }
 
     /**
-     *  2.10.x MUST produce tokens that contain both username and userRsId in order to be backward compatible
-     * with 2.9.x (whose code expects both username and userId to be populated).
+     *  Produce tokens that contain userRsId.
      *
      */
-    def "auth produces token with populated userRsId and username"() {
+    def "auth produces token with populated userRsId"() {
         def user = utils11.createUser()
         AuthData authData = utils11.authenticateWithKey(user.id, user.key)
 
@@ -63,7 +62,6 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
 
         then:
         token != null
-        token.username != null
         token.userRsId != null
     }
 

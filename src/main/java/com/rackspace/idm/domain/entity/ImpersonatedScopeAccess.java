@@ -18,6 +18,7 @@ import org.joda.time.DateTime;
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
 public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken {
+    public static final String IMPERSONATING_USERNAME_HARDCODED_VALUE = "<deprecated>";
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -26,22 +27,20 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
 
-    /**
-     * @deprecated use {@link #getIssuedToUserId()}
-     */
-    @Deprecated
-    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String username;
-
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
     /**
+     * This field is deprecated and should NOT be relied upon to identify the user being impersonated. It is a required field in the
+     * schema, however, so a default/junk value will be persisted. The real value is NOT saved since it's incomplete, and
+     * do not want anyone to get the mistaken belief that is fully answers the question of who the impersonated user is.
+     *
      * @deprecated use {@link #getRsImpersonatingRsId()}
      */
     @Deprecated
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String impersonatingUsername;
+    private String impersonatingUsername = IMPERSONATING_USERNAME_HARDCODED_VALUE;
+
 
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rsImpersonatingRsId;
@@ -61,10 +60,10 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
     public String getAuditContext() {
         if(StringUtils.isNotBlank(this.getRackerId())) {
             final String format = "User(rackerId=%s,impersonating=%s)";
-            return String.format(format, this.getRackerId(), this.getImpersonatingUsername());
+            return String.format(format, this.getRackerId(), this.getRsImpersonatingRsId());
         } else {
             final String format = "User(userRsId=%s,impersonating=%s)";
-            return String.format(format, this.getUserRsId(), this.getImpersonatingUsername());
+            return String.format(format, this.getUserRsId(), this.getRsImpersonatingRsId());
         }
     }
 
@@ -80,5 +79,20 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
         } else {
             return getUserRsId();
         }
+    }
+
+    /**
+     * Shouldn't set this. The value is hardcoded.
+     * @param impersonatingUsername
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public void setImpersonatingUsername(String impersonatingUsername) {
+        //no-op
+    }
+
+    public String getImpersonatingUsername() {
+        return IMPERSONATING_USERNAME_HARDCODED_VALUE;
     }
 }

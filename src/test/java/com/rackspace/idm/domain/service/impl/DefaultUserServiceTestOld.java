@@ -282,11 +282,12 @@ public class DefaultUserServiceTestOld {
         User user = new User();
         String username = "testUser";
         user.setUsername(username);
+        user.setId("blah");
         user.setEnabled(true);
         ImpersonatedScopeAccess scopeAccess = mock(ImpersonatedScopeAccess.class);
         when(scopeAccess.getRackerId()).thenReturn(null);
-        when(scopeAccess.getUsername()).thenReturn(username);
-        when(userDao.getUserByUsername(username)).thenReturn(user);
+        when(scopeAccess.getUserRsId()).thenReturn(user.getId());
+        when(identityUserService.getEndUserById(user.getId())).thenReturn(user);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
         assertThat("user", (User)result, equalTo(user));
     }
@@ -298,9 +299,7 @@ public class DefaultUserServiceTestOld {
         String userId = "userId";
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUserRsId()).thenReturn(userId);
-        when(scopeAccess.getUsername()).thenReturn("username");
         when(identityUserService.getEndUserById(userId)).thenReturn(user);
-        when(userDao.getUserByUsername("username")).thenReturn(user);
         when(domainService.getDomain(anyString())).thenReturn(null);
         BaseUser result = defaultUserService.getUserByScopeAccess(scopeAccess);
         assertThat("user", (User)result, equalTo(user));
@@ -318,8 +317,6 @@ public class DefaultUserServiceTestOld {
         String userId = "userRsId";
         when(scopeAccess.getUserRsId()).thenReturn(userId);
         when(identityUserService.getEndUserById(userId)).thenReturn(null);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(null);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 
@@ -331,8 +328,6 @@ public class DefaultUserServiceTestOld {
         UserScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(scopeAccess.getUserRsId()).thenReturn(userId);
         when(identityUserService.getEndUserById(userId)).thenReturn(null);
-        when(scopeAccess.getUsername()).thenReturn("username");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
         defaultUserService.getUserByScopeAccess(scopeAccess);
     }
 
