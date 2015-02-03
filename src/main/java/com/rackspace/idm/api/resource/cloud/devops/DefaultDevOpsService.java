@@ -38,7 +38,7 @@ public class DefaultDevOpsService implements DevOpsService {
     @Autowired
     private Configuration globalConfig;
 
-    @Autowired
+    @Autowired(required = false)
     private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
 
     @Override
@@ -73,16 +73,24 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder getKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
-        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+        if (cacheableKeyCzarCrypterLocator == null) {
+            return Response.noContent();
+        } else {
+            final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+            return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+        }
     }
 
     @Override
     public Response.ResponseBuilder resetKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        cacheableKeyCzarCrypterLocator.resetCache();
-        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
-        return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+        if (cacheableKeyCzarCrypterLocator == null) {
+            return Response.noContent();
+        } else {
+            cacheableKeyCzarCrypterLocator.resetCache();
+            final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+            return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+        }
     }
 
     private File getLogParentDir() {
