@@ -63,8 +63,8 @@ public class IdentityConfig {
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
     private static final String KEYCZAR_DN_DEFAULT = "ou=keystore,o=configuration,dc=rackspace,dc=com";
 
-    private static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
-    private static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
+    public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
+    public static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
 
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;

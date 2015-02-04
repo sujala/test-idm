@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
@@ -60,6 +61,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private UserDao userDao;
@@ -272,12 +276,11 @@ public class DefaultUserService implements UserService {
             if (StringUtils.isBlank(user.getDomainId())) {
                 user.setDomainId(getDomainUUID());
             }
-
-
             attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
 
-        if (authorizationService.hasIdentityAdminRole(caller)) {
+        boolean hasIdentityAdminRole = authorizationService.hasIdentityAdminRole(caller);
+        if (hasIdentityAdminRole) {
             if (StringUtils.isBlank(user.getDomainId())) {
                 throw new BadRequestException("User-admin cannot be created without a domain");
             }
@@ -297,8 +300,10 @@ public class DefaultUserService implements UserService {
                 attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
                 attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
             }
-        } else if (!hasServiceAdminRole) {
-            // Just identity admins and service admins can set 'tokenFormat'
+        }
+
+        //only identity admins and service admins can set the user's token format, but only if ae tokens are enabled (decryptable)
+        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getFeatureAETokensDecrypt()) {
             user.setTokenFormat(null);
         }
 

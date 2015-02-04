@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.RoleService
@@ -43,6 +44,8 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared defaultRole
     @Shared computeDefaultRole
     @Shared objectStoreRole
+
+    @Shared IdentityConfig identityConfig
 
     def setupSpec(){
         service = new DefaultUserService()
@@ -125,6 +128,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockRoleService(service);
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
+        mockIdentityConfig(service)
     }
 
     def "Add BaseUrl to user"() {
@@ -422,6 +426,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def caller = Mock(User)
         def user = Mock(User)
         authorizationService.hasServiceAdminRole(caller) >> true
+        identityConfig.getFeatureAETokensDecrypt() >> true
 
         mockRoleService.getIdentityAdminRole() >> new ClientRole()
         user.getRoles() >> new ArrayList<TenantRole>()
@@ -438,6 +443,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def caller = Mock(User)
         def user = Mock(User)
         authorizationService.hasIdentityAdminRole(caller) >> true
+        identityConfig.getFeatureAETokensDecrypt() >> true
 
         user.getDomainId() >> "123"
         mockRoleService.getUserAdminRole() >> new ClientRole()
