@@ -763,6 +763,16 @@ public class Cloud20VersionResource {
         return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
     }
 
+    @PUT
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
+    public Response updateEndpointTemplate(
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("endpointTemplateId") String endpointTemplateId,
+            @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
+        return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
+    }
+
     @GET
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response getEndpointTemplate(
