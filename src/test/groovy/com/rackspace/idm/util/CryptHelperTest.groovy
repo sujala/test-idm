@@ -6,7 +6,6 @@ import spock.lang.Specification
 
 class CryptHelperTest extends Specification {
     @Shared CryptHelper cryptHelper
-    @Shared Configuration config
     @Shared EncryptionPasswordSource encryptionPasswordSource
 
 
@@ -36,7 +35,6 @@ class CryptHelperTest extends Specification {
         String value = cryptHelper.decrypt(encryptedValue, version, salt)
 
         then:
-        0 * config.getString("crypto.salt") >> salt
         2 * encryptionPasswordSource.getPassword(version) >> "password"
         value == "hello"
     }
@@ -52,9 +50,6 @@ class CryptHelperTest extends Specification {
 
     def setupMock(){
         cryptHelper = new CryptHelper()
-
-        config = Mock()
-        cryptHelper.config = config
 
         encryptionPasswordSource = Mock()
         cryptHelper.encryptionPasswordSource = encryptionPasswordSource
