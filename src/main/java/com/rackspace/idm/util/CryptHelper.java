@@ -1,7 +1,6 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.exception.IdmException;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -29,15 +28,8 @@ import java.util.List;
 @Component
 public class CryptHelper {
 
-    private CipherParameters keyParams;
-
-    @Autowired
-    private Configuration config;
-
     @Autowired
     private EncryptionPasswordSource encryptionPasswordSource;
-
-	private static PBEParametersGenerator keyGenerator;
 
     public static final int ITERATION_COUNT = 20;
 
@@ -47,25 +39,22 @@ public class CryptHelper {
 
     private SecureRandom secureRandom = new SecureRandom();
 
-    public CryptHelper () {
+    private static final PBEParametersGenerator keyGenerator;
+
+    static {
         Security.addProvider(new BouncyCastleProvider());
         keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
     }
 
-    /*private CipherParameters getKeyParams() {
-        if (keyParams == null) {
-            keyParams = getKeyParams(config.getString("crypto.password"), config.getString("crypto.salt"));
-        }
-        return keyParams;
-    }*/
-
-    synchronized public CipherParameters getKeyParams(String passwordString, String saltString) {
+    public CipherParameters getKeyParams(String passwordString, String saltString) {
         CipherParameters result = null;
 		try {
             char[] password = passwordString.toCharArray();
             byte[] salt = fromHexString(saltString);
-			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
-			result = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
+            synchronized (keyGenerator) {
+                keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
+                result = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
+            }
 		} catch (Exception e) {
 			throw new IdmException(e.getMessage());
 		}
@@ -151,11 +140,8 @@ public class CryptHelper {
 		}
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.config = configuration;
-    }
-
     public void setEncryptionPasswordSource(EncryptionPasswordSource encryptionPasswordSource) {
         this.encryptionPasswordSource = encryptionPasswordSource;
     }
+
 }
