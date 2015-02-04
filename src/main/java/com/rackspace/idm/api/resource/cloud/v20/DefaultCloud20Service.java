@@ -699,8 +699,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
 
-            // Just identity admins and service admins can update 'tokenFormat'
-            if (!callerIsIdentityAdmin && !callerIsServiceAdmin) {
+            // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
+            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getFeatureAETokensDecrypt()) {
                 user.setTokenFormat(null);
             }
 

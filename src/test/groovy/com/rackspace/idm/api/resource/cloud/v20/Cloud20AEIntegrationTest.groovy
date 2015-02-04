@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
@@ -18,6 +20,7 @@ import javax.ws.rs.core.MediaType
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
+import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_OK
 
 @ContextConfiguration(locations = ["classpath:app-config.xml"
@@ -74,6 +77,65 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+    }
+
+    @Unroll
+    def "update user - setting token format on user only allowed if ae tokens disabled. Testing with ae tokens enabled: #ae_enabled"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+        def domainId = utils.createDomain()
+
+        def userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        assert userAdmin.tokenFormat == null
+
+        when:
+        userAdmin.tokenFormat = TokenFormatEnum.AE
+        utils.updateUser(userAdmin)
+        def retrievedUser = utils.getUserById(userAdmin.id)
+
+        then:
+        ae_enabled ? retrievedUser.tokenFormat == TokenFormatEnum.AE : retrievedUser.tokenFormat == null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
+
+        where:
+        ae_enabled  | _
+        false       | _
+        true        | _
+    }
+
+    @Unroll
+    def "create user - setting token format on user creation only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+
+        def username = testUtils.getRandomUUID()
+        User userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, null, "Password1")
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
+
+        when:
+        def response = cloud20.createUser(utils.getServiceAdminToken(), userForCreate)
+        assert response.status == SC_CREATED
+        def user = cloud20.getUserByName(utils.getServiceAdminToken(), username).getEntity(User).value
+
+        then:
+        ae_enabled ? user.tokenFormat == TokenFormatEnum.AE : user.tokenFormat == null
+
+        cleanup:
+        utils.deleteUsers(user)
+        staticIdmConfiguration.reset()
+
+        where:
+        ae_enabled  | _
+        false       | _
+        true        | _
     }
 
     def "retrieve AE token for a user"() {

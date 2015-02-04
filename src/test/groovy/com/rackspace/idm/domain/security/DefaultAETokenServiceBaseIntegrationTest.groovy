@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.Racker
@@ -31,6 +32,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     @Shared KeyCzarAuthenticatedMessageProvider amProvider
     @Shared KeyCzarCrypterLocator crypterLocator
     @Shared UserService userService
+    @Shared IdentityConfig identityConfig
 
     def setupSpec() {
         crypterLocator = new ClasspathKeyCzarCrypterLocator();
@@ -38,6 +40,12 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
         config = new PropertiesConfiguration()
         config.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
+        config.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
+        config.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
+
+
+        identityConfig = new IdentityConfig()
+        identityConfig.config = config
 
         identityUserService = Mock()
         userService = Mock()
@@ -51,6 +59,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
         amProvider = new KeyCzarAuthenticatedMessageProvider()
         amProvider.keyCzarCrypterLocator = crypterLocator
+        amProvider.identityConfig = identityConfig
 
         aeTokenService.tokenDataPacker = dataPacker
         aeTokenService.authenticatedMessageProvider = amProvider
