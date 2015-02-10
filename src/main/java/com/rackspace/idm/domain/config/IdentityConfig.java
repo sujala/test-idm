@@ -79,6 +79,8 @@ public class IdentityConfig {
 
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final boolean EXPOSE_V11_ADD_BASE_URL_DEFAULT = true;
+    public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
+    public static final boolean FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT = false;
 
     @Autowired
     private Configuration config;
@@ -234,6 +236,10 @@ public class IdentityConfig {
 
     public boolean getV11AddBaseUrlExposed() {
         return config.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
+    }
+
+    public boolean getBaseUlrRespectEnabledFlag() {
+        return config.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
     }
 
 }

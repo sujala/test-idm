@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -37,6 +38,9 @@ public class DefaultEndpointService implements EndpointService {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -148,10 +152,16 @@ public class DefaultEndpointService implements EndpointService {
     public List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType) {
         logger.debug("Getting baseurls by baseUrlType");
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
-        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrls()) {
-            if (baseUrl.getBaseUrlType() != null) {
-                if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
-                    filteredBaseUrls.add(baseUrl);
+        if(identityConfig.getBaseUlrRespectEnabledFlag()) {
+            for (CloudBaseUrl baseUrl : endpointDao.getDefaultBaseUrlsByBaseUrlTypeAndEnabled(baseUrlType, true)) {
+                filteredBaseUrls.add(baseUrl);
+            }
+        } else {
+            for (CloudBaseUrl baseUrl : endpointDao.getBaseUrls()) {
+                if (baseUrl.getBaseUrlType() != null) {
+                    if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
+                        filteredBaseUrls.add(baseUrl);
+                    }
                 }
             }
         }
