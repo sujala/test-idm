@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
@@ -12,6 +13,7 @@ import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 /**
  * Created with IntelliJ IDEA.
@@ -293,6 +295,31 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
         cloud20.deleteDomain(serviceAdminToken, createdUser.mossoId.toString())
+    }
+
+    @Unroll
+    def "verify v1.1 add base URL feature flag works: exposeEndpoint = #exposeEndpoint" () {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.EXPOSE_V11_ADD_BASE_URL_PROP, exposeEndpoint)
+        def baseURLId = testUtils.getRandomInteger()
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
+
+        when:
+        def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
+
+        then:
+        baseUrlResponse.status == status
+
+        cleanup:
+        if(exposeEndpoint) {
+            cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        }
+        staticIdmConfiguration.reset()
+
+        where:
+        exposeEndpoint | status
+        true           | 201
+        false          | 404
     }
 
     def "auth-admin call should not display user's admin urls - password credentials" () {

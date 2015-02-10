@@ -77,6 +77,9 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
     public static final boolean FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT = false;
 
+    public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
+    public static final boolean EXPOSE_V11_ADD_BASE_URL_DEFAULT = true;
+
     @Autowired
     private Configuration config;
 
@@ -99,6 +102,8 @@ public class IdentityConfig {
         verifyAndLogProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
+
+        verifyAndLogProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
 
         logFederatedTokenFormatOverrides();
     }
@@ -225,6 +230,10 @@ public class IdentityConfig {
             }
         }
         return TokenFormat.UUID;
+    }
+
+    public boolean getV11AddBaseUrlExposed() {
+        return config.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
     }
 
 }

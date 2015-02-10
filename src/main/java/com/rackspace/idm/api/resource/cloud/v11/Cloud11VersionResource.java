@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
@@ -21,6 +24,9 @@ public class Cloud11VersionResource {
 
     @Autowired
     private DefaultCloud11Service cloud11Service;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Context
     private UriInfo uriInfo;
@@ -114,7 +120,11 @@ public class Cloud11VersionResource {
     @Path("baseURLs")
     public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
             throws IOException, JAXBException {
-        return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
+        if(identityConfig.getV11AddBaseUrlExposed()) {
+            return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
+        } else {
+            throw new NotFoundException("Resource Not Found");
+        }
     }
 
     @GET
