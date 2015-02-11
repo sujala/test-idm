@@ -16,6 +16,21 @@ public class IdentityConfig {
 
     private static final String LOCALHOST = "localhost";
 
+    public static final String CONFIG_FOLDER_SYS_PROP_NAME = "idm.properties.location";
+
+    public static final String FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME = "feature.use.reloadable.docs";
+    public static final boolean FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE = true;
+
+    /**
+     * Should be provided in seconds
+     */
+    public static final String RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME = "reloadable.docs.cache.timeout";
+
+    /**
+     * In seconds
+     */
+    public static final int RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE = 60;
+
     //REQUIRED PROPERTIES
     private static final String GA_USERNAME = "ga.username";
 
@@ -216,6 +231,18 @@ public class IdentityConfig {
 
     public boolean allowFederatedImpersonation() {
         return config.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);
+    }
+
+    public boolean useReloadableDocs() {
+        return config.getBoolean(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE);
+    }
+
+    public int reloadableDocsTimeOutInSeconds() {
+        return config.getInt(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE);
+    }
+
+    public String getConfigRoot() {
+        return System.getProperty(CONFIG_FOLDER_SYS_PROP_NAME);
     }
 
     private TokenFormat convertToTokenFormat(String strFormat) {
