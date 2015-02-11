@@ -5,20 +5,17 @@ import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
 import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,11 +34,13 @@ public class CloudVersionsResourceTest {
     CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
     FileSystemApiDocRepository fileSystemApiDocRepository;
     ServiceDescriptionTemplateUtil serviceDescriptionTemplateUtil;
+    IdentityConfig identityConfig;
 
     @Before
     public void setUp() throws Exception {
+        identityConfig = mock(IdentityConfig.class);
         serviceDescriptionTemplateUtil = new ServiceDescriptionTemplateUtil();
-        fileSystemApiDocRepository = new FileSystemApiDocRepository();
+        fileSystemApiDocRepository = new FileSystemApiDocRepository(identityConfig);
         cloudClient = mock(CloudClient.class);
         cloud10VersionResource = mock(Cloud10VersionResource.class);
         cloud11VersionResource = mock(Cloud11VersionResource.class);

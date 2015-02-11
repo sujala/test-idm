@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
-import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
+import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
-import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +40,7 @@ public class Cloud20VersionResourceTestOld {
     @Before
     public void setUp() throws Exception {
         // setting up for version resource
-        fileSystemApiDocRepository = new FileSystemApiDocRepository();
+        fileSystemApiDocRepository = new FileSystemApiDocRepository(mock(IdentityConfig.class));
         serviceDescriptionTemplateUtil = new ServiceDescriptionTemplateUtil();
         config = mock(Configuration.class);
         cloudContractDescriptionBuilder = new CloudContractDescriptionBuilder(fileSystemApiDocRepository, serviceDescriptionTemplateUtil);

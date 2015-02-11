@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 
@@ -19,9 +21,14 @@ public class FileSystemApiDocRepositoryTest {
 
     FileSystemApiDocRepository fileSystemApiDocRepository;
 
+    IdentityConfig config;
+
     @Before
     public void setUp() throws Exception {
+        config = Mockito.mock(IdentityConfig.class);
+
         fileSystemApiDocRepository = new FileSystemApiDocRepository();
+        fileSystemApiDocRepository.identityConfig = config;
     }
 
     @Test
@@ -55,5 +62,4 @@ public class FileSystemApiDocRepositoryTest {
         String body = "test";
         assertThat("returns string",fileSystemApiDocRepository.convertStreamToString(new ByteArrayInputStream(body.getBytes())),equalTo("test"));
     }
-
 }
