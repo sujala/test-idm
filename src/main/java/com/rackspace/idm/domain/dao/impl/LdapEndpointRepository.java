@@ -70,6 +70,11 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
+    public Iterable<CloudBaseUrl> getDefaultBaseUrlsByBaseUrlTypeAndEnabled(String baseUrlType, boolean enabled) {
+        return getObjects(searchFilterGetDefaultBaseUrlsByBaseUrlType(baseUrlType, enabled));
+    }
+
+    @Override
     public Iterable<CloudBaseUrl> getBaseUrlsByOpenStackType(String openStackType) {
         return getObjects(searchFilterGetBaseurlByOpenstackType(openStackType));
     }
@@ -124,6 +129,14 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     private Filter searchFilterGetBaseUrlByService(String service) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_SERVICE, service)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+    }
+
+    private Filter searchFilterGetDefaultBaseUrlsByBaseUrlType(String baseUrlType, boolean enabled) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
+                .addEqualAttribute(ATTR_DEF, Boolean.toString(true).toUpperCase())
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
     }
 

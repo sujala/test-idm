@@ -13,6 +13,18 @@ public interface EndpointDao {
 
     Iterable<CloudBaseUrl> getBaseUrlsByService(String service);
 
+    /**
+     * Returns base URLs that match the following criteria:
+     * CloudBaseURL.def == true
+     * CloudBaseUrl.baseUrlType == baseUrlType parameter
+     * CloudBaseUrl.enabled == enabled parameter
+     *
+     * @param baseUrlType The type of the base url to match on
+     * @param enabled If the base urls are enabled or not
+     * @return
+     */
+    Iterable<CloudBaseUrl> getDefaultBaseUrlsByBaseUrlTypeAndEnabled(String baseUrlType, boolean enabled);
+
     Iterable<CloudBaseUrl> getBaseUrlsByOpenStackType(String openStackType);
 
     Iterable<CloudBaseUrl> getGlobalUSBaseUrlsByBaseUrlType(String openStackType);

@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
@@ -7,12 +8,15 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+
+import java.security.Identity
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
@@ -59,31 +63,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(v20CreatedUser)
         utils.deleteUser(v11CreatedUser)
-    }
-
-    def "scope access is created when a user is created"() {
-        given:
-        def v20Username = "v20Username" + testUtils.getRandomUUID()
-        def v20User = v2Factory.createUserForCreate(v20Username, "displayName", "testemail@rackspace.com", true, "ORD", testUtils.getRandomUUID(), "Password1")
-        def randomMosso = 10000000 + new Random().nextInt(1000000)
-        def v11Username = "v11Username" + testUtils.getRandomUUID()
-        def v11User = v1Factory.createUser(v11Username, "1234567890", randomMosso, null, true)
-
-        when:
-        cloud20.createUser(identityAdminToken, v20User)
-        def v20UserEntity = userService.getUser(v20Username)
-        cloud11.createUser(v11User)
-        def v11UserEntity = userService.getUser(v11Username)
-
-        then:
-        scopeAccessService.getScopeAccessesForUserByClientId(v20UserEntity, config.getString(IDM_CLIENT_ID)) != null
-        scopeAccessService.getScopeAccessesForUserByClientId(v20UserEntity, config.getString(CLOUD_AUTH_CLIENT_ID)) != null
-        scopeAccessService.getScopeAccessesForUserByClientId(v11UserEntity, config.getString(IDM_CLIENT_ID)) != null
-        scopeAccessService.getScopeAccessesForUserByClientId(v11UserEntity, config.getString(CLOUD_AUTH_CLIENT_ID)) != null
-
-        cleanup:
-        cloud11.deleteUser(v11Username)
-        cloud20.deleteUser(identityAdminToken, v20UserEntity.id)
     }
 
     def "tenants ARE NOT created for create user v2.0 calls"() {
@@ -191,6 +170,70 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[1].id)
         cloud20.deleteDomain(identityAdminToken, domainId)
         cloud20.deleteDomain(identityAdminToken, v11MossoId as String)
+    }
+
+    def "disabled default tenants are not assigned to a user when making the create user in one call"() {
+        given:
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD")).getEntity(EndpointTemplate).value
+        def endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
+        endpointTemplateEntity.def = true
+        endpointService.updateBaseUrl(endpointTemplateEntity)
+
+        when: "create a user with the new endpoint disabled and auth as that user"
+        def createdUser1 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def authUser1 = utils.authenticate(createdUser1)
+
+        then: "the endpoint DOES NOT show up in the service catalog"
+        authUser1.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) == null
+
+        when: "enable the endpoint and create a user"
+        endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
+        endpointTemplateEntity.enabled = true
+        endpointService.updateBaseUrl(endpointTemplateEntity)
+        def createdUser2 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def authUser2 = utils.authenticate(createdUser2)
+
+        then: "the endpoint DOES show up in the service catalog"
+        authUser2.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) != null
+
+        cleanup:
+        utils.deleteUsers(createdUser1, createdUser2)
+        utils.deleteEndpointTemplate(endpointTemplateResp)
+    }
+
+    @Unroll
+    def "test feature flag for respecting enabled property on default base URLs when assigning them to a new user (CIDMDEV-1248): useEnabled = #useEnabledFlag"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, useEnabledFlag)
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD")).getEntity(EndpointTemplate).value
+        def endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
+        endpointTemplateEntity.def = true
+        endpointService.updateBaseUrl(endpointTemplateEntity)
+
+        when: "create a user with the base URL enabled attribute set to false"
+        def createdUser = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def authUser = utils.authenticate(createdUser)
+
+        then:
+        if(useEnabledFlag) {
+            authUser.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) == null
+        } else {
+            authUser.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) != null
+        }
+
+        cleanup:
+        utils.deleteUsers(createdUser)
+        utils.deleteEndpointTemplate(endpointTemplateResp)
+        staticIdmConfiguration.reset()
+
+        where:
+        useEnabledFlag  | _
+        true            | _
+        false           | _
     }
 
 
