@@ -1,7 +1,12 @@
 package com.rackspace.idm.domain.config
 
 import com.rackspace.idm.domain.security.TokenFormat
+import org.apache.commons.configuration.ConfigurationException
+import org.apache.commons.configuration.PropertiesConfiguration
+import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
+import org.apache.commons.io.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -24,6 +29,55 @@ class IdentityConfigIntegrationTest  extends Specification {
 
     public cleanupSpec() {
         staticIdmConfiguration.reset()
+    }
+
+    def "reloadable properties exist"() {
+        expect:
+        config.getReloadableConfig() != null
+        ((PropertiesConfiguration) config.reloadableConfiguration).strategy instanceof FileChangedReloadingStrategy
+        ((FileChangedReloadingStrategy)((PropertiesConfiguration) config.reloadableConfiguration).strategy).refreshDelay == config.staticConfig.getReloadablePropertiesTTL() * 1000
+    }
+
+    def "reloadable properties works"() {
+        given:
+        def newProp = "new.property"
+        def tempFile = File.createTempFile("temp",".tmp").with {
+            deleteOnExit()
+            return it
+        }
+
+        FileChangedReloadingStrategy strategy = new FileChangedReloadingStrategy();
+        strategy.setRefreshDelay(0);
+        PropertiesConfiguration localConfig = new PropertiesConfiguration();
+        localConfig.setReloadingStrategy(strategy);
+        localConfig.setFile(tempFile);
+        localConfig.load();
+
+        when: "load prop when doesn't exist"
+        //nothing to do
+
+        then:
+        localConfig.getString(newProp) == null
+
+        when: "add new prop"
+        def newPropOrigValue = "value1"
+        System.sleep(1000) //need to delay a second so lastmodifieddate of file will change
+        writeProp(tempFile, newProp, newPropOrigValue)
+
+        then: "when check again it exists"
+        localConfig.getString(newProp) == newPropOrigValue
+
+        when: "change value"
+        def newPropOrigValue2 = "value2"
+        System.sleep(1000) //need to delay a second so lastmodifieddate of file will change
+        writeProp(tempFile, newProp, newPropOrigValue2)
+
+        then: "when check again it is changed"
+        localConfig.getString(newProp) == newPropOrigValue2
+    }
+
+    def writeProp(file, name, val) {
+        file.write(name + "=" + val)
     }
 
     /**
